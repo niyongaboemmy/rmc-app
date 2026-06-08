@@ -1,3 +1,6 @@
+# MinIO local data
+minio-data/
+
 # Terraform
 *.tfstate
 *.tfstate.backup
