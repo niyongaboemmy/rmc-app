@@ -1,0 +1,81 @@
+{
+  "common": {
+    "appName": "Urubuga rwa RMC",
+    "loading": "Birategerezwa...",
+    "error": "Habaye ikosa",
+    "submit": "Ohereza",
+    "cancel": "Reka",
+    "back": "Subira",
+    "save": "Bika",
+    "close": "Funga"
+  },
+  "auth": {
+    "login": {
+      "title": "Injira",
+      "subtitle": "Injira muri konti yawe ya RMC",
+      "email": "Aderesi imeri",
+      "phone": "Numero ya telefoni",
+      "identifier": "Imeri cyangwa telefoni",
+      "password": "Ijambo ry'ibanga",
+      "submit": "Injira",
+      "forgotPassword": "Wibagiwe ijambo ry'ibanga?",
+      "noAccount": "Nta konti ufite?",
+      "register": "Iyandikishe",
+      "mfaCode": "Kode yo kwemeza",
+      "mfaPlaceholder": "Imibare 6",
+      "success": "Injiye neza"
+    },
+    "register": {
+      "title": "Fungura Konti",
+      "subtitle": "Injira mu muryango w'Abasilamu bo mu Rwanda",
+      "firstName": "Izina ry'ibanze",
+      "lastName": "Irindi zina",
+      "email": "Aderesi imeri",
+      "phone": "Numero ya telefoni",
+      "phoneHelp": "Uburyo: +250XXXXXXXXX",
+      "password": "Ijambo ry'ibanga",
+      "passwordHelp": "Byibura inyuguti 8, harimo imfinangiro, inumero na kimwe cy'ibirango byihariye",
+      "gender": "Igitsina",
+      "male": "Gabo",
+      "female": "Gore",
+      "submit": "Fungura Konti",
+      "alreadyAccount": "Ufite konti?",
+      "login": "Injira",
+      "success": "Konti yarafunguwe! Nyamuneka emeza numero yawe ya telefoni."
+    },
+    "forgotPassword": {
+      "title": "Vugurura Ijambo ry'Ibanga",
+      "subtitle": "Injiza imeri yawe kugira ngo ugire inyandiko yo gusubiramo",
+      "email": "Aderesi imeri",
+      "submit": "Ohereza Inyandiko yo Gusubiramo",
+      "back": "Subira ku Kwinjira",
+      "success": "Niba iyo imeri yanditswe, inyandiko yo gusubiramo yoherejwe."
+    },
+    "resetPassword": {
+      "title": "Ijambo Ry'ibanga Rishya",
+      "subtitle": "Injiza ijambo ry'ibanga rishya",
+      "password": "Ijambo ry'ibanga rishya",
+      "submit": "Subiramo Ijambo ry'Ibanga",
+      "success": "Ijambo ry'ibanga ryasubiramowe. Nyamuneka injira."
+    }
+  },
+  "nav": {
+    "home": "Ahabanza",
+    "about": "Abo turi bo",
+    "services": "Serivisi",
+    "donate": "Gutera inkunga",
+    "contact": "Twunganire",
+    "login": "Injira",
+    "register": "Iyandikishe",
+    "logout": "Sohoka",
+    "dashboard": "Ikibaho"
+  },
+  "home": {
+    "hero": {
+      "title": "Urubuga Rukora Uruhare rw'Abasilamu bo mu Rwanda",
+      "subtitle": "Guha serivisi Abasilamu bose muri Rwanda ukoresheje ikoranabuhanga rigezweho",
+      "cta": "Tangira",
+      "comingSoon": "Urubuga Ruraje Vuba"
+    }
+  }
+}

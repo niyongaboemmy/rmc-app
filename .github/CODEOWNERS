@@ -1,0 +1,16 @@
+# Global owners
+* @tech-lead @project-manager
+
+# Infrastructure & DevOps
+infra/ @devops-engineer @tech-lead
+docker-compose*.yml @devops-engineer
+.github/workflows/ @devops-engineer @tech-lead
+
+# Backend
+apps/backend/ @backend-lead @tech-lead
+
+# Frontend
+apps/frontend/ @frontend-lead @tech-lead
+
+# Database migrations
+apps/backend/src/database/migrations/ @db-engineer @tech-lead
