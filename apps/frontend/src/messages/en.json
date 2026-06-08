@@ -1,0 +1,81 @@
+{
+  "common": {
+    "appName": "RMC Platform",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "back": "Back",
+    "save": "Save",
+    "close": "Close"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Sign in to your RMC account",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "identifier": "Email or Phone",
+      "password": "Password",
+      "submit": "Sign In",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "register": "Register",
+      "mfaCode": "Authentication Code",
+      "mfaPlaceholder": "6-digit code",
+      "success": "Signed in successfully"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Join the Rwanda Muslim Community",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "phoneHelp": "Format: +250XXXXXXXXX",
+      "password": "Password",
+      "passwordHelp": "Min 8 chars, must include uppercase, number & special character",
+      "gender": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "submit": "Create Account",
+      "alreadyAccount": "Already have an account?",
+      "login": "Sign In",
+      "success": "Account created! Please verify your phone number."
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email to receive a reset link",
+      "email": "Email Address",
+      "submit": "Send Reset Link",
+      "back": "Back to Sign In",
+      "success": "If that email is registered, a reset link has been sent."
+    },
+    "resetPassword": {
+      "title": "New Password",
+      "subtitle": "Enter your new password",
+      "password": "New Password",
+      "submit": "Reset Password",
+      "success": "Password reset successfully. Please sign in."
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services",
+    "donate": "Donate",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "hero": {
+      "title": "Rwanda Muslim Community Digital Platform",
+      "subtitle": "Serving the Muslim community across Rwanda with modern digital services",
+      "cta": "Get Started",
+      "comingSoon": "Platform Coming Soon"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rmc-green: #1a7a4a;
+  --rmc-green-dark: #145c38;
+  --rmc-gold: #d4a017;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}

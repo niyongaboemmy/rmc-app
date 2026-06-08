@@ -1,0 +1,51 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  label-check:
+    name: Label Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required labels
+        uses: mheap/github-action-required-labels@v5
+        with:
+          mode: minimum
+          count: 1
+          labels: 'feature, bug, infrastructure, refactor, documentation, hotfix'
+
+  size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR diff size
+        run: |
+          DIFF_LINES=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | grep -oP '\d+(?= insertion)' || echo 0)
+          DIFF_LINES_DEL=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | grep -oP '\d+(?= deletion)' || echo 0)
+          TOTAL=$((DIFF_LINES + DIFF_LINES_DEL))
+          echo "PR diff size: ${TOTAL} lines"
+          if [ "${TOTAL}" -gt 500 ]; then
+            echo "::warning::PR diff is ${TOTAL} lines (> 500). Consider splitting into smaller PRs."
+          fi
+
+  conventional-commits:
+    name: Conventional Commit Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit message format
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: '.commitlintrc.json'
+        continue-on-error: true
