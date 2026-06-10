@@ -160,3 +160,6 @@ vite.config.ts.timestamp-*
 
 # Refact AI
 .refact/
+
+# Compiled output
+apps/backend/dist2/
