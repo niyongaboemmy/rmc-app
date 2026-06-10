@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Noto_Naskh_Arabic } from 'next/font/google';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
+import { AuthProvider } from '@/contexts/AuthContext';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -30,7 +31,7 @@ export default function LocaleLayout({
     <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} className={fontClass}>
       <body className={isRtl ? 'font-arabic' : 'font-sans'}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>
