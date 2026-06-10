@@ -1,6 +1,8 @@
 import {
   Controller,
   Post,
+  Get,
+  Put,
   Body,
   HttpCode,
   HttpStatus,
@@ -25,6 +27,8 @@ import { VerifyPhoneDto } from './dto/verify-phone.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MfaVerifySetupDto, MfaDisableDto } from './dto/mfa-verify-setup.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -132,6 +136,33 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid, expired, or used reset token' })
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
     return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get current user profile' })
+  getProfile(@CurrentUser() user: User) {
+    return this.authService.getProfile(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('profile')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Update current user profile' })
+  updateProfile(@CurrentUser() user: User, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(user.id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Change password (requires current password)' })
+  @ApiResponse({ status: 200, description: 'Password changed — all sessions revoked' })
+  @ApiResponse({ status: 401, description: 'Current password incorrect' })
+  changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto): Promise<{ message: string }> {
+    return this.authService.changePassword(user.id, dto);
   }
 
   @UseGuards(JwtAuthGuard)

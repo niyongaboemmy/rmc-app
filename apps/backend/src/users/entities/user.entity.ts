@@ -6,7 +6,10 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Role } from '../../roles/entities/role.entity';
 
 @Entity('users')
 export class User {
@@ -68,6 +71,14 @@ export class User {
 
   @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
   lastLoginAt: Date | null;
+
+  @Index('IDX_users_role_id')
+  @Column({ name: 'role_id', type: 'uuid', nullable: true })
+  roleId: string | null;
+
+  @ManyToOne(() => Role, { nullable: true, eager: false })
+  @JoinColumn({ name: 'role_id' })
+  roleEntity: Role | null;
 
   @Index('IDX_users_mosque_id')
   @Column({ name: 'mosque_id', type: 'uuid', nullable: true })

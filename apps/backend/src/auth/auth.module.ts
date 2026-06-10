@@ -12,6 +12,7 @@ import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { PhoneOtpVerification } from './entities/phone-otp-verification.entity';
 import { MemberProfile } from '../members/entities/member-profile.entity';
 import { AuditLog } from '../finance/entities/audit-log.entity';
+import { Role } from '../roles/entities/role.entity';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { UsersModule } from '../users/users.module';
       PhoneOtpVerification,
       MemberProfile,
       AuditLog,
+      Role,
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

@@ -5,14 +5,336 @@
 :root {
   --rmc-green: #1a7a4a;
   --rmc-green-dark: #145c38;
+  --rmc-green-deep: #0d3d24;
   --rmc-gold: #d4a017;
+  --rmc-dark: #0a1628;
 }
 
 @layer base {
   * {
     box-sizing: border-box;
   }
-  body {
-    @apply bg-gray-50 text-gray-900;
+  html {
+    scroll-behavior: smooth;
   }
+  body {
+    @apply bg-white text-gray-900;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  /* GPU-accelerate all interactive elements */
+  a, button, [role="button"] {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  img {
+    will-change: opacity;
+  }
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--rmc-green);
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  /* Gradient text */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #d4a017 0%, #f0c040 50%, #d4a017 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-green {
+    background: linear-gradient(135deg, #1a7a4a 0%, #2ea05c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .glass-white {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  /* Animation delays */
+  .delay-75  { animation-delay: 75ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+  .delay-700 { animation-delay: 700ms; }
+
+  /* Card hover lift */
+  .card-hover {
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  .card-hover:hover {
+    transform: translateY(-7px) translateZ(0);
+    box-shadow: 0 24px 64px rgba(26, 122, 74, 0.12);
+  }
+}
+
+/* --------------------------------------------------------
+   Islamic geometric patterns
+-------------------------------------------------------- */
+.pattern-islamic {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L33.5 19 L47 19 L36.5 27.5 L40 42 L30 33.5 L20 42 L23.5 27.5 L13 19 L26.5 19 Z' fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.12'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+}
+.pattern-light {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L33.5 19 L47 19 L36.5 27.5 L40 42 L30 33.5 L20 42 L23.5 27.5 L13 19 L26.5 19 Z' fill='none' stroke='%231a7a4a' stroke-width='0.6' opacity='0.06'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+}
+
+/* --------------------------------------------------------
+   Scroll-reveal system  (easeOutExpo for snappy-but-smooth feel)
+-------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px) translateZ(0);
+  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.visible { opacity: 1; transform: translateY(0) translateZ(0); }
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-24px) translateZ(0);
+  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal-left.visible { opacity: 1; transform: translateX(0) translateZ(0); }
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(24px) translateZ(0);
+  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0) translateZ(0); }
+
+/* --------------------------------------------------------
+   Hero animated gradient blob (used as pseudo-element bg)
+-------------------------------------------------------- */
+@keyframes blobPulse {
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  33%       { transform: scale(1.08) translate(15px, -10px); }
+  66%       { transform: scale(0.94) translate(-10px, 12px); }
+}
+.hero-blob {
+  animation: blobPulse 12s ease-in-out infinite;
+}
+.hero-blob-2 {
+  animation: blobPulse 16s ease-in-out infinite reverse;
+}
+
+/* --------------------------------------------------------
+   Floating particle dots for hero
+-------------------------------------------------------- */
+@keyframes particleDrift {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.15; }
+  50%  { transform: translateY(-40px) translateX(20px) scale(1.1); opacity: 0.35; }
+  100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.15; }
+}
+.particle { animation: particleDrift var(--dur, 8s) ease-in-out infinite var(--delay, 0s); }
+
+/* --------------------------------------------------------
+   Shimmer loading skeleton
+-------------------------------------------------------- */
+@keyframes shimmerLoad {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmerLoad 1.5s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------
+   Ornamental gold divider
+-------------------------------------------------------- */
+.ornament-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ornament-divider::before,
+.ornament-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(212, 160, 23, 0.5));
+}
+.ornament-divider::after {
+  background: linear-gradient(to left, transparent, rgba(212, 160, 23, 0.5));
+}
+
+/* --------------------------------------------------------
+   Animated underline for nav links
+-------------------------------------------------------- */
+.nav-underline {
+  position: relative;
+}
+.nav-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--rmc-green);
+  border-radius: 1px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+}
+.nav-underline:hover::after,
+.nav-underline.active::after {
+  transform: scaleX(1);
+}
+
+/* --------------------------------------------------------
+   Tilt card effect (applied via JS on hover)
+-------------------------------------------------------- */
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+
+/* --------------------------------------------------------
+   Glow border animation
+-------------------------------------------------------- */
+@keyframes glowBorder {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(26,122,74,0); }
+  50%       { box-shadow: 0 0 0 3px rgba(26,122,74,0.25); }
+}
+.glow-border-pulse {
+  animation: glowBorder 2.5s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------
+   Page transition fade-in
+-------------------------------------------------------- */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+main {
+  animation: pageFadeIn 0.5s ease-out both;
+}
+
+/* --------------------------------------------------------
+   Animated gradient border card
+   Usage: wrap content in .grad-border > div
+-------------------------------------------------------- */
+.grad-border {
+  position: relative;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(26,122,74,0.3), rgba(212,160,23,0.3), rgba(26,122,74,0.3));
+  background-size: 300% 300%;
+}
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.grad-border:hover {
+  animation: gradientShift 3s ease infinite;
+  background-size: 300% 300%;
+}
+
+/* --------------------------------------------------------
+   Hover shimmer sweep on cards
+-------------------------------------------------------- */
+.shimmer-card {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  transition: none;
+}
+.shimmer-card:hover::after {
+  transform: translateX(100%);
+  transition: transform 0.55s ease;
+}
+
+/* --------------------------------------------------------
+   Animated gold underline for section titles
+-------------------------------------------------------- */
+.title-underline {
+  position: relative;
+  display: inline-block;
+}
+.title-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--rmc-green), var(--rmc-gold), var(--rmc-green));
+  background-size: 200% 100%;
+  border-radius: 2px;
+  animation: gradientShift 3s ease infinite;
+}
+
+/* --------------------------------------------------------
+   Scroll progress bar glow
+-------------------------------------------------------- */
+@keyframes progressGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(26,122,74,0.5)); }
+  50%       { filter: drop-shadow(0 0 8px rgba(212,160,23,0.6)); }
+}
+.progress-bar-glow {
+  animation: progressGlow 2s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------
+   Stat card number count animation flash
+-------------------------------------------------------- */
+@keyframes countFlash {
+  0%   { color: white; }
+  50%  { color: #D4A017; }
+  100% { color: white; }
+}
+.count-flash {
+  animation: countFlash 0.3s ease-out;
 }
