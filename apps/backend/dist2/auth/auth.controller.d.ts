@@ -1,0 +1,52 @@
+import { Request as ExpressRequest } from 'express';
+import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyPhoneDto } from './dto/verify-phone.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { MfaVerifySetupDto, MfaDisableDto } from './dto/mfa-verify-setup.dto';
+import { User } from '../users/entities/user.entity';
+export declare class AuthController {
+    private readonly authService;
+    constructor(authService: AuthService);
+    register(dto: RegisterDto): Promise<{
+        userId: string;
+        message: string;
+    }>;
+    login(dto: LoginDto, req: ExpressRequest): Promise<unknown>;
+    refresh(dto: RefreshTokenDto): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
+    logout(user: User, body: {
+        refreshToken?: string;
+    }): Promise<{
+        message: string;
+    }>;
+    sendOtp(dto: SendOtpDto): Promise<{
+        message: string;
+        expiresAt: Date;
+    }>;
+    verifyPhone(dto: VerifyPhoneDto): Promise<{
+        message: string;
+    }>;
+    forgotPassword(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
+    resetPassword(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
+    mfaSetup(user: User): Promise<{
+        qrCodeDataUrl: string;
+        manualEntryCode: string;
+    }>;
+    mfaVerifySetup(user: User, dto: MfaVerifySetupDto): Promise<{
+        message: string;
+    }>;
+    mfaDisable(user: User, dto: MfaDisableDto): Promise<{
+        message: string;
+    }>;
+}
