@@ -87,6 +87,10 @@ apiClient.interceptors.response.use(
         const { accessToken, refreshToken: newRefresh } = res.data.data;
         localStorage.setItem('rmc_access_token', accessToken);
         localStorage.setItem('rmc_refresh_token', newRefresh);
+        if (typeof document !== 'undefined') {
+          document.cookie = `rmc_access_token=${accessToken}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+          document.cookie = `rmc_refresh_token=${newRefresh}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`;
+        }
 
         onRefreshed(accessToken);
         isRefreshing = false;

@@ -7,7 +7,11 @@
     "cancel": "Cancel",
     "back": "Back",
     "save": "Save",
-    "close": "Close"
+    "close": "Close",
+    "learnMore": "Learn More",
+    "readMore": "Read More",
+    "viewAll": "View All",
+    "download": "Download"
   },
   "auth": {
     "login": {
@@ -61,21 +65,209 @@
   },
   "nav": {
     "home": "Home",
-    "about": "About",
+    "about": "About Us",
     "services": "Services",
     "donate": "Donate",
     "contact": "Contact",
+    "blog": "Blog",
+    "gallery": "Gallery",
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "memberPortal": "Member Portal",
+    "profile": "My Profile",
+    "changePassword": "Change Password",
+    "admin": "Admin"
   },
   "home": {
     "hero": {
       "title": "Rwanda Muslim Community Digital Platform",
       "subtitle": "Serving the Muslim community across Rwanda with modern digital services",
-      "cta": "Get Started",
+      "cta": "Become a Member",
+      "learnMore": "Learn More",
       "comingSoon": "Platform Coming Soon"
+    },
+    "verseOfDay": {
+      "title": "Verse of the Day",
+      "reference": "Reference"
+    },
+    "prayerTimes": {
+      "title": "Prayer Times",
+      "subtitle": "Today's prayer times for Kigali",
+      "fajr": "Fajr",
+      "sunrise": "Sunrise",
+      "dhuhr": "Dhuhr",
+      "asr": "Asr",
+      "maghrib": "Maghrib",
+      "isha": "Isha",
+      "next": "Next Prayer",
+      "usingLocation": "Using your location"
+    },
+    "stats": {
+      "members": "Active Members",
+      "mosques": "Registered Mosques",
+      "provinces": "Provinces Covered",
+      "services": "Services Offered"
+    },
+    "announcements": {
+      "title": "Announcements",
+      "noAnnouncements": "No announcements at this time"
+    },
+    "upcomingEvents": {
+      "title": "Upcoming Events",
+      "noEvents": "No upcoming events"
+    },
+    "services": {
+      "title": "Our Services",
+      "subtitle": "Comprehensive digital services for the RMC community"
+    },
+    "blog": {
+      "title": "Latest News",
+      "subtitle": "Stay updated with RMC news and articles"
+    },
+    "partners": {
+      "title": "Our Partners"
+    }
+  },
+  "about": {
+    "title": "About RMC",
+    "subtitle": "Rwanda Muslim Community — Building a United Ummah",
+    "mission": {
+      "title": "Our Mission",
+      "text": "To unite and serve the Muslim community in Rwanda through digital innovation, promoting Islamic values, education, and social welfare."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "text": "A digitally empowered, unified, and prosperous Muslim community contributing to the development of Rwanda."
+    },
+    "history": {
+      "title": "Our History",
+      "text": "The Rwanda Muslim Community has been serving Muslims across Rwanda since its founding. With a network spanning all provinces and districts, RMC coordinates religious, educational, and social services for over 500,000 Muslims nationwide."
+    },
+    "values": {
+      "title": "Our Values",
+      "unity": "Unity",
+      "unityDesc": "Bringing Muslims together across all regions of Rwanda",
+      "education": "Education",
+      "educationDesc": "Promoting Islamic and secular education for all members",
+      "service": "Service",
+      "serviceDesc": "Providing essential services to community members in need",
+      "transparency": "Transparency",
+      "transparencyDesc": "Open and accountable governance of community resources"
+    },
+    "leadership": {
+      "title": "Leadership"
+    },
+    "areas": {
+      "title": "Areas of Intervention",
+      "religious": "Religious Services",
+      "education": "Education & Schools",
+      "social": "Social Welfare",
+      "finance": "Finance & Zakat",
+      "health": "Health Services",
+      "youth": "Youth Programs"
+    }
+  },
+  "services": {
+    "title": "Community Services",
+    "subtitle": "RMC offers 7 core services to support our community",
+    "marriage": {
+      "title": "Marriage Services",
+      "desc": "Official Islamic marriage ceremonies, certificates, and documentation for couples in the community."
+    },
+    "funeral": {
+      "title": "Funeral Services",
+      "desc": "Coordination of Islamic burial rites, imam assignment, and logistics support for families."
+    },
+    "conduct": {
+      "title": "Good Conduct Certificate",
+      "desc": "Official certificates of good Islamic conduct for members — required for various administrative processes."
+    },
+    "scholarship": {
+      "title": "Scholarships",
+      "desc": "Financial support for Muslim students pursuing education at all levels."
+    },
+    "hijra": {
+      "title": "Hijra Support",
+      "desc": "Documentation and support services for community relocation and migration needs."
+    },
+    "tender": {
+      "title": "Tenders",
+      "desc": "Business opportunities published by RMC for qualified organizations and contractors."
+    },
+    "jobs": {
+      "title": "Job Opportunities",
+      "desc": "Employment vacancies at RMC and affiliated organizations across Rwanda."
+    }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Get in touch with the Rwanda Muslim Community",
+    "findMosque": "Find Nearest Mosque",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "form": {
+      "name": "Your Name",
+      "email": "Email Address",
+      "subject": "Subject",
+      "message": "Message",
+      "submit": "Send Message",
+      "success": "Message sent! We'll get back to you soon."
+    }
+  },
+  "member": {
+    "register": {
+      "title": "Complete Member Profile",
+      "subtitle": "Fill in your details to submit your membership application",
+      "nationalId": "National ID (16 digits)",
+      "occupation": "Occupation",
+      "education": "Education Level",
+      "category": "Member Category",
+      "mosque": "Home Mosque",
+      "province": "Province",
+      "district": "District",
+      "sector": "Sector",
+      "emergencyName": "Emergency Contact Name",
+      "emergencyPhone": "Emergency Contact Phone",
+      "consent": "I consent to RMC processing my personal data in accordance with the privacy policy",
+      "submit": "Submit Application",
+      "success": "Application submitted! Awaiting admin review.",
+      "photoUpload": "Upload Profile Photo",
+      "categories": {
+        "standard": "Standard Member",
+        "student": "Student",
+        "scholar": "Islamic Scholar",
+        "partner": "Partner Organization",
+        "vip": "VIP"
+      }
+    },
+    "dashboard": {
+      "title": "Member Dashboard",
+      "membershipNo": "Membership Number",
+      "status": "Status",
+      "category": "Category",
+      "downloadId": "Download ID Card",
+      "pending": "Pending Approval",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "admin": {
+    "members": {
+      "title": "Member Management",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reason": "Reason",
+      "search": "Search members...",
+      "filter": "Filter",
+      "export": "Export",
+      "total": "Total Members",
+      "viewProfile": "View Profile"
     }
   }
 }

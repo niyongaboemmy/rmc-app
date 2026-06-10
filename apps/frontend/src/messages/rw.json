@@ -7,7 +7,11 @@
     "cancel": "Reka",
     "back": "Subira",
     "save": "Bika",
-    "close": "Funga"
+    "close": "Funga",
+    "learnMore": "Menya Birenzeho",
+    "readMore": "Soma Birenzeho",
+    "viewAll": "Reba Byose",
+    "download": "Pakurura"
   },
   "auth": {
     "login": {
@@ -65,17 +69,205 @@
     "services": "Serivisi",
     "donate": "Gutera inkunga",
     "contact": "Twunganire",
+    "blog": "Amakuru",
+    "gallery": "Amafoto",
     "login": "Injira",
     "register": "Iyandikishe",
     "logout": "Sohoka",
-    "dashboard": "Ikibaho"
+    "dashboard": "Ikibaho",
+    "memberPortal": "Urubuga rw'Umunyamuryango",
+    "profile": "Umwirondoro Wanjye",
+    "changePassword": "Hindura Ijambo ry'Ibanga",
+    "admin": "Ubuyobozi"
   },
   "home": {
     "hero": {
       "title": "Urubuga Rukora Uruhare rw'Abasilamu bo mu Rwanda",
       "subtitle": "Guha serivisi Abasilamu bose muri Rwanda ukoresheje ikoranabuhanga rigezweho",
-      "cta": "Tangira",
+      "cta": "Iyandikishe Nk'Umunyamuryango",
+      "learnMore": "Menya Birenzeho",
       "comingSoon": "Urubuga Ruraje Vuba"
+    },
+    "verseOfDay": {
+      "title": "Inshuti y'Umunsi wa Buri Munsi",
+      "reference": "Inkomoko"
+    },
+    "prayerTimes": {
+      "title": "Amasaha yo Gusenga",
+      "subtitle": "Amasaha yo gusenga ya none i Kigali",
+      "fajr": "Fajr",
+      "sunrise": "Izuba Rirasa",
+      "dhuhr": "Dhuhr",
+      "asr": "Asr",
+      "maghrib": "Maghrib",
+      "isha": "Isha",
+      "next": "Kuzerera",
+      "usingLocation": "Koresheje aho uri"
+    },
+    "stats": {
+      "members": "Abanyamuryango Bakora",
+      "mosques": "Masikiti Yanditswe",
+      "provinces": "Intara Zirinzwe",
+      "services": "Serivisi Zihabwa"
+    },
+    "announcements": {
+      "title": "Impanuro",
+      "noAnnouncements": "Nta mpanuro zihari ubu"
+    },
+    "upcomingEvents": {
+      "title": "Ibikorwa Bizaza",
+      "noEvents": "Nta bikorwa bizaza"
+    },
+    "services": {
+      "title": "Serivisi Zacu",
+      "subtitle": "Serivisi nzima zijyanye n'imiryango ya RMC"
+    },
+    "blog": {
+      "title": "Amakuru Mashya",
+      "subtitle": "Makura kuri amakuru ya RMC"
+    },
+    "partners": {
+      "title": "Inshuti Zacu"
+    }
+  },
+  "about": {
+    "title": "Ibyerekeye RMC",
+    "subtitle": "Umuryango w'Abasilamu bo mu Rwanda",
+    "mission": {
+      "title": "Intego Yacu",
+      "text": "Guhuza no gufasha abanyamuryango b'Abasilamu mu Rwanda binyuze mu ikoranabuhanga, no guteza imbere gusengera, uburezi, n'ubufasha bw'imibereho myiza."
+    },
+    "vision": {
+      "title": "Icyo Turimbuka",
+      "text": "Umuryango w'Abasilamu ugenewe gukorana no kwifashisha ikoranabuhanga, uhuriwe kandi uzenguruka ufasha guteza imbere u Rwanda."
+    },
+    "history": {
+      "title": "Amateka Yacu",
+      "text": "Umuryango w'Abasilamu bo mu Rwanda urakomeza gufasha Abasilamu muri Rwanda. Uyu muryango ugabanya intara zose na disitriki, RMC itegura serivisi z'amadini, uburezi, n'imibereho myiza kubantu barenga 500,000 b'Abasilamu muri Rwanda."
+    },
+    "values": {
+      "title": "Indangagaciro Zacu",
+      "unity": "Ubumwe",
+      "unityDesc": "Guhuza Abasilamu muri Rwanda yose",
+      "education": "Uburezi",
+      "educationDesc": "Guteza imbere uburezi bw'Islamimu no bw'isi kuri abanyamuryango bose",
+      "service": "Serivisi",
+      "serviceDesc": "Gutanga serivisi ngenderwaho kuri abanyamuryango bakeneye",
+      "transparency": "Ubunyangamugayo",
+      "transparencyDesc": "Imicungire y'imuryango ifunguye kandi igenga neza"
+    },
+    "leadership": {
+      "title": "Ubutegetsi"
+    },
+    "areas": {
+      "title": "Inzego z'Ibikorwa",
+      "religious": "Serivisi z'Amadini",
+      "education": "Uburezi n'Amashuri",
+      "social": "Ubufasha bw'Imibereho",
+      "finance": "Imari na Zakat",
+      "health": "Ubuzima",
+      "youth": "Porogaramu z'Urubyiruko"
+    }
+  },
+  "services": {
+    "title": "Serivisi z'Umuryango",
+    "subtitle": "RMC itanga serivisi 7 z'ingenzi kuri abanyamuryango",
+    "marriage": {
+      "title": "Serivisi y'Ubukwe",
+      "desc": "Ibirori by'ubukwe bw'Islamimu, impapuro, n'inyandiko kuri abakobwa n'abasore mu muryango."
+    },
+    "funeral": {
+      "title": "Serivisi y'Umuryango w'Abapfuye",
+      "desc": "Gutegura gushyingura mu Islamimu, guha Imam, no gufasha imiryango."
+    },
+    "conduct": {
+      "title": "Icyemezo cy'Imyitwarire Myiza",
+      "desc": "Impapuro zigenwa neza z'imyitwarire myiza kuri abanyamuryango - bizagenerwa inzego zinyuranye."
+    },
+    "scholarship": {
+      "title": "Buruse",
+      "desc": "Inkunga y'amafaranga kuri abanyeshuri b'Abasilamu bavoma uburezi mu mashuri yose."
+    },
+    "hijra": {
+      "title": "Ubufasha bwa Hijra",
+      "desc": "Serivisi z'inyandiko n'ubufasha kuri abagiye guhindura aho batuye."
+    },
+    "tender": {
+      "title": "Itumba",
+      "desc": "Amahirwe y'ubucuruzi ashyirwa ahagaragara na RMC ku mashirika n'abakozi bafite ubushobozi."
+    },
+    "jobs": {
+      "title": "Amahirwe y'Akazi",
+      "desc": "Imirimo ihagaze muri RMC n'imiryango ishamikiyeho muri Rwanda."
+    }
+  },
+  "contact": {
+    "title": "Twunganire",
+    "subtitle": "Tunga amabwiriza y'Umuryango w'Abasilamu bo mu Rwanda",
+    "findMosque": "Shaka Masikiti Hafi",
+    "address": "Aderesi",
+    "phone": "Telefoni",
+    "email": "Imeri",
+    "form": {
+      "name": "Izina Ryawe",
+      "email": "Aderesi Imeri",
+      "subject": "Inyito",
+      "message": "Ubutumwa",
+      "submit": "Ohereza Ubutumwa",
+      "success": "Ubutumwa bwoherejwe! Tuzasubiza vuba."
+    }
+  },
+  "member": {
+    "register": {
+      "title": "Uzuza Dosiye ya Nyirawo",
+      "subtitle": "Uzuza amakuru yawe kugira ngo usohoze ubusabe bwo kwiyandikisha",
+      "nationalId": "Indangamuntu (imibare 16)",
+      "occupation": "Akazi",
+      "education": "Urwego rw'Uburezi",
+      "category": "Ubwoko bw'Umunyamuryango",
+      "mosque": "Masikiti Yikunda",
+      "province": "Intara",
+      "district": "Akarere",
+      "sector": "Umurenge",
+      "emergencyName": "Izina ry'Umuturanyi wo mu Bibazo",
+      "emergencyPhone": "Telefoni y'Umuturanyi wo mu Bibazo",
+      "consent": "Ndemeye ko RMC ishobora gukoresha amakuru yanjye bitewe n'itegeko ry'ubuzima bw'amakuru",
+      "submit": "Ohereza Ubusabe",
+      "success": "Ubusabe bwoherejwe! Birategerezwa kwemezwa n'ubuyobozi.",
+      "photoUpload": "Shyiraho Ifoto",
+      "categories": {
+        "standard": "Umunyamuryango Rusange",
+        "student": "Umunyeshuri",
+        "scholar": "Inzobere mu Islamimu",
+        "partner": "Ishirika",
+        "vip": "VIP"
+      }
+    },
+    "dashboard": {
+      "title": "Ikibaho cy'Umunyamuryango",
+      "membershipNo": "Numero y'Ubwisanzure",
+      "status": "Imiterere",
+      "category": "Ubwoko",
+      "downloadId": "Pakurura Indangamuntu",
+      "pending": "Birategerezwa Kwemezwa",
+      "approved": "Byemewe",
+      "rejected": "Byanzwe"
+    }
+  },
+  "admin": {
+    "members": {
+      "title": "Gucunga Abanyamuryango",
+      "pending": "Birategerezwa",
+      "approved": "Byemewe",
+      "rejected": "Byanzwe",
+      "approve": "Emeza",
+      "reject": "Anze",
+      "reason": "Impamvu",
+      "search": "Shakisha abanyamuryango...",
+      "filter": "Shungura",
+      "export": "Ohereza Hanze",
+      "total": "Abanyamuryango Bose",
+      "viewProfile": "Reba Dosiye"
     }
   }
 }
