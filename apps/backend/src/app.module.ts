@@ -13,8 +13,15 @@ import { AppController } from './app.controller';
 import { HealthController } from './health/health.controller';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { RolesModule } from './roles/roles.module';
+import { LocationsModule } from './locations/locations.module';
+import { MosquesModule } from './mosques/mosques.module';
+import { PrayerTimesModule } from './prayer-times/prayer-times.module';
+import { MembersModule } from './members/members.module';
+import { PublicModule } from './public/public.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { PermissionsGuard } from './common/guards/permissions.guard';
 
 @Module({
   imports: [
@@ -35,12 +42,19 @@ import { RolesGuard } from './common/guards/roles.guard';
     DatabaseModule,
     RedisModule,
     UsersModule,
+    RolesModule,
     AuthModule,
+    LocationsModule,
+    MosquesModule,
+    PrayerTimesModule,
+    MembersModule,
+    PublicModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
 })
 export class AppModule {}

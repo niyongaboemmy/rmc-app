@@ -26,9 +26,12 @@ import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { PhoneOtpVerification } from './entities/phone-otp-verification.entity';
 import { MemberProfile } from '../members/entities/member-profile.entity';
 import { AuditLog } from '../finance/entities/audit-log.entity';
+import { Role } from '../roles/entities/role.entity';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ErrorCode } from '../common/types/error-codes.enum';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 import { InjectRedis } from '../common/decorators/inject-redis.decorator';
@@ -51,6 +54,8 @@ export class AuthService {
     private readonly memberProfileRepo: Repository<MemberProfile>,
     @InjectRepository(AuditLog)
     private readonly auditLogRepo: Repository<AuditLog>,
+    @InjectRepository(Role)
+    private readonly roleRepo: Repository<Role>,
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
@@ -370,24 +375,79 @@ export class AuthService {
     return { message: 'MFA disabled successfully' };
   }
 
+  // ── Profile ───────────────────────────────────────────────────────────────────
+
+  async getProfile(userId: string): Promise<Partial<User>> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, mfaSecret, ...safe } = user as User & { passwordHash: string; mfaSecret: string };
+    return safe;
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<Partial<User>> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+    const updated = await this.usersService.updateProfile(userId, dto);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, mfaSecret, ...safe } = updated as User & { passwordHash: string; mfaSecret: string };
+    return safe;
+  }
+
+  // ── Change Password ───────────────────────────────────────────────────────────
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<{ message: string }> {
+    const user = await this.usersService.findByIdRaw(userId);
+    if (!user) throw new UnauthorizedException();
+
+    if (!(await bcrypt.compare(dto.currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'Current password is incorrect' });
+    }
+
+    const rounds = this.configService.get<number>('app.bcryptRounds', 12);
+    const passwordHash = await bcrypt.hash(dto.newPassword, rounds);
+
+    await this.usersService.update(userId, { passwordHash });
+    await this.revokeAllUserTokens(userId);
+    await this.writeAuditLog('user', userId, 'password_changed', userId, 'user');
+    await this.sendPasswordChangedEmail(user);
+
+    return { message: 'Password changed successfully. Please log in again.' };
+  }
+
   // ── JWT Strategy validation ───────────────────────────────────────────────────
 
-  async validateJwtPayload(payload: JwtPayload): Promise<User> {
+  async validateJwtPayload(payload: JwtPayload): Promise<User & { permissions: string[] }> {
     const user = await this.usersService.findById(payload.sub);
     if (!user || user.status === 'inactive' || user.status === 'suspended') {
       throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'User not found or inactive' });
     }
-    return user;
+    // Attach permissions from payload (already resolved at token issuance)
+    return Object.assign(user, { permissions: payload.permissions ?? [] });
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
+
+  private async loadUserPermissions(user: User): Promise<string[]> {
+    if (user.role === 'superadmin') return ['*'];
+    if (!user.roleId) return [];
+    const role = await this.roleRepo.findOne({ where: { id: user.roleId } });
+    return role?.permissions ?? [];
+  }
 
   private async issueTokens(
     user: User,
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
+    const permissions = await this.loadUserPermissions(user);
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      roleId: user.roleId,
+      permissions,
+    };
     const accessToken = this.jwtService.sign(payload);
 
     const rawRefreshToken = uuidv4();
