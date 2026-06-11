@@ -12,6 +12,7 @@ import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { PhoneOtpVerification } from './entities/phone-otp-verification.entity';
 import { MemberProfile } from '../members/entities/member-profile.entity';
 import { AuditLog } from '../finance/entities/audit-log.entity';
+import { Role } from '../roles/entities/role.entity';
 import { REDIS_CLIENT } from '../common/decorators/inject-redis.decorator';
 import { RegisterDto } from './dto/register.dto';
 
@@ -70,8 +71,10 @@ describe('AuthService', () => {
             findByPhone: jest.fn(),
             findByEmailOrPhone: jest.fn(),
             findById: jest.fn(),
+            findByIdRaw: jest.fn(),
             save: jest.fn(),
             update: jest.fn(),
+            updateProfile: jest.fn(),
           },
         },
         { provide: JwtService, useValue: { sign: jest.fn().mockReturnValue('mock-jwt-token') } },
@@ -99,6 +102,7 @@ describe('AuthService', () => {
         { provide: getRepositoryToken(PhoneOtpVerification), useFactory: mockRepo },
         { provide: getRepositoryToken(MemberProfile), useFactory: mockRepo },
         { provide: getRepositoryToken(AuditLog), useFactory: mockRepo },
+        { provide: getRepositoryToken(Role), useFactory: mockRepo },
         { provide: REDIS_CLIENT, useValue: mockRedis },
       ],
     }).compile();
