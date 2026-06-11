@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { apiClient } from '@/lib/api';
@@ -88,17 +89,14 @@ function ProfileContent() {
               <Input label="Last Name" error={errors.lastName?.message} {...register('lastName')} />
             </div>
             <Input label="Date of Birth" type="date" {...register('dateOfBirth')} />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-                {...register('gender')}
-              >
-                <option value="">— Select —</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-            </div>
+            <Select
+              label="Gender"
+              placeholder="— Select —"
+              {...register('gender')}
+            >
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </Select>
             <Button type="submit" isLoading={isLoading}>Save Changes</Button>
           </form>
         </div>

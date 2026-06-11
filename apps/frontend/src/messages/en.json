@@ -268,6 +268,87 @@
       "export": "Export",
       "total": "Total Members",
       "viewProfile": "View Profile"
+    },
+    "sidebar": {
+      "panel": "Control Panel",
+      "dashboard": "Dashboard",
+      "members": "Members",
+      "mosques": "Mosques",
+      "prayer": "Prayer Times",
+      "content": "Manage Content",
+      "users": "Users",
+      "roles": "Roles & Permissions",
+      "reports": "Reports",
+      "settings": "Settings",
+      "logout": "Sign Out",
+      "group": {
+        "main": "Management",
+        "content": "Content",
+        "system": "System"
+      }
+    },
+    "topbar": {
+      "search": "Search...",
+      "notifications": "Notifications",
+      "markAllRead": "Mark all read",
+      "viewAll": "View all notifications"
+    },
+    "dashboard": {
+      "goodMorning": "Good morning",
+      "goodAfternoon": "Good afternoon",
+      "goodEvening": "Good evening",
+      "subtitle": "Here's what's happening across the platform today.",
+      "refresh": "Refresh",
+      "totalMembers": "Total Members",
+      "pendingApproval": "Pending Approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "totalMosques": "Total Mosques",
+      "totalUsers": "Total Users",
+      "weeklyRegistrations": "Weekly Registrations",
+      "last7days": "Last 7 days",
+      "vsLastWeek": "vs last week",
+      "totalThisWeek": "This week",
+      "avgPerDay": "Daily avg",
+      "peakDay": "Peak day",
+      "quickActions": "Quick Actions",
+      "pendingAlert": "applications awaiting review",
+      "reviewNow": "Review now",
+      "recentActivity": "Recent Activity",
+      "viewAll": "View all",
+      "systemStatus": "System Status",
+      "platformVersion": "RMC Digital Platform v2.0",
+      "action": {
+        "approveMembers": "Review Members",
+        "manageUsers": "Manage Users",
+        "addMosque": "Add Mosque",
+        "manageRoles": "Manage Roles"
+      },
+      "status": {
+        "api": "API Server",
+        "database": "PostgreSQL",
+        "auth": "Auth Service",
+        "fileServer": "File Server",
+        "redis": "Redis Cache",
+        "operational": "Operational",
+        "down": "Down"
+      }
+    },
+    "content": {
+      "title": "Manage Content",
+      "subtitle": "Update and manage all dynamic content across the RMC platform",
+      "sections": {
+        "verse": "Verse of the Day",
+        "updates": "Updates & Programs",
+        "whoWeAre": "Who We Are",
+        "prayer": "Prayer Times",
+        "areas": "Areas of Intervention",
+        "activities": "Activities & Events",
+        "announcements": "Announcements",
+        "impact": "Community Impact",
+        "partners": "Our Partners",
+        "about": "About RMC"
+      }
     }
   }
 }

@@ -7,7 +7,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Navbar } from '@/components/layout/Navbar';
+import { Select } from '@/components/ui/Select';
 import { publicApi } from '@/lib/public-api';
+import { User } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 
 const schema = z.object({
@@ -86,7 +88,7 @@ export default function MemberRegisterPage() {
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-rmc-green-light rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">👤</span>
+              <User className="w-8 h-8 text-rmc-green" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
             <p className="text-gray-500 text-sm mt-1">{t('subtitle')}</p>
@@ -113,17 +115,11 @@ export default function MemberRegisterPage() {
             </div>
 
             {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('category')}</label>
-              <select
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none bg-white"
-                {...register('category')}
-              >
-                {(['standard', 'student', 'scholar', 'partner', 'vip'] as const).map((cat) => (
-                  <option key={cat} value={cat}>{t(`categories.${cat}`)}</option>
-                ))}
-              </select>
-            </div>
+            <Select label={t('category')} {...register('category')}>
+              {(['standard', 'student', 'scholar', 'partner', 'vip'] as const).map((cat) => (
+                <option key={cat} value={cat}>{t(`categories.${cat}`)}</option>
+              ))}
+            </Select>
 
             {/* Occupation */}
             <div>
@@ -136,56 +132,32 @@ export default function MemberRegisterPage() {
             </div>
 
             {/* Education */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('education')}</label>
-              <select
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none bg-white"
-                {...register('educationLevel')}
-              >
-                <option value="">Select level</option>
-                {['primary', 'secondary', 'bachelors', 'masters', 'phd', 'other'].map((level) => (
-                  <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
-                ))}
-              </select>
-            </div>
+            <Select label={t('education')} placeholder="Select level" {...register('educationLevel')}>
+              {['primary', 'secondary', 'bachelors', 'masters', 'phd', 'other'].map((level) => (
+                <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
+              ))}
+            </Select>
 
             {/* Location cascade */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('province')}</label>
-                <select
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none bg-white"
-                  {...register('provinceId')}
-                >
-                  <option value="">Select Province</option>
-                  {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('district')}</label>
-                <select
-                  disabled={!provinceId}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none bg-white disabled:opacity-50"
-                  {...register('districtId')}
-                >
-                  <option value="">Select District</option>
-                  {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-              </div>
+              <Select label={t('province')} placeholder="Select Province" {...register('provinceId')}>
+                {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </Select>
+              <Select
+                label={t('district')}
+                placeholder="Select District"
+                disabled={!provinceId}
+                {...register('districtId')}
+              >
+                {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </Select>
             </div>
 
             {/* Mosque */}
             {mosques.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('mosque')}</label>
-                <select
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none bg-white"
-                  {...register('mosqueId')}
-                >
-                  <option value="">Select Mosque</option>
-                  {mosques.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
-              </div>
+              <Select label={t('mosque')} placeholder="Select Mosque" {...register('mosqueId')}>
+                {mosques.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </Select>
             )}
 
             {/* Emergency Contact */}

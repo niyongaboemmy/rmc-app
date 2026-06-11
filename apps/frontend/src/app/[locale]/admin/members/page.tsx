@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Navbar } from '@/components/layout/Navbar';
 import { apiClient } from '@/lib/api';
 
 interface MemberRow {
@@ -108,9 +107,7 @@ export default function AdminMembersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+    <div className="space-y-6 animate-fade-up">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -289,7 +286,6 @@ export default function AdminMembersPage() {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 }
