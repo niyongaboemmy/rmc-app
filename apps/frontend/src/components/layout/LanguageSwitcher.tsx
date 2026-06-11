@@ -6,9 +6,9 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 const LOCALES = [
-  { code: 'en', label: 'EN', flag: '🇬🇧' },
-  { code: 'rw', label: 'RW', flag: '🇷🇼' },
-  { code: 'ar', label: 'AR', flag: '🇸🇦' },
+  { code: 'en', label: 'EN', flag: 'EN' },
+  { code: 'rw', label: 'RW', flag: 'RW' },
+  { code: 'ar', label: 'AR', flag: 'AR' },
 ];
 
 export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
