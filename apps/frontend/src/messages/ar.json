@@ -268,6 +268,87 @@
       "export": "تصدير",
       "total": "إجمالي الأعضاء",
       "viewProfile": "عرض الملف الشخصي"
+    },
+    "sidebar": {
+      "panel": "لوحة التحكم",
+      "dashboard": "الرئيسية",
+      "members": "الأعضاء",
+      "mosques": "المساجد",
+      "prayer": "أوقات الصلاة",
+      "content": "إدارة المحتوى",
+      "users": "المستخدمون",
+      "roles": "الأدوار والصلاحيات",
+      "reports": "التقارير",
+      "settings": "الإعدادات",
+      "logout": "تسجيل الخروج",
+      "group": {
+        "main": "الإدارة",
+        "content": "المحتوى",
+        "system": "النظام"
+      }
+    },
+    "topbar": {
+      "search": "بحث...",
+      "notifications": "الإشعارات",
+      "markAllRead": "تحديد الكل كمقروء",
+      "viewAll": "عرض جميع الإشعارات"
+    },
+    "dashboard": {
+      "goodMorning": "صباح الخير",
+      "goodAfternoon": "مساء الخير",
+      "goodEvening": "مساء النور",
+      "subtitle": "إليك ما يحدث في المنصة اليوم.",
+      "refresh": "تحديث",
+      "totalMembers": "إجمالي الأعضاء",
+      "pendingApproval": "في انتظار الموافقة",
+      "approved": "مقبول",
+      "rejected": "مرفوض",
+      "totalMosques": "إجمالي المساجد",
+      "totalUsers": "إجمالي المستخدمين",
+      "weeklyRegistrations": "التسجيلات الأسبوعية",
+      "last7days": "آخر 7 أيام",
+      "vsLastWeek": "مقارنة بالأسبوع الماضي",
+      "totalThisWeek": "هذا الأسبوع",
+      "avgPerDay": "المعدل اليومي",
+      "peakDay": "ذروة اليوم",
+      "quickActions": "إجراءات سريعة",
+      "pendingAlert": "طلبات تنتظر المراجعة",
+      "reviewNow": "مراجعة الآن",
+      "recentActivity": "النشاط الأخير",
+      "viewAll": "عرض الكل",
+      "systemStatus": "حالة النظام",
+      "platformVersion": "منصة RMC الرقمية v2.0",
+      "action": {
+        "approveMembers": "مراجعة الأعضاء",
+        "manageUsers": "إدارة المستخدمين",
+        "addMosque": "إضافة مسجد",
+        "manageRoles": "إدارة الأدوار"
+      },
+      "status": {
+        "api": "خادم API",
+        "database": "قاعدة البيانات",
+        "auth": "خدمة المصادقة",
+        "fileServer": "خادم الملفات",
+        "redis": "ذاكرة Redis",
+        "operational": "يعمل",
+        "down": "متوقف"
+      }
+    },
+    "content": {
+      "title": "إدارة المحتوى",
+      "subtitle": "تحديث وإدارة جميع المحتوى الديناميكي عبر منصة RMC",
+      "sections": {
+        "verse": "آية اليوم",
+        "updates": "التحديثات والبرامج",
+        "whoWeAre": "من نحن",
+        "prayer": "أوقات الصلاة",
+        "areas": "مجالات التدخل",
+        "activities": "الأنشطة والفعاليات",
+        "announcements": "الإعلانات",
+        "impact": "أثر المجتمع",
+        "partners": "شركاؤنا",
+        "about": "حول RMC"
+      }
     }
   }
 }

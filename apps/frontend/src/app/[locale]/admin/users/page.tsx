@@ -6,7 +6,12 @@ import { Permission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Alert } from '@/components/ui/Alert';
+import { StatusBadge } from '@/components/ui/Badge';
+import { PageSpinner } from '@/components/ui/Spinner';
+import { ConfirmModal, Modal, ModalHeader, ModalBody, ModalFooter, ModalTitle, ModalDescription } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 
 interface Role {
   id: string;
@@ -27,19 +32,20 @@ interface UserRow {
   createdAt: string;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    active: 'bg-green-100 text-green-700',
-    pending: 'bg-yellow-100 text-yellow-700',
-    suspended: 'bg-red-100 text-red-700',
-    inactive: 'bg-gray-100 text-gray-500',
-  };
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-gray-100 text-gray-500'}`}>
-      {status}
-    </span>
-  );
-}
+const SYSTEM_ROLE_OPTIONS = [
+  { value: 'user', label: 'User' },
+  { value: 'operator', label: 'Operator' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'superadmin', label: 'Super Admin' },
+];
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'All Statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'inactive', label: 'Inactive' },
+];
 
 function AssignRoleModal({
   user,
@@ -52,6 +58,7 @@ function AssignRoleModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { success, error: toastError } = useToast();
   const [selectedRoleId, setSelectedRoleId] = useState(user.roleId ?? '');
   const [selectedRole, setSelectedRole] = useState(user.role);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,57 +72,51 @@ function AssignRoleModal({
         roleId: selectedRoleId || null,
         role: selectedRole,
       });
+      success('Role assigned successfully');
       onSaved();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message || 'Failed to assign role');
+      const msg = e?.response?.data?.error?.message || 'Failed to assign role';
+      setError(msg);
+      toastError(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const customRoleOptions = [
+    { value: '', label: '— None —' },
+    ...roles.map((r) => ({ value: r.id, label: r.name })),
+  ];
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold mb-1">Assign Role</h2>
-        <p className="text-gray-500 text-sm mb-4">
+    <Modal isOpen onClose={onClose} size="sm">
+      <ModalHeader>
+        <ModalTitle>Assign Role</ModalTitle>
+        <ModalDescription>
           {user.firstName} {user.lastName} · {user.email}
-        </p>
-        {error && <Alert variant="error" message={error} className="mb-3" />}
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">System Role (hierarchy)</label>
-            <select
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-            >
-              <option value="user">User</option>
-              <option value="operator">Operator</option>
-              <option value="admin">Admin</option>
-              <option value="superadmin">Super Admin</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Custom Role (permissions)</label>
-            <select
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-              value={selectedRoleId}
-              onChange={(e) => setSelectedRoleId(e.target.value)}
-            >
-              <option value="">— None —</option>
-              {roles.map((r) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="flex justify-end gap-3 mt-5">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button isLoading={isLoading} onClick={handleSave}>Save</Button>
-        </div>
-      </div>
-    </div>
+        </ModalDescription>
+      </ModalHeader>
+      <ModalBody className="space-y-3">
+        {error && <Alert variant="error" message={error} />}
+        <Select
+          label="System Role (hierarchy)"
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value)}
+          options={SYSTEM_ROLE_OPTIONS}
+        />
+        <Select
+          label="Custom Role (permissions)"
+          value={selectedRoleId}
+          onChange={(e) => setSelectedRoleId(e.target.value)}
+          options={customRoleOptions}
+        />
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+        <Button isLoading={isLoading} onClick={handleSave}>Save</Button>
+      </ModalFooter>
+    </Modal>
   );
 }
 
@@ -128,6 +129,7 @@ function CreateUserModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { success, error: toastError } = useToast();
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '', password: '', role: 'user', roleId: '',
   });
@@ -142,61 +144,55 @@ function CreateUserModal({
     setIsLoading(true);
     setError(null);
     try {
-      await apiClient.post('/users', {
-        ...form,
-        roleId: form.roleId || undefined,
-      });
+      await apiClient.post('/users', { ...form, roleId: form.roleId || undefined });
+      success('User created successfully');
       onSaved();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message || 'Create failed');
+      const msg = e?.response?.data?.error?.message || 'Create failed';
+      setError(msg);
+      toastError(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const customRoleOptions = [
+    { value: '', label: '— None —' },
+    ...roles.map((r) => ({ value: r.id, label: r.name })),
+  ];
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
-        <h2 className="text-lg font-bold mb-4">Create User</h2>
+    <Modal isOpen onClose={onClose} size="lg">
+      <ModalHeader>
+        <ModalTitle>Create User</ModalTitle>
+      </ModalHeader>
+      <ModalBody>
         {error && <Alert variant="error" message={error} className="mb-3" />}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+        <form id="create-user-form" onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="First Name" required value={form.firstName} onChange={set('firstName')} />
             <Input label="Last Name" required value={form.lastName} onChange={set('lastName')} />
           </div>
           <Input label="Email" type="email" required value={form.email} onChange={set('email')} />
           <Input label="Phone (+250...)" required value={form.phone} onChange={set('phone')} />
           <Input label="Password" type="password" required value={form.password} onChange={set('password')} />
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">System Role</label>
-              <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green" value={form.role} onChange={set('role')}>
-                <option value="user">User</option>
-                <option value="operator">Operator</option>
-                <option value="admin">Admin</option>
-                <option value="superadmin">Super Admin</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Custom Role</label>
-              <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green" value={form.roleId} onChange={set('roleId')}>
-                <option value="">— None —</option>
-                {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" isLoading={isLoading}>Create User</Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Select label="System Role" value={form.role} onChange={set('role')} options={SYSTEM_ROLE_OPTIONS} />
+            <Select label="Custom Role" value={form.roleId} onChange={set('roleId')} options={customRoleOptions} />
           </div>
         </form>
-      </div>
-    </div>
+      </ModalBody>
+      <ModalFooter>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+        <Button type="submit" form="create-user-form" isLoading={isLoading}>Create User</Button>
+      </ModalFooter>
+    </Modal>
   );
 }
 
 function UsersPageContent() {
+  const { success, error: toastError } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [total, setTotal] = useState(0);
@@ -207,6 +203,8 @@ function UsersPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [assignModal, setAssignModal] = useState<UserRow | null>(null);
   const [createModal, setCreateModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const limit = 20;
 
   const loadData = useCallback(async () => {
@@ -230,21 +228,26 @@ function UsersPageContent() {
 
   useEffect(() => { void loadData(); }, [loadData]);
 
-  const handleDelete = async (user: UserRow) => {
-    if (!confirm(`Delete user ${user.email}?`)) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await apiClient.delete(`/users/${user.id}`);
+      await apiClient.delete(`/users/${deleteTarget.id}`);
+      success(`${deleteTarget.email} deleted`);
+      setDeleteTarget(null);
       await loadData();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
-      alert(e?.response?.data?.error?.message || 'Delete failed');
+      toastError(e?.response?.data?.error?.message || 'Delete failed');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="space-y-6 animate-fade-up">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Users</h1>
@@ -255,8 +258,7 @@ function UsersPageContent() {
 
       {error && <Alert variant="error" message={error} className="mb-4" />}
 
-      {/* Filters */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="flex-1">
           <Input
             placeholder="Search name, email, phone…"
@@ -264,23 +266,16 @@ function UsersPageContent() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
-        <select
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+        <Select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-        >
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="suspended">Suspended</option>
-          <option value="inactive">Inactive</option>
-        </select>
+          options={STATUS_OPTIONS}
+          className="sm:w-44"
+        />
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rmc-green" />
-        </div>
+        <PageSpinner />
       ) : (
         <>
           <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
@@ -312,7 +307,9 @@ function UsersPageContent() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3"><StatusBadge status={u.status} /></td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={u.status} />
+                    </td>
                     <td className="px-4 py-3 text-gray-400 text-xs">
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
@@ -324,7 +321,7 @@ function UsersPageContent() {
                         Role
                       </button>
                       <button
-                        onClick={() => handleDelete(u)}
+                        onClick={() => setDeleteTarget(u)}
                         className="text-red-500 hover:underline text-xs font-medium"
                       >
                         Delete
@@ -336,7 +333,6 @@ function UsersPageContent() {
             </table>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-4">
               <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
@@ -367,6 +363,18 @@ function UsersPageContent() {
           onSaved={async () => { setCreateModal(false); await loadData(); }}
         />
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete user?"
+        description={deleteTarget ? `This will permanently delete ${deleteTarget.email}. This action cannot be undone.` : ''}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Building2, Navigation } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
+import { Select } from '@/components/ui/Select';
 
 interface Mosque {
   id: string;
@@ -46,35 +47,29 @@ export function MosqueFinder() {
   return (
     <div className="space-y-4">
       {/* Province */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Province</label>
-        <select
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none bg-white"
-          value={selectedProvince}
-          onChange={(e) => setSelectedProvince(e.target.value)}
-        >
-          <option value="">Select Province</option>
-          {provinces.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
-      </div>
+      <Select
+        label="Province"
+        placeholder="Select Province"
+        value={selectedProvince}
+        onChange={(e) => setSelectedProvince(e.target.value)}
+      >
+        {provinces.map((p) => (
+          <option key={p.id} value={p.id}>{p.name}</option>
+        ))}
+      </Select>
 
       {/* District */}
       {districts.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
-          <select
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none bg-white"
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-          >
-            <option value="">Select District</option>
-            {districts.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="District"
+          placeholder="Select District"
+          value={selectedDistrict}
+          onChange={(e) => setSelectedDistrict(e.target.value)}
+        >
+          {districts.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </Select>
       )}
 
       {/* Results */}

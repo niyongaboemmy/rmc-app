@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { MapPin, Phone, Mail, CheckCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -36,7 +37,7 @@ export default function ContactPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a message</h2>
               {submitted ? (
                 <div className="p-6 bg-green-50 border border-green-200 rounded-xl text-green-800">
-                  ✅ {t('form.success')}
+                  <CheckCircle className="inline w-5 h-5 mr-1.5 text-green-600" />{t('form.success')}
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,18 +79,23 @@ export default function ContactPage() {
               {/* Contact info */}
               <div className="mt-10 space-y-4">
                 {[
-                  { label: t('address'), value: 'KN 4 Ave, Kigali, Rwanda', icon: '📍' },
-                  { label: t('phone'), value: '+250 788 000 000', icon: '📞' },
-                  { label: t('email'), value: 'info@rmc.org.rw', icon: '✉️' },
-                ].map((item) => (
+                  { label: t('address'), value: 'KN 4 Ave, Kigali, Rwanda', icon: MapPin },
+                  { label: t('phone'), value: '+250 788 000 000', icon: Phone },
+                  { label: t('email'), value: 'info@rmc.org.rw', icon: Mail },
+                ].map((item) => {
+                  const ItemIcon = item.icon;
+                  return (
                   <div key={item.label} className="flex items-start gap-3">
-                    <span className="text-xl">{item.icon}</span>
+                    <span className="w-8 h-8 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
+                      <ItemIcon className="w-4 h-4 text-rmc-green" />
+                    </span>
                     <div>
                       <div className="text-sm font-medium text-gray-500">{item.label}</div>
                       <div className="text-gray-900">{item.value}</div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

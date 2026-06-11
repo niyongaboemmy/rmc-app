@@ -36,12 +36,21 @@ const config: Config = {
         'fade-left': 'fadeLeft 0.8s cubic-bezier(0.22,1,0.36,1) both',
         'fade-right': 'fadeRight 0.8s cubic-bezier(0.22,1,0.36,1) both',
         'slide-down': 'slideDown 0.35s cubic-bezier(0.22,1,0.36,1)',
+        'slide-up': 'slideUp 0.35s cubic-bezier(0.22,1,0.36,1)',
         'float': 'float 7s ease-in-out infinite',
         'float-slow': 'float 11s ease-in-out infinite',
         'spin-slow': 'spin 40s linear infinite',
         'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
         'shimmer': 'shimmer 2.5s linear infinite',
         'bounce-soft': 'bounceSoft 2.5s ease-in-out infinite',
+        'scale-in': 'scaleIn 0.3s cubic-bezier(0.22,1,0.36,1) both',
+        'count-up': 'countUp 0.6s cubic-bezier(0.22,1,0.36,1) both',
+        'dropdown-in':  'dropdownIn 0.14s cubic-bezier(0.22,1,0.36,1) both',
+        'dropdown-out': 'dropdownOut 0.1s ease-in both',
+        'modal-in': 'modalIn 0.22s cubic-bezier(0.22,1,0.36,1) both',
+        'overlay-in': 'overlayIn 0.18s ease-out both',
+        'modal-out': 'modalOut 0.18s cubic-bezier(0.55,0,1,0.45) both',
+        'overlay-out': 'overlayOut 0.16s ease-in both',
       },
       keyframes: {
         fadeUp: {
@@ -64,6 +73,10 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateY(-10px) translateZ(0)' },
           to: { opacity: '1', transform: 'translateY(0) translateZ(0)' },
         },
+        slideUp: {
+          from: { opacity: '0', transform: 'translateY(10px) translateZ(0)' },
+          to: { opacity: '1', transform: 'translateY(0) translateZ(0)' },
+        },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-18px)' },
@@ -79,6 +92,38 @@ const config: Config = {
         bounceSoft: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-8px)' },
+        },
+        scaleIn: {
+          from: { opacity: '0', transform: 'scale(0.92) translateZ(0)' },
+          to: { opacity: '1', transform: 'scale(1) translateZ(0)' },
+        },
+        countUp: {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        dropdownIn: {
+          from: { opacity: '0', transform: 'scaleY(0.94) translateY(-6px)' },
+          to:   { opacity: '1', transform: 'scaleY(1)    translateY(0)' },
+        },
+        dropdownOut: {
+          from: { opacity: '1', transform: 'scaleY(1)    translateY(0)' },
+          to:   { opacity: '0', transform: 'scaleY(0.96) translateY(-4px)' },
+        },
+        modalIn: {
+          from: { opacity: '0', transform: 'scale(0.95) translateY(12px)' },
+          to:   { opacity: '1', transform: 'scale(1)   translateY(0)' },
+        },
+        modalOut: {
+          from: { opacity: '1', transform: 'scale(1)    translateY(0)' },
+          to:   { opacity: '0', transform: 'scale(0.97) translateY(6px)' },
+        },
+        overlayIn: {
+          from: { opacity: '0' },
+          to:   { opacity: '1' },
+        },
+        overlayOut: {
+          from: { opacity: '1' },
+          to:   { opacity: '0' },
         },
       },
       backgroundImage: {
