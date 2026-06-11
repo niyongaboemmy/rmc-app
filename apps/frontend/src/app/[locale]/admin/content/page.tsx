@@ -246,7 +246,7 @@ export default function ManageContentPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder='Search by name, keyword, or location… e.g. "prayer", "dawa", "carousel", "stats"'
-                className="w-full h-10 pl-10 pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
+                className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 {query && (
@@ -265,9 +265,9 @@ export default function ManageContentPage() {
           </div>
 
           {/* Filter tabs row */}
-          <div className="px-3 pb-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-50 pt-2.5">
+          <div className="px-3 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-t border-gray-50 pt-2.5">
             {/* Page tabs */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
               <ListFilter className="w-3.5 h-3.5 text-gray-400 mr-0.5 shrink-0" />
               {[
                 { value: 'all' as const, label: 'All pages', icon: Layers, count: SECTIONS.length },
@@ -279,14 +279,14 @@ export default function ManageContentPage() {
                   <button
                     key={tab.value}
                     onClick={() => setPageFilter(tab.value)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap shrink-0 ${
                       pageFilter === tab.value
                         ? 'bg-rmc-green text-white shadow-sm'
                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     <TabIcon className="w-3.5 h-3.5 shrink-0" />
-                    {tab.label}
+                    <span className="hidden xs:inline sm:inline">{tab.label}</span>
                     <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
                       pageFilter === tab.value ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-500'
                     }`}>
@@ -298,7 +298,7 @@ export default function ManageContentPage() {
             </div>
 
             {/* Type toggle + clear */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
                 {([
                   { value: 'all', label: 'All' },
@@ -308,7 +308,7 @@ export default function ManageContentPage() {
                   <button
                     key={opt.value}
                     onClick={() => setTypeFilter(opt.value)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap ${
+                    className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap ${
                       typeFilter === opt.value
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'text-gray-500 hover:text-gray-700'
@@ -359,13 +359,13 @@ export default function ManageContentPage() {
               return (
                 <div key={page} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   {/* Group header */}
-                  <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 bg-gray-50/40">
-                    <div className={`w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm`}>
+                  <div className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 border-b border-gray-100 bg-gray-50/40">
+                    <div className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm shrink-0">
                       <GroupIcon className={`w-3.5 h-3.5 ${color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-bold text-gray-800">{page}</span>
-                      <span className="text-xs text-gray-400 ml-2">{description}</span>
+                      <span className="hidden sm:inline text-xs text-gray-400 ml-2">{description}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {/* Mini colour dots showing which sections are showing */}
@@ -431,7 +431,7 @@ function SectionRow({
   return (
     <Link
       href={`/${locale}/admin/content/${section.id}`}
-      className="group relative flex items-center gap-4 px-5 py-4 hover:bg-gray-50/80 transition-all duration-150"
+      className="group relative flex items-center gap-2.5 sm:gap-4 px-3 sm:px-5 py-3.5 sm:py-4 hover:bg-gray-50/80 transition-all duration-150"
     >
       {/* Left accent — visible on hover */}
       <div className={`absolute left-0 top-0 bottom-0 w-0.5 ${section.accentBar} opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
@@ -442,27 +442,27 @@ function SectionRow({
       </span>
 
       {/* Section icon */}
-      <div className={`w-9 h-9 rounded-xl ${section.bg} flex items-center justify-center shrink-0 group-hover:shadow-sm transition-all duration-200`}>
-        <Icon className={`w-[18px] h-[18px] ${section.iconColor}`} />
+      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${section.bg} flex items-center justify-center shrink-0 group-hover:shadow-sm transition-all duration-200`}>
+        <Icon className={`w-4 h-4 sm:w-[18px] sm:h-[18px] ${section.iconColor}`} />
       </div>
 
       {/* Main content */}
       <div className="flex-1 min-w-0">
         {/* Title + type badge */}
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`text-sm font-semibold text-gray-900 group-hover:${section.iconColor} transition-colors duration-150`}>
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
+          <span className={`text-sm font-semibold text-gray-900 group-hover:${section.iconColor} transition-colors duration-150 truncate`}>
             {section.title}
           </span>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${section.badge}`}>
-            {section.type === 'crud' ? 'Full CRUD' : 'Edit only'}
+          <span className={`text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 ${section.badge}`}>
+            {section.type === 'crud' ? 'CRUD' : 'Edit'}
           </span>
         </div>
-        {/* Description */}
-        <p className="text-xs text-gray-400 leading-relaxed truncate mb-1.5">
+        {/* Description — hidden on xs to keep rows compact */}
+        <p className="hidden sm:block text-xs text-gray-400 leading-relaxed truncate mb-1.5">
           {section.description}
         </p>
-        {/* Keyword chips */}
-        <div className="flex items-center gap-1 flex-wrap">
+        {/* Keyword chips — hidden on xs */}
+        <div className="hidden sm:flex items-center gap-1 flex-wrap">
           {displayKeywords.map((kw) => {
             const isMatch = matchedKeywords.includes(kw);
             return (
@@ -482,6 +482,11 @@ function SectionRow({
             <span className="text-[10px] text-gray-300">+{section.keywords.length - 4}</span>
           )}
         </div>
+        {/* Mobile-only: show location inline under title */}
+        <div className="flex sm:hidden items-center gap-1 mt-0.5">
+          <MapPin className={`w-3 h-3 ${section.iconColor} shrink-0`} />
+          <span className="text-[11px] text-gray-400 truncate">{section.locationLabel}</span>
+        </div>
       </div>
 
       {/* Location chip — visible on md+ */}
@@ -490,9 +495,10 @@ function SectionRow({
         <span className="text-[11px] font-medium text-gray-600 whitespace-nowrap">{section.locationLabel}</span>
       </div>
 
-      {/* Open CTA */}
-      <div className={`flex items-center gap-1.5 text-xs font-bold ${section.iconColor} shrink-0 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200`}>
-        Open <ArrowRight className="w-3.5 h-3.5" />
+      {/* Open CTA — icon always visible, label on sm+ */}
+      <div className={`flex items-center gap-1 sm:gap-1.5 text-xs font-bold ${section.iconColor} shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-x-2 sm:group-hover:translate-x-0 transition-all duration-200`}>
+        <span className="hidden sm:inline">Open</span>
+        <ArrowRight className="w-3.5 h-3.5" />
       </div>
     </Link>
   );
