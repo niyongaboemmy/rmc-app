@@ -35,8 +35,8 @@ export function AnnouncementsSection() {
   }, []);
 
   return (
-    <section className="bg-white py-16 px-4">
-      <div className="max-w-5xl mx-auto">
+    <section className="bg-white py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
           ref={titleRef}

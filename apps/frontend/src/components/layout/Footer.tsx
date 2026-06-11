@@ -38,20 +38,20 @@ export function Footer() {
 
   const quickLinks = [
     { href: `/${locale}`, label: 'Home' },
-    { href: `/${locale}/about`, label: 'Five Pillars' },
-    { href: `/${locale}/quran`, label: 'Listen Quran' },
-    { href: `/${locale}/prayer-times`, label: 'Prayer Times' },
-    { href: `/${locale}/hajj`, label: 'Hajj Packages' },
-    { href: `/${locale}/blog`, label: 'Articles' },
+    { href: `/${locale}/about`, label: 'About RMC' },
+    { href: `/${locale}/services`, label: 'Our Services' },
+    { href: `/${locale}/blog`, label: 'Blog & News' },
+    { href: `/${locale}/contact`, label: 'Contact Us' },
+    { href: `/${locale}/member/register`, label: 'Join RMC' },
   ];
 
   const services = [
-    { href: `/${locale}/hajj`, label: 'Hajj Packages' },
-    { href: `/${locale}/umrah`, label: 'Umrah Packages' },
-    { href: `/${locale}/quran-classes`, label: 'Quran Classes' },
-    { href: `/${locale}/zakat`, label: 'Zakat Calculator' },
-    { href: `/${locale}/counseling`, label: 'Islamic Counseling' },
-    { href: `/${locale}/events`, label: 'Community Events' },
+    { href: `/${locale}/services`, label: 'Marriage Documents' },
+    { href: `/${locale}/services`, label: 'Scholarships' },
+    { href: `/${locale}/services`, label: 'Good Conduct Letter' },
+    { href: `/${locale}/services`, label: 'Funeral Coordination' },
+    { href: `/${locale}/services`, label: 'Job Opportunities' },
+    { href: `/${locale}/services`, label: 'Tenders' },
   ];
 
   return (
@@ -60,7 +60,7 @@ export function Footer() {
       <MosqueSkyline />
 
       {/* Main content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-14 pb-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
 
           {/* Brand */}
@@ -151,9 +151,9 @@ export function Footer() {
         <div className="pt-6 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/25">
           <p>© {new Date().getFullYear()} Rwanda Muslim Community. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href={`/${locale}/privacy`} className="hover:text-white/50 transition-colors">Privacy Policy</Link>
+            <Link href={`/${locale}/contact`} className="hover:text-white/50 transition-colors">Privacy Policy</Link>
             <span>·</span>
-            <Link href={`/${locale}/terms`} className="hover:text-white/50 transition-colors">Terms of Use</Link>
+            <Link href={`/${locale}/contact`} className="hover:text-white/50 transition-colors">Terms of Use</Link>
           </div>
         </div>
       </div>

@@ -106,14 +106,14 @@ export function StatsSection() {
   ];
 
   return (
-    <section className="relative bg-rmc-green-deep py-20 md:py-24 px-4 overflow-hidden">
+    <section className="relative bg-rmc-green-deep py-20 md:py-24 overflow-hidden">
       <div className="absolute inset-0 pattern-islamic" />
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
       <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-rmc-green/15 rounded-full blur-[80px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-rmc-gold/5 rounded-full blur-[80px] pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           ref={titleRef}
           className={`text-center mb-14 transition-all duration-700 ${
