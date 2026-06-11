@@ -50,7 +50,7 @@ export function VerseOfDay() {
   const display = verse ?? fallback;
 
   return (
-    <section className="relative overflow-hidden py-24 px-4 -mt-1">
+    <section className="relative overflow-hidden py-24 -mt-1">
       {/* Background photo */}
       <Image
         src="https://images.unsplash.com/photo-1548013146-72479768bada?q=80&w=1200&auto=format&fit=crop"
@@ -74,7 +74,7 @@ export function VerseOfDay() {
 
       <div
         ref={ref}
-        className={`relative z-10 max-w-2xl mx-auto text-center transition-all duration-700 ${
+        className={`relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center transition-all duration-700 ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
         }`}
       >
