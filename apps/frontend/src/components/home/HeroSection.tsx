@@ -158,13 +158,13 @@ export function HeroSection() {
               className="group inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-rmc-green text-white font-semibold rounded-full text-base shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300"
             >
               <Users className="w-4 h-4 shrink-0" />
-              Applications
+              Join RMC
             </Link>
             <Link
               href={`/${locale}/about`}
               className="group inline-flex items-center justify-center gap-2.5 px-8 py-4 border-2 border-white/40 text-white font-semibold rounded-full text-base hover:bg-white/10 hover:border-white/70 transition-all duration-300"
             >
-              Our Staff
+              About Us
               <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
