@@ -166,3 +166,4 @@ vite.config.ts.timestamp-*
 
 # Compiled output
 apps/backend/dist2/
+apps/backend/dist/
