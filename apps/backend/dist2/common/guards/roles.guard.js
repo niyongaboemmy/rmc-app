@@ -1,0 +1,58 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RolesGuard = void 0;
+const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
+const roles_decorator_1 = require("../decorators/roles.decorator");
+const error_codes_enum_1 = require("../types/error-codes.enum");
+const ROLE_LEVELS = {
+    [roles_decorator_1.Role.USER]: 1,
+    [roles_decorator_1.Role.OPERATOR]: 2,
+    [roles_decorator_1.Role.ADMIN]: 3,
+    [roles_decorator_1.Role.SUPERADMIN]: 4,
+};
+let RolesGuard = class RolesGuard {
+    constructor(reflector) {
+        this.reflector = reflector;
+    }
+    canActivate(context) {
+        const requiredRoles = this.reflector.getAllAndOverride(roles_decorator_1.ROLES_KEY, [
+            context.getHandler(),
+            context.getClass(),
+        ]);
+        if (!requiredRoles || requiredRoles.length === 0) {
+            return true;
+        }
+        const { user } = context.switchToHttp().getRequest();
+        if (!user) {
+            throw new common_1.ForbiddenException({
+                code: error_codes_enum_1.ErrorCode.AUTH_INSUFFICIENT_ROLE,
+                message: 'Access denied: insufficient permissions',
+            });
+        }
+        const userLevel = ROLE_LEVELS[user.role] ?? 0;
+        const requiredLevel = Math.min(...requiredRoles.map((r) => ROLE_LEVELS[r] ?? 99));
+        if (userLevel < requiredLevel) {
+            throw new common_1.ForbiddenException({
+                code: error_codes_enum_1.ErrorCode.AUTH_INSUFFICIENT_ROLE,
+                message: 'Access denied: insufficient permissions',
+            });
+        }
+        return true;
+    }
+};
+exports.RolesGuard = RolesGuard;
+exports.RolesGuard = RolesGuard = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [core_1.Reflector])
+], RolesGuard);
+//# sourceMappingURL=roles.guard.js.map
