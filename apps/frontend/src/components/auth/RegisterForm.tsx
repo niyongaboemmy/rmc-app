@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { apiClient } from '@/lib/api';
@@ -126,17 +127,14 @@ export function RegisterForm() {
             {...register('password')}
           />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('gender')}</label>
-            <select
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-              {...register('gender')}
-            >
-              <option value="">—</option>
-              <option value="male">{t('male')}</option>
-              <option value="female">{t('female')}</option>
-            </select>
-          </div>
+          <Select
+            label={t('gender')}
+            placeholder="—"
+            {...register('gender')}
+          >
+            <option value="male">{t('male')}</option>
+            <option value="female">{t('female')}</option>
+          </Select>
 
           <Button type="submit" isLoading={isLoading} className="w-full mt-2">
             {t('submit')}

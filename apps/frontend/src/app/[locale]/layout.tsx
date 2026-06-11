@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Poppins, Noto_Naskh_Arabic } from 'next/font/google';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import '../globals.css';
 
 // Poppins — perfect circular geometric bowls, zero serifs, zero sharp angles.
@@ -44,7 +45,11 @@ export default function LocaleLayout({
     >
       <body className={isRtl ? 'font-arabic' : 'font-latin'}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ToastProvider position="top-right">
+              {children}
+            </ToastProvider>
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

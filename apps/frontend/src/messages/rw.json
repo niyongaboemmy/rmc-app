@@ -268,6 +268,87 @@
       "export": "Ohereza Hanze",
       "total": "Abanyamuryango Bose",
       "viewProfile": "Reba Dosiye"
+    },
+    "sidebar": {
+      "panel": "Aho Bagenzura",
+      "dashboard": "Ikibaho",
+      "members": "Abanyamuryango",
+      "mosques": "Masaliti",
+      "prayer": "Amasaha yo Gusenga",
+      "content": "Gucunga Ibikubiye",
+      "users": "Abakoresha",
+      "roles": "Inshingano",
+      "reports": "Raporo",
+      "settings": "Igenamiterere",
+      "logout": "Sohoka",
+      "group": {
+        "main": "Gucunga",
+        "content": "Ibigomba Gutangazwa",
+        "system": "Sisitemu"
+      }
+    },
+    "topbar": {
+      "search": "Shakisha...",
+      "notifications": "Amakuru",
+      "markAllRead": "Soma byose",
+      "viewAll": "Reba amakuru yose"
+    },
+    "dashboard": {
+      "goodMorning": "Mwaramutse",
+      "goodAfternoon": "Mwiriwe",
+      "goodEvening": "Ijoro ryiza",
+      "subtitle": "Dore ibiri mu mbuga uyu munsi.",
+      "refresh": "Vugurura",
+      "totalMembers": "Abanyamuryango Bose",
+      "pendingApproval": "Birategerezwa",
+      "approved": "Byemewe",
+      "rejected": "Byanzwe",
+      "totalMosques": "Masaliti Yose",
+      "totalUsers": "Abakoresha Bose",
+      "weeklyRegistrations": "Iyandikishe ry'Icyumweru",
+      "last7days": "Iminsi 7 ishize",
+      "vsLastWeek": "ugereranije n'icyumweru gishize",
+      "totalThisWeek": "Iki cyumweru",
+      "avgPerDay": "Burimunsi",
+      "peakDay": "Umunsi mwiza",
+      "quickActions": "Ibikorwa Byihuse",
+      "pendingAlert": "ibyiciro birategerezwa isuzuma",
+      "reviewNow": "Suzuma ubu",
+      "recentActivity": "Ibikorwa bya vuba",
+      "viewAll": "Reba byose",
+      "systemStatus": "Imiterere ya Sisitemu",
+      "platformVersion": "RMC Urubuga rwa Dijitali v2.0",
+      "action": {
+        "approveMembers": "Suzuma Abanyamuryango",
+        "manageUsers": "Gucunga Abakoresha",
+        "addMosque": "Ongeraho Musaliti",
+        "manageRoles": "Gucunga Inshingano"
+      },
+      "status": {
+        "api": "Seriveri ya API",
+        "database": "Ububiko bw'amakuru",
+        "auth": "Serivisi yo Kwinjira",
+        "fileServer": "Seriveri ya Dosiye",
+        "redis": "Ububiko bwa Redis",
+        "operational": "Ikora",
+        "down": "Ntirikora"
+      }
+    },
+    "content": {
+      "title": "Gucunga Ibikubiye",
+      "subtitle": "Hindura kandi ucunge ibikubiye byose bya dinamiki ku rubuga rwa RMC",
+      "sections": {
+        "verse": "Umuryango wa Buri Munsi",
+        "updates": "Amakuru n'Porogaramu",
+        "whoWeAre": "Turi Bande",
+        "prayer": "Gahunda y'Isengesho",
+        "areas": "Inzego z'Ibikorwa",
+        "activities": "Ibikorwa n'Ibirori",
+        "announcements": "Impanuro",
+        "impact": "Ingaruka ku Muryango",
+        "partners": "Inshuti zacu",
+        "about": "Ibyerekeye RMC"
+      }
     }
   }
 }

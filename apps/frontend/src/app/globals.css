@@ -79,6 +79,11 @@
 }
 
 @layer utilities {
+  /* Admin flat UI */
+  .bg-rmc-green\/8  { background-color: rgba(26, 122, 74, 0.08); }
+  .bg-rmc-green\/5  { background-color: rgba(26, 122, 74, 0.05); }
+  .duration-250     { transition-duration: 250ms; }
+
   /* Gradient text */
   .text-gradient-gold {
     background: linear-gradient(135deg, #d4a017 0%, #f0c040 50%, #d4a017 100%);
