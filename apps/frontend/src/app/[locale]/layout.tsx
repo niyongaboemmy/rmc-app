@@ -1,14 +1,24 @@
 import type { Metadata } from 'next';
-import { Inter, Noto_Naskh_Arabic } from 'next/font/google';
+import { Poppins, Noto_Naskh_Arabic } from 'next/font/google';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { AuthProvider } from '@/contexts/AuthContext';
 import '../globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const notoNaskhArabic = Noto_Naskh_Arabic({
+// Poppins — perfect circular geometric bowls, zero serifs, zero sharp angles.
+// The standard font of modern Islamic apps (Athan, Muslim prayer platforms).
+const poppins = Poppins({
+  subsets: ['latin'],
+  variable: '--font-latin',
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+});
+
+// Noto Naskh Arabic — smooth flowing Naskh, the script of printed Qurans.
+const notoNaskh = Noto_Naskh_Arabic({
   subsets: ['arabic'],
   variable: '--font-arabic',
   weight: ['400', '500', '600', '700'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -25,11 +35,14 @@ export default function LocaleLayout({
 }) {
   const messages = useMessages();
   const isRtl = locale === 'ar';
-  const fontClass = isRtl ? notoNaskhArabic.variable : inter.variable;
 
   return (
-    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} className={fontClass}>
-      <body className={isRtl ? 'font-arabic' : 'font-sans'}>
+    <html
+      lang={locale}
+      dir={isRtl ? 'rtl' : 'ltr'}
+      className={`${poppins.variable} ${notoNaskh.variable}`}
+    >
+      <body className={isRtl ? 'font-arabic' : 'font-latin'}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>{children}</AuthProvider>
         </NextIntlClientProvider>

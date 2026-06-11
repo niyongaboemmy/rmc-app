@@ -19,7 +19,16 @@ const config: Config = {
         'rmc-navy': '#0F2740',
       },
       fontFamily: {
-        arabic: ['Noto Naskh Arabic', 'serif'],
+        // Latin — Nunito (all weights, weight = hierarchy)
+        latin:   ['var(--font-latin)', 'system-ui', 'sans-serif'],
+        sans:    ['var(--font-latin)', 'system-ui', 'sans-serif'],
+        body:    ['var(--font-latin)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-latin)', 'system-ui', 'sans-serif'],
+        // Arabic — Noto Naskh Arabic (smooth Naskh, all Arabic text)
+        arabic:           ['var(--font-arabic)', 'serif'],
+        'arabic-display': ['var(--font-arabic)', 'serif'],
+        'arabic-body':    ['var(--font-arabic)', 'serif'],
+        quran:            ['var(--font-arabic)', 'serif'],
       },
       animation: {
         'fade-up': 'fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) both',
