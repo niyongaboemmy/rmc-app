@@ -13,6 +13,7 @@ export default registerAs(
     logging:
       process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['error'],
     ssl:
+      process.env.DATABASE_SSL === 'true' ||
       process.env.NODE_ENV === 'production'
         ? { rejectUnauthorized: false }
         : false,
