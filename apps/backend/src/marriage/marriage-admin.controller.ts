@@ -9,7 +9,7 @@ import { ScheduleCeremonyDto } from './dto/schedule-ceremony.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
-import { JwtPayload } from '../common/types/jwt-payload.interface';
+import { User } from '../users/entities/user.entity';
 
 @ApiTags('Marriage — Admin')
 @Controller('admin/marriage')
@@ -52,53 +52,53 @@ export class MarriageAdminController {
   @Permissions(Permission.MARRIAGE_APPROVE)
   @ApiOperation({ summary: 'Update application status (approve / reject / amendments)' })
   updateStatus(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateApplicationStatusDto,
   ) {
-    return this.service.adminUpdateStatus(id, user.sub, dto);
+    return this.service.adminUpdateStatus(id, user.id, dto);
   }
 
   @Post('applications/:id/schedule')
   @Permissions(Permission.MARRIAGE_APPROVE)
   @ApiOperation({ summary: 'Schedule the ceremony date' })
   schedule(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ScheduleCeremonyDto,
   ) {
-    return this.service.adminScheduleCeremony(id, user.sub, dto);
+    return this.service.adminScheduleCeremony(id, user.id, dto);
   }
 
   @Post('applications/:id/payment/confirm')
   @Permissions(Permission.MARRIAGE_MANAGE)
   @ApiOperation({ summary: 'Confirm cash or bank payment' })
   confirmPayment(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.service.adminConfirmCashPayment(id, user.sub);
+    return this.service.adminConfirmCashPayment(id, user.id);
   }
 
   @Post('applications/:id/wedding-photo')
   @Permissions(Permission.MARRIAGE_APPROVE)
   @ApiOperation({ summary: 'Upload wedding photo after ceremony completion' })
   saveWeddingPhoto(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { photoUrl: string },
   ) {
-    return this.service.adminSaveWeddingPhoto(id, user.sub, body.photoUrl);
+    return this.service.adminSaveWeddingPhoto(id, user.id, body.photoUrl);
   }
 
   @Post('applications/:id/certificate')
   @Permissions(Permission.MARRIAGE_CERTIFICATE)
   @ApiOperation({ summary: 'Issue marriage certificate' })
   issueCertificate(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.service.adminIssueCertificate(id, user.sub);
+    return this.service.adminIssueCertificate(id, user.id);
   }
 
   @Get('stats')

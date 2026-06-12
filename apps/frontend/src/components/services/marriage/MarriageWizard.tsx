@@ -128,7 +128,9 @@ async function uploadFileToServer(file: File, folder: string): Promise<string> {
   form.append('file', file);
   const res = await axios.post(`${FILE_SERVER_URL}/api/v1/upload?folder=${folder}`, form, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      // Do NOT set Content-Type manually — axios/browser must auto-generate it
+      // with the multipart boundary (e.g. "multipart/form-data; boundary=----...").
+      // Overriding it here strips the boundary and breaks multer parsing.
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });

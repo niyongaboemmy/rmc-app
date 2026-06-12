@@ -279,16 +279,16 @@ export class MarriageService {
     const qb = this.applicationRepo
       .createQueryBuilder('app')
       .leftJoinAndSelect('app.documents', 'docs')
-      .orderBy('app.created_at', 'DESC')
+      .orderBy('app.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
     if (status) qb.andWhere('app.status = :status', { status });
-    if (paymentStatus) qb.andWhere('app.payment_status = :paymentStatus', { paymentStatus });
-    if (venueType) qb.andWhere('app.venue_type = :venueType', { venueType });
+    if (paymentStatus) qb.andWhere('app.paymentStatus = :paymentStatus', { paymentStatus });
+    if (venueType) qb.andWhere('app.venueType = :venueType', { venueType });
     if (search) {
       qb.andWhere(
-        '(app.groom_name ILIKE :q OR app.bride_name ILIKE :q OR app.application_number ILIKE :q)',
+        '(app.groomName ILIKE :q OR app.brideName ILIKE :q OR app.applicationNumber ILIKE :q)',
         { q: `%${search}%` },
       );
     }
@@ -400,8 +400,8 @@ export class MarriageService {
 
     const revenue = await this.applicationRepo
       .createQueryBuilder('app')
-      .select('SUM(app.amount_paid)', 'total')
-      .where('app.payment_status = :ps', { ps: PaymentStatus.PAID })
+      .select('SUM(app.amountPaid)', 'total')
+      .where('app.paymentStatus = :ps', { ps: PaymentStatus.PAID })
       .getRawOne();
 
     return { total, byStatus, revenue: Number(revenue?.total ?? 0) };
