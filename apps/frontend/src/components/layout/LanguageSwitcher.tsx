@@ -40,7 +40,7 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+        className={`flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-sm sm:text-xs font-medium transition-all duration-200 ${
           scrolled
             ? 'bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-700'
             : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-sm'

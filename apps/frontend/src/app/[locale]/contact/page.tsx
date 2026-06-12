@@ -94,7 +94,7 @@ export default function ContactPage() {
             </div>
 
             {/* Mosque finder */}
-            <div>
+            <div id="find-mosque" className="scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('findMosque')}</h2>
               <MosqueFinder />
             </div>
