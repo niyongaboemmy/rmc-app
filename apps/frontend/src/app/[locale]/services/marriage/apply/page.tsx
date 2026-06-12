@@ -4,12 +4,22 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, LogIn, FileText, User, Users, Heart,
-  CreditCard, Clock, CheckCircle2, AlertCircle,
-  Camera, Landmark,
+  ArrowLeft,
+  LogIn,
+  FileText,
+  User,
+  Users,
+  Heart,
+  CreditCard,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Camera,
+  Landmark,
 } from 'lucide-react';
 import { MarriageWizard } from '@/components/services/marriage/MarriageWizard';
 import { useAuth } from '@/hooks/useAuth';
+import { Navbar } from '@/components/layout/Navbar';
 
 // ─── Requirements data ───────────────────────────────────────────────────────
 
@@ -37,16 +47,36 @@ const REQUIRED_DOCUMENTS = [
 ];
 
 const PROCESS_STEPS = [
-  { icon: FileText,      label: 'Submit Application', desc: 'Fill the form with couple, ceremony, and document details.' },
-  { icon: Clock,         label: 'Under Review',        desc: 'RMC team reviews your documents (1–3 business days).' },
-  { icon: CheckCircle2,  label: 'Approval & Imam',     desc: 'Application approved and an imam is assigned to officiate.' },
-  { icon: Landmark,      label: 'Ceremony (Nikah)',     desc: 'Nikah conducted at your chosen venue or mosque.' },
-  { icon: Heart,         label: 'Certificate Issued',  desc: 'Official marriage certificate signed and delivered.' },
+  {
+    icon: FileText,
+    label: 'Submit Application',
+    desc: 'Fill the form with couple, ceremony, and document details.',
+  },
+  {
+    icon: Clock,
+    label: 'Under Review',
+    desc: 'RMC team reviews your documents (1–3 business days).',
+  },
+  {
+    icon: CheckCircle2,
+    label: 'Approval & Imam',
+    desc: 'Application approved and an imam is assigned to officiate.',
+  },
+  {
+    icon: Landmark,
+    label: 'Ceremony (Nikah)',
+    desc: 'Nikah conducted at your chosen venue or mosque.',
+  },
+  {
+    icon: Heart,
+    label: 'Certificate Issued',
+    desc: 'Official marriage certificate signed and delivered.',
+  },
 ];
 
 const FEES = [
   { venue: 'Mosque Ceremony', amount: '10,000 RWF' },
-  { venue: 'Outside Mosque',  amount: '25,000 RWF' },
+  { venue: 'Outside Mosque', amount: '25,000 RWF' },
 ];
 
 // ─── Public info view ─────────────────────────────────────────────────────────
@@ -55,143 +85,139 @@ function RequirementsView({ locale }: { locale: string }) {
   const router = useRouter();
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10 space-y-10">
-
-      {/* Auth notice */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 flex gap-3">
-        <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-amber-800 mb-0.5">Sign in required</p>
-          <p className="text-sm text-amber-700">
-            Only registered and authorised members (Imam) can submit a marriage application.
-            Please sign in to access the application form.
-          </p>
-          <button
-            onClick={() => router.push(`/${locale}/login?redirect=/services/marriage/apply`)}
-            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition-colors"
+    <div className="min-h-screen">
+      <Navbar />
+      <main className="bg-gray-50/60 pattern-light">
+        <div className="max-w-7xl mx-auto px-4 py-10 lg:py-16">
+          <Link
+            href={`/${locale}/services/marriage`}
+            className="inline-flex items-center gap-1.5 text-gray-500 hover:text-rose-700 text-sm font-medium mb-8 transition-colors"
           >
             <LogIn className="w-4 h-4" /> Sign in to Apply
-          </button>
-        </div>
-      </div>
-
-      {/* Required documents */}
-      <section>
-        <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-rose-500" />
-          Required Documents
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {REQUIRED_DOCUMENTS.map(({ icon: Icon, label, detail }) => (
-            <div
-              key={label}
-              className="flex items-start gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
-            >
-              <span className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
-                <Icon className="w-4 h-4 text-rose-500" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-gray-800">{label}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{detail}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Application process */}
-      <section>
-        <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-rose-500" />
-          Application Process
-        </h2>
-        <div className="relative flex flex-col gap-0">
-          {PROCESS_STEPS.map(({ icon: Icon, label, desc }, i) => (
-            <div key={label} className="flex gap-4">
-              {/* Connector */}
-              <div className="flex flex-col items-center">
-                <div className="w-8 h-8 rounded-full bg-rose-600 flex items-center justify-center shrink-0 z-10">
-                  <Icon className="w-4 h-4 text-white" />
-                </div>
-                {i < PROCESS_STEPS.length - 1 && (
-                  <div className="w-0.5 flex-1 bg-rose-100 my-1" />
-                )}
-              </div>
-              <div className="pb-6">
-                <p className="text-sm font-semibold text-gray-800">{label}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Fees */}
-      <section>
-        <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-rose-500" />
-          Service Fees
-        </h2>
-        <div className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
-          {FEES.map(({ venue, amount }, i) => (
-            <div
-              key={venue}
-              className={`flex items-center justify-between px-5 py-3.5 ${
-                i < FEES.length - 1 ? 'border-b border-gray-100' : ''
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Landmark className="w-4 h-4 text-gray-300" />
-                <span className="text-sm text-gray-700">{venue}</span>
-              </div>
-              <span className="text-sm font-bold text-gray-900 font-mono">{amount}</span>
-            </div>
-          ))}
-          <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
-            <p className="text-xs text-gray-400">
-              Payment accepted via Mobile Money (MoMo), cash at the RMC office, or bank transfer.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Witness requirements */}
-      <section>
-        <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Users className="w-4 h-4 text-rose-500" />
-          Witness & Guardian Requirements
-        </h2>
-        <div className="rounded-xl border border-gray-100 bg-white shadow-sm px-5 py-4 space-y-2.5">
-          {[
-            'Two Muslim witnesses are required (must present their NIDs)',
-            "The bride's Wali (guardian) must provide a signed consent letter",
-            'Witnesses must be adult Muslims in good standing',
-            'The preferred imam may be requested but is subject to availability',
-          ].map((item) => (
-            <div key={item} className="flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-600">{item}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <div className="text-center pb-4">
-        <button
-          onClick={() => router.push(`/${locale}/login?redirect=/services/marriage/apply`)}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-rose-500/20"
-        >
-          <LogIn className="w-4 h-4" /> Sign in to Submit Application
-        </button>
-        <p className="text-xs text-gray-400 mt-3">
-          Don't have an account?{' '}
-          <Link href={`/${locale}/register`} className="text-rose-600 hover:underline font-medium">
-            Request access
           </Link>
-        </p>
-      </div>
-    </main>
+        </div>
+
+        {/* Required documents */}
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-rose-500" />
+            Required Documents
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {REQUIRED_DOCUMENTS.map(({ icon: Icon, label, detail }) => (
+              <div
+                key={label}
+                className="flex items-start gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
+              >
+                <span className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-rose-500" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Application process */}
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-rose-500" />
+            Application Process
+          </h2>
+          <div className="relative flex flex-col gap-0">
+            {PROCESS_STEPS.map(({ icon: Icon, label, desc }, i) => (
+              <div key={label} className="flex gap-4">
+                {/* Connector */}
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-rose-600 flex items-center justify-center shrink-0 z-10">
+                    <Icon className="w-4 h-4 text-white" />
+                  </div>
+                  {i < PROCESS_STEPS.length - 1 && (
+                    <div className="w-0.5 flex-1 bg-rose-100 my-1" />
+                  )}
+                </div>
+                <div className="pb-6">
+                  <p className="text-sm font-semibold text-gray-800">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Fees */}
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-rose-500" />
+            Service Fees
+          </h2>
+          <div className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
+            {FEES.map(({ venue, amount }, i) => (
+              <div
+                key={venue}
+                className={`flex items-center justify-between px-5 py-3.5 ${
+                  i < FEES.length - 1 ? 'border-b border-gray-100' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Landmark className="w-4 h-4 text-gray-300" />
+                  <span className="text-sm text-gray-700">{venue}</span>
+                </div>
+                <span className="text-sm font-bold text-gray-900 font-mono">{amount}</span>
+              </div>
+            ))}
+            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
+              <p className="text-xs text-gray-400">
+                Payment accepted via Mobile Money (MoMo), cash at the RMC office, or bank transfer.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Witness requirements */}
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Users className="w-4 h-4 text-rose-500" />
+            Witness & Guardian Requirements
+          </h2>
+          <div className="rounded-xl border border-gray-100 bg-white shadow-sm px-5 py-4 space-y-2.5">
+            {[
+              'Two Muslim witnesses are required (must present their NIDs)',
+              "The bride's Wali (guardian) must provide a signed consent letter",
+              'Witnesses must be adult Muslims in good standing',
+              'The preferred imam may be requested but is subject to availability',
+            ].map((item) => (
+              <div key={item} className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-600">{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA */}
+        <div className="text-center pb-4">
+          <button
+            onClick={() => router.push(`/${locale}/login?redirect=/services/marriage/apply`)}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-rose-500/20"
+          >
+            <LogIn className="w-4 h-4" /> Sign in to Submit Application
+          </button>
+          <p className="text-xs text-gray-400 mt-3">
+            Don't have an account?{' '}
+            <Link
+              href={`/${locale}/register`}
+              className="text-rose-600 hover:underline font-medium"
+            >
+              Request access
+            </Link>
+          </p>
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -203,7 +229,6 @@ export default function MarriageApplyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* Hero banner */}
       <section className="relative h-40 sm:h-52 overflow-hidden">
         <Image
@@ -241,15 +266,14 @@ export default function MarriageApplyPage() {
       )}
 
       {/* Public: requirements view */}
-      {!isLoading && !isAuthenticated && (
-        <RequirementsView locale={locale} />
-      )}
+      {!isLoading && !isAuthenticated && <RequirementsView locale={locale} />}
 
       {/* Authenticated: full wizard */}
       {!isLoading && isAuthenticated && (
         <main className="max-w-3xl mx-auto px-4 py-8 lg:py-10">
           <p className="text-gray-500 text-sm mb-6">
-            Complete all six steps. Your progress is saved as a draft — you can return to continue at any time.
+            Complete all six steps. Your progress is saved as a draft — you can return to continue
+            at any time.
           </p>
           <MarriageWizard />
         </main>

@@ -201,7 +201,7 @@ export function PrayerTimesWidget() {
     : [];
 
   return (
-    <section className="relative bg-white py-16 md:py-20 pattern-light">
+    <section className="relative bg-transparent py-16 md:py-20 pattern-light">
       {/* Single gold hairline accent across the top */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent pointer-events-none" />
 

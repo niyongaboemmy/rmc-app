@@ -98,7 +98,7 @@ export function PartnersSection() {
   const { ref: gridRef, visible: gridVisible } = useScrollReveal(0.05);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-rmc-green-light/20 to-white py-20 md:py-24">
+    <section className="relative overflow-hidden bg-transparent py-20 md:py-24">
       {/* Light Islamic geometry + symmetric gold hairline seams */}
       <div aria-hidden className="absolute inset-0 pattern-light opacity-50" />
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
