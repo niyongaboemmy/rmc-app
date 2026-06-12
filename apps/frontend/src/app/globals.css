@@ -18,7 +18,13 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-white text-gray-900;
+    @apply text-gray-900;
+    /* App-wide diagonal crosshatch — a brand-tinted diamond lattice canvas */
+    background-color: #f4f5f2;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(13, 61, 36, 0.07) 0, rgba(13, 61, 36, 0.07) 1px, transparent 1px, transparent 22px),
+      repeating-linear-gradient(-45deg, rgba(13, 61, 36, 0.07) 0, rgba(13, 61, 36, 0.07) 1px, transparent 1px, transparent 22px);
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -177,6 +183,15 @@
   will-change: opacity, transform;
 }
 .reveal-right.visible { opacity: 1; transform: translateX(0) translateZ(0); }
+
+/* Reduced-motion: show content immediately, no reveal animation */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
 
 /* --------------------------------------------------------
    Hero animated gradient blob (used as pseudo-element bg)

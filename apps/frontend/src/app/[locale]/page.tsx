@@ -15,7 +15,7 @@ import { Footer } from '@/components/layout/Footer';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
         {/* 1. Hero — Verse of the Day (sliding) */}

@@ -29,12 +29,6 @@ function PartnerCard({ partner, delay, visible }: { partner: Partner; delay: num
 
   const content = (
     <>
-      {/* Gold top accent — appears on hover */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-0.5 rounded-t-3xl bg-gradient-to-r from-rmc-gold to-rmc-gold-light opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      />
-
       {/* External-link hint — only for partners with a website */}
       {linked && (
         <span
@@ -98,7 +92,7 @@ export function PartnersSection() {
   const { ref: gridRef, visible: gridVisible } = useScrollReveal(0.05);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-rmc-green-light/20 to-white py-20 md:py-24">
+    <section className="relative overflow-hidden bg-transparent py-20 md:py-24">
       {/* Light Islamic geometry + symmetric gold hairline seams */}
       <div aria-hidden className="absolute inset-0 pattern-light opacity-50" />
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />

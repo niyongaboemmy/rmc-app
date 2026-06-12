@@ -5,6 +5,7 @@ import { MapPin, Phone, Mail, CheckCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { Reveal } from '@/components/Reveal';
 import { MosqueFinder } from '@/components/contact/MosqueFinder';
 
 export default function ContactPage() {
@@ -19,7 +20,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
         {/* Header */}
@@ -33,7 +34,7 @@ export default function ContactPage() {
         <section className="py-16 px-4">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12">
             {/* Contact form */}
-            <div>
+            <Reveal>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a message</h2>
               {submitted ? (
                 <div className="p-6 bg-green-50 border border-green-200 rounded-xl text-green-800">
@@ -97,13 +98,15 @@ export default function ContactPage() {
                   );
                 })}
               </div>
-            </div>
+            </Reveal>
 
             {/* Mosque finder */}
-            <div id="find-mosque" className="scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('findMosque')}</h2>
-              <MosqueFinder />
-            </div>
+            <Reveal delay={120}>
+              <div id="find-mosque" className="scroll-mt-28">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('findMosque')}</h2>
+                <MosqueFinder />
+              </div>
+            </Reveal>
           </div>
         </section>
       </main>

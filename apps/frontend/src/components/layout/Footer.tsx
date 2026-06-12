@@ -1,29 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
-
-function MosqueSkyline() {
-  // The reference site tiles this SVG ~30× horizontally to fill the footer top.
-  // Each tile is rendered at auto-width × 220px, repeating across the full width.
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        width: '100%',
-        height: 220,
-        backgroundColor: '#ffffff',
-        backgroundImage: 'url(/footer-architecture.svg)',
-        backgroundSize: 'auto 220px',
-        backgroundRepeat: 'repeat-x',
-        backgroundPosition: 'top left',
-      }}
-    />
-  );
-}
 
 const socialLinks = [
   { Icon: Facebook, href: '#', label: 'Facebook' },
@@ -32,8 +12,17 @@ const socialLinks = [
   { Icon: Youtube, href: '#', label: 'YouTube' },
 ];
 
+/* Shared, hero-consistent column heading — gold dot + uppercase tracking */
+function ColumnHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h4 className="flex items-center gap-2 mb-5 text-xs font-bold uppercase tracking-[0.15em] text-white">
+      <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+      {children}
+    </h4>
+  );
+}
+
 export function Footer() {
-  const t = useTranslations('nav');
   const { locale } = useParams<{ locale: string }>();
 
   const quickLinks = [
@@ -54,10 +43,29 @@ export function Footer() {
     { href: `/${locale}/services`, label: 'Tenders' },
   ];
 
+  const linkClass =
+    'inline-block text-white/55 hover:text-white text-sm transition-all duration-200 hover:translate-x-1';
+
   return (
-    <footer className="relative bg-[#0a0a0a] overflow-hidden">
-      {/* Mosque skyline top divider */}
-      <MosqueSkyline />
+    <footer className="relative bg-black mt-32">
+      {/* Islamic geometric pattern — the same motif used across the app */}
+      <div className="absolute inset-0 pattern-islamic opacity-30 pointer-events-none" />
+      {/* Gold hairline at the very top — the app's signature accent */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent pointer-events-none z-20" />
+
+      {/* Mosque skyline — sits fully ABOVE the footer (same green), fading up into the section above */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 -translate-y-full z-10 h-24 sm:h-32 md:h-36 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/footer-architecture.svg)',
+          backgroundRepeat: 'repeat-x',
+          backgroundSize: 'auto 100%',
+          backgroundPosition: 'bottom center',
+          WebkitMaskImage: 'linear-gradient(to top, #000 45%, transparent)',
+          maskImage: 'linear-gradient(to top, #000 45%, transparent)',
+        }}
+      />
 
       {/* Main content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
@@ -66,26 +74,29 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href={`/${locale}`} className="inline-flex items-center gap-2.5 mb-5 group">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-200">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-rmc-gold/30 motion-safe:group-hover:scale-105 transition-transform duration-200">
                 <Image src="/logo.webp" alt="RMC" width={40} height={40} className="w-full h-full object-contain p-0.5" />
               </div>
-              <div className="leading-tight">
-                <p className="text-white font-bold text-base">Rwanda</p>
-                <p className="text-rmc-green text-sm font-medium">Muslim Community</p>
+              <div className="flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+                <div className="leading-tight">
+                  <p className="text-white font-bold text-sm tracking-tight leading-tight">Rwanda Muslim</p>
+                  <p className="text-rmc-gold-light/80 text-[10px] font-semibold uppercase tracking-[0.18em] leading-tight">Community</p>
+                </div>
               </div>
             </Link>
 
-            <p className="text-white/40 text-sm leading-relaxed mb-7">
+            <p className="text-white/45 text-sm leading-relaxed mb-7 max-w-xs">
               Spreading the light of Islam through education, community, and service across Rwanda.
             </p>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {socialLinks.map(({ Icon, href, label }) => (
                 <a
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-9 h-9 rounded-full bg-rmc-green/80 hover:bg-rmc-green flex items-center justify-center text-white transition-colors duration-200"
+                  className="w-9 h-9 rounded-full bg-white/[0.07] border border-white/10 text-white/70 hover:text-white hover:bg-rmc-green hover:border-rmc-green flex items-center justify-center transition-all duration-200 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold/50"
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -95,11 +106,11 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-bold text-base mb-5">Quick Links</h4>
+            <ColumnHeading>Quick Links</ColumnHeading>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-white/45 hover:text-white text-sm transition-colors duration-150">
+                  <Link href={link.href} className={linkClass}>
                     {link.label}
                   </Link>
                 </li>
@@ -109,11 +120,11 @@ export function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="text-white font-bold text-base mb-5">Services</h4>
+            <ColumnHeading>Services</ColumnHeading>
             <ul className="space-y-3">
               {services.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-white/45 hover:text-white text-sm transition-colors duration-150">
+                <li key={link.label}>
+                  <Link href={link.href} className={linkClass}>
                     {link.label}
                   </Link>
                 </li>
@@ -123,37 +134,44 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="text-white font-bold text-base mb-5">Contact</h4>
+            <ColumnHeading>Contact</ColumnHeading>
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center shrink-0">
-                  <Mail className="w-3.5 h-3.5 text-white/50" />
-                </div>
-                <a href="mailto:info@rmc.rw" className="text-white/45 hover:text-white text-sm transition-colors">info@rmc.rw</a>
+                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                  <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
+                </span>
+                <a href="mailto:info@rmc.rw" className="text-white/55 hover:text-white text-sm transition-colors">info@rmc.rw</a>
               </li>
               <li className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center shrink-0">
-                  <Phone className="w-3.5 h-3.5 text-white/50" />
-                </div>
-                <a href="tel:+250788000000" className="text-white/45 hover:text-white text-sm transition-colors">+250 788 000 000</a>
+                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                  <Phone className="w-3.5 h-3.5 text-rmc-gold-light" />
+                </span>
+                <a href="tel:+250788000000" className="text-white/55 hover:text-white text-sm transition-colors">+250 788 000 000</a>
               </li>
               <li className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center shrink-0">
-                  <MapPin className="w-3.5 h-3.5 text-white/50" />
-                </div>
-                <span className="text-white/45 text-sm">Rebero, Kigali</span>
+                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                  <MapPin className="w-3.5 h-3.5 text-rmc-gold-light" />
+                </span>
+                <span className="text-white/55 text-sm">Rebero, Kigali</span>
               </li>
             </ul>
           </div>
         </div>
 
+        {/* Bismillah — "In the name of Allah", as on the previous site */}
+        <div className="ornament-divider max-w-xs mx-auto mb-8">
+          <p className="font-arabic text-rmc-gold-light/85 text-lg md:text-xl text-center px-3 leading-loose" dir="rtl">
+            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+          </p>
+        </div>
+
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/25">
+        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/35">
           <p>© {new Date().getFullYear()} Rwanda Muslim Community. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href={`/${locale}/contact`} className="hover:text-white/50 transition-colors">Privacy Policy</Link>
-            <span>·</span>
-            <Link href={`/${locale}/contact`} className="hover:text-white/50 transition-colors">Terms of Use</Link>
+            <Link href={`/${locale}/contact`} className="hover:text-rmc-gold-light transition-colors">Privacy Policy</Link>
+            <span className="text-white/20">·</span>
+            <Link href={`/${locale}/contact`} className="hover:text-rmc-gold-light transition-colors">Terms of Use</Link>
           </div>
         </div>
       </div>
