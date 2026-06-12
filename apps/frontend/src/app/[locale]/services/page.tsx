@@ -60,7 +60,7 @@ export default async function ServicesPage({ params: { locale } }: { params: { l
   const t = await getTranslations();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
         {/* Header */}

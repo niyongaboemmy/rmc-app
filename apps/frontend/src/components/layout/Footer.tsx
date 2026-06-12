@@ -47,7 +47,7 @@ export function Footer() {
     'inline-block text-white/55 hover:text-white text-sm transition-all duration-200 hover:translate-x-1';
 
   return (
-    <footer className="relative bg-black mt-32">
+    <footer className="relative bg-black mt-48">
       {/* Islamic geometric pattern — the same motif used across the app */}
       <div className="absolute inset-0 pattern-islamic opacity-30 pointer-events-none" />
       {/* Gold hairline at the very top — the app's signature accent */}
