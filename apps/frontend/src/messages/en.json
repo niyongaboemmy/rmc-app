@@ -146,7 +146,7 @@
       "text": "The Rwanda Muslim Community has been serving Muslims across Rwanda since its founding. With a network spanning all provinces and districts, RMC coordinates religious, educational, and social services for over 500,000 Muslims nationwide."
     },
     "values": {
-      "title": "Our Values",
+      "title": "Core Values",
       "unity": "Unity",
       "unityDesc": "Bringing Muslims together across all regions of Rwanda",
       "education": "Education",
@@ -157,7 +157,24 @@
       "transparencyDesc": "Open and accountable governance of community resources"
     },
     "leadership": {
-      "title": "Leadership"
+      "title": "Leadership",
+      "subtitle": "Guided by dedicated leaders committed to serving the community",
+      "m1": {
+        "role": "Mufti / President",
+        "desc": "Provides spiritual guidance and leads the strategic direction of the community."
+      },
+      "m2": {
+        "role": "Vice President",
+        "desc": "Supports leadership and oversees coordination across provinces and districts."
+      },
+      "m3": {
+        "role": "Secretary General",
+        "desc": "Manages administration, communication, and day-to-day operations."
+      },
+      "m4": {
+        "role": "Head of Programs",
+        "desc": "Leads educational, social, and development initiatives nationwide."
+      }
     },
     "areas": {
       "title": "Areas of Intervention",
@@ -166,7 +183,57 @@
       "social": "Social Welfare",
       "finance": "Finance & Zakat",
       "health": "Health Services",
-      "youth": "Youth Programs"
+      "youth": "Youth Programs",
+      "religiousDesc": "Mosque coordination, imam training, Da'wah, and religious guidance.",
+      "educationDesc": "Islamic and secular schools, scholarships, and Qur'an education.",
+      "socialDesc": "Support for families in need, orphans, and vulnerable members.",
+      "financeDesc": "Zakat collection and distribution, and community financial support.",
+      "healthDesc": "Health awareness, support programs, and access to care.",
+      "youthDesc": "Youth empowerment, leadership, and community engagement programs."
+    },
+    "whoWeAre": {
+      "badge": "Who We Are",
+      "heading": "One Ummah,",
+      "headingHighlight": "United Across Rwanda",
+      "p1": "The Rwanda Muslim Community (RMC) is the national umbrella organization representing and serving Muslims across all provinces of Rwanda. We coordinate religious, educational, and social services for a community of over 500,000 people.",
+      "p2": "Rooted in the principles of Islamic brotherhood, RMC works hand in hand with mosques, schools, and local leaders to build a thriving, self-reliant, and digitally empowered Ummah.",
+      "point1": "Present in all 5 provinces and 30 districts",
+      "point2": "A network of 320+ registered mosques",
+      "point3": "Faith, education, and welfare under one roof",
+      "point4": "Transparent, community-driven governance"
+    },
+    "story": {
+      "title": "Our Story",
+      "subtitle": "Key milestones in the journey of the Rwanda Muslim Community",
+      "e1": {
+        "year": "1990s",
+        "title": "Foundations",
+        "text": "Local Muslim associations across Rwanda begin coordinating to serve their communities with a shared vision."
+      },
+      "e2": {
+        "year": "2000s",
+        "title": "National Unity",
+        "text": "Communities unite under one national body, establishing RMC as the umbrella organization for Muslims in Rwanda."
+      },
+      "e3": {
+        "year": "2010s",
+        "title": "Growth & Education",
+        "text": "Expansion of Islamic schools, mosques, and social programs reaching every province and district."
+      },
+      "e4": {
+        "year": "2020s",
+        "title": "Digital Transformation",
+        "text": "RMC embraces technology to connect members, share knowledge, and deliver services online."
+      },
+      "e5": {
+        "year": "Today",
+        "title": "A Thriving Ummah",
+        "text": "Serving over 500,000 Muslims with religious, educational, financial, and social services nationwide."
+      }
+    },
+    "programs": {
+      "title": "Programs & Activities",
+      "subtitle": "How we serve and uplift the community every day"
     }
   },
   "services": {
@@ -174,7 +241,130 @@
     "subtitle": "RMC offers 7 core services to support our community",
     "marriage": {
       "title": "Marriage Services",
-      "desc": "Official Islamic marriage ceremonies, certificates, and documentation for couples in the community."
+      "desc": "Official Islamic marriage ceremonies, certificates, and documentation for couples in the community.",
+      "detail": {
+        "backToServices": "All Services",
+        "heroBadge": "Marriage Services",
+        "overviewHeading": "A blessed beginning,",
+        "overviewHeadingHighlight": "done right",
+        "overviewP1": "RMC guides couples through every step of the Islamic marriage (Nikah) — from pre-marital guidance to a properly officiated ceremony and official documentation. Our scholars ensure the marriage is conducted fully in accordance with Islamic law.",
+        "overviewP2": "Whether you are starting your application or simply learning what is involved, we make the process clear, dignified, and stress-free for both families.",
+        "startApplication": "Start your application",
+        "certifiedBadge": "Certified Nikah",
+        "certifiedBadgeSub": "Officiated by qualified imams",
+        "includesTitle": "What's included",
+        "includesSubtitle": "Everything you need for a complete and recognised Islamic marriage.",
+        "includes": {
+          "nikah": {
+            "title": "Nikah Ceremony",
+            "text": "A complete Islamic marriage ceremony officiated by a qualified imam in accordance with the Sunnah."
+          },
+          "certificate": {
+            "title": "Official Certificate",
+            "text": "A recognised RMC marriage certificate issued and registered for both partners."
+          },
+          "guidance": {
+            "title": "Pre-Marital Guidance",
+            "text": "Counselling sessions covering rights, responsibilities, and building a strong Islamic household."
+          },
+          "witness": {
+            "title": "Witness & Mahr Support",
+            "text": "Assistance arranging witnesses and documenting the agreed mahr (dowry) correctly."
+          }
+        },
+        "processTitle": "How it works",
+        "processSubtitle": "Five simple steps from application to certificate.",
+        "steps": {
+          "s1": {
+            "title": "Register as a member",
+            "text": "Both partners create or confirm their RMC membership accounts."
+          },
+          "s2": {
+            "title": "Submit your application",
+            "text": "Provide personal details, guardian (wali) information, and choose a preferred date."
+          },
+          "s3": {
+            "title": "Document verification",
+            "text": "RMC reviews your identity documents and confirms eligibility for the Nikah."
+          },
+          "s4": {
+            "title": "Pre-marital counselling",
+            "text": "Attend a short guidance session with an RMC scholar before the ceremony."
+          },
+          "s5": {
+            "title": "Nikah & certification",
+            "text": "The ceremony is performed and your official marriage certificate is issued."
+          }
+        },
+        "requirementsTitle": "What you'll need",
+        "requirementsSubtitle": "Prepare these documents before applying to keep your Nikah on schedule.",
+        "requirements": {
+          "r1": "Valid national ID or passport for both partners",
+          "r2": "Wali (guardian) consent and identification",
+          "r3": "Two adult Muslim witnesses",
+          "r4": "Proof of RMC membership for both partners",
+          "r5": "Agreed mahr (dowry) details",
+          "r6": "Passport-size photographs"
+        },
+        "faqTitle": "Frequently asked questions",
+        "faqs": {
+          "f1": {
+            "q": "How long does the process take?",
+            "a": "Once your documents are verified, the Nikah can usually be scheduled within 1-2 weeks depending on availability."
+          },
+          "f2": {
+            "q": "Is RMC membership required?",
+            "a": "Yes. Both partners must be registered RMC members so the marriage can be properly documented and certified."
+          },
+          "f3": {
+            "q": "Is the certificate officially recognised?",
+            "a": "The RMC certificate is recognised within the community and serves as proof of an Islamic marriage. For civil registration, follow your local authority's process."
+          },
+          "f4": {
+            "q": "Can the ceremony be held at our own venue?",
+            "a": "Yes. Subject to imam availability, the Nikah can be conducted at a mosque, your home, or another agreed venue."
+          }
+        },
+        "ctaTitle": "Ready to begin your Nikah?",
+        "ctaSubtitle": "Register as an RMC member to start your marriage application and book your ceremony.",
+        "ctaStart": "Start application",
+        "ctaContact": "Contact us"
+      },
+      "apply": {
+        "title": "Marriage Application",
+        "subtitle": "Fill in the details below to apply for your Islamic marriage certificate.",
+        "aside": {
+          "heading": "Begin your blessed union",
+          "text": "Your application is reviewed by RMC and a qualified imam before your Nikah is scheduled. Please make sure every detail matches your official documents.",
+          "p1": "Both partners must be registered RMC members",
+          "p2": "National ID numbers are 16 digits long",
+          "p3": "Your photo will appear on the official certificate"
+        },
+        "coupleSection": "Couple details",
+        "groomName": "Groom's full name",
+        "groomNid": "Groom's National ID",
+        "brideName": "Bride's full name",
+        "brideNid": "Bride's National ID",
+        "witnessSection": "Witnesses",
+        "witnessNote": "Provide the National ID number of two adult Muslim witnesses.",
+        "witness1": "Witness 1 — National ID",
+        "witness2": "Witness 2 — National ID",
+        "officiantSection": "Officiant",
+        "officiant": "Religious leader to officiate",
+        "officiantHint": "Name of the imam or sheikh who will conduct the Nikah.",
+        "photoSection": "Certificate photo",
+        "photo": "ID photo for the certificate",
+        "photoHint": "Clear passport-style photo — JPG or PNG, up to 5 MB.",
+        "photoChange": "Change photo",
+        "photoChoose": "Upload photo",
+        "nidHint": "16-digit National ID number",
+        "nidPlaceholder": "16 digits",
+        "namePlaceholder": "Full name as on ID",
+        "submit": "Submit application",
+        "successTitle": "Application submitted",
+        "successText": "Thank you. RMC has received your marriage application and will contact you to confirm the details and schedule your Nikah.",
+        "successAnother": "Submit another application"
+      }
     },
     "funeral": {
       "title": "Funeral Services",
