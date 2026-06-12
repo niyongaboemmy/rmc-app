@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Heart, GraduationCap, Globe, Users, ArrowRight } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  GraduationCap,
+  Globe,
+  Users,
+  ArrowRight,
+  Pause,
+  Play,
+} from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface Slide {
@@ -17,6 +27,8 @@ interface Slide {
   image: string;
   imageAlt: string;
   stat: { value: string; label: string };
+  /** Short Quran verse that frames the slide — a 1:1 echo of the hero's quote block (ar + en + ref) */
+  verse: { ar: string; en: string; ref: string };
 }
 
 const SLIDES: Slide[] = [
@@ -28,9 +40,11 @@ const SLIDES: Slide[] = [
     cta: 'Apply Now',
     ctaHref: '/services',
     Icon: GraduationCap,
-    image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=900&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Graduation caps thrown in celebration',
     stat: { value: '500+', label: 'Scholarships awarded' },
+    verse: { ar: 'اقْرَأْ بِاسْمِ رَبِّكَ', en: 'Read in the name of your Lord.', ref: 'Al-Alaq 96:1' },
   },
   {
     badge: 'Community Programs',
@@ -40,9 +54,11 @@ const SLIDES: Slide[] = [
     cta: 'Learn More',
     ctaHref: '/about',
     Icon: Users,
-    image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=900&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Community members gathered together',
     stat: { value: '12,500+', label: 'Community members' },
+    verse: { ar: 'وَتَعَاوَنُوا عَلَى الْبِرِّ', en: 'And cooperate in righteousness.', ref: 'Al-Maidah 5:2' },
   },
   {
     badge: 'Support Our Mission',
@@ -52,9 +68,11 @@ const SLIDES: Slide[] = [
     cta: 'Donate Now',
     ctaHref: '/contact',
     Icon: Heart,
-    image: 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=900&auto=format&fit=crop',
-    imageAlt: 'Hands giving charitable donation',
+    image:
+      'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=900&auto=format&fit=crop',
+    imageAlt: 'Hands giving a charitable donation',
     stat: { value: '5,000+', label: 'Families supported' },
+    verse: { ar: 'مَّن ذَا الَّذِي يُقْرِضُ اللَّهَ', en: 'Who is it that will lend to Allah?', ref: 'Al-Baqarah 2:245' },
   },
   {
     badge: 'International Affairs',
@@ -64,198 +82,351 @@ const SLIDES: Slide[] = [
     cta: 'Discover More',
     ctaHref: '/about',
     Icon: Globe,
-    image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=900&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'International partnership handshake',
     stat: { value: '20+', label: 'Global partners' },
+    verse: { ar: 'وَجَعَلْنَاكُمْ شُعُوبًا', en: 'And We made you peoples and tribes.', ref: 'Al-Hujurat 49:13' },
   },
 ];
 
+/* Floating gold particle — identical mechanics + coordinates to the hero (.particle + --dur/--delay) */
+function Particle({
+  top,
+  left,
+  dur,
+  delay,
+  size = 4,
+  paused = false,
+}: {
+  top: string;
+  left: string;
+  dur: string;
+  delay: string;
+  size?: number;
+  paused?: boolean;
+}) {
+  return (
+    <div
+      className="particle absolute rounded-full bg-rmc-gold/30 pointer-events-none motion-reduce:hidden"
+      style={
+        {
+          top,
+          left,
+          width: size,
+          height: size,
+          '--dur': dur,
+          '--delay': delay,
+          animationPlayState: paused ? 'paused' : 'running',
+        } as React.CSSProperties
+      }
+    />
+  );
+}
+
 export function WelcomeCarouselSection() {
   const { locale } = useParams<{ locale: string }>();
+  const { ref, visible } = useScrollReveal(0.1);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const { ref, visible } = useScrollReveal(0.1);
+  const [paused, setPaused] = useState(false);
+  const liveRef = useRef<HTMLParagraphElement>(null);
+
+  const change = useCallback(
+    (resolve: (c: number) => number) => {
+      setAnimating(true);
+      window.setTimeout(() => {
+        setCurrent(resolve);
+        setAnimating(false);
+      }, 420);
+    },
+    [],
+  );
 
   const goTo = useCallback(
     (index: number) => {
-      if (animating) return;
-      setAnimating(true);
-      setTimeout(() => {
-        setCurrent(index);
-        setAnimating(false);
-      }, 320);
+      if (animating || index === current) return;
+      change(() => index);
     },
-    [animating],
+    [animating, current, change],
   );
 
-  const next = useCallback(() => goTo((current + 1) % SLIDES.length), [current, goTo]);
-  const prev = useCallback(() => goTo((current - 1 + SLIDES.length) % SLIDES.length), [current, goTo]);
+  const next = useCallback(() => {
+    change((c) => (c + 1) % SLIDES.length);
+  }, [change]);
 
+  const prev = useCallback(() => {
+    change((c) => (c - 1 + SLIDES.length) % SLIDES.length);
+  }, [change]);
+
+  /* Autoplay — slow enough to comfortably read each slide; pauses on hover / focus-within (WCAG 2.2.2) */
   useEffect(() => {
-    const id = setInterval(next, 6500);
-    return () => clearInterval(id);
-  }, [next]);
+    if (paused) return;
+    const id = window.setInterval(() => {
+      change((c) => (c + 1) % SLIDES.length);
+    }, 11000);
+    return () => window.clearInterval(id);
+  }, [paused, change]);
 
   const slide = SLIDES[current];
   const { Icon } = slide;
 
+  /* Reusable focus ring for every interactive control */
+  const ring =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold focus-visible:ring-offset-2 focus-visible:ring-offset-rmc-green-deep';
+
   return (
     <section
       ref={ref}
-      className={`relative bg-rmc-green-light/30 py-16 md:py-20 overflow-hidden transition-all duration-700 ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+      className="relative isolate overflow-hidden bg-rmc-green-deep min-h-[640px] md:min-h-[720px] flex items-center"
+      aria-roledescription="carousel"
+      aria-label="Updates and programs"
     >
-      {/* Subtle top/bottom borders */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-green/20 to-transparent" />
-      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-green/20 to-transparent" />
+      {/* ── Full-bleed photographic crossfade — identical mechanics to the hero ── */}
+      {SLIDES.map((s, i) => (
+        <div
+          key={s.image}
+          className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out motion-reduce:transition-none"
+          style={{ opacity: i === current && !animating ? 1 : 0 }}
+          aria-hidden={i !== current}
+        >
+          <Image
+            src={s.image}
+            alt={i === current ? s.imageAlt : ''}
+            fill
+            priority={i === 0}
+            className="object-cover object-center"
+            sizes="100vw"
+          />
+        </div>
+      ))}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── Symmetric dark scrim — centered content reads cleanly, mirrors the hero's overlays ── */}
+      <div className="absolute inset-0 bg-gradient-to-r from-rmc-green-deep/85 via-rmc-green-deep/55 to-rmc-green-deep/85" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
-        {/* Section header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-rmc-green/10 text-rmc-green px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-green animate-pulse" />
-            Welcome
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Updates &amp; Programs</h2>
-          <p className="text-gray-500 mt-2 text-sm md:text-base max-w-xl mx-auto">
-            Stay informed on RMC scholarships, community programs, and initiatives across Rwanda.
-          </p>
+      {/* ── Islamic geometric texture ── */}
+      <div className="absolute inset-0 pattern-islamic opacity-30" />
+
+      {/* ── Floating gold particles — hero's exact coordinate / duration set; freeze on hover ── */}
+      <Particle top="20%" left="12%" dur="8s" delay="0s" size={5} paused={paused} />
+      <Particle top="65%" left="9%" dur="11s" delay="1.5s" size={3} paused={paused} />
+      <Particle top="30%" left="85%" dur="9s" delay="0.8s" size={4} paused={paused} />
+      <Particle top="70%" left="78%" dur="12s" delay="2.5s" size={3} paused={paused} />
+      <Particle top="50%" left="55%" dur="10s" delay="3s" size={3} paused={paused} />
+
+      {/* ── Top gold hairline — seams this section to the hero above ── */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
+
+      {/* ── Content ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-20 md:py-24">
+
+        {/* Centered section eyebrow + title — mirrors the hero's centerline rhythm */}
+        <div
+          className={`text-center mb-12 md:mb-14 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
+          style={{ animationDelay: '120ms' }}
+        >
+          <span className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] text-white/75">
+            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+            Updates &amp; Programs
+          </span>
+          <h2 className="mt-5 text-2xl md:text-4xl font-bold text-white drop-shadow-lg leading-tight">
+            Initiatives shaping the <span className="text-gradient-gold">Rwandan ummah</span>
+          </h2>
+          <div className="mx-auto mt-6 h-px w-40 bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
         </div>
 
-        {/* Carousel — flat, no card shadow */}
-        <div className="relative rounded-2xl overflow-hidden border border-rmc-green/15">
-
-          {/* Slide transition wrapper */}
+        {/* Cinematic stage — glass content panel centered over the photography (mirrors the hero) */}
+        <div className="relative">
+          {/* Entrance wrapper (scroll-reveal) — kept SEPARATE from the per-slide crossfade node */}
           <div
-            className={`transition-all duration-300 ease-out ${
-              animating ? 'opacity-0 scale-[0.99]' : 'opacity-100 scale-100'
-            }`}
+            className={`relative ${visible ? 'animate-fade-up' : 'opacity-0'}`}
+            style={{ animationDelay: '260ms' }}
           >
-            {/* Split layout — consistent green-tinted background */}
-            <div className="grid grid-cols-1 md:grid-cols-2 min-h-[380px] md:min-h-[420px] bg-white">
-
-              {/* LEFT — text content */}
-              <div className="flex flex-col justify-center px-8 md:px-12 py-10 md:py-14 order-2 md:order-1 bg-rmc-green-light/40">
-
-                {/* Badge + icon row */}
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-rmc-green flex items-center justify-center shadow-md shadow-rmc-green/20">
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold text-white bg-rmc-green shadow-sm">
-                    {slide.badge}
-                  </span>
-                </div>
-
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-4">
-                  {slide.title}
-                </h3>
-                <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-7 max-w-md">
-                  {slide.description}
-                </p>
-
-                {/* Stat pill */}
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="px-4 py-2 rounded-xl bg-rmc-green text-white shadow-sm shadow-rmc-green/20">
-                    <p className="text-lg font-bold leading-none">{slide.stat.value}</p>
-                    <p className="text-[10px] font-medium opacity-80 mt-0.5">{slide.stat.label}</p>
-                  </div>
-                </div>
-
-                {/* CTA buttons */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href={`/${locale}${slide.ctaHref}`}
-                    className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-sm font-bold text-white bg-rmc-green hover:bg-rmc-green-dark shadow-lg shadow-rmc-green/20 hover:scale-105 hover:shadow-xl transition-all duration-200"
-                  >
-                    {slide.cta}
-                    <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                  </Link>
-                  <Link
-                    href={`/${locale}/contact`}
-                    className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-rmc-green border-2 border-rmc-green/30 hover:border-rmc-green hover:bg-rmc-green/5 bg-white transition-all duration-200"
-                  >
-                    <Heart className="w-4 h-4" />
-                    Donate
-                  </Link>
-                </div>
+            {/* Per-slide crossfade node — its own opacity/transform, no fade-up conflict */}
+            <div
+              className={`max-w-xl mx-auto text-center glass rounded-3xl p-7 sm:p-9 md:p-11 shadow-2xl shadow-black/40 transition-all duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+                animating ? 'opacity-0 translate-y-3' : 'opacity-100 translate-y-0'
+              }`}
+            >
+              {/* Eyebrow row — refined gold icon tile + glass badge */}
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <span className="grid place-items-center w-11 h-11 rounded-2xl bg-rmc-gold/15 border border-rmc-gold/30 text-rmc-gold shadow-inner">
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/15 bg-white/5 text-[11px] font-medium uppercase tracking-[0.16em] text-white/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+                  {slide.badge}
+                </span>
               </div>
 
-              {/* RIGHT — image */}
-              <div className="relative min-h-[240px] md:min-h-0 order-1 md:order-2 overflow-hidden">
-                <Image
-                  src={slide.image}
-                  alt={slide.imageAlt}
-                  fill
-                  className="object-cover object-center"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority={current === 0}
-                />
-                {/* Left fade to blend with content side */}
-                <div className="absolute inset-0 hidden md:block bg-gradient-to-r from-rmc-green-light/60 via-transparent to-transparent" />
-                {/* Bottom gradient for mobile */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent md:hidden" />
+              {/* Quran verse — full hero treatment: Arabic + italic gloss + gold reference */}
+              <p
+                className="font-arabic text-rmc-gold-light/90 text-xl md:text-2xl leading-loose mb-2 drop-shadow"
+                lang="ar"
+                dir="rtl"
+              >
+                {slide.verse.ar}
+              </p>
+              <p className="text-white/60 text-xs italic">&ldquo;{slide.verse.en}&rdquo;</p>
+              <p className="text-rmc-gold text-[11px] font-semibold tracking-wide mb-5">
+                — {slide.verse.ref}
+              </p>
 
-                {/* Slide counter */}
-                <div className="absolute top-4 right-4 bg-rmc-green/80 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                  {current + 1} / {SLIDES.length}
-                </div>
+              {/* Headline — sized to sit clearly above the verse, not compete with it */}
+              <h3 className="text-xl md:text-2xl font-bold text-white leading-tight drop-shadow-lg mb-4">
+                {slide.title}
+              </h3>
+
+              {/* Gold hairline divider — centered accent */}
+              <div className="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-rmc-gold/45 to-transparent mb-5" />
+
+              <p className="text-white/75 text-sm md:text-base leading-relaxed mb-7 max-w-md mx-auto">
+                {slide.description}
+              </p>
+
+              {/* Gold stat chip */}
+              <div className="inline-flex items-center gap-3 mb-8 px-4 py-2.5 rounded-2xl border border-rmc-gold/30 bg-rmc-gold/10 backdrop-blur-sm">
+                <p className="text-2xl font-bold text-rmc-gold-light leading-none">{slide.stat.value}</p>
+                <span className="h-7 w-px bg-white/15" />
+                <p className="text-[11px] font-medium text-white/65 leading-tight max-w-[8rem]">
+                  {slide.stat.label}
+                </p>
+              </div>
+
+              {/* CTAs — verbatim hero button grammar (primary green pill + glass secondary) */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href={`/${locale}${slide.ctaHref}`}
+                  className={`group inline-flex items-center justify-center gap-2 px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300 ${ring}`}
+                >
+                  {slide.cta}
+                  <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href={`/${locale}/contact`}
+                  className={`group inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 ${ring}`}
+                >
+                  <Heart className="w-4 h-4 shrink-0" />
+                  Donate
+                </Link>
               </div>
             </div>
           </div>
 
-          {/* Arrow nav */}
-          <button
-            onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow border border-rmc-green/20 flex items-center justify-center text-rmc-green hover:bg-rmc-green hover:text-white transition-all duration-200 hover:scale-110 z-10"
-            aria-label="Previous"
+          {/* Single, unified control row — centered: arrow pair, dot set, pause toggle, counter */}
+          <div
+            className={`mt-9 flex flex-wrap items-center justify-center gap-x-5 gap-y-4 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
+            style={{ animationDelay: '460ms' }}
           >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={next}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow border border-rmc-green/20 flex items-center justify-center text-rmc-green hover:bg-rmc-green hover:text-white transition-all duration-200 hover:scale-110 z-10"
-            aria-label="Next"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Dots + thumbnail strip */}
-        <div className="flex items-center justify-center gap-4 mt-6">
-          {/* Dot indicators */}
-          <div className="flex items-center gap-2">
-            {SLIDES.map((_, i) => (
+            {/* Prev / Next glass arrows — 44px touch targets */}
+            <div className="flex items-center gap-2">
               <button
-                key={i}
-                onClick={() => goTo(i)}
-                className={`rounded-full transition-all duration-300 ${
-                  i === current ? 'w-7 h-2.5 bg-rmc-green' : 'w-2.5 h-2.5 bg-rmc-green/25 hover:bg-rmc-green/50'
-                }`}
-                aria-label={`Slide ${i + 1}`}
-              />
-            ))}
+                onClick={prev}
+                className={`grid place-items-center w-11 h-11 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-white hover:bg-white/15 hover:border-white/40 hover:scale-105 active:scale-100 transition-all duration-300 ${ring}`}
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={next}
+                className={`grid place-items-center w-11 h-11 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-white hover:bg-white/15 hover:border-white/40 hover:scale-105 active:scale-100 transition-all duration-300 ${ring}`}
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Gold/white dot indicators — plain labeled buttons (announced semantics match behavior) */}
+            <div className="flex items-center gap-3" role="group" aria-label="Choose a slide">
+              {SLIDES.map((s, i) => (
+                <button
+                  key={s.badge}
+                  onClick={() => goTo(i)}
+                  aria-label={`${s.badge} (slide ${i + 1} of ${SLIDES.length})`}
+                  aria-current={i === current}
+                  className={`grid place-items-center w-7 h-11 ${ring} rounded-full`}
+                >
+                  <span
+                    className={`block transition-all duration-500 rounded-full ${
+                      i === current ? 'bg-rmc-gold w-7 h-2' : 'bg-white/40 hover:bg-white/60 w-2 h-2'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Pause / play toggle — required for WCAG 2.2.2 moving content */}
+            <button
+              onClick={() => setPaused((p) => !p)}
+              className={`grid place-items-center w-11 h-11 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-white hover:bg-white/15 hover:border-white/40 transition-all duration-300 ${ring}`}
+              aria-label={paused ? 'Play automatic slideshow' : 'Pause automatic slideshow'}
+              aria-pressed={paused}
+            >
+              {paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+            </button>
+
+            {/* Persistent 01 / 04 counter */}
+            <div className="flex items-center gap-2 text-white/55 text-xs font-medium tracking-wide">
+              <span className="text-rmc-gold font-bold tabular-nums">
+                {String(current + 1).padStart(2, '0')}
+              </span>
+              <span className="h-4 w-px bg-white/20" />
+              <span className="tabular-nums">{String(SLIDES.length).padStart(2, '0')}</span>
+            </div>
           </div>
 
-          {/* Thumbnail strip */}
-          <div className="hidden sm:flex items-center gap-2 ml-4 pl-4 border-l border-rmc-green/15">
-            {SLIDES.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                className={`relative w-12 h-8 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                  i === current ? 'border-rmc-green scale-110 shadow-md' : 'border-transparent opacity-40 hover:opacity-70'
-                }`}
-                aria-label={`Go to slide ${i + 1}`}
-              >
-                <Image src={s.image} alt={s.imageAlt} fill className="object-cover" sizes="48px" />
-              </button>
-            ))}
+          {/* Desktop thumbnail strip — centered; always-colored (dimmed when inactive), gold-ring active */}
+          <div
+            className={`hidden md:flex items-center justify-center gap-3 mt-6 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
+            style={{ animationDelay: '560ms' }}
+          >
+            {SLIDES.map((s, i) => {
+              const active = i === current;
+              const ThumbIcon = s.Icon;
+              return (
+                <button
+                  key={s.image}
+                  onClick={() => goTo(i)}
+                  aria-label={`Go to ${s.badge}`}
+                  aria-current={active}
+                  className={`group relative w-28 h-16 rounded-xl overflow-hidden border transition-all duration-300 ${ring} ${
+                    active
+                      ? 'border-rmc-gold/80 ring-2 ring-rmc-gold/40 scale-105 shadow-lg shadow-black/40'
+                      : 'border-white/15 opacity-60 hover:opacity-100 hover:border-white/40'
+                  }`}
+                >
+                  <Image src={s.image} alt="" fill className="object-cover" sizes="112px" />
+                  <span className="absolute inset-0 bg-gradient-to-t from-rmc-green-deep/85 via-rmc-green-deep/20 to-transparent" />
+                  <span className="absolute top-1.5 left-1.5 grid place-items-center w-6 h-6 rounded-lg bg-black/35 backdrop-blur-sm">
+                    <ThumbIcon
+                      className={`w-3.5 h-3.5 drop-shadow ${active ? 'text-rmc-gold-light' : 'text-white/85'}`}
+                    />
+                  </span>
+                  <span className="absolute bottom-1 left-1.5 right-1.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 leading-tight line-clamp-1 text-left">
+                    {s.badge}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
+
+      {/* ── Screen-reader live region — announces slide changes politely ── */}
+      <p ref={liveRef} aria-live="polite" className="sr-only">
+        {`Slide ${current + 1} of ${SLIDES.length}: ${slide.badge}. ${slide.title}`}
+      </p>
+
+      {/* ── Bottom gold hairline — brackets the section symmetrically (Approach 2) ── */}
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent z-10" />
+
+      {/* ── Bottom green-deep blend — seamless seam into the next section ── */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-rmc-green-deep via-rmc-green-deep/40 to-transparent pointer-events-none" />
     </section>
   );
 }

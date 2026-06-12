@@ -1,167 +1,95 @@
 'use client';
 
-import { useState } from 'react';
+import Image from 'next/image';
 import { ExternalLink } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface Partner {
   name: string;
-  initials: string;
-  category: string;
-  website: string;
-  logoUrl: string;
-  fallbackBg: string;
-  fallbackText: string;
-  badgeBg: string;
+  sector: string;
+  logo: string;
+  website?: string;
 }
 
+/* Real RMC partners — names, sectors & logos sourced from the live registry (rwandamuslim.org).
+   Logos are stored locally in /public/partners for reliability. */
 const PARTNERS: Partner[] = [
-  {
-    name: 'Organization of Islamic Cooperation',
-    initials: 'OIC',
-    category: 'International',
-    website: 'https://www.oic-oci.org',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/OIC_Logo_since_2011.svg/240px-OIC_Logo_since_2011.svg.png',
-    fallbackBg: 'bg-emerald-50',
-    fallbackText: 'text-emerald-700',
-    badgeBg: 'bg-emerald-100 text-emerald-700',
-  },
-  {
-    name: 'Islamic Development Bank',
-    initials: 'IsDB',
-    category: 'Finance',
-    website: 'https://www.isdb.org',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Islamic_Development_Bank_Group_logo.svg/240px-Islamic_Development_Bank_Group_logo.svg.png',
-    fallbackBg: 'bg-sky-50',
-    fallbackText: 'text-sky-700',
-    badgeBg: 'bg-sky-100 text-sky-700',
-  },
-  {
-    name: 'Muslim World League',
-    initials: 'MWL',
-    category: 'Religious',
-    website: 'https://www.themwl.org',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Muslim_World_League_logo.svg/240px-Muslim_World_League_logo.svg.png',
-    fallbackBg: 'bg-violet-50',
-    fallbackText: 'text-violet-700',
-    badgeBg: 'bg-violet-100 text-violet-700',
-  },
-  {
-    name: 'Government of Rwanda',
-    initials: 'GoR',
-    category: 'Government',
-    website: 'https://www.gov.rw',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Coat_of_arms_of_Rwanda.svg/200px-Coat_of_arms_of_Rwanda.svg.png',
-    fallbackBg: 'bg-amber-50',
-    fallbackText: 'text-amber-700',
-    badgeBg: 'bg-amber-100 text-amber-700',
-  },
-  {
-    name: 'UNHCR Rwanda',
-    initials: 'UNHCR',
-    category: 'Humanitarian',
-    website: 'https://www.unhcr.org/rw',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/UNHCR-visibility-vertical-Blue-RGB-v2015.jpg/240px-UNHCR-visibility-vertical-Blue-RGB-v2015.jpg',
-    fallbackBg: 'bg-blue-50',
-    fallbackText: 'text-blue-700',
-    badgeBg: 'bg-blue-100 text-blue-700',
-  },
-  {
-    name: 'Rwanda Education Board',
-    initials: 'REB',
-    category: 'Education',
-    website: 'https://www.reb.rw',
-    logoUrl: '',
-    fallbackBg: 'bg-teal-50',
-    fallbackText: 'text-teal-700',
-    badgeBg: 'bg-teal-100 text-teal-700',
-  },
-  {
-    name: 'Africa Muslims Agency',
-    initials: 'AMA',
-    category: 'Development',
-    website: 'https://www.africamuslimsagency.com',
-    logoUrl: '',
-    fallbackBg: 'bg-orange-50',
-    fallbackText: 'text-orange-700',
-    badgeBg: 'bg-orange-100 text-orange-700',
-  },
-  {
-    name: 'Qatar Charity',
-    initials: 'QC',
-    category: 'Charity',
-    website: 'https://www.qcharity.org',
-    logoUrl: '',
-    fallbackBg: 'bg-cyan-50',
-    fallbackText: 'text-cyan-700',
-    badgeBg: 'bg-cyan-100 text-cyan-700',
-  },
+  { name: 'ADEF', sector: 'Education Foundation', logo: '/partners/adef.png' },
+  { name: 'Direct Aid', sector: 'Social & Education', logo: '/partners/direct-aid.png', website: 'https://direct-aid.org/' },
+  { name: 'IERA', sector: 'Dawah', logo: '/partners/iera.png', website: 'https://iera.org/' },
+  { name: 'WAMY', sector: 'Youth Development', logo: '/partners/wamy.jpg', website: 'https://www.wamy.co.uk/' },
 ];
 
-function PartnerCard({
-  partner,
-  delay,
-  visible,
-}: {
-  partner: Partner;
-  delay: number;
-  visible: boolean;
-}) {
-  const [imgError, setImgError] = useState(!partner.logoUrl);
+function PartnerCard({ partner, delay, visible }: { partner: Partner; delay: number; visible: boolean }) {
+  const linked = Boolean(partner.website);
 
-  return (
-    <a
-      href={partner.website}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group relative flex flex-col items-center gap-4 p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-rmc-green/20 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {/* Hover glow overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-rmc-green/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  const cardClass = `group relative flex h-full flex-col items-center rounded-3xl border border-gray-200/70 bg-white px-6 py-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.16)] transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_60px_-24px_rgba(26,122,74,0.28)] ${
+    visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+  }`;
 
-      {/* External link badge */}
-      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0">
-        <div className="w-6 h-6 rounded-full bg-rmc-green/10 flex items-center justify-center">
-          <ExternalLink className="w-3 h-3 text-rmc-green" />
-        </div>
-      </div>
+  const content = (
+    <>
+      {/* Gold top accent — appears on hover */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-0.5 rounded-t-3xl bg-gradient-to-r from-rmc-gold to-rmc-gold-light opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+      />
 
-      {/* Logo area */}
-      <div
-        className={`relative w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-300 shadow-sm ${
-          imgError ? partner.fallbackBg : 'bg-gray-50'
-        }`}
-      >
-        {imgError ? (
-          <span className={`text-base font-extrabold tracking-tight ${partner.fallbackText}`}>
-            {partner.initials}
-          </span>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={partner.logoUrl}
-            alt={`${partner.name} logo`}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            className="w-16 h-16 object-contain"
-            onError={() => setImgError(true)}
-          />
-        )}
+      {/* External-link hint — only for partners with a website */}
+      {linked && (
+        <span
+          aria-hidden
+          className="absolute right-3.5 top-3.5 grid place-items-center w-6 h-6 rounded-full bg-rmc-green/10 text-rmc-green opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0"
+        >
+          <ExternalLink className="w-3 h-3" />
+        </span>
+      )}
+
+      {/* Logo — fixed box so every partner aligns regardless of aspect ratio */}
+      <div className="relative flex h-20 w-full items-center justify-center md:h-24">
+        <Image
+          src={partner.logo}
+          alt={`${partner.name} logo`}
+          fill
+          sizes="(max-width: 640px) 40vw, 220px"
+          className="object-contain p-1 transition-transform duration-500 motion-reduce:transform-none group-hover:scale-105"
+        />
       </div>
 
       {/* Name */}
-      <p className="text-xs font-semibold text-gray-700 text-center leading-snug group-hover:text-rmc-green transition-colors duration-200 line-clamp-2 flex-1">
+      <p className="mt-6 text-sm font-bold uppercase tracking-wide text-gray-900 transition-colors duration-200 group-hover:text-rmc-green">
         {partner.name}
       </p>
 
-      {/* Category badge */}
-      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${partner.badgeBg}`}>
-        {partner.category}
-      </span>
-    </a>
+      {/* Sector */}
+      <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
+        {partner.sector}
+      </p>
+    </>
+  );
+
+  const ring =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white';
+
+  if (linked) {
+    return (
+      <a
+        href={partner.website}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Visit ${partner.name} (opens in a new tab)`}
+        className={`${cardClass} ${ring}`}
+        style={{ transitionDelay: `${delay}ms` }}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div className={cardClass} style={{ transitionDelay: `${delay}ms` }}>
+      {content}
+    </div>
   );
 }
 
@@ -170,54 +98,55 @@ export function PartnersSection() {
   const { ref: gridRef, visible: gridVisible } = useScrollReveal(0.05);
 
   return (
-    <section className="relative bg-gray-50/80 py-20 md:py-24 overflow-hidden">
-      {/* Top/bottom separators */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-rmc-green-light/20 to-white py-20 md:py-24">
+      {/* Light Islamic geometry + symmetric gold hairline seams */}
+      <div aria-hidden className="absolute inset-0 pattern-light opacity-50" />
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
 
-      {/* Ambient decoration */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rmc-green/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-rmc-gold/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-[100px] pointer-events-none" />
+      {/* Airy brand glow anchors */}
+      <div aria-hidden className="absolute -top-24 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-rmc-green-light/50 blur-3xl" />
+      <div aria-hidden className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-rmc-gold/5 blur-3xl" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
           ref={titleRef}
-          className={`text-center mb-14 transition-all duration-700 ${
+          className={`mx-auto mb-14 max-w-2xl text-center transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <div className="inline-flex items-center gap-2 bg-rmc-green/10 text-rmc-green px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-green animate-pulse" />
+          <span className="inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
             Our Partners
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Trusted Collaborators</h2>
-          <p className="text-gray-400 mt-3 max-w-xl mx-auto text-sm md:text-base">
-            RMC works alongside leading international, regional, and local organizations to serve
-            Rwanda's Muslim community.
+          </span>
+
+          <h2 className="mt-7 text-3xl font-bold text-gray-900 md:text-[2.6rem] md:leading-tight">
+            Trusted <span className="title-underline">Collaborators</span>
+          </h2>
+
+          <p className="mx-auto mt-9 max-w-xl text-sm leading-relaxed text-gray-500 md:text-base">
+            RMC works alongside leading international and regional organizations to educate, uplift,
+            and serve the Muslim community of Rwanda.
           </p>
         </div>
 
-        {/* Partners grid — 4 cols → 2 rows */}
-        <div
-          ref={gridRef}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-5"
-        >
+        {/* Partner logo wall */}
+        <div ref={gridRef} className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
           {PARTNERS.map((partner, i) => (
-            <PartnerCard key={partner.name} partner={partner} delay={i * 80} visible={gridVisible} />
+            <PartnerCard key={partner.name} partner={partner} delay={i * 90} visible={gridVisible} />
           ))}
         </div>
 
         {/* Footer note */}
         <p
-          className={`text-center text-sm text-gray-400 mt-10 transition-all duration-700 delay-700 ${
+          className={`mt-12 text-center text-sm text-gray-500 transition-all duration-700 delay-500 motion-reduce:transition-none ${
             titleVisible ? 'opacity-100' : 'opacity-0'
           }`}
         >
           Interested in partnering with RMC?{' '}
-          <a href="mailto:info@rmc.rw" className="text-rmc-green hover:underline font-semibold">
-            Contact us
+          <a href="mailto:info@rwandamuslim.org" className="font-semibold text-rmc-green hover:underline">
+            Get in touch
           </a>
         </p>
       </div>
