@@ -119,7 +119,7 @@ export function AreasOfInterventionSection() {
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-rmc-green-light/30 to-white py-20 md:py-28">
+    <section className="relative overflow-hidden bg-transparent py-20 md:py-28">
       {/* Light Islamic geometry + symmetric gold hairline seams to the darker neighbouring sections */}
       <div aria-hidden className="absolute inset-0 pattern-light opacity-60" />
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
