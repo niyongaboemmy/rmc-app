@@ -34,6 +34,18 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.AUDIT_LOG_VIEW,
 ];
 
+const MARRIAGE_OFFICER_PERMISSIONS: Permission[] = [
+  Permission.MARRIAGE_VIEW,
+  Permission.MARRIAGE_MANAGE,
+  Permission.MARRIAGE_APPROVE,
+  Permission.MARRIAGE_ASSIGN_IMAM,
+  Permission.MARRIAGE_CERTIFICATE,
+  Permission.MARRIAGE_REPORTS,
+  Permission.MEMBERS_VIEW,
+  Permission.MOSQUES_VIEW,
+  Permission.CONTENT_VIEW,
+];
+
 const DEFAULT_ROLES = [
   {
     name: 'Super Admin',
@@ -55,6 +67,13 @@ const DEFAULT_ROLES = [
     description: 'Day-to-day operations: members, content, prayer times',
     permissions: OPERATOR_PERMISSIONS,
     isSystem: true,
+  },
+  {
+    name: 'Marriage Officer',
+    slug: 'marriage_officer',
+    description: 'Manages marriage applications, scheduling, and certificates',
+    permissions: MARRIAGE_OFFICER_PERMISSIONS,
+    isSystem: false,
   },
   {
     name: 'Member',

@@ -45,6 +45,14 @@ export enum Permission {
   REPORTS_VIEW = 'reports:view',
   REPORTS_EXPORT = 'reports:export',
 
+  // ── Marriage Service ──────────────────────────────────────────────
+  MARRIAGE_VIEW = 'marriage:view',
+  MARRIAGE_MANAGE = 'marriage:manage',
+  MARRIAGE_APPROVE = 'marriage:approve',
+  MARRIAGE_ASSIGN_IMAM = 'marriage:assign_imam',
+  MARRIAGE_CERTIFICATE = 'marriage:certificate',
+  MARRIAGE_REPORTS = 'marriage:reports',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

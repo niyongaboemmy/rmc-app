@@ -12,9 +12,19 @@ interface Toast {
 
 interface ToastContextValue {
   showToast: (message: string, type?: ToastType) => void;
+  success: (message: string) => void;
+  error: (message: string) => void;
+  warning: (message: string) => void;
+  info: (message: string) => void;
 }
 
-const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
+const ToastContext = createContext<ToastContextValue>({
+  showToast: () => {},
+  success: () => {},
+  error: () => {},
+  warning: () => {},
+  info: () => {},
+});
 
 export function useToast() {
   return useContext(ToastContext);
@@ -52,8 +62,13 @@ export function ToastProvider({
     }, 4000);
   }, []);
 
+  const success = useCallback((message: string) => showToast(message, 'success'), [showToast]);
+  const error   = useCallback((message: string) => showToast(message, 'error'),   [showToast]);
+  const warning = useCallback((message: string) => showToast(message, 'warning'), [showToast]);
+  const info    = useCallback((message: string) => showToast(message, 'info'),    [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
       {children}
       <div className={`fixed z-50 flex flex-col gap-2 ${positionClasses[position] ?? positionClasses['top-right']}`}>
         {toasts.map((toast) => (

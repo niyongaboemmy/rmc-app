@@ -27,6 +27,7 @@ const mosques_module_1 = require("./mosques/mosques.module");
 const prayer_times_module_1 = require("./prayer-times/prayer-times.module");
 const members_module_1 = require("./members/members.module");
 const public_module_1 = require("./public/public.module");
+const marriage_module_1 = require("./marriage/marriage.module");
 const jwt_auth_guard_1 = require("./common/guards/jwt-auth.guard");
 const roles_guard_1 = require("./common/guards/roles.guard");
 const permissions_guard_1 = require("./common/guards/permissions.guard");
@@ -60,6 +61,7 @@ exports.AppModule = AppModule = __decorate([
             prayer_times_module_1.PrayerTimesModule,
             members_module_1.MembersModule,
             public_module_1.PublicModule,
+            marriage_module_1.MarriageModule,
         ],
         controllers: [app_controller_1.AppController, health_controller_1.HealthController],
         providers: [
