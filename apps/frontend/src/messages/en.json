@@ -135,11 +135,25 @@
     "subtitle": "Rwanda Muslim Community — Building a United Ummah",
     "mission": {
       "title": "Our Mission",
-      "text": "To unite and serve the Muslim community in Rwanda through digital innovation, promoting Islamic values, education, and social welfare."
+      "items": {
+        "i1": {
+          "label": "Community Support",
+          "text": "Offering religious resources, such as the translated Quran, free of charge to the public."
+        }
+      }
     },
     "vision": {
       "title": "Our Vision",
-      "text": "A digitally empowered, unified, and prosperous Muslim community contributing to the development of Rwanda."
+      "items": {
+        "i1": {
+          "label": "Spiritual Guidance",
+          "text": "Providing a “path and guidance” for the inhabitants of the world through the teachings of the Quran."
+        },
+        "i2": {
+          "label": "Educational Advancement",
+          "text": "Collaborating with international partners like the Africa Development and Education Foundation (ADEF) to improve religious literacy."
+        }
+      }
     },
     "history": {
       "title": "Our History",
@@ -147,6 +161,7 @@
     },
     "values": {
       "title": "Core Values",
+      "subtitle": "The principles that guide everything we do as a community",
       "unity": "Unity",
       "unityDesc": "Bringing Muslims together across all regions of Rwanda",
       "education": "Education",
@@ -160,20 +175,28 @@
       "title": "Leadership",
       "subtitle": "Guided by dedicated leaders committed to serving the community",
       "m1": {
-        "role": "Mufti / President",
-        "desc": "Provides spiritual guidance and leads the strategic direction of the community."
+        "name": "Sheikh SINDAYIGAYA Musa",
+        "role": "Mufti of Rwanda"
       },
       "m2": {
-        "role": "Vice President",
-        "desc": "Supports leadership and oversees coordination across provinces and districts."
+        "name": "Sheikh MUSHUMBA Yunnus",
+        "role": "Deputy Mufti of Rwanda"
       },
       "m3": {
-        "role": "Secretary General",
-        "desc": "Manages administration, communication, and day-to-day operations."
+        "name": "Sheikh SEGISEKURE Ibrahim",
+        "role": "Qadhwi of Rwanda"
       },
       "m4": {
-        "role": "Head of Programs",
-        "desc": "Leads educational, social, and development initiatives nationwide."
+        "name": "Sheikh NZANAHAYO Qassim",
+        "role": "President of The Majlisi Shuyukh"
+      },
+      "m5": {
+        "name": "Sheikh MBARUSHIMANA Suleiman",
+        "role": "Advisor to the Mufti of Rwanda"
+      },
+      "m6": {
+        "name": "Mr. SIBOMANA Salim",
+        "role": "Executive Secretary"
       }
     },
     "areas": {
@@ -189,18 +212,20 @@
       "socialDesc": "Support for families in need, orphans, and vulnerable members.",
       "financeDesc": "Zakat collection and distribution, and community financial support.",
       "healthDesc": "Health awareness, support programs, and access to care.",
-      "youthDesc": "Youth empowerment, leadership, and community engagement programs."
+      "youthDesc": "Youth empowerment, leadership, and community engagement programs.",
+      "subtitle": "The core domains through which we serve and uplift the community"
     },
     "whoWeAre": {
       "badge": "Who We Are",
       "heading": "One Ummah,",
       "headingHighlight": "United Across Rwanda",
-      "p1": "The Rwanda Muslim Community (RMC) is the national umbrella organization representing and serving Muslims across all provinces of Rwanda. We coordinate religious, educational, and social services for a community of over 500,000 people.",
-      "p2": "Rooted in the principles of Islamic brotherhood, RMC works hand in hand with mosques, schools, and local leaders to build a thriving, self-reliant, and digitally empowered Ummah.",
+      "p1": "The Rwanda Muslim Community (RMC), formerly AMUR, represents Muslims in Rwanda, whose history spans over a century. Islam was introduced in the late 19th century by Swahili traders from the East African coast, spreading gradually among urban and marginalized communities. During German and Belgian colonial rule, Muslims faced discrimination, exclusion from education and employment, and social marginalization.",
+      "p2": "After independence in 1962, Muslims remained a small minority and largely stayed away from ethnic divisions, emphasizing religious unity. During the Rwandan Genocide, Muslim leaders condemned violence, promoted unity, and mosques served as places of refuge, shaping a positive perception of Islam afterward.",
       "point1": "Present in all 5 provinces and 30 districts",
       "point2": "A network of 320+ registered mosques",
       "point3": "Faith, education, and welfare under one roof",
-      "point4": "Transparent, community-driven governance"
+      "point4": "Transparent, community-driven governance",
+      "p3": "In the post-genocide period, Islam experienced steady growth due to increased freedom, equality, and openness, allowing Muslims to share their faith widely. Today, Muslims make up about 5–10% of Rwanda’s population, are well integrated into society, and actively contribute to interfaith dialogue and national unity. The community is currently led by Mufti Sheikh SINDAYIGAYA Musa, who oversees religious affairs and representation."
     },
     "story": {
       "title": "Our Story",
@@ -234,6 +259,67 @@
     "programs": {
       "title": "Programs & Activities",
       "subtitle": "How we serve and uplift the community every day"
+    },
+    "beliefs": {
+      "title": "Our Beliefs & Doctrine",
+      "subtitle": "RMC follows mainstream Sunni Islam, grounded in the Qur'an and the authentic Sunnah",
+      "tawhid": {
+        "title": "Oneness of Allah",
+        "text": "We affirm the absolute oneness of Allah (Tawhid) — the foundation of Islamic faith and worship."
+      },
+      "quran": {
+        "title": "The Holy Qur’an",
+        "text": "The Qur’an is the literal word of Allah and our primary source of guidance in all matters of life."
+      },
+      "sunnah": {
+        "title": "The Prophetic Sunnah",
+        "text": "We follow the authentic teachings and example of the Prophet Muhammad ﷺ as preserved in the Sunnah."
+      },
+      "pillars": {
+        "title": "The Five Pillars",
+        "text": "We uphold and promote the Five Pillars of Islam: Shahada, Salah, Zakat, Sawm, and Hajj."
+      },
+      "iman": {
+        "title": "Articles of Faith",
+        "text": "We believe in Allah, His angels, His books, His messengers, the Last Day, and divine decree."
+      },
+      "wasatiyyah": {
+        "title": "Moderation & Unity",
+        "text": "Following Ahlus-Sunnah wal-Jama'ah, we embrace moderation, tolerance, and unity, rejecting extremism."
+      }
+    },
+    "activities": {
+      "title": "Programs & Activities",
+      "subtitle": "The initiatives we run year-round to serve and uplift the community",
+      "ramadan": {
+        "title": "Ramadan & Iftar",
+        "text": "Community iftars, Taraweeh coordination, and food distribution throughout the holy month."
+      },
+      "hajj": {
+        "title": "Hajj & Umrah",
+        "text": "Guidance, registration, and logistical support for pilgrims travelling to the holy sites."
+      },
+      "hifdh": {
+        "title": "Qur’an Memorization",
+        "text": "Hifdh classes and tajweed programs for children and adults across our centers."
+      },
+      "dawah": {
+        "title": "Imam & Da’wah Training",
+        "text": "Capacity building for imams, preachers, and volunteers leading our mosques and outreach."
+      },
+      "zakat": {
+        "title": "Zakat & Sadaqah Drives",
+        "text": "Organized collection and transparent distribution of Zakat and charity to those in need."
+      },
+      "youthcamp": {
+        "title": "Youth Camps & Conferences",
+        "text": "Leadership camps, seminars, and conferences empowering the next generation of the Ummah."
+      }
+    },
+    "gallery": {
+      "title": "From Our Community",
+      "subtitle": "Moments from gatherings, programs, and events across Rwanda",
+      "cta": "View Full Gallery"
     }
   },
   "services": {
@@ -328,9 +414,6 @@
         "ctaTitle": "Ready to begin your Nikah?",
         "ctaSubtitle": "Register as an RMC member to start your marriage application and book your ceremony.",
         "ctaStart": "Start application",
-<<<<<<< HEAD
-        "ctaContact": "Contact us"
-=======
         "ctaContact": "Contact us",
         "fees": {
           "title": "Service fees",
@@ -343,7 +426,6 @@
           "clause": "The applicable fee must be paid in full before the official marriage certificate is issued. The fee is determined solely by the location of the ceremony — 30,000 RWF within a mosque and 200,000 RWF at any other venue."
         },
         "checkStatus": "Check application status"
->>>>>>> 7fe79b2 (work on about ,services pages ,marriage application form :)
       },
       "apply": {
         "title": "Marriage Application",
@@ -378,9 +460,6 @@
         "submit": "Submit application",
         "successTitle": "Application submitted",
         "successText": "Thank you. RMC has received your marriage application and will contact you to confirm the details and schedule your Nikah.",
-<<<<<<< HEAD
-        "successAnother": "Submit another application"
-=======
         "successAnother": "Submit another application",
         "venueSection": "Ceremony location",
         "venueNote": "Your fee depends on where the Nikah takes place.",
@@ -447,7 +526,6 @@
         "backToService": "Back to Marriage Services",
         "checkAnother": "Check another application",
         "location": "Location"
->>>>>>> 7fe79b2 (work on about ,services pages ,marriage application form :)
       }
     },
     "funeral": {
@@ -478,11 +556,25 @@
   "contact": {
     "title": "Contact Us",
     "subtitle": "Get in touch with the Rwanda Muslim Community",
-    "findMosque": "Find Nearest Mosque",
+    "findMosque": "Find a Mosque Near You",
+    "findMosqueSubtitle": "Select your province and district to locate mosques near you on the map.",
+    "province": "Province",
+    "district": "District",
+    "selectProvince": "Select Province",
+    "selectDistrict": "Select District",
+    "directions": "Get Directions",
+    "noMosques": "No mosques found in this area.",
+    "communicationTitle": "Get in Touch",
+    "communicationSubtitle": "Reach us directly or send a message — we'll respond as soon as we can.",
+    "socialTitle": "Follow Us",
+    "socialSubtitle": "Stay connected with the Rwanda Muslim Community on social media.",
     "address": "Address",
     "phone": "Phone",
     "email": "Email",
+    "hours": "Office Hours",
+    "hoursValue": "Mon – Fri, 8:00 AM – 5:00 PM",
     "form": {
+      "heading": "Send us a message",
       "name": "Your Name",
       "email": "Email Address",
       "subject": "Subject",
@@ -624,5 +716,32 @@
         "about": "About RMC"
       }
     }
+  },
+  "galleryPage": {
+    "title": "Gallery",
+    "subtitle": "Moments of worship, service, learning, and community life across Rwanda",
+    "all": "All",
+    "viewAll": "View all",
+    "back": "Back to gallery",
+    "categories": {
+      "prayer": "Prayer & Worship Events",
+      "charity": "Community Services & Charity",
+      "religious": "Religious Events",
+      "education": "Education & Learning",
+      "community": "Community Life & Gatherings",
+      "mosques": "Mosques & Facilities"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "News, stories, and updates from the Rwanda Muslim Community",
+    "latest": "Latest",
+    "readMore": "Read article",
+    "back": "Back to blog",
+    "more": "More articles",
+    "all": "All",
+    "minRead": "{count} min read",
+    "search": "Search articles",
+    "noResults": "No articles found"
   }
 }
