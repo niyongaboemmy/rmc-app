@@ -9,7 +9,8 @@ exports.default = (0, config_1.registerAs)('database', () => ({
     migrationsRun: false,
     synchronize: false,
     logging: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['error'],
-    ssl: process.env.NODE_ENV === 'production'
+    ssl: process.env.DATABASE_SSL === 'true' ||
+        process.env.NODE_ENV === 'production'
         ? { rejectUnauthorized: false }
         : false,
     extra: { max: 10 },
