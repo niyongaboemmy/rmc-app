@@ -36,7 +36,7 @@ export default async function AboutPage() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
 
@@ -66,7 +66,7 @@ export default async function AboutPage() {
         {/* ===================================================================
             2. WHO WE ARE — intro + image with overlaid key facts
         =================================================================== */}
-        <section className="py-20 px-4 bg-white overflow-hidden">
+        <section className="py-20 px-4 bg-transparent overflow-hidden">
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left — image with stat badge */}
             <div className="relative">
@@ -134,7 +134,7 @@ export default async function AboutPage() {
         {/* ===================================================================
             4. CORE VALUES — icon grid
         =================================================================== */}
-        <section className="py-20 px-4 bg-white">
+        <section className="py-20 px-4 bg-transparent">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900">{t('values.title')}</h2>
@@ -205,7 +205,7 @@ export default async function AboutPage() {
         {/* ===================================================================
             6. LEADERSHIP — role cards
         =================================================================== */}
-        <section className="py-20 px-4 bg-white">
+        <section className="py-20 px-4 bg-transparent">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('leadership.title')}</h2>

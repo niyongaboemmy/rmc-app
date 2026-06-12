@@ -11,7 +11,7 @@ export default async function MarriageApplyPage({ params: { locale } }: { params
   const points = ['p1', 'p2', 'p3'] as const;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main className="bg-gray-50/60 pattern-light">
         <div className="max-w-7xl mx-auto px-4 py-10 lg:py-16">

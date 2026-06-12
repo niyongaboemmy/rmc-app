@@ -24,7 +24,7 @@ export default async function MarriageServicePage({ params: { locale } }: { para
   const t = await getTranslations('services.marriage');
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
         {/* ===================================================================
@@ -60,7 +60,7 @@ export default async function MarriageServicePage({ params: { locale } }: { para
         {/* ===================================================================
             OVERVIEW
         =================================================================== */}
-        <section className="py-20 px-4 bg-white overflow-hidden">
+        <section className="py-20 px-4 bg-transparent overflow-hidden">
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-xl aspect-[4/3]">
@@ -137,7 +137,7 @@ export default async function MarriageServicePage({ params: { locale } }: { para
         {/* ===================================================================
             PROCESS
         =================================================================== */}
-        <section className="py-20 px-4 bg-white">
+        <section className="py-20 px-4 bg-transparent">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-14">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.processTitle')}</h2>
@@ -192,7 +192,7 @@ export default async function MarriageServicePage({ params: { locale } }: { para
         {/* ===================================================================
             FAQ
         =================================================================== */}
-        <section className="py-20 px-4 bg-white">
+        <section className="py-20 px-4 bg-transparent">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.faqTitle')}</h2>
