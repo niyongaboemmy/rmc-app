@@ -10,9 +10,7 @@ const STORAGE_KEY = 'rmc_admin_sidebar_collapsed';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Desktop: collapsed icon-rail vs full sidebar
   const [collapsed, setCollapsed] = useState(false);
-  // Mobile: off-canvas drawer open/closed
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -57,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-latin">
 
-      {/* ── Mobile backdrop ── */}
+      {/* Mobile backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/40 lg:hidden"
@@ -66,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
       )}
 
-      {/* ── Sidebar ── */}
+      {/* Sidebar */}
       <AdminSidebar
         collapsed={collapsed}
         onToggle={toggleDesktop}
@@ -74,12 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         onMobileClose={() => setMobileOpen(false)}
       />
 
-      {/* ── Main content ── */}
-      {/*
-        Mobile  : no left margin (sidebar is overlay)
-        lg collapsed : ml-16
-        lg expanded  : ml-60
-      */}
+      {/* Main content — offset by sidebar width */}
       <div
         className={`
           flex flex-col flex-1 min-w-0 transition-[margin] duration-200 ease-in-out

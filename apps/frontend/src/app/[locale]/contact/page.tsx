@@ -5,6 +5,7 @@ import { MapPin, Phone, Mail, CheckCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { Reveal } from '@/components/Reveal';
 import { MosqueFinder } from '@/components/contact/MosqueFinder';
 
 export default function ContactPage() {
@@ -19,7 +20,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
         {/* Header */}
@@ -33,11 +34,12 @@ export default function ContactPage() {
         <section className="py-16 px-4">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12">
             {/* Contact form */}
-            <div>
+            <Reveal>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a message</h2>
               {submitted ? (
                 <div className="p-6 bg-green-50 border border-green-200 rounded-xl text-green-800">
-                  <CheckCircle className="inline w-5 h-5 mr-1.5 text-green-600" />{t('form.success')}
+                  <CheckCircle className="inline w-5 h-5 mr-1.5 text-green-600" />
+                  {t('form.success')}
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -47,24 +49,32 @@ export default function ContactPage() {
                     { key: 'subject', type: 'text', label: t('form.subject') },
                   ].map(({ key, type, label }) => (
                     <div key={key}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {label}
+                      </label>
                       <input
                         type={type}
                         required
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                         value={(formState as Record<string, string>)[key]}
-                        onChange={(e) => setFormState((prev) => ({ ...prev, [key]: e.target.value }))}
+                        onChange={(e) =>
+                          setFormState((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
                       />
                     </div>
                   ))}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.message')}</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('form.message')}
+                    </label>
                     <textarea
                       required
                       rows={5}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none resize-none"
                       value={formState.message}
-                      onChange={(e) => setFormState((prev) => ({ ...prev, message: e.target.value }))}
+                      onChange={(e) =>
+                        setFormState((prev) => ({ ...prev, message: e.target.value }))
+                      }
                     />
                   </div>
                   <button
@@ -85,25 +95,27 @@ export default function ContactPage() {
                 ].map((item) => {
                   const ItemIcon = item.icon;
                   return (
-                  <div key={item.label} className="flex items-start gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
-                      <ItemIcon className="w-4 h-4 text-rmc-green" />
-                    </span>
-                    <div>
-                      <div className="text-sm font-medium text-gray-500">{item.label}</div>
-                      <div className="text-gray-900">{item.value}</div>
+                    <div key={item.label} className="flex items-start gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
+                        <ItemIcon className="w-4 h-4 text-rmc-green" />
+                      </span>
+                      <div>
+                        <div className="text-sm font-medium text-gray-500">{item.label}</div>
+                        <div className="text-gray-900">{item.value}</div>
+                      </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
-            </div>
+            </Reveal>
 
             {/* Mosque finder */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('findMosque')}</h2>
-              <MosqueFinder />
-            </div>
+            <Reveal delay={120}>
+              <div id="find-mosque" className="scroll-mt-28">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('findMosque')}</h2>
+                <MosqueFinder />
+              </div>
+            </Reveal>
           </div>
         </section>
       </main>
