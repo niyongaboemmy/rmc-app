@@ -328,7 +328,18 @@
         "ctaTitle": "Ready to begin your Nikah?",
         "ctaSubtitle": "Register as an RMC member to start your marriage application and book your ceremony.",
         "ctaStart": "Start application",
-        "ctaContact": "Contact us"
+        "ctaContact": "Contact us",
+        "fees": {
+          "title": "Service fees",
+          "subtitle": "The marriage service fee depends on where the ceremony is held.",
+          "mosqueLabel": "Ceremony held in a mosque",
+          "mosqueAmount": "30,000 RWF",
+          "outsideLabel": "Ceremony held outside a mosque",
+          "outsideAmount": "200,000 RWF",
+          "clauseTitle": "Payment clause",
+          "clause": "The applicable fee must be paid in full before the official marriage certificate is issued. The fee is determined solely by the location of the ceremony — 30,000 RWF within a mosque and 200,000 RWF at any other venue."
+        },
+        "checkStatus": "Check application status"
       },
       "apply": {
         "title": "Marriage Application",
@@ -363,7 +374,72 @@
         "submit": "Submit application",
         "successTitle": "Application submitted",
         "successText": "Thank you. RMC has received your marriage application and will contact you to confirm the details and schedule your Nikah.",
-        "successAnother": "Submit another application"
+        "successAnother": "Submit another application",
+        "venueSection": "Ceremony location",
+        "venueNote": "Your fee depends on where the Nikah takes place.",
+        "venueMosqueTitle": "At a mosque",
+        "venueOutsideTitle": "Outside a mosque",
+        "feeMosque": "30,000 RWF",
+        "feeOutside": "200,000 RWF",
+        "paymentSection": "Payment method",
+        "paymentNote": "The fee must be paid in full before your certificate is issued.",
+        "payMomo": "Mobile Money",
+        "payMomoSub": "MTN or Airtel Money",
+        "payBank": "Bank transfer",
+        "payBankSub": "Pay to the RMC bank account",
+        "payCash": "Cash",
+        "payCashSub": "Pay at the RMC office",
+        "amountDue": "Amount due",
+        "amountSelectVenue": "Select a location to see the fee",
+        "checkStatus": "Check application status",
+        "applicationIdLabel": "Your application ID",
+        "idSavePrompt": "Save this ID — you'll need it to check your application status.",
+        "copyId": "Copy",
+        "copiedId": "Copied",
+        "checkStatusBtn": "Check status",
+        "province": "Province",
+        "district": "District",
+        "provincePlaceholder": "Select a province",
+        "districtPlaceholder": "Select a district",
+        "provinces": {
+          "kigali": "Kigali City",
+          "north": "Northern Province",
+          "south": "Southern Province",
+          "east": "Eastern Province",
+          "west": "Western Province"
+        }
+      },
+      "status": {
+        "title": "Check application status",
+        "subtitle": "Enter your application ID to see the latest status of your marriage application.",
+        "idLabel": "Application ID",
+        "idPlaceholder": "RMC-MR-XXXXXX",
+        "checkButton": "Check status",
+        "notFoundTitle": "No application found",
+        "notFoundText": "We couldn't find an application with that ID. Please check the ID and try again.",
+        "detailsTitle": "Application details",
+        "submittedOn": "Submitted on",
+        "couple": "Couple",
+        "venue": "Ceremony location",
+        "fee": "Service fee",
+        "payment": "Payment method",
+        "officiant": "Officiant",
+        "currentStatus": "Current status",
+        "stages": {
+          "submitted": "Submitted",
+          "review": "Under review",
+          "approved": "Approved",
+          "ready": "Certificate ready"
+        },
+        "stageDesc": {
+          "submitted": "Your application has been received.",
+          "review": "RMC and the imam are reviewing your application.",
+          "approved": "Your application is approved — your Nikah can be scheduled.",
+          "ready": "Your marriage certificate is ready for collection."
+        },
+        "backToService": "Back to Marriage Services",
+        "checkAnother": "Check another application",
+        "location": "Location"
       }
     },
     "funeral": {

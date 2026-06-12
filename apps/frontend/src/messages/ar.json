@@ -328,7 +328,18 @@
         "ctaTitle": "هل أنت مستعد لبدء نكاحك؟",
         "ctaSubtitle": "سجّل كعضو في RMC لبدء طلب الزواج وحجز موعد مراسمك.",
         "ctaStart": "ابدأ الطلب",
-        "ctaContact": "اتصل بنا"
+        "ctaContact": "اتصل بنا",
+        "fees": {
+          "title": "رسوم الخدمة",
+          "subtitle": "تعتمد رسوم خدمة الزواج على مكان إقامة المراسم.",
+          "mosqueLabel": "إقامة المراسم في المسجد",
+          "mosqueAmount": "30,000 فرنك رواندي",
+          "outsideLabel": "إقامة المراسم خارج المسجد",
+          "outsideAmount": "200,000 فرنك رواندي",
+          "clauseTitle": "بند الدفع",
+          "clause": "يجب دفع الرسوم المستحقة كاملةً قبل إصدار شهادة الزواج الرسمية. تُحدَّد الرسوم وفقًا لمكان المراسم فقط — 30,000 فرنك رواندي داخل المسجد و200,000 فرنك رواندي في أي مكان آخر."
+        },
+        "checkStatus": "تحقق من حالة الطلب"
       },
       "apply": {
         "title": "طلب الزواج",
@@ -363,7 +374,72 @@
         "submit": "إرسال الطلب",
         "successTitle": "تم إرسال الطلب",
         "successText": "شكرًا لك. استلمت RMC طلب زواجك وستتواصل معك لتأكيد التفاصيل وتحديد موعد نكاحك.",
-        "successAnother": "إرسال طلب آخر"
+        "successAnother": "إرسال طلب آخر",
+        "venueSection": "مكان المراسم",
+        "venueNote": "تعتمد رسومك على مكان إقامة النكاح.",
+        "venueMosqueTitle": "في المسجد",
+        "venueOutsideTitle": "خارج المسجد",
+        "feeMosque": "30,000 فرنك رواندي",
+        "feeOutside": "200,000 فرنك رواندي",
+        "paymentSection": "طريقة الدفع",
+        "paymentNote": "يجب دفع الرسوم كاملةً قبل إصدار شهادتك.",
+        "payMomo": "المحفظة الإلكترونية",
+        "payMomoSub": "MTN أو Airtel Money",
+        "payBank": "تحويل بنكي",
+        "payBankSub": "ادفع إلى حساب RMC البنكي",
+        "payCash": "نقدًا",
+        "payCashSub": "ادفع في مكتب RMC",
+        "amountDue": "المبلغ المستحق",
+        "amountSelectVenue": "اختر المكان لعرض الرسوم",
+        "checkStatus": "تحقق من حالة الطلب",
+        "applicationIdLabel": "رقم طلبك",
+        "idSavePrompt": "احفظ هذا الرقم — ستحتاجه للتحقق من حالة طلبك.",
+        "copyId": "نسخ",
+        "copiedId": "تم النسخ",
+        "checkStatusBtn": "تحقق من الحالة",
+        "province": "المقاطعة",
+        "district": "المنطقة",
+        "provincePlaceholder": "اختر المقاطعة",
+        "districtPlaceholder": "اختر المنطقة",
+        "provinces": {
+          "kigali": "مدينة كيغالي",
+          "north": "المقاطعة الشمالية",
+          "south": "المقاطعة الجنوبية",
+          "east": "المقاطعة الشرقية",
+          "west": "المقاطعة الغربية"
+        }
+      },
+      "status": {
+        "title": "تحقق من حالة الطلب",
+        "subtitle": "أدخل رقم طلبك لمعرفة آخر حالة لطلب زواجك.",
+        "idLabel": "رقم الطلب",
+        "idPlaceholder": "RMC-MR-XXXXXX",
+        "checkButton": "تحقق من الحالة",
+        "notFoundTitle": "لم يُعثر على طلب",
+        "notFoundText": "لم نتمكن من العثور على طلب بهذا الرقم. يرجى التحقق من الرقم والمحاولة مرة أخرى.",
+        "detailsTitle": "تفاصيل الطلب",
+        "submittedOn": "تم الإرسال في",
+        "couple": "الزوجان",
+        "venue": "مكان المراسم",
+        "fee": "رسوم الخدمة",
+        "payment": "طريقة الدفع",
+        "officiant": "عاقد القِران",
+        "currentStatus": "الحالة الحالية",
+        "stages": {
+          "submitted": "تم الإرسال",
+          "review": "قيد المراجعة",
+          "approved": "تمت الموافقة",
+          "ready": "الشهادة جاهزة"
+        },
+        "stageDesc": {
+          "submitted": "تم استلام طلبك.",
+          "review": "تقوم RMC والإمام بمراجعة طلبك.",
+          "approved": "تمت الموافقة على طلبك — يمكن تحديد موعد نكاحك.",
+          "ready": "شهادة زواجك جاهزة للاستلام."
+        },
+        "backToService": "العودة إلى خدمات الزواج",
+        "checkAnother": "تحقق من طلب آخر",
+        "location": "الموقع"
       }
     },
     "funeral": {
