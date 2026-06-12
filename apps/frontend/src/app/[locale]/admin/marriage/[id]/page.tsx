@@ -7,8 +7,9 @@ import {
   ArrowLeft, Heart, User, Fingerprint, Phone, Calendar, MapPin, Building2,
   Users, Shield, DollarSign, UserCheck, CheckCircle2, XCircle,
   AlertTriangle, FileText, Download, Clock, RefreshCw, Send,
-  Banknote, X, Camera, ImageIcon,
+  Banknote, X, Camera, ImageIcon, Eye, ZoomIn, ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import { fileUrl } from '@/lib/api';
 import axios from 'axios';
 import { FILE_SERVER_URL } from '@/lib/api';
 import { marriageApi, type MarriageApplication, type MarriageApplicationStatus, STATUS_COLORS } from '@/lib/marriageApi';
@@ -118,6 +119,126 @@ function ActionModal({ title, onClose, onConfirm, placeholder, required, confirm
   );
 }
 
+const DOC_TYPE_LABELS: Record<string, string> = {
+  groom_id:      "Groom's National ID",
+  bride_id:      "Bride's National ID",
+  wali_consent:  'Wali Consent Letter',
+  mahr_agreement:'Mahr Agreement',
+  portrait:      'Portrait Photo',
+  additional:    'Additional Document',
+};
+
+interface LightboxProps {
+  docs: { url: string; name: string; mimeType: string }[];
+  index: number;
+  onClose: () => void;
+}
+
+function Lightbox({ docs, index: initialIndex, onClose }: LightboxProps) {
+  const [index, setIndex] = useState(initialIndex);
+  const current = docs[index];
+  const isImage = current.mimeType.startsWith('image/');
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft')  setIndex((i) => Math.max(i - 1, 0));
+      if (e.key === 'ArrowRight') setIndex((i) => Math.min(i + 1, docs.length - 1));
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [docs.length, onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm" onClick={onClose}>
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <p className="text-white text-sm font-medium truncate max-w-xs">{current.name}</p>
+        <div className="flex items-center gap-2">
+          <a
+            href={current.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="w-3.5 h-3.5" /> Download
+          </a>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main viewer */}
+      <div className="flex-1 flex items-center justify-center relative min-h-0 px-12" onClick={(e) => e.stopPropagation()}>
+        {/* Prev */}
+        {index > 0 && (
+          <button
+            onClick={() => setIndex((i) => i - 1)}
+            className="absolute left-2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+
+        {isImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={current.url}
+            alt={current.name}
+            className="max-h-full max-w-full object-contain rounded-lg select-none"
+          />
+        ) : (
+          <iframe
+            src={current.url}
+            title={current.name}
+            className="w-full h-full rounded-lg bg-white"
+          />
+        )}
+
+        {/* Next */}
+        {index < docs.length - 1 && (
+          <button
+            onClick={() => setIndex((i) => i + 1)}
+            className="absolute right-2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Thumbnail strip */}
+      {docs.length > 1 && (
+        <div className="shrink-0 flex items-center justify-center gap-2 py-3 px-4 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+          {docs.map((d, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={cn(
+                'w-12 h-12 rounded-lg shrink-0 overflow-hidden border-2 transition-all',
+                i === index ? 'border-white scale-110' : 'border-white/20 hover:border-white/50',
+              )}
+            >
+              {d.mimeType.startsWith('image/') ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={d.url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white/60" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminMarriageDetailPage() {
   const { locale, id } = useParams<{ locale: string; id: string }>();
   const [app, setApp] = useState<MarriageApplication | null>(null);
@@ -130,6 +251,7 @@ export default function AdminMarriageDetailPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [weddingPhotoFile, setWeddingPhotoFile] = useState<File | null>(null);
   const [weddingPhotoUploading, setWeddingPhotoUploading] = useState(false);
+  const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
 
   const fetchApp = useCallback(async () => {
     try {
@@ -214,7 +336,6 @@ export default function AdminMarriageDetailPage() {
       form.append('file', weddingPhotoFile);
       const uploadRes = await axios.post(`${FILE_SERVER_URL}/api/v1/upload?folder=wedding-photos`, form, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
@@ -363,6 +484,76 @@ export default function AdminMarriageDetailPage() {
               />
             )}
           </Section>
+
+          {/* Documents */}
+          {app.documents && app.documents.length > 0 && (() => {
+            const docsWithUrl = app.documents.map((d) => ({
+              ...d,
+              url: fileUrl(d.fileKey),
+            }));
+            return (
+              <Section title="Submitted Documents" icon={<FileText className="w-4 h-4" />}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {docsWithUrl.map((doc, i) => {
+                    const isImage = doc.mimeType.startsWith('image/');
+                    return (
+                      <button
+                        key={doc.id}
+                        onClick={() => setLightbox({ index: i })}
+                        className="group relative flex flex-col rounded-xl border border-gray-100 overflow-hidden hover:border-rose-300 hover:shadow-md transition-all text-left"
+                      >
+                        {/* Thumbnail / icon area */}
+                        <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
+                          {isImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={doc.url}
+                              alt={doc.fileName}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center gap-1.5">
+                              <FileText className="w-8 h-8 text-gray-300" />
+                              <span className="text-[10px] font-medium text-gray-400 uppercase">
+                                {doc.mimeType.split('/')[1] ?? 'file'}
+                              </span>
+                            </div>
+                          )}
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <ZoomIn className="w-6 h-6 text-white" />
+                          </div>
+                          {/* Verified badge */}
+                          {doc.verified && (
+                            <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow">
+                              <CheckCircle2 className="w-3 h-3 text-white" />
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Label */}
+                        <div className="px-2.5 py-2">
+                          <p className="text-[11px] font-semibold text-gray-700 leading-tight truncate">
+                            {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType}
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">{doc.fileName}</p>
+                          <p className="text-[10px] text-gray-300 mt-0.5">
+                            {(doc.fileSize / 1024).toFixed(0)} KB
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* View-all strip */}
+                <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2">
+                  <Eye className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-400">{app.documents.length} file{app.documents.length !== 1 ? 's' : ''} — click any to preview or download</span>
+                </div>
+              </Section>
+            );
+          })()}
 
           {/* Status history */}
           {app.statusHistory && app.statusHistory.length > 0 && (
@@ -599,6 +790,19 @@ export default function AdminMarriageDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Document lightbox */}
+      {lightbox && app.documents && app.documents.length > 0 && (
+        <Lightbox
+          docs={app.documents.map((d) => ({
+            url: fileUrl(d.fileKey),
+            name: DOC_TYPE_LABELS[d.documentType] ?? d.fileName,
+            mimeType: d.mimeType,
+          }))}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+        />
+      )}
 
       {/* Action modals */}
       {modal === 'approve' && (

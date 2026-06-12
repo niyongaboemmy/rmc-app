@@ -20,6 +20,7 @@ export type PaymentMethod = 'momo' | 'bank' | 'cash';
 export interface MarriageDocument {
   id: string;
   documentType: string;
+  fileKey: string;
   fileName: string;
   fileSize: number;
   mimeType: string;

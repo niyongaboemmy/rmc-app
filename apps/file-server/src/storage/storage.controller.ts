@@ -39,17 +39,20 @@ export class StorageController {
   private readonly logger = new Logger(StorageController.name);
   private readonly allowedMimeTypes: string[];
 
+  private readonly maxFileSize: number;
+
   constructor(
     private readonly storageService: StorageService,
     private readonly config: ConfigService,
   ) {
     this.allowedMimeTypes = this.config.get<string[]>('app.allowedMimeTypes') || [];
+    this.maxFileSize = this.config.get<number>('app.maxFileSize') || 10 * 1024 * 1024;
   }
 
   // ── Upload ────────────────────────────────────────────────────────────────
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   @ApiOperation({ summary: 'Upload a file (server-side multipart)' })
   @ApiConsumes('multipart/form-data')
   @ApiQuery({ name: 'folder', required: false, example: 'avatars' })

@@ -2,6 +2,7 @@ import {
   IsString, IsNotEmpty, Length, Matches, IsEnum, IsOptional,
   IsDateString, IsDecimal, Min, IsNumberString, IsEmail,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { VenueType } from '../entities/marriage-application.entity';
 
@@ -42,6 +43,7 @@ export class CreateMarriageApplicationDto {
   witness1Nid: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
   @IsOptional() @IsString() @Length(3, 150)
   witness1Name?: string;
 
@@ -50,15 +52,18 @@ export class CreateMarriageApplicationDto {
   witness2Nid: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
   @IsOptional() @IsString() @Length(3, 150)
   witness2Name?: string;
 
   // Islamic requirements
   @ApiPropertyOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
   @IsOptional() @IsString() @Length(3, 150)
   waliName?: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
   @IsOptional() @Matches(/^\d{16}$/)
   waliNid?: string;
 
@@ -76,6 +81,7 @@ export class CreateMarriageApplicationDto {
 
   // Officiant
   @ApiPropertyOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
   @IsOptional() @IsString() @Length(3, 150)
   requestedOfficiant?: string;
 
@@ -102,10 +108,12 @@ export class CreateMarriageApplicationDto {
 
   // Scheduling
   @ApiPropertyOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
   @IsOptional() @IsDateString()
   preferredDateFrom?: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
   @IsOptional() @IsDateString()
   preferredDateTo?: string;
 
