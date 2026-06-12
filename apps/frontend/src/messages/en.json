@@ -551,7 +551,8 @@
         "main": "Management",
         "content": "Content",
         "system": "System"
-      }
+      },
+      "marriage": "Marriage"
     },
     "topbar": {
       "search": "Search...",

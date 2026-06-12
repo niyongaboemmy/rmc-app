@@ -19,6 +19,7 @@ import { MosquesModule } from './mosques/mosques.module';
 import { PrayerTimesModule } from './prayer-times/prayer-times.module';
 import { MembersModule } from './members/members.module';
 import { PublicModule } from './public/public.module';
+import { MarriageModule } from './marriage/marriage.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -49,6 +50,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     PrayerTimesModule,
     MembersModule,
     PublicModule,
+    MarriageModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

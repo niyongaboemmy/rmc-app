@@ -9,11 +9,12 @@ export default registerAs('app', () => ({
   otpExpiryMinutes: parseInt(process.env.OTP_EXPIRY_MINUTES || '5', 10),
   passwordResetExpiryMinutes: parseInt(process.env.PASSWORD_RESET_EXPIRY_MINUTES || '15', 10),
   smtp: {
-    host: process.env.SMTP_HOST || 'localhost',
-    port: parseInt(process.env.SMTP_PORT || '1025', 10),
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || '',
-    from: process.env.EMAIL_FROM || 'noreply@rmc.org.rw',
+    host:   process.env.SMTP_HOST || 'localhost',
+    port:   parseInt(process.env.SMTP_PORT || '1025', 10),
+    secure: process.env.SMTP_SECURE === 'true',
+    user:   process.env.SMTP_USER || '',
+    pass:   process.env.SMTP_PASS || '',
+    from:   process.env.SMTP_FROM || process.env.EMAIL_FROM || 'noreply@rmc.org.rw',
   },
   mfa: {
     appName: process.env.MFA_APP_NAME || 'RMC Platform',
