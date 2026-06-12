@@ -1,20 +1,62 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { Heart, FileText, ClipboardList, GraduationCap, Home, Briefcase, ArrowRight } from 'lucide-react';
+import { Heart, FileText, ClipboardList, GraduationCap, Home, Briefcase, ArrowRight, ScrollText } from 'lucide-react';
 
+/**
+ * Per-service theme. Each service owns a distinct colour family so the grid
+ * reads as a set of clearly-separated cards (visible borders, tinted
+ * backgrounds, gradient icon tiles) rather than a wall of identical white boxes.
+ * Class strings are fully spelled out so Tailwind's JIT can detect them.
+ */
 const services = [
-  { key: 'marriage', Icon: Heart, color: 'bg-rose-50 border-rose-100 hover:border-rose-300', iconBg: 'bg-rose-100', iconColor: 'text-rose-500' },
-  { key: 'funeral', Icon: FileText, color: 'bg-slate-50 border-slate-100 hover:border-slate-300', iconBg: 'bg-slate-100', iconColor: 'text-slate-500' },
-  { key: 'conduct', Icon: ClipboardList, color: 'bg-blue-50 border-blue-100 hover:border-blue-300', iconBg: 'bg-blue-100', iconColor: 'text-blue-500' },
-  { key: 'scholarship', Icon: GraduationCap, color: 'bg-violet-50 border-violet-100 hover:border-violet-300', iconBg: 'bg-violet-100', iconColor: 'text-violet-500' },
-  { key: 'hijra', Icon: Home, color: 'bg-amber-50 border-amber-100 hover:border-amber-300', iconBg: 'bg-amber-100', iconColor: 'text-amber-500' },
-  { key: 'tender', Icon: ClipboardList, color: 'bg-cyan-50 border-cyan-100 hover:border-cyan-300', iconBg: 'bg-cyan-100', iconColor: 'text-cyan-500' },
-  { key: 'jobs', Icon: Briefcase, color: 'bg-green-50 border-green-100 hover:border-green-300', iconBg: 'bg-green-100', iconColor: 'text-green-500' },
+  {
+    key: 'marriage', slug: 'marriage', Icon: Heart,
+    card: 'bg-gradient-to-br from-rose-50 to-white border-rose-200 hover:border-rose-400',
+    iconTile: 'bg-gradient-to-br from-rose-600 to-rose-800 shadow-rose-900/25',
+    accent: 'text-rose-700', accentHover: 'group-hover:text-rose-700',
+  },
+  {
+    key: 'funeral', slug: 'funeral', Icon: ScrollText,
+    card: 'bg-gradient-to-br from-slate-100 to-white border-slate-300 hover:border-slate-500',
+    iconTile: 'bg-gradient-to-br from-slate-600 to-slate-800 shadow-slate-500/30',
+    accent: 'text-slate-700', accentHover: 'group-hover:text-slate-700',
+  },
+  {
+    key: 'conduct', slug: 'conduct', Icon: FileText,
+    card: 'bg-gradient-to-br from-blue-50 to-white border-blue-200 hover:border-blue-400',
+    iconTile: 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/30',
+    accent: 'text-blue-600', accentHover: 'group-hover:text-blue-600',
+  },
+  {
+    key: 'scholarship', slug: 'scholarship', Icon: GraduationCap,
+    card: 'bg-gradient-to-br from-violet-50 to-white border-violet-200 hover:border-violet-400',
+    iconTile: 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30',
+    accent: 'text-violet-600', accentHover: 'group-hover:text-violet-600',
+  },
+  {
+    key: 'hijra', slug: 'hijra', Icon: Home,
+    card: 'bg-gradient-to-br from-amber-50 to-white border-amber-200 hover:border-amber-400',
+    iconTile: 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/30',
+    accent: 'text-amber-600', accentHover: 'group-hover:text-amber-600',
+  },
+  {
+    key: 'tender', slug: 'tender', Icon: ClipboardList,
+    card: 'bg-gradient-to-br from-cyan-50 to-white border-cyan-200 hover:border-cyan-400',
+    iconTile: 'bg-gradient-to-br from-cyan-500 to-teal-600 shadow-cyan-500/30',
+    accent: 'text-cyan-700', accentHover: 'group-hover:text-cyan-700',
+  },
+  {
+    key: 'jobs', slug: 'jobs', Icon: Briefcase,
+    card: 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200 hover:border-emerald-400',
+    iconTile: 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/30',
+    accent: 'text-emerald-600', accentHover: 'group-hover:text-emerald-600',
+  },
 ] as const;
 
-export default async function ServicesPage() {
+export default async function ServicesPage({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations();
 
   return (
@@ -45,29 +87,30 @@ export default async function ServicesPage() {
         {/* Services grid */}
         <section className="py-20 px-4 pattern-light">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {services.map(({ key, Icon, color, iconBg, iconColor }) => (
-                <div
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {services.map(({ key, slug, Icon, card, iconTile, accent, accentHover }) => (
+                <Link
                   key={key}
-                  className={`group relative rounded-2xl border ${color} p-8 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 bg-white overflow-hidden`}
+                  href={`/${locale}/services/${slug}`}
+                  className={`group relative flex flex-col rounded-2xl border-2 ${card} p-8 shadow-sm hover:shadow-lg hover:-translate-y-1.5 transition-all duration-200 overflow-hidden`}
                 >
-                  {/* Subtle gradient on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-current opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300" />
-                  <div className="relative">
-                    <div className={`w-13 h-13 w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className={`w-5 h-5 ${iconColor}`} />
+                  <div className="relative flex flex-col h-full">
+                    {/* Elegant gradient icon tile */}
+                    <div className={`w-14 h-14 rounded-2xl ${iconTile} flex items-center justify-center mb-5 shadow-md ring-1 ring-white/20 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-200`}>
+                      <Icon className="w-6 h-6 text-white" strokeWidth={2.25} />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-rmc-green transition-colors">
+                    <h2 className={`text-xl font-bold text-gray-900 mb-2.5 ${accentHover} transition-colors`}>
                       {t(`services.${key}.title`)}
                     </h2>
-                    <p className="text-gray-500 leading-relaxed text-sm">
+                    <p className="text-gray-600 leading-relaxed text-sm">
                       {t(`services.${key}.desc`)}
                     </p>
-                    <div className="mt-6 flex items-center gap-1.5 text-rmc-green font-semibold text-sm opacity-0 group-hover:opacity-100 translate-x-[-4px] group-hover:translate-x-0 transition-all duration-200">
-                      {t('common.learnMore')} <ArrowRight className="w-4 h-4" />
+                    <div className={`mt-6 flex items-center gap-1.5 ${accent} font-semibold text-sm`}>
+                      {t('common.learnMore')}
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -86,7 +129,7 @@ export default async function ServicesPage() {
             <h2 className="text-3xl font-bold text-white mb-4">Ready to access our services?</h2>
             <p className="text-white/60 mb-10 text-base">Register as a member to apply for marriage certificates, scholarships, and more.</p>
             <a
-              href="/en/register"
+              href={`/${locale}/register`}
               className="inline-flex items-center gap-2.5 px-8 py-4 bg-rmc-gold text-white font-semibold rounded-full hover:bg-amber-500 transition-all duration-200 shadow-xl shadow-rmc-gold/25 hover:shadow-rmc-gold/40 hover:scale-105 active:scale-100"
             >
               Register Now <ArrowRight className="w-4 h-4" />
