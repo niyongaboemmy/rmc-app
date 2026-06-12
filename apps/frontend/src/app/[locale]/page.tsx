@@ -21,14 +21,14 @@ export default function HomePage() {
         {/* 1. Hero — Verse of the Day (sliding) */}
         <HeroSection />
 
-        {/* 2. Welcome — Carousel for updates, scholarships, donations */}
-        <WelcomeCarouselSection />
-
-        {/* 3. Who We Are */}
+        {/* 2. Who We Are */}
         <WhoWeAreSection />
 
-        {/* 4. Prayer Times */}
+        {/* 3. Prayer Times */}
         <PrayerTimesWidget />
+
+        {/* 4. Welcome — Carousel for updates, scholarships, donations */}
+        <WelcomeCarouselSection />
 
         {/* 5. Areas of Intervention: Dawa, Social & Dev, Education, Foreign Affairs */}
         <AreasOfInterventionSection />

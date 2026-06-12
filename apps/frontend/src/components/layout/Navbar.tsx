@@ -19,7 +19,7 @@ function LogoBadge({ scrolled }: { scrolled: boolean }) {
   if (scrolled) {
     /* On white navbar — no box, just the logo with a subtle shadow */
     return (
-      <div className="transition-all duration-300 group-hover:scale-105 shrink-0">
+      <div className="transition-all duration-300 motion-safe:group-hover:scale-105 shrink-0">
         <Image
           src="/logo.webp"
           alt="RMC Logo"
@@ -32,7 +32,7 @@ function LogoBadge({ scrolled }: { scrolled: boolean }) {
   }
   /* Over dark hero — small frosted glass pill to contain the white bg */
   return (
-    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:bg-white/30">
+    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center overflow-hidden transition-all duration-300 motion-safe:group-hover:scale-105 group-hover:bg-white/20">
       <Image
         src="/logo.webp"
         alt="RMC Logo"
@@ -73,6 +73,24 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
+  /* Close any open menu on Escape */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setUserMenuOpen(false);
+        setMobileOpen(false);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  /* Lock body scroll while the mobile menu is open */
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
   const navLinks = [
     { href: `/${locale}`, label: t('home') },
     { href: `/${locale}/about`, label: t('about') },
@@ -90,46 +108,60 @@ export function Navbar() {
   };
 
   const linkClass = (active: boolean) =>
-    `relative px-4 py-2 text-sm font-medium transition-all duration-200 group ${
+    `relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
       active
         ? scrolled ? 'text-rmc-green' : 'text-white'
         : scrolled
           ? 'text-gray-600 hover:text-rmc-green'
           : 'text-white/80 hover:text-white'
+    } ${
+      scrolled
+        ? 'focus-visible:ring-rmc-green focus-visible:ring-offset-white'
+        : 'focus-visible:ring-white focus-visible:ring-offset-transparent'
     }`;
 
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100/80'
+          ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-200/70'
           : 'bg-transparent'
       }`}
     >
       {/* Scroll progress bar */}
       <div
-        className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-rmc-green via-rmc-gold to-rmc-green transition-all duration-100 ease-out z-50"
+        className="absolute top-0 left-0 h-[1.5px] bg-gradient-to-r from-rmc-gold to-rmc-green transition-all duration-150 ease-out z-50 shadow-sm shadow-rmc-gold/30"
         style={{ width: `${progress}%` }}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-[70px]">
+        <div className="flex items-center justify-between h-14 md:h-16">
 
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-3 group shrink-0">
+          <Link href={`/${locale}`} className="flex items-center gap-2.5 group shrink-0">
             <LogoBadge scrolled={scrolled} />
-            <div className={`hidden sm:block transition-colors duration-200 ${scrolled ? 'text-rmc-green' : 'text-white'}`}>
-              <p className="text-sm font-bold leading-tight">Rwanda Muslim</p>
-              <p className="text-xs font-medium opacity-70 leading-tight">Community</p>
+            <div className={`hidden sm:flex items-center gap-2.5 transition-colors duration-200 ${scrolled ? 'text-rmc-green' : 'text-white'}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+              <div>
+                <p className="text-sm font-bold leading-tight tracking-tight">Rwanda Muslim</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70 leading-tight">Community</p>
+              </div>
             </div>
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-0.5">
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={linkClass(isActive(link.href))}>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={linkClass(isActive(link.href))}
+                aria-current={isActive(link.href) ? 'page' : undefined}
+              >
                 {link.label}
                 <span
-                  className={`absolute bottom-0.5 left-4 right-4 h-0.5 bg-rmc-green rounded-full transition-transform duration-200 origin-center ${
+                  className={`absolute bottom-1 left-3 right-3 h-0.5 rounded-full transition-transform duration-200 origin-center ${
+                    scrolled ? 'bg-rmc-green' : 'bg-rmc-gold'
+                  } ${
                     isActive(link.href) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                   }`}
                 />
@@ -138,7 +170,7 @@ export function Navbar() {
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-1.5 shrink-0">
             {isAuthenticated && user ? (
               <div className="hidden md:flex items-center gap-2">
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
@@ -158,10 +190,13 @@ export function Navbar() {
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setUserMenuOpen((o) => !o)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                    aria-haspopup="menu"
+                    aria-expanded={userMenuOpen}
+                    aria-label={`${user.firstName} ${user.lastName} — account menu`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                       scrolled
-                        ? 'border-gray-200 bg-white hover:border-rmc-green/40 hover:bg-rmc-green-light'
-                        : 'border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50'
+                        ? 'border-gray-200 bg-white hover:border-rmc-green/40 hover:bg-rmc-green-light focus-visible:ring-rmc-green focus-visible:ring-offset-white'
+                        : 'border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 focus-visible:ring-white focus-visible:ring-offset-transparent'
                     }`}
                   >
                     <div className="w-6 h-6 rounded-full bg-rmc-green flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -230,17 +265,17 @@ export function Navbar() {
               <div className="hidden md:flex items-center gap-2">
                 <Link
                   href={`/${locale}/login`}
-                  className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
+                  className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                     scrolled
-                      ? 'text-gray-600 hover:text-rmc-green hover:bg-rmc-green-light'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                      ? 'text-gray-600 hover:text-rmc-green hover:bg-rmc-green-light focus-visible:ring-rmc-green focus-visible:ring-offset-white'
+                      : 'text-white/80 hover:text-white hover:bg-white/10 focus-visible:ring-white focus-visible:ring-offset-transparent'
                   }`}
                 >
                   {t('login')}
                 </Link>
                 <Link
                   href={`/${locale}/register`}
-                  className="bg-rmc-green text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-rmc-green-dark transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-rmc-green/25 hover:scale-105 active:scale-100"
+                  className="bg-rmc-green text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-rmc-green-dark transition-all duration-300 shadow-lg shadow-rmc-green/30 hover:shadow-rmc-green/50 motion-safe:hover:scale-105 motion-safe:active:scale-100 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                 >
                   {t('register')}
                 </Link>
@@ -252,12 +287,14 @@ export function Navbar() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className={`md:hidden p-2 rounded-lg transition-all duration-200 ${
+              className={`md:hidden flex items-center justify-center w-11 h-11 -mr-1.5 rounded-lg transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                 scrolled
-                  ? 'text-gray-600 hover:bg-gray-100'
-                  : 'text-white hover:bg-white/15'
+                  ? 'text-gray-600 hover:bg-gray-100 focus-visible:ring-rmc-green focus-visible:ring-offset-white'
+                  : 'text-white hover:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-transparent'
               }`}
-              aria-label="Toggle menu"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
             >
               {mobileOpen
                 ? <X className="h-5 w-5" />
@@ -270,13 +307,24 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-xl animate-slide-down">
+        <>
+          {/* Backdrop — tap to dismiss */}
+          <div
+            className="md:hidden fixed inset-0 top-14 z-40 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            id="mobile-menu"
+            className="md:hidden relative z-50 bg-white border-t border-gray-100 shadow-xl rounded-b-2xl animate-slide-down max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain"
+          >
           <div className="px-4 pt-3 pb-2 space-y-0.5">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
+                aria-current={isActive(link.href) ? 'page' : undefined}
                 className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   isActive(link.href)
                     ? 'text-rmc-green bg-rmc-green-light'
@@ -311,11 +359,11 @@ export function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="flex gap-3 mt-1">
+              <div className="flex gap-3">
                 <Link
                   href={`/${locale}/login`}
                   onClick={() => setMobileOpen(false)}
-                  className="flex-1 text-center px-4 py-3 border-2 border-rmc-green text-rmc-green rounded-xl text-sm font-semibold hover:bg-rmc-green-light transition-colors"
+                  className="flex-1 text-center px-4 py-3 border border-rmc-green/30 text-rmc-green rounded-xl text-sm font-semibold hover:bg-rmc-green-light hover:border-rmc-green/50 transition-colors"
                 >
                   {t('login')}
                 </Link>
@@ -330,6 +378,7 @@ export function Navbar() {
             )}
           </div>
         </div>
+        </>
       )}
     </nav>
   );

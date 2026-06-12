@@ -97,8 +97,8 @@ export function HeroSection() {
         </div>
       ))}
 
-      {/* ── Dark gradient overlay ── */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/25" />
+      {/* ── Dark gradient overlay (symmetric for centered content) ── */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/55 to-black/70" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
       {/* ── Subtle Islamic pattern on top ── */}
@@ -113,56 +113,50 @@ export function HeroSection() {
 
       {/* ── Main content ── */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-36 pb-40">
-        <div className="max-w-3xl">
+        <div className="max-w-2xl mx-auto text-center">
 
-          {/* Animated quote — changes with slide */}
+          {/* Platform name — small, refined eyebrow label */}
+          <h1
+            className="animate-fade-up inline-flex items-center gap-2.5 mb-10 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] text-white/75"
+            style={{ animationDelay: '120ms' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+            {t('title')}
+          </h1>
+
+          {/* Animated quote — the centerpiece, changes with slide */}
           <div
             className={`transition-all duration-700 ease-out ${
               transitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
             }`}
           >
             {/* Arabic verse */}
-            <p className="text-3xl md:text-5xl font-arabic text-white leading-loose mb-4 drop-shadow-lg" dir="rtl">
+            <p className="text-3xl md:text-5xl font-arabic text-white leading-loose mb-5 drop-shadow-lg" dir="rtl">
               {slide.quote.ar}
             </p>
 
             {/* Translation */}
-            <p className="text-white/80 text-lg md:text-xl italic mb-2">
+            <p className="text-white/85 text-lg md:text-xl italic mb-2 max-w-xl mx-auto leading-relaxed">
               &ldquo;{slide.quote.en}&rdquo;
             </p>
-            <p className="text-rmc-gold text-sm font-semibold mb-10">— {slide.quote.ref}</p>
+            <p className="text-rmc-gold text-xs font-semibold tracking-wide mb-10">— {slide.quote.ref}</p>
           </div>
-
-          {/* Platform title */}
-          <h1
-            className="text-4xl md:text-6xl font-bold text-white leading-tight mb-4 animate-fade-up drop-shadow-md"
-            style={{ animationDelay: '200ms' }}
-          >
-            {t('title')}
-          </h1>
-
-          <p
-            className="text-lg text-white/65 mb-10 max-w-xl leading-relaxed animate-fade-up"
-            style={{ animationDelay: '340ms' }}
-          >
-            {t('subtitle')}
-          </p>
 
           {/* CTAs */}
           <div
-            className="flex flex-col sm:flex-row gap-4 mb-14 animate-fade-up"
+            className="flex flex-col sm:flex-row gap-4 mb-14 justify-center animate-fade-up"
             style={{ animationDelay: '460ms' }}
           >
             <Link
               href={`/${locale}/member/register`}
-              className="group inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-rmc-green text-white font-semibold rounded-full text-base shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300"
+              className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300"
             >
               <Users className="w-4 h-4 shrink-0" />
               Join RMC
             </Link>
             <Link
               href={`/${locale}/about`}
-              className="group inline-flex items-center justify-center gap-2.5 px-8 py-4 border-2 border-white/40 text-white font-semibold rounded-full text-base hover:bg-white/10 hover:border-white/70 transition-all duration-300"
+              className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300"
             >
               About Us
               <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
@@ -171,7 +165,7 @@ export function HeroSection() {
 
           {/* Slide indicators */}
           <div
-            className="animate-fade-up flex items-center gap-6"
+            className="animate-fade-up flex flex-wrap items-center justify-center gap-6"
             style={{ animationDelay: '560ms' }}
           >
             <SlideIndicators total={SLIDES.length} current={current} onChange={goTo} />
