@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server';
 import {
   Heart, ArrowRight, ArrowLeft, CheckCircle2, FileText, Users,
   CalendarCheck, ShieldCheck, BookOpenCheck, ScrollText, Phone,
+  Building2, MapPin, Wallet, Search,
 } from 'lucide-react';
 
 // Icon per "what's included" item — copy comes from translations
@@ -24,7 +25,7 @@ export default async function MarriageServicePage({ params: { locale } }: { para
   const t = await getTranslations('services.marriage');
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
         {/* ===================================================================
@@ -60,7 +61,7 @@ export default async function MarriageServicePage({ params: { locale } }: { para
         {/* ===================================================================
             OVERVIEW
         =================================================================== */}
-        <section className="py-20 px-4 bg-white overflow-hidden">
+        <section className="py-20 px-4 bg-transparent overflow-hidden">
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-xl aspect-[4/3]">
@@ -93,12 +94,20 @@ export default async function MarriageServicePage({ params: { locale } }: { para
               </h2>
               <p className="text-gray-600 leading-relaxed mb-4 text-sm md:text-base">{t('detail.overviewP1')}</p>
               <p className="text-gray-600 leading-relaxed mb-7 text-sm md:text-base">{t('detail.overviewP2')}</p>
-              <Link
-                href={`/${locale}/services/marriage/apply`}
-                className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-gradient-to-br from-rose-600 to-rose-800 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-rose-900/30 transition-all duration-200 hover:scale-105 active:scale-100"
-              >
-                {t('detail.startApplication')} <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href={`/${locale}/services/marriage/apply`}
+                  className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-gradient-to-br from-rose-600 to-rose-800 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-rose-900/30 transition-all duration-200 hover:scale-105 active:scale-100"
+                >
+                  {t('detail.startApplication')} <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href={`/${locale}/services/marriage/status`}
+                  className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-white border-2 border-rose-200 text-rose-700 font-semibold rounded-full hover:border-rose-400 hover:bg-rose-50 transition-all duration-200"
+                >
+                  <Search className="w-4 h-4" /> {t('detail.checkStatus')}
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -137,7 +146,7 @@ export default async function MarriageServicePage({ params: { locale } }: { para
         {/* ===================================================================
             PROCESS
         =================================================================== */}
-        <section className="py-20 px-4 bg-white">
+        <section className="py-20 px-4 bg-transparent">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-14">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.processTitle')}</h2>
@@ -190,9 +199,49 @@ export default async function MarriageServicePage({ params: { locale } }: { para
         </section>
 
         {/* ===================================================================
+            SERVICE FEES & PAYMENT CLAUSE
+        =================================================================== */}
+        <section className="py-20 px-4 bg-rose-50/40 pattern-light">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.fees.title')}</h2>
+              <p className="text-gray-500 max-w-2xl mx-auto">{t('detail.fees.subtitle')}</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6 mb-8">
+              {/* Mosque */}
+              <div className="relative bg-white border-2 border-rose-200 rounded-2xl p-7 shadow-sm overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-600 to-rose-800 flex items-center justify-center shadow-md shadow-rose-900/25 ring-1 ring-white/20 mb-5">
+                  <Building2 className="w-6 h-6 text-white" strokeWidth={2.25} />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{t('detail.fees.mosqueAmount')}</p>
+                <p className="text-gray-500 text-sm mt-2">{t('detail.fees.mosqueLabel')}</p>
+              </div>
+              {/* Outside */}
+              <div className="relative bg-white border-2 border-gray-200 rounded-2xl p-7 shadow-sm overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center shadow-md shadow-slate-900/20 ring-1 ring-white/20 mb-5">
+                  <MapPin className="w-6 h-6 text-white" strokeWidth={2.25} />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{t('detail.fees.outsideAmount')}</p>
+                <p className="text-gray-500 text-sm mt-2">{t('detail.fees.outsideLabel')}</p>
+              </div>
+            </div>
+
+            {/* Payment clause */}
+            <div className="flex gap-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-6">
+              <Wallet className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-amber-900 mb-1.5">{t('detail.fees.clauseTitle')}</h3>
+                <p className="text-amber-900/80 text-sm leading-relaxed">{t('detail.fees.clause')}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ===================================================================
             FAQ
         =================================================================== */}
-        <section className="py-20 px-4 bg-white">
+        <section className="py-20 px-4 bg-transparent">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.faqTitle')}</h2>

@@ -595,16 +595,12 @@ export class AuthService {
   }
 
   private createMailTransporter(): nodemailer.Transporter {
+    const user = this.configService.get<string>('app.smtp.user');
     return nodemailer.createTransport({
-      host: this.configService.get<string>('app.smtp.host', 'localhost'),
-      port: this.configService.get<number>('app.smtp.port', 1025),
-      auth: this.configService.get<string>('app.smtp.user')
-        ? {
-            user: this.configService.get<string>('app.smtp.user'),
-            pass: this.configService.get<string>('app.smtp.pass'),
-          }
-        : undefined,
-      secure: false,
+      host:   this.configService.get<string>('app.smtp.host', 'localhost'),
+      port:   this.configService.get<number>('app.smtp.port', 1025),
+      secure: this.configService.get<boolean>('app.smtp.secure', false),
+      auth:   user ? { user, pass: this.configService.get<string>('app.smtp.pass') } : undefined,
     });
   }
 }

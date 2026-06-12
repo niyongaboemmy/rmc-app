@@ -328,7 +328,18 @@
         "ctaTitle": "Witeguye gutangira Nikah yawe?",
         "ctaSubtitle": "Iyandikishe nk'umunyamuryango wa RMC kugira ngo utangire ubusabe bw'ubukwe kandi ufate itariki y'ibirori.",
         "ctaStart": "Tangira ubusabe",
-        "ctaContact": "Twandikire"
+        "ctaContact": "Twandikire",
+        "fees": {
+          "title": "Amafaranga ya serivisi",
+          "subtitle": "Amafaranga ya serivisi y'ubukwe aterwa n'aho umuhango ukorerwa.",
+          "mosqueLabel": "Umuhango ukorewe mu musigiti",
+          "mosqueAmount": "30,000 RWF",
+          "outsideLabel": "Umuhango ukorewe hanze y'umusigiti",
+          "outsideAmount": "200,000 RWF",
+          "clauseTitle": "Ingingo y'ubwishyu",
+          "clause": "Amafaranga akwiriye agomba kwishyurwa yose mbere y'uko icyemezo cy'ubukwe cyemewe gitangwa. Amafaranga aterwa gusa n'aho umuhango ukorerwa — 30,000 RWF mu musigiti na 200,000 RWF ahandi hose."
+        },
+        "checkStatus": "Reba aho ubusabe bugeze"
       },
       "apply": {
         "title": "Gusaba Ubukwe",
@@ -363,7 +374,72 @@
         "submit": "Ohereza ubusabe",
         "successTitle": "Ubusabe bwoherejwe",
         "successText": "Murakoze. RMC yakiriye ubusabe bwawe bw'ubukwe kandi izakuvugisha kugira ngo yemeze amakuru no gushyiraho itariki ya Nikah.",
-        "successAnother": "Ohereza ubundi busabe"
+        "successAnother": "Ohereza ubundi busabe",
+        "venueSection": "Aho umuhango ukorerwa",
+        "venueNote": "Amafaranga yawe aterwa n'aho Nikah ikorerwa.",
+        "venueMosqueTitle": "Mu musigiti",
+        "venueOutsideTitle": "Hanze y'umusigiti",
+        "feeMosque": "30,000 RWF",
+        "feeOutside": "200,000 RWF",
+        "paymentSection": "Uburyo bwo kwishyura",
+        "paymentNote": "Amafaranga agomba kwishyurwa yose mbere y'uko icyemezo cyawe gitangwa.",
+        "payMomo": "Mobile Money",
+        "payMomoSub": "MTN cyangwa Airtel Money",
+        "payBank": "Kohereza kuri banki",
+        "payBankSub": "Ishyura kuri konti ya banki ya RMC",
+        "payCash": "Amafaranga atangwa intoki",
+        "payCashSub": "Ishyura ku biro bya RMC",
+        "amountDue": "Amafaranga agomba kwishyurwa",
+        "amountSelectVenue": "Hitamo aho umuhango ukorerwa kugira ngo ubone amafaranga",
+        "checkStatus": "Reba aho ubusabe bugeze",
+        "applicationIdLabel": "Nimero y'ubusabe bwawe",
+        "idSavePrompt": "Bika iyi nimero — uzayikenera kugira ngo urebe aho ubusabe bwawe bugeze.",
+        "copyId": "Koporora",
+        "copiedId": "Byakoporowe",
+        "checkStatusBtn": "Reba aho bigeze",
+        "province": "Intara",
+        "district": "Akarere",
+        "provincePlaceholder": "Hitamo intara",
+        "districtPlaceholder": "Hitamo akarere",
+        "provinces": {
+          "kigali": "Umujyi wa Kigali",
+          "north": "Intara y'Amajyaruguru",
+          "south": "Intara y'Amajyepfo",
+          "east": "Intara y'Iburasirazuba",
+          "west": "Intara y'Iburengerazuba"
+        }
+      },
+      "status": {
+        "title": "Reba aho ubusabe bugeze",
+        "subtitle": "Andika nimero y'ubusabe bwawe kugira ngo urebe aho ubusabe bw'ubukwe bwawe bugeze.",
+        "idLabel": "Nimero y'ubusabe",
+        "idPlaceholder": "RMC-MR-XXXXXX",
+        "checkButton": "Reba aho bigeze",
+        "notFoundTitle": "Nta busabe bubonetse",
+        "notFoundText": "Ntitwabashije kubona ubusabe bufite iyo nimero. Reba neza nimero hanyuma wongere ugerageze.",
+        "detailsTitle": "Amakuru y'ubusabe",
+        "submittedOn": "Bwoherejwe ku wa",
+        "couple": "Abashyingiranwa",
+        "venue": "Aho umuhango ukorerwa",
+        "fee": "Amafaranga ya serivisi",
+        "payment": "Uburyo bwo kwishyura",
+        "officiant": "Uyobora umuhango",
+        "currentStatus": "Aho bigeze ubu",
+        "stages": {
+          "submitted": "Bwoherejwe",
+          "review": "Burimo gusuzumwa",
+          "approved": "Bwemejwe",
+          "ready": "Icyemezo cyiteguye"
+        },
+        "stageDesc": {
+          "submitted": "Ubusabe bwawe bwakiriwe.",
+          "review": "RMC n'imamu barimo gusuzuma ubusabe bwawe.",
+          "approved": "Ubusabe bwawe bwemejwe — Nikah ishobora gushyirirwaho itariki.",
+          "ready": "Icyemezo cyawe cy'ubukwe cyiteguye kuza gufata."
+        },
+        "backToService": "Subira kuri Serivisi y'Ubukwe",
+        "checkAnother": "Reba ubundi busabe",
+        "location": "Aho biherereye"
       }
     },
     "funeral": {
@@ -475,7 +551,8 @@
         "main": "Gucunga",
         "content": "Ibigomba Gutangazwa",
         "system": "Sisitemu"
-      }
+      },
+      "marriage": "Ubukwe"
     },
     "topbar": {
       "search": "Shakisha...",

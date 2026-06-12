@@ -15,20 +15,20 @@ import { Footer } from '@/components/layout/Footer';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <main>
         {/* 1. Hero — Verse of the Day (sliding) */}
         <HeroSection />
 
-        {/* 2. Welcome — Carousel for updates, scholarships, donations */}
-        <WelcomeCarouselSection />
-
-        {/* 3. Who We Are */}
+        {/* 2. Who We Are */}
         <WhoWeAreSection />
 
-        {/* 4. Prayer Times */}
+        {/* 3. Prayer Times */}
         <PrayerTimesWidget />
+
+        {/* 4. Welcome — Carousel for updates, scholarships, donations */}
+        <WelcomeCarouselSection />
 
         {/* 5. Areas of Intervention: Dawa, Social & Dev, Education, Foreign Affairs */}
         <AreasOfInterventionSection />

@@ -15,24 +15,10 @@ import {
   Lock, Users, Shield, LogOut,
 } from 'lucide-react';
 
-function LogoBadge({ scrolled }: { scrolled: boolean }) {
-  if (scrolled) {
-    /* On white navbar — no box, just the logo with a subtle shadow */
-    return (
-      <div className="transition-all duration-300 group-hover:scale-105 shrink-0">
-        <Image
-          src="/logo.webp"
-          alt="RMC Logo"
-          width={40}
-          height={40}
-          className="w-10 h-10 object-contain drop-shadow-sm"
-        />
-      </div>
-    );
-  }
-  /* Over dark hero — small frosted glass pill to contain the white bg */
+function LogoBadge() {
+  /* Frosted glass pill — sits over the dark / translucent navbar in every state */
   return (
-    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:bg-white/30">
+    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center overflow-hidden transition-all duration-300 motion-safe:group-hover:scale-105 group-hover:bg-white/20">
       <Image
         src="/logo.webp"
         alt="RMC Logo"
@@ -73,6 +59,24 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
+  /* Close any open menu on Escape */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setUserMenuOpen(false);
+        setMobileOpen(false);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  /* Lock body scroll while the mobile menu is open */
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
   const navLinks = [
     { href: `/${locale}`, label: t('home') },
     { href: `/${locale}/about`, label: t('about') },
@@ -85,51 +89,66 @@ export function Navbar() {
 
   const handleLogout = async () => {
     setUserMenuOpen(false);
+    setMobileOpen(false);
     await logout();
     router.push(`/${locale}/login`);
   };
 
+  /* Navbar text is always light — the bar is transparent over the dark hero and
+     dark-glass once scrolled, so white reads cleanly in every state. */
   const linkClass = (active: boolean) =>
-    `relative px-4 py-2 text-sm font-medium transition-all duration-200 group ${
-      active
-        ? scrolled ? 'text-rmc-green' : 'text-white'
-        : scrolled
-          ? 'text-gray-600 hover:text-rmc-green'
-          : 'text-white/80 hover:text-white'
+    `relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent ${
+      active ? 'text-white' : 'text-white/80 hover:text-white'
     }`;
 
+  /* Dark bar once the user scrolls, or whenever the full-screen mobile menu is open */
+  const barSolid = scrolled || mobileOpen;
+
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100/80'
-          : 'bg-transparent'
-      }`}
-    >
+    <nav className="fixed top-0 left-0 right-0 z-50">
+      {/* Bar background layer — dark glass once scrolled / menu open. Kept as a SEPARATE
+          layer so <nav> itself carries no backdrop-filter; a filtered ancestor would
+          otherwise trap the fixed full-screen mobile menu inside the bar. */}
+      <div
+        aria-hidden
+        className={`absolute inset-0 transition-all duration-300 ${
+          barSolid
+            ? 'bg-rmc-green-deep/90 backdrop-blur-xl shadow-lg shadow-black/20 border-b border-white/10'
+            : 'bg-transparent'
+        }`}
+      />
       {/* Scroll progress bar */}
       <div
-        className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-rmc-green via-rmc-gold to-rmc-green transition-all duration-100 ease-out z-50"
+        className="absolute top-0 left-0 h-[1.5px] bg-gradient-to-r from-rmc-gold to-rmc-green transition-all duration-150 ease-out z-50 shadow-sm shadow-rmc-gold/30"
         style={{ width: `${progress}%` }}
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-[70px]">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 md:h-16">
 
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-3 group shrink-0">
-            <LogoBadge scrolled={scrolled} />
-            <div className={`hidden sm:block transition-colors duration-200 ${scrolled ? 'text-rmc-green' : 'text-white'}`}>
-              <p className="text-sm font-bold leading-tight">Rwanda Muslim</p>
-              <p className="text-xs font-medium opacity-70 leading-tight">Community</p>
+          <Link href={`/${locale}`} className="flex items-center gap-2.5 group shrink-0">
+            <LogoBadge />
+            <div className="hidden sm:flex items-center gap-2.5 text-white transition-colors duration-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+              <div>
+                <p className="text-sm font-bold leading-tight tracking-tight">Rwanda Muslim</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70 leading-tight">Community</p>
+              </div>
             </div>
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-0.5">
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={linkClass(isActive(link.href))}>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={linkClass(isActive(link.href))}
+                aria-current={isActive(link.href) ? 'page' : undefined}
+              >
                 {link.label}
                 <span
-                  className={`absolute bottom-0.5 left-4 right-4 h-0.5 bg-rmc-green rounded-full transition-transform duration-200 origin-center ${
+                  className={`absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-rmc-gold transition-transform duration-200 origin-center ${
                     isActive(link.href) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                   }`}
                 />
@@ -138,17 +157,13 @@ export function Navbar() {
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-1.5 shrink-0">
             {isAuthenticated && user ? (
               <div className="hidden md:flex items-center gap-2">
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
                   <Link
                     href={`/${locale}/admin/members`}
-                    className={`text-sm font-medium px-3 py-2 rounded-lg transition-all ${
-                      scrolled
-                        ? 'text-gray-600 hover:text-rmc-green hover:bg-rmc-green-light'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
+                    className="text-sm font-medium px-3 py-2 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/10"
                   >
                     {t('admin')}
                   </Link>
@@ -158,19 +173,18 @@ export function Navbar() {
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setUserMenuOpen((o) => !o)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
-                      scrolled
-                        ? 'border-gray-200 bg-white hover:border-rmc-green/40 hover:bg-rmc-green-light'
-                        : 'border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50'
-                    }`}
+                    aria-haspopup="menu"
+                    aria-expanded={userMenuOpen}
+                    aria-label={`${user.firstName} ${user.lastName} — account menu`}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 focus-visible:ring-white focus-visible:ring-offset-transparent"
                   >
                     <div className="w-6 h-6 rounded-full bg-rmc-green flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {user.firstName[0]}{user.lastName[0]}
                     </div>
-                    <span className={`text-sm font-medium max-w-[80px] truncate ${scrolled ? 'text-gray-800' : 'text-white'}`}>
+                    <span className="text-sm font-medium max-w-[80px] truncate text-white">
                       {user.firstName}
                     </span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${userMenuOpen ? 'rotate-180' : ''} ${scrolled ? 'text-gray-400' : 'text-white/60'}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 text-white/60 ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {userMenuOpen && (
@@ -230,34 +244,28 @@ export function Navbar() {
               <div className="hidden md:flex items-center gap-2">
                 <Link
                   href={`/${locale}/login`}
-                  className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
-                    scrolled
-                      ? 'text-gray-600 hover:text-rmc-green hover:bg-rmc-green-light'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
+                  className="text-sm font-medium px-4 py-2 rounded-full transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 text-white/80 hover:text-white hover:bg-white/10 focus-visible:ring-white focus-visible:ring-offset-transparent"
                 >
                   {t('login')}
                 </Link>
                 <Link
                   href={`/${locale}/register`}
-                  className="bg-rmc-green text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-rmc-green-dark transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-rmc-green/25 hover:scale-105 active:scale-100"
+                  className="bg-rmc-green text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-rmc-green-dark transition-all duration-300 shadow-lg shadow-rmc-green/30 hover:shadow-rmc-green/50 motion-safe:hover:scale-105 motion-safe:active:scale-100 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green focus-visible:ring-offset-2 focus-visible:ring-offset-rmc-green-deep"
                 >
                   {t('register')}
                 </Link>
               </div>
             )}
 
-            <LanguageSwitcher scrolled={scrolled} />
+            <LanguageSwitcher />
 
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className={`md:hidden p-2 rounded-lg transition-all duration-200 ${
-                scrolled
-                  ? 'text-gray-600 hover:bg-gray-100'
-                  : 'text-white hover:bg-white/15'
-              }`}
-              aria-label="Toggle menu"
+              className="md:hidden flex items-center justify-center w-11 h-11 -mr-1.5 rounded-lg transition-all duration-200 outline-none text-white hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
             >
               {mobileOpen
                 ? <X className="h-5 w-5" />
@@ -268,66 +276,77 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — full-height dark panel covering the whole screen below the bar */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-xl animate-slide-down">
-          <div className="px-4 pt-3 pb-2 space-y-0.5">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  isActive(link.href)
-                    ? 'text-rmc-green bg-rmc-green-light'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-rmc-green'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+        <div
+          id="mobile-menu"
+          className="md:hidden fixed inset-x-0 top-14 bottom-0 z-40 bg-rmc-green-deep overflow-y-auto overscroll-contain animate-fade-in"
+        >
+          <div aria-hidden className="absolute inset-0 pattern-islamic opacity-20 pointer-events-none" />
+          <div aria-hidden className="absolute top-0 right-0 w-72 h-72 bg-rmc-green/20 rounded-full blur-[90px] pointer-events-none" />
+          <div aria-hidden className="absolute bottom-0 left-0 w-72 h-72 bg-rmc-gold/5 rounded-full blur-[90px] pointer-events-none" />
+          <div aria-hidden className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
 
-          <div className="px-4 pb-4 pt-2 border-t border-gray-100">
-            {isAuthenticated && user ? (
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 mb-2">
-                  <div className="w-9 h-9 rounded-full bg-rmc-green flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {user.firstName[0]}{user.lastName[0]}
+          <div className="relative flex flex-col min-h-full px-5 pt-6 pb-8">
+            <div className="space-y-1.5">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  aria-current={isActive(link.href) ? 'page' : undefined}
+                  className={`flex items-center px-4 py-3.5 rounded-2xl text-base font-semibold transition-all ${
+                    isActive(link.href)
+                      ? 'bg-white/10 text-rmc-gold-light border border-white/10'
+                      : 'text-white/85 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-auto pt-6 border-t border-white/10">
+              {isAuthenticated && user ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-rmc-green flex items-center justify-center text-white text-sm font-bold shrink-0">
+                      {user.firstName[0]}{user.lastName[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{user.firstName} {user.lastName}</p>
+                      <p className="text-xs text-white/50 capitalize">{user.role}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{user.firstName} {user.lastName}</p>
-                    <p className="text-xs text-gray-400 capitalize">{user.role}</p>
-                  </div>
+                  <Link href={`/${locale}/profile`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-white/85 hover:bg-white/10 hover:text-white transition-colors">
+                    <User className="w-4 h-4 text-white/50" /> {t('profile')}
+                  </Link>
+                  <Link href={`/${locale}/member/dashboard`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-white/85 hover:bg-white/10 hover:text-white transition-colors">
+                    <LayoutDashboard className="w-4 h-4 text-white/50" /> {t('dashboard')}
+                  </Link>
+                  <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm text-red-300 hover:bg-red-500/15 transition-colors">
+                    <LogOut className="w-4 h-4" /> {t('logout')}
+                  </button>
                 </div>
-                <Link href={`/${locale}/profile`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50">
-                  <User className="w-4 h-4 text-gray-400" /> {t('profile')}
-                </Link>
-                <Link href={`/${locale}/member/dashboard`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50">
-                  <LayoutDashboard className="w-4 h-4 text-gray-400" /> {t('dashboard')}
-                </Link>
-                <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50">
-                  <LogOut className="w-4 h-4" /> {t('logout')}
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-3 mt-1">
-                <Link
-                  href={`/${locale}/login`}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex-1 text-center px-4 py-3 border-2 border-rmc-green text-rmc-green rounded-xl text-sm font-semibold hover:bg-rmc-green-light transition-colors"
-                >
-                  {t('login')}
-                </Link>
-                <Link
-                  href={`/${locale}/register`}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex-1 text-center px-4 py-3 bg-rmc-green text-white rounded-xl text-sm font-semibold hover:bg-rmc-green-dark transition-colors"
-                >
-                  {t('register')}
-                </Link>
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <Link
+                    href={`/${locale}/login`}
+                    onClick={() => setMobileOpen(false)}
+                    className="w-full text-center px-4 py-3.5 border border-white/30 text-white rounded-2xl text-sm font-semibold hover:bg-white/10 hover:border-white/50 transition-colors"
+                  >
+                    {t('login')}
+                  </Link>
+                  <Link
+                    href={`/${locale}/register`}
+                    onClick={() => setMobileOpen(false)}
+                    className="w-full text-center px-4 py-3.5 bg-rmc-green text-white rounded-2xl text-sm font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark transition-colors"
+                  >
+                    {t('register')}
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -199,12 +199,12 @@ export default function AdminDashboardPage() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const STAT_CARDS: Omit<StatProps, 'active'>[] = [
-    { label: t('dashboard.totalMembers'),    value: stats.totalMembers,    icon: Users,        iconBg: 'bg-violet-50',   iconColor: 'text-violet-500', trend: 12,  href: `/${locale}/admin/members` },
-    { label: t('dashboard.pendingApproval'), value: stats.pendingMembers,  icon: Clock,        iconBg: 'bg-amber-50',    iconColor: 'text-amber-500',  trend: -3,  href: `/${locale}/admin/members` },
-    { label: t('dashboard.approved'),        value: stats.approvedMembers, icon: CheckCircle2, iconBg: 'bg-emerald-50',  iconColor: 'text-emerald-500',trend: 8                                      },
-    { label: t('dashboard.rejected'),        value: stats.rejectedMembers, icon: XCircle,      iconBg: 'bg-red-50',      iconColor: 'text-red-400',    trend: 0                                      },
-    { label: t('dashboard.totalMosques'),    value: stats.totalMosques,    icon: Landmark,     iconBg: 'bg-sky-50',      iconColor: 'text-sky-500',                href: `/${locale}/admin/mosques` },
-    { label: t('dashboard.totalUsers'),      value: stats.totalUsers,      icon: UserCheck,    iconBg: 'bg-rmc-green-light', iconColor: 'text-rmc-green',           href: `/${locale}/admin/users`   },
+    { label: t('dashboard.totalMembers'),    value: stats.totalMembers,    icon: Users,        iconBg: 'bg-violet-50',       iconColor: 'text-violet-500',  trend: 12, href: `/${locale}/admin/members` },
+    { label: t('dashboard.pendingApproval'), value: stats.pendingMembers,  icon: Clock,        iconBg: 'bg-amber-50',        iconColor: 'text-amber-500',   trend: -3, href: `/${locale}/admin/members` },
+    { label: t('dashboard.approved'),        value: stats.approvedMembers, icon: CheckCircle2, iconBg: 'bg-emerald-50',      iconColor: 'text-emerald-500', trend: 8                                   },
+    { label: t('dashboard.rejected'),        value: stats.rejectedMembers, icon: XCircle,      iconBg: 'bg-red-50',          iconColor: 'text-red-400',     trend: 0                                   },
+    { label: t('dashboard.totalMosques'),    value: stats.totalMosques,    icon: Landmark,     iconBg: 'bg-sky-50',          iconColor: 'text-sky-500',               href: `/${locale}/admin/mosques` },
+    { label: t('dashboard.totalUsers'),      value: stats.totalUsers,      icon: UserCheck,    iconBg: 'bg-green-50',        iconColor: 'text-green-600',             href: `/${locale}/admin/users`   },
   ];
 
   if (loading) {
@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -241,19 +241,16 @@ export default function AdminDashboardPage() {
         </button>
       </div>
 
-      {/* ── KPI cards ── */}
-      {/* xs: 2 cols | sm: 2 cols | md: 3 cols | xl: 6 cols */}
+      {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {STAT_CARDS.map((card, i) => (
           <StatCard key={card.label} {...card} active={cardsVisible} delay={i * 60} />
         ))}
       </div>
 
-      {/* ── Middle: chart + quick actions ── */}
-      {/* stacks to 1 col below lg */}
+      {/* Middle: chart + quick actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* Weekly chart */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-4 sm:mb-5">
             <div>
@@ -267,7 +264,6 @@ export default function AdminDashboardPage() {
 
           <BarChart data={WEEKLY_DATA} labels={WEEKLY_LABELS} />
 
-          {/* Summary sub-row */}
           <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-3 divide-x divide-gray-100">
             {[
               { label: 'Total this week', value: '133' },
@@ -282,7 +278,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Quick actions */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
           <p className="text-[13px] font-semibold text-gray-900 mb-3">Quick Actions</p>
           <div className="space-y-1">
@@ -319,11 +314,9 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* ── Bottom: activity + system ── */}
-      {/* stacks to 1 col below lg */}
+      {/* Bottom: activity + system */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        {/* Recent activity */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <p className="text-[13px] font-semibold text-gray-900">Recent Activity</p>
@@ -338,7 +331,6 @@ export default function AdminDashboardPage() {
           <ActivityItem initials="IB" name="Ibrahim Bakari" action="Membership approved"             time="3h"  status="approved" />
         </div>
 
-        {/* System status */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
           <p className="text-[13px] font-semibold text-gray-900 mb-3 sm:mb-4">System Status</p>
           <StatusRow label="API Server"   ok={true} />
