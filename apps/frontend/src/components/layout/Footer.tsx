@@ -74,7 +74,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href={`/${locale}`} className="inline-flex items-center gap-2.5 mb-5 group">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-rmc-gold/30 motion-safe:group-hover:scale-105 transition-transform duration-200">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shrink-0 motion-safe:group-hover:scale-105 transition-transform duration-200">
                 <Image src="/logo.webp" alt="RMC" width={40} height={40} className="w-full h-full object-contain p-0.5" />
               </div>
               <div className="flex items-center gap-2.5">
@@ -158,10 +158,10 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bismillah — "In the name of Allah", as on the previous site */}
-        <div className="ornament-divider max-w-xs mx-auto mb-8">
-          <p className="font-arabic text-rmc-gold-light/85 text-lg md:text-xl text-center px-3 leading-loose" dir="rtl">
-            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        {/* Alhamdulillah — closing praise (the page opens with Bismillah in the navbar) */}
+        <div className="ornament-divider max-w-sm mx-auto mb-8">
+          <p className="font-arabic text-rmc-gold-light/90 text-lg md:text-xl text-center px-3 leading-loose" dir="rtl">
+            الْحَمْدُ لِلَّٰهِ رَبِّ الْعَالَمِينَ
           </p>
         </div>
 

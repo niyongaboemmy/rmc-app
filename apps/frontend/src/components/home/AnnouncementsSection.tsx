@@ -14,6 +14,42 @@ interface Announcement {
   publishAt: string;
 }
 
+/* Fallback content so the section always shows announcements on the landing page */
+const DUMMY_ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: 'd1',
+    title: 'Eid al-Adha Prayer Schedule Announced',
+    content:
+      'Eid prayers will be held at Amahoro National Stadium and all district masjids on Eid morning. Please arrive 30 minutes early.',
+    priority: 'high',
+    publishAt: '2026-06-12T08:00:00Z',
+  },
+  {
+    id: 'd2',
+    title: 'Free Community Health Camp This Weekend',
+    content:
+      'Free medical check-ups, consultations, and medication will be available at the Grand Mosque of Kigali this Saturday and Sunday.',
+    priority: 'urgent',
+    publishAt: '2026-06-10T09:00:00Z',
+  },
+  {
+    id: 'd3',
+    title: 'RMC Scholarship Applications Now Open',
+    content:
+      'Full and partial scholarships for Muslim students across Rwanda are open for the 2026/27 academic year. Apply before June 30th.',
+    priority: 'normal',
+    publishAt: '2026-06-06T10:00:00Z',
+  },
+  {
+    id: 'd4',
+    title: 'Weekly Qur’an Classes Resume at District Masjids',
+    content:
+      'Qur’an memorization and Tajweed classes for all ages resume this week. Register at your local mosque.',
+    priority: 'normal',
+    publishAt: '2026-06-02T07:30:00Z',
+  },
+];
+
 function priorityConfig(priority: string) {
   if (priority === 'urgent') return { bg: 'bg-red-50 border-red-200', badge: 'bg-red-100 text-red-600', Icon: AlertTriangle, dot: 'bg-red-400' };
   if (priority === 'high') return { bg: 'bg-orange-50 border-orange-200', badge: 'bg-orange-100 text-orange-600', Icon: Bell, dot: 'bg-orange-400' };
@@ -29,13 +65,13 @@ export function AnnouncementsSection() {
   useEffect(() => {
     publicApi
       .getAnnouncements()
-      .then(setItems)
-      .catch(() => setItems([]))
+      .then((data) => setItems(data && data.length > 0 ? data : DUMMY_ANNOUNCEMENTS))
+      .catch(() => setItems(DUMMY_ANNOUNCEMENTS))
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <section className="bg-transparent py-16">
+    <section className="bg-transparent py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div

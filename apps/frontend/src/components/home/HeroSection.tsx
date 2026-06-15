@@ -1,11 +1,10 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, Users, ChevronDown } from 'lucide-react';
+import { ArrowRight, FileText, TrendingUp, ChevronDown } from 'lucide-react';
 
 /* Real RMC community event photos */
 const SLIDES = [
@@ -53,7 +52,6 @@ function Particle({ top, left, dur, delay, size = 4 }: {
 }
 
 export function HeroSection() {
-  const t = useTranslations('home.hero');
   const { locale } = useParams<{ locale: string }>();
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
@@ -79,10 +77,8 @@ export function HeroSection() {
     setTimeout(() => { setCurrent(i); setTransitioning(false); }, 600);
   };
 
-  const slide = SLIDES[current];
-
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-rmc-green-deep">
+    <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-rmc-green-deep">
 
       {/* ── Background image layer (crossfade) ── */}
       {SLIDES.map((s, i) => (
@@ -102,12 +98,31 @@ export function HeroSection() {
         </div>
       ))}
 
-      {/* ── Dark gradient overlay (symmetric for centered content) ── */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/55 to-black/70" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+      {/* ── Directional overlay — image stays clear on the left, text readable on the right ── */}
+      <div className="absolute inset-0 bg-gradient-to-l from-black/75 via-black/35 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/15" />
 
       {/* ── Subtle Islamic pattern on top ── */}
       <div className="absolute inset-0 pattern-islamic opacity-30" />
+
+      {/* ── Verse of the day — continuous right-to-left ticker below the navbar ── */}
+      <div className="absolute top-[76px] md:top-[84px] inset-x-0 z-20 overflow-hidden border-y border-white/10 bg-black/30 backdrop-blur-sm">
+        <div className="flex w-max animate-marquee py-2">
+          {[0, 1].map((dup) => (
+            <div key={dup} className="flex items-center shrink-0" aria-hidden={dup === 1}>
+              {SLIDES.map((s, i) => (
+                <span key={i} className="flex items-center gap-2.5 px-12 whitespace-nowrap text-xs">
+                  <span className="font-arabic text-white" dir="rtl">{s.quote.ar}</span>
+                  <span className="text-white/30">—</span>
+                  <span className="text-white/70 italic">&ldquo;{s.quote.en}&rdquo;</span>
+                  <span className="text-rmc-gold text-[10px] font-semibold tracking-wide">{s.quote.ref}</span>
+                  <span className="text-rmc-gold/40 pl-5" aria-hidden="true">◆</span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* ── Floating particles ── */}
       <Particle top="20%" left="12%" dur="8s" delay="0s" size={5} />
@@ -121,52 +136,42 @@ export function HeroSection() {
 
       {/* ── Main content ── */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-32 pb-40">
-        <div className="max-w-2xl mx-auto text-center">
+        <div className="max-w-2xl ml-auto text-right">
 
-          {/* Platform name — small, refined eyebrow label */}
-          <h1
-            className="animate-fade-up inline-flex items-center gap-2.5 mb-10 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] text-white/75"
-            style={{ animationDelay: '120ms' }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-            {t('title')}
-          </h1>
-
-          {/* Animated quote — the centerpiece, changes with slide */}
-          <div
-            className={`transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${
-              transitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-            }`}
-          >
-            {/* Arabic verse */}
-            <p className="text-3xl md:text-5xl font-arabic text-white leading-loose mb-5 drop-shadow-lg" dir="rtl">
-              {slide.quote.ar}
+          {/* Welcoming intro — the centerpiece */}
+          <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
+            {/* Warm Islamic greeting */}
+            <p className="font-arabic text-rmc-gold-light text-lg md:text-xl mb-3 leading-loose drop-shadow" dir="rtl">
+              السَّلَامُ عَلَيْكُمْ
             </p>
 
-            {/* Translation */}
-            <p className="text-white/85 text-lg md:text-xl italic mb-2 max-w-xl mx-auto leading-relaxed">
-              &ldquo;{slide.quote.en}&rdquo;
+            <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4 drop-shadow-lg">
+              Rwanda Muslim Community
+            </h2>
+
+            <p className="text-white/70 text-sm md:text-base mb-10 max-w-md ml-auto leading-relaxed">
+              Faith, knowledge, and service — for the Muslim community across Rwanda.
             </p>
-            <p className="text-rmc-gold text-xs font-semibold tracking-wide mb-10">— {slide.quote.ref}</p>
           </div>
 
           {/* CTAs */}
           <div
-            className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up"
+            className="flex flex-col sm:flex-row gap-4 items-end sm:items-center sm:justify-end animate-fade-up"
             style={{ animationDelay: '460ms' }}
           >
             <Link
-              href={`/${locale}/member/register`}
+              href={`/${locale}/services`}
               className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300 motion-reduce:transition-none motion-reduce:hover:scale-100"
             >
-              <Users className="w-4 h-4 shrink-0" />
-              Join RMC
+              <FileText className="w-4 h-4 shrink-0" />
+              Request a Service
             </Link>
             <Link
-              href={`/${locale}/about`}
+              href={`/${locale}/activities`}
               className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 motion-reduce:transition-none"
             >
-              About Us
+              <TrendingUp className="w-4 h-4 shrink-0" />
+              Trends
               <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" />
             </Link>
           </div>
