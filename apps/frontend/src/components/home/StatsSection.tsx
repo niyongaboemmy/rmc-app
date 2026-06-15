@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Users, Building2, Map, LayoutGrid } from 'lucide-react';
+import { Users, GraduationCap, Building2 } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface Stat {
@@ -88,25 +87,23 @@ function StatCard({ value, label, suffix, Icon, ringColor, glowColor, delay = 0 
         <div className="text-3xl md:text-4xl font-bold text-white mb-1 tabular-nums tracking-tight">
           {count.toLocaleString()}{suffix}
         </div>
-        <div className="text-white/45 text-sm font-medium tracking-wide">{label}</div>
+        <div className="text-white/45 text-sm font-medium uppercase tracking-wider">{label}</div>
       </div>
     </div>
   );
 }
 
 export function StatsSection() {
-  const t = useTranslations('home.stats');
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
 
   const stats: Stat[] = [
-    { value: 12500, label: t('members'), Icon: Users, suffix: '+', ringColor: 'border-emerald-400 text-emerald-400', glowColor: 'rgba(52,211,153,0.07)' },
-    { value: 320, label: t('mosques'), Icon: Building2, suffix: '+', ringColor: 'border-sky-400 text-sky-400', glowColor: 'rgba(56,189,248,0.07)' },
-    { value: 5, label: t('provinces'), Icon: Map, ringColor: 'border-violet-400 text-violet-400', glowColor: 'rgba(167,139,250,0.07)' },
-    { value: 7, label: t('services'), Icon: LayoutGrid, ringColor: 'border-amber-400 text-amber-400', glowColor: 'rgba(251,191,36,0.07)' },
+    { value: 1000000, label: 'Muslims', Icon: Users, suffix: '+', ringColor: 'border-emerald-400 text-emerald-400', glowColor: 'rgba(52,211,153,0.07)' },
+    { value: 14, label: 'Schools', Icon: GraduationCap, suffix: '+', ringColor: 'border-amber-400 text-amber-400', glowColor: 'rgba(251,191,36,0.07)' },
+    { value: 640, label: 'Masjids', Icon: Building2, suffix: '+', ringColor: 'border-sky-400 text-sky-400', glowColor: 'rgba(56,189,248,0.07)' },
   ];
 
   return (
-    <section className="relative bg-rmc-green-deep py-20 md:py-24 overflow-hidden">
+    <section className="relative bg-rmc-green-deep py-12 md:py-16 overflow-hidden">
       <div className="absolute inset-0 pattern-islamic" />
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
       <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
@@ -131,7 +128,7 @@ export function StatsSection() {
           <p className="text-white/40 mt-2 text-sm">Serving the Muslim community across Rwanda</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
           {stats.map((stat, i) => (
             <StatCard key={stat.label} {...stat} delay={i * 120} />
           ))}

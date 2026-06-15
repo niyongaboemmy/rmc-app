@@ -48,10 +48,9 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span>{current.flag}</span>
         <span>{current.label}</span>
         <ChevronDown
-          className={`w-3 h-3 opacity-70 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`w-2.5 h-2.5 opacity-70 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -62,7 +61,7 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
         }`}
         role="listbox"
       >
-        {LOCALES.map(({ code, label, flag }) => (
+        {LOCALES.map(({ code, label }) => (
           <button
             key={code}
             onClick={() => switchLocale(code)}
@@ -74,7 +73,6 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
-            <span>{flag}</span>
             <span>{label}</span>
             {currentLocale === code && (
               <span className="ml-auto w-1.5 h-1.5 rounded-full bg-rmc-green" />

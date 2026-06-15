@@ -92,7 +92,7 @@ export function PartnersSection() {
   const { ref: gridRef, visible: gridVisible } = useScrollReveal(0.05);
 
   return (
-    <section className="relative overflow-hidden bg-transparent py-20 md:py-24">
+    <section className="relative overflow-hidden bg-transparent py-12 md:py-16">
       {/* Light Islamic geometry + symmetric gold hairline seams */}
       <div aria-hidden className="absolute inset-0 pattern-light opacity-50" />
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
@@ -112,11 +112,11 @@ export function PartnersSection() {
         >
           <span className="inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-            Our Partners
+            Working Together
           </span>
 
           <h2 className="mt-7 text-3xl font-bold text-gray-900 md:text-[2.6rem] md:leading-tight">
-            Trusted <span className="title-underline">Collaborators</span>
+            Our <span className="title-underline">Partners</span>
           </h2>
 
           <p className="mx-auto mt-9 max-w-xl text-sm leading-relaxed text-gray-500 md:text-base">

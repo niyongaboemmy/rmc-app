@@ -2,12 +2,10 @@ import { Navbar } from '@/components/layout/Navbar';
 import { HeroSection } from '@/components/home/HeroSection';
 import { WelcomeCarouselSection } from '@/components/home/WelcomeCarouselSection';
 import { WhoWeAreSection } from '@/components/home/WhoWeAreSection';
-import { PrayerTimesWidget } from '@/components/home/PrayerTimesWidget';
 import { AreasOfInterventionSection } from '@/components/home/AreasOfInterventionSection';
 import { ActivitiesEventsSection } from '@/components/home/ActivitiesEventsSection';
 import { AnnouncementsSection } from '@/components/home/AnnouncementsSection';
 import { StatsSection } from '@/components/home/StatsSection';
-import { ServicesPreview } from '@/components/home/ServicesPreview';
 import { PartnersSection } from '@/components/home/PartnersSection';
 import { SocialMediaSection } from '@/components/home/SocialMediaSection';
 import { AskAIButton } from '@/components/home/AskAIButton';
@@ -24,10 +22,7 @@ export default function HomePage() {
         {/* 2. Who We Are */}
         <WhoWeAreSection />
 
-        {/* 3. Prayer Times */}
-        <PrayerTimesWidget />
-
-        {/* 4. Welcome — Carousel for updates, scholarships, donations */}
+        {/* 3. Welcome — Updates & Programs (with live prayer times) */}
         <WelcomeCarouselSection />
 
         {/* 5. Areas of Intervention: Dawa, Social & Dev, Education, Foreign Affairs */}
