@@ -5,6 +5,7 @@ import {
   Images, Upload, X, Edit2, Trash2, Eye, EyeOff,
   Plus, CheckCircle2, Loader2, ImageOff, Tag,
   LayoutGrid, Search, RefreshCw, Layers,
+  ChevronLeft, ChevronRight, Maximize2,
 } from 'lucide-react';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
@@ -90,6 +91,9 @@ function GalleryManagerInner() {
   const [editItem, setEditItem] = useState<GalleryItem | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({ title: '', description: '', category: '', isPublic: true });
   const [saving, setSaving] = useState(false);
+
+  // Preview lightbox
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   // ── Load gallery ──────────────────────────────────────────────────────────
 
@@ -360,10 +364,11 @@ function GalleryManagerInner() {
         <EmptyGallery onUpload={() => { resetUpload(); setUploadOpen(true); }} />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {filtered.map((item) => (
+          {filtered.map((item, idx) => (
             <GalleryCard
               key={item.id}
               item={item}
+              onPreview={() => setPreviewIndex(idx)}
               onEdit={() => openEdit(item)}
               onDelete={() => setDeleteId(item.id)}
               onToggleVisibility={() => toggleVisibility(item)}
@@ -417,6 +422,16 @@ function GalleryManagerInner() {
         variant="danger"
         isLoading={deleting}
       />
+
+      {/* ── Preview lightbox ── */}
+      {previewIndex !== null && (
+        <PreviewModal
+          items={filtered}
+          index={previewIndex}
+          onClose={() => setPreviewIndex(null)}
+          onNav={setPreviewIndex}
+        />
+      )}
     </div>
   );
 }
@@ -425,11 +440,13 @@ function GalleryManagerInner() {
 
 function GalleryCard({
   item,
+  onPreview,
   onEdit,
   onDelete,
   onToggleVisibility,
 }: {
   item: GalleryItem;
+  onPreview: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onToggleVisibility: () => void;
@@ -440,7 +457,10 @@ function GalleryCard({
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 aspect-[4/3]">
+    <div
+      className="group relative rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 aspect-[4/3] cursor-pointer"
+      onClick={onPreview}
+    >
       {/* Image */}
       {imgSrc && !imgError ? (
         <img
@@ -457,6 +477,13 @@ function GalleryCard({
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      {/* Preview icon hint — center on hover */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+          <Maximize2 className="w-4 h-4 text-white" />
+        </div>
+      </div>
 
       {/* Always-visible: category badge + visibility dot */}
       <div className="absolute top-2 left-2 right-2 flex items-start justify-between pointer-events-none">
@@ -537,6 +564,160 @@ function VersionDot({ label, title, filled }: { label: string; title: string; fi
     >
       {label}
     </span>
+  );
+}
+
+// ── Preview lightbox modal ────────────────────────────────────────────────────
+
+function PreviewModal({
+  items,
+  index,
+  onClose,
+  onNav,
+}: {
+  items: GalleryItem[];
+  index: number;
+  onClose: () => void;
+  onNav: (i: number) => void;
+}) {
+  const item = items[index];
+  const hasPrev = index > 0;
+  const hasNext = index < items.length - 1;
+
+  const imgSrc = item.mediumKey
+    ? fileUrl(item.mediumKey)
+    : item.fileKey
+    ? fileUrl(item.fileKey)
+    : item.thumbnailKey
+    ? fileUrl(item.thumbnailKey)
+    : null;
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft' && hasPrev) onNav(index - 1);
+      if (e.key === 'ArrowRight' && hasNext) onNav(index + 1);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [index, hasPrev, hasNext, onClose, onNav]);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const catStyle = getCategoryStyle(item.category);
+  const catLabel = getCategoryLabel(item.category);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/92 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Counter */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold backdrop-blur-sm border border-white/10 select-none">
+        {index + 1} / {items.length}
+      </div>
+
+      {/* Close */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors backdrop-blur-sm border border-white/10"
+        title="Close (Esc)"
+      >
+        <X className="w-4 h-4" />
+      </button>
+
+      {/* Prev arrow */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onNav(index - 1); }}
+        disabled={!hasPrev}
+        className={`absolute left-3 sm:left-6 w-11 h-11 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-sm border ${
+          hasPrev
+            ? 'bg-white/10 hover:bg-white/25 border-white/20 cursor-pointer'
+            : 'bg-white/5 border-white/10 opacity-30 cursor-not-allowed'
+        }`}
+        title="Previous (←)"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+
+      {/* Image container */}
+      <div
+        className="relative flex items-center justify-center max-w-[90vw] max-h-[85vh] px-16"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={item.title ?? ''}
+            className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+          />
+        ) : (
+          <div className="w-80 h-60 flex flex-col items-center justify-center bg-white/5 rounded-xl border border-white/10 text-white/30 gap-3">
+            <ImageOff className="w-10 h-10" />
+            <span className="text-sm">No image available</span>
+          </div>
+        )}
+
+        {/* Caption bar */}
+        {(item.title || item.category) && (
+          <div className="absolute bottom-0 left-0 right-0 rounded-b-xl bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pt-8 pb-3 flex items-end gap-2">
+            {item.category && (
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${catStyle} shrink-0`}>
+                {catLabel}
+              </span>
+            )}
+            {item.title && (
+              <p className="text-white text-sm font-semibold leading-tight truncate drop-shadow">{item.title}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Next arrow */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onNav(index + 1); }}
+        disabled={!hasNext}
+        className={`absolute right-3 sm:right-6 w-11 h-11 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-sm border ${
+          hasNext
+            ? 'bg-white/10 hover:bg-white/25 border-white/20 cursor-pointer'
+            : 'bg-white/5 border-white/10 opacity-30 cursor-not-allowed'
+        }`}
+        title="Next (→)"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
+
+      {/* Thumbnail strip */}
+      {items.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 max-w-[min(600px,90vw)] overflow-x-auto px-2 py-1 rounded-xl bg-black/40 backdrop-blur-sm">
+          {items.map((it, i) => {
+            const src = it.thumbnailKey ? fileUrl(it.thumbnailKey) : it.fileKey ? fileUrl(it.fileKey) : null;
+            return (
+              <button
+                key={it.id}
+                onClick={(e) => { e.stopPropagation(); onNav(i); }}
+                className={`shrink-0 w-10 h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                  i === index ? 'border-white scale-110' : 'border-transparent opacity-50 hover:opacity-80'
+                }`}
+                title={it.title ?? `Image ${i + 1}`}
+              >
+                {src ? (
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                    <ImageOff className="w-3 h-3 text-white/50" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
