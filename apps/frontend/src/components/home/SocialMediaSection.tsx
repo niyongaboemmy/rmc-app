@@ -145,7 +145,7 @@ export function SocialMediaSection() {
   const { ref: feedRef, visible: feedVisible } = useScrollReveal(0.05);
 
   return (
-    <section className="relative bg-transparent py-20 md:py-24 overflow-hidden">
+    <section className="relative bg-transparent py-12 md:py-16 overflow-hidden">
       <div className="absolute inset-0 pattern-light" />
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 

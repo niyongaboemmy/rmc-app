@@ -16,6 +16,7 @@ import {
   Play,
 } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { PrayerColumn } from './PrayerColumn';
 
 interface Slide {
   badge: string;
@@ -66,7 +67,7 @@ const SLIDES: Slide[] = [
     description:
       'Your donation supports mosques, schools, orphans, and social programs across Rwanda. Every contribution, big or small, builds a stronger ummah. Earn your reward today.',
     cta: 'Donate Now',
-    ctaHref: '/contact',
+    ctaHref: '/donate',
     Icon: Heart,
     image:
       'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=900&auto=format&fit=crop',
@@ -182,7 +183,7 @@ export function WelcomeCarouselSection() {
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
-      className="relative isolate overflow-hidden bg-rmc-green-deep min-h-[640px] md:min-h-[720px] flex items-center"
+      className="relative isolate overflow-hidden bg-rmc-green-deep"
       aria-roledescription="carousel"
       aria-label="Updates and programs"
     >
@@ -223,25 +224,26 @@ export function WelcomeCarouselSection() {
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-20 md:py-24">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 md:py-14">
 
-        {/* Centered section eyebrow + title — mirrors the hero's centerline rhythm */}
-        <div
-          className={`text-center mb-12 md:mb-14 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
-          style={{ animationDelay: '120ms' }}
-        >
-          <span className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] text-white/75">
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-            Updates &amp; Programs
-          </span>
-          <h2 className="mt-5 text-2xl md:text-4xl font-bold text-white drop-shadow-lg leading-tight">
-            Initiatives shaping the <span className="text-gradient-gold">Rwandan ummah</span>
-          </h2>
-          <div className="mx-auto mt-6 h-px w-40 bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
-        </div>
+        {/* Two distinct sections side by side: Updates & Programs (left) + Prayer Times (right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-start">
+          {/* ════════ LEFT — Updates & Programs ════════ */}
+          <div className="lg:col-span-2 relative">
+            {/* Section header — belongs to the updates carousel only */}
+            <div
+              className={`text-center mb-7 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
+              style={{ animationDelay: '120ms' }}
+            >
+              <span className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] text-white/75">
+                <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+                Updates &amp; Programs
+              </span>
+              <h2 className="mt-4 text-2xl md:text-3xl font-bold text-white drop-shadow-lg leading-tight">
+                Initiatives shaping the <span className="text-gradient-gold">Rwandan ummah</span>
+              </h2>
+            </div>
 
-        {/* Cinematic stage — glass content panel centered over the photography (mirrors the hero) */}
-        <div className="relative">
           {/* Entrance wrapper (scroll-reveal) — kept SEPARATE from the per-slide crossfade node */}
           <div
             className={`relative ${visible ? 'animate-fade-up' : 'opacity-0'}`}
@@ -249,12 +251,12 @@ export function WelcomeCarouselSection() {
           >
             {/* Per-slide crossfade node — its own opacity/transform, no fade-up conflict */}
             <div
-              className={`max-w-xl mx-auto text-center glass rounded-3xl p-7 sm:p-9 md:p-11 shadow-2xl shadow-black/40 transition-all duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+              className={`max-w-xl mx-auto text-center glass rounded-3xl p-6 sm:p-7 shadow-2xl shadow-black/40 transition-all duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
                 animating ? 'opacity-0 translate-y-3' : 'opacity-100 translate-y-0'
               }`}
             >
               {/* Eyebrow row — refined gold icon tile + glass badge */}
-              <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="flex items-center justify-center gap-3 mb-5">
                 <span className="grid place-items-center w-11 h-11 rounded-2xl bg-rmc-gold/15 border border-rmc-gold/30 text-rmc-gold shadow-inner">
                   <Icon className="w-5 h-5" />
                 </span>
@@ -264,33 +266,17 @@ export function WelcomeCarouselSection() {
                 </span>
               </div>
 
-              {/* Quran verse — full hero treatment: Arabic + italic gloss + gold reference */}
-              <p
-                className="font-arabic text-rmc-gold-light/90 text-xl md:text-2xl leading-loose mb-2 drop-shadow"
-                lang="ar"
-                dir="rtl"
-              >
-                {slide.verse.ar}
-              </p>
-              <p className="text-white/60 text-xs italic">&ldquo;{slide.verse.en}&rdquo;</p>
-              <p className="text-rmc-gold text-[11px] font-semibold tracking-wide mb-5">
-                — {slide.verse.ref}
-              </p>
-
-              {/* Headline — sized to sit clearly above the verse, not compete with it */}
-              <h3 className="text-xl md:text-2xl font-bold text-white leading-tight drop-shadow-lg mb-4">
+              {/* Headline */}
+              <h3 className="text-xl md:text-2xl font-bold text-white leading-tight drop-shadow-lg mb-3">
                 {slide.title}
               </h3>
 
-              {/* Gold hairline divider — centered accent */}
-              <div className="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-rmc-gold/45 to-transparent mb-5" />
-
-              <p className="text-white/75 text-sm md:text-base leading-relaxed mb-7 max-w-md mx-auto">
+              <p className="text-white/75 text-sm md:text-base leading-relaxed mb-5 max-w-md mx-auto">
                 {slide.description}
               </p>
 
               {/* Gold stat chip */}
-              <div className="inline-flex items-center gap-3 mb-8 px-4 py-2.5 rounded-2xl border border-rmc-gold/30 bg-rmc-gold/10 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-3 mb-6 px-4 py-2.5 rounded-2xl border border-rmc-gold/30 bg-rmc-gold/10 backdrop-blur-sm">
                 <p className="text-2xl font-bold text-rmc-gold-light leading-none">{slide.stat.value}</p>
                 <span className="h-7 w-px bg-white/15" />
                 <p className="text-[11px] font-medium text-white/65 leading-tight max-w-[8rem]">
@@ -308,7 +294,7 @@ export function WelcomeCarouselSection() {
                   <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link
-                  href={`/${locale}/contact`}
+                  href={`/${locale}/donate`}
                   className={`group inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 ${ring}`}
                 >
                   <Heart className="w-4 h-4 shrink-0" />
@@ -320,7 +306,7 @@ export function WelcomeCarouselSection() {
 
           {/* Single, unified control row — centered: arrow pair, dot set, pause toggle, counter */}
           <div
-            className={`mt-9 flex flex-wrap items-center justify-center gap-x-5 gap-y-4 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
+            className={`mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-4 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
             style={{ animationDelay: '460ms' }}
           >
             {/* Prev / Next glass arrows — 44px touch targets */}
@@ -379,40 +365,11 @@ export function WelcomeCarouselSection() {
               <span className="tabular-nums">{String(SLIDES.length).padStart(2, '0')}</span>
             </div>
           </div>
+          </div>
 
-          {/* Desktop thumbnail strip — centered; always-colored (dimmed when inactive), gold-ring active */}
-          <div
-            className={`hidden md:flex items-center justify-center gap-3 mt-6 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
-            style={{ animationDelay: '560ms' }}
-          >
-            {SLIDES.map((s, i) => {
-              const active = i === current;
-              const ThumbIcon = s.Icon;
-              return (
-                <button
-                  key={s.image}
-                  onClick={() => goTo(i)}
-                  aria-label={`Go to ${s.badge}`}
-                  aria-current={active}
-                  className={`group relative w-28 h-16 rounded-xl overflow-hidden border transition-all duration-300 ${ring} ${
-                    active
-                      ? 'border-rmc-gold/80 ring-2 ring-rmc-gold/40 scale-105 shadow-lg shadow-black/40'
-                      : 'border-white/15 opacity-60 hover:opacity-100 hover:border-white/40'
-                  }`}
-                >
-                  <Image src={s.image} alt="" fill className="object-cover" sizes="112px" />
-                  <span className="absolute inset-0 bg-gradient-to-t from-rmc-green-deep/85 via-rmc-green-deep/20 to-transparent" />
-                  <span className="absolute top-1.5 left-1.5 grid place-items-center w-6 h-6 rounded-lg bg-black/35 backdrop-blur-sm">
-                    <ThumbIcon
-                      className={`w-3.5 h-3.5 drop-shadow ${active ? 'text-rmc-gold-light' : 'text-white/85'}`}
-                    />
-                  </span>
-                  <span className="absolute bottom-1 left-1.5 right-1.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 leading-tight line-clamp-1 text-left">
-                    {s.badge}
-                  </span>
-                </button>
-              );
-            })}
+          {/* Live prayer times — right column */}
+          <div className="lg:col-span-1">
+            <PrayerColumn />
           </div>
         </div>
       </div>

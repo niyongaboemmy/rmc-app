@@ -11,7 +11,7 @@ export function WhoWeAreSection() {
   const { ref: bodyRef, visible: bodyVisible } = useScrollReveal(0.1);
 
   return (
-    <section className="relative bg-transparent py-24 md:py-32 overflow-hidden">
+    <section className="relative bg-transparent py-14 md:py-20 overflow-hidden">
       {/* Faint Islamic geometric texture — echoes the hero's pattern overlay */}
       <div className="absolute inset-0 pattern-light opacity-70 pointer-events-none" />
       {/* Soft ambient light wash */}
