@@ -10,55 +10,197 @@ on:
     tags:
       - 'v*.*.*'
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
-  deploy-production:
-    name: Deploy to Production
+  # ──────────────────────────────────────────────
+  # 1. Build all apps on the CI runner
+  # ──────────────────────────────────────────────
+  build:
+    name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: production
     if: >
       github.event_name == 'push' ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'DEPLOY')
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to production via SSH
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/backend/package-lock.json
+            apps/frontend/package-lock.json
+            apps/file-server/package-lock.json
+
+      - name: Build — backend
+        working-directory: apps/backend
+        run: npm ci && npm run build
+
+      - name: Build — frontend
+        working-directory: apps/frontend
+        run: npm ci && npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.isengesho.com
+
+      - name: Build — file-server
+        working-directory: apps/file-server
+        run: npm ci && npm run build
+
+      - name: Upload backend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: apps/backend/dist/
+          retention-days: 1
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: |
+            apps/frontend/.next/
+            apps/frontend/public/
+          retention-days: 1
+
+      - name: Upload file-server dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: file-server-dist
+          path: apps/file-server/dist/
+          retention-days: 1
+
+  # ──────────────────────────────────────────────
+  # 2. Push artifacts to EC2, install prod deps, reload PM2
+  # ──────────────────────────────────────────────
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build]
+    environment:
+      name: production
+      url: https://isengesho.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download backend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-dist
+          path: apps/backend/dist/
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: apps/frontend/
+
+      - name: Download file-server dist
+        uses: actions/download-artifact@v4
+        with:
+          name: file-server-dist
+          path: apps/file-server/dist/
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rsync — backend
+        run: |
+          rsync -az --delete \
+            apps/backend/dist/ \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/backend/dist/
+          rsync -az \
+            apps/backend/package.json \
+            apps/backend/package-lock.json \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/backend/
+
+      - name: Rsync — frontend
+        run: |
+          rsync -az --delete \
+            apps/frontend/.next/ \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/.next/
+          rsync -az \
+            apps/frontend/public/ \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/public/
+          rsync -az \
+            apps/frontend/package.json \
+            apps/frontend/package-lock.json \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/
+
+      - name: Rsync — file-server
+        run: |
+          rsync -az --delete \
+            apps/file-server/dist/ \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/file-server/dist/
+          rsync -az \
+            apps/file-server/package.json \
+            apps/file-server/package-lock.json \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/file-server/
+
+      - name: Install prod deps, migrate & reload
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
-          username: ec2-user
+          username: ubuntu
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           script: |
-            cd /opt/rmc-platform
-            git fetch --tags
-            git checkout ${{ github.ref_name }}
-            docker compose -f docker-compose.prod.yml pull
-            # Rolling deploy — restart one at a time
-            docker compose -f docker-compose.prod.yml up -d --no-deps backend
-            sleep 10
-            curl -f http://localhost:3000/api/v1/health || exit 1
-            docker compose -f docker-compose.prod.yml up -d --no-deps frontend
-            echo "Production deployment successful: ${{ github.ref_name }}"
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
 
+            echo "==> Installing production dependencies (no build)..."
+            cd /opt/rmc-platform/apps/backend    && npm ci --omit=dev
+            cd /opt/rmc-platform/apps/frontend   && npm ci --omit=dev
+            cd /opt/rmc-platform/apps/file-server && npm ci --omit=dev
+
+            echo "==> Running DB migrations..."
+            cd /opt/rmc-platform/apps/backend
+            ./node_modules/.bin/typeorm migration:run -d dist/config/data-source.js
+
+            echo "==> Reloading PM2 (zero downtime)..."
+            cd /opt/rmc-platform
+            pm2 reload ecosystem.config.js --update-env
+
+            echo "==> Health checks..."
+            sleep 5
+            curl -f http://localhost:3000/api/v1/health || (pm2 logs rmc-backend --lines 50 && exit 1)
+            curl -f http://localhost:3001 || (pm2 logs rmc-frontend --lines 50 && exit 1)
+            curl -f http://localhost:3002 || (pm2 logs rmc-file-server --lines 50 && exit 1)
+
+            pm2 save
+            echo "✅ Deployment complete"
+
+  # ──────────────────────────────────────────────
+  # 3. Notify result
+  # ──────────────────────────────────────────────
   notify:
-    name: Notify Deployment Result
+    name: Notify Result
     runs-on: ubuntu-latest
-    needs: [deploy-production]
+    needs: [deploy]
     if: always()
     steps:
       - name: Notify success
-        if: needs.deploy-production.result == 'success'
+        if: needs.deploy.result == 'success'
         uses: slackapi/slack-github-action@v1
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
             {
-              "text": ":white_check_mark: Production deploy SUCCEEDED — ${{ github.ref_name }} by ${{ github.actor }}"
+              "text": ":white_check_mark: Production deploy SUCCEEDED — ${{ github.ref_name }} by ${{ github.actor }}\nhttps://isengesho.com"
             }
 
       - name: Notify failure
-        if: needs.deploy-production.result == 'failure'
+        if: needs.deploy.result == 'failure'
         uses: slackapi/slack-github-action@v1
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
