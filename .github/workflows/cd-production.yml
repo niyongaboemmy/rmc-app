@@ -32,10 +32,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: |
-            apps/backend/package-lock.json
-            apps/frontend/package-lock.json
-            apps/file-server/package-lock.json
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Build — backend
         working-directory: apps/backend
