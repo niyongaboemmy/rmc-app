@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { PageHero } from '@/components/layout/PageHero';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
@@ -64,25 +65,12 @@ export default async function ServicesPage({ params: { locale } }: { params: { l
       <Navbar />
       <main>
         {/* Header */}
-        <section className="relative text-white py-36 px-4 overflow-hidden min-h-[380px] flex items-center">
-          <Image
-            src="https://pbs.twimg.com/media/HESeGQZWAAAvdtq?format=jpg&name=large"
-            alt="RMC Services"
-            fill
-            className="object-cover object-center"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/30" />
-          <div className="absolute inset-0 pattern-islamic opacity-25" />
-          <div className="relative max-w-4xl mx-auto text-center w-full">
-            <div className="inline-flex items-center gap-2 bg-rmc-gold/20 border border-rmc-gold/30 text-rmc-gold px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold" />
-              Our Services
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">{t('services.title')}</h1>
-            <p className="text-white/75 text-lg max-w-2xl mx-auto">{t('services.subtitle')}</p>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="Our Services"
+          title={t('services.title')}
+          subtitle={t('services.subtitle')}
+          ornament
+        />
 
         {/* Services grid */}
         <section className="py-20 px-4 pattern-light">
