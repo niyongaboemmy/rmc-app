@@ -33,18 +33,68 @@ export function AskAIButton() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  const send = (text: string) => {
-    if (!text.trim()) return;
+  const send = async (text: string) => {
+    if (!text.trim() || typing) return;
+
     const userMsg: Message = { id: Date.now().toString(), role: 'user', text };
-    setMessages((m) => [...m, userMsg]);
+    const history = [...messages, userMsg];
+    setMessages(history);
     setInput('');
     setTyping(true);
 
-    setTimeout(() => {
-      const reply = getStaticReply(text);
+    const aiId = `${Date.now() + 1}`;
+
+    // Conversation for the API: drop the static greeting, map 'ai' -> 'assistant'.
+    const payload = history
+      .filter((m) => m.id !== GREETING.id)
+      .map((m) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }));
+
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ messages: payload }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`Request failed: ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let acc = '';
+      let started = false;
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        if (!acc) continue;
+        if (!started) {
+          started = true;
+          setTyping(false);
+          setMessages((m) => [...m, { id: aiId, role: 'ai', text: acc }]);
+        } else {
+          setMessages((m) => m.map((msg) => (msg.id === aiId ? { ...msg, text: acc } : msg)));
+        }
+      }
+
+      if (!started) {
+        setTyping(false);
+        setMessages((m) => [
+          ...m,
+          { id: aiId, role: 'ai', text: 'Sorry, I could not generate a response. Please try again.' },
+        ]);
+      }
+    } catch {
       setTyping(false);
-      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), role: 'ai', text: reply }]);
-    }, 1200);
+      setMessages((m) => [
+        ...m,
+        {
+          id: aiId,
+          role: 'ai',
+          text: "Sorry — I'm having trouble connecting right now. Please reach us at info@rmc.org.rw or +250 788 000 000.",
+        },
+      ]);
+    }
   };
 
   return (
@@ -113,7 +163,7 @@ export function AskAIButton() {
                 </div>
               )}
               <div
-                className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
                   msg.role === 'user'
                     ? 'bg-rmc-green text-white rounded-br-sm'
                     : 'bg-gray-100 text-gray-700 rounded-bl-sm'
@@ -166,12 +216,13 @@ export function AskAIButton() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send(input)}
-              placeholder="Ask a question..."
-              className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-300"
+              disabled={typing}
+              placeholder={typing ? 'Thinking…' : 'Ask a question...'}
+              className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-300 disabled:opacity-60"
             />
             <button
               onClick={() => send(input)}
-              disabled={!input.trim()}
+              disabled={!input.trim() || typing}
               className="w-8 h-8 rounded-full bg-rmc-green flex items-center justify-center text-white disabled:opacity-30 hover:bg-rmc-green-dark transition-colors shrink-0"
             >
               <Send className="w-3.5 h-3.5" />
@@ -182,30 +233,4 @@ export function AskAIButton() {
       </div>
     </>
   );
-}
-
-function getStaticReply(input: string): string {
-  const q = input.toLowerCase();
-  if (q.includes('scholarship') || q.includes('school') || q.includes('education')) {
-    return 'RMC offers scholarships for Muslim students at primary, secondary, and university levels. Visit our Services page or contact us at info@rmc.rw to apply. Applications for 2025/2026 close June 30th.';
-  }
-  if (q.includes('prayer') || q.includes('salah') || q.includes('time')) {
-    return 'You can view today\'s prayer times on our homepage under "Prayer Times." We show times for Fajr, Sunrise, Dhuhr, Asr, Maghrib, and Isha based on your location.';
-  }
-  if (q.includes('mosque') || q.includes('masjid')) {
-    return 'RMC has registered over 320 mosques across Rwanda\'s 5 provinces. Use our "Find Nearest Mosque" feature on the Contact page to locate the closest one to you.';
-  }
-  if (q.includes('marriage') || q.includes('nikah')) {
-    return 'RMC provides official Islamic marriage documentation. You\'ll need both parties\' IDs, two witnesses\' IDs, the guardian\'s ID, and photos. Fees are 30,000 RWF in the mosque or 200,000 RWF outside. Visit our Services page.';
-  }
-  if (q.includes('service') || q.includes('offer')) {
-    return 'RMC offers 7 key services: Marriage documentation, Funeral coordination, Good Conduct certificates, Scholarships, Hijra support, Tenders, and Job opportunities. Visit our Services page for details.';
-  }
-  if (q.includes('donate') || q.includes('donation') || q.includes('zakat')) {
-    return 'Thank you for your generosity! You can support RMC\'s mission by donating via our contact page or bank transfer. Your contribution supports mosques, schools, orphans, and social programs.';
-  }
-  if (q.includes('contact') || q.includes('reach') || q.includes('phone') || q.includes('email')) {
-    return 'You can reach RMC at info@rmc.rw or call +250 788 000 000. Our headquarters is in Rebero, Kigali. Visit our Contact page for a map and all contact details.';
-  }
-  return 'Thank you for your question! For detailed information, please visit our website or contact us directly at info@rmc.rw or +250 788 000 000. Our team will be happy to assist you. Jazakallahu Khairan!';
 }

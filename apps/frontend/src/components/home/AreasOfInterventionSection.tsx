@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Heart, GraduationCap, Globe, Check } from 'lucide-react';
+import { BookOpen, Heart, GraduationCap, Globe } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface Area {
@@ -9,7 +9,6 @@ interface Area {
   Icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
-  items: string[];
 }
 
 const AREAS: Area[] = [
@@ -17,37 +16,29 @@ const AREAS: Area[] = [
     key: 'dawa',
     index: '01',
     Icon: BookOpen,
-    title: 'Dawa',
-    description:
-      "Islamic outreach and propagation of the faith across Rwanda, supporting imams, madrassas, and Islamic education programs in communities.",
-    items: ['Imam training programs', 'Quran distribution', 'Community preaching', 'Islamic literacy'],
+    title: 'Dawah',
+    description: 'Spreading the true teachings of Islam through peaceful outreach and guidance.',
   },
   {
     key: 'social',
     index: '02',
     Icon: Heart,
-    title: 'Social & Development',
-    description:
-      "Uplifting vulnerable Muslim families through welfare programs, microfinance, food assistance, and community infrastructure development.",
-    items: ['Zakat distribution', 'Orphan support', 'Widow programs', 'Community development'],
+    title: 'Socio Development',
+    description: 'Empowering communities through health, poverty alleviation, and welfare initiatives.',
   },
   {
     key: 'education',
     index: '03',
     Icon: GraduationCap,
     title: 'Education',
-    description:
-      "Investing in the future of the Rwandan Muslim community through schools, scholarships, teacher training, and digital learning initiatives.",
-    items: ['Scholarships', 'School construction', 'Teacher training', 'Digital learning'],
+    description: 'Providing quality secular and Islamic education to the youth across the nation.',
   },
   {
     key: 'foreign',
     index: '04',
     Icon: Globe,
     title: 'Foreign Affairs',
-    description:
-      "Building international bridges with Islamic organizations, governments, and diaspora communities to bring resources and recognition to Rwandan Muslims.",
-    items: ['International partnerships', 'Hajj coordination', 'Diaspora engagement', 'Diplomatic relations'],
+    description: 'Building and maintaining strong international relations and partnerships.',
   },
 ];
 
@@ -59,16 +50,10 @@ function PillarCard({ area, delay }: { area: Area; delay: number }) {
     <article
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-gray-200/70 bg-white p-9 lg:p-11 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_64px_-24px_rgba(26,122,74,0.3)] ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-gray-200/70 bg-white p-7 lg:p-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_64px_-24px_rgba(26,122,74,0.3)] ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
     >
-      {/* Always-on gold left rail — gives every card a co-equal green+gold identity at rest */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-rmc-gold via-rmc-gold-light to-rmc-gold"
-      />
-
       {/* Ghosted index numeral — anchors the card. -webkit-text-stroke draws a hairline outline;
           a faint solid green fill is the cross-engine fallback so it never vanishes.
           One of the two hover events: it warms to gold. */}
@@ -98,19 +83,6 @@ function PillarCard({ area, delay }: { area: Area; delay: number }) {
 
       {/* Description */}
       <p className="relative mt-4 text-sm leading-relaxed text-gray-500">{area.description}</p>
-
-      {/* Focus items — pushed to the base of the card for an even bottom edge. The list sits above a
-          gold→green→transparent hairline divider rather than a flat gray rule. */}
-      <ul className="relative mt-auto space-y-2.5 pt-6 before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-rmc-gold/40 before:via-rmc-green/15 before:to-transparent before:content-['']">
-        {area.items.map((item) => (
-          <li key={item} className="flex items-center gap-2.5 text-sm text-gray-600">
-            <span className="grid place-items-center w-5 h-5 shrink-0 rounded-full bg-rmc-green-light text-rmc-green ring-1 ring-rmc-green/10">
-              <Check className="w-3 h-3" strokeWidth={3} />
-            </span>
-            <span className="leading-snug">{item}</span>
-          </li>
-        ))}
-      </ul>
     </article>
   );
 }
@@ -119,7 +91,7 @@ export function AreasOfInterventionSection() {
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
 
   return (
-    <section className="relative overflow-hidden bg-transparent py-20 md:py-28">
+    <section className="relative overflow-hidden bg-transparent py-12 md:py-16">
       {/* Light Islamic geometry + symmetric gold hairline seams to the darker neighbouring sections */}
       <div aria-hidden className="absolute inset-0 pattern-light opacity-60" />
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
