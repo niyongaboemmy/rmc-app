@@ -47,7 +47,7 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             HERO
         =================================================================== */}
-        <section className="relative text-white py-36 px-4 overflow-hidden min-h-[420px] flex items-center">
+        <section className="relative text-white min-h-[50vh] py-14 px-4 sm:px-6 lg:px-8 overflow-hidden flex items-center">
           <Image
             src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=80"
             alt="Islamic marriage celebration"
@@ -77,8 +77,8 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             OVERVIEW
         =================================================================== */}
-        <section className="py-20 px-4 bg-transparent overflow-hidden">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-xl aspect-[4/3]">
                 <Image
@@ -89,8 +89,8 @@ export default async function MarriageServicePage({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-rose-950/45 to-transparent" />
               </div>
-              <div className="absolute -bottom-5 -right-4 bg-white rounded-2xl shadow-lg px-5 py-4 flex items-center gap-3 border border-rose-100">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-600 to-rose-800 flex items-center justify-center shadow-md shadow-rose-900/25">
+              <div className="absolute -bottom-5 -right-4 bg-white rounded-2xl shadow-lg px-5 py-4 flex items-center gap-3 border border-gray-100">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-sm">
                   <CalendarCheck className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -126,7 +126,7 @@ export default async function MarriageServicePage({
                 </Link>
                 <Link
                   href={`/${locale}/services/marriage/status`}
-                  className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-white border-2 border-rose-200 text-rose-700 font-semibold rounded-full hover:border-rose-400 hover:bg-rose-50 transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-white border border-rose-200 text-rose-700 font-semibold rounded-full hover:border-rose-300 hover:bg-rose-50 transition-all duration-200"
                 >
                   <Search className="w-4 h-4" /> {t('detail.checkStatus')}
                 </Link>
@@ -138,9 +138,9 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             WHAT'S INCLUDED
         =================================================================== */}
-        <section className="py-20 px-4 bg-rose-50/40 pattern-light">
+        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-rose-50/40 pattern-light">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-9">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.includesTitle')}</h2>
               <p className="text-gray-500 max-w-2xl mx-auto">{t('detail.includesSubtitle')}</p>
             </div>
@@ -150,9 +150,9 @@ export default async function MarriageServicePage({
                 return (
                   <div
                     key={key}
-                    className="group flex gap-5 bg-white border-2 border-rose-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:border-rose-300 hover:-translate-y-1 transition-all duration-200"
+                    className="group flex gap-5 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-rose-500/10 hover:border-rose-200 hover:-translate-y-1 transition-all duration-300"
                   >
-                    <div className="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-rose-600 to-rose-800 flex items-center justify-center shadow-md shadow-rose-900/25 ring-1 ring-white/20 group-hover:scale-110 transition-transform duration-200">
+                    <div className="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-sm ring-1 ring-white/20 group-hover:scale-110 transition-transform duration-300">
                       <Icon className="w-6 h-6 text-white" strokeWidth={2.25} />
                     </div>
                     <div>
@@ -173,9 +173,9 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             PROCESS
         =================================================================== */}
-        <section className="py-20 px-4 bg-transparent">
+        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-transparent">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.processTitle')}</h2>
               <p className="text-gray-500 max-w-2xl mx-auto">{t('detail.processSubtitle')}</p>
             </div>
@@ -183,7 +183,7 @@ export default async function MarriageServicePage({
             <div className="relative">
               {/* Vertical connector line */}
               <div className="absolute left-5 top-2 bottom-2 w-px bg-gradient-to-b from-rose-400 via-rose-200 to-transparent" />
-              <div className="space-y-8">
+              <div className="space-y-5">
                 {stepKeys.map((key, i) => (
                   <div key={key} className="relative flex gap-6 items-start">
                     <div className="relative z-10 w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-rose-600 to-rose-800 text-white font-bold flex items-center justify-center shadow-md shadow-rose-900/25 ring-4 ring-white">
@@ -207,9 +207,9 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             REQUIREMENTS
         =================================================================== */}
-        <section className="py-20 px-4 bg-gray-50/80 pattern-light">
+        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-gray-50/80 pattern-light">
           <div className="max-w-5xl mx-auto">
-            <div className="bg-white rounded-3xl border-2 border-rose-100 shadow-md overflow-hidden grid md:grid-cols-5">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-5">
               <div className="md:col-span-2 bg-gradient-to-br from-rose-600 to-rose-800 p-8 text-white flex flex-col justify-center">
                 <FileText className="w-10 h-10 mb-4 text-white/90" />
                 <h2 className="text-2xl font-bold mb-2">{t('detail.requirementsTitle')}</h2>
@@ -236,25 +236,25 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             SERVICE FEES & PAYMENT CLAUSE
         =================================================================== */}
-        <section className="py-20 px-4 bg-rose-50/40 pattern-light">
+        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-rose-50/40 pattern-light">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-9">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.fees.title')}</h2>
               <p className="text-gray-500 max-w-2xl mx-auto">{t('detail.fees.subtitle')}</p>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-6 mb-8">
               {/* Mosque */}
-              <div className="relative bg-white border-2 border-rose-200 rounded-2xl p-7 shadow-sm overflow-hidden">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-600 to-rose-800 flex items-center justify-center shadow-md shadow-rose-900/25 ring-1 ring-white/20 mb-5">
+              <div className="relative bg-white border border-gray-100 rounded-2xl p-7 shadow-sm overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-sm ring-1 ring-white/20 mb-5">
                   <Building2 className="w-6 h-6 text-white" strokeWidth={2.25} />
                 </div>
                 <p className="text-3xl font-bold text-gray-900">{t('detail.fees.mosqueAmount')}</p>
                 <p className="text-gray-500 text-sm mt-2">{t('detail.fees.mosqueLabel')}</p>
               </div>
               {/* Outside */}
-              <div className="relative bg-white border-2 border-gray-200 rounded-2xl p-7 shadow-sm overflow-hidden">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center shadow-md shadow-slate-900/20 ring-1 ring-white/20 mb-5">
+              <div className="relative bg-white border border-gray-100 rounded-2xl p-7 shadow-sm overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shadow-sm ring-1 ring-white/20 mb-5">
                   <MapPin className="w-6 h-6 text-white" strokeWidth={2.25} />
                 </div>
                 <p className="text-3xl font-bold text-gray-900">{t('detail.fees.outsideAmount')}</p>
@@ -263,7 +263,7 @@ export default async function MarriageServicePage({
             </div>
 
             {/* Payment clause */}
-            <div className="flex gap-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-6">
+            <div className="flex gap-4 bg-amber-50 border border-amber-200 rounded-2xl p-6">
               <Wallet className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-bold text-amber-900 mb-1.5">{t('detail.fees.clauseTitle')}</h3>
@@ -278,16 +278,16 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             FAQ
         =================================================================== */}
-        <section className="py-20 px-4 bg-transparent">
+        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-transparent">
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-9">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('detail.faqTitle')}</h2>
             </div>
             <div className="space-y-4">
               {faqKeys.map((key) => (
                 <details
                   key={key}
-                  className="group bg-white border-2 border-gray-100 rounded-2xl p-6 hover:border-rose-200 transition-colors duration-200 [&_summary]:list-none"
+                  className="group bg-white border border-gray-100 rounded-2xl p-6 hover:border-rose-200 transition-colors duration-200 [&_summary]:list-none"
                 >
                   <summary className="flex items-center justify-between cursor-pointer font-bold text-gray-900">
                     {t(`detail.faqs.${key}.q`)}
@@ -307,7 +307,7 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             CTA
         =================================================================== */}
-        <section className="relative py-20 px-4 text-center overflow-hidden">
+        <section className="relative py-14 px-4 sm:px-6 lg:px-8 text-center overflow-hidden">
           <Image
             src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=1600&q=80"
             alt="Begin your marriage application"

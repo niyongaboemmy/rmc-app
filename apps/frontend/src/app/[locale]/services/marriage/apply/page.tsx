@@ -88,7 +88,7 @@ function RequirementsView({ locale }: { locale: string }) {
     <div className="min-h-screen">
       <Navbar />
       <main className="bg-gray-50/60 pattern-light">
-        <div className="max-w-7xl mx-auto px-4 py-10 lg:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
           <Link
             href={`/${locale}/services/marriage`}
             className="inline-flex items-center gap-1.5 text-gray-500 hover:text-rose-700 text-sm font-medium mb-8 transition-colors"
@@ -241,7 +241,7 @@ export default function MarriageApplyPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-rose-950/60 to-black/40" />
         <div className="absolute inset-0 pattern-islamic opacity-20" />
 
-        <div className="relative h-full flex flex-col justify-end pb-6 px-4 max-w-3xl mx-auto w-full">
+        <div className="relative h-full flex flex-col justify-end pb-6 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full">
           <Link
             href={`/${locale}/services/marriage`}
             className="inline-flex items-center gap-1.5 text-white/60 hover:text-white text-xs font-medium mb-3 transition-colors w-fit"
@@ -259,7 +259,7 @@ export default function MarriageApplyPage() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <main className="max-w-3xl mx-auto px-4 py-10">
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="h-24 rounded-2xl bg-gray-200 animate-pulse mb-6" />
           <div className="h-40 rounded-2xl bg-gray-200 animate-pulse" />
         </main>
@@ -270,7 +270,7 @@ export default function MarriageApplyPage() {
 
       {/* Authenticated: full wizard */}
       {!isLoading && isAuthenticated && (
-        <main className="max-w-3xl mx-auto px-4 py-8 lg:py-10">
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
           <p className="text-gray-500 text-sm mb-6">
             Complete all six steps. Your progress is saved as a draft — you can return to continue
             at any time.

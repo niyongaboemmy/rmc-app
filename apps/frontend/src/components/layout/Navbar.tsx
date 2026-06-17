@@ -82,6 +82,7 @@ export function Navbar() {
     { href: `/${locale}/about`, label: t('about') },
     { href: `/${locale}/services`, label: t('services') },
     { href: `/${locale}/blog`, label: t('blog') },
+    { href: `/${locale}/gallery`, label: t('gallery') },
     { href: `/${locale}/contact`, label: t('contact') },
   ];
 

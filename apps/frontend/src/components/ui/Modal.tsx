@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, ReactNode } from 'react';
+import { useEffect, useRef, useState, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Button } from './Button';
 import { X } from 'lucide-react';
@@ -26,6 +27,10 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
   const visible = open ?? isOpen ?? false;
   const overlayRef = useRef<HTMLDivElement>(null);
 
+  // Portal target is only available on the client; gate render until mounted.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
     if (!visible) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -33,9 +38,12 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
     return () => document.removeEventListener('keydown', handler);
   }, [visible, onClose]);
 
-  if (!visible) return null;
+  if (!visible || !mounted) return null;
 
-  return (
+  // Render through a portal to <body> so the overlay always covers the full
+  // viewport, escaping any ancestor with a transform/filter that would
+  // otherwise become the containing block for `position: fixed`.
+  return createPortal(
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -60,7 +68,8 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
         </button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

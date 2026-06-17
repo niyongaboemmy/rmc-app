@@ -32,17 +32,48 @@ function getCategoryStyle(cat: string | null) {
   return CATEGORIES.find((c) => c.id === cat)?.color ?? 'bg-gray-100 text-gray-500 border-gray-200';
 }
 
+/** Pull a human-readable reason out of an axios/API error for toast + console. */
+function apiErrorMessage(err: unknown, fallback: string): string {
+  const e = err as {
+    response?: { status?: number; data?: { error?: { message?: string }; message?: string } };
+    message?: string;
+  };
+  const status = e?.response?.status;
+  const detail =
+    e?.response?.data?.error?.message ?? e?.response?.data?.message ?? e?.message;
+  if (status === 401) return 'Session expired — please sign in again.';
+  if (status === 403) return 'You don’t have permission to do that.';
+  if (status === 429) return 'Too many requests — wait a moment and retry.';
+  return detail ? `${fallback} (${detail})` : fallback;
+}
+
 function getCategoryLabel(cat: string | null) {
   return CATEGORIES.find((c) => c.id === cat)?.label ?? cat ?? 'Uncategorised';
 }
 
-// ── Upload progress state ─────────────────────────────────────────────────────
+// ── Upload queue (bulk) ─────────────────────────────────────────────────────
 
-interface UploadStage {
-  label: string;
-  key: 'processing' | 'thumbnail' | 'medium' | 'original';
+type QueueStatus = 'pending' | 'processing' | 'uploading' | 'done' | 'error';
+
+interface QueueItem {
+  id: string;
+  file: File;
+  preview: string;
+  status: QueueStatus;
   pct: number;
-  done: boolean;
+  error?: string;
+}
+
+// Maps each upload stage to a slice of the per-file 0-100 progress bar.
+const STAGE_BASE: Record<'thumbnail' | 'medium' | 'original', number> = {
+  thumbnail: 10, medium: 40, original: 70,
+};
+const STAGE_SPAN = 30;
+
+// Shared metadata applied to every image in a bulk upload.
+interface BulkForm {
+  category: string;
+  isPublic: boolean;
 }
 
 // ── Edit form ─────────────────────────────────────────────────────────────────
@@ -76,15 +107,12 @@ function GalleryManagerInner() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Upload modal
+  // Upload modal (bulk)
   const [uploadOpen, setUploadOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
-  const [uploadForm, setUploadForm] = useState<EditForm>({ title: '', description: '', category: '', isPublic: true });
-  const [uploadStages, setUploadStages] = useState<UploadStage[]>([]);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [bulkForm, setBulkForm] = useState<BulkForm>({ category: '', isPublic: true });
   const [uploading, setUploading] = useState(false);
-  const [uploadDone, setUploadDone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit modal
@@ -127,86 +155,98 @@ function GalleryManagerInner() {
     return list;
   }, [items, categoryFilter, searchQ]);
 
-  // ── Upload flow ───────────────────────────────────────────────────────────
+  // ── Upload flow (bulk) ──────────────────────────────────────────────────────
 
-  function initStages(): UploadStage[] {
-    return [
-      { label: 'Processing image', key: 'processing', pct: 0, done: false },
-      { label: 'Thumbnail (low)',   key: 'thumbnail',  pct: 0, done: false },
-      { label: 'Medium quality',    key: 'medium',     pct: 0, done: false },
-      { label: 'Original (full)',   key: 'original',   pct: 0, done: false },
-    ];
-  }
+  const patchQueue = useCallback((id: string, patch: Partial<QueueItem>) => {
+    setQueue((prev) => prev.map((q) => (q.id === id ? { ...q, ...patch } : q)));
+  }, []);
 
-  function setStage(key: UploadStage['key'], update: Partial<UploadStage>) {
-    setUploadStages((prev) => prev.map((s) => (s.key === key ? { ...s, ...update } : s)));
-  }
-
-  function handleFilePick(file: File) {
-    if (!file.type.startsWith('image/')) { error('Only image files are supported.'); return; }
-    setUploadFile(file);
-    const url = URL.createObjectURL(file);
-    if (uploadPreview) URL.revokeObjectURL(uploadPreview);
-    setUploadPreview(url);
-    setUploadStages(initStages());
-    setUploadDone(false);
-  }
+  const addFiles = useCallback((files: File[]) => {
+    const imgs = files.filter((f) => f.type.startsWith('image/'));
+    if (imgs.length < files.length) error('Some files were skipped — only images are supported.');
+    if (!imgs.length) return;
+    setQueue((prev) => [
+      ...prev,
+      ...imgs.map((file) => ({
+        id: crypto.randomUUID(),
+        file,
+        preview: URL.createObjectURL(file),
+        status: 'pending' as QueueStatus,
+        pct: 0,
+      })),
+    ]);
+  }, [error]);
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFilePick(file);
+    addFiles(Array.from(e.dataTransfer.files));
+  }
+
+  function removeFromQueue(id: string) {
+    setQueue((prev) => {
+      const it = prev.find((q) => q.id === id);
+      if (it) URL.revokeObjectURL(it.preview);
+      return prev.filter((q) => q.id !== id);
+    });
   }
 
   const handleUpload = useCallback(async () => {
-    if (!uploadFile) return;
+    // Snapshot the items still needing upload (fresh or previously failed).
+    const pending = queue.filter((q) => q.status === 'pending' || q.status === 'error');
+    if (!pending.length) return;
     setUploading(true);
-    setUploadStages(initStages());
 
-    try {
-      // Stage 1: process
-      setStage('processing', { pct: 30 });
-      const versions = await generateImageVersions(uploadFile);
-      setStage('processing', { pct: 100, done: true });
+    const created: GalleryItem[] = [];
+    let ok = 0;
+    let failed = 0;
 
-      // Stage 2-4: upload sequentially (avoids ECONNRESET from concurrent large multipart uploads)
-      const keys = await uploadGalleryVersions({
-        versions,
-        onProgress: (stage, pct) => setStage(stage, { pct }),
-        onStageDone: (stage) => setStage(stage, { pct: 100, done: true }),
-      });
+    // Sequential — avoids ECONNRESET from concurrent large multipart uploads.
+    for (const q of pending) {
+      try {
+        patchQueue(q.id, { status: 'processing', pct: 5, error: undefined });
+        const versions = await generateImageVersions(q.file);
 
-      // Save record
-      const created = await galleryApi.create({
-        fileKey: keys.fileKey,
-        thumbnailKey: keys.thumbnailKey,
-        mediumKey: keys.mediumKey,
-        fileType: 'image',
-        title: uploadForm.title.trim() || null as unknown as string,
-        description: uploadForm.description.trim() || null as unknown as string,
-        category: uploadForm.category || null as unknown as string,
-        isPublic: uploadForm.isPublic,
-      });
+        patchQueue(q.id, { status: 'uploading', pct: STAGE_BASE.thumbnail });
+        const keys = await uploadGalleryVersions({
+          versions,
+          onProgress: (stage, pct) =>
+            patchQueue(q.id, { pct: Math.round(STAGE_BASE[stage] + (STAGE_SPAN * pct) / 100) }),
+        });
 
-      setItems((prev) => [created, ...prev]);
-      setUploadDone(true);
-      success('Image uploaded successfully in 3 quality versions!');
-    } catch {
-      error('Upload failed. Please try again.');
-      setUploading(false);
-    } finally {
-      setUploading(false);
+        const rec = await galleryApi.create({
+          fileKey: keys.fileKey,
+          thumbnailKey: keys.thumbnailKey,
+          mediumKey: keys.mediumKey,
+          fileType: 'image',
+          title: null as unknown as string,
+          description: null as unknown as string,
+          category: bulkForm.category || (null as unknown as string),
+          isPublic: bulkForm.isPublic,
+        });
+
+        created.push(rec);
+        patchQueue(q.id, { status: 'done', pct: 100 });
+        ok++;
+      } catch {
+        patchQueue(q.id, { status: 'error', pct: 0, error: 'Upload failed' });
+        failed++;
+      }
     }
-  }, [uploadFile, uploadForm, success, error]);
+
+    if (created.length) setItems((prev) => [...created, ...prev]);
+    setUploading(false);
+    if (ok && failed) error(`${ok} uploaded, ${failed} failed. Retry the failed ones.`);
+    else if (ok) success(`${ok} image${ok > 1 ? 's' : ''} uploaded successfully!`);
+    else error(`All ${failed} upload${failed > 1 ? 's' : ''} failed.`);
+  }, [queue, bulkForm, patchQueue, success, error]);
 
   function resetUpload() {
-    if (uploadPreview) URL.revokeObjectURL(uploadPreview);
-    setUploadFile(null);
-    setUploadPreview(null);
-    setUploadStages([]);
-    setUploadDone(false);
-    setUploadForm({ title: '', description: '', category: '', isPublic: true });
+    setQueue((prev) => {
+      prev.forEach((q) => URL.revokeObjectURL(q.preview));
+      return [];
+    });
+    setBulkForm({ category: '', isPublic: true });
     setUploading(false);
   }
 
@@ -240,8 +280,9 @@ function GalleryManagerInner() {
       setItems((prev) => prev.map((i) => (i.id === editItem.id ? updated : i)));
       setEditItem(null);
       success('Gallery item updated.');
-    } catch {
-      error('Failed to save changes.');
+    } catch (err) {
+      console.error('Gallery update failed:', err);
+      error(apiErrorMessage(err, 'Failed to save changes.'));
     } finally {
       setSaving(false);
     }
@@ -253,8 +294,9 @@ function GalleryManagerInner() {
     try {
       const updated = await galleryApi.update(item.id, { isPublic: !item.isPublic });
       setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
-    } catch {
-      error('Failed to update visibility.');
+    } catch (err) {
+      console.error('Gallery visibility toggle failed:', err);
+      error(apiErrorMessage(err, 'Failed to update visibility.'));
     }
   }, [error]);
 
@@ -267,8 +309,9 @@ function GalleryManagerInner() {
       await galleryApi.delete(deleteId);
       setItems((prev) => prev.filter((i) => i.id !== deleteId));
       success('Image deleted.');
-    } catch {
-      error('Failed to delete image.');
+    } catch (err) {
+      console.error('Gallery delete failed:', err);
+      error(apiErrorMessage(err, 'Failed to delete image.'));
     } finally {
       setDeleting(false);
       setDeleteId(null);
@@ -306,7 +349,7 @@ function GalleryManagerInner() {
             onClick={() => { resetUpload(); setUploadOpen(true); }}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl shadow-sm shadow-rmc-green/20 transition-all active:scale-95"
           >
-            <Upload className="w-4 h-4" /> Upload Image
+            <Upload className="w-4 h-4" /> Upload Images
           </button>
         </div>
       </div>
@@ -377,20 +420,18 @@ function GalleryManagerInner() {
         </div>
       )}
 
-      {/* ── Upload modal overlay ── */}
+      {/* ── Upload modal overlay (bulk) ── */}
       {uploadOpen && (
         <UploadModal
           dragOver={dragOver}
           setDragOver={setDragOver}
-          uploadFile={uploadFile}
-          uploadPreview={uploadPreview}
-          uploadForm={uploadForm}
-          setUploadForm={setUploadForm}
-          uploadStages={uploadStages}
+          queue={queue}
+          bulkForm={bulkForm}
+          setBulkForm={setBulkForm}
           uploading={uploading}
-          uploadDone={uploadDone}
           fileInputRef={fileInputRef}
-          onFilePick={handleFilePick}
+          onAddFiles={addFiles}
+          onRemove={removeFromQueue}
           onUpload={handleUpload}
           onDrop={handleDrop}
           onReset={resetUpload}
@@ -613,18 +654,18 @@ function PreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/92 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Counter */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold backdrop-blur-sm border border-white/10 select-none">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold backdrop-blur-sm border border-white/10 select-none">
         {index + 1} / {items.length}
       </div>
 
       {/* Close */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors backdrop-blur-sm border border-white/10"
+        className="absolute top-4 right-4 z-[60] w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors backdrop-blur-sm border border-white/10"
         title="Close (Esc)"
       >
         <X className="w-4 h-4" />
@@ -634,7 +675,7 @@ function PreviewModal({
       <button
         onClick={(e) => { e.stopPropagation(); onNav(index - 1); }}
         disabled={!hasPrev}
-        className={`absolute left-3 sm:left-6 w-11 h-11 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-sm border ${
+        className={`absolute left-3 sm:left-6 z-[60] w-11 h-11 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-sm border ${
           hasPrev
             ? 'bg-white/10 hover:bg-white/25 border-white/20 cursor-pointer'
             : 'bg-white/5 border-white/10 opacity-30 cursor-not-allowed'
@@ -644,16 +685,14 @@ function PreviewModal({
         <ChevronLeft className="w-6 h-6" />
       </button>
 
-      {/* Image container */}
-      <div
-        className="relative flex items-center justify-center max-w-[90vw] max-h-[85vh] px-16"
-        onClick={(e) => e.stopPropagation()}
-      >
+      {/* Image container — fills the full viewport width */}
+      <div className="relative flex items-center justify-center w-full max-h-[88vh] px-14 sm:px-20">
         {imgSrc ? (
           <img
             src={imgSrc}
             alt={item.title ?? ''}
-            className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-h-[88vh] object-contain rounded-xl shadow-2xl"
           />
         ) : (
           <div className="w-80 h-60 flex flex-col items-center justify-center bg-white/5 rounded-xl border border-white/10 text-white/30 gap-3">
@@ -681,7 +720,7 @@ function PreviewModal({
       <button
         onClick={(e) => { e.stopPropagation(); onNav(index + 1); }}
         disabled={!hasNext}
-        className={`absolute right-3 sm:right-6 w-11 h-11 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-sm border ${
+        className={`absolute right-3 sm:right-6 z-[60] w-11 h-11 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-sm border ${
           hasNext
             ? 'bg-white/10 hover:bg-white/25 border-white/20 cursor-pointer'
             : 'bg-white/5 border-white/10 opacity-30 cursor-not-allowed'
@@ -693,7 +732,7 @@ function PreviewModal({
 
       {/* Thumbnail strip */}
       {items.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 max-w-[min(600px,90vw)] overflow-x-auto px-2 py-1 rounded-xl bg-black/40 backdrop-blur-sm">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[60] flex gap-1.5 max-w-[min(600px,90vw)] overflow-x-auto px-2 py-1 rounded-xl bg-black/40 backdrop-blur-sm">
           {items.map((it, i) => {
             const src = it.thumbnailKey ? fileUrl(it.thumbnailKey) : it.fileKey ? fileUrl(it.fileKey) : null;
             return (
@@ -756,15 +795,13 @@ function CategoryPill({
 interface UploadModalProps {
   dragOver: boolean;
   setDragOver: (v: boolean) => void;
-  uploadFile: File | null;
-  uploadPreview: string | null;
-  uploadForm: EditForm;
-  setUploadForm: (f: EditForm) => void;
-  uploadStages: UploadStage[];
+  queue: QueueItem[];
+  bulkForm: BulkForm;
+  setBulkForm: (f: BulkForm) => void;
   uploading: boolean;
-  uploadDone: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
-  onFilePick: (f: File) => void;
+  onAddFiles: (files: File[]) => void;
+  onRemove: (id: string) => void;
   onUpload: () => void;
   onDrop: (e: React.DragEvent) => void;
   onReset: () => void;
@@ -773,12 +810,16 @@ interface UploadModalProps {
 
 function UploadModal(props: UploadModalProps) {
   const {
-    dragOver, setDragOver, uploadFile, uploadPreview, uploadForm, setUploadForm,
-    uploadStages, uploading, uploadDone, fileInputRef, onFilePick, onUpload,
-    onDrop, onReset, onClose,
+    dragOver, setDragOver, queue, bulkForm, setBulkForm,
+    uploading, fileInputRef, onAddFiles, onRemove,
+    onUpload, onDrop, onReset, onClose,
   } = props;
 
-  const anyProgress = uploadStages.some((s) => s.pct > 0);
+  const total = queue.length;
+  const doneCount = queue.filter((q) => q.status === 'done').length;
+  const errorCount = queue.filter((q) => q.status === 'error').length;
+  const pendingCount = queue.filter((q) => q.status === 'pending' || q.status === 'error').length;
+  const allDone = total > 0 && doneCount === total;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
@@ -797,8 +838,10 @@ function UploadModal(props: UploadModalProps) {
               <Images className="w-4.5 h-4.5 text-rmc-green" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900">Upload Image</h2>
-              <p className="text-[11px] text-gray-400">3 quality versions generated automatically</p>
+              <h2 className="text-base font-bold text-gray-900">Upload Images</h2>
+              <p className="text-[11px] text-gray-400">
+                {total ? `${total} selected · 3 quality versions each` : 'Add multiple images at once'}
+              </p>
             </div>
           </div>
           {!uploading && (
@@ -810,191 +853,137 @@ function UploadModal(props: UploadModalProps) {
 
         <div className="px-6 pb-6 space-y-4 max-h-[80vh] overflow-y-auto">
 
-          {uploadDone ? (
-            /* ── Success state ── */
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4 animate-scale-in">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+          {/* ── Drop zone — always available to add more (disabled while uploading) ── */}
+          <div
+            onDragOver={(e) => { if (!uploading) { e.preventDefault(); setDragOver(true); } }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={uploading ? (e) => e.preventDefault() : onDrop}
+            onClick={() => { if (!uploading) fileInputRef.current?.click(); }}
+            className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-all duration-200 py-7 ${
+              uploading
+                ? 'border-gray-200 bg-gray-50/50 opacity-60 cursor-not-allowed'
+                : dragOver
+                ? 'border-rmc-green bg-rmc-green/5 scale-[1.01] cursor-pointer'
+                : 'border-gray-200 bg-gray-50/50 hover:border-rmc-green/40 cursor-pointer'
+            }`}
+          >
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors duration-200 ${dragOver ? 'bg-rmc-green/15' : 'bg-gray-100'}`}>
+              <Upload className={`w-5 h-5 transition-colors duration-200 ${dragOver ? 'text-rmc-green' : 'text-gray-400'}`} />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-gray-700">
+                {dragOver ? 'Drop to add' : total ? 'Add more images' : 'Drag & drop or click to browse'}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP — max 10 MB each</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              onChange={(e) => {
+                const files = e.target.files ? Array.from(e.target.files) : [];
+                if (files.length) onAddFiles(files);
+                e.target.value = '';
+              }}
+            />
+          </div>
+
+          {/* ── Queue ── */}
+          {total > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-rmc-green" />
+                  {total} image{total > 1 ? 's' : ''}
+                  {doneCount > 0 && <span className="text-emerald-600 font-medium"> · {doneCount} done</span>}
+                  {errorCount > 0 && <span className="text-red-500 font-medium"> · {errorCount} failed</span>}
+                </p>
+                {!uploading && (
+                  <button type="button" onClick={onReset} className="text-[11px] font-semibold text-gray-400 hover:text-red-500 transition-colors">
+                    Clear all
+                  </button>
+                )}
               </div>
-              <h3 className="text-base font-bold text-gray-900 mb-1">Upload complete!</h3>
-              <p className="text-sm text-gray-400 mb-6">Thumbnail, medium & original versions saved.</p>
-              <div className="flex gap-3">
-                <button type="button" onClick={onReset}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors">
-                  <Plus className="w-4 h-4" /> Upload Another
-                </button>
-                <button type="button" onClick={onClose}
-                  className="px-4 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
-                  Done
-                </button>
+              <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
+                {queue.map((q) => (
+                  <QueueRow key={q.id} item={q} uploading={uploading} onRemove={() => onRemove(q.id)} />
+                ))}
               </div>
             </div>
-          ) : (
-            <>
-              {/* ── Drop zone ── */}
-              {!uploadFile ? (
-                <div
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={onDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 py-12 ${
-                    dragOver
-                      ? 'border-rmc-green bg-rmc-green/5 scale-[1.01]'
-                      : 'border-gray-200 bg-gray-50/50 hover:border-rmc-green/40 hover:bg-rmc-green/3'
-                  }`}
-                >
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors duration-200 ${dragOver ? 'bg-rmc-green/15' : 'bg-gray-100'}`}>
-                    <Upload className={`w-7 h-7 transition-colors duration-200 ${dragOver ? 'text-rmc-green' : 'text-gray-400'}`} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-gray-700">
-                      {dragOver ? 'Drop to upload' : 'Drag & drop or click to browse'}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP — max 10 MB</p>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) onFilePick(f); }}
-                  />
+          )}
+
+          {/* ── Shared metadata (applies to every image) ── */}
+          {total > 0 && !allDone && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                  Category <span className="text-gray-400 font-normal">(applied to all)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={uploading} onClick={() => setBulkForm({ ...bulkForm, category: '' })}
+                    className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all disabled:opacity-50 ${
+                      !bulkForm.category ? 'bg-gray-700 text-white border-transparent' : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
+                    }`}>
+                    None
+                  </button>
+                  {CATEGORIES.map((cat) => (
+                    <button key={cat.id} type="button" disabled={uploading} onClick={() => setBulkForm({ ...bulkForm, category: cat.id })}
+                      className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all disabled:opacity-50 ${
+                        bulkForm.category === cat.id ? cat.color : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
+                      }`}>
+                      {cat.label}
+                    </button>
+                  ))}
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-100">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Public</p>
+                  <p className="text-[11px] text-gray-400">Visible on the public gallery page</p>
+                </div>
+                <ToggleSwitch checked={bulkForm.isPublic} onChange={(v) => setBulkForm({ ...bulkForm, isPublic: v })} />
+              </div>
+
+              <p className="text-[11px] text-gray-400">
+                Tip: titles &amp; descriptions can be added per image afterwards via Edit.
+              </p>
+            </div>
+          )}
+
+          {/* ── Footer actions ── */}
+          {total > 0 && (
+            <div className="flex gap-3 pt-1">
+              {allDone ? (
+                <>
+                  <button type="button" onClick={onReset}
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors">
+                    <Plus className="w-4 h-4" /> Upload More
+                  </button>
+                  <button type="button" onClick={onClose}
+                    className="flex-1 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+                    Done
+                  </button>
+                </>
               ) : (
-                /* ── File selected: preview + form ── */
-                <div className="space-y-4">
-                  {/* Preview */}
-                  <div className="relative rounded-2xl overflow-hidden bg-gray-100 aspect-video">
-                    {uploadPreview && (
-                      <img src={uploadPreview} alt="preview" className="w-full h-full object-cover" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-                      <div>
-                        <p className="text-white text-xs font-semibold truncate">{uploadFile.name}</p>
-                        <p className="text-white/70 text-[10px]">{(uploadFile.size / 1024 / 1024).toFixed(1)} MB</p>
-                      </div>
-                      {!uploading && (
-                        <button type="button" onClick={onReset}
-                          className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white flex items-center justify-center transition-colors">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Version badges */}
-                    <div className="absolute top-3 right-3 flex gap-1">
-                      {(['T', 'M', 'O'] as const).map((v) => (
-                        <span key={v} className="w-6 h-6 rounded-full bg-rmc-green/80 backdrop-blur-sm text-white text-[9px] font-bold flex items-center justify-center border border-white/30">
-                          {v}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Upload progress */}
-                  {anyProgress && (
-                    <div className="space-y-2 p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                      <p className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <Layers className="w-3.5 h-3.5 text-rmc-green" />
-                        Generating & uploading versions…
-                      </p>
-                      {uploadStages.map((stage) => (
-                        <ProgressRow key={stage.key} stage={stage} />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Metadata form */}
-                  {!uploading && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title <span className="text-gray-400 font-normal">(optional)</span></label>
-                        <input
-                          type="text"
-                          value={uploadForm.title}
-                          onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
-                          placeholder="e.g. Eid Celebration 2025"
-                          className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description <span className="text-gray-400 font-normal">(optional)</span></label>
-                        <textarea
-                          rows={2}
-                          value={uploadForm.description}
-                          onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
-                          placeholder="Brief description of this image…"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-2">Category</label>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setUploadForm({ ...uploadForm, category: '' })}
-                            className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all ${
-                              !uploadForm.category ? 'bg-gray-700 text-white border-transparent' : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
-                            }`}
-                          >
-                            None
-                          </button>
-                          {CATEGORIES.map((cat) => (
-                            <button
-                              key={cat.id}
-                              type="button"
-                              onClick={() => setUploadForm({ ...uploadForm, category: cat.id })}
-                              className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all ${
-                                uploadForm.category === cat.id ? cat.color : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
-                              }`}
-                            >
-                              {cat.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-100">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800">Public</p>
-                          <p className="text-[11px] text-gray-400">Visible on the public gallery page</p>
-                        </div>
-                        <ToggleSwitch
-                          checked={uploadForm.isPublic}
-                          onChange={(v) => setUploadForm({ ...uploadForm, isPublic: v })}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ── Footer actions ── */}
-              {uploadFile && !uploadDone && (
-                <div className="flex gap-3 pt-1">
+                <>
                   <button type="button" onClick={onClose} disabled={uploading}
                     className="flex-1 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors">
                     Cancel
                   </button>
-                  <button
-                    type="button"
-                    onClick={onUpload}
-                    disabled={uploading}
-                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
-                  >
+                  <button type="button" onClick={onUpload} disabled={uploading || pendingCount === 0}
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
                     {uploading ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
                     ) : (
-                      <><Upload className="w-4 h-4" /> Upload in 3 Versions</>
+                      <><Upload className="w-4 h-4" /> {errorCount > 0 ? `Retry ${pendingCount} failed` : `Upload ${pendingCount} image${pendingCount > 1 ? 's' : ''}`}</>
                     )}
                   </button>
-                </div>
+                </>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -1002,29 +991,45 @@ function UploadModal(props: UploadModalProps) {
   );
 }
 
-// ── Progress row ──────────────────────────────────────────────────────────────
+// ── Queue row ─────────────────────────────────────────────────────────────────
 
-function ProgressRow({ stage }: { stage: UploadStage }) {
+function QueueRow({ item, uploading, onRemove }: { item: QueueItem; uploading: boolean; onRemove: () => void }) {
+  const busy = item.status === 'processing' || item.status === 'uploading';
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-medium text-gray-600 flex items-center gap-1.5">
-          {stage.done ? (
-            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-          ) : stage.pct > 0 ? (
-            <Loader2 className="w-3 h-3 text-rmc-green animate-spin" />
-          ) : (
-            <div className="w-3 h-3 rounded-full border border-gray-300" />
-          )}
-          {stage.label}
-        </span>
-        <span className="text-[10px] text-gray-400 font-mono">{stage.pct}%</span>
+    <div className="flex items-center gap-3 p-2 rounded-xl border border-gray-100 bg-white">
+      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+        <img src={item.preview} alt="" className="w-full h-full object-cover" />
+        {item.status === 'done' && (
+          <div className="absolute inset-0 bg-emerald-500/70 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-white" />
+          </div>
+        )}
+        {item.status === 'error' && (
+          <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center">
+            <ImageOff className="w-5 h-5 text-white" />
+          </div>
+        )}
       </div>
-      <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-300 ${stage.done ? 'bg-emerald-500' : 'bg-rmc-green'}`}
-          style={{ width: `${stage.pct}%` }}
-        />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-gray-800 truncate">{item.file.name}</p>
+        <p className="text-[10px] text-gray-400">{(item.file.size / 1024 / 1024).toFixed(1)} MB</p>
+        {busy && (
+          <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-rmc-green rounded-full transition-all duration-300" style={{ width: `${item.pct}%` }} />
+          </div>
+        )}
+        {item.status === 'error' && <p className="text-[10px] text-red-500 font-medium mt-0.5">{item.error}</p>}
+      </div>
+      <div className="shrink-0 w-7 flex items-center justify-center">
+        {busy ? (
+          <Loader2 className="w-4 h-4 text-rmc-green animate-spin" />
+        ) : item.status === 'done' ? (
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+        ) : !uploading ? (
+          <button type="button" onClick={onRemove} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        ) : null}
       </div>
     </div>
   );
