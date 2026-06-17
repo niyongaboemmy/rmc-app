@@ -110,17 +110,13 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Rsync — backend
+      - name: Rsync — backend dist
         run: |
           rsync -az --delete \
             apps/backend/dist/ \
             ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/backend/dist/
-          rsync -az \
-            apps/backend/package.json \
-            apps/backend/package-lock.json \
-            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/backend/
 
-      - name: Rsync — frontend
+      - name: Rsync — frontend build
         run: |
           rsync -az --delete \
             apps/frontend/.next/ \
@@ -128,20 +124,12 @@ jobs:
           rsync -az \
             apps/frontend/public/ \
             ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/public/
-          rsync -az \
-            apps/frontend/package.json \
-            apps/frontend/package-lock.json \
-            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/
 
-      - name: Rsync — file-server
+      - name: Rsync — file-server dist
         run: |
           rsync -az --delete \
             apps/file-server/dist/ \
             ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/file-server/dist/
-          rsync -az \
-            apps/file-server/package.json \
-            apps/file-server/package-lock.json \
-            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/file-server/
 
       - name: Install prod deps, migrate & reload
         uses: appleboy/ssh-action@v1
@@ -154,10 +142,9 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             source "$NVM_DIR/nvm.sh"
 
-            echo "==> Installing production dependencies (no build)..."
-            cd /opt/rmc-platform/apps/backend    && npm ci --omit=dev
-            cd /opt/rmc-platform/apps/frontend   && npm ci --omit=dev
-            cd /opt/rmc-platform/apps/file-server && npm ci --omit=dev
+            echo "==> Installing production dependencies from root workspace..."
+            cd /opt/rmc-platform
+            npm ci --omit=dev --workspace=apps/backend --workspace=apps/frontend --workspace=apps/file-server
 
             echo "==> Running DB migrations..."
             cd /opt/rmc-platform/apps/backend
