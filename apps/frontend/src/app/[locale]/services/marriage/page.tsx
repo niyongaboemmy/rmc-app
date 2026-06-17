@@ -47,7 +47,7 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             HERO
         =================================================================== */}
-        <section className="relative text-white py-36 px-4 overflow-hidden min-h-[420px] flex items-center">
+        <section className="relative text-white py-20 md:py-24 px-4 overflow-hidden flex items-center">
           <Image
             src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=80"
             alt="Islamic marriage celebration"
