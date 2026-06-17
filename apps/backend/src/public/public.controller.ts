@@ -99,18 +99,36 @@ export class PublicController {
   // ── Gallery ──
   @Get('gallery')
   @Public()
-  @ApiOperation({ summary: 'Get gallery items' })
+  @ApiOperation({ summary: 'Get public gallery items' })
   @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
   getGallery(@Query('category') category?: string, @Query('page') page?: string) {
     return this.service.getGallery(category, page ? parseInt(page) : 1);
   }
 
+  @Get('gallery/admin-all')
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Get all gallery items for admin (includes private)' })
+  @ApiQuery({ name: 'category', required: false })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  adminGetGallery(@Query('category') category?: string, @Query('page') page?: string) {
+    return this.service.adminGetGallery(category, page ? parseInt(page) : 1);
+  }
+
   @Post('gallery')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  addGalleryItem(@CurrentUser() user: JwtPayload, @Body() dto: any) {
-    return this.service.addGalleryItem({ ...dto, uploadedBy: user.sub });
+  addGalleryItem(@CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.service.addGalleryItem({ ...dto, uploadedBy: userId });
+  }
+
+  @Put('gallery/:id')
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Update gallery item metadata' })
+  updateGalleryItem(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
+    return this.service.updateGalleryItem(id, dto);
   }
 
   @Delete('gallery/:id')

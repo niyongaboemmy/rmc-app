@@ -4,9 +4,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import {
-  Heart, ArrowRight, ArrowLeft, CheckCircle2, FileText, Users,
-  CalendarCheck, ShieldCheck, BookOpenCheck, ScrollText, Phone,
-  Building2, MapPin, Wallet, Search,
+  Heart,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  FileText,
+  Users,
+  CalendarCheck,
+  ShieldCheck,
+  BookOpenCheck,
+  ScrollText,
+  Phone,
+  Building2,
+  MapPin,
+  Wallet,
+  Search,
 } from 'lucide-react';
 
 // Icon per "what's included" item — copy comes from translations
@@ -21,7 +33,11 @@ const stepKeys = ['s1', 's2', 's3', 's4', 's5'] as const;
 const requirementKeys = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'] as const;
 const faqKeys = ['f1', 'f2', 'f3', 'f4'] as const;
 
-export default async function MarriageServicePage({ params: { locale } }: { params: { locale: string } }) {
+export default async function MarriageServicePage({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
   const t = await getTranslations('services.marriage');
 
   return (
@@ -78,7 +94,9 @@ export default async function MarriageServicePage({ params: { locale } }: { para
                   <CalendarCheck className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 leading-none">{t('detail.certifiedBadge')}</p>
+                  <p className="text-sm font-bold text-gray-900 leading-none">
+                    {t('detail.certifiedBadge')}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">{t('detail.certifiedBadgeSub')}</p>
                 </div>
               </div>
@@ -90,10 +108,15 @@ export default async function MarriageServicePage({ params: { locale } }: { para
                 {t('detail.heroBadge')}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-5">
-                {t('detail.overviewHeading')} <span className="text-rose-700">{t('detail.overviewHeadingHighlight')}</span>
+                {t('detail.overviewHeading')}{' '}
+                <span className="text-rose-700">{t('detail.overviewHeadingHighlight')}</span>
               </h2>
-              <p className="text-gray-600 leading-relaxed mb-4 text-sm md:text-base">{t('detail.overviewP1')}</p>
-              <p className="text-gray-600 leading-relaxed mb-7 text-sm md:text-base">{t('detail.overviewP2')}</p>
+              <p className="text-gray-600 leading-relaxed mb-4 text-sm md:text-base">
+                {t('detail.overviewP1')}
+              </p>
+              <p className="text-gray-600 leading-relaxed mb-7 text-sm md:text-base">
+                {t('detail.overviewP2')}
+              </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href={`/${locale}/services/marriage/apply`}
@@ -133,8 +156,12 @@ export default async function MarriageServicePage({ params: { locale } }: { para
                       <Icon className="w-6 h-6 text-white" strokeWidth={2.25} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 mb-1.5">{t(`detail.includes.${key}.title`)}</h3>
-                      <p className="text-gray-600 text-sm leading-relaxed">{t(`detail.includes.${key}.text`)}</p>
+                      <h3 className="font-bold text-gray-900 mb-1.5">
+                        {t(`detail.includes.${key}.title`)}
+                      </h3>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        {t(`detail.includes.${key}.text`)}
+                      </p>
                     </div>
                   </div>
                 );
@@ -163,8 +190,12 @@ export default async function MarriageServicePage({ params: { locale } }: { para
                       {i + 1}
                     </div>
                     <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all duration-200 flex-1">
-                      <h3 className="font-bold text-gray-900 mb-1">{t(`detail.steps.${key}.title`)}</h3>
-                      <p className="text-gray-500 text-sm leading-relaxed">{t(`detail.steps.${key}.text`)}</p>
+                      <h3 className="font-bold text-gray-900 mb-1">
+                        {t(`detail.steps.${key}.title`)}
+                      </h3>
+                      <p className="text-gray-500 text-sm leading-relaxed">
+                        {t(`detail.steps.${key}.text`)}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -182,14 +213,18 @@ export default async function MarriageServicePage({ params: { locale } }: { para
               <div className="md:col-span-2 bg-gradient-to-br from-rose-600 to-rose-800 p-8 text-white flex flex-col justify-center">
                 <FileText className="w-10 h-10 mb-4 text-white/90" />
                 <h2 className="text-2xl font-bold mb-2">{t('detail.requirementsTitle')}</h2>
-                <p className="text-white/80 text-sm leading-relaxed">{t('detail.requirementsSubtitle')}</p>
+                <p className="text-white/80 text-sm leading-relaxed">
+                  {t('detail.requirementsSubtitle')}
+                </p>
               </div>
               <div className="md:col-span-3 p-8">
                 <ul className="space-y-4">
                   {requirementKeys.map((key) => (
                     <li key={key} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm md:text-base">{t(`detail.requirements.${key}`)}</span>
+                      <span className="text-gray-700 text-sm md:text-base">
+                        {t(`detail.requirements.${key}`)}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -232,7 +267,9 @@ export default async function MarriageServicePage({ params: { locale } }: { para
               <Wallet className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-bold text-amber-900 mb-1.5">{t('detail.fees.clauseTitle')}</h3>
-                <p className="text-amber-900/80 text-sm leading-relaxed">{t('detail.fees.clause')}</p>
+                <p className="text-amber-900/80 text-sm leading-relaxed">
+                  {t('detail.fees.clause')}
+                </p>
               </div>
             </div>
           </div>
@@ -258,7 +295,9 @@ export default async function MarriageServicePage({ params: { locale } }: { para
                       +
                     </span>
                   </summary>
-                  <p className="text-gray-600 text-sm leading-relaxed mt-4">{t(`detail.faqs.${key}.a`)}</p>
+                  <p className="text-gray-600 text-sm leading-relaxed mt-4">
+                    {t(`detail.faqs.${key}.a`)}
+                  </p>
                 </details>
               ))}
             </div>

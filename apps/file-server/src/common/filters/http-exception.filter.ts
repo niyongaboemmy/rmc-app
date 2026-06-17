@@ -40,8 +40,35 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = String(exceptionResponse);
         code = this.statusToCode(status);
       }
+
+      // Log non-5xx guard/validation rejections at debug level so they're
+      // visible without polluting the error log.
+      if (status < 500) {
+        this.logger.debug(
+          `[${status}] ${request.method} ${request.url} — ${message}`,
+        );
+      }
     } else if (exception instanceof Error) {
-      this.logger.error(`Unhandled error on ${request.method} ${request.url}`, exception.stack);
+      // Client-disconnect errors (ECONNRESET, EPIPE, ECONNABORTED) are not
+      // application errors — the remote peer closed the connection. Log at
+      // warn level and skip trying to write to a dead socket.
+      const msg = exception.message ?? '';
+      if (
+        msg.includes('ECONNRESET') ||
+        msg.includes('EPIPE') ||
+        msg.includes('ECONNABORTED') ||
+        msg.includes('ENOTCONN')
+      ) {
+        this.logger.warn(
+          `Client disconnected on ${request.method} ${request.url} — ${msg}`,
+        );
+        return; // response socket is gone; nothing to send
+      }
+
+      this.logger.error(
+        `Unhandled error on ${request.method} ${request.url}`,
+        exception.stack,
+      );
       message = exception.message;
     }
 

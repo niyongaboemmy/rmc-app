@@ -3,22 +3,23 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowRight, Mail } from 'lucide-react';
+import { ArrowRight, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { WizardFormData } from '../MarriageWizard';
 
 const nid = z.string().regex(/^\d{16}$/, 'Must be exactly 16 digits');
 const fullName = z.string().trim().min(3, 'At least 3 characters required');
+const phone = z.string().trim().min(9, 'Enter a valid phone number');
 
 const schema = z.object({
   groomName: fullName,
   groomNid: nid,
-  groomPhone: z.string().optional(),
+  groomPhone: phone,
   brideName: fullName,
   brideNid: nid,
-  bridePhone: z.string().optional(),
-  notificationEmail: z.string().email('Enter a valid email address').min(1, 'Email is required'),
+  bridePhone: phone,
+  notificationPhone: phone,
 }).refine((d) => d.groomNid !== d.brideNid, {
   message: 'Groom and bride cannot share the same National ID',
   path: ['brideNid'],
@@ -49,7 +50,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
       brideName: initialData.brideName ?? '',
       brideNid: initialData.brideNid ?? '',
       bridePhone: initialData.bridePhone ?? '',
-      notificationEmail: initialData.notificationEmail ?? '',
+      notificationPhone: initialData.notificationPhone ?? '',
     },
   });
 
@@ -78,8 +79,8 @@ export function Step1Couple({ initialData, onNext }: Props) {
           <div className="sm:col-span-2">
             <Input
               label="Phone number"
+              required
               placeholder="+250 7XX XXX XXX"
-              hint="Optional — used for MoMo payment notifications"
               error={errors.groomPhone?.message}
               {...register('groomPhone')}
             />
@@ -110,8 +111,8 @@ export function Step1Couple({ initialData, onNext }: Props) {
           <div className="sm:col-span-2">
             <Input
               label="Phone number"
+              required
               placeholder="+250 7XX XXX XXX"
-              hint="Optional"
               error={errors.bridePhone?.message}
               {...register('bridePhone')}
             />
@@ -121,18 +122,17 @@ export function Step1Couple({ initialData, onNext }: Props) {
 
       <div className="border-t border-dashed border-gray-200" />
 
-      {/* Notification email */}
+      {/* SMS notifications */}
       <div>
-        <SectionLabel color="rose">Notifications</SectionLabel>
+        <SectionLabel color="rose">SMS Notifications</SectionLabel>
         <Input
-          label="Email address"
+          label="Phone number for SMS updates"
           required
-          type="email"
-          leftIcon={<Mail className="w-4 h-4" />}
-          placeholder="your@email.com"
-          hint="Your Application ID and all status updates will be sent here"
-          error={errors.notificationEmail?.message}
-          {...register('notificationEmail')}
+          leftIcon={<MessageSquare className="w-4 h-4" />}
+          placeholder="+250 7XX XXX XXX"
+          hint="Your Application ID and all status updates will be sent via SMS to this number"
+          error={errors.notificationPhone?.message}
+          {...register('notificationPhone')}
         />
       </div>
 

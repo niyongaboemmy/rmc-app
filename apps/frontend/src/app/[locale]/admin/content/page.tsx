@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
+import { GalleryManagement } from '@/components/admin/GalleryManagement';
 import {
   BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
-  ListFilter,
+  ListFilter, Images,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -173,10 +174,13 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'About Page', icon: FileText, color: 'text-slate-600', description: 'Content on the /about page' },
 ];
 
+type Tab = 'sections' | 'gallery';
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ManageContentPage() {
   const { locale } = useParams<{ locale: string }>();
+  const [activeTab, setActiveTab] = useState<Tab>('sections');
   const [query, setQuery] = useState('');
   const [pageFilter, setPageFilter] = useState<'all' | PageLocation>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | SectionType>('all');
@@ -221,7 +225,7 @@ export default function ManageContentPage() {
     <ProtectedRoute permissions={[Permission.CONTENT_VIEW]}>
       <div className="space-y-4">
 
-        {/* ── Compact page header ── */}
+        {/* ── Page header ── */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-rmc-green/10 flex items-center justify-center shrink-0">
             <Layers className="w-[18px] h-[18px] text-rmc-green" />
@@ -234,178 +238,249 @@ export default function ManageContentPage() {
           </div>
         </div>
 
-        {/* ── Search + filter bar ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {/* Search row */}
-          <div className="px-3 pt-3 pb-2.5">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <input
-                ref={searchRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder='Search by name, keyword, or location… e.g. "prayer", "dawa", "carousel", "stats"'
-                className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                {query && (
-                  <button
-                    onClick={() => setQuery('')}
-                    className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-gray-500 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-                <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-gray-100 border border-gray-200 text-[10px] text-gray-400 font-mono select-none">
-                  ⌘K
-                </kbd>
-              </div>
-            </div>
-          </div>
-
-          {/* Filter tabs row */}
-          <div className="px-3 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-t border-gray-50 pt-2.5">
-            {/* Page tabs */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-              <ListFilter className="w-3.5 h-3.5 text-gray-400 mr-0.5 shrink-0" />
-              {[
-                { value: 'all' as const, label: 'All pages', icon: Layers, count: SECTIONS.length },
-                { value: 'Homepage' as const, label: 'Homepage', icon: Home, count: SECTIONS.filter((s) => s.page === 'Homepage').length },
-                { value: 'About Page' as const, label: 'About', icon: FileText, count: SECTIONS.filter((s) => s.page === 'About Page').length },
-              ].map((tab) => {
-                const TabIcon = tab.icon;
-                return (
-                  <button
-                    key={tab.value}
-                    onClick={() => setPageFilter(tab.value)}
-                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap shrink-0 ${
-                      pageFilter === tab.value
-                        ? 'bg-rmc-green text-white shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <TabIcon className="w-3.5 h-3.5 shrink-0" />
-                    <span className="hidden xs:inline sm:inline">{tab.label}</span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
-                      pageFilter === tab.value ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-500'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Type toggle + clear */}
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-                {([
-                  { value: 'all', label: 'All' },
-                  { value: 'crud', label: 'CRUD' },
-                  { value: 'edit', label: 'Edit only' },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setTypeFilter(opt.value)}
-                    className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap ${
-                      typeFilter === opt.value
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              {hasActiveFilter && (
-                <button
-                  onClick={clearAll}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 font-semibold transition-colors"
-                >
-                  <X className="w-3 h-3" /> Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Active filter summary line */}
-          {hasActiveFilter && (
-            <div className="px-4 py-2 bg-rmc-green/5 border-t border-rmc-green/10 flex items-center gap-2">
-              <span className="text-xs text-rmc-green font-semibold">
-                {filtered.length} of {SECTIONS.length} sections
-              </span>
-              {query && (
-                <span className="text-xs text-gray-500">
-                  matching &ldquo;<span className="font-medium text-gray-700">{query}</span>&rdquo;
-                </span>
-              )}
-            </div>
-          )}
+        {/* ── Tab switcher ── */}
+        <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 w-fit">
+          <TabButton
+            active={activeTab === 'sections'}
+            onClick={() => setActiveTab('sections')}
+            icon={<Layers className="w-3.5 h-3.5" />}
+            label="Content Sections"
+          />
+          <TabButton
+            active={activeTab === 'gallery'}
+            onClick={() => setActiveTab('gallery')}
+            icon={<Images className="w-3.5 h-3.5" />}
+            label="Gallery Management"
+            badge="New"
+          />
         </div>
 
-        {/* ── Grouped section lists ── */}
-        {filtered.length === 0 ? (
-          <EmptyState query={query} onClear={clearAll} />
-        ) : (
-          <div className="space-y-4">
-            {PAGE_GROUPS.map(({ page, icon: GroupIcon, color, description }) => {
-              const groupItems = filtered
-                .filter((s) => s.page === page)
-                .sort((a, b) => a.positionOrder - b.positionOrder);
-              const totalInPage = SECTIONS.filter((s) => s.page === page).length;
-              if (groupItems.length === 0) return null;
-
-              return (
-                <div key={page} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  {/* Group header */}
-                  <div className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 border-b border-gray-100 bg-gray-50/40">
-                    <div className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm shrink-0">
-                      <GroupIcon className={`w-3.5 h-3.5 ${color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-bold text-gray-800">{page}</span>
-                      <span className="hidden sm:inline text-xs text-gray-400 ml-2">{description}</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {/* Mini colour dots showing which sections are showing */}
-                      <div className="hidden sm:flex items-center gap-0.5">
-                        {SECTIONS.filter((s) => s.page === page).map((s) => {
-                          const visible = groupItems.some((g) => g.id === s.id);
-                          return (
-                            <span
-                              key={s.id}
-                              title={s.title}
-                              className={`w-2 h-2 rounded-full transition-opacity ${s.accentBar} ${visible ? 'opacity-90' : 'opacity-20'}`}
-                            />
-                          );
-                        })}
-                      </div>
-                      <span className="text-[11px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                        {groupItems.length === totalInPage ? totalInPage : `${groupItems.length}/${totalInPage}`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Section rows */}
-                  <div className="divide-y divide-gray-50/80">
-                    {groupItems.map((section, idx) => (
-                      <SectionRow
-                        key={section.id}
-                        section={section}
-                        index={idx}
-                        locale={locale}
-                        query={query}
-                      />
-                    ))}
+        {/* ── Tab: Content Sections ── */}
+        {activeTab === 'sections' && (
+          <>
+            {/* Search + filter bar */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              {/* Search row */}
+              <div className="px-3 pt-3 pb-2.5">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder='Search by name, keyword, or location… e.g. "prayer", "dawa", "carousel", "stats"'
+                    className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    {query && (
+                      <button
+                        onClick={() => setQuery('')}
+                        className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-gray-500 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                    <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-gray-100 border border-gray-200 text-[10px] text-gray-400 font-mono select-none">
+                      ⌘K
+                    </kbd>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+
+              {/* Filter tabs row */}
+              <div className="px-3 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-t border-gray-50 pt-2.5">
+                {/* Page tabs */}
+                <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+                  <ListFilter className="w-3.5 h-3.5 text-gray-400 mr-0.5 shrink-0" />
+                  {[
+                    { value: 'all' as const, label: 'All pages', icon: Layers, count: SECTIONS.length },
+                    { value: 'Homepage' as const, label: 'Homepage', icon: Home, count: SECTIONS.filter((s) => s.page === 'Homepage').length },
+                    { value: 'About Page' as const, label: 'About', icon: FileText, count: SECTIONS.filter((s) => s.page === 'About Page').length },
+                  ].map((tab) => {
+                    const TabIcon = tab.icon;
+                    return (
+                      <button
+                        key={tab.value}
+                        onClick={() => setPageFilter(tab.value)}
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap shrink-0 ${
+                          pageFilter === tab.value
+                            ? 'bg-rmc-green text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span className="hidden xs:inline sm:inline">{tab.label}</span>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
+                          pageFilter === tab.value ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-500'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Type toggle + clear */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                    {([
+                      { value: 'all', label: 'All' },
+                      { value: 'crud', label: 'CRUD' },
+                      { value: 'edit', label: 'Edit only' },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setTypeFilter(opt.value)}
+                        className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap ${
+                          typeFilter === opt.value
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  {hasActiveFilter && (
+                    <button
+                      onClick={clearAll}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 font-semibold transition-colors"
+                    >
+                      <X className="w-3 h-3" /> Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Active filter summary */}
+              {hasActiveFilter && (
+                <div className="px-4 py-2 bg-rmc-green/5 border-t border-rmc-green/10 flex items-center gap-2">
+                  <span className="text-xs text-rmc-green font-semibold">
+                    {filtered.length} of {SECTIONS.length} sections
+                  </span>
+                  {query && (
+                    <span className="text-xs text-gray-500">
+                      matching &ldquo;<span className="font-medium text-gray-700">{query}</span>&rdquo;
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Grouped section lists */}
+            {filtered.length === 0 ? (
+              <EmptyState query={query} onClear={clearAll} />
+            ) : (
+              <div className="space-y-4">
+                {PAGE_GROUPS.map(({ page, icon: GroupIcon, color, description }) => {
+                  const groupItems = filtered
+                    .filter((s) => s.page === page)
+                    .sort((a, b) => a.positionOrder - b.positionOrder);
+                  const totalInPage = SECTIONS.filter((s) => s.page === page).length;
+                  if (groupItems.length === 0) return null;
+
+                  return (
+                    <div key={page} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                      {/* Group header */}
+                      <div className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 border-b border-gray-100 bg-gray-50/40">
+                        <div className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm shrink-0">
+                          <GroupIcon className={`w-3.5 h-3.5 ${color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-bold text-gray-800">{page}</span>
+                          <span className="hidden sm:inline text-xs text-gray-400 ml-2">{description}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="hidden sm:flex items-center gap-0.5">
+                            {SECTIONS.filter((s) => s.page === page).map((s) => {
+                              const visible = groupItems.some((g) => g.id === s.id);
+                              return (
+                                <span
+                                  key={s.id}
+                                  title={s.title}
+                                  className={`w-2 h-2 rounded-full transition-opacity ${s.accentBar} ${visible ? 'opacity-90' : 'opacity-20'}`}
+                                />
+                              );
+                            })}
+                          </div>
+                          <span className="text-[11px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                            {groupItems.length === totalInPage ? totalInPage : `${groupItems.length}/${totalInPage}`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Section rows */}
+                      <div className="divide-y divide-gray-50/80">
+                        {groupItems.map((section, idx) => (
+                          <SectionRow
+                            key={section.id}
+                            section={section}
+                            index={idx}
+                            locale={locale}
+                            query={query}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Tab: Gallery Management ── */}
+        {activeTab === 'gallery' && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {/* Gallery tab header */}
+            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+              <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+                <Images className="w-[18px] h-[18px] text-violet-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">Gallery Management</h2>
+                <p className="text-xs text-gray-400">Upload, organise and manage the public photo gallery</p>
+              </div>
+            </div>
+            <GalleryManagement />
           </div>
         )}
+
       </div>
     </ProtectedRoute>
+  );
+}
+
+// ─── Tab button ───────────────────────────────────────────────────────────────
+
+function TabButton({
+  active, onClick, icon, label, badge,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  badge?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 whitespace-nowrap ${
+        active
+          ? 'bg-white text-gray-900 shadow-sm'
+          : 'text-gray-500 hover:text-gray-700'
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+      {badge && (
+        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-rmc-green text-white leading-none">
+          {badge}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -433,7 +508,7 @@ function SectionRow({
       href={`/${locale}/admin/content/${section.id}`}
       className="group relative flex items-center gap-2.5 sm:gap-4 px-3 sm:px-5 py-3.5 sm:py-4 hover:bg-gray-50/80 transition-all duration-150"
     >
-      {/* Left accent — visible on hover */}
+      {/* Left accent */}
       <div className={`absolute left-0 top-0 bottom-0 w-0.5 ${section.accentBar} opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
 
       {/* Position badge */}
@@ -448,7 +523,6 @@ function SectionRow({
 
       {/* Main content */}
       <div className="flex-1 min-w-0">
-        {/* Title + type badge */}
         <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
           <span className={`text-sm font-semibold text-gray-900 group-hover:${section.iconColor} transition-colors duration-150 truncate`}>
             {section.title}
@@ -457,11 +531,9 @@ function SectionRow({
             {section.type === 'crud' ? 'CRUD' : 'Edit'}
           </span>
         </div>
-        {/* Description — hidden on xs to keep rows compact */}
         <p className="hidden sm:block text-xs text-gray-400 leading-relaxed truncate mb-1.5">
           {section.description}
         </p>
-        {/* Keyword chips — hidden on xs */}
         <div className="hidden sm:flex items-center gap-1 flex-wrap">
           {displayKeywords.map((kw) => {
             const isMatch = matchedKeywords.includes(kw);
@@ -482,20 +554,19 @@ function SectionRow({
             <span className="text-[10px] text-gray-300">+{section.keywords.length - 4}</span>
           )}
         </div>
-        {/* Mobile-only: show location inline under title */}
         <div className="flex sm:hidden items-center gap-1 mt-0.5">
           <MapPin className={`w-3 h-3 ${section.iconColor} shrink-0`} />
           <span className="text-[11px] text-gray-400 truncate">{section.locationLabel}</span>
         </div>
       </div>
 
-      {/* Location chip — visible on md+ */}
+      {/* Location chip */}
       <div className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 group-hover:border-gray-200 transition-colors shrink-0">
         <MapPin className={`w-3 h-3 ${section.iconColor} shrink-0`} />
         <span className="text-[11px] font-medium text-gray-600 whitespace-nowrap">{section.locationLabel}</span>
       </div>
 
-      {/* Open CTA — icon always visible, label on sm+ */}
+      {/* Open CTA */}
       <div className={`flex items-center gap-1 sm:gap-1.5 text-xs font-bold ${section.iconColor} shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-x-2 sm:group-hover:translate-x-0 transition-all duration-200`}>
         <span className="hidden sm:inline">Open</span>
         <ArrowRight className="w-3.5 h-3.5" />
