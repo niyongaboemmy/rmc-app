@@ -99,8 +99,8 @@ jobs:
               --workspace=apps/file-server
 
             echo "==> Running DB migrations..."
-            cd /opt/rmc-platform/apps/backend
-            ./node_modules/.bin/typeorm migration:run -d dist/config/data-source.js
+            cd /opt/rmc-platform
+            ./node_modules/.bin/typeorm migration:run -d apps/backend/dist/config/data-source.js
 
             echo "==> Reloading PM2 (zero downtime)..."
             cd /opt/rmc-platform
