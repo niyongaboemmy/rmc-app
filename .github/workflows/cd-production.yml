@@ -176,33 +176,3 @@ jobs:
             pm2 save
             echo "✅ Deployment complete"
 
-  # ──────────────────────────────────────────────
-  # 3. Notify result
-  # ──────────────────────────────────────────────
-  notify:
-    name: Notify Result
-    runs-on: ubuntu-latest
-    needs: [deploy]
-    if: always()
-    steps:
-      - name: Notify success
-        if: needs.deploy.result == 'success'
-        uses: slackapi/slack-github-action@v1
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            {
-              "text": ":white_check_mark: Production deploy SUCCEEDED — ${{ github.ref_name }} by ${{ github.actor }}\nhttps://isengesho.com"
-            }
-
-      - name: Notify failure
-        if: needs.deploy.result == 'failure'
-        uses: slackapi/slack-github-action@v1
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            {
-              "text": ":x: Production deploy FAILED — ${{ github.ref_name }} by ${{ github.actor }} — check GitHub Actions immediately"
-            }
