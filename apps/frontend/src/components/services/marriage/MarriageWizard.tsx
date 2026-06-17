@@ -21,7 +21,6 @@ import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
 export interface WizardFormData extends CreateMarriageApplicationPayload {
-  notificationEmail: string;
   // Documents (handled separately)
   groomIdFile?: File;
   brideIdFile?: File;
@@ -77,7 +76,7 @@ function SuccessScreen({ app, locale, onReset }: SuccessScreenProps) {
 
         <h2 className="text-xl font-bold text-gray-900 mb-2">Application submitted</h2>
         <p className="text-sm text-gray-400 max-w-sm mx-auto mb-8">
-          Our team will review your application within 1–3 business days. You will be notified by email on every status change.
+          Our team will review your application within 1–3 business days. You will be notified by SMS on every status change.
         </p>
 
         {/* Application ID card */}
@@ -187,17 +186,17 @@ export function MarriageWizard() {
 
     try {
       const payload: CreateMarriageApplicationPayload = {
-        notificationEmail: merged.notificationEmail,
+        notificationPhone: merged.notificationPhone!,
         groomName: merged.groomName!,
         groomNid: merged.groomNid!,
-        groomPhone: merged.groomPhone,
+        groomPhone: merged.groomPhone!,
         brideName: merged.brideName!,
         brideNid: merged.brideNid!,
-        bridePhone: merged.bridePhone,
+        bridePhone: merged.bridePhone!,
         witness1Nid: merged.witness1Nid!,
-        witness1Name: merged.witness1Name,
+        witness1Name: merged.witness1Name!,
         witness2Nid: merged.witness2Nid!,
-        witness2Name: merged.witness2Name,
+        witness2Name: merged.witness2Name!,
         waliName: merged.waliName,
         waliNid: merged.waliNid,
         waliPhone: merged.waliPhone,
@@ -205,13 +204,13 @@ export function MarriageWizard() {
         mahrDescription: merged.mahrDescription,
         requestedOfficiant: merged.requestedOfficiant,
         venueType: merged.venueType!,
-        province: merged.province,
-        district: merged.district,
+        province: merged.province!,
+        district: merged.district!,
         mosqueId: merged.mosqueId,
         venueAddress: merged.venueAddress,
-        preferredDateFrom: merged.preferredDateFrom,
+        preferredDateFrom: merged.preferredDateFrom!,
         preferredDateTo: merged.preferredDateTo,
-        paymentMethod: merged.paymentMethod,
+        paymentMethod: merged.paymentMethod!,
       };
 
       let draft: MarriageApplication;

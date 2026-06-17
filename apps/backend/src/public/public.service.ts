@@ -103,8 +103,26 @@ export class PublicService {
     }));
   }
 
+  adminGetGallery(category?: string, page = 1, limit = 50) {
+    const qb = this.gallery.createQueryBuilder('g')
+      .orderBy('g.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+    if (category) qb.andWhere('g.category = :category', { category });
+    return qb.getManyAndCount().then(([data, total]) => ({
+      data, total, page, pages: Math.ceil(total / limit),
+    }));
+  }
+
   async addGalleryItem(dto: Partial<GalleryItem>): Promise<GalleryItem> {
     const item = this.gallery.create(dto);
+    return this.gallery.save(item);
+  }
+
+  async updateGalleryItem(id: string, dto: Partial<GalleryItem>): Promise<GalleryItem> {
+    const item = await this.gallery.findOne({ where: { id } });
+    if (!item) throw new NotFoundException('Gallery item not found');
+    Object.assign(item, dto);
     return this.gallery.save(item);
   }
 

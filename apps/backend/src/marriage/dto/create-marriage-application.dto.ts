@@ -1,124 +1,43 @@
-import {
-  IsString, IsNotEmpty, Length, Matches, IsEnum, IsOptional,
-  IsDateString, IsDecimal, Min, IsNumberString, IsEmail,
-} from 'class-validator';
+import { IsString, IsNotEmpty, Length, Matches, IsEnum, IsOptional, IsDateString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { VenueType } from '../entities/marriage-application.entity';
 
+const nid = Matches(/^\d{16}$/, { message: 'Must be exactly 16 digits' });
+const blankToUndefined = Transform(({ value }) => value === '' ? undefined : value);
+
 export class CreateMarriageApplicationDto {
-  @ApiPropertyOptional()
-  @IsOptional() @IsEmail()
-  notificationEmail?: string;
+  @ApiProperty() @IsString() @IsNotEmpty() notificationPhone!: string;
 
-  // Groom
-  @ApiProperty()
-  @IsString() @IsNotEmpty() @Length(3, 150)
-  groomName: string;
+  @ApiProperty() @IsString() @IsNotEmpty() @Length(3, 150) groomName!: string;
+  @ApiProperty() @nid groomNid!: string;
+  @ApiProperty() @IsString() @IsNotEmpty() groomPhone!: string;
 
-  @ApiProperty()
-  @Matches(/^\d{16}$/, { message: 'Groom NID must be exactly 16 digits' })
-  groomNid: string;
+  @ApiProperty() @IsString() @IsNotEmpty() @Length(3, 150) brideName!: string;
+  @ApiProperty() @nid brideNid!: string;
+  @ApiProperty() @IsString() @IsNotEmpty() bridePhone!: string;
 
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  groomPhone?: string;
+  @ApiProperty() @nid witness1Nid!: string;
+  @ApiProperty() @IsString() @IsNotEmpty() @Length(3, 150) witness1Name!: string;
+  @ApiProperty() @nid witness2Nid!: string;
+  @ApiProperty() @IsString() @IsNotEmpty() @Length(3, 150) witness2Name!: string;
 
-  // Bride
-  @ApiProperty()
-  @IsString() @IsNotEmpty() @Length(3, 150)
-  brideName: string;
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsString() @Length(3, 150) waliName?: string;
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @Matches(/^\d{16}$/) waliNid?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() waliPhone?: string;
+  @ApiPropertyOptional() @IsOptional() mahrAmount?: number;
+  @ApiPropertyOptional() @IsOptional() @IsString() mahrDescription?: string;
 
-  @ApiProperty()
-  @Matches(/^\d{16}$/, { message: 'Bride NID must be exactly 16 digits' })
-  brideNid: string;
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsString() @Length(3, 150) requestedOfficiant?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  bridePhone?: string;
+  @ApiProperty({ enum: VenueType }) @IsEnum(VenueType) venueType!: VenueType;
+  @ApiProperty() @IsString() @IsNotEmpty() province!: string;
+  @ApiProperty() @IsString() @IsNotEmpty() district!: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() mosqueId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() venueAddress?: string;
 
-  // Witnesses
-  @ApiProperty()
-  @Matches(/^\d{16}$/, { message: 'Witness 1 NID must be exactly 16 digits' })
-  witness1Nid: string;
+  @ApiProperty() @IsDateString() preferredDateFrom!: string;
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsDateString() preferredDateTo?: string;
 
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value === '' ? undefined : value)
-  @IsOptional() @IsString() @Length(3, 150)
-  witness1Name?: string;
-
-  @ApiProperty()
-  @Matches(/^\d{16}$/, { message: 'Witness 2 NID must be exactly 16 digits' })
-  witness2Nid: string;
-
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value === '' ? undefined : value)
-  @IsOptional() @IsString() @Length(3, 150)
-  witness2Name?: string;
-
-  // Islamic requirements
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value === '' ? undefined : value)
-  @IsOptional() @IsString() @Length(3, 150)
-  waliName?: string;
-
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value === '' ? undefined : value)
-  @IsOptional() @Matches(/^\d{16}$/)
-  waliNid?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  waliPhone?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  mahrAmount?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  mahrDescription?: string;
-
-  // Officiant
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value === '' ? undefined : value)
-  @IsOptional() @IsString() @Length(3, 150)
-  requestedOfficiant?: string;
-
-  // Venue
-  @ApiProperty({ enum: VenueType })
-  @IsEnum(VenueType)
-  venueType: VenueType;
-
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  province?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  district?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  mosqueId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
-  venueAddress?: string;
-
-  // Scheduling
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value === '' ? undefined : value)
-  @IsOptional() @IsDateString()
-  preferredDateFrom?: string;
-
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value === '' ? undefined : value)
-  @IsOptional() @IsDateString()
-  preferredDateTo?: string;
-
-  // Payment
-  @ApiPropertyOptional()
-  @IsOptional() @IsEnum(['momo', 'bank', 'cash'])
-  paymentMethod?: string;
+  @ApiProperty() @IsEnum(['momo', 'bank', 'cash']) paymentMethod!: string;
 }

@@ -16,7 +16,18 @@ async function bootstrap() {
   const allowedOrigins = config.get<string[]>('app.allowedOrigins') || [];
   const maxFileSize = config.get<number>('app.maxFileSize') || 10 * 1024 * 1024;
 
-  app.use(helmet());
+  // crossOriginResourcePolicy must be 'cross-origin' so browsers can read
+  // responses from this file-server when the request originates on another
+  // port (e.g. Next.js on :3001 uploading to this server on :3002).
+  // crossOriginEmbedderPolicy is disabled for the same reason — COEP
+  // require-corp would force every sub-resource to opt-in, which breaks
+  // cross-origin XHR responses before the client can even read them.
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
   app.use(compression());
 
   app.enableCors({
@@ -34,6 +45,19 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  // Temporary auth-debug middleware — shows what token (if any) arrives on
+  // every non-OPTIONS request so we can diagnose 401 failures quickly.
+  app.use((req: { method: string; url: string; headers: Record<string, string> }, _res: unknown, next: () => void) => {
+    if (req.method !== 'OPTIONS') {
+      const auth = req.headers['authorization'];
+      const snippet = auth
+        ? auth.substring(0, 30) + (auth.length > 30 ? '…' : '')
+        : 'NONE';
+      logger.debug(`→ ${req.method} ${req.url}  auth=${snippet}`);
+    }
+    next();
+  });
 
   app.setGlobalPrefix('api/v1');
 

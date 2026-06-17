@@ -41,6 +41,7 @@ export interface MarriageApplication {
   id: string;
   applicationNumber: string;
   applicantId: string;
+  notificationPhone: string | null;
   groomName: string;
   groomNid: string;
   groomPhone: string | null;
@@ -87,17 +88,17 @@ export interface MarriageApplication {
 }
 
 export interface CreateMarriageApplicationPayload {
-  notificationEmail?: string;
+  notificationPhone: string;
   groomName: string;
   groomNid: string;
-  groomPhone?: string;
+  groomPhone: string;
   brideName: string;
   brideNid: string;
-  bridePhone?: string;
+  bridePhone: string;
   witness1Nid: string;
-  witness1Name?: string;
+  witness1Name: string;
   witness2Nid: string;
-  witness2Name?: string;
+  witness2Name: string;
   waliName?: string;
   waliNid?: string;
   waliPhone?: string;
@@ -105,13 +106,13 @@ export interface CreateMarriageApplicationPayload {
   mahrDescription?: string;
   requestedOfficiant?: string;
   venueType: VenueType;
-  province?: string;
-  district?: string;
+  province: string;
+  district: string;
   mosqueId?: string;
   venueAddress?: string;
-  preferredDateFrom?: string;
+  preferredDateFrom: string;
   preferredDateTo?: string;
-  paymentMethod?: PaymentMethod;
+  paymentMethod: PaymentMethod;
 }
 
 export interface AdminApplicationsResult {

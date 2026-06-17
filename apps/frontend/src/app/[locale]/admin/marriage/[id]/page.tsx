@@ -246,11 +246,11 @@ export default function AdminMarriageDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+  const actionLoading = activeAction !== null;
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [weddingPhotoFile, setWeddingPhotoFile] = useState<File | null>(null);
-  const [weddingPhotoUploading, setWeddingPhotoUploading] = useState(false);
   const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
 
   const fetchApp = useCallback(async () => {
@@ -267,68 +267,71 @@ export default function AdminMarriageDetailPage() {
 
   useEffect(() => { fetchApp(); }, [fetchApp]);
 
-  const handleStatusUpdate = async (status: MarriageApplicationStatus, notes: string, extra?: object) => {
-    setActionLoading(true);
+  const handleStatusUpdate = async (status: MarriageApplicationStatus, notes: string, action = status) => {
+    setActiveAction(action);
     setActionError(null);
     try {
-      const updated = await marriageApi.admin.updateStatus(id, { status, notes, ...extra });
+      const updated = await marriageApi.admin.updateStatus(id, { status, notes });
       setApp(updated);
       setSuccessMsg(`Status updated to ${STATUS_LABELS[status]}`);
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: unknown) {
       setActionError((err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Action failed');
     } finally {
-      setActionLoading(false);
+      setActiveAction(null);
     }
   };
 
   const handleConfirmPayment = async () => {
-    setActionLoading(true);
+    setActiveAction('payment');
+    setActionError(null);
     try {
       const updated = await marriageApi.admin.confirmPayment(id);
       setApp(updated);
       setSuccessMsg('Payment confirmed');
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch {
       setActionError('Failed to confirm payment');
     } finally {
-      setActionLoading(false);
+      setActiveAction(null);
     }
   };
 
   const handleSchedule = async () => {
     if (!scheduleDate) return;
-    setActionLoading(true);
+    setActiveAction('schedule');
+    setActionError(null);
     try {
       const updated = await marriageApi.admin.schedule(id, { ceremonyDate: scheduleDate });
       setApp(updated);
-      setSuccessMsg('Ceremony scheduled');
+      setSuccessMsg('Ceremony scheduled — confirmation email sent');
       setScheduleDate('');
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch {
       setActionError('Failed to schedule ceremony');
     } finally {
-      setActionLoading(false);
+      setActiveAction(null);
     }
   };
 
   const handleIssueCertificate = async () => {
-    setActionLoading(true);
+    setActiveAction('certificate');
+    setActionError(null);
     try {
       const updated = await marriageApi.admin.issueCertificate(id);
       setApp(updated);
-      setSuccessMsg('Certificate issued');
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setSuccessMsg('Certificate issued — notification email sent');
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch {
       setActionError('Failed to issue certificate');
     } finally {
-      setActionLoading(false);
+      setActiveAction(null);
     }
   };
 
   const handleUploadWeddingPhoto = async () => {
     if (!weddingPhotoFile) return;
-    setWeddingPhotoUploading(true);
+    setActiveAction('wedding-photo');
     setActionError(null);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
@@ -345,11 +348,11 @@ export default function AdminMarriageDetailPage() {
       setApp(updated);
       setWeddingPhotoFile(null);
       setSuccessMsg('Wedding photo uploaded');
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch {
       setActionError('Failed to upload wedding photo');
     } finally {
-      setWeddingPhotoUploading(false);
+      setActiveAction(null);
     }
   };
 
@@ -618,7 +621,10 @@ export default function AdminMarriageDetailPage() {
                 disabled={actionLoading}
                 className="w-full px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
-                <Banknote className="w-4 h-4" /> Confirm Payment
+                {activeAction === 'payment'
+                  ? <RefreshCw className="w-4 h-4 animate-spin" />
+                  : <Banknote className="w-4 h-4" />}
+                {activeAction === 'payment' ? 'Confirming...' : 'Confirm Payment'}
               </button>
             )}
           </div>
@@ -633,54 +639,72 @@ export default function AdminMarriageDetailPage() {
                 <button
                   onClick={() => setModal('approve')}
                   disabled={actionLoading}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-60 transition-colors"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Approve Application
+                  {activeAction === 'approved'
+                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                    : <CheckCircle2 className="w-4 h-4" />}
+                  {activeAction === 'approved' ? 'Approving...' : 'Approve Application'}
                 </button>
               )}
               {canAmendments && (
                 <button
                   onClick={() => setModal('amendments')}
                   disabled={actionLoading}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-60 transition-colors"
                 >
-                  <AlertTriangle className="w-4 h-4" /> Request Amendments
+                  {activeAction === 'amendments_requested'
+                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                    : <AlertTriangle className="w-4 h-4" />}
+                  {activeAction === 'amendments_requested' ? 'Sending...' : 'Request Amendments'}
                 </button>
               )}
               {canReject && (
                 <button
                   onClick={() => setModal('reject')}
                   disabled={actionLoading}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors"
                 >
-                  <XCircle className="w-4 h-4" /> Reject Application
+                  {activeAction === 'rejected'
+                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                    : <XCircle className="w-4 h-4" />}
+                  {activeAction === 'rejected' ? 'Rejecting...' : 'Reject Application'}
                 </button>
               )}
               {['submitted', 'under_review'].includes(app.status) && (
                 <button
                   onClick={() => handleStatusUpdate('under_review' as MarriageApplicationStatus, 'Moved to under review')}
                   disabled={actionLoading || app.status === 'under_review'}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors disabled:opacity-50"
                 >
-                  <Clock className="w-4 h-4" /> Mark Under Review
+                  {activeAction === 'under_review'
+                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                    : <Clock className="w-4 h-4" />}
+                  {activeAction === 'under_review' ? 'Updating...' : 'Mark Under Review'}
                 </button>
               )}
               {canMarkCompleted && (
                 <button
                   onClick={() => handleStatusUpdate('completed' as MarriageApplicationStatus, 'Nikah ceremony completed')}
                   disabled={actionLoading}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Mark Ceremony Completed
+                  {activeAction === 'completed'
+                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                    : <CheckCircle2 className="w-4 h-4" />}
+                  {activeAction === 'completed' ? 'Updating...' : 'Mark Ceremony Completed'}
                 </button>
               )}
               {canIssueCert && (
                 <button
                   onClick={handleIssueCertificate}
                   disabled={actionLoading}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 transition-colors"
                 >
-                  <Download className="w-4 h-4" /> Issue Certificate
+                  {activeAction === 'certificate'
+                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                    : <Download className="w-4 h-4" />}
+                  {activeAction === 'certificate' ? 'Issuing...' : 'Issue Certificate'}
                 </button>
               )}
             </div>
@@ -701,18 +725,21 @@ export default function AdminMarriageDetailPage() {
               <button
                 onClick={handleSchedule}
                 disabled={!scheduleDate || actionLoading}
-                className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
-                Set Ceremony Date
+                {activeAction === 'schedule'
+                  ? <RefreshCw className="w-4 h-4 animate-spin" />
+                  : <Calendar className="w-4 h-4" />}
+                {activeAction === 'schedule' ? 'Scheduling...' : 'Set Ceremony Date'}
               </button>
             </div>
           )}
 
-          {/* Wedding photo upload — available after ceremony completed */}
-          {app.status === 'completed' && (
+          {/* Wedding photo upload — available during validation and after ceremony */}
+          {['submitted', 'under_review', 'amendments_requested', 'approved', 'completed'].includes(app.status) && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
-                <Camera className="w-4 h-4 text-rose-500" /> Wedding Photo
+                <Camera className="w-4 h-4 text-rose-500" /> Marriage Photo
               </h3>
               {app.weddingPhotoUrl ? (
                 <div className="space-y-2">
@@ -731,7 +758,7 @@ export default function AdminMarriageDetailPage() {
                   )}>
                     <ImageIcon className="w-6 h-6 text-gray-300" />
                     <span className="text-xs text-gray-500">
-                      {weddingPhotoFile ? weddingPhotoFile.name : 'Click to select wedding photo'}
+                      {weddingPhotoFile ? weddingPhotoFile.name : 'Click to select marriage photo'}
                     </span>
                     <input
                       type="file"
@@ -742,10 +769,13 @@ export default function AdminMarriageDetailPage() {
                   </label>
                   <button
                     onClick={handleUploadWeddingPhoto}
-                    disabled={!weddingPhotoFile || weddingPhotoUploading}
-                    className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors"
+                    disabled={!weddingPhotoFile || actionLoading}
+                    className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                   >
-                    {weddingPhotoUploading ? 'Uploading...' : 'Upload Photo'}
+                    {activeAction === 'wedding-photo'
+                      ? <RefreshCw className="w-4 h-4 animate-spin" />
+                      : <Camera className="w-4 h-4" />}
+                    {activeAction === 'wedding-photo' ? 'Uploading...' : 'Upload Photo'}
                   </button>
                 </div>
               )}

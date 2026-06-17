@@ -46,8 +46,8 @@ export class MarriageApplication {
   @Column({ name: 'applicant_id', type: 'uuid' })
   applicantId: string;
 
-  @Column({ name: 'notification_email', type: 'varchar', length: 255, nullable: true })
-  notificationEmail: string | null;
+  @Column({ name: 'notification_phone', type: 'varchar', length: 30, nullable: true })
+  notificationPhone: string | null;
 
   // Groom
   @Column({ name: 'groom_user_id', type: 'uuid', nullable: true })

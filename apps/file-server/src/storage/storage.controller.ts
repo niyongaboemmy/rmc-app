@@ -10,11 +10,12 @@ import {
   UseInterceptors,
   BadRequestException,
   NotFoundException,
-  Redirect,
   HttpCode,
   HttpStatus,
   Logger,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
@@ -156,19 +157,25 @@ export class StorageController {
 
   @Get('files/:key(*)')
   @Public()
-  @Redirect()
   @ApiOperation({ summary: 'Redirect to presigned download URL (use in <img src>)' })
   @ApiParam({ name: 'key', example: 'avatars/uuid.jpg' })
   @ApiResponse({ status: 302, description: 'Redirects to presigned URL' })
   @ApiResponse({ status: 404, description: 'File not found' })
-  async serveFile(@Param('key') key: string) {
+  async serveFile(
+    @Param('key') key: string,
+    @Res() res: Response,
+  ): Promise<void> {
     try {
       await this.storageService.getMetadata(key);
     } catch {
-      throw new NotFoundException({ code: 'FILE_NOT_FOUND', message: 'File not found' });
+      res.status(HttpStatus.NOT_FOUND).json({
+        success: false,
+        error: { code: 'FILE_NOT_FOUND', message: 'File not found' },
+      });
+      return;
     }
     const url = await this.storageService.getPresignedUrl(key);
-    return { url, statusCode: HttpStatus.FOUND };
+    res.redirect(HttpStatus.FOUND, url);
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────

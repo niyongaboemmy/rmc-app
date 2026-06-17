@@ -27,9 +27,9 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
 
   const schema = z.object({
     witness1Nid: nid,
-    witness1Name: z.string().trim().min(3, 'Min. 3 characters').optional().or(z.literal('')),
+    witness1Name: z.string().trim().min(3, 'Min. 3 characters'),
     witness2Nid: nid,
-    witness2Name: z.string().trim().min(3, 'Min. 3 characters').optional().or(z.literal('')),
+    witness2Name: z.string().trim().min(3, 'Min. 3 characters'),
     waliName: z.string().trim().min(3, 'Min. 3 characters').optional().or(z.literal('')),
     waliNid: nid.optional().or(z.literal('')),
     waliPhone: z.string().optional(),
@@ -75,14 +75,14 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
           <SectionLabel>Witness 1</SectionLabel>
           <div className="space-y-4">
             <Input label="National ID" required error={errors.witness1Nid?.message} {...nidProps} {...register('witness1Nid')} />
-            <Input label="Full name" placeholder="Optional" error={errors.witness1Name?.message} {...register('witness1Name')} />
+            <Input label="Full name" required placeholder="Witness full name" error={errors.witness1Name?.message} {...register('witness1Name')} />
           </div>
         </div>
         <div>
           <SectionLabel>Witness 2</SectionLabel>
           <div className="space-y-4">
             <Input label="National ID" required error={errors.witness2Nid?.message} {...nidProps} {...register('witness2Nid')} />
-            <Input label="Full name" placeholder="Optional" error={errors.witness2Name?.message} {...register('witness2Name')} />
+            <Input label="Full name" required placeholder="Witness full name" error={errors.witness2Name?.message} {...register('witness2Name')} />
           </div>
         </div>
       </div>

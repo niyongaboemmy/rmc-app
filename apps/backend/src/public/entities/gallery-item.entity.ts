@@ -14,6 +14,12 @@ export class GalleryItem {
   @Column({ name: 'file_key', type: 'varchar', length: 500 })
   fileKey: string;
 
+  @Column({ name: 'thumbnail_key', type: 'varchar', length: 500, nullable: true })
+  thumbnailKey: string | null;
+
+  @Column({ name: 'medium_key', type: 'varchar', length: 500, nullable: true })
+  mediumKey: string | null;
+
   @Column({ name: 'file_type', type: 'varchar', length: 20, default: 'image' })
   fileType: string;
 
