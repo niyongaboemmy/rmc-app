@@ -48,4 +48,14 @@ export const publicApi = {
     unwrap<{ data: Array<{ id: string; title: string; slug: string; excerpt: string | null; featuredImage: string | null; publishedAt: string }>; total: number }>(
       api.get('/public/blog/posts', { params: { category, page } }),
     ),
+
+  getGallery: (category?: string, page = 1) =>
+    unwrap<{
+      data: Array<{
+        id: string; title: string | null; description: string | null;
+        fileKey: string; thumbnailKey: string | null; mediumKey: string | null;
+        fileType: string; category: string | null; createdAt: string;
+      }>;
+      total: number; page: number; pages: number;
+    }>(api.get('/public/gallery', { params: { category, page } })),
 };

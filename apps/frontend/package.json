@@ -18,6 +18,7 @@
     "adhan": "^4.4.3",
     "axios": "^1.7.2",
     "clsx": "^2.1.1",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.400.0",
     "next": "14.2.29",
     "next-intl": "^3.17.2",
@@ -25,6 +26,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.52.1",
+    "react-leaflet": "^4.2.1",
     "tailwind-merge": "^2.4.0",
     "zod": "^3.23.8"
   },
@@ -33,6 +35,7 @@
     "@testing-library/react": "^16",
     "@types/google.maps": "^3.65.1",
     "@types/jest": "^29",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
