@@ -333,29 +333,29 @@
         "heroBadge": "Serivisi y'Ubukwe",
         "overviewHeading": "Intangiriro yuje umugisha,",
         "overviewHeadingHighlight": "ikorwa neza",
-        "overviewP1": "RMC iyobora abashyingiranwa muri buri ntambwe y'ubukwe bw'Abayisilamu (Nikah) — kuva ku nama mbere y'ubukwe kugeza ku birori n'inyandiko zemewe, hubahirizwa amategeko ya Islamu.",
-        "overviewP2": "Waba utangiye gusaba cyangwa ushaka kumenya gusa, tugufasha ko inzira igaragara, yubahwa kandi idatera umuhangayiko ku miryango yombi.",
+        "overviewP1": "RMC ikuyobora muri buri ntambwe ya Nikah — nama mbere y'ubukwe, ibirori n'inyandiko zemewe.",
+        "overviewP2": "Tugufasha ko inzira igaragara, yubahwa kandi idatera umuhangayiko ku miryango yombi.",
         "startApplication": "Tangira gusaba",
         "certifiedBadge": "Nikah Yemewe",
         "certifiedBadgeSub": "Ikorwa n'aba imamu babifitiye ubushobozi",
         "includesTitle": "Ibikubiyemo",
-        "includesSubtitle": "Ibyo ukeneye byose kugira ngo ubukwe bw'Abayisilamu bwuzuye kandi bwemewe.",
+        "includesSubtitle": "Ibyo ukeneye kugira ngo ubukwe bw'Abayisilamu bwuzuye kandi bwemewe.",
         "includes": {
           "nikah": {
             "title": "Umuhango wa Nikah",
-            "text": "Ibirori byuzuye by'ubukwe bw'Abayisilamu bikorwa n'imamu ubifitiye ubushobozi hakurikijwe Sunnah."
+            "text": "Ibirori bikorwa n'imamu ubifitiye ubushobozi hakurikijwe Sunnah."
           },
           "certificate": {
             "title": "Icyemezo Cyemewe",
-            "text": "Icyemezo cy'ubukwe cya RMC cyemewe gitangwa kandi cyandikwa ku bashyingiranwa bombi."
+            "text": "Icyemezo cya RMC gitangwa kandi cyandikwa ku bashyingiranwa bombi."
           },
           "guidance": {
             "title": "Inama Mbere y'Ubukwe",
-            "text": "Amasomo y'inama yerekeye uburenganzira, inshingano, no kubaka urugo rukomeye rw'Abayisilamu."
+            "text": "Inama yerekeye uburenganzira, inshingano, no kubaka urugo rukomeye rw'Abayisilamu."
           },
           "witness": {
             "title": "Ubufasha mu Batangabuhamya na Mahr",
-            "text": "Ubufasha mu gushaka abatangabuhamya no kwandika neza mahr (inkwano) byumvikanyweho."
+            "text": "Ubufasha mu gushaka abatangabuhamya no kwandika mahr byumvikanyweho."
           }
         },
         "processTitle": "Uko bikorwa",
@@ -383,7 +383,7 @@
           }
         },
         "requirementsTitle": "Ibyo Ukeneye",
-        "requirementsSubtitle": "Tegura izi nyandiko mbere yo gusaba kugira ngo Nikah yawe ikomeze ku gihe.",
+        "requirementsSubtitle": "Tegura izi nyandiko mbere yo gusaba.",
         "requirements": {
           "r1": "Irangamuntu cyangwa pasiporo yemewe ku bashyingiranwa bombi",
           "r2": "Uruhushya rwa wali (umurinzi) n'irangamuntu",
@@ -400,19 +400,19 @@
           },
           "f2": {
             "q": "Ubunyamuryango bwa RMC burakenewe?",
-            "a": "Yego. Abashyingiranwa bombi bagomba kuba banditse muri RMC kugira ngo ubukwe bwandikwe kandi bwemezwe neza."
+            "a": "Yego — abashyingiranwa bombi bagomba kuba banditse muri RMC."
           },
           "f3": {
             "q": "Icyemezo cyemewe ku mugaragaro?",
-            "a": "Icyemezo cya RMC kiremewe mu muryango kandi gikora nk'ikimenyetso cy'ubukwe bw'Abayisilamu. Ku iyandikwa rya leta, kurikiza inzira y'ubuyobozi bw'aho utuye."
+            "a": "Kiremewe mu muryango nk'ikimenyetso cy'ubukwe bw'Abayisilamu. Ku iyandikwa rya leta, kurikiza inzira y'ubuyobozi bw'aho utuye."
           },
           "f4": {
             "q": "Ibirori bishobora gukorerwa ahantu hacu bwite?",
-            "a": "Yego. Bitewe n'uko imamu aboneka, Nikah ishobora gukorerwa mu musigiti, mu rugo rwawe, cyangwa ahandi hantu humvikanyweho."
+            "a": "Yego — bitewe n'uko imamu aboneka, mu musigiti, mu rugo rwawe, cyangwa ahandi hantu humvikanyweho."
           }
         },
         "ctaTitle": "Witeguye gutangira Nikah yawe?",
-        "ctaSubtitle": "Iyandikishe nk'umunyamuryango wa RMC kugira ngo utangire ubusabe bw'ubukwe kandi ufate itariki y'ibirori.",
+        "ctaSubtitle": "Iyandikishe muri RMC kugira ngo utangire ubusabe kandi ufate itariki y'ibirori.",
         "ctaStart": "Tangira ubusabe",
         "ctaContact": "Twandikire",
         "fees": {
@@ -423,7 +423,7 @@
           "outsideLabel": "Umuhango ukorewe hanze y'umusigiti",
           "outsideAmount": "200,000 RWF",
           "clauseTitle": "Ingingo y'ubwishyu",
-          "clause": "Amafaranga akwiriye agomba kwishyurwa yose mbere y'uko icyemezo cy'ubukwe cyemewe gitangwa. Amafaranga aterwa gusa n'aho umuhango ukorerwa — 30,000 RWF mu musigiti na 200,000 RWF ahandi hose."
+          "clause": "Amafaranga yose agomba kwishyurwa mbere y'uko icyemezo gitangwa."
         },
         "checkStatus": "Reba aho ubusabe bugeze"
       },

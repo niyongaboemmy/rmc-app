@@ -333,29 +333,29 @@
         "heroBadge": "Marriage Services",
         "overviewHeading": "A blessed beginning,",
         "overviewHeadingHighlight": "done right",
-        "overviewP1": "RMC guides couples through every step of the Islamic marriage (Nikah) — from pre-marital guidance to an officiated ceremony and official documentation, fully in line with Islamic law.",
-        "overviewP2": "Whether you're applying or just exploring, we keep the process clear, dignified, and stress-free for both families.",
+        "overviewP1": "RMC guides you through every step of the Nikah — pre-marital guidance, an officiated ceremony, and official documentation.",
+        "overviewP2": "We keep the process clear, dignified, and stress-free for both families.",
         "startApplication": "Start your application",
         "certifiedBadge": "Certified Nikah",
         "certifiedBadgeSub": "Officiated by qualified imams",
         "includesTitle": "What's included",
-        "includesSubtitle": "Everything you need for a complete and recognised Islamic marriage.",
+        "includesSubtitle": "All you need for a complete, recognised Islamic marriage.",
         "includes": {
           "nikah": {
             "title": "Nikah Ceremony",
-            "text": "A complete Islamic marriage ceremony officiated by a qualified imam in accordance with the Sunnah."
+            "text": "A full ceremony officiated by a qualified imam in accordance with the Sunnah."
           },
           "certificate": {
             "title": "Official Certificate",
-            "text": "A recognised RMC marriage certificate issued and registered for both partners."
+            "text": "An RMC marriage certificate issued and registered for both partners."
           },
           "guidance": {
             "title": "Pre-Marital Guidance",
-            "text": "Counselling sessions covering rights, responsibilities, and building a strong Islamic household."
+            "text": "Counselling on rights, responsibilities, and building a strong Islamic household."
           },
           "witness": {
             "title": "Witness & Mahr Support",
-            "text": "Assistance arranging witnesses and documenting the agreed mahr (dowry) correctly."
+            "text": "Help arranging witnesses and documenting the agreed mahr correctly."
           }
         },
         "processTitle": "How it works",
@@ -383,7 +383,7 @@
           }
         },
         "requirementsTitle": "What you'll need",
-        "requirementsSubtitle": "Prepare these documents before applying to keep your Nikah on schedule.",
+        "requirementsSubtitle": "Have these ready before submitting your application.",
         "requirements": {
           "r1": "Valid national ID or passport for both partners",
           "r2": "Wali (guardian) consent and identification",
@@ -400,19 +400,19 @@
           },
           "f2": {
             "q": "Is RMC membership required?",
-            "a": "Yes. Both partners must be registered RMC members so the marriage can be properly documented and certified."
+            "a": "Yes — both partners must be registered RMC members."
           },
           "f3": {
             "q": "Is the certificate officially recognised?",
-            "a": "The RMC certificate is recognised within the community and serves as proof of an Islamic marriage. For civil registration, follow your local authority's process."
+            "a": "Recognised within the community as proof of an Islamic marriage. For civil registration, follow your local authority's process."
           },
           "f4": {
             "q": "Can the ceremony be held at our own venue?",
-            "a": "Yes. Subject to imam availability, the Nikah can be conducted at a mosque, your home, or another agreed venue."
+            "a": "Yes — subject to imam availability, at a mosque, your home, or any agreed venue."
           }
         },
         "ctaTitle": "Ready to begin your Nikah?",
-        "ctaSubtitle": "Register as an RMC member to start your marriage application and book your ceremony.",
+        "ctaSubtitle": "Become an RMC member to start your application and book your ceremony.",
         "ctaStart": "Start application",
         "ctaContact": "Contact us",
         "fees": {
@@ -423,7 +423,7 @@
           "outsideLabel": "Ceremony held outside a mosque",
           "outsideAmount": "200,000 RWF",
           "clauseTitle": "Payment clause",
-          "clause": "The applicable fee must be paid in full before the official marriage certificate is issued. The fee is determined solely by the location of the ceremony — 30,000 RWF within a mosque and 200,000 RWF at any other venue."
+          "clause": "The full fee must be paid before the certificate is issued."
         },
         "checkStatus": "Check application status"
       },
