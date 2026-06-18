@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, ReactNode } from 'react';
+import { useEffect, useRef, ReactNode, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Button } from './Button';
 import { X } from 'lucide-react';
@@ -25,6 +26,9 @@ const sizeClasses = {
 export function Modal({ open, isOpen, onClose, children, size = 'md', className }: ModalProps) {
   const visible = open ?? isOpen ?? false;
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!visible) return;
@@ -33,12 +37,12 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
     return () => document.removeEventListener('keydown', handler);
   }, [visible, onClose]);
 
-  if (!visible) return null;
+  if (!visible || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
       <div
@@ -60,7 +64,8 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
         </button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
