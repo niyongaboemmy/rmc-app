@@ -16,7 +16,8 @@
     "test:e2e": "npm run test:e2e --workspace=apps/backend",
     "lint": "npm run lint --workspace=apps/backend && npm run lint --workspace=apps/frontend && npm run lint --workspace=apps/file-server",
     "install:all": "npm install --workspace=apps/backend && npm install --workspace=apps/frontend && npm install --workspace=apps/file-server",
-    "deploy": "node scripts/deploy.js"
+    "deploy": "node scripts/deploy.js",
+    "seed:live": "gh workflow run seed-production.yml --field confirm=SEED"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

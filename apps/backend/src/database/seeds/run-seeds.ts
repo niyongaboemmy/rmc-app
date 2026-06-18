@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { AppDataSource } from '../../../src/config/data-source';
+import { AppDataSource } from '../../config/data-source';
 import { seedProvincesAndDistricts } from './01-provinces-districts.seed';
 import { seedRolesAndAdmin } from './02-roles-admin.seed';
 import { seedDonationCampaigns } from './03-donation-campaigns.seed';

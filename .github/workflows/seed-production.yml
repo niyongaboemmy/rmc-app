@@ -1,0 +1,34 @@
+name: Seed — Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type SEED to confirm running seeds on production'
+        required: true
+
+jobs:
+  seed:
+    name: Run seeds on production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.confirm == 'SEED'
+    environment:
+      name: production
+      url: https://isengesho.com
+    steps:
+      - name: Run seeds on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ubuntu
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+
+            echo "==> Running DB seeds (idempotent — skips existing records, never replaces users)..."
+            cd /opt/rmc-platform/apps/backend
+            npm run seed:run
+            echo "==> Seeds complete"
