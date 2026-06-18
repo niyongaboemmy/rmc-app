@@ -15,7 +15,10 @@
     "test": "npm run test --workspace=apps/backend && npm run test --workspace=apps/frontend && npm run test --workspace=apps/file-server",
     "test:e2e": "npm run test:e2e --workspace=apps/backend",
     "lint": "npm run lint --workspace=apps/backend && npm run lint --workspace=apps/frontend && npm run lint --workspace=apps/file-server",
-    "install:all": "npm install --workspace=apps/backend && npm install --workspace=apps/frontend && npm install --workspace=apps/file-server"
+    "install:all": "npm install --workspace=apps/backend && npm install --workspace=apps/frontend && npm install --workspace=apps/file-server",
+    "deploy:patch": "node scripts/deploy.js patch",
+    "deploy:minor": "node scripts/deploy.js minor",
+    "deploy:major": "node scripts/deploy.js major"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
