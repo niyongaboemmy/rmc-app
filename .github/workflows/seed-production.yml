@@ -11,12 +11,40 @@ jobs:
   seed:
     name: Run seeds on production
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     if: github.event.inputs.confirm == 'SEED'
     environment:
       name: production
       url: https://isengesho.com
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Build backend
+        working-directory: apps/backend
+        run: npm ci && npm run build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rsync compiled seeds to EC2
+        run: |
+          rsync -az \
+            apps/backend/dist/database/seeds/ \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/backend/dist/database/seeds/
+          rsync -az \
+            apps/backend/dist/config/ \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/backend/dist/config/
+
       - name: Run seeds on EC2
         uses: appleboy/ssh-action@v1
         with:
