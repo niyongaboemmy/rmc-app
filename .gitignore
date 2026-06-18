@@ -95,6 +95,7 @@ web_modules/
 
 # Next.js build output
 .next
+.next_bak_root
 out
 
 # Nuxt.js build / generate output
