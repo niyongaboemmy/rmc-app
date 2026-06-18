@@ -57,6 +57,6 @@ jobs:
             source "$NVM_DIR/nvm.sh"
 
             echo "==> Running DB seeds (idempotent — skips existing records, never replaces users)..."
-            cd /opt/rmc-platform/apps/backend
-            node dist/database/seeds/run-seeds.js
+            cd /opt/rmc-platform
+            node apps/backend/dist/database/seeds/run-seeds.js
             echo "==> Seeds complete"
