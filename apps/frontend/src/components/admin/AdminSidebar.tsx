@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, usePathname } from 'next/navigation';
@@ -41,6 +42,75 @@ const GROUPS = [
   { key: 'system',  labelKey: 'sidebar.group.system'  },
 ];
 
+// Collapsed sidebar width in px (lg:w-16 = 4rem)
+const COLLAPSED_W = 64;
+
+interface SidebarNavItemProps {
+  item: NavItem;
+  active: boolean;
+  collapsed: boolean;
+  locale: string;
+  label: string;
+  onMobileClose: () => void;
+}
+
+function SidebarNavItem({ item, active, collapsed, locale, label, onMobileClose }: SidebarNavItemProps) {
+  const [tooltipY, setTooltipY] = useState<number | null>(null);
+  const Icon = item.icon;
+
+  return (
+    <li className={collapsed ? 'lg:flex lg:justify-center' : ''}>
+      <Link
+        href={`/${locale}${item.href}`}
+        onClick={onMobileClose}
+        onMouseEnter={(e) => {
+          if (collapsed) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltipY(rect.top + rect.height / 2);
+          }
+        }}
+        onMouseLeave={() => setTooltipY(null)}
+        className={`
+          group relative flex items-center rounded-md transition-all duration-150
+          h-10 px-2 gap-3
+          ${collapsed ? 'lg:h-9 lg:w-9 lg:justify-center lg:px-0 lg:gap-0' : 'lg:h-9 lg:gap-2.5'}
+          ${active
+            ? 'bg-rmc-green/8 text-rmc-green'
+            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+          }
+        `}
+      >
+        {active && (
+          <span className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-rmc-green ${
+            collapsed ? 'lg:hidden' : ''
+          }`} />
+        )}
+
+        <Icon className={`shrink-0 ${
+          collapsed ? 'lg:w-[18px] lg:h-[18px] w-4 h-4' : 'w-4 h-4'
+        } ${active ? 'text-rmc-green' : ''}`} />
+
+        <span className={`text-[13px] font-medium truncate ${
+          collapsed ? 'lg:hidden' : ''
+        } ${active ? 'text-rmc-green font-semibold' : ''}`}>
+          {label}
+        </span>
+      </Link>
+
+      {/* Tooltip rendered via portal — escapes all overflow constraints */}
+      {collapsed && tooltipY !== null && createPortal(
+        <span
+          style={{ top: tooltipY, left: COLLAPSED_W + 6 }}
+          className="fixed z-[99999] -translate-y-1/2 px-2.5 py-1.5 text-[11px] font-semibold bg-gray-900 text-white rounded-lg whitespace-nowrap shadow-xl pointer-events-none hidden lg:block"
+        >
+          {label}
+        </span>,
+        document.body,
+      )}
+    </li>
+  );
+}
+
 interface Props {
   collapsed: boolean;
   onToggle: () => void;
@@ -69,23 +139,16 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
     window.location.href = `/${locale}/login`;
   };
 
-  /*
-   * Two modes:
-   *  Mobile  (< lg): off-canvas drawer — always w-64, slides in/out via translate-x
-   *  Desktop (≥ lg): fixed rail — w-16 (collapsed) or w-60 (expanded), no translate
-   */
   return (
     <aside
       className={`
         fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-gray-100
         transition-transform duration-200 ease-in-out
-        /* mobile: full-width drawer, slides in/out */
         w-64 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        /* desktop: static rail, no slide; width determined by collapsed prop */
         lg:translate-x-0 ${collapsed ? 'lg:w-16' : 'lg:w-60'}
       `}
     >
-      {/* ── Brand / header ── */}
+      {/* Brand / header */}
       <div className={`flex items-center h-14 px-4 border-b border-gray-100 shrink-0 ${
         collapsed ? 'lg:justify-center' : 'justify-between gap-2.5'
       }`}>
@@ -93,7 +156,6 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
           <div className="w-7 h-7 rounded-lg bg-rmc-green flex items-center justify-center shrink-0">
             <Image src="/logo.webp" alt="RMC" width={20} height={20} className="object-contain" />
           </div>
-          {/* Label: visible on mobile always; on desktop only when not collapsed */}
           <div className={`min-w-0 ${collapsed ? 'lg:hidden' : ''}`}>
             <p className="text-[13px] font-bold text-gray-900 leading-none truncate">RMC Admin</p>
             <p className="text-[10px] text-gray-400 leading-none mt-0.5 uppercase tracking-wide truncate">
@@ -102,7 +164,6 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
           </div>
         </Link>
 
-        {/* Desktop collapse button — hidden on mobile */}
         <button
           onClick={onToggle}
           className={`hidden lg:flex w-6 h-6 items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0 ${
@@ -112,7 +173,6 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
 
-        {/* Mobile close button */}
         <button
           onClick={onMobileClose}
           className="lg:hidden ml-auto p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -121,14 +181,13 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
         </button>
       </div>
 
-      {/* ── Navigation ── */}
+      {/* Navigation — overflow-x-hidden is safe now because tooltips use portals */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3">
         {GROUPS.map((group) => {
           const items = NAV_ITEMS.filter((i) => i.group === group.key && canSee(i));
           if (!items.length) return null;
           return (
             <div key={group.key} className={`mb-4 ${collapsed ? 'lg:px-2 px-3' : 'px-3'}`}>
-              {/* Group label: hide on desktop-collapsed, always show on mobile */}
               <p className={`text-[10px] font-semibold tracking-widest uppercase text-gray-400 px-2 mb-1 ${
                 collapsed ? 'lg:hidden' : ''
               }`}>
@@ -136,78 +195,51 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
               </p>
 
               <ul className="space-y-px">
-                {items.map((item) => {
-                  const active = isActive(item.href);
-                  const Icon = item.icon;
-                  return (
+                {items.map((item) => (
+                  mounted ? (
+                    <SidebarNavItem
+                      key={item.key}
+                      item={item}
+                      active={isActive(item.href)}
+                      collapsed={collapsed}
+                      locale={locale}
+                      label={t(item.labelKey)}
+                      onMobileClose={onMobileClose}
+                    />
+                  ) : (
+                    // SSR placeholder — no tooltip, no portal
                     <li key={item.key}>
                       <Link
                         href={`/${locale}${item.href}`}
-                        onClick={onMobileClose}
                         className={`
-                          group relative flex items-center rounded-md transition-all duration-150
-                          /* mobile: always full row */
+                          relative flex items-center rounded-md transition-all duration-150
                           h-10 px-2 gap-3
-                          /* desktop collapsed: icon-only square */
                           ${collapsed ? 'lg:h-9 lg:w-9 lg:justify-center lg:px-0 lg:gap-0' : 'lg:h-9 lg:gap-2.5'}
-                          ${active
-                            ? 'bg-rmc-green/8 text-rmc-green'
-                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                          }
+                          ${isActive(item.href) ? 'bg-rmc-green/8 text-rmc-green' : 'text-gray-500'}
                         `}
                       >
-                        {/* Active left-border accent (not in collapsed icon mode) */}
-                        {active && (
-                          <span className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-rmc-green ${
-                            collapsed ? 'lg:hidden' : ''
-                          }`} />
-                        )}
-
-                        <Icon className={`shrink-0 ${
-                          collapsed ? 'lg:w-[18px] lg:h-[18px] w-4 h-4' : 'w-4 h-4'
-                        } ${active ? 'text-rmc-green' : ''}`} />
-
-                        {/* Nav label — always visible on mobile; hidden on desktop-collapsed */}
-                        <span className={`text-[13px] font-medium truncate ${
-                          collapsed ? 'lg:hidden' : ''
-                        } ${active ? 'text-rmc-green font-semibold' : ''}`}>
+                        <item.icon className={`shrink-0 w-4 h-4 ${isActive(item.href) ? 'text-rmc-green' : ''}`} />
+                        <span className={`text-[13px] font-medium truncate ${collapsed ? 'lg:hidden' : ''}`}>
                           {t(item.labelKey)}
                         </span>
-
-                        {/* Desktop-collapsed tooltip */}
-                        {collapsed && mounted && (
-                          <span className="hidden lg:block pointer-events-none absolute left-full ml-2.5 z-50 px-2 py-1 text-[11px] font-medium bg-gray-900 text-white rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-100 shadow-lg">
-                            {t(item.labelKey)}
-                          </span>
-                        )}
                       </Link>
                     </li>
-                  );
-                })}
+                  )
+                ))}
               </ul>
             </div>
           );
         })}
       </nav>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <div className={`border-t border-gray-100 py-3 shrink-0 ${
         collapsed ? 'lg:px-2 lg:flex lg:justify-center px-3' : 'px-3'
       }`}>
-        {/* Desktop icon-rail: just expand button */}
-        {collapsed && (
-          <button
-            onClick={onToggle}
-            className="hidden lg:flex w-9 h-9 items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors group relative"
-          >
-            <ChevronRight className="w-4 h-4" />
-            <span className="pointer-events-none absolute left-full ml-2.5 z-50 px-2 py-1 text-[11px] font-medium bg-gray-900 text-white rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-100">
-              Expand
-            </span>
-          </button>
+        {collapsed && mounted && (
+          <ExpandButton onToggle={onToggle} />
         )}
 
-        {/* Full footer: mobile always, desktop when expanded */}
         <div className={`space-y-px ${collapsed ? 'lg:hidden' : ''}`}>
           <div className="flex items-center gap-2.5 px-2 py-2 rounded-md">
             <div className="w-7 h-7 rounded-full bg-rmc-green flex items-center justify-center text-white text-[11px] font-bold shrink-0">
@@ -230,5 +262,37 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
         </div>
       </div>
     </aside>
+  );
+}
+
+function ExpandButton({ onToggle }: { onToggle: () => void }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipY, setTooltipY] = useState(0);
+
+  return (
+    <>
+      <button
+        onClick={onToggle}
+        onMouseEnter={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setTooltipY(rect.top + rect.height / 2);
+          setShowTooltip(true);
+        }}
+        onMouseLeave={() => setShowTooltip(false)}
+        className="hidden lg:flex w-9 h-9 items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+
+      {showTooltip && createPortal(
+        <span
+          style={{ top: tooltipY, left: COLLAPSED_W + 6 }}
+          className="fixed z-[99999] -translate-y-1/2 px-2.5 py-1.5 text-[11px] font-semibold bg-gray-900 text-white rounded-lg whitespace-nowrap shadow-xl pointer-events-none hidden lg:block"
+        >
+          Expand
+        </span>,
+        document.body,
+      )}
+    </>
   );
 }

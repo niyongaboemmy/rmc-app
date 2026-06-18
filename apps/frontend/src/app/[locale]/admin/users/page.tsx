@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
@@ -258,20 +259,54 @@ function UsersPageContent() {
 
       {error && <Alert variant="error" message={error} className="mb-4" />}
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search name, email, phone…"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div className="flex-1 w-full">
+            <Input
+              placeholder="Search by name, email or phone…"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              leftIcon={<Search className="w-4 h-4" />}
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="hidden sm:flex items-center gap-1.5 text-sm text-gray-500 shrink-0">
+              <SlidersHorizontal className="w-4 h-4" />
+              Filter
+            </span>
+            <Select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              options={STATUS_OPTIONS}
+              className="w-full sm:w-44"
+            />
+            {(search || statusFilter) && (
+              <button
+                onClick={() => { setSearch(''); setStatusFilter(''); setPage(1); }}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 hover:border-gray-300 rounded-lg px-2.5 py-2 transition-colors shrink-0 bg-gray-50 hover:bg-gray-100"
+                title="Clear filters"
+              >
+                <X className="w-3.5 h-3.5" />
+                Clear
+              </button>
+            )}
+          </div>
         </div>
-        <Select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          options={STATUS_OPTIONS}
-          className="sm:w-44"
-        />
+        {(search || statusFilter) && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+            <span className="text-xs text-gray-400">Active filters:</span>
+            {search && (
+              <span className="inline-flex items-center gap-1 text-xs bg-rmc-green/10 text-rmc-green font-medium rounded-full px-2.5 py-1">
+                Search: &quot;{search}&quot;
+              </span>
+            )}
+            {statusFilter && (
+              <span className="inline-flex items-center gap-1 text-xs bg-rmc-green/10 text-rmc-green font-medium rounded-full px-2.5 py-1 capitalize">
+                Status: {statusFilter}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {isLoading ? (
