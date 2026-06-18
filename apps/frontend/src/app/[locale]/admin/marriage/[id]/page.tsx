@@ -429,7 +429,10 @@ export default function AdminMarriageDetailPage() {
   const canAmendments = ['submitted', 'under_review'].includes(app.status);
   const canSchedule = app.status === 'approved' && !app.ceremonyDate;
   const canMarkCompleted = app.status === 'approved' && !!app.ceremonyDate;
-  const canIssueCert = ['approved', 'completed'].includes(app.status);
+  const certStatusReady = ['approved', 'completed'].includes(app.status);
+  const hasWeddingPhoto = !!app.weddingPhotoUrl;
+  // Certificate may only be issued once the marriage photo has been uploaded.
+  const canIssueCert = certStatusReady && hasWeddingPhoto;
   const needsPaymentConfirm = app.paymentStatus !== 'paid' && ['pending_cash', 'processing'].includes(app.paymentStatus);
 
   return (
@@ -817,17 +820,26 @@ export default function AdminMarriageDetailPage() {
                   {activeAction === 'completed' ? 'Updating...' : 'Mark Ceremony Completed'}
                 </button>
               )}
-              {canIssueCert && (
-                <button
-                  onClick={handleIssueCertificate}
-                  disabled={actionLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 transition-colors"
-                >
-                  {activeAction === 'certificate'
-                    ? <RefreshCw className="w-4 h-4 animate-spin" />
-                    : <Download className="w-4 h-4" />}
-                  {activeAction === 'certificate' ? 'Issuing...' : 'Issue Certificate'}
-                </button>
+              {certStatusReady && (
+                <div>
+                  <button
+                    onClick={handleIssueCertificate}
+                    disabled={actionLoading || !hasWeddingPhoto}
+                    title={!hasWeddingPhoto ? 'Upload the marriage photo first to enable this' : undefined}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {activeAction === 'certificate'
+                      ? <RefreshCw className="w-4 h-4 animate-spin" />
+                      : <Download className="w-4 h-4" />}
+                    {activeAction === 'certificate' ? 'Issuing...' : 'Issue Certificate'}
+                  </button>
+                  {!hasWeddingPhoto && (
+                    <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-600">
+                      <Camera className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      Upload the marriage photo below to enable certificate issuance.
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -916,7 +928,7 @@ export default function AdminMarriageDetailPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
               >
-                <Download className="w-4 h-4" /> Download PDF
+                <Eye className="w-4 h-4" /> View Certificate
               </a>
             </div>
           )}

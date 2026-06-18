@@ -525,7 +525,20 @@
         },
         "backToService": "Subira kuri Serivisi y'Ubukwe",
         "checkAnother": "Reba ubundi busabe",
-        "location": "Aho biherereye"
+        "location": "Aho biherereye",
+        "checking": "Birarebwa…",
+        "viewCertificate": "Reba icyemezo",
+        "certificateReadyTitle": "Icyemezo cyawe cy'ubukwe cyiteguye",
+        "certificateReadyText": "Nikah yawe yanditswe kandi icyemezo cyawe cyemewe cyatanzwe.",
+        "issuedOn": "Cyatanzwe kuwa",
+        "banner": {
+          "amendmentsTitle": "Hasabwe impinduka",
+          "amendmentsText": "RMC yasabye impinduka ku busabe bwawe. Reba inyandiko maze uvugurure ubusabe bwawe.",
+          "rejectedTitle": "Ubusabe ntibwemewe",
+          "rejectedText": "Ku bw'amahirwe make, ubu busabe ntibwemewe. Vugana na RMC kugira ngo ubone amakuru menshi.",
+          "cancelledTitle": "Ubusabe bwahagaritswe",
+          "cancelledText": "Ubu busabe bwahagaritswe."
+        }
       }
     },
     "funeral": {

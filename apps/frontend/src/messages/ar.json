@@ -525,7 +525,20 @@
         },
         "backToService": "العودة إلى خدمات الزواج",
         "checkAnother": "تحقق من طلب آخر",
-        "location": "الموقع"
+        "location": "الموقع",
+        "checking": "جارٍ التحقق…",
+        "viewCertificate": "عرض الشهادة",
+        "certificateReadyTitle": "شهادة زواجك جاهزة",
+        "certificateReadyText": "تم تسجيل نكاحك وإصدار شهادتك الرسمية.",
+        "issuedOn": "صدرت في",
+        "banner": {
+          "amendmentsTitle": "طُلبت تعديلات",
+          "amendmentsText": "طلبت RMC إجراء تغييرات على طلبك. يرجى مراجعة الملاحظات وتحديث ما قدمته.",
+          "rejectedTitle": "لم تتم الموافقة على الطلب",
+          "rejectedText": "للأسف، لم تتم الموافقة على هذا الطلب. يرجى التواصل مع RMC لمزيد من المعلومات.",
+          "cancelledTitle": "أُلغي الطلب",
+          "cancelledText": "تم إلغاء هذا الطلب."
+        }
       }
     },
     "funeral": {
