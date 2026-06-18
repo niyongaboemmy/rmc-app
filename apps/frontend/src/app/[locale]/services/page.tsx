@@ -3,56 +3,161 @@ import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { Heart, FileText, ClipboardList, GraduationCap, Home, Briefcase, ArrowRight, ScrollText } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
-/**
- * Per-service theme. Cards share a clean white base so the grid reads as a
- * cohesive set; each service keeps its identity through a gradient icon tile,
- * an accent colour, and a subtle border/shadow tint on hover.
- * Class strings are fully spelled out so Tailwind's JIT can detect them.
- */
+// ── Stroke-only SVG icons — 24×24, respond to `currentColor` ─────────────────
+// No fill backgrounds. Colour identity lives on the icon stroke + top accent bar.
+
+function MarriageIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      <circle cx="9" cy="12" r="4" />
+      <circle cx="15" cy="12" r="4" />
+    </svg>
+  );
+}
+
+function FuneralIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+      <circle cx="16.5" cy="5.5" r="0.5" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="8" r="0.5" fill="currentColor" stroke="none" />
+      <circle cx="17.5" cy="3.5" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function ConductIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}
+
+function ScholarshipIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 10L12 5 2 10l10 5 10-5z" />
+      <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />
+      <line x1="22" y1="10" x2="22" y2="16" />
+      <circle cx="22" cy="17" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function HijraIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+      <path d="M9 21V13h6v8" />
+      <path d="M1 12h3M2.5 9.5L5 12l-2.5 2.5" />
+    </svg>
+  );
+}
+
+function TenderIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <line x1="8" y1="13" x2="12" y2="13" />
+      <line x1="8" y1="17" x2="11" y2="17" />
+      <circle cx="16" cy="17" r="3" />
+      <path d="M14.8 17l.9.9 1.5-1.5" />
+    </svg>
+  );
+}
+
+function JobsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="17" rx="1" />
+      <line x1="2" y1="10" x2="22" y2="10" />
+      <line x1="8" y1="10" x2="8" y2="21" />
+      <line x1="16" y1="10" x2="16" y2="21" />
+      <rect x="5" y="6" width="2" height="2" rx="0.3" />
+      <rect x="11" y="6" width="2" height="2" rx="0.3" />
+      <rect x="17" y="6" width="2" height="2" rx="0.3" />
+    </svg>
+  );
+}
+
+// ── Service definitions ────────────────────────────────────────────────────────
+// All hover/accent Tailwind classes must be spelled out fully for JIT to detect them.
 const services = [
   {
-    key: 'marriage', slug: 'marriage', Icon: Heart,
-    iconTile: 'bg-gradient-to-br from-rose-500 to-rose-700',
-    hover: 'hover:border-rose-200 hover:shadow-rose-500/10',
-    accent: 'text-rose-600', accentHover: 'group-hover:text-rose-700',
+    key: 'marriage', slug: 'marriage',
+    Icon: MarriageIcon,
+    bar: 'bg-rose-500',
+    iconIdle: 'text-gray-300',
+    iconHover: 'group-hover:text-rose-500',
+    cta: 'text-rose-600',
+    ctaHover: 'group-hover:text-rose-600',
+    cardHover: 'hover:shadow-rose-100',
   },
   {
-    key: 'funeral', slug: 'funeral', Icon: ScrollText,
-    iconTile: 'bg-gradient-to-br from-slate-500 to-slate-700',
-    hover: 'hover:border-slate-200 hover:shadow-slate-500/10',
-    accent: 'text-slate-600', accentHover: 'group-hover:text-slate-700',
+    key: 'funeral', slug: 'funeral',
+    Icon: FuneralIcon,
+    bar: 'bg-slate-500',
+    iconIdle: 'text-gray-300',
+    iconHover: 'group-hover:text-slate-500',
+    cta: 'text-slate-600',
+    ctaHover: 'group-hover:text-slate-600',
+    cardHover: 'hover:shadow-slate-100',
   },
   {
-    key: 'conduct', slug: 'conduct', Icon: FileText,
-    iconTile: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-    hover: 'hover:border-blue-200 hover:shadow-blue-500/10',
-    accent: 'text-blue-600', accentHover: 'group-hover:text-blue-600',
+    key: 'conduct', slug: 'conduct',
+    Icon: ConductIcon,
+    bar: 'bg-indigo-500',
+    iconIdle: 'text-gray-300',
+    iconHover: 'group-hover:text-indigo-500',
+    cta: 'text-indigo-600',
+    ctaHover: 'group-hover:text-indigo-600',
+    cardHover: 'hover:shadow-indigo-100',
   },
   {
-    key: 'scholarship', slug: 'scholarship', Icon: GraduationCap,
-    iconTile: 'bg-gradient-to-br from-violet-500 to-purple-600',
-    hover: 'hover:border-violet-200 hover:shadow-violet-500/10',
-    accent: 'text-violet-600', accentHover: 'group-hover:text-violet-600',
+    key: 'scholarship', slug: 'scholarship',
+    Icon: ScholarshipIcon,
+    bar: 'bg-violet-500',
+    iconIdle: 'text-gray-300',
+    iconHover: 'group-hover:text-violet-500',
+    cta: 'text-violet-600',
+    ctaHover: 'group-hover:text-violet-600',
+    cardHover: 'hover:shadow-violet-100',
   },
   {
-    key: 'hijra', slug: 'hijra', Icon: Home,
-    iconTile: 'bg-gradient-to-br from-amber-500 to-orange-600',
-    hover: 'hover:border-amber-200 hover:shadow-amber-500/10',
-    accent: 'text-amber-600', accentHover: 'group-hover:text-amber-600',
+    key: 'hijra', slug: 'hijra',
+    Icon: HijraIcon,
+    bar: 'bg-amber-500',
+    iconIdle: 'text-gray-300',
+    iconHover: 'group-hover:text-amber-500',
+    cta: 'text-amber-600',
+    ctaHover: 'group-hover:text-amber-600',
+    cardHover: 'hover:shadow-amber-100',
   },
   {
-    key: 'tender', slug: 'tender', Icon: ClipboardList,
-    iconTile: 'bg-gradient-to-br from-cyan-500 to-teal-600',
-    hover: 'hover:border-cyan-200 hover:shadow-cyan-500/10',
-    accent: 'text-cyan-700', accentHover: 'group-hover:text-cyan-700',
+    key: 'tender', slug: 'tender',
+    Icon: TenderIcon,
+    bar: 'bg-teal-500',
+    iconIdle: 'text-gray-300',
+    iconHover: 'group-hover:text-teal-500',
+    cta: 'text-teal-600',
+    ctaHover: 'group-hover:text-teal-600',
+    cardHover: 'hover:shadow-teal-100',
   },
   {
-    key: 'jobs', slug: 'jobs', Icon: Briefcase,
-    iconTile: 'bg-gradient-to-br from-emerald-500 to-green-600',
-    hover: 'hover:border-emerald-200 hover:shadow-emerald-500/10',
-    accent: 'text-emerald-600', accentHover: 'group-hover:text-emerald-600',
+    key: 'jobs', slug: 'jobs',
+    Icon: JobsIcon,
+    bar: 'bg-emerald-500',
+    iconIdle: 'text-gray-300',
+    iconHover: 'group-hover:text-emerald-500',
+    cta: 'text-emerald-600',
+    ctaHover: 'group-hover:text-emerald-600',
+    cardHover: 'hover:shadow-emerald-100',
   },
 ] as const;
 
@@ -63,7 +168,6 @@ export default async function ServicesPage({ params: { locale } }: { params: { l
     <div className="min-h-screen">
       <Navbar />
       <main>
-        {/* Header */}
         <PageHero
           eyebrow="Our Services"
           title={t('services.title')}
@@ -71,29 +175,42 @@ export default async function ServicesPage({ params: { locale } }: { params: { l
           ornament
         />
 
-        {/* Services grid */}
         <section className="py-20 px-4 sm:px-6 lg:px-8 pattern-light">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {services.map(({ key, slug, Icon, iconTile, hover, accent, accentHover }) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {services.map(({ key, slug, Icon, bar, iconIdle, iconHover, cta, ctaHover, cardHover }, idx) => (
                 <Link
                   key={key}
                   href={`/${locale}/services/${slug}`}
-                  className={`group flex flex-col rounded-2xl border border-gray-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl ${hover}`}
+                  className={`group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100/80 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl ${cardHover}`}
                 >
-                  {/* Gradient icon tile carries each service's colour identity */}
-                  <div className={`w-12 h-12 rounded-xl ${iconTile} flex items-center justify-center mb-5 shadow-sm ring-1 ring-white/20 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
-                    <Icon className="w-6 h-6 text-white" strokeWidth={2.25} />
+                  {/* Sliding top-accent bar — reveals left-to-right on hover */}
+                  <span
+                    className={`pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 rounded-t-2xl transition-transform duration-500 ease-out group-hover:scale-x-100 ${bar}`}
+                  />
+
+                  {/* Icon row */}
+                  <div className="mb-6 flex items-start justify-between">
+                    <div className={`transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3 ${iconIdle} ${iconHover}`}>
+                      <Icon className="w-10 h-10" />
+                    </div>
+                    <span className="font-mono text-[11px] tracking-widest text-gray-200 transition-colors duration-300 group-hover:text-gray-300">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
                   </div>
-                  <h2 className={`text-lg font-bold text-gray-900 mb-2 ${accentHover} transition-colors`}>
+
+                  {/* Content */}
+                  <h2 className="mb-2 text-[1.05rem] font-bold leading-snug text-gray-900">
                     {t(`services.${key}.title`)}
                   </h2>
-                  <p className="text-gray-500 leading-relaxed text-sm">
+                  <p className="flex-1 text-sm leading-relaxed text-gray-400">
                     {t(`services.${key}.desc`)}
                   </p>
-                  <div className={`mt-auto pt-5 flex items-center gap-1.5 ${accent} font-semibold text-sm`}>
+
+                  {/* CTA */}
+                  <div className={`mt-7 flex items-center gap-1.5 text-sm font-semibold text-gray-300 transition-colors duration-300 ${ctaHover}`}>
                     {t('common.learnMore')}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </Link>
               ))}
