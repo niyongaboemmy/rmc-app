@@ -173,3 +173,8 @@ apps/backend/dist/
 
 # Next.js backup directory
 apps/frontend/.next_bak_root/
+.next_bak_root/
+.next_bak_root
+
+# Generated data seeds — contain PII (emails, password hashes, applicant data)
+apps/backend/src/database/seeds/sql/*.sql
