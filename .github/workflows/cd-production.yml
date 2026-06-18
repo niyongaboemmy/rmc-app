@@ -73,6 +73,9 @@ jobs:
           rsync -az --delete \
             apps/frontend/public/ \
             ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/public/
+          rsync -az \
+            apps/frontend/next.config.js \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/next.config.js
 
       - name: Rsync — file-server dist
         run: |
