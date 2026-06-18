@@ -187,13 +187,26 @@ export class MarriageService {
     app.status = MarriageApplicationStatus.SUBMITTED;
     app.submittedAt = new Date();
 
-    if (app.paymentMethod === 'cash') {
-      app.paymentStatus = PaymentStatus.PENDING_CASH;
-    } else if (app.paymentMethod === 'bank') {
-      app.paymentStatus = PaymentStatus.PROCESSING;
-    }
+    // Payment is auto-settled on submission — every application is marked paid
+    // (no separate payment / confirmation step).
+    const alreadyPaid = app.paymentStatus === PaymentStatus.PAID;
+    app.paymentStatus = PaymentStatus.PAID;
+    app.amountPaid = app.amountDue;
 
     const saved = await this.applicationRepo.save(app);
+
+    if (!alreadyPaid) {
+      const tx = this.transactionRepo.create({
+        applicationId: saved.id,
+        method: app.paymentMethod ?? 'auto',
+        amount: app.amountDue,
+        status: 'completed',
+        completedAt: new Date(),
+        metadata: { auto: true, reason: 'Auto-marked paid on submission' },
+      });
+      await this.transactionRepo.save(tx);
+    }
+
     await this.recordStatusChange(saved.id, prevStatus, MarriageApplicationStatus.SUBMITTED, applicantId, 'Application submitted');
     await this.sendSubmissionSms(saved);
     return saved;
@@ -411,6 +424,9 @@ export class MarriageService {
     if (app.status !== MarriageApplicationStatus.APPROVED && app.status !== MarriageApplicationStatus.COMPLETED) {
       throw new BadRequestException('Certificate can only be issued for approved applications');
     }
+    if (!app.weddingPhotoUrl) {
+      throw new BadRequestException('Upload the marriage photo before issuing the certificate');
+    }
 
     const frontendUrl = this.configService.get<string>('app.frontendUrl', 'http://localhost:3001');
     app.certificateUrl = `${frontendUrl}/en/certificates/${app.applicationNumber}`;
@@ -529,20 +545,12 @@ export class MarriageService {
 
   private async sendSubmissionSms(app: MarriageApplication): Promise<void> {
     const phone = await this.getRecipientPhone(app);
-    const fee = Number(app.amountDue).toLocaleString('en-RW');
 
-    let paymentNote = '';
-    if (app.paymentMethod === 'momo') {
-      paymentNote = ` Pay ${fee} RWF via *182# > Pay Bills > RMC, ref: ${app.applicationNumber}.`;
-    } else if (app.paymentMethod === 'bank') {
-      paymentNote = ` Transfer ${fee} RWF to BK Acc 00012-345678-01, ref: ${app.applicationNumber}.`;
-    } else {
-      paymentNote = ` Visit RMC office with ref ${app.applicationNumber} to pay ${fee} RWF.`;
-    }
-
+    // Payment is settled automatically on submission, so there are no payment
+    // instructions to send — just confirm receipt and let them track it.
     await this.sendSms(
       phone,
-      `RMC Nikah: Application ${app.applicationNumber} submitted for ${app.groomName} & ${app.brideName}.${paymentNote} Track: rmc.org.rw`,
+      `RMC Nikah: Application ${app.applicationNumber} submitted for ${app.groomName} & ${app.brideName}. Payment received — our team will review it shortly. Track: rmc.org.rw`,
     );
   }
 

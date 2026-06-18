@@ -525,7 +525,20 @@
         },
         "backToService": "Back to Marriage Services",
         "checkAnother": "Check another application",
-        "location": "Location"
+        "location": "Location",
+        "checking": "Checking…",
+        "viewCertificate": "View certificate",
+        "certificateReadyTitle": "Your marriage certificate is ready",
+        "certificateReadyText": "Your Nikah has been registered and your official certificate has been issued.",
+        "issuedOn": "Issued on",
+        "banner": {
+          "amendmentsTitle": "Amendments requested",
+          "amendmentsText": "RMC has requested changes to your application. Please review the notes and update your submission.",
+          "rejectedTitle": "Application not approved",
+          "rejectedText": "Unfortunately, this application was not approved. Please contact RMC for more information.",
+          "cancelledTitle": "Application cancelled",
+          "cancelledText": "This application has been cancelled."
+        }
       }
     },
     "funeral": {
