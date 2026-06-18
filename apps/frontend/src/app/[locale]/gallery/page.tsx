@@ -101,12 +101,6 @@ export default async function GalleryPage() {
             {/* ALL — 3D carousel of every photo */}
             <section className="py-8 md:py-10 px-4 sm:px-6 lg:px-8 bg-transparent">
               <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{t('all')}</h2>
-                  <div className="ornament-divider max-w-xs mx-auto my-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-                  </div>
-                </div>
                 <div className="relative rounded-3xl overflow-hidden w-full max-w-4xl mx-auto min-h-[340px] md:min-h-[440px]">
                   <ImageCarousel3D images={allImages} />
                 </div>

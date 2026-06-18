@@ -6,6 +6,14 @@ import { PageHero } from '@/components/layout/PageHero';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { ArrowRight, Images } from 'lucide-react';
+import { publicApi } from '@/lib/public-api';
+
+const FILE_SERVER = process.env.NEXT_PUBLIC_FILE_SERVER_URL || 'http://localhost:3002';
+const fileUrl = (key: string) => `${FILE_SERVER}/api/v1/files/${key}`;
+
+// Always fetch fresh so newly uploaded gallery images appear without a rebuild.
+export const dynamic = 'force-dynamic';
+
 export default async function AboutPage() {
   const t = await getTranslations('about');
   const locale = await getLocale();
@@ -20,14 +28,16 @@ export default async function AboutPage() {
     { id: 'm6', img: 'https://i.postimg.cc/YSxyqhck/ES-Salim.jpg' },
   ] as const;
 
-  // Gallery preview 3D carousel images
-  const galleryImages = [
-    { src: 'https://drive.google.com/thumbnail?id=1y0QOLz--4XxIthJh7sViyl7KU7XFbd2t&sz=w1600', alt: 'RMC community gathering' },
-    { src: 'https://pbs.twimg.com/media/HESeGQZWAAAvdtq?format=jpg&name=large', alt: 'RMC community event' },
-    { src: 'https://pbs.twimg.com/media/HEQLxPtaUAADjH2?format=jpg&name=large', alt: 'RMC members together' },
-    { src: 'https://lh3.googleusercontent.com/d/1JAOmqaWrQjILrZjGXVt9jP5EpjmR5PNr=w1600?authuser=0', alt: 'RMC community gathering' },
-    { src: 'https://drive.google.com/thumbnail?id=1-V1PRFYujv6JHscMzlBlLLayQA9REX7T&sz=w1600', alt: 'RMC community event' },
-  ];
+  // Gallery preview 3D carousel — pulled from the public gallery API.
+  const galleryImages = await publicApi
+    .getGallery(undefined, 1)
+    .then((res) =>
+      res.data.map((g) => ({
+        src: fileUrl(g.mediumKey ?? g.fileKey),
+        alt: g.title ?? t('gallery.title'),
+      })),
+    )
+    .catch(() => [] as { src: string; alt: string }[]);
 
   return (
     <div className="min-h-screen">
@@ -56,7 +66,7 @@ export default async function AboutPage() {
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header — centered */}
-            <div className="max-w-3xl mx-auto text-center">
+            <div className="max-w-7xl mx-auto text-center">
               <div className="inline-flex items-center gap-2.5 mb-6 px-4 py-1.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 backdrop-blur-sm text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-rmc-green-dark">
                 <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
                 {t('whoWeAre.badge')}
@@ -78,8 +88,8 @@ export default async function AboutPage() {
               </p>
             </div>
 
-            {/* Narrative — left-aligned for readability within a centered column */}
-            <div className="max-w-3xl mx-auto space-y-4 text-gray-500 leading-relaxed text-sm md:text-base">
+            {/* Narrative — left-aligned, spanning the full section width */}
+            <div className="max-w-7xl mx-auto space-y-4 text-gray-500 leading-relaxed text-sm md:text-base">
               <p>{t('whoWeAre.p1')}</p>
               <p>{t('whoWeAre.p2')}</p>
               <p>{t('whoWeAre.p3')}</p>
@@ -134,13 +144,13 @@ export default async function AboutPage() {
         {/* ===================================================================
             4. LEADERSHIP — role cards
         =================================================================== */}
-        <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
+        <section className="relative py-20 bg-transparent overflow-hidden">
           {/* Ambient backdrop — mirrors the Who We Are section */}
           <div aria-hidden className="absolute inset-0 pattern-light opacity-70 pointer-events-none" />
           <div aria-hidden className="absolute top-0 left-0 w-[480px] h-[480px] bg-rmc-green-light rounded-full -translate-y-1/2 -translate-x-1/3 opacity-50 blur-[90px] pointer-events-none" />
           <div aria-hidden className="absolute bottom-0 right-0 w-[420px] h-[420px] bg-rmc-gold/5 rounded-full translate-y-1/2 translate-x-1/3 blur-[90px] pointer-events-none" />
 
-          <div className="relative max-w-7xl mx-auto">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900">{t('leadership.title')}</h2>
               <div className="ornament-divider max-w-xs mx-auto my-4">
@@ -202,9 +212,11 @@ export default async function AboutPage() {
               <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">{t('gallery.subtitle')}</p>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden w-full max-w-4xl mx-auto min-h-[420px] md:min-h-[520px]">
-              <ImageCarousel3D images={galleryImages} />
-            </div>
+            {galleryImages.length > 0 && (
+              <div className="relative rounded-3xl overflow-hidden w-full max-w-4xl mx-auto min-h-[420px] md:min-h-[520px]">
+                <ImageCarousel3D images={galleryImages} />
+              </div>
+            )}
 
             <div className="mt-10 text-center">
               <Link

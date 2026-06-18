@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Images, Upload, X, Edit2, Trash2, Eye, EyeOff,
   Plus, CheckCircle2, Loader2, ImageOff, Tag,
@@ -83,6 +84,15 @@ interface EditForm {
   description: string;
   category: string;
   isPublic: boolean;
+}
+
+// Renders children into <body> so fixed overlays cover the whole viewport,
+// escaping any ancestor transform/filter that would trap `position: fixed`.
+function Portal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+  return createPortal(children, document.body);
 }
 
 // ── Root export ───────────────────────────────────────────────────────────────
@@ -422,6 +432,7 @@ function GalleryManagerInner() {
 
       {/* ── Upload modal overlay (bulk) ── */}
       {uploadOpen && (
+        <Portal>
         <UploadModal
           dragOver={dragOver}
           setDragOver={setDragOver}
@@ -437,10 +448,12 @@ function GalleryManagerInner() {
           onReset={resetUpload}
           onClose={closeUpload}
         />
+        </Portal>
       )}
 
       {/* ── Edit modal ── */}
       {editItem && (
+        <Portal>
         <EditModal
           item={editItem}
           form={editForm}
@@ -449,6 +462,7 @@ function GalleryManagerInner() {
           onSave={handleSaveEdit}
           onClose={() => setEditItem(null)}
         />
+        </Portal>
       )}
 
       {/* ── Delete confirm ── */}
@@ -466,12 +480,14 @@ function GalleryManagerInner() {
 
       {/* ── Preview lightbox ── */}
       {previewIndex !== null && (
+        <Portal>
         <PreviewModal
           items={filtered}
           index={previewIndex}
           onClose={() => setPreviewIndex(null)}
           onNav={setPreviewIndex}
         />
+        </Portal>
       )}
     </div>
   );
@@ -654,7 +670,7 @@ function PreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Counter */}
@@ -822,7 +838,7 @@ function UploadModal(props: UploadModalProps) {
   const allDone = total > 0 && doneCount === total;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={!uploading ? onClose : undefined} />
 
@@ -1047,15 +1063,21 @@ function EditModal({
   onSave: () => void;
   onClose: () => void;
 }) {
-  const imgSrc = item.thumbnailKey ? fileUrl(item.thumbnailKey) : item.fileKey ? fileUrl(item.fileKey) : null;
+  const imgSrc = item.mediumKey
+    ? fileUrl(item.mediumKey)
+    : item.fileKey
+    ? fileUrl(item.fileKey)
+    : item.thumbnailKey
+    ? fileUrl(item.thumbnailKey)
+    : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={!saving ? onClose : undefined} />
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-in">
+      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-in">
         <div className="h-1 bg-gradient-to-r from-rmc-green to-rmc-green-light" />
 
-        <div className="flex items-center justify-between px-6 pt-5 pb-4">
+        <div className="flex items-center justify-between px-6 pt-4 pb-3">
           <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <Edit2 className="w-4 h-4 text-rmc-green" /> Edit Image
           </h2>
@@ -1066,46 +1088,52 @@ function EditModal({
           )}
         </div>
 
-        <div className="px-6 pb-6 space-y-4">
-          {/* Thumbnail preview */}
-          {imgSrc && (
-            <div className="relative h-32 rounded-2xl overflow-hidden bg-gray-100">
-              <img src={imgSrc} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-              <div className="absolute bottom-2 left-2 flex gap-1">
-                {[
-                  { v: 'T', filled: !!item.thumbnailKey, title: 'Thumbnail' },
-                  { v: 'M', filled: !!item.mediumKey, title: 'Medium' },
-                  { v: 'O', filled: !!item.fileKey, title: 'Original' },
-                ].map(({ v, filled, title }) => (
-                  <span key={v} title={title} className={`w-5 h-5 rounded-full text-[8px] font-bold flex items-center justify-center border ${filled ? 'bg-rmc-green border-rmc-green text-white' : 'bg-white/30 border-white/50 text-white/70'}`}>
-                    {v}
-                  </span>
-                ))}
+        <div className="px-6 pb-5 space-y-3">
+          {/* Top: form fields (left) + landscape preview (right) */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-3 order-2 sm:order-1">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="No title"
+                  className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                <textarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="No description"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all resize-none"
+                />
               </div>
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="No title"
-              className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
-            <textarea
-              rows={2}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="No description"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all resize-none"
-            />
+            {/* Landscape preview — right side */}
+            {imgSrc && (
+              <div className="order-1 sm:order-2">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
+                  <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                  <div className="absolute bottom-2 left-2 flex gap-1">
+                    {[
+                      { v: 'T', filled: !!item.thumbnailKey, title: 'Thumbnail' },
+                      { v: 'M', filled: !!item.mediumKey, title: 'Medium' },
+                      { v: 'O', filled: !!item.fileKey, title: 'Original' },
+                    ].map(({ v, filled, title }) => (
+                      <span key={v} title={title} className={`w-5 h-5 rounded-full text-[8px] font-bold flex items-center justify-center border ${filled ? 'bg-rmc-green border-rmc-green text-white' : 'bg-white/30 border-white/50 text-white/70'}`}>
+                        {v}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
