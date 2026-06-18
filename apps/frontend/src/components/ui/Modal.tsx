@@ -32,7 +32,9 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
 
   useEffect(() => {
     if (!visible) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [visible, onClose]);
@@ -43,7 +45,9 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
     <div
       ref={overlayRef}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
     >
       <div
         className={cn(
@@ -70,35 +74,25 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
 }
 
 export function ModalHeader({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={cn('px-6 pt-6 pb-4 border-b border-gray-100', className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('px-6 pt-6 pb-4 border-b border-gray-100', className)}>{children}</div>;
 }
 
 export function ModalTitle({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <h2 className={cn('text-lg font-bold text-gray-900 pr-8', className)}>
-      {children}
-    </h2>
-  );
+  return <h2 className={cn('text-lg font-bold text-gray-900 pr-8', className)}>{children}</h2>;
 }
 
-export function ModalDescription({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <p className={cn('text-sm text-gray-500 mt-1', className)}>
-      {children}
-    </p>
-  );
+export function ModalDescription({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <p className={cn('text-sm text-gray-500 mt-1', className)}>{children}</p>;
 }
 
 export function ModalBody({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={cn('px-6 py-4', className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('px-6 py-4', className)}>{children}</div>;
 }
 
 export function ModalFooter({ children, className }: { children: ReactNode; className?: string }) {

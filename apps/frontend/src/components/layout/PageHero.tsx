@@ -24,6 +24,8 @@ interface PageHeroProps {
   eyebrow?: string;
   /** Main heading. */
   title: string;
+  /** Override the heading's responsive font-size classes (defaults to the large hero size). */
+  titleClassName?: string;
   /** Supporting line under the title. */
   subtitle?: string;
   /** Optional "back" pill (detail pages). */
@@ -42,6 +44,7 @@ interface PageHeroProps {
 export function PageHero({
   eyebrow,
   title,
+  titleClassName = 'text-3xl md:text-4xl lg:text-5xl',
   subtitle,
   backHref,
   backLabel,
@@ -113,7 +116,7 @@ export function PageHero({
               </div>
             )}
 
-            <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-lg md:text-4xl lg:text-5xl">
+            <h1 className={`font-bold leading-tight text-white drop-shadow-lg ${titleClassName}`}>
               {title}
             </h1>
 

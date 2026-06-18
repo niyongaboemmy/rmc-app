@@ -2,36 +2,32 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface PileImage {
   src: string;
-  alt: string;
+  alt?: string;
 }
 
 interface Props {
   images: PileImage[];
-  /** Where to navigate when the pile is clicked (e.g. the category page). */
-  href?: string;
-  /** Label for the link / button (defaults to "View all"). */
+  /** Opens the lightbox at the given image index when the pile is clicked. */
+  onOpen?: (index: number) => void;
+  /** Label for the "view all" trigger (defaults to "View all"). */
   viewAllLabel?: string;
 }
 
 /**
  * A "pile" of photos stacked in 3D — the front photo is in focus while the
- * rest fan out behind it with rotation, offset and scale. Clicking it navigates
- * to `href` (or advances to the next photo if no href is given).
+ * rest fan out behind it with rotation, offset and scale. Clicking it opens
+ * the gallery lightbox at the currently focused photo.
  */
-export function PileCarousel({ images, href, viewAllLabel = 'View all' }: Props) {
-  const router = useRouter();
+export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Props) {
   const n = images.length;
-  const [current, setCurrent] = useState(0);
+  const [current] = useState(0);
 
   const activate = useCallback(() => {
-    if (href) router.push(href);
-    else setCurrent((c) => (c + 1) % n);
-  }, [href, router, n]);
+    onOpen?.(current);
+  }, [onOpen, current]);
 
   if (n === 0) return null;
 
@@ -40,7 +36,7 @@ export function PileCarousel({ images, href, viewAllLabel = 'View all' }: Props)
       <div
         role="button"
         tabIndex={0}
-        aria-label={href ? viewAllLabel : 'Show next photo'}
+        aria-label={viewAllLabel}
         onClick={activate}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -72,7 +68,7 @@ export function PileCarousel({ images, href, viewAllLabel = 'View all' }: Props)
               <div className="relative w-full h-full overflow-hidden rounded-xl bg-gray-100">
                 <Image
                   src={img.src}
-                  alt={depth === 0 ? img.alt : ''}
+                  alt={depth === 0 ? img.alt ?? '' : ''}
                   fill
                   sizes="(max-width: 768px) 90vw, 28rem"
                   className="object-cover object-center"
@@ -81,11 +77,9 @@ export function PileCarousel({ images, href, viewAllLabel = 'View all' }: Props)
                 {depth === 0 && (
                   <>
                     <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-rmc-green-deep/40 via-transparent to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-90" />
-                    {href && (
-                      <span className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-2 rounded-full bg-white/90 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                        {viewAllLabel}
-                      </span>
-                    )}
+                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-2 rounded-full bg-white/90 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                      {viewAllLabel}
+                    </span>
                   </>
                 )}
               </div>
@@ -94,24 +88,20 @@ export function PileCarousel({ images, href, viewAllLabel = 'View all' }: Props)
         })}
       </div>
 
-      {/* Footer — counter + explicit "View all" trigger */}
+      {/* Footer — photo count + explicit "View all" trigger */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 text-xs font-medium tabular-nums text-gray-400">
-          <span className="font-bold text-rmc-green">{current + 1}</span>
-          <span className="h-3 w-px bg-gray-300" />
-          <span>{n}</span>
+          <span className="font-bold text-rmc-green">{n}</span>
+          <span>{n === 1 ? 'photo' : 'photos'}</span>
         </div>
-        {href && (
-          <>
-            <span className="h-3 w-px bg-gray-300" />
-            <Link
-              href={href}
-              className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green transition-colors hover:text-rmc-green-dark"
-            >
-              {viewAllLabel}
-            </Link>
-          </>
-        )}
+        <span className="h-3 w-px bg-gray-300" />
+        <button
+          type="button"
+          onClick={() => onOpen?.(0)}
+          className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green transition-colors hover:text-rmc-green-dark"
+        >
+          {viewAllLabel}
+        </button>
       </div>
     </div>
   );

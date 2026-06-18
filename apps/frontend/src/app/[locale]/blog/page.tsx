@@ -24,12 +24,17 @@ export default async function BlogPage({
       <Navbar />
       <main>
         {/* Hero — animated community photo background */}
-        <PageHero eyebrow={t('title')} title={t('subtitle')} ornament />
+        <PageHero
+          eyebrow={t('title')}
+          title={t('subtitle')}
+          titleClassName="text-2xl md:text-3xl"
+          ornament
+        />
 
         {/* ===================================================================
             1. FEATURED — most recently added blog, image background + overlay
         =================================================================== */}
-        <section className="px-4 pt-12 pb-10">
+        <section className="px-4 sm:px-6 lg:px-8 pt-12 pb-10">
           <div className="max-w-7xl mx-auto">
             <Link
               href={`/${locale}/blog/${featured.slug}`}

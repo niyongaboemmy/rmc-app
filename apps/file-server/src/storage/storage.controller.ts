@@ -28,6 +28,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
 import { StorageService } from './storage.service';
 import { PresignedUploadDto } from './dto/presigned-upload.dto';
 import { Public } from '../common/decorators/public.decorator';
@@ -53,6 +54,9 @@ export class StorageController {
   // ── Upload ────────────────────────────────────────────────────────────────
 
   @Post('upload')
+  // Bulk gallery uploads fire several requests per image (3 versions each). Skip
+  // the aggressive per-second burst limiter; the 'medium' window still applies.
+  @SkipThrottle({ short: true })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   @ApiOperation({ summary: 'Upload a file (server-side multipart)' })
   @ApiConsumes('multipart/form-data')
@@ -157,6 +161,12 @@ export class StorageController {
 
   @Get('files/:key(*)')
   @Public()
+  // Image-heavy pages request many files at once (a gallery grid fires dozens of
+  // <img> loads in parallel). Skip throttling on read-only file serving so those
+  // bursts don't 429 — abuse protection still applies to upload/delete.
+  // NB: throttlers are named 'short'/'medium', so both must be named explicitly
+  // (a bare @SkipThrottle() only skips a throttler named 'default').
+  @SkipThrottle({ short: true, medium: true })
   @ApiOperation({ summary: 'Redirect to presigned download URL (use in <img src>)' })
   @ApiParam({ name: 'key', example: 'avatars/uuid.jpg' })
   @ApiResponse({ status: 302, description: 'Redirects to presigned URL' })

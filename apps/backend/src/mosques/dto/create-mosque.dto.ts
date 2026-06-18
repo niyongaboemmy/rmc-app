@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsEmail, IsUUID, MaxLength, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsEmail, IsUUID, IsIn, MaxLength, Min, Max } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMosqueDto {
@@ -69,4 +69,9 @@ export class CreateMosqueDto {
   @IsOptional()
   @IsString()
   fridayPrayerTime?: string;
+
+  @ApiPropertyOptional({ enum: ['active', 'inactive'] })
+  @IsOptional()
+  @IsIn(['active', 'inactive'])
+  status?: string;
 }

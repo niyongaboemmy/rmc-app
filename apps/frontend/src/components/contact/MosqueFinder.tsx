@@ -1,12 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Building2, Navigation, MapPin } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Building2, Navigation, Search, X, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { FeatureCollection } from 'geojson';
 import { publicApi } from '@/lib/public-api';
-import { Select } from '@/components/ui/Select';
+import type { MapMosque, DirectionsTarget } from './MosqueMap';
 
-interface Mosque {
+// Leaflet touches `window`, so the map must only load on the client.
+const MosqueMap = dynamic(() => import('./MosqueMap'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-gray-100" />,
+});
+
+interface ApiMosque {
   id: string;
   name: string;
   address: string | null;
@@ -14,158 +22,223 @@ interface Mosque {
   gpsLng: number | null;
   districtId: string | null;
 }
-
 interface Province { id: string; name: string; code: string; }
-interface District { id: string; name: string; code: string; provinceId: string; }
 
-// Default map view centred on Rwanda when no mosque is selected.
-const DEFAULT_MAP = 'https://maps.google.com/maps?q=Rwanda&z=8&output=embed';
-
-function mapSrc(mosque: Mosque | null): string {
-  if (mosque?.gpsLat != null && mosque?.gpsLng != null) {
-    return `https://maps.google.com/maps?q=${mosque.gpsLat},${mosque.gpsLng}&z=15&output=embed`;
-  }
-  return DEFAULT_MAP;
-}
+/* -------------------------------------------------------------------------
+ * TEMPORARY PLACEHOLDER DATA — FOR TESTING ONLY.
+ * The mosques table is currently empty, so these sample mosques (with real
+ * Rwanda coordinates across all five provinces) let us exercise the markers,
+ * name search and province-click filtering on the map. They are only used as
+ * a fallback when the API returns no mosques.
+ * TODO: remove this once real mosque data is seeded in the backend.
+ * ----------------------------------------------------------------------- */
+const PLACEHOLDER_MOSQUES: MapMosque[] = [
+  { id: 'tmp-kig-1', name: 'Nyamirambo Grand Mosque', address: 'Nyamirambo, Kigali', gpsLat: -1.9806, gpsLng: 30.0469, provinceCode: 'KIG' },
+  { id: 'tmp-kig-2', name: 'Kigali Islamic Centre', address: 'Nyarugenge, Kigali', gpsLat: -1.9495, gpsLng: 30.0588, provinceCode: 'KIG' },
+  { id: 'tmp-nor-1', name: 'Musanze Central Mosque', address: 'Musanze, Northern Province', gpsLat: -1.4998, gpsLng: 29.6340, provinceCode: 'NOR' },
+  { id: 'tmp-nor-2', name: 'Byumba Friday Mosque', address: 'Gicumbi, Northern Province', gpsLat: -1.5763, gpsLng: 30.0675, provinceCode: 'NOR' },
+  { id: 'tmp-sou-1', name: 'Huye Jamia Mosque', address: 'Huye, Southern Province', gpsLat: -2.5967, gpsLng: 29.7390, provinceCode: 'SOU' },
+  { id: 'tmp-sou-2', name: 'Muhanga Central Mosque', address: 'Muhanga, Southern Province', gpsLat: -2.0780, gpsLng: 29.7560, provinceCode: 'SOU' },
+  { id: 'tmp-eas-1', name: 'Rwamagana Main Mosque', address: 'Rwamagana, Eastern Province', gpsLat: -1.9487, gpsLng: 30.4347, provinceCode: 'EAS' },
+  { id: 'tmp-eas-2', name: 'Nyagatare Friday Mosque', address: 'Nyagatare, Eastern Province', gpsLat: -1.2920, gpsLng: 30.3258, provinceCode: 'EAS' },
+  { id: 'tmp-wes-1', name: 'Rubavu Central Mosque', address: 'Rubavu, Western Province', gpsLat: -1.6777, gpsLng: 29.2580, provinceCode: 'WES' },
+  { id: 'tmp-wes-2', name: 'Karongi Lakeside Mosque', address: 'Karongi, Western Province', gpsLat: -2.0000, gpsLng: 29.3833, provinceCode: 'WES' },
+];
 
 export function MosqueFinder() {
   const t = useTranslations('contact');
-  const [provinces, setProvinces] = useState<Province[]>([]);
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [mosques, setMosques] = useState<Mosque[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selected, setSelected] = useState<Mosque | null>(null);
-  const [loading, setLoading] = useState(false);
 
+  const [geo, setGeo] = useState<FeatureCollection | null>(null);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [mosques, setMosques] = useState<MapMosque[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [focus, setFocus] = useState<{ lat: number; lng: number; nonce: number } | null>(null);
+  const [directions, setDirections] = useState<DirectionsTarget | null>(null);
+  const nonce = useRef(0);
+
+  // Province boundary polygons (static file in /public).
   useEffect(() => {
-    publicApi.getProvinces().then(setProvinces);
+    fetch('/geo/rwanda-provinces.geojson')
+      .then((r) => r.json())
+      .then(setGeo)
+      .catch(() => setGeo(null));
   }, []);
 
+  // All provinces, districts and mosques — resolve each mosque's province via its district.
   useEffect(() => {
-    if (!selectedProvince) { setDistricts([]); setMosques([]); setSelected(null); return; }
-    publicApi.getDistricts(selectedProvince).then(setDistricts);
-    setSelectedDistrict('');
-    setMosques([]);
-    setSelected(null);
-  }, [selectedProvince]);
-
-  useEffect(() => {
-    if (!selectedDistrict) { setMosques([]); setSelected(null); return; }
-    setLoading(true);
-    publicApi.getMosques(selectedDistrict)
-      .then((list) => {
-        setMosques(list);
-        // Auto-focus the first mosque that has coordinates.
-        setSelected(list.find((m: Mosque) => m.gpsLat != null && m.gpsLng != null) ?? null);
+    Promise.all([publicApi.getProvinces(), publicApi.getDistricts(), publicApi.getMosques()])
+      .then(([provs, dists, list]: [Province[], Array<{ id: string; provinceId: string }>, ApiMosque[]]) => {
+        setProvinces(provs);
+        const codeByProvinceId = new Map(provs.map((p) => [p.id, p.code]));
+        const provinceCodeByDistrict = new Map(
+          dists.map((d) => [d.id, codeByProvinceId.get(d.provinceId) ?? null]),
+        );
+        const mapped: MapMosque[] = list.map((m) => ({
+          id: m.id,
+          name: m.name,
+          address: m.address,
+          gpsLat: m.gpsLat,
+          gpsLng: m.gpsLng,
+          provinceCode: m.districtId ? provinceCodeByDistrict.get(m.districtId) ?? null : null,
+        }));
+        // TEMP: fall back to placeholder mosques while the table is empty (testing only).
+        setMosques(mapped.length ? mapped : PLACEHOLDER_MOSQUES);
       })
       .finally(() => setLoading(false));
-  }, [selectedDistrict]);
+  }, []);
+
+  const provinceName = useMemo(
+    () => provinces.find((p) => p.code === selectedProvince)?.name ?? null,
+    [provinces, selectedProvince],
+  );
+
+  // Search by name spans every province; otherwise filter to the picked province.
+  const q = query.trim().toLowerCase();
+  const visible = useMemo(
+    () =>
+      mosques.filter((m) => {
+        if (q) return m.name.toLowerCase().includes(q);
+        if (selectedProvince) return m.provinceCode === selectedProvince;
+        return true;
+      }),
+    [mosques, q, selectedProvince],
+  );
+
+  const pickProvince = (code: string | null) => {
+    setSelectedProvince(code);
+    setQuery('');
+    setFocus(null);
+  };
+
+  const focusMosque = (m: MapMosque) => {
+    if (m.gpsLat != null && m.gpsLng != null) {
+      setFocus({ lat: m.gpsLat, lng: m.gpsLng, nonce: nonce.current++ });
+    }
+  };
+
+  const requestDirections = (m: MapMosque) => {
+    if (m.gpsLat != null && m.gpsLng != null) {
+      setDirections({ mosque: m, nonce: nonce.current++ });
+    }
+  };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* Controls + results list */}
-      <div className="space-y-4">
-        <Select
-          label={t('province')}
-          placeholder={t('selectProvince')}
-          value={selectedProvince}
-          onChange={(e) => setSelectedProvince(e.target.value)}
-        >
-          {provinces.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </Select>
-
-        {districts.length > 0 && (
-          <Select
-            label={t('district')}
-            placeholder={t('selectDistrict')}
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-          >
-            {districts.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </Select>
-        )}
-
-        {loading && (
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse h-16 bg-gray-100 rounded-xl" />
-            ))}
+    <div className="relative flex w-full flex-col overflow-hidden rounded-2xl border border-gray-100 shadow-sm bg-gray-100 sm:block">
+      {/* Search + results panel — stacked above the map on mobile, floating overlay on sm+ */}
+      <div className="z-[1000] flex max-h-[18rem] flex-col overflow-hidden border-b border-gray-100 bg-white sm:absolute sm:top-3.5 sm:left-3.5 sm:max-h-[calc(100%-1.75rem)] sm:w-72 sm:rounded-2xl sm:border sm:border-black/5 sm:bg-white/90 sm:shadow-lg sm:ring-1 sm:ring-black/5 sm:backdrop-blur-md md:w-80">
+        <div className="space-y-2.5 p-3">
+          {/* Name search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              className="w-full pl-8 pr-8 py-2 text-sm rounded-lg border border-gray-200 bg-white/70 placeholder:text-gray-400 focus:ring-2 focus:ring-rmc-green/60 focus:border-transparent outline-none transition"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label={t('clear')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-        )}
 
-        {!loading && mosques.length > 0 && (
-          <div className="space-y-3 max-h-[26rem] overflow-y-auto pr-1">
-            {mosques.map((mosque) => {
-              const isActive = selected?.id === mosque.id;
-              const hasGps = mosque.gpsLat != null && mosque.gpsLng != null;
-              return (
-                <button
-                  key={mosque.id}
-                  type="button"
-                  onClick={() => setSelected(mosque)}
-                  aria-pressed={isActive}
-                  className={`w-full text-left p-4 rounded-xl border bg-white transition-all ${
-                    isActive
-                      ? 'border-rmc-green ring-2 ring-rmc-green/15 shadow-sm'
-                      : 'border-gray-100 hover:border-rmc-green/30 hover:shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
-                      <Building2 className="w-4 h-4 text-rmc-green" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-gray-900">{mosque.name}</h3>
-                      {mosque.address && (
-                        <p className="text-gray-500 text-sm mt-0.5">{mosque.address}</p>
-                      )}
-                      {hasGps && (
-                        <a
-                          href={`https://maps.google.com/?q=${mosque.gpsLat},${mosque.gpsLng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-rmc-green text-xs font-medium mt-1.5 inline-flex items-center gap-1 hover:underline"
-                        >
-                          <Navigation className="w-3 h-3" /> {t('directions')}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+          {/* Active filter chip / hint */}
+          <div className="flex items-center gap-2 text-xs">
+            {selectedProvince ? (
+              <button
+                type="button"
+                onClick={() => pickProvince(null)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-rmc-green-light px-2.5 py-1 font-medium text-rmc-green-dark hover:bg-rmc-green/15 transition-colors"
+              >
+                <MapPin className="w-3 h-3" />
+                {provinceName}
+                <X className="w-3 h-3" />
+              </button>
+            ) : (
+              <span className="text-gray-400 leading-snug">{t('mapHint')}</span>
+            )}
           </div>
-        )}
+        </div>
 
-        {!loading && selectedDistrict && mosques.length === 0 && (
-          <p className="text-gray-400 text-sm text-center py-4">{t('noMosques')}</p>
-        )}
+        {/* Results (scrolls within the panel) */}
+        <div className="overflow-y-auto border-t border-gray-100 px-3 py-2.5">
+          {loading ? (
+            <div className="space-y-1.5">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse h-12 bg-gray-100 rounded-lg" />
+              ))}
+            </div>
+          ) : visible.length > 0 ? (
+            <div className="space-y-1.5">
+              {visible.map((mosque) => {
+                const hasGps = mosque.gpsLat != null && mosque.gpsLng != null;
+                return (
+                  <button
+                    key={mosque.id}
+                    type="button"
+                    onClick={() => focusMosque(mosque)}
+                    disabled={!hasGps}
+                    className="w-full text-left p-2.5 rounded-lg border border-transparent transition-all hover:border-rmc-green/20 hover:bg-rmc-green/[0.04] disabled:opacity-60 disabled:hover:border-transparent disabled:hover:bg-transparent"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
+                        <Building2 className="w-3.5 h-3.5 text-rmc-green" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-[13px] font-semibold leading-tight text-gray-900">{mosque.name}</h3>
+                        {mosque.address && (
+                          <p className="text-gray-500 text-[11px] mt-0.5 truncate">{mosque.address}</p>
+                        )}
+                        {hasGps && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              requestDirections(mosque);
+                            }}
+                            className="text-rmc-green text-[11px] font-medium mt-1 inline-flex items-center gap-1 hover:underline"
+                          >
+                            <Navigation className="w-2.5 h-2.5" /> {t('directions')}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-xs text-center py-3">{t('noMosques')}</p>
+          )}
+        </div>
       </div>
 
-      {/* Live map */}
-      <div className="lg:sticky lg:top-28 self-start">
-        <div className="relative overflow-hidden rounded-2xl border border-gray-100 shadow-sm aspect-[4/3] lg:aspect-auto lg:h-[28rem] bg-gray-100">
-          <iframe
-            key={mapSrc(selected)}
-            title={t('findMosque')}
-            src={mapSrc(selected)}
-            className="absolute inset-0 h-full w-full"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
+      {/* Map */}
+      <div className="h-[20rem] sm:h-[34rem] lg:h-[38rem]">
+        {geo && (
+          <MosqueMap
+            geo={geo}
+            mosques={visible}
+            selectedProvince={selectedProvince}
+            onSelectProvince={pickProvince}
+            focus={focus}
+            directionsLabel={t('directions')}
+            directionsTarget={directions}
+            onRequestDirections={requestDirections}
+            onClearDirections={() => setDirections(null)}
+            locatingLabel={t('locating')}
+            routeErrorLabel={t('locationError')}
           />
-        </div>
-        {selected && (
-          <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-gray-500">
-            <MapPin className="w-4 h-4 text-rmc-green shrink-0" />
-            <span className="font-medium text-gray-900">{selected.name}</span>
-            {selected.address && <span className="text-gray-400">· {selected.address}</span>}
-          </p>
         )}
       </div>
     </div>
