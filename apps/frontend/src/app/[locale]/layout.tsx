@@ -25,6 +25,11 @@ const notoNaskh = Noto_Naskh_Arabic({
 export const metadata: Metadata = {
   title: 'RMC Digital Platform',
   description: 'Rwanda Muslim Community Digital Platform',
+  icons: {
+    icon: '/logo.webp',
+    shortcut: '/logo.webp',
+    apple: '/logo.webp',
+  },
 };
 
 export default function LocaleLayout({

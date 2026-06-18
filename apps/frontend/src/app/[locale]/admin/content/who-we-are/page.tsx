@@ -1,11 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
+import {
+  ContentKeys,
+  WHO_WE_ARE_DEFAULT,
+  getSiteContent,
+  saveSiteContent,
+  type WhoWeAreContent,
+} from '@/lib/content-api';
 import { Info, ArrowLeft, Save, Users, Building2, Map, Star } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -16,25 +23,7 @@ const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = 
   { key: 'ar', label: 'Arabic', dir: 'rtl', flag: 'AR' },
 ];
 
-interface WhoWeAreContent {
-  descriptionEn: string; descriptionRw: string; descriptionAr: string;
-  missionEn: string; missionRw: string; missionAr: string;
-  visionEn: string; visionRw: string; visionAr: string;
-  membersCount: string; mosquesCount: string; provincesCount: string; yearsOfService: string;
-}
-
-const INITIAL: WhoWeAreContent = {
-  descriptionEn: 'The Rwanda Muslim Community (RMC) is the umbrella organization representing Muslims across all provinces of Rwanda. Founded on the principles of Islamic brotherhood, we coordinate religious, educational, and social services for over 500,000 Muslims nationwide.',
-  descriptionRw: 'Umuryango w\'Abasilamu bo mu Rwanda (RMC) ni umuryango ngengamikorere uhuza Abasilamu bose muri leta ya Rwanda. Washingwe ku mico y\'ubuvandimwe bw\'Ubusilamu, tuhuza serivisi z\'amadini, z\'uburezi n\'imibereho myiza y\'Abasilamu basaga 500,000 mu Rwanda.',
-  descriptionAr: 'مجتمع المسلمين في رواندا (RMC) هو المنظمة المظلة التي تمثل المسلمين في جميع مقاطعات رواندا. تأسست على مبادئ الأخوة الإسلامية، وتنسق الخدمات الدينية والتعليمية والاجتماعية لأكثر من 500,000 مسلم على الصعيد الوطني.',
-  missionEn: 'Unite and serve the Muslim community in Rwanda through digital innovation, promoting Islamic values, education, and social welfare.',
-  missionRw: 'Guhuza no gukorera umuryango w\'Abasilamu mu Rwanda binyuze mu buhanga bwa digital, guteza imbere indangagaciro z\'Ubusilamu, uburezi n\'imibereho myiza.',
-  missionAr: 'توحيد وخدمة المجتمع المسلم في رواندا من خلال الابتكار الرقمي، وتعزيز القيم الإسلامية والتعليم والرعاية الاجتماعية.',
-  visionEn: 'A digitally empowered, unified, and prosperous Muslim community contributing to the development of Rwanda.',
-  visionRw: 'Umuryango w\'Abasilamu uhuye, ukoresheje ikoranabuhanga kandi ugira inyungu, utera inkunga iterambere rya Rwanda.',
-  visionAr: 'مجتمع مسلم ممكّن رقمياً، موحد ومزدهر، يساهم في تطوير رواندا.',
-  membersCount: '12500', mosquesCount: '320', provincesCount: '5', yearsOfService: '25',
-};
+const INITIAL = WHO_WE_ARE_DEFAULT;
 
 export default function WhoWeArePage() {
   return (
@@ -48,10 +37,29 @@ export default function WhoWeArePage() {
 
 function WhoWeAreManager() {
   const { locale } = useParams<{ locale: string }>();
-  const { success } = useToast();
+  const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
   const [form, setForm] = useState<WhoWeAreContent>(INITIAL);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load any previously saved content; fall back to defaults if none exists.
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, string>>(ContentKeys.whoWeAre)
+      .then((data) => {
+        if (active && data) setForm({ ...INITIAL, ...data });
+      })
+      .catch(() => {
+        /* keep defaults — section simply hasn't been saved yet */
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const set = useCallback(<K extends keyof WhoWeAreContent>(field: K, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -59,10 +67,16 @@ function WhoWeAreManager() {
 
   const handleSave = useCallback(async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setSaving(false);
-    success('Content saved successfully.');
-  }, [success]);
+    try {
+      const saved = await saveSiteContent(ContentKeys.whoWeAre, form);
+      setForm((prev) => ({ ...prev, ...saved }));
+      success('Content saved successfully.');
+    } catch {
+      error('Could not save content. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [form, success, error]);
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
@@ -83,10 +97,10 @@ function WhoWeAreManager() {
             <p className="text-xs text-gray-400">Update homepage overview content</p>
           </div>
         </div>
-        <button onClick={handleSave} disabled={saving}
+        <button onClick={handleSave} disabled={saving || loading}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-violet-600/20 transition-colors">
-          {saving ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-          Save Changes
+          {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+          {loading ? 'Loading…' : 'Save Changes'}
         </button>
       </div>
 

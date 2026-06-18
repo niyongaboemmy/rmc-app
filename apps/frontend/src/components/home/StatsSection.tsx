@@ -1,8 +1,21 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Users, GraduationCap, Building2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { Users, GraduationCap, Building2, type LucideIcon } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import {
+  ContentKeys,
+  STATS_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  pick,
+  isRtl,
+  type StatsContent,
+} from '@/lib/content-api';
+
+/** Lucide icons available to stat items, resolved by name from content. */
+const ICONS: Record<string, LucideIcon> = { Users, GraduationCap, Building2 };
 
 interface Stat {
   value: number;
@@ -12,6 +25,13 @@ interface Stat {
   ringColor: string;
   glowColor: string;
 }
+
+/** Per-position visual accents (preserved from the original design). */
+const ACCENTS = [
+  { ringColor: 'border-emerald-400 text-emerald-400', glowColor: 'rgba(52,211,153,0.07)' },
+  { ringColor: 'border-amber-400 text-amber-400', glowColor: 'rgba(251,191,36,0.07)' },
+  { ringColor: 'border-sky-400 text-sky-400', glowColor: 'rgba(56,189,248,0.07)' },
+];
 
 function useCountUp(target: number, duration: number, trigger: boolean) {
   const [count, setCount] = useState(0);
@@ -94,13 +114,34 @@ function StatCard({ value, label, suffix, Icon, ringColor, glowColor, delay = 0 
 }
 
 export function StatsSection() {
+  const { locale } = useParams<{ locale: string }>();
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
+  const rtl = isRtl(locale);
 
-  const stats: Stat[] = [
-    { value: 1000000, label: 'Muslims', Icon: Users, suffix: '+', ringColor: 'border-emerald-400 text-emerald-400', glowColor: 'rgba(52,211,153,0.07)' },
-    { value: 14, label: 'Schools', Icon: GraduationCap, suffix: '+', ringColor: 'border-amber-400 text-amber-400', glowColor: 'rgba(251,191,36,0.07)' },
-    { value: 640, label: 'Masjids', Icon: Building2, suffix: '+', ringColor: 'border-sky-400 text-sky-400', glowColor: 'rgba(56,189,248,0.07)' },
-  ];
+  // Content managed from Admin → Content → Community Impact. Falls back to the
+  // built-in defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<StatsContent>(STATS_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Partial<StatsContent>>(ContentKeys.stats)
+      .then((d) => {
+        if (active && d) setContent(mergeContent(STATS_DEFAULT, d));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const stats: Stat[] = content.items.map((item, i) => ({
+    value: item.value,
+    suffix: item.suffix,
+    label: pick(item.label, locale),
+    Icon: ICONS[item.icon] ?? Users,
+    ...(ACCENTS[i % ACCENTS.length]),
+  }));
 
   return (
     <section className="relative bg-rmc-green-deep py-12 md:py-16 overflow-hidden">
@@ -113,24 +154,25 @@ export function StatsSection() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           ref={titleRef}
+          dir={rtl ? 'rtl' : 'ltr'}
           className={`text-center mb-14 transition-all duration-700 ${
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <div className="inline-flex items-center gap-2 bg-rmc-gold/15 border border-rmc-gold/25 text-rmc-gold px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+          <div className={`inline-flex items-center gap-2 bg-rmc-gold/15 border border-rmc-gold/25 text-rmc-gold px-4 py-1.5 rounded-full text-sm font-medium mb-4 ${rtl ? 'font-arabic' : ''}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold animate-pulse" />
-            Community Impact
+            {pick(content.eyebrow, locale)}
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white">
-            Our Growing{' '}
-            <span className="title-underline" style={{ '--rmc-green': '#2ea05c', '--rmc-gold': '#f0c040' } as React.CSSProperties}>Community</span>
+          <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-white ${rtl ? 'font-arabic' : ''}`}>
+            {pick(content.title, locale)}{' '}
+            <span className="text-emerald-400">{pick(content.titleAccent, locale)}</span>
           </h2>
-          <p className="text-white/40 mt-2 text-sm">Serving the Muslim community across Rwanda</p>
+          <p className={`text-white/40 mt-2 text-sm ${rtl ? 'font-arabic' : ''}`}>{pick(content.subtitle, locale)}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
           {stats.map((stat, i) => (
-            <StatCard key={stat.label} {...stat} delay={i * 120} />
+            <StatCard key={`${stat.label}-${i}`} {...stat} delay={i * 120} />
           ))}
         </div>
       </div>

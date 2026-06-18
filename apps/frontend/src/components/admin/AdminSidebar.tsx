@@ -11,7 +11,7 @@ import { Permission } from '@/lib/permissions';
 import {
   LayoutDashboard, Users, Shield, UserCheck, Landmark,
   Clock, BarChart2, Settings, ChevronLeft, ChevronRight,
-  LogOut, BookOpen, X, Heart,
+  LogOut, BookOpen, X, Heart, HandCoins,
 } from 'lucide-react';
 
 interface NavItem {
@@ -29,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'marriage',  href: '/admin/marriage',     icon: Heart,           labelKey: 'sidebar.marriage',  group: 'main',   permission: Permission.MARRIAGE_VIEW     },
   { key: 'mosques',   href: '/admin/mosques',      icon: Landmark,        labelKey: 'sidebar.mosques',   group: 'main',   permission: Permission.MOSQUES_VIEW      },
   { key: 'prayer',    href: '/admin/prayer-times', icon: Clock,           labelKey: 'sidebar.prayer',    group: 'main',   permission: Permission.PRAYER_TIMES_VIEW },
+  { key: 'donations', href: '/admin/donations',    icon: HandCoins,       labelKey: 'sidebar.donations', group: 'main',   permission: Permission.DONATIONS_VIEW    },
   { key: 'content',   href: '/admin/content',      icon: BookOpen,        labelKey: 'sidebar.content',   group: 'content', permission: Permission.CONTENT_VIEW      },
   { key: 'users',     href: '/admin/users',        icon: Users,           labelKey: 'sidebar.users',     group: 'system', permission: Permission.USERS_VIEW        },
   { key: 'roles',     href: '/admin/roles',        icon: Shield,          labelKey: 'sidebar.roles',     group: 'system', permission: Permission.ROLES_VIEW        },

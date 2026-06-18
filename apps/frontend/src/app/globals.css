@@ -389,6 +389,19 @@ main {
   animation: gradientShift 3s ease infinite;
 }
 
+/* Gentle green↔gold text-colour cycle for heading accent words.
+   Override --tc-from / --tc-to inline for dark backgrounds. */
+@keyframes textColorCycle {
+  0%, 100% { color: var(--tc-from, #1A7A4A); }
+  50%      { color: var(--tc-to, #D4A017); }
+}
+.animate-text-color {
+  animation: textColorCycle 4.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-text-color { animation: none !important; }
+}
+
 /* --------------------------------------------------------
    Scroll progress bar glow
 -------------------------------------------------------- */

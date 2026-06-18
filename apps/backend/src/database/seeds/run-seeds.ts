@@ -5,6 +5,7 @@ dotenv.config();
 import { AppDataSource } from '../../../src/config/data-source';
 import { seedProvincesAndDistricts } from './01-provinces-districts.seed';
 import { seedRolesAndAdmin } from './02-roles-admin.seed';
+import { seedDonationCampaigns } from './03-donation-campaigns.seed';
 
 async function runSeeds(): Promise<void> {
   await AppDataSource.initialize();
@@ -13,6 +14,7 @@ async function runSeeds(): Promise<void> {
 
   await seedProvincesAndDistricts(AppDataSource);
   await seedRolesAndAdmin(AppDataSource);
+  await seedDonationCampaigns(AppDataSource);
 
   await AppDataSource.destroy();
   // eslint-disable-next-line no-console

@@ -138,7 +138,18 @@ async function uploadFileToServer(file: File, folder: string): Promise<string> {
 
 type DocSlot = { file: File; docType: SaveDocumentPayload['documentType'] };
 
+const DOC_LABELS: Record<string, string> = {
+  groom_id: "Groom's National ID",
+  bride_id: "Bride's National ID",
+  wali_consent: 'Wali consent letter',
+  portrait: 'Portrait photo',
+};
+
+// Uploads every document and records it on the draft. If any upload fails we
+// throw so the applicant is told and can retry — submitting an application with
+// missing documents would leave the admin unable to review them.
 async function uploadDocuments(draftId: string, slots: DocSlot[]): Promise<void> {
+  const failed: string[] = [];
   await Promise.all(
     slots.map(async ({ file, docType }) => {
       try {
@@ -151,10 +162,15 @@ async function uploadDocuments(draftId: string, slots: DocSlot[]): Promise<void>
           mimeType: file.type,
         });
       } catch {
-        // Document upload failure is non-blocking — application still submits
+        failed.push(DOC_LABELS[docType] ?? docType);
       }
     }),
   );
+  if (failed.length > 0) {
+    throw new Error(
+      `Could not upload: ${failed.join(', ')}. Please check your connection and try again — your details are saved.`,
+    );
+  }
 }
 
 export function MarriageWizard() {
@@ -238,6 +254,7 @@ export function MarriageWizard() {
       const msg =
         (err as { response?: { data?: { error?: { message?: string }; message?: string } } })?.response?.data?.error?.message ||
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err instanceof Error ? err.message : '') ||
         'Failed to submit application. Please try again.';
       setSubmitError(msg);
     } finally {

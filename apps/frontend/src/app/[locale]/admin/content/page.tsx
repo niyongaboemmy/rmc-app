@@ -10,7 +10,7 @@ import {
   BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
-  ListFilter, Images,
+  ListFilter, Images, Sparkles, Share2,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -37,6 +37,19 @@ interface SectionConfig {
 }
 
 const SECTIONS: SectionConfig[] = [
+  {
+    id: 'hero',
+    icon: Sparkles,
+    title: 'Hero',
+    description: 'Headline, subtitle, call-to-action buttons and background slideshow at the very top of the homepage.',
+    type: 'edit', itemLabel: null,
+    page: 'Homepage', positionOrder: 0,
+    locationLabel: 'Homepage · Top Hero',
+    keywords: ['hero', 'headline', 'banner', 'welcome', 'slideshow', 'background', 'cta', 'subtitle', 'salam', 'top', 'intro', 'slides'],
+    bg: 'bg-rose-50', iconColor: 'text-rose-600', border: 'border-rose-100',
+    badge: 'bg-rose-100 text-rose-700',
+    accentBar: 'bg-rose-400',
+  },
   {
     id: 'verse-of-day',
     icon: BookOpen,
@@ -153,6 +166,19 @@ const SECTIONS: SectionConfig[] = [
     bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
     badge: 'bg-amber-100 text-amber-700',
     accentBar: 'bg-amber-400',
+  },
+  {
+    id: 'social-media',
+    icon: Share2,
+    title: 'Social Media',
+    description: 'Social post feed and follow-us channel buttons shown near the bottom of the homepage.',
+    type: 'crud', itemLabel: 'posts',
+    page: 'Homepage', positionOrder: 10,
+    locationLabel: 'Homepage · Social Media',
+    keywords: ['social', 'media', 'facebook', 'twitter', 'instagram', 'youtube', 'posts', 'feed', 'followers', 'channels', 'share', 'community'],
+    bg: 'bg-pink-50', iconColor: 'text-pink-600', border: 'border-pink-100',
+    badge: 'bg-pink-100 text-pink-700',
+    accentBar: 'bg-pink-400',
   },
   {
     id: 'about',

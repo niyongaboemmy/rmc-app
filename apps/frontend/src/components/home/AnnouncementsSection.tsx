@@ -1,54 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Bell, AlertTriangle, Info } from 'lucide-react';
-import { publicApi } from '@/lib/public-api';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  priority: string;
-  publishAt: string;
-}
-
-/* Fallback content so the section always shows announcements on the landing page */
-const DUMMY_ANNOUNCEMENTS: Announcement[] = [
-  {
-    id: 'd1',
-    title: 'Eid al-Adha Prayer Schedule Announced',
-    content:
-      'Eid prayers will be held at Amahoro National Stadium and all district masjids on Eid morning. Please arrive 30 minutes early.',
-    priority: 'high',
-    publishAt: '2026-06-12T08:00:00Z',
-  },
-  {
-    id: 'd2',
-    title: 'Free Community Health Camp This Weekend',
-    content:
-      'Free medical check-ups, consultations, and medication will be available at the Grand Mosque of Kigali this Saturday and Sunday.',
-    priority: 'urgent',
-    publishAt: '2026-06-10T09:00:00Z',
-  },
-  {
-    id: 'd3',
-    title: 'RMC Scholarship Applications Now Open',
-    content:
-      'Full and partial scholarships for Muslim students across Rwanda are open for the 2026/27 academic year. Apply before June 30th.',
-    priority: 'normal',
-    publishAt: '2026-06-06T10:00:00Z',
-  },
-  {
-    id: 'd4',
-    title: 'Weekly Qur’an Classes Resume at District Masjids',
-    content:
-      'Qur’an memorization and Tajweed classes for all ages resume this week. Register at your local mosque.',
-    priority: 'normal',
-    publishAt: '2026-06-02T07:30:00Z',
-  },
-];
+import {
+  ContentKeys,
+  ANNOUNCEMENTS_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  pick,
+  isRtl,
+  type AnnouncementsContent,
+  type AnnouncementItem as AnnouncementItemData,
+} from '@/lib/content-api';
 
 function priorityConfig(priority: string) {
   if (priority === 'urgent') return { bg: 'bg-red-50 border-red-200', badge: 'bg-red-100 text-red-600', Icon: AlertTriangle, dot: 'bg-red-400' };
@@ -57,18 +23,31 @@ function priorityConfig(priority: string) {
 }
 
 export function AnnouncementsSection() {
+  const { locale } = useParams<{ locale: string }>();
   const t = useTranslations('home.announcements');
-  const [items, setItems] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
 
+  // Content managed from Admin → Content → Announcements. Falls back to the
+  // built-in defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<AnnouncementsContent>(ANNOUNCEMENTS_DEFAULT);
   useEffect(() => {
-    publicApi
-      .getAnnouncements()
-      .then((data) => setItems(data && data.length > 0 ? data : DUMMY_ANNOUNCEMENTS))
-      .catch(() => setItems(DUMMY_ANNOUNCEMENTS))
-      .finally(() => setLoading(false));
+    let active = true;
+    getSiteContent<AnnouncementsContent>(ContentKeys.announcements)
+      .then((d) => {
+        if (active && d) setContent(mergeContent(ANNOUNCEMENTS_DEFAULT, d));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const heading = pick(content.title, locale) || t('title');
+  const subtitle = pick(content.subtitle, locale);
+  const items = content.items;
+  const rtl = isRtl(locale);
 
   return (
     <section className="bg-transparent py-10">
@@ -85,27 +64,14 @@ export function AnnouncementsSection() {
               <Bell className="w-5 h-5 text-rmc-green" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{t('title')}</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Latest news & updates</p>
+              <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`} dir={rtl ? 'rtl' : 'ltr'}>{heading}</h2>
+              <p className={`text-gray-400 text-xs mt-0.5 ${rtl ? 'font-arabic' : ''}`} dir={rtl ? 'rtl' : 'ltr'}>{subtitle}</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse flex gap-4 p-5 bg-gray-50 rounded-2xl">
-                <div className="w-10 h-10 bg-gray-200 rounded-xl shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-2/3" />
-                  <div className="h-3 bg-gray-200 rounded w-full" />
-                  <div className="h-3 bg-gray-200 rounded w-4/5" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : items.length === 0 ? (
+        {items.length === 0 ? (
           <div className="text-center py-14 text-gray-300">
             <Bell className="w-10 h-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">{t('noAnnouncements')}</p>
@@ -116,8 +82,9 @@ export function AnnouncementsSection() {
               const config = priorityConfig(item.priority);
               return (
                 <AnnouncementItem
-                  key={item.id}
+                  key={i}
                   item={item}
+                  locale={locale}
                   config={config}
                   delay={i * 80}
                   parentVisible={titleVisible}
@@ -133,16 +100,21 @@ export function AnnouncementsSection() {
 
 function AnnouncementItem({
   item,
+  locale,
   config,
   delay,
   parentVisible,
 }: {
-  item: Announcement;
+  item: AnnouncementItemData;
+  locale: string;
   config: ReturnType<typeof priorityConfig>;
   delay: number;
   parentVisible: boolean;
 }) {
   const { Icon } = config;
+  const rtl = isRtl(locale);
+  const title = pick(item.title, locale);
+  const content = pick(item.content, locale);
 
   return (
     <div
@@ -160,9 +132,9 @@ function AnnouncementItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.dot}`} />
-          <h3 className="font-semibold text-gray-900 text-sm leading-tight">{item.title}</h3>
+          <h3 className={`font-semibold text-gray-900 text-sm leading-tight ${rtl ? 'font-arabic' : ''}`} dir={rtl ? 'rtl' : 'ltr'}>{title}</h3>
         </div>
-        <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">{item.content}</p>
+        <p className={`text-gray-500 text-xs leading-relaxed line-clamp-2 ${rtl ? 'font-arabic' : ''}`} dir={rtl ? 'rtl' : 'ltr'}>{content}</p>
       </div>
 
       {/* Date */}
