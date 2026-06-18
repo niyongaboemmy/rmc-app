@@ -170,3 +170,6 @@ apps/backend/dist/
 
 # Local-only dev storage (MinIO binary + data)
 .localstorage/
+
+# Next.js backup directory
+apps/frontend/.next_bak_root/
