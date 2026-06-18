@@ -80,22 +80,17 @@ export function PrayerColumn() {
   const location = usingLocation ? 'Your location' : 'Kigali, Rwanda';
 
   return (
-    <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-rmc-green-dark to-rmc-green-deep ring-1 ring-rmc-gold/25 shadow-2xl shadow-black/50">
-      {/* Gold top accent — distinguishes this panel from the cinematic carousel */}
-      <div className="h-1 bg-gradient-to-r from-transparent via-rmc-gold to-transparent" />
-      {/* Subtle Islamic geometry */}
-      <div aria-hidden className="absolute inset-0 pattern-islamic opacity-[0.06] pointer-events-none" />
-
-      <div className="relative p-6 sm:p-7">
+    <div className="relative h-full flex flex-col rounded-3xl overflow-hidden border border-gray-200/70 bg-white shadow-[0_1px_2px_rgba(13,61,36,0.04),0_16px_40px_-24px_rgba(13,61,36,0.22)]">
+      <div className="relative flex flex-1 flex-col p-5 sm:p-6">
         {/* Header */}
-        <div className="flex items-center gap-3 pb-5 mb-5 border-b border-white/10">
-          <span className="grid place-items-center w-11 h-11 rounded-2xl bg-rmc-gold/15 border border-rmc-gold/30 text-rmc-gold shrink-0">
-            <Clock className="w-5 h-5" />
+        <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100">
+          <span className="grid place-items-center w-10 h-10 rounded-xl bg-rmc-green-light border border-rmc-green/15 text-rmc-green shrink-0">
+            <Clock className="w-[18px] h-[18px]" />
           </span>
           <div className="min-w-0">
-            <h3 className="text-lg font-bold text-white leading-none">Prayer Times</h3>
-            <p className="text-xs text-white/55 mt-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-rmc-gold-light shrink-0" />
+            <h3 className="text-base font-bold text-gray-900 leading-none">Prayer Times</h3>
+            <p className="text-[11px] text-gray-400 mt-1.5 flex items-center gap-1.5">
+              <MapPin className="w-3 h-3 text-rmc-gold shrink-0" />
               <span className="truncate">{dateLabel ? `${dateLabel} · ${location}` : location}</span>
             </p>
           </div>
@@ -103,44 +98,44 @@ export function PrayerColumn() {
 
         {/* Next prayer + live countdown — the highlight */}
         {times && next && (
-          <div className="rounded-2xl bg-rmc-gold/10 border border-rmc-gold/25 px-4 py-3.5 mb-5">
+          <div className="rounded-xl bg-rmc-green-light/60 border border-rmc-green/15 px-3.5 py-3 mb-4">
             <div className="flex items-center justify-between gap-3 mb-1">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-rmc-gold-light font-bold">Next Prayer</p>
-              <p className="text-rmc-gold-light font-bold text-sm tabular-nums">in {formatRemaining(remaining)}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-rmc-green-dark font-bold">Next Prayer</p>
+              <p className="text-rmc-green-dark font-bold text-xs tabular-nums">in {formatRemaining(remaining)}</p>
             </div>
-            <p className="text-white font-bold text-2xl leading-none">
+            <p className="text-gray-900 font-bold text-xl leading-none">
               {LABELS[next]}
-              <span className="text-white/60 font-semibold text-xl tabular-nums"> · {times[next]}</span>
+              <span className="text-gray-400 font-semibold text-base tabular-nums"> · {times[next]}</span>
             </p>
           </div>
         )}
 
-        {/* Full timetable */}
+        {/* Full timetable — grows to fill the panel so it matches the updates card height */}
         {!times ? (
-          <div className="space-y-2.5">
+          <div className="flex flex-1 flex-col justify-between gap-2.5">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-11 rounded-xl bg-white/5 animate-pulse" />
+              <div key={i} className="h-11 rounded-xl bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : (
-          <ul className="space-y-0.5">
+          <ul className="flex flex-1 flex-col justify-between gap-0.5">
             {ORDER.map((name) => {
               const isNext = name === next;
               const PrayerIcon = ICONS[name];
               return (
                 <li
                   key={name}
-                  className={`flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl transition-colors ${
-                    isNext ? 'bg-rmc-gold/15 ring-1 ring-rmc-gold/30' : 'hover:bg-white/5'
+                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isNext ? 'bg-rmc-green-light ring-1 ring-rmc-green/20' : 'hover:bg-gray-50'
                   }`}
                 >
-                  <span className="flex items-center gap-3 min-w-0">
-                    <PrayerIcon className={`w-4 h-4 shrink-0 ${isNext ? 'text-rmc-gold-light' : 'text-rmc-gold-light/45'}`} />
-                    <span className={`text-base ${isNext ? 'text-rmc-gold-light font-bold' : 'text-white/85'}`}>
+                  <span className="flex items-center gap-2.5 min-w-0">
+                    <PrayerIcon className={`w-4 h-4 shrink-0 ${isNext ? 'text-rmc-green' : 'text-rmc-green/40'}`} />
+                    <span className={`text-sm ${isNext ? 'text-rmc-green-dark font-bold' : 'text-gray-700'}`}>
                       {LABELS[name]}
                     </span>
                   </span>
-                  <span className={`text-base tabular-nums font-semibold ${isNext ? 'text-white' : 'text-white/75'}`}>
+                  <span className={`text-sm tabular-nums font-semibold ${isNext ? 'text-gray-900' : 'text-gray-500'}`}>
                     {times[name]}
                   </span>
                 </li>

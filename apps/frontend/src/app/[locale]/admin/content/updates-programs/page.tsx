@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -11,63 +11,60 @@ import {
 } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import {
+  ContentKeys,
+  UPDATES_DEFAULT,
+  getSiteContent,
+  saveSiteContent,
+  pick,
+  tri,
+  type Tri,
+  type UpdateSlide,
+  type UpdatesContent,
+} from '@/lib/content-api';
+import {
   Megaphone, ArrowLeft, Plus, Edit2, Trash2,
-  ToggleLeft, ToggleRight, ExternalLink, Link2,
+  ExternalLink, Link2, Save,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface UpdateProgram {
-  id: string;
-  titleEn: string;
-  titleRw: string;
-  titleAr: string;
-  link: string;
-  buttonTitleEn: string;
-  buttonTitleRw: string;
-  buttonTitleAr: string;
-  isActive: boolean;
-}
-
 type Lang = 'en' | 'rw' | 'ar';
 
-const EMPTY_ITEM: Omit<UpdateProgram, 'id'> = {
-  titleEn: '', titleRw: '', titleAr: '',
-  link: '',
-  buttonTitleEn: '', buttonTitleRw: '', buttonTitleAr: '',
-  isActive: true,
-};
-
-const MOCK_ITEMS: UpdateProgram[] = [
-  {
-    id: '1',
-    titleEn: 'Annual Scholarship Program 2025',
-    titleRw: 'Porogaramu y\'Ishuri Rikirenga 2025',
-    titleAr: 'برنامج المنح الدراسية السنوي 2025',
-    link: 'https://rmc.rw/scholarships',
-    buttonTitleEn: 'Apply Now',
-    buttonTitleRw: 'Saba Ubu',
-    buttonTitleAr: 'قدّم الآن',
-    isActive: true,
-  },
-  {
-    id: '2',
-    titleEn: 'Eid al-Adha Community Gathering',
-    titleRw: 'Ibikorwa bya Nyumba ya Eid al-Adha',
-    titleAr: 'تجمع مجتمع عيد الأضحى',
-    link: 'https://rmc.rw/events/eid',
-    buttonTitleEn: 'Learn More',
-    buttonTitleRw: 'Menya Byinshi',
-    buttonTitleAr: 'اعرف أكثر',
-    isActive: true,
-  },
-];
+/** A slide plus a local-only id for list management. */
+type SlideRow = UpdateSlide & { id: string };
 
 const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = [
   { key: 'en', label: 'English', dir: 'ltr', flag: 'EN' },
   { key: 'rw', label: 'Kinyarwanda', dir: 'ltr', flag: 'RW' },
   { key: 'ar', label: 'Arabic', dir: 'rtl', flag: 'AR' },
 ];
+
+const ICON_OPTIONS = ['GraduationCap', 'Users', 'Heart', 'Globe'];
+
+const EMPTY_SLIDE: UpdateSlide = {
+  badge: tri(''),
+  title: tri(''),
+  description: tri(''),
+  cta: tri(''),
+  ctaHref: '',
+  icon: 'GraduationCap',
+  image: '',
+  imageAlt: '',
+  statValue: '',
+  statLabel: tri(''),
+};
+
+let rowSeq = 0;
+const newId = () => `row-${Date.now()}-${rowSeq++}`;
+
+const withIds = (items: UpdateSlide[]): SlideRow[] =>
+  items.map((s) => ({ ...s, id: newId() }));
+
+const stripId = ({ id: _id, ...slide }: SlideRow): UpdateSlide => slide;
+
+const triKey: Record<Lang, keyof Tri> = { en: 'en', rw: 'rw', ar: 'ar' };
+
+// ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function UpdatesProgramsPage() {
   return (
@@ -83,62 +80,126 @@ function UpdatesProgramsManager() {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
-  const [items, setItems] = useState<UpdateProgram[]>(MOCK_ITEMS);
+  const [heading, setHeading] = useState<Tri>(UPDATES_DEFAULT.heading);
+  const [items, setItems] = useState<SlideRow[]>(() => withIds(UPDATES_DEFAULT.items));
   const [lang, setLang] = useState<Lang>('en');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<UpdateProgram | null>(null);
+  const [editingItem, setEditingItem] = useState<SlideRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<Omit<UpdateProgram, 'id'>>(EMPTY_ITEM);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<UpdateSlide>(EMPTY_SLIDE);
+
+  // Load any previously saved content; fall back to defaults if none exists.
+  useEffect(() => {
+    let active = true;
+    getSiteContent<UpdatesContent>(ContentKeys.updates)
+      .then((data) => {
+        if (active && data) {
+          const merged = { ...UPDATES_DEFAULT, ...data };
+          setHeading(merged.heading);
+          setItems(withIds(merged.items));
+        }
+      })
+      .catch(() => {
+        /* keep defaults — section simply hasn't been saved yet */
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  /** Persist the whole UpdatesContent to the store. */
+  const persist = useCallback(
+    async (nextHeading: Tri, nextItems: SlideRow[]) => {
+      const full: UpdatesContent = {
+        heading: nextHeading,
+        items: nextItems.map(stripId),
+      };
+      await saveSiteContent(ContentKeys.updates, full);
+    },
+    [],
+  );
 
   const openCreate = useCallback(() => {
     setEditingItem(null);
-    setFormData(EMPTY_ITEM);
+    setFormData(EMPTY_SLIDE);
     setLang('en');
     setIsModalOpen(true);
   }, []);
 
-  const openEdit = useCallback((item: UpdateProgram) => {
+  const openEdit = useCallback((item: SlideRow) => {
     setEditingItem(item);
-    setFormData({ ...item });
+    setFormData(stripId(item));
+    setLang('en');
     setIsModalOpen(true);
   }, []);
 
+  const setField = useCallback(<K extends keyof UpdateSlide>(field: K, value: UpdateSlide[K]) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const setTriField = useCallback(
+    (field: 'badge' | 'title' | 'description' | 'cta' | 'statLabel', value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: { ...prev[field], [triKey[lang]]: value } }));
+    },
+    [lang],
+  );
+
   const handleSave = useCallback(async () => {
-    if (!formData.titleEn.trim() || !formData.link.trim() || !formData.buttonTitleEn.trim()) {
-      error('English title, link, and button title are required.');
+    if (!formData.badge.en.trim() || !formData.title.en.trim() || !formData.cta.en.trim()) {
+      error('English badge, title, and CTA are required.');
       return;
     }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    if (editingItem) {
-      setItems((prev) => prev.map((i) => i.id === editingItem.id ? { ...formData, id: i.id } : i));
-      success('Item updated successfully.');
-    } else {
-      setItems((prev) => [...prev, { ...formData, id: Date.now().toString() }]);
-      success('Item added successfully.');
+    const next = editingItem
+      ? items.map((i) => (i.id === editingItem.id ? { ...formData, id: i.id } : i))
+      : [...items, { ...formData, id: newId() }];
+    try {
+      await persist(heading, next);
+      setItems(next);
+      success(editingItem ? 'Item updated successfully.' : 'Item added successfully.');
+      setIsModalOpen(false);
+    } catch {
+      error('Could not save. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setIsModalOpen(false);
-  }, [formData, editingItem, success, error]);
+  }, [formData, editingItem, items, heading, persist, success, error]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setItems((prev) => prev.filter((i) => i.id !== deleteId));
-    success('Item deleted.');
-    setSaving(false);
-    setDeleteId(null);
-  }, [deleteId, success]);
+    const next = items.filter((i) => i.id !== deleteId);
+    try {
+      await persist(heading, next);
+      setItems(next);
+      success('Item deleted.');
+      setDeleteId(null);
+    } catch {
+      error('Could not delete. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [deleteId, items, heading, persist, success, error]);
 
-  const toggleActive = useCallback((id: string) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, isActive: !i.isActive } : i));
-  }, []);
+  const handleSaveHeading = useCallback(async () => {
+    setSaving(true);
+    try {
+      await persist(heading, items);
+      success('Section heading saved.');
+    } catch {
+      error('Could not save heading. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [heading, items, persist, success, error]);
 
-  const setField = <K extends keyof Omit<UpdateProgram, 'id'>>(field: K, value: Omit<UpdateProgram, 'id'>[K]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const fc = lang === 'ar' ? 'font-arabic' : '';
 
   return (
     <div className="space-y-6">
@@ -157,19 +218,52 @@ function UpdatesProgramsManager() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Updates & Programs</h1>
-            <p className="text-xs text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''} · {items.filter((i) => i.isActive).length} active</p>
+            <p className="text-xs text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-blue-600/20 transition-colors"
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-blue-600/20 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Item
         </button>
       </div>
 
-      {/* ── Language tabs ── */}
+      {/* ── Section heading (Tri) ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-bold text-gray-700">Section Heading</h2>
+          <button
+            onClick={handleSaveHeading}
+            disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors"
+          >
+            {saving || loading ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            {loading ? 'Loading…' : 'Save Heading'}
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {LANGS.map((l) => (
+            <div key={l.key}>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Heading ({l.label}){l.key === 'en' && <span className="text-red-500"> *</span>}
+              </label>
+              <input
+                dir={l.dir}
+                type="text"
+                value={heading[triKey[l.key]]}
+                onChange={(e) => setHeading((prev) => ({ ...prev, [triKey[l.key]]: e.target.value }))}
+                placeholder="Updates & Programs"
+                className={`${INPUT_CLS} ${l.key === 'ar' ? 'font-arabic' : ''}`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Language tabs (list preview) ── */}
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* ── Items list ── */}
@@ -181,14 +275,13 @@ function UpdatesProgramsManager() {
           </div>
         )}
         {items.map((item) => {
-          const title = lang === 'en' ? item.titleEn : lang === 'rw' ? item.titleRw : item.titleAr;
-          const btnTitle = lang === 'en' ? item.buttonTitleEn : lang === 'rw' ? item.buttonTitleRw : item.buttonTitleAr;
+          const title = pick(item.title, lang);
+          const badge = pick(item.badge, lang);
+          const cta = pick(item.cta, lang);
           return (
             <div
               key={item.id}
-              className={`flex items-center gap-4 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md ${
-                item.isActive ? 'bg-white border-gray-100 hover:border-blue-100' : 'bg-gray-50/60 border-gray-100 opacity-60'
-              }`}
+              className="flex items-center gap-4 p-5 rounded-2xl border bg-white border-gray-100 hover:border-blue-100 transition-all duration-200 hover:shadow-md"
             >
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                 <Megaphone className="w-4 h-4 text-blue-600" />
@@ -196,24 +289,29 @@ function UpdatesProgramsManager() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 truncate" dir={lang === 'ar' ? 'rtl' : 'ltr'}>{title || '—'}</p>
                 <div className="flex items-center gap-3 mt-1">
+                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium border border-blue-100">
+                    {badge || '—'}
+                  </span>
                   <span className="flex items-center gap-1 text-xs text-gray-400">
                     <Link2 className="w-3 h-3" />
-                    <span className="truncate max-w-[200px]">{item.link}</span>
+                    <span className="truncate max-w-[200px]">{item.ctaHref || '—'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium border border-blue-100">
-                    {btnTitle || '—'}
+                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-gray-50 text-gray-500 font-medium border border-gray-100">
+                    {cta || '—'}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <a
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                {item.ctaHref && (
+                  <a
+                    href={item.ctaHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
                 <button
                   onClick={() => openEdit(item)}
                   className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
@@ -226,11 +324,6 @@ function UpdatesProgramsManager() {
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => toggleActive(item.id)}>
-                  {item.isActive
-                    ? <ToggleRight className="w-6 h-6 text-blue-500" />
-                    : <ToggleLeft className="w-6 h-6 text-gray-300" />}
-                </button>
               </div>
             </div>
           );
@@ -241,19 +334,57 @@ function UpdatesProgramsManager() {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
         <ModalHeader>
           <ModalTitle>{editingItem ? 'Edit Item' : 'Add Item'}</ModalTitle>
-          <ModalDescription>Provide title and button label in all languages, plus the link URL.</ModalDescription>
+          <ModalDescription>Provide the slide content in all languages, plus icon, image, link, and stat.</ModalDescription>
         </ModalHeader>
         <ModalBody className="space-y-5">
-          {/* Shared: Link URL */}
-          <FormField label="Link URL" required>
-            <input
-              type="url"
-              value={formData.link}
-              onChange={(e) => setField('link', e.target.value)}
-              placeholder="https://rmc.rw/..."
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </FormField>
+          {/* Non-translated fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Icon" required>
+              <select
+                value={formData.icon}
+                onChange={(e) => setField('icon', e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </FormField>
+            <FormField label="CTA Link (href)">
+              <input
+                type="text"
+                value={formData.ctaHref}
+                onChange={(e) => setField('ctaHref', e.target.value)}
+                placeholder="/services"
+                className={INPUT_CLS}
+              />
+            </FormField>
+            <FormField label="Image URL">
+              <input
+                type="url"
+                value={formData.image}
+                onChange={(e) => setField('image', e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+                className={INPUT_CLS}
+              />
+            </FormField>
+            <FormField label="Image Alt Text">
+              <input
+                type="text"
+                value={formData.imageAlt}
+                onChange={(e) => setField('imageAlt', e.target.value)}
+                placeholder="Graduation caps thrown in celebration"
+                className={INPUT_CLS}
+              />
+            </FormField>
+            <FormField label="Stat Value">
+              <input
+                type="text"
+                value={formData.statValue}
+                onChange={(e) => setField('statValue', e.target.value)}
+                placeholder="500+"
+                className={INPUT_CLS}
+              />
+            </FormField>
+          </div>
 
           {/* Language tabs */}
           <div className="border rounded-2xl border-gray-100 overflow-hidden">
@@ -271,41 +402,23 @@ function UpdatesProgramsManager() {
               ))}
             </div>
             <div className="p-4 space-y-4">
-              {lang === 'en' && (
-                <>
-                  <FormField label="Title (English)" required>
-                    <input type="text" value={formData.titleEn} onChange={(e) => setField('titleEn', e.target.value)} placeholder="Annual Scholarship Program 2025" className={INPUT_CLS} />
-                  </FormField>
-                  <FormField label="Button Title (English)" required>
-                    <input type="text" value={formData.buttonTitleEn} onChange={(e) => setField('buttonTitleEn', e.target.value)} placeholder="Apply Now" className={INPUT_CLS} />
-                  </FormField>
-                </>
-              )}
-              {lang === 'rw' && (
-                <>
-                  <FormField label="Title (Kinyarwanda)">
-                    <input type="text" value={formData.titleRw} onChange={(e) => setField('titleRw', e.target.value)} placeholder="Porogaramu y'Ishuri Rikirenga 2025" className={INPUT_CLS} />
-                  </FormField>
-                  <FormField label="Button Title (Kinyarwanda)">
-                    <input type="text" value={formData.buttonTitleRw} onChange={(e) => setField('buttonTitleRw', e.target.value)} placeholder="Saba Ubu" className={INPUT_CLS} />
-                  </FormField>
-                </>
-              )}
-              {lang === 'ar' && (
-                <>
-                  <FormField label="Title (Arabic)">
-                    <input dir="rtl" type="text" value={formData.titleAr} onChange={(e) => setField('titleAr', e.target.value)} placeholder="برنامج المنح الدراسية 2025" className={`${INPUT_CLS} font-arabic`} />
-                  </FormField>
-                  <FormField label="Button Title (Arabic)">
-                    <input dir="rtl" type="text" value={formData.buttonTitleAr} onChange={(e) => setField('buttonTitleAr', e.target.value)} placeholder="قدّم الآن" className={`${INPUT_CLS} font-arabic`} />
-                  </FormField>
-                </>
-              )}
+              <FormField label={`Badge (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
+                <input dir={dir} type="text" value={formData.badge[triKey[lang]]} onChange={(e) => setTriField('badge', e.target.value)} placeholder="Scholarships 2025" className={`${INPUT_CLS} ${fc}`} />
+              </FormField>
+              <FormField label={`Title (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
+                <input dir={dir} type="text" value={formData.title[triKey[lang]]} onChange={(e) => setTriField('title', e.target.value)} placeholder="Apply for the RMC Education Scholarship Program" className={`${INPUT_CLS} ${fc}`} />
+              </FormField>
+              <FormField label={`Description (${LANGS.find((l) => l.key === lang)?.label})`}>
+                <textarea dir={dir} rows={3} value={formData.description[triKey[lang]]} onChange={(e) => setTriField('description', e.target.value)} placeholder="Full and partial scholarships…" className={`${INPUT_CLS} resize-none ${fc}`} />
+              </FormField>
+              <FormField label={`CTA Label (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
+                <input dir={dir} type="text" value={formData.cta[triKey[lang]]} onChange={(e) => setTriField('cta', e.target.value)} placeholder="Apply Now" className={`${INPUT_CLS} ${fc}`} />
+              </FormField>
+              <FormField label={`Stat Label (${LANGS.find((l) => l.key === lang)?.label})`}>
+                <input dir={dir} type="text" value={formData.statLabel[triKey[lang]]} onChange={(e) => setTriField('statLabel', e.target.value)} placeholder="Scholarships awarded" className={`${INPUT_CLS} ${fc}`} />
+              </FormField>
             </div>
           </div>
-
-          {/* Active toggle */}
-          <ActiveToggle isActive={formData.isActive} onChange={(v) => setField('isActive', v)} accentColor="text-blue-500" />
         </ModalBody>
         <ModalFooter>
           <button type="button" onClick={() => setIsModalOpen(false)} className={CANCEL_BTN}>Cancel</button>
@@ -356,22 +469,6 @@ function FormField({ label, required, children }: { label: string; required?: bo
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
-    </div>
-  );
-}
-
-function ActiveToggle({ isActive, onChange, accentColor }: { isActive: boolean; onChange: (v: boolean) => void; accentColor: string }) {
-  return (
-    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100">
-      <div>
-        <p className="text-sm font-semibold text-gray-800">Active</p>
-        <p className="text-xs text-gray-400">Show this item on the homepage</p>
-      </div>
-      <button type="button" onClick={() => onChange(!isActive)}>
-        {isActive
-          ? <ToggleRight className={`w-8 h-8 ${accentColor}`} />
-          : <ToggleLeft className="w-8 h-8 text-gray-300" />}
-      </button>
     </div>
   );
 }

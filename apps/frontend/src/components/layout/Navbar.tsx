@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { VERSES } from '@/data/verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { Permission } from '@/lib/permissions';
@@ -136,8 +137,39 @@ export function Navbar() {
         </p>
       </div>
 
+      {/* ── Verse of the day — slim right-to-left ticker sitting just below the Bismillah;
+            collapses once scrolled (and while the mobile menu is open so the panel aligns). ── */}
+      <div
+        aria-hidden={scrolled || mobileOpen}
+        className={`relative z-10 overflow-hidden transition-all duration-300 ${
+          scrolled || mobileOpen ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-10 opacity-100'
+        }`}
+      >
+        <div className="relative overflow-hidden border-y border-white/10 bg-rmc-green-deep/90 backdrop-blur-sm">
+          <div className="flex w-max animate-marquee py-1.5" style={{ animationDuration: '110s' }}>
+            {[0, 1].map((dup) => (
+              <div key={dup} className="flex items-center shrink-0" aria-hidden={dup === 1}>
+                {VERSES.map((v, i) => (
+                  <span key={i} className="flex items-center gap-2.5 px-10 whitespace-nowrap text-xs">
+                    <span className="font-arabic text-white" dir="rtl">
+                      {v.ar}
+                    </span>
+                    <span className="text-white/25">—</span>
+                    <span className="text-white/65 italic">&ldquo;{v.en}&rdquo;</span>
+                    <span className="text-rmc-gold text-[10px] font-semibold tracking-wide">{v.ref}</span>
+                    <span className="text-rmc-gold/40 pl-5" aria-hidden="true">
+                      ◆
+                    </span>
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative flex items-center h-14 md:h-16">
+        <div className="relative flex items-center justify-between h-14 md:h-16">
 
           {/* ── Left — menu ── */}
           <div className="flex items-center">
@@ -181,11 +213,11 @@ export function Navbar() {
           </Link>
 
           {/* ── Right — Donate + Sign in + Language ── */}
-          <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Donate */}
             <Link
               href={`/${locale}/donate`}
-              className="hidden sm:inline-flex items-center gap-1.5 bg-rmc-green text-white px-4 lg:px-5 py-2 rounded-full text-sm font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 transition-all duration-300 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-rmc-green text-white px-3.5 py-1.5 rounded-full text-[13px] font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 transition-all duration-300 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
               <Heart className="w-3.5 h-3.5 shrink-0" />
               Donate
@@ -196,7 +228,7 @@ export function Navbar() {
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
                   <Link
                     href={`/${locale}/admin/members`}
-                    className="text-sm font-medium px-3 py-2 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/10"
+                    className="text-[13px] font-medium px-2.5 py-1.5 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/10"
                   >
                     {t('admin')}
                   </Link>
@@ -209,19 +241,19 @@ export function Navbar() {
                     aria-haspopup="menu"
                     aria-expanded={userMenuOpen}
                     aria-label={`${user.firstName} ${user.lastName} — account menu`}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 focus-visible:ring-white focus-visible:ring-offset-transparent"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 focus-visible:ring-white focus-visible:ring-offset-transparent"
                   >
-                    <div className="w-6 h-6 rounded-full bg-rmc-green flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-rmc-green flex items-center justify-center text-white text-[10px] font-bold shrink-0">
                       {user.firstName[0]}{user.lastName[0]}
                     </div>
-                    <span className="text-sm font-medium max-w-[80px] truncate text-white">
+                    <span className="text-[13px] font-medium max-w-[72px] truncate text-white">
                       {user.firstName}
                     </span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 text-white/60 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 shrink-0 text-white/60 ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-slide-down">
+                    <div className="absolute end-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-slide-down">
                       <div className="px-4 py-3 border-b border-gray-50">
                         <p className="text-sm font-semibold text-gray-900 truncate">{user.firstName} {user.lastName}</p>
                         <p className="text-xs text-gray-400 truncate mt-0.5">{user.email}</p>
@@ -276,7 +308,7 @@ export function Navbar() {
             ) : (
               <Link
                 href={`/${locale}/login`}
-                className="hidden md:inline-flex items-center px-4 py-2 rounded-full border border-white/30 text-white text-sm font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
+                className="hidden md:inline-flex items-center px-3.5 py-1.5 rounded-full border border-white/30 text-white text-[13px] font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
               >
                 Sign in
               </Link>

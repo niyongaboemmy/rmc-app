@@ -25,7 +25,15 @@ export interface MarriageDocument {
   fileSize: number;
   mimeType: string;
   verified: boolean;
+  verifiedAt: string | null;
   uploadedAt: string;
+}
+
+export interface ApplicantSummary {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
 }
 
 export interface StatusHistoryEntry {
@@ -83,6 +91,7 @@ export interface MarriageApplication {
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  applicant?: ApplicantSummary | null;
   documents: MarriageDocument[];
   statusHistory: StatusHistoryEntry[];
 }
@@ -284,6 +293,14 @@ export const marriageApi = {
 
     issueCertificate: async (id: string): Promise<MarriageApplication> => {
       const { data } = await apiClient.post(`/admin/marriage/applications/${id}/certificate`);
+      return data.data ?? data;
+    },
+
+    verifyDocument: async (id: string, docId: string, verified: boolean): Promise<MarriageApplication> => {
+      const { data } = await apiClient.patch(
+        `/admin/marriage/applications/${id}/documents/${docId}/verify`,
+        { verified },
+      );
       return data.data ?? data;
     },
 

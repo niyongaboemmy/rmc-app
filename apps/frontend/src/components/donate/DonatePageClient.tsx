@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -20,6 +20,7 @@ import {
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { EVENTS, badgeClass, fundedPercent, formatMoney } from '@/components/activities/data';
+import { donationsApi, PublicCampaign } from '@/lib/donationsApi';
 
 /* ──────────────────────────────────────────────────────────────
    Static config — programs, frequencies, currencies, methods.
@@ -87,6 +88,20 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
   const [email, setEmail] = useState('');
   const [anonymous, setAnonymous] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  // Live program funding (raised = completed donation transactions) — same
+  // figures as the admin Programs tab. Falls back to static data if unavailable.
+  const [liveCampaigns, setLiveCampaigns] = useState<PublicCampaign[]>([]);
+  useEffect(() => {
+    donationsApi.listCampaigns().then(setLiveCampaigns).catch(() => {});
+  }, []);
+  const liveBySlug = useMemo(() => {
+    const m = new Map<string, PublicCampaign>();
+    liveCampaigns.forEach((c) => m.set(c.slug, c));
+    return m;
+  }, [liveCampaigns]);
 
   const amount = custom.trim() ? Math.max(0, Math.floor(Number(custom) || 0)) : preset ?? 0;
   const programName =
@@ -102,11 +117,29 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
     setCustom('');
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canDonate) return;
-    setSubmitted(true);
-    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!canDonate || submitting) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await donationsApi.donate({
+        campaignSlug: program === 'general' ? null : program,
+        amount,
+        currency,
+        frequency: frequency as 'once' | 'monthly' | 'yearly',
+        paymentMethod: method,
+        donorName: anonymous ? undefined : name.trim() || undefined,
+        donorEmail: email.includes('@') ? email.trim() : undefined,
+        isAnonymous: anonymous,
+      });
+      setSubmitted(true);
+      if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      setError('We could not record your donation. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -215,7 +248,11 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       {EVENTS.map((ev) => {
                         const active = program === ev.id;
-                        const pct = fundedPercent(ev.raisedAmount, ev.goalAmount);
+                        // Prefer live figures (raised = completed transactions); fall back to static.
+                        const live = liveBySlug.get(ev.id);
+                        const raised = live ? live.receivedAmount : ev.raisedAmount;
+                        const goal = live ? live.targetAmount : ev.goalAmount;
+                        const pct = fundedPercent(raised, goal);
                         const funded = pct >= 100;
                         return (
                           <button
@@ -241,8 +278,8 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
                             <div className="mt-auto pt-3">
                               <div className="mb-1 flex items-baseline justify-between gap-2 text-[11px]">
                                 <span className="font-bold tabular-nums text-gray-900">
-                                  RWF {formatMoney(ev.raisedAmount)}
-                                  <span className="font-medium text-gray-400"> / {formatMoney(ev.goalAmount)}</span>
+                                  RWF {formatMoney(raised)}
+                                  <span className="font-medium text-gray-400"> / {formatMoney(goal)}</span>
                                 </span>
                                 <span className={`inline-flex items-center gap-1 font-bold tabular-nums ${funded ? 'text-[#8A6A0F]' : 'text-rmc-green'}`}>
                                   {funded && <CheckCircle2 className="h-3 w-3 shrink-0" />}
@@ -462,13 +499,16 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
                         <button
                           type="submit"
                           form="donate-form"
-                          disabled={!canDonate}
+                          disabled={!canDonate || submitting}
                           className="group flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 disabled:cursor-not-allowed disabled:opacity-50 motion-safe:enabled:hover:scale-[1.02]"
                         >
                           <HandHeart className="h-4 w-4 shrink-0" />
-                          {canDonate ? `Donate ${money(currency, amount)}` : 'Enter an amount'}
+                          {submitting ? 'Processing…' : canDonate ? `Donate ${money(currency, amount)}` : 'Enter an amount'}
                           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                         </button>
+                        {error && (
+                          <p className="mt-3 text-center text-[12px] font-medium text-red-600">{error}</p>
+                        )}
                         <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-gray-400">
                           <Lock className="h-3 w-3 shrink-0" />
                           Secure &amp; encrypted payment

@@ -10,38 +10,56 @@ import { PartnersSection } from '@/components/home/PartnersSection';
 import { SocialMediaSection } from '@/components/home/SocialMediaSection';
 import { AskAIButton } from '@/components/home/AskAIButton';
 import { Footer } from '@/components/layout/Footer';
+import { Reveal } from '@/components/ui/Reveal';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
       <Navbar />
       <main>
-        {/* 1. Hero — Verse of the Day (sliding) */}
+        {/* 1. Hero — Verse of the Day (sliding); animates on load (above the fold) */}
         <HeroSection />
 
+        {/* Each section below glides in smoothly the first time it scrolls into view */}
         {/* 2. Who We Are */}
-        <WhoWeAreSection />
+        <Reveal>
+          <WhoWeAreSection />
+        </Reveal>
 
         {/* 3. Welcome — Updates & Programs (with live prayer times) */}
-        <WelcomeCarouselSection />
+        <Reveal>
+          <WelcomeCarouselSection />
+        </Reveal>
 
         {/* 5. Areas of Intervention: Dawa, Social & Dev, Education, Foreign Affairs */}
-        <AreasOfInterventionSection />
+        <Reveal>
+          <AreasOfInterventionSection />
+        </Reveal>
 
         {/* 6. Activities: Latest & Upcoming Events */}
-        <ActivitiesEventsSection />
+        <Reveal>
+          <ActivitiesEventsSection />
+        </Reveal>
 
         {/* 7. Announcements */}
-        <AnnouncementsSection />
+        <Reveal>
+          <AnnouncementsSection />
+        </Reveal>
 
         {/* 8. RMC in Statistics */}
-        <StatsSection />
+        <Reveal>
+          <StatsSection />
+        </Reveal>
 
         {/* 9. Partners */}
-        <PartnersSection />
+        <Reveal>
+          <PartnersSection />
+        </Reveal>
 
         {/* 10. Latest on Social Media */}
-        <SocialMediaSection />
+        <Reveal>
+          <SocialMediaSection />
+        </Reveal>
       </main>
 
       <Footer />

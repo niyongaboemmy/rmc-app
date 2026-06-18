@@ -1,30 +1,35 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
-import { BarChart3, ArrowLeft, Save, Users, Building2, Map, LayoutGrid, TrendingUp } from 'lucide-react';
+import {
+  ContentKeys,
+  STATS_DEFAULT,
+  getSiteContent,
+  saveSiteContent,
+  pick,
+  type StatsContent,
+  type StatItem,
+  type Tri,
+} from '@/lib/content-api';
+import { BarChart3, ArrowLeft, Save, Plus, Trash2, TrendingUp } from 'lucide-react';
 
-interface ImpactStats {
-  members: string;
-  mosques: string;
-  provinces: string;
-  services: string;
-}
+type Lang = 'en' | 'rw' | 'ar';
 
-const INITIAL: ImpactStats = {
-  members: '12500', mosques: '320', provinces: '5', services: '7',
-};
-
-const STATS = [
-  { key: 'members' as const, label: 'Active Members', suffix: '+', icon: Users, gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', ring: 'focus:ring-emerald-400' },
-  { key: 'mosques' as const, label: 'Registered Mosques', suffix: '+', icon: Building2, gradient: 'from-sky-500 to-blue-600', bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-100', ring: 'focus:ring-sky-400' },
-  { key: 'provinces' as const, label: 'Provinces Covered', suffix: '', icon: Map, gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-100', ring: 'focus:ring-violet-400' },
-  { key: 'services' as const, label: 'Services Offered', suffix: '', icon: LayoutGrid, gradient: 'from-amber-500 to-orange-600', bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', ring: 'focus:ring-amber-400' },
+const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = [
+  { key: 'en', label: 'English', dir: 'ltr', flag: 'EN' },
+  { key: 'rw', label: 'Kinyarwanda', dir: 'ltr', flag: 'RW' },
+  { key: 'ar', label: 'Arabic', dir: 'rtl', flag: 'AR' },
 ];
+
+/** lucide icon names selectable for each stat item. */
+const ICON_OPTIONS = ['Users', 'GraduationCap', 'Building2', 'Map', 'LayoutGrid'];
+
+const INITIAL: StatsContent = STATS_DEFAULT;
 
 export default function CommunityImpactPage() {
   return (
@@ -36,16 +41,92 @@ export default function CommunityImpactPage() {
 
 function CommunityImpactManager() {
   const { locale } = useParams<{ locale: string }>();
-  const { success } = useToast();
-  const [form, setForm] = useState<ImpactStats>(INITIAL);
+  const { success, error } = useToast();
+  const [lang, setLang] = useState<Lang>('en');
+  const [form, setForm] = useState<StatsContent>(INITIAL);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load any previously saved content; fall back to defaults if none exists.
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Partial<StatsContent>>(ContentKeys.stats)
+      .then((data) => {
+        if (active && data) setForm({ ...INITIAL, ...data });
+      })
+      .catch(() => {
+        /* keep defaults — section simply hasn't been saved yet */
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const fontClass = lang === 'ar' ? 'font-arabic' : '';
+
+  // ─── Header text setters (Tri fields) ─────────────────────────────────────
+  const setTri = useCallback(
+    (field: 'eyebrow' | 'title' | 'titleAccent' | 'subtitle', value: string) => {
+      setForm((prev) => ({ ...prev, [field]: { ...prev[field], [lang]: value } }));
+    },
+    [lang],
+  );
+
+  // ─── Item setters ─────────────────────────────────────────────────────────
+  const setItem = useCallback(
+    (index: number, patch: Partial<StatItem>) => {
+      setForm((prev) => ({
+        ...prev,
+        items: prev.items.map((it, i) => (i === index ? { ...it, ...patch } : it)),
+      }));
+    },
+    [],
+  );
+
+  const setItemLabel = useCallback(
+    (index: number, value: string) => {
+      setForm((prev) => ({
+        ...prev,
+        items: prev.items.map((it, i) =>
+          i === index ? { ...it, label: { ...it.label, [lang]: value } } : it,
+        ),
+      }));
+    },
+    [lang],
+  );
+
+  const addItem = useCallback(() => {
+    setForm((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        { value: 0, suffix: '+', icon: 'Users', label: { en: '', rw: '', ar: '' } as Tri },
+      ],
+    }));
+  }, []);
+
+  const removeItem = useCallback((index: number) => {
+    setForm((prev) => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }));
+  }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setSaving(false);
-    success('Community impact stats saved successfully.');
-  }, [success]);
+    try {
+      const saved = await saveSiteContent(ContentKeys.stats, form);
+      setForm((prev) => ({ ...prev, ...saved }));
+      success('Community impact stats saved successfully.');
+    } catch {
+      error('Could not save community impact stats. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [form, success, error]);
+
+  const triValue = (t: Tri) => t[lang] ?? '';
 
   return (
     <div className="space-y-6">
@@ -63,10 +144,10 @@ function CommunityImpactManager() {
             <p className="text-xs text-gray-400">Update homepage statistics</p>
           </div>
         </div>
-        <button onClick={handleSave} disabled={saving}
+        <button onClick={handleSave} disabled={saving || loading}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-indigo-600/20 transition-colors">
-          {saving ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-          Save Changes
+          {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+          {loading ? 'Loading…' : 'Save Changes'}
         </button>
       </div>
 
@@ -77,43 +158,128 @@ function CommunityImpactManager() {
           <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1 flex items-center gap-2">
             <TrendingUp className="w-3.5 h-3.5" /> Preview — how it looks on homepage
           </p>
+          <p className="text-rmc-gold text-xs font-medium mt-2">{pick(form.eyebrow, lang)}</p>
+          <p className="text-white text-lg font-bold">
+            {pick(form.title, lang)} <span className="text-rmc-gold">{pick(form.titleAccent, lang)}</span>
+          </p>
+          <p className="text-white/50 text-xs">{pick(form.subtitle, lang)}</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-            {STATS.map(({ key, label, suffix }) => (
-              <div key={key} className="bg-white/10 border border-white/15 rounded-xl p-4 text-center backdrop-blur-sm">
+            {form.items.map((item, i) => (
+              <div key={i} className="bg-white/10 border border-white/15 rounded-xl p-4 text-center backdrop-blur-sm">
                 <p className="text-2xl font-bold text-white tabular-nums">
-                  {Number(form[key]).toLocaleString()}{suffix}
+                  {Number(item.value).toLocaleString()}{item.suffix}
                 </p>
-                <p className="text-white/50 text-xs mt-1">{label}</p>
+                <p className="text-white/50 text-xs mt-1">{pick(item.label, lang)}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Input cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {STATS.map(({ key, label, suffix, icon: Icon, bg, text, border, ring, gradient }) => (
-          <div key={key} className={`bg-white rounded-2xl border ${border} p-5`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-                <Icon className="w-5 h-5 text-white" />
+      {/* Language tabs */}
+      <LanguageTabs lang={lang} onChange={setLang} />
+
+      {/* Header text — per-language */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+        <h2 className="text-sm font-bold text-gray-700">Section Header — {LANGS.find((l) => l.key === lang)?.label}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Eyebrow</label>
+            <input
+              dir={dir}
+              value={triValue(form.eyebrow)}
+              onChange={(e) => setTri('eyebrow', e.target.value)}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Subtitle</label>
+            <input
+              dir={dir}
+              value={triValue(form.subtitle)}
+              onChange={(e) => setTri('subtitle', e.target.value)}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+            <input
+              dir={dir}
+              value={triValue(form.title)}
+              onChange={(e) => setTri('title', e.target.value)}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title Accent</label>
+            <input
+              dir={dir}
+              value={triValue(form.titleAccent)}
+              onChange={(e) => setTri('titleAccent', e.target.value)}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Stat items list editor */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-700">Statistics</h2>
+          <button onClick={addItem}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+            <Plus className="w-3.5 h-3.5" /> Add Stat
+          </button>
+        </div>
+
+        {form.items.map((item, i) => (
+          <div key={i} className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="w-28">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Value</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={item.value}
+                  onChange={(e) => setItem(i, { value: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-bold text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                />
               </div>
-              <div>
-                <p className="text-sm font-bold text-gray-800">{label}</p>
-                <p className={`text-xs ${text}`}>Displays as {Number(form[key]).toLocaleString()}{suffix} on homepage</p>
+              <div className="w-20">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Suffix</label>
+                <input
+                  value={item.suffix}
+                  onChange={(e) => setItem(i, { suffix: e.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                />
               </div>
-            </div>
-            <div className="relative">
-              <input
-                type="number"
-                min="0"
-                value={form[key]}
-                onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-                className={`w-full rounded-xl border ${border} px-4 py-3 text-xl font-bold ${text} focus:outline-none focus:ring-2 ${ring} focus:border-transparent bg-gray-50`}
-              />
-              {suffix && (
-                <span className={`absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold ${text}`}>{suffix}</span>
-              )}
+              <div className="w-40">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Icon</label>
+                <select
+                  value={item.icon}
+                  onChange={(e) => setItem(i, { icon: e.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                >
+                  {ICON_OPTIONS.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[12rem]">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  Label — {LANGS.find((l) => l.key === lang)?.label}
+                </label>
+                <input
+                  dir={dir}
+                  value={triValue(item.label)}
+                  onChange={(e) => setItemLabel(i, e.target.value)}
+                  className={`w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent ${fontClass}`}
+                />
+              </div>
+              <button onClick={() => removeItem(i)}
+                className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-200 transition-colors">
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
         ))}
@@ -121,8 +287,21 @@ function CommunityImpactManager() {
 
       <div className="flex items-start gap-3 p-4 rounded-xl bg-indigo-50 border border-indigo-100 text-sm text-indigo-700">
         <BarChart3 className="w-4 h-4 shrink-0 mt-0.5" />
-        <p>These statistics are displayed with an animated count-up effect on the homepage. Values are shown with a <strong>+</strong> suffix where applicable.</p>
+        <p>These statistics are displayed with an animated count-up effect on the homepage. Values are shown with the configured suffix (e.g. <strong>+</strong>) where applicable.</p>
       </div>
+    </div>
+  );
+}
+
+function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
+  return (
+    <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+      {LANGS.map((l) => (
+        <button key={l.key} onClick={() => onChange(l.key)}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${lang === l.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          <span>{l.flag}</span> {l.label}
+        </button>
+      ))}
     </div>
   );
 }

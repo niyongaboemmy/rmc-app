@@ -14,6 +14,7 @@ import {
   HttpStatus,
   Logger,
   Res,
+  Headers,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -153,20 +154,22 @@ export class StorageController {
     }
   }
 
-  // ── Wildcard redirect — LAST among GET /files/:key routes ─────────────────
+  // ── Wildcard stream — LAST among GET /files/:key routes ───────────────────
 
   @Get('files/:key(*)')
   @Public()
-  @ApiOperation({ summary: 'Redirect to presigned download URL (use in <img src>)' })
+  @ApiOperation({ summary: 'Stream a file inline (use in <img src> / iframe / <a>)' })
   @ApiParam({ name: 'key', example: 'avatars/uuid.jpg' })
-  @ApiResponse({ status: 302, description: 'Redirects to presigned URL' })
+  @ApiResponse({ status: 200, description: 'File bytes streamed' })
   @ApiResponse({ status: 404, description: 'File not found' })
   async serveFile(
     @Param('key') key: string,
+    @Headers('range') range: string | undefined,
     @Res() res: Response,
   ): Promise<void> {
+    let file: Awaited<ReturnType<StorageService['getObject']>>;
     try {
-      await this.storageService.getMetadata(key);
+      file = await this.storageService.getObject(key, range);
     } catch {
       res.status(HttpStatus.NOT_FOUND).json({
         success: false,
@@ -174,8 +177,28 @@ export class StorageController {
       });
       return;
     }
-    const url = await this.storageService.getPresignedUrl(key);
-    res.redirect(HttpStatus.FOUND, url);
+
+    res.setHeader('Content-Type', file.contentType);
+    // Show in the browser rather than forcing a download.
+    res.setHeader('Content-Disposition', file.contentDisposition || 'inline');
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    if (file.acceptRanges) res.setHeader('Accept-Ranges', file.acceptRanges);
+    if (file.contentLength != null) res.setHeader('Content-Length', String(file.contentLength));
+
+    // Honour byte-range requests (PDF viewers / video seeking).
+    if (range && file.contentRange) {
+      res.status(HttpStatus.PARTIAL_CONTENT);
+      res.setHeader('Content-Range', file.contentRange);
+    }
+
+    file.body.on('error', () => {
+      if (!res.headersSent) {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).end();
+      } else {
+        res.end();
+      }
+    });
+    file.body.pipe(res);
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────

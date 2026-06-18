@@ -1,54 +1,43 @@
 'use client';
 
-import { BookOpen, Heart, GraduationCap, Globe } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { BookOpen, Heart, GraduationCap, Globe, type LucideIcon } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import {
+  ContentKeys,
+  AREAS_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  pick,
+  isRtl,
+  type AreasContent,
+  type AreaItem,
+} from '@/lib/content-api';
 
-interface Area {
-  key: string;
+/** Lucide icon name → component. Falls back to Globe for unknown names. */
+const ICONS: Record<string, LucideIcon> = { BookOpen, Heart, GraduationCap, Globe };
+
+function PillarCard({
+  item,
+  index,
+  locale,
+  delay,
+}: {
+  item: AreaItem;
   index: string;
-  Icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}
-
-const AREAS: Area[] = [
-  {
-    key: 'dawa',
-    index: '01',
-    Icon: BookOpen,
-    title: 'Dawah',
-    description: 'Spreading the true teachings of Islam through peaceful outreach and guidance.',
-  },
-  {
-    key: 'social',
-    index: '02',
-    Icon: Heart,
-    title: 'Socio Development',
-    description: 'Empowering communities through health, poverty alleviation, and welfare initiatives.',
-  },
-  {
-    key: 'education',
-    index: '03',
-    Icon: GraduationCap,
-    title: 'Education',
-    description: 'Providing quality secular and Islamic education to the youth across the nation.',
-  },
-  {
-    key: 'foreign',
-    index: '04',
-    Icon: Globe,
-    title: 'Foreign Affairs',
-    description: 'Building and maintaining strong international relations and partnerships.',
-  },
-];
-
-function PillarCard({ area, delay }: { area: Area; delay: number }) {
+  locale: string;
+  delay: number;
+}) {
   const { ref, visible } = useScrollReveal(0.12);
-  const { Icon } = area;
+  const Icon = ICONS[item.icon] ?? Globe;
+  const rtl = isRtl(locale);
+  const arFont = locale === 'ar' ? 'font-arabic' : '';
 
   return (
     <article
       ref={ref}
+      dir={rtl ? 'rtl' : 'ltr'}
       style={{ transitionDelay: `${delay}ms` }}
       className={`group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-gray-200/70 bg-white p-7 lg:p-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_64px_-24px_rgba(26,122,74,0.3)] ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -61,7 +50,7 @@ function PillarCard({ area, delay }: { area: Area; delay: number }) {
         aria-hidden
         className="pointer-events-none absolute -top-2 right-5 select-none font-bold leading-none tracking-tighter text-rmc-green/10 text-[6rem] md:text-[7rem] [-webkit-text-stroke:1.5px_rgba(26,122,74,0.14)] [-webkit-text-fill-color:transparent] transition-all duration-500 group-hover:text-rmc-gold/30 group-hover:[-webkit-text-stroke-color:rgba(212,160,23,0.5)]"
       >
-        {area.index}
+        {index}
       </span>
 
       {/* Icon tile — self-contained green+gold brand object: green gradient body + inset gold ring */}
@@ -71,9 +60,11 @@ function PillarCard({ area, delay }: { area: Area; delay: number }) {
 
       {/* Always-visible gold pillar label + title — gold reads at rest, not only on hover */}
       <p className="relative mt-7 text-[11px] font-semibold uppercase tracking-[0.22em] text-rmc-gold">
-        Pillar {area.index}
+        Pillar {index}
       </p>
-      <h3 className="relative mt-1.5 text-xl font-bold text-gray-900">{area.title}</h3>
+      <h3 className={`relative mt-1.5 text-xl font-bold text-gray-900 ${arFont}`}>
+        {pick(item.title, locale)}
+      </h3>
 
       {/* Gold hairline beneath the title — static, on-brand accent */}
       <span
@@ -82,13 +73,36 @@ function PillarCard({ area, delay }: { area: Area; delay: number }) {
       />
 
       {/* Description */}
-      <p className="relative mt-4 text-sm leading-relaxed text-gray-500">{area.description}</p>
+      <p className={`relative mt-4 text-sm leading-relaxed text-gray-500 ${arFont}`}>
+        {pick(item.description, locale)}
+      </p>
     </article>
   );
 }
 
 export function AreasOfInterventionSection() {
+  const { locale } = useParams<{ locale: string }>();
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
+
+  // Content managed from Admin → Content → Areas of Intervention. Falls back to
+  // the built-in defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<AreasContent>(AREAS_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<AreasContent>(ContentKeys.areas)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(AREAS_DEFAULT, data));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const rtl = isRtl(locale);
+  const arFont = locale === 'ar' ? 'font-arabic' : '';
 
   return (
     <section className="relative overflow-hidden bg-transparent py-12 md:py-16">
@@ -104,20 +118,21 @@ export function AreasOfInterventionSection() {
         {/* ── Section header — light-styled echo of the hero / sibling-light eyebrow rhythm ── */}
         <div
           ref={titleRef}
+          dir={rtl ? 'rtl' : 'ltr'}
           className={`mx-auto mb-16 max-w-2xl text-center transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
           {/* Gold-dot eyebrow chip — matches the WhoWeAre light-section grammar exactly */}
-          <span className="inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm">
+          <span className={`inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm ${arFont}`}>
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-            Our Impact
+            {pick(content.eyebrow, locale)}
           </span>
 
           {/* Heading keyword carries the canonical brand .title-underline (green→gold→green bar) —
               the single strongest brand echo. No second rule stacked directly beneath it. */}
-          <h2 className="mt-7 text-3xl font-bold text-gray-900 md:text-[2.6rem] md:leading-tight">
-            Areas of <span className="title-underline">Intervention</span>
+          <h2 className={`mt-7 text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}>
+            {pick(content.title, locale)} <span className="text-rmc-green">{pick(content.titleAccent, locale)}</span>
           </h2>
 
           {/* One ornament rule below the lede — keeps the gold rhythm without competing with the
@@ -126,16 +141,21 @@ export function AreasOfInterventionSection() {
             <span className="h-1.5 w-1.5 rounded-full bg-rmc-gold" />
           </div>
 
-          <p className="mx-auto max-w-xl text-sm leading-relaxed text-gray-500 md:text-base">
-            RMC works across four strategic pillars to uplift, educate, and connect the Muslim
-            community of Rwanda — from local mosques to global partnerships.
+          <p className={`mx-auto max-w-xl text-sm leading-relaxed text-gray-500 md:text-base ${arFont}`}>
+            {pick(content.lede, locale)}
           </p>
         </div>
 
         {/* ── Numbered pillar showcase ── */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {AREAS.map((area, i) => (
-            <PillarCard key={area.key} area={area} delay={i * 110} />
+          {content.items.map((item, i) => (
+            <PillarCard
+              key={i}
+              item={item}
+              index={String(i + 1).padStart(2, '0')}
+              locale={locale}
+              delay={i * 110}
+            />
           ))}
         </div>
       </div>
