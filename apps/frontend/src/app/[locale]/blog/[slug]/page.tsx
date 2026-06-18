@@ -61,7 +61,7 @@ export default async function BlogPostPage({
           </PageHero>
 
           {/* Hero image */}
-          <div className="px-4 mt-8">
+          <div className="px-4 sm:px-6 lg:px-8 mt-8">
             <div className="max-w-5xl mx-auto relative aspect-[16/9] overflow-hidden rounded-3xl shadow-[0_30px_70px_-30px_rgba(13,61,36,0.5)] ring-1 ring-black/5">
               <Image
                 src={post.image}
@@ -75,7 +75,7 @@ export default async function BlogPostPage({
           </div>
 
           {/* Body */}
-          <div className="px-4 py-12">
+          <div className="px-4 sm:px-6 lg:px-8 py-12">
             <div className="max-w-3xl mx-auto space-y-5">
               <p className="text-lg leading-relaxed text-gray-700 first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-5xl first-letter:font-bold first-letter:leading-[0.75] first-letter:text-rmc-green">
                 {body[0]}
@@ -95,7 +95,7 @@ export default async function BlogPostPage({
 
         {/* More articles */}
         {more.length > 0 && (
-          <section className="px-4 pb-16 pt-4 bg-rmc-green/[0.03] border-t border-rmc-green/10">
+          <section className="px-4 sm:px-6 lg:px-8 pb-16 pt-4 bg-rmc-green/[0.03] border-t border-rmc-green/10">
             <div className="max-w-7xl mx-auto py-12">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">{t('more')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

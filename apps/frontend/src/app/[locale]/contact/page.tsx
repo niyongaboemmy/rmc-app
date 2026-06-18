@@ -11,7 +11,6 @@ import {
   Twitter,
   Instagram,
   Youtube,
-  ExternalLink,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
@@ -59,10 +58,135 @@ export default function ContactPage() {
         <PageHero eyebrow="RMC" title={t('title')} subtitle={t('subtitle')} ornament />
 
         {/* ===================================================================
-            1. FIND A MOSQUE — finder + live map
+            1. COMMUNICATION & ADDRESS — info cards + contact form
         =================================================================== */}
-        <section id="find-mosque" className="py-16 px-4 scroll-mt-28">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-16 px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="max-w-5xl mx-auto overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl shadow-rmc-green/5">
+              <div className="grid lg:grid-cols-2">
+                {/* Contact info */}
+                <div className="p-7 sm:p-10 bg-rmc-green/[0.05]">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {t('communicationTitle')}
+                  </h2>
+                  <p className="mt-2 text-gray-500">{t('communicationSubtitle')}</p>
+
+                  <div className="mt-8 space-y-5">
+                    {contactInfo.map((item) => {
+                      const ItemIcon = item.icon;
+                      const inner = (
+                        <div className="flex items-start gap-3.5">
+                          <span className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+                            <ItemIcon className="w-5 h-5 text-rmc-green" />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-500">{item.label}</div>
+                            <div className="text-gray-900 font-medium break-words">
+                              {item.value}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                      return item.href ? (
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          className="block -m-2 rounded-xl p-2 transition-colors hover:bg-gray-50"
+                        >
+                          {inner}
+                        </a>
+                      ) : (
+                        <div key={item.label}>{inner}</div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Social links */}
+                  <div className="mt-8 pt-6 border-t border-rmc-green/10">
+                    <p className="text-sm font-semibold text-gray-900">{t('socialTitle')}</p>
+                    <div className="mt-3 flex flex-wrap gap-2.5">
+                      {socialLinks.map(({ Icon, label, href, bg }) => (
+                        <a
+                          key={label}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={label}
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${bg} text-white shadow-sm transition-transform duration-200 hover:scale-110`}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact form */}
+                <div className="p-7 sm:p-10 bg-gray-50/60 border-t border-gray-100 lg:border-t-0 lg:border-l">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">{t('form.heading')}</h3>
+                  {submitted ? (
+                    <div className="p-6 bg-green-50 border border-green-200 rounded-xl text-green-800">
+                      <CheckCircle className="inline w-5 h-5 mr-1.5 text-green-600" />
+                      {t('form.success')}
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      {[
+                        { key: 'name', type: 'text', label: t('form.name') },
+                        { key: 'email', type: 'email', label: t('form.email') },
+                        { key: 'subject', type: 'text', label: t('form.subject') },
+                      ].map(({ key, type, label }) => (
+                        <div key={key}>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {label}
+                          </label>
+                          <input
+                            type={type}
+                            required
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                            value={(formState as Record<string, string>)[key]}
+                            onChange={(e) =>
+                              setFormState((prev) => ({ ...prev, [key]: e.target.value }))
+                            }
+                          />
+                        </div>
+                      ))}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('form.message')}
+                        </label>
+                        <textarea
+                          required
+                          rows={5}
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none resize-none"
+                          value={formState.message}
+                          onChange={(e) =>
+                            setFormState((prev) => ({ ...prev, message: e.target.value }))
+                          }
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-3 bg-rmc-green text-white font-semibold rounded-lg hover:bg-rmc-green-dark transition-colors"
+                      >
+                        {t('form.submit')}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
+        {/* ===================================================================
+            2. FIND A MOSQUE — finder + live map
+        =================================================================== */}
+        <section
+          id="find-mosque"
+          className="py-16 scroll-mt-28 bg-rmc-green/[0.03] border-y border-rmc-green/10"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Reveal>
               <div className="max-w-2xl mb-8">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{t('findMosque')}</h2>
@@ -73,136 +197,6 @@ export default function ContactPage() {
               <MosqueFinder />
             </Reveal>
           </div>
-        </section>
-
-        {/* ===================================================================
-            2. COMMUNICATION & ADDRESS — info cards + contact form
-        =================================================================== */}
-        <section className="py-16 px-4 bg-rmc-green/[0.03] border-y border-rmc-green/10">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12">
-            {/* Contact info */}
-            <Reveal>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                {t('communicationTitle')}
-              </h2>
-              <p className="mt-2 text-gray-500">{t('communicationSubtitle')}</p>
-
-              <div className="mt-8 grid sm:grid-cols-2 gap-4">
-                {contactInfo.map((item) => {
-                  const ItemIcon = item.icon;
-                  const inner = (
-                    <div className="flex items-start gap-3.5 p-5 rounded-2xl border border-gray-100 bg-white shadow-sm h-full transition-all hover:border-rmc-green/30 hover:shadow-md">
-                      <span className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
-                        <ItemIcon className="w-5 h-5 text-rmc-green" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-gray-500">{item.label}</div>
-                        <div className="text-gray-900 font-medium break-words">{item.value}</div>
-                      </div>
-                    </div>
-                  );
-                  return item.href ? (
-                    <a key={item.label} href={item.href} className="block">
-                      {inner}
-                    </a>
-                  ) : (
-                    <div key={item.label}>{inner}</div>
-                  );
-                })}
-              </div>
-            </Reveal>
-
-            {/* Contact form */}
-            <Reveal delay={120}>
-              <div className="p-6 sm:p-8 rounded-2xl border border-gray-100 bg-white shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">{t('form.heading')}</h3>
-                {submitted ? (
-                  <div className="p-6 bg-green-50 border border-green-200 rounded-xl text-green-800">
-                    <CheckCircle className="inline w-5 h-5 mr-1.5 text-green-600" />
-                    {t('form.success')}
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {[
-                      { key: 'name', type: 'text', label: t('form.name') },
-                      { key: 'email', type: 'email', label: t('form.email') },
-                      { key: 'subject', type: 'text', label: t('form.subject') },
-                    ].map(({ key, type, label }) => (
-                      <div key={key}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {label}
-                        </label>
-                        <input
-                          type={type}
-                          required
-                          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
-                          value={(formState as Record<string, string>)[key]}
-                          onChange={(e) =>
-                            setFormState((prev) => ({ ...prev, [key]: e.target.value }))
-                          }
-                        />
-                      </div>
-                    ))}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('form.message')}
-                      </label>
-                      <textarea
-                        required
-                        rows={5}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none resize-none"
-                        value={formState.message}
-                        onChange={(e) =>
-                          setFormState((prev) => ({ ...prev, message: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full py-3 bg-rmc-green text-white font-semibold rounded-lg hover:bg-rmc-green-dark transition-colors"
-                    >
-                      {t('form.submit')}
-                    </button>
-                  </form>
-                )}
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ===================================================================
-            3. SOCIAL MEDIA — stay connected
-        =================================================================== */}
-        <section className="py-16 px-4">
-          <Reveal>
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{t('socialTitle')}</h2>
-              <p className="mt-2 text-gray-500">{t('socialSubtitle')}</p>
-              <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {socialLinks.map(({ Icon, label, followers, href, bg }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    className="group flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-transparent hover:shadow-xl transition-all duration-300 hover:scale-105 text-left"
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-200`}
-                    >
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate">{label}</p>
-                      <p className="text-xs text-gray-400">{followers} followers</p>
-                    </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover:text-rmc-green ml-auto shrink-0 transition-colors" />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </Reveal>
         </section>
       </main>
       <Footer />

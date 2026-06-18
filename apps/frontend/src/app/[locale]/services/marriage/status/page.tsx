@@ -17,7 +17,7 @@ export default async function MarriageStatusPage({
     <div className="min-h-screen bg-white">
       <Navbar />
       <main className="bg-gray-50/60 pattern-light">
-        <div className="max-w-3xl mx-auto px-4 py-10 lg:py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
           <Link
             href={`/${locale}/services/marriage`}
             className="inline-flex items-center gap-1.5 text-gray-500 hover:text-rose-700 text-sm font-medium mb-8 transition-colors"
