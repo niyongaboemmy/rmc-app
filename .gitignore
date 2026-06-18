@@ -95,6 +95,10 @@ web_modules/
 
 # Next.js build output
 .next
+<<<<<<< HEAD
+=======
+.next_bak_root
+>>>>>>> emmy
 out
 
 # Nuxt.js build / generate output
@@ -170,6 +174,9 @@ apps/backend/dist/
 
 # Local-only dev storage (MinIO binary + data)
 .localstorage/
+<<<<<<< HEAD
 
 # Next.js backup directory
 apps/frontend/.next_bak_root/
+=======
+>>>>>>> emmy
