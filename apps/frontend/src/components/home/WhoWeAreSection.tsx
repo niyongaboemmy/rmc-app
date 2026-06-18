@@ -2,13 +2,42 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import {
+  ContentKeys,
+  WHO_WE_ARE_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  pick,
+  pickLang,
+  type WhoWeAreContent,
+} from '@/lib/content-api';
 
 export function WhoWeAreSection() {
   const { locale } = useParams<{ locale: string }>();
   const { ref: headerRef, visible: headerVisible } = useScrollReveal(0.15);
   const { ref: bodyRef, visible: bodyVisible } = useScrollReveal(0.1);
+
+  // Content managed from Admin → Content → Who We Are. Falls back to the
+  // built-in defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<WhoWeAreContent>(WHO_WE_ARE_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, string>>(ContentKeys.whoWeAre)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(WHO_WE_ARE_DEFAULT, data));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const description = pickLang(content, 'description', locale);
 
   return (
     <section className="relative bg-transparent py-14 md:py-20 overflow-hidden">
@@ -28,14 +57,22 @@ export function WhoWeAreSection() {
           }`}
         >
           {/* Shared hero-consistent eyebrow */}
-          <div className="inline-flex items-center gap-2.5 mb-6 px-4 py-1.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 backdrop-blur-sm text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-rmc-green-dark">
+          <div
+            className={`inline-flex items-center gap-2.5 mb-6 px-4 py-1.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 backdrop-blur-sm text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-rmc-green-dark ${locale === 'ar' ? 'font-arabic' : ''}`}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-            Who We Are
+            {pick({ en: 'Who We Are', rw: 'Abo Turi Bo', ar: 'من نحن' }, locale)}
           </div>
 
-          <h2 className="text-3xl md:text-[2.6rem] font-bold text-gray-900 leading-[1.15] tracking-tight mb-5">
-            Rwanda Muslim Community —{' '}
-            <span className="text-rmc-green">Serving the Ummah</span>
+          <h2
+            className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 mb-5 ${locale === 'ar' ? 'font-arabic' : ''}`}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          >
+            {pick({ en: 'Rwanda Muslim Community —', rw: "Umuryango w'Abasilamu bo mu Rwanda —", ar: 'المجتمع الإسلامي الرواندي —' }, locale)}{' '}
+            <span className="text-rmc-green">
+              {pick({ en: 'Serving the Ummah', rw: 'Dukorera Umat', ar: 'في خدمة الأمة' }, locale)}
+            </span>
           </h2>
 
           {/* Arabic touch framed by gold ornament — echoes the hero's scripture centerpiece */}
@@ -44,12 +81,25 @@ export function WhoWeAreSection() {
               وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا
             </p>
           </div>
-          <p className="text-rmc-gold text-[11px] font-semibold tracking-wide mb-6">
-            &ldquo;Hold firmly to the rope of Allah, all together&rdquo; — Aal-Imran 3:103
+          <p
+            className={`text-rmc-gold text-[11px] font-semibold tracking-wide mb-6 ${locale === 'ar' ? 'font-arabic' : ''}`}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          >
+            {pick(
+              {
+                en: '"Hold firmly to the rope of Allah, all together" — Aal-Imran 3:103',
+                rw: '"Mufatane mwese ku mugozi w\'Imana" — Aal-Imran 3:103',
+                ar: 'سورة آل عمران — الآية ١٠٣',
+              },
+              locale,
+            )}
           </p>
 
-          <p className="text-gray-500 leading-relaxed text-sm md:text-base max-w-2xl mx-auto">
-            The Rwanda Muslim Community (RMC) is the umbrella organization representing Muslims across all provinces of Rwanda. Founded on the principles of Islamic brotherhood, we coordinate religious, educational, and social services for over 500,000 Muslims nationwide.
+          <p
+            className={`text-gray-500 leading-relaxed text-sm md:text-base max-w-2xl mx-auto ${locale === 'ar' ? 'font-arabic' : ''}`}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          >
+            {description}
           </p>
         </div>
 
@@ -67,14 +117,14 @@ export function WhoWeAreSection() {
               className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 bg-rmc-green text-white text-sm font-bold rounded-full shadow-lg shadow-rmc-green/25 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 motion-safe:hover:scale-105 transition-all duration-300"
             >
               <BookOpen className="w-4 h-4" />
-              Learn Our Story
+              {pick({ en: 'Learn Our Story', rw: 'Menya Inkuru Yacu', ar: 'تعرّف على قصتنا' }, locale)}
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Link>
             <Link
               href={`/${locale}/contact`}
               className="inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-full hover:border-rmc-green hover:text-rmc-green motion-safe:hover:scale-105 transition-all duration-300"
             >
-              Contact Us
+              {pick({ en: 'Contact Us', rw: 'Twandikire', ar: 'اتصل بنا' }, locale)}
             </Link>
           </div>
         </div>

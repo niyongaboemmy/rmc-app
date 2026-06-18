@@ -1,0 +1,343 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Donation, DonationStatus, DonationFrequency } from './entities/donation.entity';
+import { DonationCampaign, CampaignStatus } from './entities/donation-campaign.entity';
+import { CreateDonationDto } from './dto/create-donation.dto';
+import { UpdateDonationDto } from './dto/update-donation.dto';
+import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
+
+export interface DonationFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  campaignId?: string;
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+@Injectable()
+export class DonationsService {
+  constructor(
+    @InjectRepository(Donation)
+    private readonly donations: Repository<Donation>,
+    @InjectRepository(DonationCampaign)
+    private readonly campaigns: Repository<DonationCampaign>,
+  ) {}
+
+  // ── Public ───────────────────────────────────────────────────────────────
+
+  /**
+   * Active programs shown on the public donate page, each enriched with its
+   * live raised total (sum of completed donation transactions in the program's
+   * currency) — the same figure the admin Programs tab shows.
+   */
+  async listPublicCampaigns() {
+    const campaigns = await this.campaigns.find({
+      where: { status: CampaignStatus.ACTIVE },
+      order: { startDate: 'ASC' },
+    });
+    const { received } = await this.getReceivedMap();
+    return campaigns.map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      title: c.title,
+      description: c.description,
+      targetAmount: Number(c.targetAmount),
+      receivedAmount: received.get(`${c.id}|${c.currency}`) ?? 0,
+      currency: c.currency,
+      fundType: c.fundType,
+      heroImageUrl: c.heroImageUrl,
+      startDate: c.startDate,
+      endDate: c.endDate,
+    }));
+  }
+
+  /**
+   * Record a donation from the public donate page. There is no separate payment
+   * gateway step yet, so a submitted donation is treated as received
+   * (status "completed") and counts toward the program total immediately.
+   */
+  async create(dto: CreateDonationDto, donorId: string | null): Promise<Donation> {
+    let campaignId: string | null = null;
+    if (dto.campaignSlug) {
+      const campaign = await this.campaigns.findOne({ where: { slug: dto.campaignSlug } });
+      campaignId = campaign?.id ?? null;
+    }
+
+    const donation = this.donations.create({
+      campaignId,
+      donorId,
+      donorName: dto.isAnonymous ? null : (dto.donorName ?? null),
+      donorEmail: dto.donorEmail ?? null,
+      isAnonymous: dto.isAnonymous ?? false,
+      amount: dto.amount,
+      currency: dto.currency ?? 'RWF',
+      frequency: dto.frequency ?? DonationFrequency.ONCE,
+      paymentMethod: dto.paymentMethod ?? null,
+      status: DonationStatus.COMPLETED,
+      message: dto.message ?? null,
+      donatedAt: new Date(),
+    });
+    return this.donations.save(donation);
+  }
+
+  // ── Admin: donations report ──────────────────────────────────────────────
+
+  private applyFilters(
+    qb: SelectQueryBuilder<Donation>,
+    filters: DonationFilters,
+  ): SelectQueryBuilder<Donation> {
+    if (filters.dateFrom) {
+      qb.andWhere('donation.donatedAt >= :dateFrom', { dateFrom: filters.dateFrom });
+    }
+    if (filters.dateTo) {
+      const end = new Date(filters.dateTo);
+      end.setDate(end.getDate() + 1); // make the end date inclusive
+      qb.andWhere('donation.donatedAt < :dateTo', { dateTo: end.toISOString() });
+    }
+    if (filters.campaignId) {
+      if (filters.campaignId === 'general') {
+        qb.andWhere('donation.campaignId IS NULL');
+      } else {
+        qb.andWhere('donation.campaignId = :campaignId', { campaignId: filters.campaignId });
+      }
+    }
+    if (filters.status) {
+      qb.andWhere('donation.status = :status', { status: filters.status });
+    }
+    if (filters.search) {
+      qb.andWhere('(donation.donorName ILIKE :s OR donation.donorEmail ILIKE :s)', {
+        s: `%${filters.search}%`,
+      });
+    }
+    return qb;
+  }
+
+  async adminFindAll(filters: DonationFilters) {
+    const page = filters.page && filters.page > 0 ? filters.page : 1;
+    const limit = filters.limit && filters.limit > 0 ? filters.limit : 20;
+
+    const qb = this.donations
+      .createQueryBuilder('donation')
+      .leftJoinAndSelect('donation.campaign', 'campaign')
+      .orderBy('donation.donatedAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    this.applyFilters(qb, filters);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return { items, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+
+  /** Top-line stats + per-program / per-currency / per-status breakdowns. */
+  async adminGetStats(filters: DonationFilters) {
+    // Per currency: received (completed) vs pending vs all
+    const byCurrencyQb = this.donations
+      .createQueryBuilder('donation')
+      .select('donation.currency', 'currency')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect(
+        `COALESCE(SUM(donation.amount) FILTER (WHERE donation.status = 'completed'), 0)`,
+        'received',
+      )
+      .addSelect(
+        `COALESCE(SUM(donation.amount) FILTER (WHERE donation.status = 'pending'), 0)`,
+        'pending',
+      )
+      .addSelect('COALESCE(SUM(donation.amount), 0)', 'total')
+      .groupBy('donation.currency');
+    this.applyFilters(byCurrencyQb, filters);
+    const byCurrencyRaw = await byCurrencyQb.getRawMany();
+
+    // Per program (campaign)
+    const byProgramQb = this.donations
+      .createQueryBuilder('donation')
+      .leftJoin('donation.campaign', 'campaign')
+      .select('donation.campaignId', 'campaignId')
+      .addSelect('campaign.title', 'title')
+      .addSelect('donation.currency', 'currency')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect(
+        `COALESCE(SUM(donation.amount) FILTER (WHERE donation.status = 'completed'), 0)`,
+        'received',
+      )
+      .addSelect('COALESCE(SUM(donation.amount), 0)', 'total')
+      .groupBy('donation.campaignId')
+      .addGroupBy('campaign.title')
+      .addGroupBy('donation.currency')
+      .orderBy('received', 'DESC');
+    this.applyFilters(byProgramQb, filters);
+    const byProgramRaw = await byProgramQb.getRawMany();
+
+    // Per status
+    const byStatusQb = this.donations
+      .createQueryBuilder('donation')
+      .select('donation.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect('COALESCE(SUM(donation.amount), 0)', 'total')
+      .groupBy('donation.status');
+    this.applyFilters(byStatusQb, filters);
+    const byStatusRaw = await byStatusQb.getRawMany();
+
+    const count = byCurrencyRaw.reduce((acc, r) => acc + Number(r.count), 0);
+
+    return {
+      count,
+      byCurrency: byCurrencyRaw.map((r) => ({
+        currency: r.currency,
+        count: Number(r.count),
+        received: Number(r.received),
+        pending: Number(r.pending),
+        total: Number(r.total),
+      })),
+      byProgram: byProgramRaw.map((r) => ({
+        campaignId: r.campaignId,
+        title: r.title ?? 'General fund',
+        currency: r.currency,
+        count: Number(r.count),
+        received: Number(r.received),
+        total: Number(r.total),
+      })),
+      byStatus: byStatusRaw.map((r) => ({
+        status: r.status,
+        count: Number(r.count),
+        total: Number(r.total),
+      })),
+    };
+  }
+
+  async adminUpdateDonation(id: string, dto: UpdateDonationDto): Promise<Donation> {
+    const donation = await this.donations.findOne({ where: { id } });
+    if (!donation) throw new NotFoundException('Donation not found');
+
+    if (dto.amount !== undefined) donation.amount = dto.amount;
+    if (dto.status !== undefined) donation.status = dto.status;
+    if (dto.frequency !== undefined) donation.frequency = dto.frequency;
+    if (dto.campaignId !== undefined) donation.campaignId = dto.campaignId || null;
+    if (dto.donorName !== undefined) donation.donorName = dto.donorName;
+    if (dto.donorEmail !== undefined) donation.donorEmail = dto.donorEmail;
+    if (dto.currency !== undefined) donation.currency = dto.currency;
+
+    const saved = await this.donations.save(donation);
+
+    // Note: a program's `raisedAmount` is the public-facing figure (shown
+    // identically on the admin Programs tab and the client donate page) and is
+    // managed explicitly via the program editor — we don't overwrite it here.
+
+    return this.donations.findOne({
+      where: { id: saved.id },
+      relations: ['campaign'],
+    }) as Promise<Donation>;
+  }
+
+  // ── Admin: program / campaign management ──────────────────────────────────
+
+  /**
+   * Per-campaign aggregates from completed donation transactions, grouped by
+   * campaign AND currency so a campaign's received total is summed in its own
+   * currency only (we never add e.g. USD gifts into an RWF total).
+   */
+  private async getReceivedMap(): Promise<{
+    counts: Map<string, number>;
+    received: Map<string, number>;
+  }> {
+    const agg = await this.donations
+      .createQueryBuilder('donation')
+      .select('donation.campaignId', 'campaignId')
+      .addSelect('donation.currency', 'currency')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect(
+        `COALESCE(SUM(donation.amount) FILTER (WHERE donation.status = 'completed'), 0)`,
+        'received',
+      )
+      .where('donation.campaignId IS NOT NULL')
+      .groupBy('donation.campaignId')
+      .addGroupBy('donation.currency')
+      .getRawMany();
+
+    const counts = new Map<string, number>();
+    const received = new Map<string, number>();
+    for (const r of agg) {
+      counts.set(r.campaignId, (counts.get(r.campaignId) ?? 0) + Number(r.count));
+      received.set(`${r.campaignId}|${r.currency}`, Number(r.received));
+    }
+    return { counts, received };
+  }
+
+  /** All campaigns with live received totals + donation counts. */
+  async adminListCampaigns() {
+    const campaigns = await this.campaigns.find({ order: { startDate: 'ASC' } });
+    const { counts, received } = await this.getReceivedMap();
+
+    return campaigns.map((c) => ({
+      ...c,
+      targetAmount: Number(c.targetAmount),
+      raisedAmount: Number(c.raisedAmount),
+      receivedAmount: received.get(`${c.id}|${c.currency}`) ?? 0,
+      donationCount: counts.get(c.id) ?? 0,
+    }));
+  }
+
+  private slugify(title: string): string {
+    return title
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 180);
+  }
+
+  async createCampaign(dto: CreateCampaignDto, userId: string): Promise<DonationCampaign> {
+    let slug = this.slugify(dto.title) || 'campaign';
+    // Ensure slug uniqueness
+    if (await this.campaigns.findOne({ where: { slug } })) {
+      slug = `${slug}-${Date.now().toString(36)}`;
+    }
+
+    const campaign = this.campaigns.create({
+      title: dto.title,
+      slug,
+      description: dto.description,
+      targetAmount: dto.targetAmount,
+      currency: dto.currency ?? 'RWF',
+      fundType: dto.fundType ?? 'general',
+      startDate: dto.startDate ?? new Date().toISOString().slice(0, 10),
+      endDate: dto.endDate ?? null,
+      heroImageUrl: dto.heroImageUrl ?? null,
+      status: dto.status ?? CampaignStatus.ACTIVE,
+      createdBy: userId,
+    });
+    return this.campaigns.save(campaign);
+  }
+
+  async updateCampaign(id: string, dto: UpdateCampaignDto): Promise<DonationCampaign> {
+    const campaign = await this.campaigns.findOne({ where: { id } });
+    if (!campaign) throw new NotFoundException('Campaign not found');
+
+    Object.assign(campaign, {
+      title: dto.title ?? campaign.title,
+      description: dto.description ?? campaign.description,
+      targetAmount: dto.targetAmount ?? campaign.targetAmount,
+      raisedAmount: dto.raisedAmount ?? campaign.raisedAmount,
+      currency: dto.currency ?? campaign.currency,
+      fundType: dto.fundType ?? campaign.fundType,
+      startDate: dto.startDate ?? campaign.startDate,
+      endDate: dto.endDate !== undefined ? dto.endDate : campaign.endDate,
+      heroImageUrl: dto.heroImageUrl !== undefined ? dto.heroImageUrl : campaign.heroImageUrl,
+      status: dto.status ?? campaign.status,
+    });
+    return this.campaigns.save(campaign);
+  }
+
+  async deleteCampaign(id: string): Promise<{ id: string }> {
+    const campaign = await this.campaigns.findOne({ where: { id } });
+    if (!campaign) throw new NotFoundException('Campaign not found');
+    await this.campaigns.softRemove(campaign);
+    return { id };
+  }
+}

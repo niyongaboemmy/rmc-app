@@ -38,9 +38,21 @@ export default function middleware(req: NextRequest) {
   const locale = localeMatch?.[1] ?? 'en';
   const routePath = localeMatch?.[2] ?? '/';
 
-  // Check auth token from cookies (set by the API client after login)
-  const token = req.cookies.get('rmc_access_token')?.value;
-  const isLoggedIn = token ? isTokenValid(token) : false;
+  // Check auth tokens from cookies (set by the API client after login).
+  //
+  // The access token (JWT) is short-lived (15 min). Once it expires the browser
+  // drops its cookie, but the session is still valid as long as the refresh
+  // token (7 days) is present — the client-side axios interceptor transparently
+  // mints a new access token on the next API call. So we must NOT redirect a
+  // user to /login just because their access token expired mid-session; treat
+  // them as logged in if EITHER the access token is still valid OR a refresh
+  // token cookie exists. (The refresh token is an opaque UUID, not a JWT, so we
+  // can only check for its presence; its own cookie max-age enforces expiry,
+  // and the backend JWT guards still protect the actual data.)
+  const accessToken = req.cookies.get('rmc_access_token')?.value;
+  const refreshToken = req.cookies.get('rmc_refresh_token')?.value;
+  const isLoggedIn =
+    (accessToken ? isTokenValid(accessToken) : false) || Boolean(refreshToken);
 
   // Redirect authenticated users away from guest-only pages
   if (isLoggedIn && GUEST_ONLY_PATTERNS.some((p) => p.test(routePath))) {

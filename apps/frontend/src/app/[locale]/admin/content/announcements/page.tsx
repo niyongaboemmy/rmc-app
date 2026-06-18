@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -11,12 +11,23 @@ import {
 } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import {
+  ContentKeys,
+  ANNOUNCEMENTS_DEFAULT,
+  getSiteContent,
+  saveSiteContent,
+  tri,
+  type Tri,
+  type AnnouncementsContent,
+  type AnnouncementItem,
+  type AnnouncementPriority,
+} from '@/lib/content-api';
+import {
   Bell, ArrowLeft, Plus, Edit2, Trash2,
-  ToggleLeft, ToggleRight, AlertTriangle, Info,
+  AlertTriangle, Info, Save,
 } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
-type Priority = 'normal' | 'high' | 'urgent';
+type Priority = AnnouncementPriority;
 
 const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = [
   { key: 'en', label: 'English', dir: 'ltr', flag: 'EN' },
@@ -25,50 +36,35 @@ const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = 
 ];
 
 const PRIORITY_CONFIG: Record<Priority, { label: string; badge: string; icon: React.ReactNode; row: string }> = {
-  normal:  { label: 'Normal',  badge: 'bg-blue-100 text-blue-700',   icon: <Info className="w-3.5 h-3.5" />,          row: 'hover:border-blue-100'   },
-  high:    { label: 'High',    badge: 'bg-orange-100 text-orange-700',icon: <Bell className="w-3.5 h-3.5" />,          row: 'hover:border-orange-100' },
-  urgent:  { label: 'Urgent',  badge: 'bg-red-100 text-red-700',     icon: <AlertTriangle className="w-3.5 h-3.5" />, row: 'hover:border-red-100'    },
+  normal:  { label: 'Normal',  badge: 'bg-blue-100 text-blue-700',    icon: <Info className="w-3.5 h-3.5" />,          row: 'hover:border-blue-100'   },
+  high:    { label: 'High',    badge: 'bg-orange-100 text-orange-700', icon: <Bell className="w-3.5 h-3.5" />,          row: 'hover:border-orange-100' },
+  urgent:  { label: 'Urgent',  badge: 'bg-red-100 text-red-700',      icon: <AlertTriangle className="w-3.5 h-3.5" />, row: 'hover:border-red-100'    },
 };
 
-interface Announcement {
-  id: string;
-  titleEn: string; titleRw: string; titleAr: string;
-  contentEn: string; contentRw: string; contentAr: string;
-  priority: Priority;
-  publishAt: string;
-  isActive: boolean;
+const EMPTY: AnnouncementItem = {
+  title: tri(''),
+  content: tri(''),
+  priority: 'normal',
+  publishAt: new Date().toISOString(),
+};
+
+/** ISO timestamp → "YYYY-MM-DD" for a date input. */
+function toDateInput(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
 }
 
-const EMPTY: Omit<Announcement, 'id'> = {
-  titleEn: '', titleRw: '', titleAr: '',
-  contentEn: '', contentRw: '', contentAr: '',
-  priority: 'normal',
-  publishAt: new Date().toISOString().slice(0, 10),
-  isActive: true,
-};
+/** "YYYY-MM-DD" → ISO timestamp (preserving the previous time-of-day). */
+function fromDateInput(date: string, prevIso: string): string {
+  if (!date) return prevIso;
+  const prev = new Date(prevIso);
+  const time = Number.isNaN(prev.getTime()) ? '00:00:00.000Z' : prev.toISOString().slice(11);
+  return `${date}T${time}`;
+}
 
-const MOCK: Announcement[] = [
-  {
-    id: '1',
-    titleEn: 'Eid al-Adha Prayer Schedule',
-    titleRw: 'Gahunda y\'Isengesho rya Eid al-Adha',
-    titleAr: 'جدول صلاة عيد الأضحى',
-    contentEn: 'Eid prayer will be held at Amahoro National Stadium on June 16th at 07:00 AM. All members are encouraged to attend.',
-    contentRw: 'Isengesho rya Eid rizabera ku Kigali Convention Centre kuwa 16 Kamena saa moya z\'inzota. Abanyamuryango bose basabwa kugira uruhare.',
-    contentAr: 'ستقام صلاة العيد في ملعب أماهورو الوطني في السادس عشر من يونيو الساعة السابعة صباحاً. جميع الأعضاء مدعوون للحضور.',
-    priority: 'urgent', publishAt: '2025-06-10', isActive: true,
-  },
-  {
-    id: '2',
-    titleEn: 'Membership Registration Now Open',
-    titleRw: 'Kwiyandikisha mu Muryango Bifunguye',
-    titleAr: 'تسجيل العضوية مفتوح الآن',
-    contentEn: 'Annual membership registration for 2025 is now open. Visit your nearest RMC office or register online through the member portal.',
-    contentRw: 'Kwiyandikisha mu muryango ku mwaka wa 2025 bifunguye. Sura ibiro bya RMC biri hafi yawe cyangwa iyandikishe kuri interineti.',
-    contentAr: 'تسجيل العضوية السنوية لعام 2025 مفتوح الآن. قم بزيارة أقرب مكتب لـ RMC أو سجل عبر الإنترنت.',
-    priority: 'normal', publishAt: '2025-06-01', isActive: true,
-  },
-];
+function setTri(t: Tri, lang: Lang, value: string): Tri {
+  return { ...t, [lang]: value };
+}
 
 export default function AnnouncementsPage() {
   return (
@@ -82,45 +78,86 @@ function AnnouncementsManager() {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
-  const [items, setItems] = useState<Announcement[]>(MOCK);
+  const [content, setContent] = useState<AnnouncementsContent>(ANNOUNCEMENTS_DEFAULT);
   const [lang, setLang] = useState<Lang>('en');
   const [priorityFilter, setPriorityFilter] = useState<'all' | Priority>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Announcement | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<Omit<Announcement, 'id'>>(EMPTY);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState<AnnouncementItem>(EMPTY);
   const [modalLang, setModalLang] = useState<Lang>('en');
 
-  const openCreate = () => { setEditingItem(null); setForm(EMPTY); setModalLang('en'); setIsModalOpen(true); };
-  const openEdit = (item: Announcement) => { setEditingItem(item); setForm({ ...item }); setIsModalOpen(true); };
-  const set = <K extends keyof Omit<Announcement, 'id'>>(field: K, value: Omit<Announcement, 'id'>[K]) => setForm((p) => ({ ...p, [field]: value }));
+  const items = content.items;
+
+  // Load any previously saved content; fall back to defaults if none exists.
+  useEffect(() => {
+    let active = true;
+    getSiteContent<AnnouncementsContent>(ContentKeys.announcements)
+      .then((data) => {
+        if (active && data) setContent({ ...ANNOUNCEMENTS_DEFAULT, ...data });
+      })
+      .catch(() => {
+        /* keep defaults — section simply hasn't been saved yet */
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const openCreate = () => { setEditingIndex(null); setForm({ ...EMPTY, publishAt: new Date().toISOString() }); setModalLang('en'); setIsModalOpen(true); };
+  const openEdit = (index: number) => { setEditingIndex(index); setForm({ ...items[index] }); setModalLang('en'); setIsModalOpen(true); };
+  const set = <K extends keyof AnnouncementItem>(field: K, value: AnnouncementItem[K]) => setForm((p) => ({ ...p, [field]: value }));
+
+  /** Persist a fully-formed AnnouncementsContent to the store and sync local state. */
+  const persist = useCallback(async (next: AnnouncementsContent, okMsg: string) => {
+    setSaving(true);
+    try {
+      const saved = await saveSiteContent(ContentKeys.announcements, next);
+      setContent({ ...ANNOUNCEMENTS_DEFAULT, ...saved });
+      success(okMsg);
+      return true;
+    } catch {
+      error('Could not save. Please try again.');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [success, error]);
+
+  const setHeader = useCallback((field: 'title' | 'subtitle', value: Tri) => {
+    setContent((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleSaveHeader = useCallback(async () => {
+    await persist(content, 'Section header saved.');
+  }, [content, persist]);
 
   const handleSave = useCallback(async () => {
-    if (!form.titleEn.trim() || !form.contentEn.trim()) {
+    if (!form.title.en.trim() || !form.content.en.trim()) {
       error('English title and content are required.'); return;
     }
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    if (editingItem) {
-      setItems((prev) => prev.map((i) => i.id === editingItem.id ? { ...form, id: i.id } : i));
-      success('Announcement updated.');
-    } else {
-      setItems((prev) => [...prev, { ...form, id: Date.now().toString() }]);
-      success('Announcement added.');
-    }
-    setSaving(false); setIsModalOpen(false);
-  }, [form, editingItem, success, error]);
+    const nextItems = editingIndex !== null
+      ? items.map((it, i) => (i === editingIndex ? form : it))
+      : [...items, form];
+    const ok = await persist({ ...content, items: nextItems }, editingIndex !== null ? 'Announcement updated.' : 'Announcement added.');
+    if (ok) setIsModalOpen(false);
+  }, [form, editingIndex, items, content, persist, error]);
 
   const handleDelete = useCallback(async () => {
-    if (!deleteId) return;
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setItems((prev) => prev.filter((i) => i.id !== deleteId));
-    success('Deleted.'); setSaving(false); setDeleteId(null);
-  }, [deleteId, success]);
+    if (deleteIndex === null) return;
+    const nextItems = items.filter((_, i) => i !== deleteIndex);
+    const ok = await persist({ ...content, items: nextItems }, 'Deleted.');
+    if (ok) setDeleteIndex(null);
+  }, [deleteIndex, items, content, persist]);
 
-  const filtered = priorityFilter === 'all' ? items : items.filter((i) => i.priority === priorityFilter);
+  const filtered = items
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => priorityFilter === 'all' || item.priority === priorityFilter);
 
   return (
     <div className="space-y-6">
@@ -135,12 +172,43 @@ function AnnouncementsManager() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Announcements</h1>
-            <p className="text-xs text-gray-400">{items.length} total · {items.filter((i) => i.isActive).length} active</p>
+            <p className="text-xs text-gray-400">{loading ? 'Loading…' : `${items.length} total`}</p>
           </div>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-red-600/20 transition-colors">
+        <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-red-600/20 transition-colors">
           <Plus className="w-4 h-4" /> Add Announcement
         </button>
+      </div>
+
+      {/* Section header editor */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-700">Section Header</h2>
+          <button onClick={handleSaveHeader} disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-semibold rounded-lg transition-colors">
+            {saving ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Save Header
+          </button>
+        </div>
+        <LanguageTabs lang={lang} onChange={setLang} />
+        {LANGS.map(({ key: l, dir }) => {
+          if (l !== lang) return null;
+          const fc = l === 'ar' ? 'font-arabic' : '';
+          return (
+            <div key={l} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+                <input dir={dir} type="text" value={content.title[l]} onChange={(e) => setHeader('title', setTri(content.title, l, e.target.value))}
+                  className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${fc}`} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Subtitle</label>
+                <input dir={dir} type="text" value={content.subtitle[l]} onChange={(e) => setHeader('subtitle', setTri(content.subtitle, l, e.target.value))}
+                  className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${fc}`} />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Filters row */}
@@ -164,12 +232,12 @@ function AnnouncementsManager() {
             <p className="text-sm">No announcements yet.</p>
           </div>
         )}
-        {filtered.map((item) => {
-          const title = lang === 'en' ? item.titleEn : lang === 'rw' ? item.titleRw : item.titleAr;
-          const content = lang === 'en' ? item.contentEn : lang === 'rw' ? item.contentRw : item.contentAr;
+        {filtered.map(({ item, index }) => {
+          const title = item.title[lang] || item.title.en;
+          const body = item.content[lang] || item.content.en;
           const pc = PRIORITY_CONFIG[item.priority];
           return (
-            <div key={item.id} className={`group flex gap-4 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md ${item.isActive ? `bg-white border-gray-100 ${pc.row}` : 'bg-gray-50/60 border-gray-100 opacity-60'}`}>
+            <div key={index} className={`group flex gap-4 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md bg-white border-gray-100 ${pc.row}`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.priority === 'urgent' ? 'bg-red-50' : item.priority === 'high' ? 'bg-orange-50' : 'bg-blue-50'}`}>
                 <span className={item.priority === 'urgent' ? 'text-red-600' : item.priority === 'high' ? 'text-orange-600' : 'text-blue-600'}>
                   {pc.icon}
@@ -178,19 +246,16 @@ function AnnouncementsManager() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${pc.badge}`}>{item.priority}</span>
-                  <span className="text-xs text-gray-400">{item.publishAt}</span>
+                  <span className="text-xs text-gray-400">{toDateInput(item.publishAt)}</span>
                 </div>
-                <p className="text-sm font-bold text-gray-900 mb-1 line-clamp-1" dir={lang === 'ar' ? 'rtl' : 'ltr'}>{title || '—'}</p>
-                <p className="text-xs text-gray-500 line-clamp-2" dir={lang === 'ar' ? 'rtl' : 'ltr'}>{content}</p>
+                <p className={`text-sm font-bold text-gray-900 mb-1 line-clamp-1 ${lang === 'ar' ? 'font-arabic' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>{title || '—'}</p>
+                <p className={`text-xs text-gray-500 line-clamp-2 ${lang === 'ar' ? 'font-arabic' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>{body}</p>
               </div>
               <div className="flex flex-col items-end gap-2 shrink-0">
                 <div className="flex items-center gap-1">
-                  <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setDeleteId(item.id)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => openEdit(index)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setDeleteIndex(index)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
-                <button onClick={() => setItems((prev) => prev.map((i) => i.id === item.id ? { ...i, isActive: !i.isActive } : i))}>
-                  {item.isActive ? <ToggleRight className="w-6 h-6 text-red-500" /> : <ToggleLeft className="w-6 h-6 text-gray-300" />}
-                </button>
               </div>
             </div>
           );
@@ -200,7 +265,7 @@ function AnnouncementsManager() {
       {/* Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
         <ModalHeader>
-          <ModalTitle>{editingItem ? 'Edit Announcement' : 'New Announcement'}</ModalTitle>
+          <ModalTitle>{editingIndex !== null ? 'Edit Announcement' : 'New Announcement'}</ModalTitle>
           <ModalDescription>Fill in the announcement in all three languages.</ModalDescription>
         </ModalHeader>
         <ModalBody className="space-y-5">
@@ -218,7 +283,7 @@ function AnnouncementsManager() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">Publish Date</label>
-              <input type="date" value={form.publishAt} onChange={(e) => set('publishAt', e.target.value)}
+              <input type="date" value={toDateInput(form.publishAt)} onChange={(e) => set('publishAt', fromDateInput(e.target.value, form.publishAt))}
                 className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent" />
             </div>
           </div>
@@ -237,20 +302,16 @@ function AnnouncementsManager() {
               {LANGS.map(({ key: l, dir }) => {
                 if (l !== modalLang) return null;
                 const fc = l === 'ar' ? 'font-arabic' : '';
-                const t = l === 'en' ? form.titleEn : l === 'rw' ? form.titleRw : form.titleAr;
-                const c = l === 'en' ? form.contentEn : l === 'rw' ? form.contentRw : form.contentAr;
-                const setT = (v: string) => set(l === 'en' ? 'titleEn' : l === 'rw' ? 'titleRw' : 'titleAr', v);
-                const setC = (v: string) => set(l === 'en' ? 'contentEn' : l === 'rw' ? 'contentRw' : 'contentAr', v);
                 return (
                   <div key={l} className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title {l === 'en' && <span className="text-red-500">*</span>}</label>
-                      <input dir={dir} type="text" value={t} onChange={(e) => setT(e.target.value)}
+                      <input dir={dir} type="text" value={form.title[l]} onChange={(e) => set('title', setTri(form.title, l, e.target.value))}
                         className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${fc}`} />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">Content {l === 'en' && <span className="text-red-500">*</span>}</label>
-                      <textarea dir={dir} rows={4} value={c} onChange={(e) => setC(e.target.value)}
+                      <textarea dir={dir} rows={4} value={form.content[l]} onChange={(e) => set('content', setTri(form.content, l, e.target.value))}
                         className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none ${fc}`} />
                     </div>
                   </div>
@@ -258,24 +319,17 @@ function AnnouncementsManager() {
               })}
             </div>
           </div>
-
-          <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100">
-            <div><p className="text-sm font-semibold text-gray-800">Active</p><p className="text-xs text-gray-400">Show on homepage</p></div>
-            <button type="button" onClick={() => set('isActive', !form.isActive)}>
-              {form.isActive ? <ToggleRight className="w-8 h-8 text-red-500" /> : <ToggleLeft className="w-8 h-8 text-gray-300" />}
-            </button>
-          </div>
         </ModalBody>
         <ModalFooter>
           <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
           <button type="button" onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
             {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-            {editingItem ? 'Save Changes' : 'Add Announcement'}
+            {editingIndex !== null ? 'Save Changes' : 'Add Announcement'}
           </button>
         </ModalFooter>
       </Modal>
 
-      <ConfirmModal isOpen={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={handleDelete} title="Delete announcement?" description="This will remove the announcement from the homepage." confirmLabel="Delete" cancelLabel="Keep" variant="danger" isLoading={saving} />
+      <ConfirmModal isOpen={deleteIndex !== null} onClose={() => setDeleteIndex(null)} onConfirm={handleDelete} title="Delete announcement?" description="This will remove the announcement from the homepage." confirmLabel="Delete" cancelLabel="Keep" variant="danger" isLoading={saving} />
     </div>
   );
 }

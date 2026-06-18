@@ -1,26 +1,32 @@
 'use client';
 
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import {
+  ContentKeys,
+  PARTNERS_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  pick,
+  isRtl,
+  type PartnersContent,
+  type PartnerItem,
+} from '@/lib/content-api';
 
-interface Partner {
-  name: string;
+function PartnerCard({
+  partner,
+  sector,
+  delay,
+  visible,
+}: {
+  partner: PartnerItem;
   sector: string;
-  logo: string;
-  website?: string;
-}
-
-/* Real RMC partners — names, sectors & logos sourced from the live registry (rwandamuslim.org).
-   Logos are stored locally in /public/partners for reliability. */
-const PARTNERS: Partner[] = [
-  { name: 'ADEF', sector: 'Education Foundation', logo: '/partners/adef.png' },
-  { name: 'Direct Aid', sector: 'Social & Education', logo: '/partners/direct-aid.png', website: 'https://direct-aid.org/' },
-  { name: 'IERA', sector: 'Dawah', logo: '/partners/iera.png', website: 'https://iera.org/' },
-  { name: 'WAMY', sector: 'Youth Development', logo: '/partners/wamy.jpg', website: 'https://www.wamy.co.uk/' },
-];
-
-function PartnerCard({ partner, delay, visible }: { partner: Partner; delay: number; visible: boolean }) {
+  delay: number;
+  visible: boolean;
+}) {
   const linked = Boolean(partner.website);
 
   const cardClass = `group relative flex h-full flex-col items-center rounded-3xl border border-gray-200/70 bg-white px-6 py-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.16)] transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_60px_-24px_rgba(26,122,74,0.28)] ${
@@ -29,12 +35,6 @@ function PartnerCard({ partner, delay, visible }: { partner: Partner; delay: num
 
   const content = (
     <>
-      {/* Gold top accent — appears on hover */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-0.5 rounded-t-3xl bg-gradient-to-r from-rmc-gold to-rmc-gold-light opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      />
-
       {/* External-link hint — only for partners with a website */}
       {linked && (
         <span
@@ -63,7 +63,7 @@ function PartnerCard({ partner, delay, visible }: { partner: Partner; delay: num
 
       {/* Sector */}
       <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
-        {partner.sector}
+        {sector}
       </p>
     </>
   );
@@ -94,8 +94,35 @@ function PartnerCard({ partner, delay, visible }: { partner: Partner; delay: num
 }
 
 export function PartnersSection() {
+  const { locale } = useParams<{ locale: string }>();
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
   const { ref: gridRef, visible: gridVisible } = useScrollReveal(0.05);
+
+  // Content managed from Admin → Content → Our Partners. Falls back to the
+  // built-in defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<PartnersContent>(PARTNERS_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<PartnersContent>(ContentKeys.partners)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(PARTNERS_DEFAULT, data));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const rtl = isRtl(locale);
+  const fontClass = rtl ? 'font-arabic' : '';
+  const dir = rtl ? 'rtl' : 'ltr';
+
+  const eyebrow = pick(content.eyebrow, locale);
+  const title = pick(content.title, locale);
+  const lede = pick(content.lede, locale);
+  const footerNote = pick(content.footerNote, locale);
 
   return (
     <section className="relative overflow-hidden bg-transparent py-12 md:py-16">
@@ -116,37 +143,55 @@ export function PartnersSection() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <span className="inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm">
+          <span
+            dir={dir}
+            className={`inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm ${fontClass}`}
+          >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-            Working Together
+            {eyebrow}
           </span>
 
-          <h2 className="mt-7 text-3xl font-bold text-gray-900 md:text-[2.6rem] md:leading-tight">
-            Our <span className="title-underline">Partners</span>
+          <h2
+            dir={dir}
+            className={`mt-7 text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${fontClass}`}
+          >
+            <span className="text-rmc-green">{title}</span>
           </h2>
 
-          <p className="mx-auto mt-9 max-w-xl text-sm leading-relaxed text-gray-500 md:text-base">
-            RMC works alongside leading international and regional organizations to educate, uplift,
-            and serve the Muslim community of Rwanda.
+          <p
+            dir={dir}
+            className={`mx-auto mt-9 max-w-xl text-sm leading-relaxed text-gray-500 md:text-base ${fontClass}`}
+          >
+            {lede}
           </p>
         </div>
 
         {/* Partner logo wall */}
         <div ref={gridRef} className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
-          {PARTNERS.map((partner, i) => (
-            <PartnerCard key={partner.name} partner={partner} delay={i * 90} visible={gridVisible} />
+          {content.items.map((partner, i) => (
+            <PartnerCard
+              key={partner.name}
+              partner={partner}
+              sector={pick(partner.sector, locale)}
+              delay={i * 90}
+              visible={gridVisible}
+            />
           ))}
         </div>
 
         {/* Footer note */}
         <p
-          className={`mt-12 text-center text-sm text-gray-500 transition-all duration-700 delay-500 motion-reduce:transition-none ${
+          dir={dir}
+          className={`mt-12 text-center text-sm text-gray-500 transition-all duration-700 delay-500 motion-reduce:transition-none ${fontClass} ${
             titleVisible ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          Interested in partnering with RMC?{' '}
-          <a href="mailto:info@rwandamuslim.org" className="font-semibold text-rmc-green hover:underline">
-            Get in touch
+          {footerNote}{' '}
+          <a
+            href={`mailto:${content.contactEmail}`}
+            className="font-semibold text-rmc-green hover:underline"
+          >
+            {pick({ en: 'Get in touch', rw: 'Twandikire', ar: 'تواصل معنا' }, locale)}
           </a>
         </p>
       </div>
