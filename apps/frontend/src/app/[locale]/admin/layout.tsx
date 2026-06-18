@@ -5,6 +5,9 @@ import { usePathname } from 'next/navigation';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopBar } from '@/components/admin/AdminTopBar';
 
+const SIDEBAR_COLLAPSED_W = '4rem';   // lg:w-16
+const SIDEBAR_EXPANDED_W  = '15rem';  // lg:w-60
+
 const STORAGE_KEY = 'rmc_admin_sidebar_collapsed';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +33,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
+
+  // Keep the CSS variable in sync so Modal backdrop never covers the sidebar.
+  useEffect(() => {
+    const update = () => {
+      const isMobile = window.innerWidth < 1024;
+      const w = isMobile ? '0px' : (collapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W);
+      document.documentElement.style.setProperty('--admin-sidebar-w', w);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [collapsed]);
 
   const toggleDesktop = useCallback(() => {
     setCollapsed((prev) => {

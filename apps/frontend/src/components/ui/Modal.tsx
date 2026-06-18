@@ -44,7 +44,8 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
   return createPortal(
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-y-0 right-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      style={{ left: 'var(--admin-sidebar-w, 0px)' }}
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
