@@ -228,7 +228,7 @@ export function Navbar() {
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
                   <Link
                     href={`/${locale}/admin/members`}
-                    className="text-[13px] font-medium px-2.5 py-1.5 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/10"
+                    className="text-[13px] font-medium px-3 py-1.5 rounded-full border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 transition-all duration-200 text-white/80 hover:text-white"
                   >
                     {t('admin')}
                   </Link>
