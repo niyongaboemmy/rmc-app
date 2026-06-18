@@ -1,7 +1,7 @@
 import {
   Controller, Get, Post, Patch, Param, Body, Query, ParseUUIDPipe,
 } from '@nestjs/common';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsBoolean } from 'class-validator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MarriageService } from './marriage.service';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
@@ -10,6 +10,11 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
 import { User } from '../users/entities/user.entity';
+
+class VerifyDocumentDto {
+  @IsBoolean()
+  verified: boolean;
+}
 
 @ApiTags('Marriage — Admin')
 @Controller('admin/marriage')
@@ -78,6 +83,18 @@ export class MarriageAdminController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.service.adminConfirmCashPayment(id, user.id);
+  }
+
+  @Patch('applications/:id/documents/:docId/verify')
+  @Permissions(Permission.MARRIAGE_MANAGE)
+  @ApiOperation({ summary: 'Mark a submitted document as verified / unverified' })
+  verifyDocument(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('docId', ParseUUIDPipe) docId: string,
+    @Body() body: VerifyDocumentDto,
+  ) {
+    return this.service.adminVerifyDocument(id, docId, user.id, body.verified);
   }
 
   @Post('applications/:id/wedding-photo')

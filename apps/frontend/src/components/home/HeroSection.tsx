@@ -4,27 +4,15 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, FileText, TrendingUp, ChevronDown } from 'lucide-react';
-
-/* Real RMC community event photos */
-const SLIDES = [
-  {
-    src: 'https://pbs.twimg.com/media/HEQLxPtaUAADjH2?format=jpg&name=large',
-    quote: {
-      ar: 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا',
-      en: 'Indeed, with hardship [will be] ease.',
-      ref: 'Ash-Sharh 94:6',
-    },
-  },
-  {
-    src: 'https://pbs.twimg.com/media/HESeGQZWAAAvdtq?format=jpg&name=large',
-    quote: {
-      ar: 'وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا',
-      en: 'And whoever fears Allah — He will make for him a way out.',
-      ref: 'At-Talaq 65:2',
-    },
-  },
-];
+import { ChevronDown } from 'lucide-react';
+import {
+  ContentKeys,
+  HERO_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  pick,
+  type HeroContent,
+} from '@/lib/content-api';
 
 function SlideIndicators({
   total,
@@ -89,6 +77,33 @@ export function HeroSection() {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
 
+  // Content managed from Admin → Content → Hero. Falls back to the built-in
+  // defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<HeroContent>(HERO_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<HeroContent>(ContentKeys.hero)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(HERO_DEFAULT, data));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const slides = content.slides;
+  const slideCount = slides.length;
+
+  /* Split the headline so the lead ("Welcome to the") reads in white and the
+     brand name (the last words) reads in gold — two distinct colours. */
+  const headlineWords = pick(content.headline, locale).trim().split(/\s+/);
+  const accentCount = Math.min(3, Math.max(1, headlineWords.length - 1));
+  const headlineLead = headlineWords.slice(0, headlineWords.length - accentCount).join(' ');
+  const headlineAccent = headlineWords.slice(headlineWords.length - accentCount).join(' ');
+
   /* Auto-advance slideshow (paused for reduced-motion users) */
   useEffect(() => {
     if (
@@ -97,15 +112,16 @@ export function HeroSection() {
     ) {
       return;
     }
+    if (slideCount <= 1) return;
     const id = setInterval(() => {
       setTransitioning(true);
       setTimeout(() => {
-        setCurrent((c) => (c + 1) % SLIDES.length);
+        setCurrent((c) => (c + 1) % slideCount);
         setTransitioning(false);
       }, 600);
     }, 6000);
     return () => clearInterval(id);
-  }, []);
+  }, [slideCount]);
 
   const goTo = (i: number) => {
     if (i === current) return;
@@ -119,14 +135,14 @@ export function HeroSection() {
   return (
     <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-rmc-green-deep">
       {/* ── Background image layer (crossfade) ── */}
-      {SLIDES.map((s, i) => (
+      {slides.map((src, i) => (
         <div
-          key={s.src}
+          key={src}
           className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out motion-reduce:transition-none"
           style={{ opacity: i === current && !transitioning ? 1 : 0 }}
         >
           <Image
-            src={s.src}
+            src={src}
             alt=""
             fill
             priority={i === 0}
@@ -136,37 +152,18 @@ export function HeroSection() {
         </div>
       ))}
 
-      {/* ── Directional overlay — image stays clear on the left, text readable on the right ── */}
-      <div className="absolute inset-0 bg-gradient-to-l from-black/75 via-black/35 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/15" />
+      {/* ── Dark backdrop for the right-aligned copy; the photo stays visible on the left ── */}
+      <div className="absolute inset-0 bg-gradient-to-l from-black/90 via-black/50 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20" />
 
       {/* ── Subtle Islamic pattern on top ── */}
       <div className="absolute inset-0 pattern-islamic opacity-30" />
 
-      {/* ── Verse of the day — continuous right-to-left ticker below the navbar ── */}
-      <div className="absolute top-[76px] md:top-[84px] inset-x-0 z-20 overflow-hidden border-y border-white/10 bg-black/30 backdrop-blur-sm">
-        <div className="flex w-max animate-marquee py-2">
-          {[0, 1].map((dup) => (
-            <div key={dup} className="flex items-center shrink-0" aria-hidden={dup === 1}>
-              {SLIDES.map((s, i) => (
-                <span key={i} className="flex items-center gap-2.5 px-12 whitespace-nowrap text-xs">
-                  <span className="font-arabic text-white" dir="rtl">
-                    {s.quote.ar}
-                  </span>
-                  <span className="text-white/30">—</span>
-                  <span className="text-white/70 italic">&ldquo;{s.quote.en}&rdquo;</span>
-                  <span className="text-rmc-gold text-[10px] font-semibold tracking-wide">
-                    {s.quote.ref}
-                  </span>
-                  <span className="text-rmc-gold/40 pl-5" aria-hidden="true">
-                    ◆
-                  </span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* ── Soft radial halo behind the right-aligned copy, for extra legibility ── */}
+      <div
+        aria-hidden
+        className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/4 h-[36rem] w-[46rem] rounded-full bg-rmc-green/20 blur-[120px] pointer-events-none"
+      />
 
       {/* ── Floating particles ── */}
       <Particle top="20%" left="12%" dur="8s" delay="0s" size={5} />
@@ -179,46 +176,56 @@ export function HeroSection() {
       <div className="absolute bottom-0 left-0 right-0 h-28 z-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent pointer-events-none" />
 
       {/* ── Main content ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-32 pb-40">
-        <div className="max-w-2xl ml-auto text-right">
-          {/* Welcoming intro — the centerpiece */}
-          <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
-            {/* Warm Islamic greeting */}
-            <p
-              className="font-arabic text-rmc-gold-light text-lg md:text-xl mb-3 leading-loose drop-shadow"
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-24 pb-24">
+        <div className="max-w-xl ml-auto text-right">
+          {/* Greeting eyebrow — Arabic salam with a gold rule */}
+          <div className="animate-fade-up flex items-center justify-end gap-3" style={{ animationDelay: '160ms' }}>
+            <span
+              className="font-arabic text-rmc-gold-light text-base md:text-lg leading-loose drop-shadow"
               dir="rtl"
             >
-              السَّلَامُ عَلَيْكُمْ
-            </p>
-
-            <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4 drop-shadow-lg">
-              Rwanda Muslim Community
-            </h2>
-
-            <p className="text-white/70 text-sm md:text-base mb-10 max-w-md ml-auto leading-relaxed">
-              Faith, knowledge, and service — for the Muslim community across Rwanda.
-            </p>
+              {content.salam}
+            </span>
+            <span aria-hidden className="h-px w-8 rounded-full bg-gradient-to-l from-transparent to-rmc-gold" />
           </div>
+
+          {/* Headline */}
+          <h2
+            className={`animate-fade-up mt-5 text-3xl md:text-4xl font-bold text-white leading-tight tracking-tight drop-shadow-lg ${locale === 'ar' ? 'font-arabic' : ''}`}
+            style={{ animationDelay: '260ms' }}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          >
+            {headlineLead && <>{headlineLead} </>}
+            <span className="bg-gradient-to-r from-rmc-gold-light via-rmc-gold to-rmc-gold-light bg-clip-text text-transparent">
+              {headlineAccent}
+            </span>
+          </h2>
+
+          {/* Subtitle */}
+          <p
+            className={`animate-fade-up mt-5 ml-auto max-w-md text-white/75 text-sm md:text-[15px] leading-relaxed ${locale === 'ar' ? 'font-arabic' : ''}`}
+            style={{ animationDelay: '420ms' }}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          >
+            {pick(content.subtitle, locale)}
+          </p>
 
           {/* CTAs */}
           <div
-            className="flex flex-col sm:flex-row gap-4 items-end sm:items-center sm:justify-end animate-fade-up"
-            style={{ animationDelay: '460ms' }}
+            className="mt-8 flex flex-col sm:flex-row gap-3 items-end sm:items-center sm:justify-end animate-fade-up"
+            style={{ animationDelay: '500ms' }}
           >
             <Link
-              href={`/${locale}/services`}
-              className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300 motion-reduce:transition-none motion-reduce:hover:scale-100"
+              href={`/${locale}${content.primaryHref}`}
+              className={`group inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300 motion-reduce:transition-none motion-reduce:hover:scale-100 ${locale === 'ar' ? 'font-arabic' : ''}`}
             >
-              <FileText className="w-4 h-4 shrink-0" />
-              Request a Service
+              {pick(content.primaryCta, locale)}
             </Link>
             <Link
-              href={`/${locale}/activities`}
-              className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 motion-reduce:transition-none"
+              href={`/${locale}${content.secondaryHref}`}
+              className={`group inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 motion-reduce:transition-none ${locale === 'ar' ? 'font-arabic' : ''}`}
             >
-              <TrendingUp className="w-4 h-4 shrink-0" />
-              Trends
-              <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" />
+              {pick(content.secondaryCta, locale)}
             </Link>
           </div>
         </div>
@@ -227,7 +234,7 @@ export function HeroSection() {
       {/* ── Bottom chrome: slide dots + scroll cue, centered ── */}
       <div className="absolute inset-x-0 bottom-8 z-20 flex flex-col items-center gap-4">
         <div className="animate-fade-up pointer-events-auto" style={{ animationDelay: '560ms' }}>
-          <SlideIndicators total={SLIDES.length} current={current} onChange={goTo} />
+          <SlideIndicators total={slideCount} current={current} onChange={goTo} />
         </div>
         <div className="flex flex-col items-center gap-1 animate-bounce-soft motion-reduce:animate-none pointer-events-none">
           <ChevronDown className="w-5 h-5 text-white/35" />

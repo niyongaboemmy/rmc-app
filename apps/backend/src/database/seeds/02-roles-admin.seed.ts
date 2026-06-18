@@ -25,6 +25,8 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.PRAYER_TIMES_MANAGE,
   Permission.CONTENT_DELETE,
   Permission.FINANCE_VIEW,
+  Permission.DONATIONS_VIEW,
+  Permission.DONATIONS_MANAGE,
   Permission.REPORTS_EXPORT,
   Permission.USERS_VIEW,
   Permission.USERS_CREATE,

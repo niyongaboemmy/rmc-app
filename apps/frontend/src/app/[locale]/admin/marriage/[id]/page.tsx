@@ -8,6 +8,7 @@ import {
   Users, Shield, DollarSign, UserCheck, CheckCircle2, XCircle,
   AlertTriangle, FileText, Download, Clock, RefreshCw, Send,
   Banknote, X, Camera, ImageIcon, Eye, ZoomIn, ChevronLeft, ChevronRight,
+  Mail, ShieldCheck,
 } from 'lucide-react';
 import { fileUrl } from '@/lib/api';
 import axios from 'axios';
@@ -128,16 +129,35 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   additional:    'Additional Document',
 };
 
-interface LightboxProps {
-  docs: { url: string; name: string; mimeType: string }[];
-  index: number;
-  onClose: () => void;
+// Document types the applicant is expected to provide (mirrors the public wizard).
+const EXPECTED_DOCS: { type: string; required: boolean }[] = [
+  { type: 'groom_id',     required: true  },
+  { type: 'bride_id',     required: true  },
+  { type: 'portrait',     required: true  },
+  { type: 'wali_consent', required: false },
+];
+
+interface LightboxDoc {
+  id: string;
+  url: string;
+  name: string;
+  mimeType: string;
+  verified: boolean;
 }
 
-function Lightbox({ docs, index: initialIndex, onClose }: LightboxProps) {
+interface LightboxProps {
+  docs: LightboxDoc[];
+  index: number;
+  onClose: () => void;
+  onVerify: (docId: string, verified: boolean) => void;
+  verifyingId: string | null;
+}
+
+function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }: LightboxProps) {
   const [index, setIndex] = useState(initialIndex);
   const current = docs[index];
   const isImage = current.mimeType.startsWith('image/');
+  const verifying = verifyingId === current.id;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -155,6 +175,21 @@ function Lightbox({ docs, index: initialIndex, onClose }: LightboxProps) {
       <div className="flex items-center justify-between px-4 py-3 shrink-0" onClick={(e) => e.stopPropagation()}>
         <p className="text-white text-sm font-medium truncate max-w-xs">{current.name}</p>
         <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); onVerify(current.id, !current.verified); }}
+            disabled={verifying}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50',
+              current.verified
+                ? 'bg-green-500/90 hover:bg-green-500 text-white'
+                : 'bg-white/10 hover:bg-white/20 text-white',
+            )}
+          >
+            {verifying
+              ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              : current.verified ? <CheckCircle2 className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+            {current.verified ? 'Verified' : 'Mark verified'}
+          </button>
           <a
             href={current.url}
             target="_blank"
@@ -356,6 +391,19 @@ export default function AdminMarriageDetailPage() {
     }
   };
 
+  const handleVerifyDoc = async (docId: string, verified: boolean) => {
+    setActiveAction(`verify-${docId}`);
+    setActionError(null);
+    try {
+      const updated = await marriageApi.admin.verifyDocument(id, docId, verified);
+      setApp(updated);
+    } catch {
+      setActionError('Failed to update document verification');
+    } finally {
+      setActiveAction(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -421,6 +469,26 @@ export default function AdminMarriageDetailPage() {
       <div className="grid lg:grid-cols-3 gap-5">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-5">
+          {/* Submission */}
+          <Section title="Submission" icon={<UserCheck className="w-4 h-4" />}>
+            <div className="grid sm:grid-cols-2 gap-x-6">
+              <InfoRow label="Submitted by" value={app.applicant?.name} icon={<User className="w-4 h-4" />} />
+              <InfoRow label="Applicant email" value={app.applicant?.email} icon={<Mail className="w-4 h-4" />} />
+              <InfoRow label="Applicant phone" value={app.applicant?.phone} icon={<Phone className="w-4 h-4" />} />
+              <InfoRow label="Notification phone" value={app.notificationPhone} icon={<Phone className="w-4 h-4" />} />
+              <InfoRow
+                label="Submitted on"
+                value={app.submittedAt ? new Date(app.submittedAt).toLocaleString() : null}
+                icon={<Calendar className="w-4 h-4" />}
+              />
+              <InfoRow
+                label="Created on"
+                value={new Date(app.createdAt).toLocaleString()}
+                icon={<Clock className="w-4 h-4" />}
+              />
+            </div>
+          </Section>
+
           {/* Couple */}
           <Section title="Couple Details" icon={<Heart className="w-4 h-4" />}>
             <div className="grid sm:grid-cols-2 gap-x-6">
@@ -489,71 +557,125 @@ export default function AdminMarriageDetailPage() {
           </Section>
 
           {/* Documents */}
-          {app.documents && app.documents.length > 0 && (() => {
-            const docsWithUrl = app.documents.map((d) => ({
-              ...d,
-              url: fileUrl(d.fileKey),
-            }));
+          {(() => {
+            const docs = app.documents ?? [];
+            const docsWithUrl = docs.map((d) => ({ ...d, url: fileUrl(d.fileKey) }));
+            const presentTypes = new Set(docs.map((d) => d.documentType));
             return (
               <Section title="Submitted Documents" icon={<FileText className="w-4 h-4" />}>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {docsWithUrl.map((doc, i) => {
-                    const isImage = doc.mimeType.startsWith('image/');
+                {/* Required-document checklist — what was expected vs. what arrived */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {EXPECTED_DOCS.map((e) => {
+                    const present = presentTypes.has(e.type);
                     return (
-                      <button
-                        key={doc.id}
-                        onClick={() => setLightbox({ index: i })}
-                        className="group relative flex flex-col rounded-xl border border-gray-100 overflow-hidden hover:border-rose-300 hover:shadow-md transition-all text-left"
+                      <span
+                        key={e.type}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border',
+                          present
+                            ? 'bg-green-50 border-green-200 text-green-700'
+                            : e.required
+                              ? 'bg-red-50 border-red-200 text-red-600'
+                              : 'bg-gray-50 border-gray-200 text-gray-400',
+                        )}
                       >
-                        {/* Thumbnail / icon area */}
-                        <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
-                          {isImage ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={doc.url}
-                              alt={doc.fileName}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center gap-1.5">
-                              <FileText className="w-8 h-8 text-gray-300" />
-                              <span className="text-[10px] font-medium text-gray-400 uppercase">
-                                {doc.mimeType.split('/')[1] ?? 'file'}
-                              </span>
-                            </div>
-                          )}
-                          {/* Hover overlay */}
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <ZoomIn className="w-6 h-6 text-white" />
-                          </div>
-                          {/* Verified badge */}
-                          {doc.verified && (
-                            <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow">
-                              <CheckCircle2 className="w-3 h-3 text-white" />
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Label */}
-                        <div className="px-2.5 py-2">
-                          <p className="text-[11px] font-semibold text-gray-700 leading-tight truncate">
-                            {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType}
-                          </p>
-                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">{doc.fileName}</p>
-                          <p className="text-[10px] text-gray-300 mt-0.5">
-                            {(doc.fileSize / 1024).toFixed(0)} KB
-                          </p>
-                        </div>
-                      </button>
+                        {present ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                        {DOC_TYPE_LABELS[e.type] ?? e.type}
+                        {!e.required && <span className="opacity-60">· optional</span>}
+                      </span>
                     );
                   })}
                 </div>
 
-                {/* View-all strip */}
-                <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2">
-                  <Eye className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-xs text-gray-400">{app.documents.length} file{app.documents.length !== 1 ? 's' : ''} — click any to preview or download</span>
-                </div>
+                {docs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <FileText className="w-8 h-8 text-gray-300 mb-2" />
+                    <p className="text-sm font-medium text-gray-500">No documents submitted</p>
+                    <p className="text-xs text-gray-400 mt-1">The applicant has not uploaded any supporting documents.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {docsWithUrl.map((doc, i) => {
+                        const isImage = doc.mimeType.startsWith('image/');
+                        const verifying = activeAction === `verify-${doc.id}`;
+                        return (
+                          <div
+                            key={doc.id}
+                            className="group relative flex flex-col rounded-xl border border-gray-100 overflow-hidden hover:border-rose-300 hover:shadow-md transition-all"
+                          >
+                            {/* Thumbnail / icon area — click to preview */}
+                            <button
+                              type="button"
+                              onClick={() => setLightbox({ index: i })}
+                              className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden text-left"
+                            >
+                              {isImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={doc.url}
+                                  alt={doc.fileName}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center gap-1.5">
+                                  <FileText className="w-8 h-8 text-gray-300" />
+                                  <span className="text-[10px] font-medium text-gray-400 uppercase">
+                                    {doc.mimeType.split('/')[1] ?? 'file'}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Hover overlay */}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ZoomIn className="w-6 h-6 text-white" />
+                              </div>
+                              {/* Verified badge */}
+                              {doc.verified && (
+                                <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow">
+                                  <CheckCircle2 className="w-3 h-3 text-white" />
+                                </span>
+                              )}
+                            </button>
+
+                            {/* Label + verify toggle */}
+                            <div className="px-2.5 py-2">
+                              <p className="text-[11px] font-semibold text-gray-700 leading-tight truncate">
+                                {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-0.5 truncate">{doc.fileName}</p>
+                              <p className="text-[10px] text-gray-300 mt-0.5">
+                                {(doc.fileSize / 1024).toFixed(0)} KB
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => handleVerifyDoc(doc.id, !doc.verified)}
+                                disabled={verifying}
+                                className={cn(
+                                  'mt-2 w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors disabled:opacity-50',
+                                  doc.verified
+                                    ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                                    : 'border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-700',
+                                )}
+                              >
+                                {verifying
+                                  ? <RefreshCw className="w-3 h-3 animate-spin" />
+                                  : doc.verified
+                                    ? <><CheckCircle2 className="w-3 h-3" /> Verified</>
+                                    : <><ShieldCheck className="w-3 h-3" /> Mark verified</>}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* View-all strip */}
+                    <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2">
+                      <Eye className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-xs text-gray-400">{docs.length} file{docs.length !== 1 ? 's' : ''} — click any to preview or download</span>
+                    </div>
+                  </>
+                )}
               </Section>
             );
           })()}
@@ -825,12 +947,16 @@ export default function AdminMarriageDetailPage() {
       {lightbox && app.documents && app.documents.length > 0 && (
         <Lightbox
           docs={app.documents.map((d) => ({
+            id: d.id,
             url: fileUrl(d.fileKey),
             name: DOC_TYPE_LABELS[d.documentType] ?? d.fileName,
             mimeType: d.mimeType,
+            verified: d.verified,
           }))}
           index={lightbox.index}
           onClose={() => setLightbox(null)}
+          onVerify={handleVerifyDoc}
+          verifyingId={activeAction?.startsWith('verify-') ? activeAction.slice('verify-'.length) : null}
         />
       )}
 

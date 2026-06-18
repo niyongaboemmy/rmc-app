@@ -6,6 +6,7 @@ import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import redisConfig from './config/redis.config';
+import socialConfig from './config/social.config';
 
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
@@ -20,6 +21,9 @@ import { PrayerTimesModule } from './prayer-times/prayer-times.module';
 import { MembersModule } from './members/members.module';
 import { PublicModule } from './public/public.module';
 import { MarriageModule } from './marriage/marriage.module';
+import { ContentModule } from './content/content.module';
+import { DonationsModule } from './donations/donations.module';
+import { SocialModule } from './social/social.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -28,7 +32,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, jwtConfig, redisConfig],
+      load: [appConfig, databaseConfig, jwtConfig, redisConfig, socialConfig],
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -51,6 +55,9 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     MembersModule,
     PublicModule,
     MarriageModule,
+    ContentModule,
+    DonationsModule,
+    SocialModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

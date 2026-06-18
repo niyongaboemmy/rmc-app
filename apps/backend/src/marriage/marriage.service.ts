@@ -296,7 +296,41 @@ export class MarriageService {
       relations: ['documents', 'statusHistory', 'transactions'],
     });
     if (!app) throw new NotFoundException('Application not found');
+
+    // Attach a lightweight applicant identity so admins can see who submitted
+    // the application (the entity only stores applicant_id as a bare uuid).
+    const applicant = app.applicantId
+      ? await this.userRepo.findOne({ where: { id: app.applicantId } })
+      : null;
+    if (applicant) {
+      (app as MarriageApplication & { applicant?: unknown }).applicant = {
+        id: applicant.id,
+        name: [applicant.firstName, applicant.lastName].filter(Boolean).join(' '),
+        email: applicant.email,
+        phone: applicant.phone,
+      };
+    }
+
     return app;
+  }
+
+  async adminVerifyDocument(
+    applicationId: string,
+    documentId: string,
+    adminId: string,
+    verified: boolean,
+  ): Promise<MarriageApplication> {
+    const doc = await this.documentRepo.findOne({
+      where: { id: documentId, applicationId },
+    });
+    if (!doc) throw new NotFoundException('Document not found');
+
+    doc.verified = verified;
+    doc.verifiedBy = verified ? adminId : null;
+    doc.verifiedAt = verified ? new Date() : null;
+    await this.documentRepo.save(doc);
+
+    return this.adminFindOne(applicationId);
   }
 
   async adminUpdateStatus(id: string, adminId: string, dto: UpdateApplicationStatusDto): Promise<MarriageApplication> {

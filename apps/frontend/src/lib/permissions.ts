@@ -34,6 +34,9 @@ export enum Permission {
   FINANCE_VIEW = 'finance:view',
   FINANCE_MANAGE = 'finance:manage',
 
+  DONATIONS_VIEW = 'donations:view',
+  DONATIONS_MANAGE = 'donations:manage',
+
   REPORTS_VIEW = 'reports:view',
   REPORTS_EXPORT = 'reports:export',
 
