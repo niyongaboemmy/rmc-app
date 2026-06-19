@@ -22,6 +22,7 @@ export interface BlogPost {
   summary: string;
   category: string;
   author: string;
+  /** Plain-text paragraphs — used for reading-time + summary fallback. */
   content: string[];
 }
 

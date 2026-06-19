@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   MapPin,
   Phone,
@@ -18,6 +21,7 @@ import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/Reveal';
 import { MosqueFinder } from '@/components/contact/MosqueFinder';
+import { submitContactMessage } from '@/lib/contactApi';
 
 const socialLinks = [
   { Icon: Facebook, label: 'Facebook', followers: '24.5K', href: '#', bg: 'bg-blue-600' },
@@ -32,15 +36,35 @@ const socialLinks = [
   { Icon: Youtube, label: 'YouTube', followers: '8.4K', href: '#', bg: 'bg-red-600' },
 ];
 
+const buildContactSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().trim().min(2, t('form.validation.name')),
+    email: z.string().trim().email(t('form.validation.email')),
+    subject: z.string().trim().min(3, t('form.validation.subject')),
+    message: z.string().trim().min(10, t('form.validation.message')),
+  });
+
+type ContactFormData = z.infer<ReturnType<typeof buildContactSchema>>;
+
 export default function ContactPage() {
   const t = useTranslations('contact');
-  const [formState, setFormState] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: wire up to backend
-    setSubmitted(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactFormData>({ resolver: zodResolver(buildContactSchema(t)) });
+
+  const onSubmit = async (data: ContactFormData) => {
+    setErrorMsg(false);
+    try {
+      await submitContactMessage(data);
+      setSubmitted(true);
+    } catch {
+      setErrorMsg(true);
+    }
   };
 
   const contactInfo = [
@@ -55,12 +79,19 @@ export default function ContactPage() {
       <Navbar />
       <main>
         {/* Header */}
-        <PageHero eyebrow="RMC" title={t('title')} subtitle={t('subtitle')} ornament />
+        <PageHero
+          eyebrow="RMC"
+          title={t('title')}
+          subtitle={t('subtitle')}
+          ornament
+          minHeightClassName="min-h-[25vh]"
+          paddingClassName="pt-24 pb-8"
+        />
 
         {/* ===================================================================
             1. COMMUNICATION & ADDRESS — info cards + contact form
         =================================================================== */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <section className="py-10 px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="max-w-5xl mx-auto overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl shadow-rmc-green/5">
               <div className="grid lg:grid-cols-2">
@@ -122,54 +153,65 @@ export default function ContactPage() {
                 </div>
 
                 {/* Contact form */}
-                <div className="p-7 sm:p-10 bg-gray-50/60 border-t border-gray-100 lg:border-t-0 lg:border-l">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6">{t('form.heading')}</h3>
+                <div className="p-6 sm:p-8 bg-gray-50/60 border-t border-gray-100 lg:border-t-0 lg:border-l">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">{t('form.heading')}</h3>
                   {submitted ? (
                     <div className="p-6 bg-green-50 border border-green-200 rounded-xl text-green-800">
                       <CheckCircle className="inline w-5 h-5 mr-1.5 text-green-600" />
                       {t('form.success')}
                     </div>
                   ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      {[
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
+                      {([
                         { key: 'name', type: 'text', label: t('form.name') },
                         { key: 'email', type: 'email', label: t('form.email') },
                         { key: 'subject', type: 'text', label: t('form.subject') },
-                      ].map(({ key, type, label }) => (
+                      ] as const).map(({ key, type, label }) => (
                         <div key={key}>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-0.5">
                             {label}
                           </label>
                           <input
                             type={type}
-                            required
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
-                            value={(formState as Record<string, string>)[key]}
-                            onChange={(e) =>
-                              setFormState((prev) => ({ ...prev, [key]: e.target.value }))
-                            }
+                            aria-invalid={!!errors[key]}
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:border-transparent outline-none ${
+                              errors[key] ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-rmc-green'
+                            }`}
+                            {...register(key)}
                           />
+                          {errors[key] && (
+                            <p className="mt-1 text-xs font-medium text-red-600">{errors[key]?.message}</p>
+                          )}
                         </div>
                       ))}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-0.5">
                           {t('form.message')}
                         </label>
                         <textarea
-                          required
-                          rows={5}
-                          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none resize-none"
-                          value={formState.message}
-                          onChange={(e) =>
-                            setFormState((prev) => ({ ...prev, message: e.target.value }))
-                          }
+                          rows={2}
+                          aria-invalid={!!errors.message}
+                          className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:border-transparent outline-none resize-none ${
+                            errors.message ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-rmc-green'
+                          }`}
+                          {...register('message')}
                         />
+                        {errors.message && (
+                          <p className="mt-1 text-xs font-medium text-red-600">{errors.message.message}</p>
+                        )}
                       </div>
+                      {errorMsg && (
+                        <p className="text-sm font-medium text-red-600">{t('form.error')}</p>
+                      )}
                       <button
                         type="submit"
-                        className="w-full py-3 bg-rmc-green text-white font-semibold rounded-lg hover:bg-rmc-green-dark transition-colors"
+                        disabled={isSubmitting}
+                        className="w-full py-2.5 bg-rmc-green text-white font-semibold rounded-lg hover:bg-rmc-green-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                       >
-                        {t('form.submit')}
+                        {isSubmitting && (
+                          <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        )}
+                        {isSubmitting ? t('form.sending') : t('form.submit')}
                       </button>
                     </form>
                   )}
@@ -184,7 +226,7 @@ export default function ContactPage() {
         =================================================================== */}
         <section
           id="find-mosque"
-          className="py-16 scroll-mt-28 bg-rmc-green/[0.03] border-y border-rmc-green/10"
+          className="py-10 scroll-mt-28 bg-rmc-green/[0.03] border-y border-rmc-green/10"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Reveal>

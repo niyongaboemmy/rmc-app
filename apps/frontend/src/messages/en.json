@@ -594,7 +594,15 @@
       "subject": "Subject",
       "message": "Message",
       "submit": "Send Message",
-      "success": "Message sent! We'll get back to you soon."
+      "sending": "Sending…",
+      "success": "Message sent! We'll get back to you soon.",
+      "error": "Sorry, your message couldn't be sent. Please try again.",
+      "validation": {
+        "name": "Please enter your name.",
+        "email": "Please enter a valid email address.",
+        "subject": "Please enter a subject.",
+        "message": "Your message must be at least 10 characters."
+      }
     }
   },
   "member": {
@@ -656,6 +664,7 @@
       "mosques": "Mosques",
       "prayer": "Prayer Times",
       "donations": "Donations",
+      "inbox": "Inbox",
       "content": "Manage Content",
       "users": "Users",
       "roles": "Roles & Permissions",

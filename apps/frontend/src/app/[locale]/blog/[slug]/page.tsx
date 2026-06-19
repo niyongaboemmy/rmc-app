@@ -23,7 +23,7 @@ export default async function BlogPostPage({
 
   const t = await getTranslations('blog');
   const dateFmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' });
-  const body = post.content ?? [post.summary];
+  const isAr = locale === 'ar';
   const minutes = readingMinutes(post);
   const more = (await getPosts(locale)).filter((p) => p.slug !== post.slug).slice(0, 3);
 
@@ -80,16 +80,16 @@ export default async function BlogPostPage({
 
           {/* Body */}
           <div className="px-4 sm:px-6 lg:px-8 py-12">
-            <div className="max-w-3xl mx-auto space-y-5">
-              <p className="text-lg leading-relaxed text-gray-700 first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-5xl first-letter:font-bold first-letter:leading-[0.75] first-letter:text-rmc-green">
-                {body[0]}
-              </p>
-              {body.slice(1).map((para, i) => (
-                <p key={i} className="text-base leading-relaxed text-gray-600">
-                  {para}
-                </p>
-              ))}
-
+            <div
+              dir={isAr ? 'rtl' : 'ltr'}
+              className={`prose prose-lg max-w-3xl mx-auto text-gray-700 leading-relaxed prose-headings:text-gray-900 prose-a:text-rmc-green prose-strong:text-gray-900 prose-blockquote:border-rmc-gold ${
+                isAr
+                  ? 'font-arabic first-letter:float-right first-letter:ml-3'
+                  : 'first-letter:float-left first-letter:mr-3'
+              } first-letter:mt-1 first-letter:text-5xl first-letter:font-bold first-letter:leading-[0.75] first-letter:text-rmc-green`}
+              dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
+            />
+            <div className="max-w-3xl mx-auto">
               <div className="ornament-divider max-w-xs mx-auto pt-8">
                 <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
               </div>
