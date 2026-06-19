@@ -17,3 +17,4 @@ export * from './content/activities';
 export * from './content/announcements';
 export * from './content/social';
 export * from './content/hero';
+export * from './content/blog';
