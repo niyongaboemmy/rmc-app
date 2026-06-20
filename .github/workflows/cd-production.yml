@@ -45,6 +45,7 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://api.isengesho.com/api/v1
           NEXT_PUBLIC_FILE_SERVER_URL: https://cdn.isengesho.com
+          NEXT_PUBLIC_ORS_API_KEY: ${{ secrets.NEXT_PUBLIC_ORS_API_KEY }}
 
       - name: Build — file-server
         working-directory: apps/file-server
