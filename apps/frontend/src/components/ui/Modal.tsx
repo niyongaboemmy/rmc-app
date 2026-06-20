@@ -44,8 +44,7 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
   return createPortal(
     <div
       ref={overlayRef}
-      className="fixed inset-y-0 right-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      style={{ left: 'var(--admin-sidebar-w, 0px)' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
@@ -53,6 +52,9 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
       <div
         className={cn(
           'relative w-full bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden',
+          // Cap at viewport height and lay out as a column so the body can scroll
+          // while the header and footer stay pinned in view.
+          'max-h-[calc(100vh-2rem)] flex flex-col',
           'animate-fade-up',
           sizeClasses[size],
           className,
@@ -75,7 +77,7 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
 }
 
 export function ModalHeader({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('px-6 pt-6 pb-4 border-b border-gray-100', className)}>{children}</div>;
+  return <div className={cn('shrink-0 px-6 pt-6 pb-4 border-b border-gray-100', className)}>{children}</div>;
 }
 
 export function ModalTitle({ children, className }: { children: ReactNode; className?: string }) {
@@ -93,12 +95,12 @@ export function ModalDescription({
 }
 
 export function ModalBody({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('px-6 py-4', className)}>{children}</div>;
+  return <div className={cn('flex-1 min-h-0 overflow-y-auto px-6 py-4', className)}>{children}</div>;
 }
 
 export function ModalFooter({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('px-6 pb-6 pt-2 flex items-center justify-end gap-3', className)}>
+    <div className={cn('shrink-0 px-6 pb-6 pt-3 border-t border-gray-100 flex items-center justify-end gap-3', className)}>
       {children}
     </div>
   );

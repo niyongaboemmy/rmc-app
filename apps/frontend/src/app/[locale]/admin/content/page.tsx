@@ -10,13 +10,13 @@ import {
   BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
-  ListFilter, Images, Sparkles, Share2,
+  ListFilter, Images, Sparkles, Share2, Newspaper,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
 type SectionType = 'crud' | 'edit';
-type PageLocation = 'Homepage' | 'About Page';
+type PageLocation = 'Homepage' | 'About Page' | 'Blog Page';
 
 interface SectionConfig {
   id: string;
@@ -193,11 +193,25 @@ const SECTIONS: SectionConfig[] = [
     badge: 'bg-slate-100 text-slate-700',
     accentBar: 'bg-slate-400',
   },
+  {
+    id: 'blog',
+    icon: Newspaper,
+    title: 'Blog & Posts',
+    description: 'Articles and news posts on the public Blog page — create, edit, translate, upload images, and publish.',
+    type: 'crud', itemLabel: 'posts',
+    page: 'Blog Page', positionOrder: 0,
+    locationLabel: 'Blog Page · Articles',
+    keywords: ['blog', 'post', 'article', 'news', 'story', 'cms', 'publish', 'draft', 'content', 'featured', 'category', 'author', 'write'],
+    bg: 'bg-cyan-50', iconColor: 'text-cyan-600', border: 'border-cyan-100',
+    badge: 'bg-cyan-100 text-cyan-700',
+    accentBar: 'bg-cyan-400',
+  },
 ];
 
 const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string; description: string }[] = [
   { page: 'Homepage', icon: Home, color: 'text-rmc-green', description: 'Sections visible on the main landing page' },
   { page: 'About Page', icon: FileText, color: 'text-slate-600', description: 'Content on the /about page' },
+  { page: 'Blog Page', icon: Newspaper, color: 'text-cyan-600', description: 'Articles on the public /blog page' },
 ];
 
 type Tab = 'sections' | 'gallery';
@@ -323,6 +337,7 @@ export default function ManageContentPage() {
                     { value: 'all' as const, label: 'All pages', icon: Layers, count: SECTIONS.length },
                     { value: 'Homepage' as const, label: 'Homepage', icon: Home, count: SECTIONS.filter((s) => s.page === 'Homepage').length },
                     { value: 'About Page' as const, label: 'About', icon: FileText, count: SECTIONS.filter((s) => s.page === 'About Page').length },
+                    { value: 'Blog Page' as const, label: 'Blog', icon: Newspaper, count: SECTIONS.filter((s) => s.page === 'Blog Page').length },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     return (

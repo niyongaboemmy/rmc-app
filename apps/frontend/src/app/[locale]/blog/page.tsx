@@ -8,6 +8,9 @@ import { PageHero } from '@/components/layout/PageHero';
 import { getPosts } from '@/components/blog/blogData';
 import { BlogCategoryTabs } from '@/components/blog/BlogCategoryTabs';
 
+// Posts are managed in the CMS (Admin → Content → Blog & Posts), so render live.
+export const dynamic = 'force-dynamic';
+
 export default async function BlogPage({
   params: { locale },
 }: {
@@ -16,7 +19,7 @@ export default async function BlogPage({
   const t = await getTranslations('blog');
   const dateFmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const posts = getPosts(locale);
+  const posts = await getPosts(locale);
   const featured = posts[0];
 
   return (
@@ -28,13 +31,16 @@ export default async function BlogPage({
           eyebrow={t('title')}
           title={t('subtitle')}
           titleClassName="text-2xl md:text-3xl"
+          minHeightClassName="min-h-[26vh]"
+          paddingClassName="pt-24 pb-6"
           ornament
         />
 
         {/* ===================================================================
             1. FEATURED — most recently added blog, image background + overlay
         =================================================================== */}
-        <section className="px-4 sm:px-6 lg:px-8 pt-12 pb-10">
+        {featured && (
+        <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-4">
           <div className="max-w-7xl mx-auto">
             <Link
               href={`/${locale}/blog/${featured.slug}`}
@@ -96,6 +102,7 @@ export default async function BlogPage({
             </Link>
           </div>
         </section>
+        )}
 
         {/* ===================================================================
             2. BY CATEGORY — posts under category tabs

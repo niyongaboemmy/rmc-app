@@ -6,25 +6,26 @@ import { ArrowRight, CalendarDays, Clock } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
-import { SLUGS, getPosts, getPost, readingMinutes } from '@/components/blog/blogData';
+import { getPosts, getPost, readingMinutes } from '@/components/blog/blogData';
 
-export function generateStaticParams() {
-  return SLUGS.map((slug) => ({ slug }));
-}
+// Render on-demand like the rest of the app (gallery, about). The route lives
+// under a dynamic [locale] segment, so partial static generation of [slug]
+// alone left the locale undefined and 500'd on the deployed standalone server.
+export const dynamic = 'force-dynamic';
 
 export default async function BlogPostPage({
   params: { locale, slug },
 }: {
   params: { locale: string; slug: string };
 }) {
-  const post = getPost(locale, slug);
+  const post = await getPost(locale, slug);
   if (!post) notFound();
 
   const t = await getTranslations('blog');
   const dateFmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' });
   const body = post.content ?? [post.summary];
   const minutes = readingMinutes(post);
-  const more = getPosts(locale).filter((p) => p.slug !== post.slug).slice(0, 3);
+  const more = (await getPosts(locale)).filter((p) => p.slug !== post.slug).slice(0, 3);
 
   return (
     <div className="min-h-screen">
@@ -39,6 +40,9 @@ export default async function BlogPostPage({
             backHref={`/${locale}/blog`}
             backLabel={t('back')}
             align="left"
+            titleClassName="text-xl md:text-2xl lg:text-3xl"
+            minHeightClassName="min-h-[32vh]"
+            paddingClassName="pt-24 pb-8"
           >
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-white/15 pt-5 text-sm text-white/70">
               {post.author && (
@@ -62,13 +66,13 @@ export default async function BlogPostPage({
 
           {/* Hero image */}
           <div className="px-4 sm:px-6 lg:px-8 mt-8">
-            <div className="max-w-5xl mx-auto relative aspect-[16/9] overflow-hidden rounded-3xl shadow-[0_30px_70px_-30px_rgba(13,61,36,0.5)] ring-1 ring-black/5">
+            <div className="max-w-3xl mx-auto relative aspect-[16/9] overflow-hidden rounded-3xl shadow-[0_30px_70px_-30px_rgba(13,61,36,0.5)] ring-1 ring-black/5">
               <Image
                 src={post.image}
                 alt={post.title}
                 fill
                 priority
-                sizes="(max-width: 1024px) 100vw, 1024px"
+                sizes="(max-width: 768px) 100vw, 768px"
                 className="object-cover object-center"
               />
             </div>

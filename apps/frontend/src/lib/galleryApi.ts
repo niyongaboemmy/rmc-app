@@ -1,4 +1,4 @@
-import { apiClient, FILE_SERVER_URL } from './api';
+import { apiClient, FILE_SERVER_URL, refreshAccessToken } from './api';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -98,18 +98,21 @@ async function materialize(blob: Blob): Promise<Blob> {
   return new Blob([buf], { type: blob.type });
 }
 
-async function uploadBlob(
-  blob: Blob,
+// Error carrying the HTTP status so callers can react to it (e.g. 401 → refresh).
+class UploadHttpError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
+
+function sendUpload(
+  stableBlob: Blob,
   filename: string,
   folder: string,
+  token: string | null,
   onProgress?: (pct: number) => void,
 ): Promise<string> {
-  const stableBlob = await materialize(blob);
-
   return new Promise<string>((resolve, reject) => {
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
-
     const form = new FormData();
     // Append as a named File so multer sees the correct filename + Content-Type
     form.append('file', new File([stableBlob], filename, { type: 'image/jpeg' }));
@@ -131,21 +134,44 @@ async function uploadBlob(
           const key = (body.data ?? body).key as string;
           resolve(key);
         } catch {
-          reject(new Error('Unexpected response from file server'));
+          reject(new UploadHttpError(xhr.status, 'Unexpected response from file server'));
         }
       } else {
         let detail = '';
         try { detail = JSON.parse(xhr.responseText)?.error?.message ?? ''; } catch { /* noop */ }
-        reject(new Error(`Upload failed — HTTP ${xhr.status}${detail ? ': ' + detail : ''}`));
+        reject(new UploadHttpError(xhr.status, `Upload failed — HTTP ${xhr.status}${detail ? ': ' + detail : ''}`));
       }
     };
 
-    xhr.onerror = () => reject(new Error('Network error — could not reach file server'));
-    xhr.ontimeout = () => reject(new Error('Upload timed out'));
+    xhr.onerror = () => reject(new UploadHttpError(0, 'Network error — could not reach file server'));
+    xhr.ontimeout = () => reject(new UploadHttpError(0, 'Upload timed out'));
     xhr.timeout = 120_000; // 2 min ceiling for large originals
 
     xhr.send(form);
   });
+}
+
+async function uploadBlob(
+  blob: Blob,
+  filename: string,
+  folder: string,
+  onProgress?: (pct: number) => void,
+): Promise<string> {
+  const stableBlob = await materialize(blob);
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
+
+  try {
+    return await sendUpload(stableBlob, filename, folder, token, onProgress);
+  } catch (err) {
+    // Raw XHR bypasses the apiClient interceptor, so an expired access token
+    // (15-min lifetime) 401s here. Refresh once and retry before giving up.
+    if (err instanceof UploadHttpError && err.status === 401) {
+      const fresh = await refreshAccessToken();
+      if (fresh) return sendUpload(stableBlob, filename, folder, fresh, onProgress);
+    }
+    throw err;
+  }
 }
 
 export interface UploadGalleryImageOptions {

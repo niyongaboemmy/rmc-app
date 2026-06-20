@@ -9,6 +9,34 @@ export function fileUrl(key: string): string {
   return `${FILE_SERVER_URL}/api/v1/files/${key}`;
 }
 
+/**
+ * Refresh the access token using the stored refresh token, updating
+ * localStorage + cookies. Returns the new access token, or null when there's no
+ * refresh token or the refresh fails. Used by raw-XHR callers (file uploads)
+ * that bypass the `apiClient` response interceptor and so don't auto-refresh.
+ */
+export async function refreshAccessToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  const refreshToken = localStorage.getItem('rmc_refresh_token');
+  if (!refreshToken) return null;
+  try {
+    const res = await axios.post<ApiResponse<{ accessToken: string; refreshToken: string }>>(
+      `${API_BASE_URL}/auth/refresh`,
+      { refreshToken },
+    );
+    const { accessToken, refreshToken: newRefresh } = res.data.data;
+    localStorage.setItem('rmc_access_token', accessToken);
+    localStorage.setItem('rmc_refresh_token', newRefresh);
+    if (typeof document !== 'undefined') {
+      document.cookie = `rmc_access_token=${accessToken}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+      document.cookie = `rmc_refresh_token=${newRefresh}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`;
+    }
+    return accessToken;
+  } catch {
+    return null;
+  }
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
