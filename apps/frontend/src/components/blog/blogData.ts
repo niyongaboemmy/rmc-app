@@ -9,7 +9,7 @@ import {
   pick,
   BLOG_DEFAULT,
   resolveBlogImage,
-  blogParagraphs,
+  blogBodyHtml,
   type BlogContent,
 } from '@/lib/content-api';
 
@@ -22,7 +22,8 @@ export interface BlogPost {
   summary: string;
   category: string;
   author: string;
-  content: string[];
+  /** Rendered body HTML — rich-text editor output (or wrapped legacy text). */
+  bodyHtml: string;
 }
 
 /** Load published posts for a locale, newest first, merged over the seed. */
@@ -38,8 +39,8 @@ async function loadPosts(locale: string): Promise<BlogPost[]> {
   return content.posts
     .filter((p) => (p.status ?? 'published') === 'published')
     .map((p) => {
-      const paras = blogParagraphs(p, locale);
       const summary = pick(p.summary, locale);
+      const bodyHtml = blogBodyHtml(p, locale);
       return {
         slug: p.slug,
         image: resolveBlogImage(p.image),
@@ -49,7 +50,7 @@ async function loadPosts(locale: string): Promise<BlogPost[]> {
         summary,
         category: pick(p.category, locale),
         author: pick(p.author, locale),
-        content: paras.length ? paras : [summary],
+        bodyHtml: bodyHtml || `<p>${summary}</p>`,
       };
     })
     .sort((a, b) => +new Date(b.date) - +new Date(a.date));
@@ -68,7 +69,8 @@ export async function getPost(locale: string, slug: string): Promise<BlogPost | 
 
 /** Estimated reading time in minutes (min 1), ~200 words/min over title + body. */
 export function readingMinutes(post: BlogPost): number {
-  const words = [post.title, ...(post.content ?? [post.summary])]
+  const bodyText = post.bodyHtml.replace(/<[^>]+>/g, ' ');
+  const words = [post.title, bodyText]
     .join(' ')
     .trim()
     .split(/\s+/)

@@ -594,7 +594,15 @@
       "subject": "Inyito",
       "message": "Ubutumwa",
       "submit": "Ohereza Ubutumwa",
-      "success": "Ubutumwa bwoherejwe! Tuzasubiza vuba."
+      "sending": "Kohereza…",
+      "success": "Ubutumwa bwoherejwe! Tuzasubiza vuba.",
+      "error": "Ihangane, ubutumwa ntibwashobotse koherezwa. Ongera ugerageze.",
+      "validation": {
+        "name": "Nyamuneka andika izina ryawe.",
+        "email": "Nyamuneka andika imeri yemewe.",
+        "subject": "Nyamuneka andika impamvu.",
+        "message": "Ubutumwa bugomba kuba nibura inyuguti 10."
+      }
     }
   },
   "member": {
@@ -656,6 +664,7 @@
       "mosques": "Masaliti",
       "prayer": "Amasaha yo Gusenga",
       "donations": "Inkunga",
+      "inbox": "Ubutumwa",
       "content": "Gucunga Ibikubiye",
       "users": "Abakoresha",
       "roles": "Inshingano",

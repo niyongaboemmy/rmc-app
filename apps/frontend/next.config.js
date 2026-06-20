@@ -22,6 +22,12 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // isomorphic-dompurify bundles jsdom, which reads internal files via relative
+  // paths webpack can't bundle (ENOENT on default-stylesheet.css). Keep it
+  // external so it's required as a normal Node module on the server.
+  experimental: {
+    serverComponentsExternalPackages: ['isomorphic-dompurify'],
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'pbs.twimg.com' },

@@ -24,6 +24,7 @@ import { MarriageModule } from './marriage/marriage.module';
 import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
 import { SocialModule } from './social/social.module';
+import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -58,6 +59,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     ContentModule,
     DonationsModule,
     SocialModule,
+    ContactMessagesModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

@@ -85,7 +85,14 @@ export default async function GalleryPage() {
       <Navbar />
       <main>
         {/* Hero header */}
-        <PageHero eyebrow="RMC" title={t('title')} subtitle={t('subtitle')} ornament />
+        <PageHero
+          eyebrow="RMC"
+          title={t('title')}
+          subtitle={t('subtitle')}
+          ornament
+          minHeightClassName="min-h-[25vh]"
+          paddingClassName="pt-24 pb-8"
+        />
 
         {isEmpty ? (
           /* Empty state — gallery is now purely API-driven */

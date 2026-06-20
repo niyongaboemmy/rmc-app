@@ -45,6 +45,10 @@ export enum Permission {
   DONATIONS_VIEW = 'donations:view',
   DONATIONS_MANAGE = 'donations:manage',
 
+  // ── Contact messages (inbox) ──────────────────────────────────────
+  CONTACT_MESSAGES_VIEW = 'contact_messages:view',
+  CONTACT_MESSAGES_MANAGE = 'contact_messages:manage',
+
   // ── Reports ───────────────────────────────────────────────────────
   REPORTS_VIEW = 'reports:view',
   REPORTS_EXPORT = 'reports:export',
