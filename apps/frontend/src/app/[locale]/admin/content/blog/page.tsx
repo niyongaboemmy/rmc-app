@@ -24,20 +24,14 @@ import {
   saveSiteContent,
   mergeContent,
   resolveBlogImage,
-<<<<<<< HEAD
-=======
   blogBodyHtml,
->>>>>>> 0410d90 (Work on blogs)
   slugifyTitle,
   type BlogContent,
   type BlogPostItem,
   type BlogStatus,
 } from '@/lib/content-api';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
-<<<<<<< HEAD
-=======
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
->>>>>>> 0410d90 (Work on blogs)
 
 type Lang = 'en' | 'rw' | 'ar';
 
@@ -369,16 +363,11 @@ function BlogManager() {
                   if (l !== modalLang) return null;
                   const fc = l === 'ar' ? 'font-arabic' : '';
                   const req = l === 'en';
-<<<<<<< HEAD
-                  return (
-                    <div key={l} className="p-4 space-y-4">
-=======
                   // Stable key: the field block is reused (not remounted) across
                   // language switches, so the editor instance persists and just
                   // swaps content via its value-sync effect — no reload flash.
                   return (
                     <div key="lang-fields" className="p-4 space-y-4">
->>>>>>> 0410d90 (Work on blogs)
                       <Field label="Title" required={req}>
                         <input dir={dir} type="text" value={form.title[l]} onChange={(e) => setTri('title', l, e.target.value)} placeholder="Post title"
                           className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent ${fc}`} />
@@ -395,11 +384,6 @@ function BlogManager() {
                       <textarea dir={dir} rows={2} value={form.summary[l]} onChange={(e) => setTri('summary', l, e.target.value)} placeholder="A short summary of the post"
                         className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none ${fc}`} />
                     </Field>
-<<<<<<< HEAD
-                    <Field label="Body" hint="Separate paragraphs with a blank line">
-                      <textarea dir={dir} rows={8} value={form.body[l]} onChange={(e) => setTri('body', l, e.target.value)} placeholder={'First paragraph…\n\nSecond paragraph…'}
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-y ${fc}`} />
-=======
                     <Field label="Body" hint="Format with the toolbar — headings, lists, quotes, links">
                       {/* No per-language key — the editor persists and swaps the
                           active language's content via its internal value sync. */}
@@ -409,7 +393,6 @@ function BlogManager() {
                         dir={dir}
                         fontClassName={fc}
                       />
->>>>>>> 0410d90 (Work on blogs)
                     </Field>
                       </div>
                     );
@@ -574,11 +557,7 @@ function ReviewStep({ form, lang, onLangChange }: { form: BlogPostItem; lang: La
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fc = lang === 'ar' ? 'font-arabic' : '';
   const img = resolveBlogImage(form.image);
-<<<<<<< HEAD
-  const paras = pick(form.body).split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-=======
   const bodyHtml = blogBodyHtml(form, lang);
->>>>>>> 0410d90 (Work on blogs)
   const dateFmt = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
@@ -614,18 +593,11 @@ function ReviewStep({ form, lang, onLangChange }: { form: BlogPostItem; lang: La
             <span className={fc}>{pick(form.author) || 'RMC Communications'}</span>
           </p>
           {pick(form.summary) && <p className={`text-sm text-gray-600 mt-3 italic ${fc}`}>{pick(form.summary)}</p>}
-<<<<<<< HEAD
-          {paras.length > 0 && (
-            <div className="mt-4 space-y-3 border-t border-gray-50 pt-4">
-              {paras.map((p, i) => <p key={i} className={`text-sm text-gray-700 leading-relaxed ${fc}`}>{p}</p>)}
-            </div>
-=======
           {bodyHtml && (
             <div
               className={`prose prose-sm max-w-none mt-4 border-t border-gray-50 pt-4 text-gray-700 ${fc}`}
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
->>>>>>> 0410d90 (Work on blogs)
           )}
         </div>
       </div>

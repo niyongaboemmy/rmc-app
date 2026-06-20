@@ -304,6 +304,26 @@ export function blogParagraphs(item: BlogPostItem, locale: string): string[] {
     .filter(Boolean);
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Render a stored body `Tri` to HTML for a locale. Bodies authored with the
+ * rich-text editor are already HTML and pass through untouched; legacy/seeded
+ * plain-text bodies are converted to blank-line-separated paragraphs.
+ */
+export function blogBodyHtml(item: BlogPostItem, locale: string): string {
+  const raw = pick(item.body, locale).trim();
+  if (!raw) return '';
+  // Rich-text editor output already contains HTML tags — render as-is.
+  if (/<\/?[a-z][\s\S]*>/i.test(raw)) return raw;
+  // Legacy plain text — wrap each paragraph, preserving single line breaks.
+  return blogParagraphs(item, locale)
+    .map((p) => `<p>${escapeHtml(p).replace(/\n/g, '<br />')}</p>`)
+    .join('\n');
+}
+
 /** Make a URL-safe slug from a title. */
 export function slugifyTitle(value: string): string {
   return value
