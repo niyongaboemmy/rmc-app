@@ -41,6 +41,7 @@ export const ContentKeys = {
   announcements: 'announcements',
   social: 'social-media',
   hero: 'hero',
+  blog: 'blog',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

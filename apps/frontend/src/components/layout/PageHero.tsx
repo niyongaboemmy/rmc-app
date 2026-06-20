@@ -37,6 +37,10 @@ interface PageHeroProps {
   align?: 'center' | 'left';
   /** Show the gold ornament divider under the title (centered heroes). */
   ornament?: boolean;
+  /** Override the section's min-height (defaults to the tall hero size). */
+  minHeightClassName?: string;
+  /** Override the content vertical padding (defaults to the tall hero spacing). */
+  paddingClassName?: string;
   /** Extra content rendered below the subtitle (e.g. article metadata). */
   children?: ReactNode;
 }
@@ -51,6 +55,8 @@ export function PageHero({
   images = DEFAULT_SLIDES,
   align = 'center',
   ornament = false,
+  minHeightClassName = 'min-h-[50vh]',
+  paddingClassName = 'pt-24 pb-14',
   children,
 }: PageHeroProps) {
   const [current, setCurrent] = useState(0);
@@ -78,7 +84,7 @@ export function PageHero({
   const centered = align === 'center';
 
   return (
-    <section className="relative flex min-h-[50vh] items-center overflow-hidden bg-rmc-green-deep">
+    <section className={`relative flex ${minHeightClassName} items-center overflow-hidden bg-rmc-green-deep`}>
       {/* ── Background image layer (crossfade) ── */}
       {images.map((src, i) => (
         <div
@@ -96,7 +102,7 @@ export function PageHero({
       <div className="absolute inset-0 pattern-islamic opacity-30" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-24 pb-14 sm:px-6 lg:px-8">
+      <div className={`relative z-10 mx-auto w-full max-w-3xl px-4 ${paddingClassName} sm:px-6 lg:px-8`}>
         <div className="animate-fade-up">
           {backHref && (
             <Link

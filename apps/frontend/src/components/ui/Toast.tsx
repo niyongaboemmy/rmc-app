@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -53,6 +54,9 @@ export function ToastProvider({
   position?: string;
 }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).slice(2);
@@ -70,16 +74,21 @@ export function ToastProvider({
   return (
     <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
       {children}
-      <div className={`fixed z-50 flex flex-col gap-2 ${positionClasses[position] ?? positionClasses['top-right']}`}>
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`px-4 py-3 rounded shadow-lg text-sm font-medium ${typeClasses[toast.type]}`}
-          >
-            {toast.message}
-          </div>
-        ))}
-      </div>
+      {/* Portal to <body> so toasts escape any nested stacking context and stay
+          above modals (which also portal to body at z-[9999]). */}
+      {mounted && createPortal(
+        <div className={`fixed z-[10000] flex flex-col gap-2 ${positionClasses[position] ?? positionClasses['top-right']}`}>
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`px-4 py-3 rounded shadow-lg text-sm font-medium ${typeClasses[toast.type]}`}
+            >
+              {toast.message}
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )}
     </ToastContext.Provider>
   );
 }
