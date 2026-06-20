@@ -27,7 +27,7 @@ export const publicApi = {
     ),
 
   getMosques: (districtId?: string) =>
-    unwrap<Array<{ id: string; name: string; address: string | null; gpsLat: number | null; gpsLng: number | null; districtId: string | null }>>(
+    unwrap<Array<{ id: string; name: string; address: string | null; gpsLat: number | null; gpsLng: number | null; districtId: string | null; imamName: string | null; imamPhoto: string | null }>>(
       api.get('/mosques', { params: { districtId, status: 'active' } }),
     ),
 

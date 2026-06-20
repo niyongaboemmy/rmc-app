@@ -6,6 +6,7 @@ import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { publicApi } from '@/lib/public-api';
 import { mosqueApi, type Mosque, type MosqueInput } from '@/lib/mosqueApi';
+import { Avatar } from '@/components/ui/Avatar';
 import {
   Modal, ModalHeader, ModalBody, ModalFooter,
   ModalTitle, ModalDescription, ConfirmModal,
@@ -42,6 +43,8 @@ const EMPTY: MosqueInput = {
   phone: '',
   email: '',
   fridayPrayerTime: '',
+  imamName: '',
+  imamPhoto: '',
 };
 
 export default function MosquesPage() {
@@ -141,6 +144,8 @@ function MosquesManager() {
       phone: m.phone ?? '',
       email: m.email ?? '',
       fridayPrayerTime: m.fridayPrayerTime ?? '',
+      imamName: m.imamName ?? '',
+      imamPhoto: m.imamPhoto ?? '',
     });
     setIsModalOpen(true);
   };
@@ -288,6 +293,7 @@ function MosquesManager() {
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[11px] text-gray-400">
                     {loc && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{loc}</span>}
                     {m.capacity != null && <span className="inline-flex items-center gap-1"><Users className="w-3 h-3" />{m.capacity}</span>}
+                    {m.imamName && <span className="inline-flex items-center gap-1.5"><Avatar name={m.imamName} photo={m.imamPhoto} size={16} />{m.imamName}</span>}
                     {m.phone && <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{m.phone}</span>}
                   </div>
                 </div>
@@ -399,6 +405,15 @@ function MosquesManager() {
               </div>
               <Field label="Friday Prayer Time">
                 <input type="time" value={form.fridayPrayerTime ?? ''} onChange={(e) => set('fridayPrayerTime', e.target.value)} className={inputCls} />
+              </Field>
+              <Field label="Imam">
+                <div className="flex items-center gap-3">
+                  {form.imamName && <Avatar name={form.imamName} photo={form.imamPhoto} size={40} />}
+                  <input type="text" value={form.imamName ?? ''} onChange={(e) => set('imamName', e.target.value)} className={inputCls} placeholder="Sheikh…" />
+                </div>
+              </Field>
+              <Field label="Imam Photo URL">
+                <input type="url" value={form.imamPhoto ?? ''} onChange={(e) => set('imamPhoto', e.target.value)} className={inputCls} placeholder="https://… (leave empty to use initials)" />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Phone">

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopBar } from '@/components/admin/AdminTopBar';
+import { InboxUnreadProvider } from '@/contexts/InboxUnreadContext';
 
 const SIDEBAR_COLLAPSED_W = '4rem';   // lg:w-16
 const SIDEBAR_EXPANDED_W  = '15rem';  // lg:w-60
@@ -68,6 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
+    <InboxUnreadProvider>
     <div className="flex h-screen bg-gray-50 overflow-hidden font-latin">
 
       {/* Mobile backdrop */}
@@ -108,5 +110,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </main>
       </div>
     </div>
+    </InboxUnreadProvider>
   );
 }

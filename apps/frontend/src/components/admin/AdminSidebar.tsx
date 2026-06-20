@@ -8,6 +8,7 @@ import { useParams, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
+import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
   LayoutDashboard, Users, Shield, UserCheck, Landmark,
   Clock, BarChart2, Settings, ChevronLeft, ChevronRight,
@@ -53,12 +54,14 @@ interface SidebarNavItemProps {
   collapsed: boolean;
   locale: string;
   label: string;
+  badge?: number;
   onMobileClose: () => void;
 }
 
-function SidebarNavItem({ item, active, collapsed, locale, label, onMobileClose }: SidebarNavItemProps) {
+function SidebarNavItem({ item, active, collapsed, locale, label, badge = 0, onMobileClose }: SidebarNavItemProps) {
   const [tooltipY, setTooltipY] = useState<number | null>(null);
   const Icon = item.icon;
+  const badgeText = badge > 99 ? '99+' : String(badge);
 
   return (
     <li className={collapsed ? 'lg:flex lg:justify-center' : ''}>
@@ -97,6 +100,22 @@ function SidebarNavItem({ item, active, collapsed, locale, label, onMobileClose 
         } ${active ? 'text-rmc-green font-semibold' : ''}`}>
           {label}
         </span>
+
+        {/* Unread badge — inline pill when expanded */}
+        {badge > 0 && (
+          <span className={`ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none ${
+            collapsed ? 'lg:hidden' : ''
+          }`}>
+            {badgeText}
+          </span>
+        )}
+
+        {/* Unread badge — dot on the icon when collapsed (lg only) */}
+        {badge > 0 && collapsed && (
+          <span className="hidden lg:flex absolute top-0.5 right-0.5 items-center justify-center min-w-[15px] h-[15px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none ring-2 ring-white">
+            {badgeText}
+          </span>
+        )}
       </Link>
 
       {/* Tooltip rendered via portal — escapes all overflow constraints */}
@@ -125,6 +144,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
   const { locale } = useParams<{ locale: string }>();
   const pathname = usePathname();
   const { user, hasPermission, logout } = useAuth();
+  const { unread: unreadCount } = useInboxUnread();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -206,6 +226,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
                       collapsed={collapsed}
                       locale={locale}
                       label={t(item.labelKey)}
+                      badge={item.key === 'inbox' ? unreadCount : 0}
                       onMobileClose={onMobileClose}
                     />
                   ) : (
