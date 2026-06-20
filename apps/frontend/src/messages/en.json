@@ -624,6 +624,8 @@
     "locating": "Finding your location…",
     "locationError": "Couldn't access your location",
     "directions": "Get Directions",
+    "imam": "Imam",
+    "nearest": "Nearest to you",
     "noMosques": "No mosques found in this area.",
     "communicationTitle": "Get in Touch",
     "communicationSubtitle": "Reach us directly or send a message — we'll respond as soon as we can.",

@@ -434,3 +434,38 @@ main {
   background: transparent;
   border: 0;
 }
+
+/* Nearest-mosque marker: a gentle bounce on the pin plus a pulsing ring at its
+   base, so the closest mosque draws the eye. Transform is applied to the inner
+   SVG only — never the root element, which Leaflet uses for positioning. */
+@keyframes nearestBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes nearestPing {
+  0%   { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+.rmc-mosque-pin--nearest svg {
+  transform-origin: 50% 100%;
+  animation: nearestBounce 1.2s ease-in-out infinite;
+}
+.rmc-mosque-pin--nearest::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.45);
+  animation: nearestPing 1.6s ease-out infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rmc-mosque-pin--nearest svg,
+  .rmc-mosque-pin--nearest::after {
+    animation: none;
+  }
+}

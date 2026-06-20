@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
   Modal, ModalHeader, ModalBody, ModalFooter, ModalTitle, ModalDescription, ConfirmModal,
 } from '@/components/ui/Modal';
@@ -36,6 +37,7 @@ function Inbox() {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const { success, error } = useToast();
+  const { setUnread } = useInboxUnread();
   const canManage = hasPermission(Permission.CONTACT_MESSAGES_MANAGE);
 
   const [messages, setMessages] = useState<ContactMessage[]>([]);
@@ -55,8 +57,11 @@ function Inbox() {
   });
 
   const loadCounts = useCallback(() => {
-    inboxApi.counts().then(setCounts).catch(() => { /* leave as-is */ });
-  }, []);
+    inboxApi.counts().then((c) => {
+      setCounts(c);
+      setUnread(c.unread); // keep the sidebar badge in sync instantly
+    }).catch(() => { /* leave as-is */ });
+  }, [setUnread]);
 
   const load = useCallback(async () => {
     setLoading(true);
