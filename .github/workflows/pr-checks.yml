@@ -1,9 +1,7 @@
 name: PR Checks
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   label-check:

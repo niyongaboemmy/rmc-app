@@ -6,9 +6,6 @@ on:
       confirm:
         description: 'Type DEPLOY to confirm production deployment'
         required: true
-  push:
-    tags:
-      - 'v*.*.*'
 
 concurrency:
   group: production-deploy

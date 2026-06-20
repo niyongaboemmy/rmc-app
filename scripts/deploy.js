@@ -58,6 +58,9 @@ async function main() {
   run(`git tag ${next}`);
   run(`git push origin ${next}`);
 
+  console.log(`\nTriggering CD pipeline...`);
+  run(`gh workflow run cd-production.yml --field confirm=DEPLOY`);
+
   console.log(`\n✅  Tag ${next} pushed — CD pipeline is running.`);
   console.log(`    https://github.com/niyongaboemmy/rmc-app/actions\n`);
 }
