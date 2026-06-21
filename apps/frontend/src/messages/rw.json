@@ -790,6 +790,147 @@
         "partners": "Inshuti zacu",
         "about": "Ibyerekeye RMC"
       }
+    },
+    "donations": {
+      "title": "Impano",
+      "subtitle": "Gukurikirana impano zakiriwe muri gahunda zose",
+      "export": "Kohereza",
+      "refresh": "Vugurura",
+      "stat": {
+        "totalReceived": "Igiteranyo cyakiriwe (RWF)",
+        "totalDonations": "Umubare w'impano",
+        "topProgram": "Gahunda ya mbere",
+        "pending": "Bitegereje (RWF)"
+      },
+      "received": "byakiriwe",
+      "gift": "impano",
+      "gifts": "impano",
+      "tabDonations": "Impano",
+      "tabPrograms": "Gahunda",
+      "period": "Igihe",
+      "preset": {
+        "all": "Igihe cyose",
+        "today": "Uyu munsi",
+        "7d": "Iminsi 7 ishize",
+        "30d": "Iminsi 30 ishize",
+        "month": "Uku kwezi",
+        "year": "Uyu mwaka"
+      },
+      "searchPlaceholder": "Shakisha izina cyangwa imeyili y'utanze...",
+      "allPrograms": "Gahunda zose",
+      "generalFund": "Ikigega rusange",
+      "allCategories": "Ibyiciro byose",
+      "allIntentions": "Imigambi yose",
+      "allMethods": "Uburyo bwose bwo kwishyura",
+      "fromDate": "Kuva ku itariki",
+      "toDate": "Kugeza ku itariki",
+      "clearFilters": "Siba muyunguruzi",
+      "loading": "Gutangiza impano...",
+      "noneTitle": "Nta mpano zabonetse",
+      "noneHint": "Gerageza guhindura muyunguruzi",
+      "col": {
+        "transaction": "Igikorwa",
+        "donor": "Utanze",
+        "cause": "Impamvu",
+        "amount": "Umubare",
+        "method": "Uburyo",
+        "date": "Itariki",
+        "intention": "Umugambi"
+      },
+      "unknown": "Ntibizwi",
+      "edit": "Hindura",
+      "showing": "Kwerekana {from}–{to} kuri {total} z'impano",
+      "filteredNote": "{count} kuri uru rupapuro bihuye na muyunguruzi yawe",
+      "previous": "Ibanziriza",
+      "next": "Ikurikira",
+      "status": {
+        "all": "Imimerere yose",
+        "completed": "Byarangiye",
+        "pending": "Bitegereje",
+        "failed": "Byanze",
+        "refunded": "Byasubijwe"
+      },
+      "programs": {
+        "new": "Gahunda nshya",
+        "noneTitle": "Nta gahunda iraboneka",
+        "donation": "impano",
+        "donations": "impano",
+        "raisedNote": "{amount} yakusanyijwe mu mpano zarangiye",
+        "statusActive": "Irakora",
+        "statusPaused": "Yahagaritswe",
+        "statusClosed": "Yafunzwe"
+      },
+      "editModal": {
+        "title": "Hindura impano",
+        "selection": "Ibyo utanze yahisemo",
+        "amount": "Umubare",
+        "currency": "Ifaranga",
+        "status": "Imimerere",
+        "program": "Gahunda",
+        "donorName": "Izina ry'utanze",
+        "donorEmail": "Imeyili y'utanze",
+        "cancel": "Hagarika",
+        "save": "Bika impinduka",
+        "saving": "Kubika...",
+        "error": "Ntibyashobotse kubika impinduka. Nyamuneka ongera ugerageze."
+      },
+      "campaignModal": {
+        "newTitle": "Gahunda nshya",
+        "editTitle": "Hindura gahunda",
+        "title": "Umutwe",
+        "description": "Ibisobanuro",
+        "targetAmount": "Umubare wifuzwa",
+        "currency": "Ifaranga",
+        "fundType": "Ubwoko bw'ikigega",
+        "category": "Icyiciro",
+        "categoryHint": "Ihuza iyi gahunda n'icyiciro cyo ku rupapuro rw'impano.",
+        "slug": "Slug",
+        "slugHint": "Ihuza n'igikorwa rusange ku nkunga itaha (urugero e1).",
+        "heroImage": "Ifoto nkuru",
+        "heroImageHint": "Ibendera rigaragara ku rupapuro rw'impano.",
+        "uploadImage": "Ohereza ifoto",
+        "uploading": "Kohereza…",
+        "removeImage": "Kuraho",
+        "invalidImageFile": "Nyamuneka hitamo dosiye y'ifoto.",
+        "uploadFailed": "Kohereza ifoto byanze.",
+        "optional": "Bya hiyongera",
+        "invalidUrl": "Andika aderesi yemewe itangirana na http.",
+        "invalidAmount": "Andika umubare wifuzwa uri hejuru ya zeru.",
+        "basics": "Ibanze",
+        "funding": "Inkunga",
+        "schedule": "Gahunda n'imimerere",
+        "status": "Imimerere",
+        "startDate": "Itariki yo gutangira",
+        "endDate": "Itariki yo kurangiza",
+        "create": "Kora gahunda",
+        "save": "Bika impinduka",
+        "saving": "Kubika...",
+        "cancel": "Hagarika",
+        "next": "Komeza",
+        "back": "Subira inyuma",
+        "step": "Intambwe {current} kuri {total}",
+        "required": "Umutwe n'umubare wifuzwa birakenewe.",
+        "error": "Ntibyashobotse kubika gahunda. Nyamuneka ongera ugerageze."
+      },
+      "detail": {
+        "reference": "Indango",
+        "intention": "Umugambi",
+        "category": "Icyiciro",
+        "fund": "Ikigega",
+        "program": "Gahunda",
+        "status": "Imimerere",
+        "method": "Uburyo bwo kwishyura",
+        "frequency": "Isubirwamo",
+        "email": "Imeyili",
+        "date": "Itariki",
+        "anonymous": "Utanze utamenyekana",
+        "expand": "Erekana ibisobanuro"
+      },
+      "freq": {
+        "once": "Inshuro imwe",
+        "monthly": "Buri kwezi",
+        "yearly": "Buri mwaka"
+      }
     }
   },
   "galleryPage": {
@@ -822,5 +963,319 @@
     "minRead": "Iminota {count} yo gusoma",
     "search": "Shakisha inkuru",
     "noResults": "Nta nkuru zabonetse"
+  },
+  "donate": {
+    "sectionHeading": "Hitamo aho impano yawe igana",
+    "sectionSub": "Reba buri cyiciro hano hasi maze wongereho impamvu iyo ari yo yose ku mpano yawe.",
+    "header": {
+      "title1": "Tanga ufite umugambi.",
+      "title2": "Wongere umugisha wawe.",
+      "intro": "Tangira na <b>niyya</b> yawe — umugambi uri inyuma y'impano yawe — hanyuma uhitemo aho igana. Buri ntererano rirambuye kandi ni ikizere.",
+      "setIntention": "Shyiraho umugambi wawe"
+    },
+    "niyyah": {
+      "lillah": {
+        "label": "Lillah",
+        "desc": "Ku bw'Imana gusa"
+      },
+      "sadaqah": {
+        "label": "Sadaka Jariya",
+        "desc": "Impuhwe zikomeza igihe kirekire"
+      },
+      "zakat": {
+        "label": "Zakat",
+        "desc": "Itegeko rya 2.5%"
+      }
+    },
+    "quickGive": {
+      "title": "Tanga aho bikenewe cyane",
+      "subtitle": "Uzi umubare? Wongereho mu kanya gato — RMC ikohereza aho bikenewe cyane.",
+      "addToGift": "ku mpano"
+    },
+    "card": {
+      "addToGift": "Ongera ku mpano",
+      "addAgain": "Ongera nanone",
+      "added": "Byongewe",
+      "add": "Ongera",
+      "cancel": "Hagarika",
+      "howMuch": "Ni angahe ushaka gutanga kuri {fund}?",
+      "customAmount": "Umubare wihariye"
+    },
+    "categories": {
+      "school": {
+        "title": "Uburezi",
+        "desc": "Buruse, ibitabo n'uburezi bw'Islamu.",
+        "long": "Fungurira ubumenyi abana b'ejo — kuva mu masomo ya Qur'an kugeza kuri buruse za kaminuza ku banyeshuri b'inararibonye badashobora kwishyura.",
+        "impact": "RWF 18M yatanzwe · abanyeshuri barenga 2,000 bagezweho"
+      },
+      "charity": {
+        "title": "Impuhwe",
+        "desc": "Kugaburira abashonji no gufasha abakene.",
+        "long": "Ubufasha butaziguye ku bakeneye cyane — imfungurwa ku miryango ikennye, kwita ku mfubyi, n'ubuvuzi ku batabona uko bivuza.",
+        "impact": "imiryango 5,000 yagaburiwe muri Ramadhan ishize"
+      },
+      "religious": {
+        "title": "Iby'idini",
+        "desc": "Kubungabunga imisigiti no gusenga kw'umuryango.",
+        "long": "Shyigikira amazu y'Imana n'abayakorera — kubungabunga imisigiti, gufasha ba imamu, no gushyira Qur'an mu maboko y'umuryango.",
+        "impact": "imisigiti 40 yabungabunzwe · ba imamu 120 batojwe"
+      },
+      "events": {
+        "title": "Ibirori",
+        "desc": "Qiyam, ifutari, amakambi y'urubyiruko n'ibindi.",
+        "long": "Huza umuryango (ummah) — terera inkunga amahuriro akomeza ukwemera n'umuryango, kuva mu birori bya Idi kugeza ku makambi y'urubyiruko n'amarushanwa y'igihugu.",
+        "impact": "RWF 84M yakusanyijwe mu bikorwa biriho"
+      }
+    },
+    "funds": {
+      "school": {
+        "scholarship": {
+          "label": "Ikigega cya Buruse",
+          "long": "Buruse zuzuye n'iz'igice ku banyeshuri b'inararibonye baturuka mu miryango ikennye, zishyura uko bakomeza amashuri kugeza barangije.",
+          "impact": "abanyeshuri barenga 200 bafashijwe",
+          "examples": [
+            "Amafaranga y'ishuri",
+            "Amafaranga y'ibizamini",
+            "Inkunga"
+          ]
+        },
+        "madrassa": {
+          "label": "Madrassa n'Ibitabo",
+          "long": "Guha amashuri ya Qur'an mu ntara zose ibitabo n'ibikoresho abana bakeneye kugira ngo bige gusoma no kwiga Qur'an ku mutwe.",
+          "impact": "amashuri 30 ya Qur'an yahawe ibikoresho",
+          "examples": [
+            "Qur'an",
+            "Ibitabo",
+            "Ibikoresho byo kwigisha"
+          ]
+        },
+        "teachers": {
+          "label": "Gufasha Abarimu",
+          "long": "Inkunga n'amahugurwa ku barimu n'abacengezamatwara batanga ubuzima bwabo mu kwigisha umuryango.",
+          "impact": "abarimu 85 bashyigikiwe",
+          "examples": [
+            "Imishahara",
+            "Amahugurwa",
+            "Ibikoresho"
+          ]
+        }
+      },
+      "charity": {
+        "foodbank": {
+          "label": "Ikigega cy'Ibiribwa",
+          "long": "Imifuka y'ibiribwa by'ibanze buri kwezi ku miryango ifite ingorane, hamwe n'inkunga yiyongera muri Ramadhan.",
+          "impact": "imiryango 5,000 yagaburiwe",
+          "examples": [
+            "Umuceri",
+            "Amavuta",
+            "Ifu",
+            "Imitende"
+          ]
+        },
+        "orphans": {
+          "label": "Kurera Imfubyi",
+          "long": "Tera inkunga ibikenewe by'ingenzi ku mfubyi kugira ngo ikure ifite agaciro, ifunguro n'uburezi.",
+          "impact": "imfubyi 300 zitabwaho",
+          "examples": [
+            "Ibiribwa",
+            "Imyenda",
+            "Amashuri"
+          ]
+        },
+        "medical": {
+          "label": "Ubufasha mu Buvuzi",
+          "long": "Kwishyura ibiganiro by'ubuvuzi, imiti n'ubuvuzi bwihutirwa ku batabona uko bivuza.",
+          "impact": "indwara 1,200 zafashijwe kuvurwa",
+          "examples": [
+            "Imiti",
+            "Ibiganiro",
+            "Kubagwa"
+          ]
+        }
+      },
+      "religious": {
+        "masjid": {
+          "label": "Kubungabunga Imisigiti",
+          "long": "Gukomeza imisigiti isukuye, ifite urumuri kandi iri mu mimerere myiza — kuva ku matereza kugeza ku gisenge n'ahantu ho gukora wudhu.",
+          "impact": "imisigiti 40 ibungabunzwe",
+          "examples": [
+            "Gusana",
+            "Amazi n'amashanyarazi",
+            "Isuku"
+          ]
+        },
+        "imam": {
+          "label": "Gufasha ba Imamu",
+          "long": "Inkunga, amahugurwa n'ubufasha mu butumwa ku ba imamu bayobora amasengesho bakanakorera imiryango yabo.",
+          "impact": "ba imamu 120 bashyigikiwe",
+          "examples": [
+            "Inkunga",
+            "Amahugurwa",
+            "Ubutumwa"
+          ]
+        },
+        "quran": {
+          "label": "Gukwirakwiza Qur'an",
+          "long": "Gucapa no gukwirakwiza Qur'an kugira ngo buri rugo na buri musigiti bibone igitabo cy'Imana.",
+          "impact": "Qur'an 10,000 zakwirakwijwe",
+          "examples": [
+            "Gucapa",
+            "Gukwirakwiza",
+            "Kopi z'amajwi"
+          ]
+        }
+      }
+    },
+    "events": {
+      "e1": {
+        "title": "Umunsi Mukuru wa Idi al-Adha ku Rwego rw'Igihugu",
+        "type": "Idini",
+        "long": "Kwakira umunsi mukuru wa Idi al-Adha ku rwego rw'igihugu — amasengesho, igitambo n'ifunguro rusange bihuza ibihumbi by'abemera.",
+        "examples": [
+          "Ahabera",
+          "Igitambo",
+          "Ibiryo"
+        ]
+      },
+      "e2": {
+        "title": "Umuhango wa RMC wo Guha Buruse buri Mwaka",
+        "type": "Uburezi",
+        "long": "Kwizihiza no gutera inkunga itsinda rishya ry’abanyeshuri ba RMC mu muhango wa buri mwaka wo guha ibihembo, dushimira ubuhanga mu masomo.",
+        "examples": [
+          "Ibihembo",
+          "Buruse",
+          "Umuhango"
+        ]
+      },
+      "e3": {
+        "title": "Inama y'Ubuyobozi bw'Abagore b'Abayisilamu",
+        "type": "Umuryango",
+        "long": "Guha imbaraga abagore b'Abayisilamu binyuze mu nama y'ubuyobozi irimo amahugurwa, uburezi n'iyubakwa ry'urusobe mu gihugu hose.",
+        "examples": [
+          "Amahugurwa",
+          "Abavugizi",
+          "Imitunganyirize"
+        ]
+      },
+      "e4": {
+        "title": "Irushanwa ryo Gusoma Qur'an — Fainali z'Igihugu",
+        "type": "Da'wah",
+        "long": "Gukora fainali z'igihugu z'irushanwa ryo gusoma Qur'an, dushimira abazi Qur'an ku mutwe bo mu Rwanda.",
+        "examples": [
+          "Ibihembo",
+          "Abacamanza",
+          "Ahabera"
+        ]
+      },
+      "e5": {
+        "title": "Inteko Rusange ya RMC",
+        "type": "Imiyoborere",
+        "long": "Gushyigikira iterana ry'Inteko Rusange ya RMC — ihuriro ry'imiyoborere riyobora imirimo y'umuryango.",
+        "examples": [
+          "Ahabera",
+          "Ingendo",
+          "Ibikoresho"
+        ]
+      }
+    },
+    "impact": {
+      "title": "Ingaruka iriho",
+      "subtitle": "Ibikorwa impano yawe iteza imbere ubu.",
+      "raisedOf": "<b>RWF {raised} yakusanyijwe</b> kuri RWF {goal} byari bigamijwe"
+    },
+    "zakat": {
+      "title": "Kibariho cya Zakat",
+      "subtitle": "Bara 2.5% yawe uyongere ku mpano yawe.",
+      "wealthLabel": "Umutungo ubarwaho Zakat",
+      "wealthHint": "Amafaranga, zahabu n'ishoramari bimaze umwaka",
+      "wealthPlaceholder": "Umutungo wose",
+      "nisabLabel": "Urwego rwa Nisab",
+      "nisabHint": "Rwujujwe mbere (ifeza) — uruhindure bibaye ngombwa",
+      "nisabPlaceholder": "Agaciro ka Nisab",
+      "yourZakat": "Zakat yawe (2.5%)",
+      "addZakat": "Ongera Zakat ku gitebo",
+      "addedAgain": "Byongewe — ongera nanone",
+      "belowNisab": "Umutungo wawe uri munsi y'urwego rwa Nisab, bityo Zakat ishobora kutaba ngombwa. Ushobora gutanga Sadaka.",
+      "disclaimer": "Iki ni icyerekezo gusa. Kugira ngo umenye neza inshingano yawe, nyamuneka baza umuhanga w'idini."
+    },
+    "cart": {
+      "title": "Impano yawe",
+      "intention": "Umugambi: {niyyah}",
+      "empty": "Igitebo cyawe kirimo ubusa",
+      "emptyHint": "Hitamo icyiciro maze wongereho ikigega kugira ngo utangire.",
+      "monthly": "Bigire ibya buri kwezi",
+      "monthlyHint": "Sadaka Jariya — ushobora guhagarika cyangwa kureka igihe icyo ari cyo cyose.",
+      "yourDetails": "Amakuru yawe",
+      "namePlaceholder": "Amazina yombi",
+      "anonName": "Utanze utamenyekana",
+      "emailPlaceholder": "Imeyili (yo kohererezwa inyemezabwishyu)",
+      "giveAnon": "Tanga utamenyekana",
+      "paymentMethod": "Uburyo bwo kwishyura",
+      "total": "Igiteranyo",
+      "perMonth": "/ ukwezi",
+      "complete": "Soza impano",
+      "processing": "Birimo gutunganywa…",
+      "secure": "Kwishyura kwizewe kandi gufite umutekano",
+      "close": "Funga",
+      "remove": "Kuraho {label}",
+      "error": "Ntitwashoboye kwandika impano yawe. Nyamuneka ongera ugerageze."
+    },
+    "methods": {
+      "momo": {
+        "title": "Mobile Money",
+        "desc": "MTN MoMo · Airtel"
+      },
+      "card": {
+        "title": "Ikarita",
+        "desc": "Visa · Mastercard"
+      },
+      "bank": {
+        "title": "Kohereza kuri Banki",
+        "desc": "Kubitsa mu buryo butaziguye"
+      },
+      "paypal": {
+        "title": "PayPal",
+        "desc": "Konti ya PayPal"
+      }
+    },
+    "floatingCart": "Reba impano",
+    "reassurance": "Buri mpano ni <b>ikizere</b> (amāna). 100% igera ku mpamvu wahisemo, kandi uzahabwa inyemezabwishyu kuri imeyili.",
+    "success": {
+      "thankYou": "Murakoze ku bugwaneza bwanyu",
+      "summary": "Uri gutanga <b>{amount}</b>{recurring} kuri <b>{count}</b> {fundWord} ukoresheje {method}. Uzayoborwa kuri mugenzi wacu wishyura mu mutekano kugira ngo urangize.",
+      "monthly": " buri kwezi",
+      "fundWordOne": "ikigega",
+      "fundWordOther": "ibigega",
+      "duaTitle": "Nyamuneka sabira Ummah",
+      "duaPlaceholder": "Andika du'a cyangwa umugambi wawe bwite…",
+      "duaAmin": "Āmīn — Imana yemere du'a yawe.",
+      "downloadReceipt": "Kuramo inyemezabwishyu",
+      "backHome": "Subira ku rupapuro rw'itangiriro",
+      "giveAgain": "Ongera utange"
+    },
+    "receipt": {
+      "org": "Umuryango w'Abayisilamu bo mu Rwanda",
+      "title": "Inyemezabwishyu y'Impano",
+      "intention": "Umugambi: {niyyah}",
+      "reference": "Indango",
+      "date": "Itariki",
+      "method": "Uburyo bwo kwishyura",
+      "monthlyRecurring": "Bisubiramo buri kwezi",
+      "fund": "Ikigega",
+      "category": "Icyiciro",
+      "amount": "Umubare",
+      "total": "Igiteranyo",
+      "perMonth": " / ukwezi",
+      "foot1": "Jazāk Allāhu khayran ku bugwaneza bwawe. Imana ibyemere kandi yongere umugisha wawe.",
+      "foot2": "Iyi nyemezabwishyu yemeza isezerano ryawe; kwishyura birangirira kuri mugenzi wacu wizewe."
+    },
+    "general": {
+      "categoryTitle": "Aho bikenewe cyane",
+      "label": "Aho bikenewe cyane"
+    },
+    "zakatItem": {
+      "category": "Impuhwe",
+      "label": "Zakat"
+    }
   }
 }

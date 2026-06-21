@@ -100,6 +100,7 @@ export interface DonationFilters {
 
 export interface CampaignPayload {
   title?: string;
+  slug?: string;
   description?: string;
   targetAmount?: number;
   raisedAmount?: number;
