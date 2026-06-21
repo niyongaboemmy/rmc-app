@@ -742,6 +742,147 @@
         "partners": "Our Partners",
         "about": "About RMC"
       }
+    },
+    "donations": {
+      "title": "Donations",
+      "subtitle": "Track donations received across all programs",
+      "export": "Export",
+      "refresh": "Refresh",
+      "stat": {
+        "totalReceived": "Total received (RWF)",
+        "totalDonations": "Total donations",
+        "topProgram": "Top program",
+        "pending": "Pending (RWF)"
+      },
+      "received": "received",
+      "gift": "gift",
+      "gifts": "gifts",
+      "tabDonations": "Donations",
+      "tabPrograms": "Programs",
+      "period": "Period",
+      "preset": {
+        "all": "All time",
+        "today": "Today",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "month": "This month",
+        "year": "This year"
+      },
+      "searchPlaceholder": "Search donor name or email...",
+      "allPrograms": "All programs",
+      "generalFund": "General fund",
+      "allCategories": "All categories",
+      "allIntentions": "All intentions",
+      "allMethods": "All methods",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "clearFilters": "Clear filters",
+      "loading": "Loading donations...",
+      "noneTitle": "No donations found",
+      "noneHint": "Try adjusting your filters",
+      "col": {
+        "transaction": "Transaction",
+        "donor": "Donor",
+        "cause": "Cause",
+        "amount": "Amount",
+        "method": "Method",
+        "date": "Date",
+        "intention": "Intention"
+      },
+      "unknown": "Unknown",
+      "edit": "Edit",
+      "showing": "Showing {from}–{to} of {total} donations",
+      "filteredNote": "{count} on this page match your filters",
+      "previous": "Previous",
+      "next": "Next",
+      "status": {
+        "all": "All statuses",
+        "completed": "Completed",
+        "pending": "Pending",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "programs": {
+        "new": "New program",
+        "noneTitle": "No programs yet",
+        "donation": "donation",
+        "donations": "donations",
+        "raisedNote": "{amount} raised from completed donations",
+        "statusActive": "Active",
+        "statusPaused": "Paused",
+        "statusClosed": "Closed"
+      },
+      "editModal": {
+        "title": "Edit donation",
+        "selection": "Donor's selection",
+        "amount": "Amount",
+        "currency": "Currency",
+        "status": "Status",
+        "program": "Program",
+        "donorName": "Donor name",
+        "donorEmail": "Donor email",
+        "cancel": "Cancel",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "error": "Could not save changes. Please try again."
+      },
+      "campaignModal": {
+        "newTitle": "New program",
+        "editTitle": "Edit program",
+        "title": "Title",
+        "description": "Description",
+        "targetAmount": "Target amount",
+        "currency": "Currency",
+        "fundType": "Fund type",
+        "category": "Category",
+        "categoryHint": "Maps this program to a donate-page category.",
+        "slug": "Slug",
+        "slugHint": "Links to a public event for live funding (e.g. e1).",
+        "heroImage": "Hero image",
+        "heroImageHint": "Banner shown on the donate page.",
+        "uploadImage": "Upload image",
+        "uploading": "Uploading…",
+        "removeImage": "Remove",
+        "invalidImageFile": "Please choose an image file.",
+        "uploadFailed": "Image upload failed.",
+        "optional": "Optional",
+        "invalidUrl": "Enter a valid URL starting with http.",
+        "invalidAmount": "Enter a target amount greater than zero.",
+        "basics": "Basics",
+        "funding": "Funding",
+        "schedule": "Schedule & status",
+        "status": "Status",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "create": "Create program",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "next": "Next",
+        "back": "Back",
+        "step": "Step {current} of {total}",
+        "required": "Title and target amount are required.",
+        "error": "Could not save the program. Please try again."
+      },
+      "detail": {
+        "reference": "Reference",
+        "intention": "Intention",
+        "category": "Category",
+        "fund": "Fund",
+        "program": "Program",
+        "status": "Status",
+        "method": "Method",
+        "frequency": "Frequency",
+        "email": "Email",
+        "date": "Date",
+        "anonymous": "Anonymous donor",
+        "expand": "Toggle details"
+      },
+      "freq": {
+        "once": "One-time",
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      }
     }
   },
   "galleryPage": {
@@ -774,5 +915,319 @@
     "minRead": "{count} min read",
     "search": "Search articles",
     "noResults": "No articles found"
+  },
+  "donate": {
+    "sectionHeading": "Choose where your gift goes",
+    "sectionSub": "Explore each category below and add any cause to your gift.",
+    "header": {
+      "title1": "Give with Intention.",
+      "title2": "Multiply your Barakah.",
+      "intro": "Begin with your <b>niyyah</b> — the intention behind your gift — then choose where it goes. Every contribution is transparent and amāna.",
+      "setIntention": "Set your intention"
+    },
+    "niyyah": {
+      "lillah": {
+        "label": "Lillah",
+        "desc": "Purely for the sake of Allah"
+      },
+      "sadaqah": {
+        "label": "Sadaqah Jariyah",
+        "desc": "Ongoing, continuous charity"
+      },
+      "zakat": {
+        "label": "Zakat",
+        "desc": "Obligatory alms — 2.5%"
+      }
+    },
+    "quickGive": {
+      "title": "Give where it's needed most",
+      "subtitle": "Know your amount? Add it in one tap — RMC directs it to the greatest need.",
+      "addToGift": "to gift"
+    },
+    "card": {
+      "addToGift": "Add to gift",
+      "addAgain": "Add again",
+      "added": "Added",
+      "add": "Add",
+      "cancel": "Cancel",
+      "howMuch": "How much to {fund}?",
+      "customAmount": "Custom amount"
+    },
+    "categories": {
+      "school": {
+        "title": "School Related",
+        "desc": "Scholarships, books & Islamic education.",
+        "long": "Open the doors of knowledge for the next generation — from Qur'an classes to university scholarships for talented students who cannot afford the fees.",
+        "impact": "RWF 18M deployed · 2,000+ students reached"
+      },
+      "charity": {
+        "title": "Charity",
+        "desc": "Feeding the hungry & supporting the poor.",
+        "long": "Direct relief for the most vulnerable — food parcels for struggling families, care for orphans, and medical aid for those who would otherwise go without.",
+        "impact": "5,000 families fed last Ramadan"
+      },
+      "religious": {
+        "title": "Religious",
+        "desc": "Masjid upkeep & community worship.",
+        "long": "Sustain the houses of Allah and those who serve them — mosque maintenance, support for imams, and Qur'ans placed in the hands of the community.",
+        "impact": "40 mosques maintained · 120 imams trained"
+      },
+      "events": {
+        "title": "Events",
+        "desc": "Qiyam, iftars, youth camps & more.",
+        "long": "Bring the ummah together — fund the gatherings that strengthen faith and community, from Eid celebrations to youth camps and national competitions.",
+        "impact": "RWF 84M raised across active campaigns"
+      }
+    },
+    "funds": {
+      "school": {
+        "scholarship": {
+          "label": "Scholarship Fund",
+          "long": "Full and partial scholarships for bright students from low-income families, covering the cost of staying in school through to graduation.",
+          "impact": "200+ students sponsored",
+          "examples": [
+            "Tuition",
+            "Exam fees",
+            "Stipends"
+          ]
+        },
+        "madrassa": {
+          "label": "Madrassa & Books",
+          "long": "Equip Qur'an schools across the provinces with the books and materials children need to learn to read and memorise the Qur'an.",
+          "impact": "30 madrassas supplied",
+          "examples": [
+            "Qur'ans",
+            "Textbooks",
+            "Teaching aids"
+          ]
+        },
+        "teachers": {
+          "label": "Teacher Support",
+          "long": "Stipends and training for the teachers and du'āt who dedicate their lives to educating the community.",
+          "impact": "85 educators supported",
+          "examples": [
+            "Salaries",
+            "Training",
+            "Materials"
+          ]
+        }
+      },
+      "charity": {
+        "foodbank": {
+          "label": "Food Bank",
+          "long": "Monthly food parcels of staple goods for families facing hardship, with extra support during Ramadan.",
+          "impact": "5,000 families fed",
+          "examples": [
+            "Rice",
+            "Oil",
+            "Flour",
+            "Dates"
+          ]
+        },
+        "orphans": {
+          "label": "Orphan Sponsorship",
+          "long": "Sponsor an orphan's essential needs so they can grow up with dignity, nourishment and an education.",
+          "impact": "300 orphans cared for",
+          "examples": [
+            "Food",
+            "Clothing",
+            "Schooling"
+          ]
+        },
+        "medical": {
+          "label": "Medical Aid",
+          "long": "Cover the cost of consultations, medicine and urgent treatment for those who cannot afford care.",
+          "impact": "1,200 treatments funded",
+          "examples": [
+            "Medicine",
+            "Consultations",
+            "Surgery"
+          ]
+        }
+      },
+      "religious": {
+        "masjid": {
+          "label": "Masjid Maintenance",
+          "long": "Keep mosques clean, lit and in good repair — from utility bills to roofing and wudu facilities.",
+          "impact": "40 mosques maintained",
+          "examples": [
+            "Repairs",
+            "Utilities",
+            "Cleaning"
+          ]
+        },
+        "imam": {
+          "label": "Imam Support",
+          "long": "Stipends, training and outreach support for the imams who lead prayer and serve their communities.",
+          "impact": "120 imams supported",
+          "examples": [
+            "Stipends",
+            "Training",
+            "Outreach"
+          ]
+        },
+        "quran": {
+          "label": "Qur'an Distribution",
+          "long": "Print and distribute mushafs so every household and mosque has access to the Book of Allah.",
+          "impact": "10,000 mushafs distributed",
+          "examples": [
+            "Printing",
+            "Distribution",
+            "Audio copies"
+          ]
+        }
+      }
+    },
+    "events": {
+      "e1": {
+        "title": "Eid al-Adha National Celebration",
+        "type": "Religious",
+        "long": "Host the national Eid al-Adha celebration — prayer, qurbani and a shared meal that brings thousands of believers together.",
+        "examples": [
+          "Venue",
+          "Qurbani",
+          "Catering"
+        ]
+      },
+      "e2": {
+        "title": "RMC Annual Scholarship Awards Ceremony",
+        "type": "Education",
+        "long": "Celebrate and fund the next cohort of RMC scholars at the annual awards ceremony, recognising academic excellence.",
+        "examples": [
+          "Awards",
+          "Scholarships",
+          "Ceremony"
+        ]
+      },
+      "e3": {
+        "title": "Muslim Women Leadership Summit",
+        "type": "Community",
+        "long": "Empower Muslim women through a leadership summit of workshops, mentorship and networking across the country.",
+        "examples": [
+          "Workshops",
+          "Speakers",
+          "Logistics"
+        ]
+      },
+      "e4": {
+        "title": "Qur'an Recitation Competition — National Finals",
+        "type": "Da'wah",
+        "long": "Stage the national finals of the Qur'an recitation competition, honouring the huffāz of Rwanda.",
+        "examples": [
+          "Prizes",
+          "Judging",
+          "Venue"
+        ]
+      },
+      "e5": {
+        "title": "RMC General Assembly Meeting",
+        "type": "Governance",
+        "long": "Support the running of RMC's General Assembly — the governance gathering that steers the community's work.",
+        "examples": [
+          "Venue",
+          "Travel",
+          "Materials"
+        ]
+      }
+    },
+    "impact": {
+      "title": "Live impact",
+      "subtitle": "Campaigns your gift moves forward right now.",
+      "raisedOf": "<b>RWF {raised} raised</b> of RWF {goal} goal"
+    },
+    "zakat": {
+      "title": "Zakat Calculator",
+      "subtitle": "Estimate your 2.5% and add it to your gift.",
+      "wealthLabel": "Zakatable wealth",
+      "wealthHint": "Savings, gold & investments held for a year",
+      "wealthPlaceholder": "Total wealth",
+      "nisabLabel": "Nisab threshold",
+      "nisabHint": "Pre-filled (silver) — adjust if needed",
+      "nisabPlaceholder": "Nisab value",
+      "yourZakat": "Your Zakat (2.5%)",
+      "addZakat": "Add Zakat to cart",
+      "addedAgain": "Added — add again",
+      "belowNisab": "Your wealth is below the Nisab threshold, so Zakat may not be due. You can still give Sadaqah.",
+      "disclaimer": "This is a guide only. For your exact obligation, please consult a scholar."
+    },
+    "cart": {
+      "title": "Your gift",
+      "intention": "Intention: {niyyah}",
+      "empty": "Your cart is empty",
+      "emptyHint": "Choose a category and add a fund to get started.",
+      "monthly": "Make it monthly",
+      "monthlyHint": "Sadaqah Jariyah — pause or cancel anytime.",
+      "yourDetails": "Your details",
+      "namePlaceholder": "Full name",
+      "anonName": "Anonymous donor",
+      "emailPlaceholder": "Email (for your receipt)",
+      "giveAnon": "Give anonymously",
+      "paymentMethod": "Payment method",
+      "total": "Total",
+      "perMonth": "/ month",
+      "complete": "Complete donation",
+      "processing": "Processing…",
+      "secure": "Secure & encrypted payment",
+      "close": "Close",
+      "remove": "Remove {label}",
+      "error": "We could not record your donation. Please try again."
+    },
+    "methods": {
+      "momo": {
+        "title": "Mobile Money",
+        "desc": "MTN MoMo · Airtel"
+      },
+      "card": {
+        "title": "Card",
+        "desc": "Visa · Mastercard"
+      },
+      "bank": {
+        "title": "Bank Transfer",
+        "desc": "Direct deposit"
+      },
+      "paypal": {
+        "title": "PayPal",
+        "desc": "PayPal balance"
+      }
+    },
+    "floatingCart": "Review gift",
+    "reassurance": "Every gift is <b>amāna</b> — a trust. 100% reaches the cause you choose, and you'll receive a receipt by email.",
+    "success": {
+      "thankYou": "Thank you for your generosity",
+      "summary": "You're giving <b>{amount}</b>{recurring} across <b>{count}</b> {fundWord} via {method}. You'll be redirected to our secure partner to complete it.",
+      "monthly": " monthly",
+      "fundWordOne": "fund",
+      "fundWordOther": "funds",
+      "duaTitle": "Please make du'ā for the Ummah",
+      "duaPlaceholder": "Write a personal du'ā or intention…",
+      "duaAmin": "Āmīn — may Allah accept your du'ā.",
+      "downloadReceipt": "Download receipt",
+      "backHome": "Back to home",
+      "giveAgain": "Give again"
+    },
+    "receipt": {
+      "org": "Rwanda Muslim Community",
+      "title": "Donation Receipt",
+      "intention": "Intention: {niyyah}",
+      "reference": "Reference",
+      "date": "Date",
+      "method": "Method",
+      "monthlyRecurring": "Monthly recurring",
+      "fund": "Fund",
+      "category": "Category",
+      "amount": "Amount",
+      "total": "Total",
+      "perMonth": " / month",
+      "foot1": "Jazāk Allāhu khayran for your generosity. May Allah accept it and multiply your barakah.",
+      "foot2": "This receipt confirms your pledge; payment is completed via our secure partner."
+    },
+    "general": {
+      "categoryTitle": "Where most needed",
+      "label": "Where most needed"
+    },
+    "zakatItem": {
+      "category": "Charity",
+      "label": "Zakat"
+    }
   }
 }

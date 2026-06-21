@@ -1,18 +1,24 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Fragment, useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   HandCoins, Search, RefreshCw, TrendingUp, Wallet, Clock, Receipt,
-  Plus, Pencil, X, Download, Trophy, Layers, CheckCircle2, CalendarRange,
+  Plus, Pencil, X, Download, Trophy, Layers, CheckCircle2, CalendarRange, Sparkles, ChevronDown, Upload,
 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import {
-  donationsApi, Donation, DonationStats, CampaignWithStats, DonationStatus,
-  CampaignStatus, STATUS_LABELS, formatCurrency,
+  donationsApi, Donation, DonationStats, CampaignWithStats,
+  CampaignStatus, formatCurrency, STATUS_COLORS,
 } from '@/lib/donationsApi';
+import { fileUrl } from '@/lib/api';
+import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
+import { parseDonationMeta, metaLabels, type DonateTranslator } from '@/lib/donationMeta';
+import { CATEGORIES, NIYYAH, METHODS } from '@/components/donate/donateData';
 import { formatMoney, fundedPercent } from '@/components/activities/data';
 import { cn } from '@/lib/utils';
 
@@ -25,26 +31,19 @@ interface Filters {
   status: string;
   search: string;
 }
-
 const EMPTY_FILTERS: Filters = { dateFrom: '', dateTo: '', campaignId: '', status: '', search: '' };
 
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: '', label: 'All statuses' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'refunded', label: 'Refunded' },
-];
+/* Client-side refinements derived from the donation message (stable meta keys). */
+interface MetaFilters {
+  category: string;
+  niyyah: string;
+  method: string;
+}
+const EMPTY_META: MetaFilters = { category: '', niyyah: '', method: '' };
 
-// Quick time-range presets — selecting one filters the list AND the metrics above.
-const PRESETS: { key: string; label: string }[] = [
-  { key: 'all', label: 'All time' },
-  { key: 'today', label: 'Today' },
-  { key: '7d', label: 'Last 7 days' },
-  { key: '30d', label: 'Last 30 days' },
-  { key: 'month', label: 'This month' },
-  { key: 'year', label: 'This year' },
-];
+const PRESET_KEYS = ['all', 'today', '7d', '30d', 'month', 'year'] as const;
+const STATUS_KEYS = ['', 'completed', 'pending', 'failed', 'refunded'] as const;
+const CATEGORY_KEYS = [...CATEGORIES.map((c) => c.key), 'general'];
 
 function presetRange(key: string): { dateFrom: string; dateTo: string } {
   const today = new Date();
@@ -65,12 +64,6 @@ function txnRef(id: string): string {
   return `TXN-${id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
 
-/** Donor display — anonymous (or nameless) donors show as "Unknown". */
-function donorLabel(d: Donation): string {
-  if (d.isAnonymous) return 'Unknown';
-  return d.donorName?.trim() || 'Unknown';
-}
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminDonationsPage() {
@@ -85,9 +78,21 @@ function DonationsAdmin() {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.DONATIONS_MANAGE);
+  const t = useTranslations('admin.donations');
+  const td = useTranslations('donate') as unknown as DonateTranslator;
+
+  const donorLabel = useCallback(
+    (d: Donation) => (d.isAnonymous ? t('unknown') : d.donorName?.trim() || t('unknown')),
+    [t],
+  );
+  const methodLabel = useCallback(
+    (m?: string | null) => (m && td.has(`methods.${m}.title`) ? td(`methods.${m}.title`) : m ?? '—'),
+    [td],
+  );
 
   const [tab, setTab] = useState<Tab>('report');
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [metaFilters, setMetaFilters] = useState<MetaFilters>(EMPTY_META);
   const [page, setPage] = useState(1);
 
   const [donations, setDonations] = useState<Donation[]>([]);
@@ -98,7 +103,7 @@ function DonationsAdmin() {
   const [stats, setStats] = useState<DonationStats | null>(null);
   const [campaigns, setCampaigns] = useState<CampaignWithStats[]>([]);
 
-  const [editing, setEditing] = useState<Donation | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [campaignModal, setCampaignModal] = useState<{ open: boolean; campaign: CampaignWithStats | null }>({ open: false, campaign: null });
 
   const fetchDonations = useCallback(async () => {
@@ -151,16 +156,31 @@ function DonationsAdmin() {
   const patch = (p: Partial<Filters>) => { setFilters((f) => ({ ...f, ...p })); setPage(1); };
   const applyPreset = (key: string) => { setFilters((f) => ({ ...f, ...presetRange(key) })); setPage(1); };
   const activePreset = useMemo(
-    () => PRESETS.find((p) => {
-      const r = presetRange(p.key);
+    () => PRESET_KEYS.find((k) => {
+      const r = presetRange(k);
       return r.dateFrom === filters.dateFrom && r.dateTo === filters.dateTo;
-    })?.key,
+    }),
     [filters.dateFrom, filters.dateTo],
   );
+  const metaActive = !!(metaFilters.category || metaFilters.niyyah || metaFilters.method);
   const hasActiveFilters = useMemo(
-    () => Object.values(filters).some(Boolean),
-    [filters],
+    () => Object.values(filters).some(Boolean) || metaActive,
+    [filters, metaActive],
   );
+
+  // Client-side refinement of the loaded page by message-derived meta keys.
+  const visible = useMemo(() => {
+    if (!metaActive) return donations;
+    return donations.filter((d) => {
+      const m = parseDonationMeta(d.message);
+      if (metaFilters.category && m.category !== metaFilters.category) return false;
+      if (metaFilters.niyyah && m.niyyah !== metaFilters.niyyah) return false;
+      if (metaFilters.method && d.paymentMethod !== metaFilters.method) return false;
+      return true;
+    });
+  }, [donations, metaFilters, metaActive]);
+
+  const clearAll = () => { setFilters(EMPTY_FILTERS); setMetaFilters(EMPTY_META); setPage(1); };
 
   // Headline figures (RWF is the primary currency; other currencies shown as a strip)
   const rwf = stats?.byCurrency.find((c) => c.currency === 'RWF');
@@ -168,17 +188,23 @@ function DonationsAdmin() {
   const topProgram = stats?.byProgram[0];
 
   const exportCsv = () => {
-    const header = ['Transaction ID', 'Date', 'Donor', 'Email', 'Program', 'Amount', 'Currency', 'Method'];
-    const rows = donations.map((d) => [
-      txnRef(d.id),
-      new Date(d.donatedAt).toISOString().slice(0, 10),
-      donorLabel(d),
-      d.isAnonymous ? '' : d.donorEmail ?? '',
-      d.campaign?.title ?? 'General fund',
-      String(d.amount),
-      d.currency,
-      d.paymentMethod ?? '',
-    ]);
+    const header = [t('col.transaction'), t('col.date'), t('col.donor'), t('editModal.donorEmail'), t('col.cause'), t('col.intention'), t('col.amount'), t('editModal.currency'), t('col.method')];
+    const rows = visible.map((d) => {
+      const ml = metaLabels(td, parseDonationMeta(d.message));
+      const fund = ml.fund ?? d.campaign?.title ?? t('generalFund');
+      const cause = ml.category ? `${ml.category} › ${fund}` : fund;
+      return [
+        txnRef(d.id),
+        new Date(d.donatedAt).toISOString().slice(0, 10),
+        donorLabel(d),
+        d.isAnonymous ? '' : d.donorEmail ?? '',
+        cause,
+        ml.niyyah ?? '',
+        String(d.amount),
+        d.currency,
+        methodLabel(d.paymentMethod),
+      ];
+    });
     const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -198,8 +224,8 @@ function DonationsAdmin() {
             <HandCoins className="w-5 h-5 text-rmc-green" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">Donations</h1>
-            <p className="text-sm text-gray-500">Track donations received across all programs</p>
+            <h1 className="text-xl font-bold text-gray-900 leading-tight">{t('title')}</h1>
+            <p className="text-sm text-gray-500">{t('subtitle')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -208,45 +234,24 @@ function DonationsAdmin() {
               onClick={exportCsv}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:border-rmc-green/40 hover:text-rmc-green transition-colors"
             >
-              <Download className="w-4 h-4" /> Export
+              <Download className="w-4 h-4" /> {t('export')}
             </button>
           )}
           <button
             onClick={refreshAll}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:border-rmc-green/40 hover:text-rmc-green transition-colors"
           >
-            <RefreshCw className="w-4 h-4" /> Refresh
+            <RefreshCw className="w-4 h-4" /> {t('refresh')}
           </button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Wallet className="w-5 h-5" />}
-          color="text-rmc-green bg-rmc-green/10"
-          label="Total received (RWF)"
-          value={formatCurrency('RWF', rwf?.received ?? 0)}
-        />
-        <StatCard
-          icon={<Receipt className="w-5 h-5" />}
-          color="text-blue-600 bg-blue-50"
-          label="Total donations"
-          value={String(stats?.count ?? 0)}
-        />
-        <StatCard
-          icon={<Trophy className="w-5 h-5" />}
-          color="text-amber-600 bg-amber-50"
-          label="Top program"
-          value={topProgram ? formatCurrency(topProgram.currency, topProgram.received) : '—'}
-          sub={topProgram?.title}
-        />
-        <StatCard
-          icon={<Clock className="w-5 h-5" />}
-          color="text-yellow-600 bg-yellow-50"
-          label="Pending (RWF)"
-          value={formatCurrency('RWF', rwf?.pending ?? 0)}
-        />
+        <StatCard icon={<Wallet className="w-5 h-5" />} color="text-rmc-green bg-rmc-green/10" label={t('stat.totalReceived')} value={formatCurrency('RWF', rwf?.received ?? 0)} />
+        <StatCard icon={<Receipt className="w-5 h-5" />} color="text-blue-600 bg-blue-50" label={t('stat.totalDonations')} value={String(stats?.count ?? 0)} />
+        <StatCard icon={<Trophy className="w-5 h-5" />} color="text-amber-600 bg-amber-50" label={t('stat.topProgram')} value={topProgram ? formatCurrency(topProgram.currency, topProgram.received) : '—'} sub={topProgram?.title} />
+        <StatCard icon={<Clock className="w-5 h-5" />} color="text-yellow-600 bg-yellow-50" label={t('stat.pending')} value={formatCurrency('RWF', rwf?.pending ?? 0)} />
       </div>
 
       {/* Other-currency strip */}
@@ -255,7 +260,7 @@ function DonationsAdmin() {
           {otherCurrencies.map((c) => (
             <span key={c.currency} className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600">
               <TrendingUp className="w-3.5 h-3.5 text-rmc-green" />
-              <span className="font-semibold text-gray-900">{formatCurrency(c.currency, c.received)}</span> received · {c.count} {c.count === 1 ? 'gift' : 'gifts'}
+              <span className="font-semibold text-gray-900">{formatCurrency(c.currency, c.received)}</span> {t('received')} · {c.count} {c.count === 1 ? t('gift') : t('gifts')}
             </span>
           ))}
         </div>
@@ -263,85 +268,75 @@ function DonationsAdmin() {
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-gray-100">
-        <TabButton active={tab === 'report'} onClick={() => setTab('report')} icon={<Receipt className="w-4 h-4" />} label="Donations" count={total} />
-        <TabButton active={tab === 'programs'} onClick={() => setTab('programs')} icon={<Layers className="w-4 h-4" />} label="Programs" count={campaigns.length} />
+        <TabButton active={tab === 'report'} onClick={() => setTab('report')} icon={<Receipt className="w-4 h-4" />} label={t('tabDonations')} count={total} />
+        <TabButton active={tab === 'programs'} onClick={() => setTab('programs')} icon={<Layers className="w-4 h-4" />} label={t('tabPrograms')} count={campaigns.length} />
       </div>
 
       {tab === 'report' ? (
         <>
           {/* Filters */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            {/* Quick time-range presets — metrics above update to match the selection */}
+            {/* Quick time-range presets */}
             <div className="mb-3 flex flex-wrap items-center gap-1.5">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 mr-1">
-                <CalendarRange className="w-3.5 h-3.5" /> Period
+                <CalendarRange className="w-3.5 h-3.5" /> {t('period')}
               </span>
-              {PRESETS.map((p) => (
+              {PRESET_KEYS.map((k) => (
                 <button
-                  key={p.key}
-                  onClick={() => applyPreset(p.key)}
+                  key={k}
+                  onClick={() => applyPreset(k)}
                   className={cn(
                     'rounded-full px-3 py-1 text-xs font-medium border transition-colors',
-                    activePreset === p.key
-                      ? 'bg-rmc-green text-white border-rmc-green'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-rmc-green/40 hover:text-rmc-green',
+                    activePreset === k ? 'bg-rmc-green text-white border-rmc-green' : 'bg-white text-gray-600 border-gray-200 hover:border-rmc-green/40 hover:text-rmc-green',
                   )}
                 >
-                  {p.label}
+                  {t(`preset.${k}`)}
                 </button>
               ))}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="relative lg:col-span-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search donor name or email..."
+                  placeholder={t('searchPlaceholder')}
                   value={filters.search}
                   onChange={(e) => patch({ search: e.target.value })}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40"
+                  className="w-full pl-9 pr-4 rtl:pl-4 rtl:pr-9 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40"
                 />
               </div>
-              <select
-                value={filters.campaignId}
-                onChange={(e) => patch({ campaignId: e.target.value })}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white"
-              >
-                <option value="">All programs</option>
-                <option value="general">General fund</option>
+              <select value={filters.campaignId} onChange={(e) => patch({ campaignId: e.target.value })} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
+                <option value="">{t('allPrograms')}</option>
+                <option value="general">{t('generalFund')}</option>
                 {campaigns.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
-              <select
-                value={filters.status}
-                onChange={(e) => patch({ status: e.target.value })}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white"
-              >
-                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <select value={filters.status} onChange={(e) => patch({ status: e.target.value })} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
+                {STATUS_KEYS.map((k) => <option key={k} value={k}>{k === '' ? t('status.all') : t(`status.${k}`)}</option>)}
               </select>
               <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => patch({ dateFrom: e.target.value })}
-                  className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 text-gray-600"
-                  aria-label="From date"
-                />
+                <input type="date" value={filters.dateFrom} onChange={(e) => patch({ dateFrom: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 text-gray-600" aria-label={t('fromDate')} />
                 <span className="text-gray-300 text-xs">→</span>
-                <input
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => patch({ dateTo: e.target.value })}
-                  className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 text-gray-600"
-                  aria-label="To date"
-                />
+                <input type="date" value={filters.dateTo} onChange={(e) => patch({ dateTo: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 text-gray-600" aria-label={t('toDate')} />
               </div>
             </div>
+            {/* Cause / intention / method (client-side) */}
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <select value={metaFilters.category} onChange={(e) => setMetaFilters((m) => ({ ...m, category: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
+                <option value="">{t('allCategories')}</option>
+                {CATEGORY_KEYS.map((k) => <option key={k} value={k}>{k === 'general' ? td('general.categoryTitle') : td(`categories.${k}.title`)}</option>)}
+              </select>
+              <select value={metaFilters.niyyah} onChange={(e) => setMetaFilters((m) => ({ ...m, niyyah: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
+                <option value="">{t('allIntentions')}</option>
+                {NIYYAH.map((n) => <option key={n.key} value={n.key}>{td(`niyyah.${n.key}.label`)}</option>)}
+              </select>
+              <select value={metaFilters.method} onChange={(e) => setMetaFilters((m) => ({ ...m, method: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
+                <option value="">{t('allMethods')}</option>
+                {METHODS.map((m) => <option key={m.key} value={m.key}>{td(`methods.${m.key}.title`)}</option>)}
+              </select>
+            </div>
             {hasActiveFilters && (
-              <button
-                onClick={() => { setFilters(EMPTY_FILTERS); setPage(1); }}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rmc-green transition-colors"
-              >
-                <X className="w-3.5 h-3.5" /> Clear filters
+              <button onClick={clearAll} className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rmc-green transition-colors">
+                <X className="w-3.5 h-3.5" /> {t('clearFilters')}
               </button>
             )}
           </div>
@@ -351,81 +346,118 @@ function DonationsAdmin() {
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <RefreshCw className="w-6 h-6 text-rmc-green animate-spin" />
-                <span className="ml-2 text-gray-500">Loading donations...</span>
+                <span className="ml-2 rtl:ml-0 rtl:mr-2 text-gray-500">{t('loading')}</span>
               </div>
-            ) : donations.length === 0 ? (
+            ) : visible.length === 0 ? (
               <div className="text-center py-16">
                 <HandCoins className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">No donations found</p>
-                <p className="text-gray-400 text-sm mt-1">Try adjusting your filters</p>
+                <p className="text-gray-500 font-medium">{t('noneTitle')}</p>
+                <p className="text-gray-400 text-sm mt-1">{t('noneHint')}</p>
               </div>
             ) : (
               <>
+                {metaActive && (
+                  <p className="px-4 pt-3 text-[11px] text-gray-400">{t('filteredNote', { count: visible.length })}</p>
+                )}
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50/50">
-                      <th className="text-left px-4 py-3.5 font-medium text-gray-600">Transaction</th>
-                      <th className="text-left px-4 py-3.5 font-medium text-gray-600">Donor</th>
-                      <th className="text-left px-4 py-3.5 font-medium text-gray-600 hidden sm:table-cell">Program</th>
-                      <th className="text-right px-4 py-3.5 font-medium text-gray-600">Amount</th>
-                      <th className="text-left px-4 py-3.5 font-medium text-gray-600 hidden lg:table-cell">Method</th>
-                      <th className="text-left px-4 py-3.5 font-medium text-gray-600 hidden md:table-cell">Date</th>
-                      {canManage && <th className="px-4 py-3.5 w-px" />}
+                    <tr className="border-b border-gray-100 bg-gray-50/50 text-left rtl:text-right">
+                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('col.transaction')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('col.donor')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden sm:table-cell">{t('col.cause')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600 text-right rtl:text-left">{t('col.amount')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden lg:table-cell">{t('col.method')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden md:table-cell">{t('col.date')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {donations.map((d) => (
-                      <tr key={d.id} className="hover:bg-rmc-green/5 transition-colors align-top">
-                        <td className="px-4 py-4">
-                          <span className="font-mono text-xs font-semibold text-gray-700 break-all" title={d.id}>{txnRef(d.id)}</span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="font-medium text-gray-900 break-words">{donorLabel(d)}</p>
-                          {!d.isAnonymous && d.donorEmail && <p className="text-xs text-gray-400 break-all">{d.donorEmail}</p>}
-                          {/* Folded-in details for narrow screens (no horizontal scroll) */}
-                          <p className="sm:hidden mt-1 text-xs text-gray-500">{d.campaign?.title ?? 'General fund'}</p>
-                        </td>
-                        <td className="px-4 py-4 hidden sm:table-cell">
-                          <span className="text-gray-700">{d.campaign?.title ?? 'General fund'}</span>
-                          {d.frequency !== 'once' && (
-                            <span className="ml-1.5 inline-flex items-center rounded-full bg-rmc-green/10 px-1.5 py-0.5 text-[10px] font-semibold text-rmc-green capitalize">{d.frequency}</span>
+                    {visible.map((d) => {
+                      const meta = parseDonationMeta(d.message);
+                      const ml = metaLabels(td, meta);
+                      const fund = ml.fund ?? d.campaign?.title ?? t('generalFund');
+                      const open = expandedId === d.id;
+                      return (
+                        <Fragment key={d.id}>
+                          <tr
+                            onClick={() => setExpandedId(open ? null : d.id)}
+                            className={cn('cursor-pointer transition-colors align-top', open ? 'bg-rmc-green/5' : 'hover:bg-rmc-green/5')}
+                          >
+                            <td className="px-4 py-4">
+                              <span className="inline-flex items-center gap-1.5">
+                                <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 text-gray-400 transition-transform', open && 'rotate-180 text-rmc-green')} />
+                                <span className="font-mono text-xs font-semibold text-gray-700 break-all" title={d.id}>{txnRef(d.id)}</span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              <p className="font-medium text-gray-900 break-words">{donorLabel(d)}</p>
+                              {!d.isAnonymous && d.donorEmail && <p className="text-xs text-gray-400 break-all">{d.donorEmail}</p>}
+                              <p className="sm:hidden mt-1 text-xs text-gray-500">{fund}{ml.niyyah ? ` · ${ml.niyyah}` : ''}</p>
+                            </td>
+                            <td className="px-4 py-4 hidden sm:table-cell">
+                              <span className="text-gray-700">{fund}</span>
+                              {ml.category && <span className="block text-[11px] text-gray-400">{ml.category}</span>}
+                              <span className="mt-1 flex flex-wrap gap-1">
+                                {ml.niyyah && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-rmc-gold/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#8A6A0F]">
+                                    <Sparkles className="w-2.5 h-2.5" />{ml.niyyah}
+                                  </span>
+                                )}
+                                {d.frequency !== 'once' && (
+                                  <span className="inline-flex items-center rounded-full bg-rmc-green/10 px-1.5 py-0.5 text-[10px] font-semibold text-rmc-green">{t(`freq.${d.frequency}`)}</span>
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-right rtl:text-left font-semibold text-gray-900 tabular-nums whitespace-nowrap">
+                              {formatCurrency(d.currency, d.amount)}
+                              <span className="md:hidden block mt-0.5 text-[11px] font-normal text-gray-400">
+                                {new Date(d.donatedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-gray-500 hidden lg:table-cell">{methodLabel(d.paymentMethod)}</td>
+                            <td className="px-4 py-4 text-xs text-gray-500 whitespace-nowrap hidden md:table-cell">
+                              {new Date(d.donatedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </td>
+                          </tr>
+                          {open && (
+                            <tr className="bg-gray-50/60">
+                              <td colSpan={6} className="px-4 pb-5 pt-1">
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+                                  <DetailField label={t('detail.reference')}>
+                                    <span className="font-mono text-xs text-gray-700 break-all">{d.id}</span>
+                                  </DetailField>
+                                  <DetailField label={t('detail.status')}>
+                                    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold', STATUS_COLORS[d.status])}>{t(`status.${d.status}`)}</span>
+                                  </DetailField>
+                                  <DetailField label={t('detail.intention')}>{ml.niyyah ?? '—'}</DetailField>
+                                  <DetailField label={t('detail.category')}>{ml.category ?? '—'}</DetailField>
+                                  <DetailField label={t('detail.fund')}>{ml.fund ?? '—'}</DetailField>
+                                  <DetailField label={t('detail.program')}>{d.campaign?.title ?? t('generalFund')}</DetailField>
+                                  <DetailField label={t('detail.method')}>{methodLabel(d.paymentMethod)}</DetailField>
+                                  <DetailField label={t('detail.frequency')}>{t(`freq.${d.frequency}`)}</DetailField>
+                                  <DetailField label={t('detail.email')}>
+                                    {d.isAnonymous ? t('detail.anonymous') : d.donorEmail || '—'}
+                                  </DetailField>
+                                  <DetailField label={t('detail.date')}>
+                                    {new Date(d.donatedAt).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' })}
+                                  </DetailField>
+                                </div>
+                              </td>
+                            </tr>
                           )}
-                        </td>
-                        <td className="px-4 py-4 text-right font-semibold text-gray-900 tabular-nums whitespace-nowrap">
-                          {formatCurrency(d.currency, d.amount)}
-                          <span className="md:hidden block mt-0.5 text-[11px] font-normal text-gray-400">
-                            {new Date(d.donatedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-gray-500 capitalize hidden lg:table-cell">{d.paymentMethod ?? '—'}</td>
-                        <td className="px-4 py-4 text-xs text-gray-500 whitespace-nowrap hidden md:table-cell">
-                          {new Date(d.donatedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </td>
-                        {canManage && (
-                          <td className="px-4 py-4 text-right">
-                            <button
-                              onClick={() => setEditing(d)}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-rmc-green hover:text-rmc-green-dark transition-colors"
-                            >
-                              <Pencil className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Edit</span>
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
+                        </Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
 
                 {pages > 1 && (
                   <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
                     <p className="text-xs text-gray-500">
-                      Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total} donations
+                      {t('showing', { from: (page - 1) * 20 + 1, to: Math.min(page * 20, total), total })}
                     </p>
                     <div className="flex gap-2">
-                      <button onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1}
-                        className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green/40 transition-colors">Previous</button>
-                      <button onClick={() => setPage((p) => Math.min(p + 1, pages))} disabled={page === pages}
-                        className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green/40 transition-colors">Next</button>
+                      <button onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green/40 transition-colors">{t('previous')}</button>
+                      <button onClick={() => setPage((p) => Math.min(p + 1, pages))} disabled={page === pages} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green/40 transition-colors">{t('next')}</button>
                     </div>
                   </div>
                 )}
@@ -434,35 +466,27 @@ function DonationsAdmin() {
           </div>
         </>
       ) : (
-        <ProgramsTab
-          campaigns={campaigns}
-          canManage={canManage}
-          onNew={() => setCampaignModal({ open: true, campaign: null })}
-          onEdit={(c) => setCampaignModal({ open: true, campaign: c })}
-        />
+        <ProgramsTab campaigns={campaigns} canManage={canManage} onNew={() => setCampaignModal({ open: true, campaign: null })} onEdit={(c) => setCampaignModal({ open: true, campaign: c })} />
       )}
 
       {/* Modals */}
-      {editing && (
-        <EditDonationModal
-          donation={editing}
-          campaigns={campaigns}
-          onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); refreshAll(); }}
-        />
-      )}
       {campaignModal.open && (
-        <CampaignModal
-          campaign={campaignModal.campaign}
-          onClose={() => setCampaignModal({ open: false, campaign: null })}
-          onSaved={() => { setCampaignModal({ open: false, campaign: null }); refreshAll(); }}
-        />
+        <CampaignModal campaign={campaignModal.campaign} onClose={() => setCampaignModal({ open: false, campaign: null })} onSaved={() => { setCampaignModal({ open: false, campaign: null }); refreshAll(); }} />
       )}
     </div>
   );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-0.5">{label}</p>
+      <div className="text-[13px] text-gray-800 break-words">{children}</div>
+    </div>
+  );
+}
 
 function StatCard({ icon, color, label, value, sub }: { icon: React.ReactNode; color: string; label: string; value: string; sub?: string }) {
   return (
@@ -496,26 +520,24 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit }: {
   onNew: () => void;
   onEdit: (c: CampaignWithStats) => void;
 }) {
+  const t = useTranslations('admin.donations');
   return (
     <div className="space-y-4">
       {canManage && (
         <div className="flex justify-end">
           <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark transition-colors">
-            <Plus className="w-4 h-4" /> New program
+            <Plus className="w-4 h-4" /> {t('programs.new')}
           </button>
         </div>
       )}
       {campaigns.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-16">
           <Layers className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">No programs yet</p>
+          <p className="text-gray-500 font-medium">{t('programs.noneTitle')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {campaigns.map((c) => {
-            // Raised is the sum of completed donation transactions for this
-            // program (in the program's currency) — same raised / goal progress
-            // shown on the public donate page.
             const raised = Number(c.receivedAmount);
             const pct = fundedPercent(raised, c.targetAmount);
             const funded = pct >= 100;
@@ -524,7 +546,7 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit }: {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
                     <h3 className="font-semibold text-gray-900 leading-tight truncate">{c.title}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5 capitalize">{c.fundType} · {c.donationCount} {c.donationCount === 1 ? 'donation' : 'donations'}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 capitalize">{c.fundType} · {c.donationCount} {c.donationCount === 1 ? t('programs.donation') : t('programs.donations')}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <CampaignStatusBadge status={c.status} />
@@ -549,7 +571,7 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit }: {
                   <div className={cn('h-full rounded-full', funded ? 'bg-rmc-gold-light' : 'bg-rmc-green')} style={{ width: `${pct}%` }} />
                 </div>
                 <p className="mt-1.5 text-[11px] text-gray-400">
-                  {formatCurrency(c.currency, raised)} raised from completed donations
+                  {t('programs.raisedNote', { amount: formatCurrency(c.currency, raised) })}
                 </p>
               </div>
             );
@@ -561,116 +583,109 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit }: {
 }
 
 function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
+  const t = useTranslations('admin.donations');
   const map: Record<CampaignStatus, string> = {
     active: 'bg-green-100 text-green-700',
     paused: 'bg-yellow-100 text-yellow-700',
     closed: 'bg-gray-100 text-gray-600',
   };
-  return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize', map[status])}>{status}</span>;
+  const labels: Record<CampaignStatus, string> = {
+    active: t('programs.statusActive'),
+    paused: t('programs.statusPaused'),
+    closed: t('programs.statusClosed'),
+  };
+  return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold', map[status])}>{labels[status]}</span>;
 }
 
 const inputClass = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40';
 const labelClass = 'block text-xs font-medium text-gray-500 mb-1.5';
 
+function slugify(s: string): string {
+  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/** Resolve a stored hero image (file-server key, or a pass-through URL/path). */
+function resolveImg(v: string): string {
+  return /^https?:\/\//.test(v) || v.startsWith('/') ? v : fileUrl(v);
+}
+
+/* Centered modal, portalled to <body> so it overlays the whole viewport
+   (escaping the admin content area's positioning/transform context). */
 function ModalShell({ title, onClose, children, footer }: { title: string; onClose: () => void; children: React.ReactNode; footer: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
-          <h2 className="font-semibold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"><X className="w-4 h-4" /></button>
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
+  }, [onClose]);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-4 sm:p-6 animate-overlay-in" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative my-auto flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl animate-modal-in"
+      >
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 sm:px-6 py-4 shrink-0">
+          <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"><X className="w-5 h-5" /></button>
         </div>
-        <div className="p-5 space-y-4">{children}</div>
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 sticky bottom-0 bg-white">{footer}</div>
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-6 space-y-8">{children}</div>
+        <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-white px-5 sm:px-6 py-4 shrink-0">{footer}</div>
       </div>
+    </div>,
+    document.body,
+  );
+}
+
+/* A labelled form section. */
+function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <h3 className="mb-3 text-[11px] font-bold uppercase tracking-wide text-gray-400">{title}</h3>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function Field({ label, hint, error, required, children }: { label: string; hint?: string; error?: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className={labelClass}>
+        {label}{required && <span className="text-red-500"> *</span>}
+      </label>
+      {children}
+      {error ? <p className="mt-1 text-[11px] text-red-600">{error}</p> : hint ? <p className="mt-1 text-[11px] text-gray-400">{hint}</p> : null}
     </div>
   );
 }
 
-function EditDonationModal({ donation, campaigns, onClose, onSaved }: {
-  donation: Donation;
-  campaigns: CampaignWithStats[];
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [amount, setAmount] = useState(String(donation.amount));
-  const [status, setStatus] = useState<DonationStatus>(donation.status);
-  const [currency, setCurrency] = useState(donation.currency);
-  const [campaignId, setCampaignId] = useState(donation.campaignId ?? 'general');
-  const [donorName, setDonorName] = useState(donation.donorName ?? '');
-  const [donorEmail, setDonorEmail] = useState(donation.donorEmail ?? '');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  const save = async () => {
-    setSaving(true);
-    setError('');
-    try {
-      await donationsApi.admin.updateDonation(donation.id, {
-        amount: Number(amount),
-        status,
-        currency,
-        campaignId: campaignId === 'general' ? null : campaignId,
-        donorName: donorName || undefined,
-        donorEmail: donorEmail || undefined,
-      });
-      onSaved();
-    } catch {
-      setError('Could not save changes. Please try again.');
-      setSaving(false);
-    }
-  };
-
+function Stepper({ steps, current }: { steps: string[]; current: number }) {
   return (
-    <ModalShell
-      title="Edit donation"
-      onClose={onClose}
-      footer={
-        <>
-          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-          <button onClick={save} disabled={saving} className="px-4 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save changes'}
-          </button>
-        </>
-      }
-    >
-      {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Amount</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>Currency</label>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
-            {['RWF', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as DonationStatus)} className={inputClass}>
-            {(['pending', 'completed', 'failed', 'refunded'] as DonationStatus[]).map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Program</label>
-          <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className={inputClass}>
-            <option value="general">General fund</option>
-            {campaigns.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-          </select>
-        </div>
-      </div>
-      <div>
-        <label className={labelClass}>Donor name</label>
-        <input value={donorName} onChange={(e) => setDonorName(e.target.value)} placeholder="Anonymous" className={inputClass} />
-      </div>
-      <div>
-        <label className={labelClass}>Donor email</label>
-        <input type="email" value={donorEmail} onChange={(e) => setDonorEmail(e.target.value)} className={inputClass} />
-      </div>
-    </ModalShell>
+    <div className="mb-6 flex items-center">
+      {steps.map((label, i) => {
+        const done = i < current;
+        const active = i === current;
+        return (
+          <Fragment key={label}>
+            <div className="flex min-w-0 items-center gap-2">
+              <span className={cn(
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 transition-colors',
+                active ? 'bg-rmc-green text-white ring-rmc-green' : done ? 'bg-rmc-green/10 text-rmc-green ring-rmc-green/20' : 'bg-gray-100 text-gray-400 ring-gray-200',
+              )}>
+                {done ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
+              </span>
+              <span className={cn('hidden truncate text-xs font-semibold sm:block', active ? 'text-gray-900' : 'text-gray-400')}>{label}</span>
+            </div>
+            {i < steps.length - 1 && <span className={cn('mx-2 h-px flex-1', done ? 'bg-rmc-green/40' : 'bg-gray-200')} />}
+          </Fragment>
+        );
+      })}
+    </div>
   );
 }
 
@@ -679,9 +694,15 @@ function CampaignModal({ campaign, onClose, onSaved }: {
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations('admin.donations');
+  const td = useTranslations('donate') as unknown as DonateTranslator;
   const isEdit = !!campaign;
+
   const [title, setTitle] = useState(campaign?.title ?? '');
+  const [slug, setSlug] = useState(campaign?.slug ?? '');
+  const [slugTouched, setSlugTouched] = useState(!!campaign?.slug);
   const [description, setDescription] = useState(campaign?.description ?? '');
+  const [heroImageUrl, setHeroImageUrl] = useState(campaign?.heroImageUrl ?? '');
   const [targetAmount, setTargetAmount] = useState(String(campaign?.targetAmount ?? ''));
   const [currency, setCurrency] = useState(campaign?.currency ?? 'RWF');
   const [fundType, setFundType] = useState(campaign?.fundType ?? 'general');
@@ -690,14 +711,80 @@ function CampaignModal({ campaign, onClose, onSaved }: {
   const [status, setStatus] = useState<CampaignStatus>(campaign?.status ?? 'active');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErr, setFieldErr] = useState<{ title?: string; targetAmount?: string; heroImage?: string }>({});
+
+  const statusLabels: Record<CampaignStatus, string> = {
+    active: t('programs.statusActive'),
+    paused: t('programs.statusPaused'),
+    closed: t('programs.statusClosed'),
+  };
+
+  // Category options — donate-page categories, keeping any legacy fundType value.
+  const catKeys = CATEGORY_KEYS.includes(fundType) ? CATEGORY_KEYS : [fundType, ...CATEGORY_KEYS];
+  const catLabel = (k: string) =>
+    k === 'general' ? td('general.categoryTitle') : td.has(`categories.${k}.title`) ? td(`categories.${k}.title`) : k;
+
+  const onTitle = (v: string) => {
+    setTitle(v);
+    if (!slugTouched) setSlug(slugify(v));
+  };
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const onPickImage = async (file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setFieldErr((p) => ({ ...p, heroImage: t('campaignModal.invalidImageFile') }));
+      return;
+    }
+    setUploadingImg(true);
+    setFieldErr((p) => ({ ...p, heroImage: undefined }));
+    try {
+      const versions = await generateImageVersions(file);
+      const { fileKey } = await uploadGalleryVersions({ versions });
+      setHeroImageUrl(fileKey);
+    } catch {
+      setFieldErr((p) => ({ ...p, heroImage: t('campaignModal.uploadFailed') }));
+    } finally {
+      setUploadingImg(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const STEPS = [
+    { key: 'basics', title: t('campaignModal.basics') },
+    { key: 'funding', title: t('campaignModal.funding') },
+    { key: 'schedule', title: t('campaignModal.schedule') },
+  ];
+  const [step, setStep] = useState(0);
+  const last = step === STEPS.length - 1;
+
+  const validateStep = (s: number) => {
+    const fe: typeof fieldErr = {};
+    if (s === 0 && !title.trim()) fe.title = t('campaignModal.required');
+    if (s === 1 && (!targetAmount || Number(targetAmount) <= 0)) fe.targetAmount = t('campaignModal.invalidAmount');
+    return fe;
+  };
+
+  const goNext = () => {
+    const fe = validateStep(step);
+    setFieldErr(fe);
+    if (!Object.keys(fe).length) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
 
   const save = async () => {
-    if (!title.trim() || !targetAmount) { setError('Title and target amount are required.'); return; }
+    const fe = { ...validateStep(0), ...validateStep(1) };
+    setFieldErr(fe);
+    if (fe.title || fe.heroImage) { setStep(0); return; }
+    if (fe.targetAmount) { setStep(1); return; }
+
     setSaving(true);
     setError('');
     const payload = {
       title: title.trim(),
+      slug: slug.trim() || undefined,
       description: description.trim(),
+      heroImageUrl: heroImageUrl.trim() || null,
       targetAmount: Number(targetAmount),
       currency,
       fundType,
@@ -710,67 +797,133 @@ function CampaignModal({ campaign, onClose, onSaved }: {
       else await donationsApi.admin.createCampaign(payload);
       onSaved();
     } catch {
-      setError('Could not save the program. Please try again.');
+      setError(t('campaignModal.error'));
       setSaving(false);
     }
   };
 
   return (
     <ModalShell
-      title={isEdit ? 'Edit program' : 'New program'}
+      title={isEdit ? t('campaignModal.editTitle') : t('campaignModal.newTitle')}
       onClose={onClose}
       footer={
-        <>
-          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-          <button onClick={save} disabled={saving} className="px-4 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
-            {saving ? 'Saving...' : isEdit ? 'Save changes' : 'Create program'}
+        <div className="flex w-full items-center justify-between gap-3">
+          <button onClick={step === 0 ? onClose : () => setStep((s) => s - 1)} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            {step === 0 ? t('campaignModal.cancel') : t('campaignModal.back')}
           </button>
-        </>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-gray-400">{t('campaignModal.step', { current: step + 1, total: STEPS.length })}</span>
+            {last ? (
+              <button onClick={save} disabled={saving} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
+                {saving ? t('campaignModal.saving') : isEdit ? t('campaignModal.save') : t('campaignModal.create')}
+              </button>
+            ) : (
+              <button onClick={goNext} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark">
+                {t('campaignModal.next')}
+              </button>
+            )}
+          </div>
+        </div>
       }
     >
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
-      <div>
-        <label className={labelClass}>Title</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
-      </div>
-      <div>
-        <label className={labelClass}>Description</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={inputClass} />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Target amount</label>
-          <input type="number" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} className={inputClass} />
+
+      <Stepper steps={STEPS.map((s) => s.title)} current={step} />
+
+      {step === 0 && (
+      <FormSection title={t('campaignModal.basics')}>
+        <Field label={t('campaignModal.title')} required error={fieldErr.title}>
+          <input value={title} onChange={(e) => onTitle(e.target.value)} className={inputClass} />
+        </Field>
+        <Field label={t('campaignModal.slug')} hint={t('campaignModal.slugHint')}>
+          <input
+            value={slug}
+            onChange={(e) => { setSlugTouched(true); setSlug(slugify(e.target.value)); }}
+            placeholder="e1"
+            className={cn(inputClass, 'font-mono')}
+          />
+        </Field>
+        <Field label={t('campaignModal.description')}>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={inputClass} />
+        </Field>
+        <Field label={t('campaignModal.heroImage')} hint={t('campaignModal.heroImageHint')} error={fieldErr.heroImage}>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onPickImage(e.target.files?.[0])} />
+          {heroImageUrl ? (
+            <div className="relative h-44 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={resolveImg(heroImageUrl)} alt="" className="h-full w-full object-cover" />
+              <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-black/50 to-transparent p-2">
+                <button type="button" onClick={() => fileRef.current?.click()} className="rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-white">{t('campaignModal.uploadImage')}</button>
+                <button type="button" onClick={() => setHeroImageUrl('')} className="rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-white">{t('campaignModal.removeImage')}</button>
+              </div>
+              {uploadingImg && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                  <RefreshCw className="h-6 w-6 animate-spin text-rmc-green" />
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadingImg}
+              className="flex h-44 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 text-gray-400 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-60"
+            >
+              {uploadingImg ? (
+                <>
+                  <RefreshCw className="h-6 w-6 animate-spin" />
+                  <span className="text-[12px]">{t('campaignModal.uploading')}</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-6 w-6" />
+                  <span className="text-[12px] font-semibold">{t('campaignModal.uploadImage')}</span>
+                  <span className="text-[11px] text-gray-400">{t('campaignModal.optional')}</span>
+                </>
+              )}
+            </button>
+          )}
+        </Field>
+      </FormSection>
+      )}
+
+      {step === 1 && (
+      <FormSection title={t('campaignModal.funding')}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label={t('campaignModal.targetAmount')} required error={fieldErr.targetAmount}>
+            <input type="number" min={0} value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} className={inputClass} />
+          </Field>
+          <Field label={t('campaignModal.currency')}>
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
+              {['RWF', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label={t('campaignModal.category')} hint={t('campaignModal.categoryHint')}>
+            <select value={fundType} onChange={(e) => setFundType(e.target.value)} className={inputClass}>
+              {catKeys.map((k) => <option key={k} value={k}>{catLabel(k)}</option>)}
+            </select>
+          </Field>
         </div>
-        <div>
-          <label className={labelClass}>Currency</label>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
-            {['RWF', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+      </FormSection>
+      )}
+
+      {step === 2 && (
+      <FormSection title={t('campaignModal.schedule')}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label={t('campaignModal.startDate')}>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
+          </Field>
+          <Field label={t('campaignModal.endDate')}>
+            <input type="date" value={endDate ?? ''} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
+          </Field>
+          <Field label={t('campaignModal.status')}>
+            <select value={status} onChange={(e) => setStatus(e.target.value as CampaignStatus)} className={inputClass}>
+              {(['active', 'paused', 'closed'] as CampaignStatus[]).map((s) => <option key={s} value={s}>{statusLabels[s]}</option>)}
+            </select>
+          </Field>
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Fund type</label>
-          <input value={fundType} onChange={(e) => setFundType(e.target.value)} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as CampaignStatus)} className={inputClass}>
-            {(['active', 'paused', 'closed'] as CampaignStatus[]).map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Start date</label>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>End date</label>
-          <input type="date" value={endDate ?? ''} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
-        </div>
-      </div>
+      </FormSection>
+      )}
     </ModalShell>
   );
 }
