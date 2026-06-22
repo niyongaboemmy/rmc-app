@@ -308,5 +308,14 @@ export const marriageApi = {
       const { data } = await apiClient.get('/admin/marriage/stats');
       return data.data ?? data;
     },
+
+    getParties: async (id: string): Promise<{ role: string; name: string | null; confirmedAt: string | null }[]> => {
+      try {
+        const { data } = await apiClient.get(`/marriage/applications/${id}/parties`);
+        return data.data ?? [];
+      } catch {
+        return [];
+      }
+    },
   },
 };

@@ -39,6 +39,8 @@ const EMPTY_ITEM: AreaItem = {
   slug: '',
   title: tri(''),
   description: tri(''),
+  richContent: tri(''),
+  imageKey: '',
 };
 
 export default function AreasPage() {
@@ -110,12 +112,12 @@ function AreasManager() {
   const openEdit = (index: number) => {
     setEditingIndex(index);
     const item = content.items[index];
-    setFormData({ icon: item.icon, slug: item.slug ?? '', title: { ...item.title }, description: { ...item.description } });
+    setFormData({ icon: item.icon, slug: item.slug ?? '', title: { ...item.title }, description: { ...item.description }, richContent: item.richContent ? { ...item.richContent } : tri(''), imageKey: item.imageKey ?? '' });
     setIsModalOpen(true);
   };
 
-  const setItemField = (field: 'title' | 'description', l: Lang, value: string) =>
-    setFormData((p) => ({ ...p, [field]: { ...p[field], [l]: value } }));
+  const setItemField = (field: 'title' | 'description' | 'richContent', l: Lang, value: string) =>
+    setFormData((p) => ({ ...p, [field]: { ...((p[field] as Record<string,string> | undefined) ?? {}), [l]: value } }));
 
   const handleSaveItem = useCallback(async () => {
     if (!formData.title.en.trim() || !formData.description.en.trim()) {
@@ -263,6 +265,16 @@ function AreasManager() {
             </div>
           </div>
 
+          {/* Image key (locale-independent) */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              Image Key <span className="ml-1 font-normal text-gray-400">(file-server key — optional hero image)</span>
+            </label>
+            <input type="text" value={formData.imageKey ?? ''} onChange={(e) => setFormData((p) => ({ ...p, imageKey: e.target.value }))}
+              placeholder="e.g. areas/dawah-hero.jpg"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono" />
+          </div>
+
           {/* Language tabs in modal */}
           <div className="border rounded-2xl border-gray-100 overflow-hidden">
             <div className="flex border-b border-gray-100 bg-gray-50/50">
@@ -287,6 +299,14 @@ function AreasManager() {
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description {l === 'en' && <span className="text-red-500">*</span>}</label>
                       <textarea dir={d} rows={3} value={formData.description[l]} onChange={(e) => setItemField('description', l, e.target.value)} className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none ${fc}`} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                        Rich Content <span className="ml-1 font-normal text-gray-400">(HTML — shown on detail page)</span>
+                      </label>
+                      <textarea dir={d} rows={6} value={formData.richContent?.[l] ?? ''} onChange={(e) => setItemField('richContent', l, e.target.value)}
+                        placeholder="<p>Full description shown on the area detail page...</p>"
+                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-y font-mono ${fc}`} />
                     </div>
                   </div>
                 );

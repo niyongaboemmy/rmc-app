@@ -2,13 +2,18 @@ import { Tri, tri } from './client';
 
 export type AnnouncementPriority = 'normal' | 'high' | 'urgent';
 
+export type AnnouncementType = 'announcement' | 'tender';
+
 /** One announcement card. */
 export interface AnnouncementItem {
   title: Tri;
   content: Tri;
   priority: AnnouncementPriority;
+  type: AnnouncementType;
   /** ISO timestamp. */
   publishAt: string;
+  /** ISO timestamp — deadline for tenders. */
+  expiresAt?: string;
 }
 
 export interface AnnouncementsContent {
@@ -37,6 +42,7 @@ export const ANNOUNCEMENTS_DEFAULT: AnnouncementsContent = {
         'تُقام صلاة العيد في ملعب أماهورو الوطني وفي جميع مساجد المقاطعات صباح يوم العيد. يُرجى الحضور قبل الموعد بثلاثين دقيقة.',
       ),
       priority: 'high',
+      type: 'announcement',
       publishAt: '2026-06-12T08:00:00Z',
     },
     {
@@ -51,6 +57,7 @@ export const ANNOUNCEMENTS_DEFAULT: AnnouncementsContent = {
         'تتوفر الفحوصات الطبية والاستشارات والأدوية مجانًا في المسجد الكبير بكيغالي يومي السبت والأحد.',
       ),
       priority: 'urgent',
+      type: 'announcement',
       publishAt: '2026-06-10T09:00:00Z',
     },
     {
@@ -65,20 +72,22 @@ export const ANNOUNCEMENTS_DEFAULT: AnnouncementsContent = {
         'باب التقديم مفتوح لمنح دراسية كاملة وجزئية للطلاب المسلمين في جميع أنحاء رواندا للعام الدراسي 2026/27. قدّم طلبك قبل الثلاثين من يونيو.',
       ),
       priority: 'normal',
+      type: 'announcement',
       publishAt: '2026-06-06T10:00:00Z',
     },
     {
       title: tri(
-        'Weekly Qur’an Classes Resume at District Masjids',
+        "Weekly Qur'an Classes Resume at District Masjids",
         "Amasomo ya buri cyumweru ya Qurani aratangira mu misigiti y'uturere",
         'استئناف دروس القرآن الأسبوعية في مساجد المقاطعات',
       ),
       content: tri(
-        'Qur’an memorization and Tajweed classes for all ages resume this week. Register at your local mosque.',
+        "Qur'an memorization and Tajweed classes for all ages resume this week. Register at your local mosque.",
         "Amasomo yo kwiga Qurani ku mutwe na Tajiwidi ku bantu b'imyaka yose aratangira muri iki cyumweru. Iyandikishe ku musigiti wo aho utuye.",
         'تُستأنف دروس حفظ القرآن والتجويد لجميع الأعمار هذا الأسبوع. سجّل في مسجد حيّك.',
       ),
       priority: 'normal',
+      type: 'announcement',
       publishAt: '2026-06-02T07:30:00Z',
     },
   ],
