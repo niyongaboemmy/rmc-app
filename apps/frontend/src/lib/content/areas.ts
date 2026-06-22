@@ -6,6 +6,9 @@ export interface AreaItem {
   icon: string;
   title: Tri;
   description: Tri;
+  slug: string;
+  richContent?: Tri;
+  imageKey?: string;
 }
 
 export interface AreasContent {
@@ -29,6 +32,7 @@ export const AREAS_DEFAULT: AreasContent = {
   items: [
     {
       icon: 'BookOpen',
+      slug: 'dawah',
       title: tri('Dawah', "Kwamamaza Idini", 'الدعوة'),
       description: tri(
         'Spreading the true teachings of Islam through peaceful outreach and guidance.',
@@ -38,6 +42,7 @@ export const AREAS_DEFAULT: AreasContent = {
     },
     {
       icon: 'Heart',
+      slug: 'social-development',
       title: tri('Socio Development', "Iterambere ry'Imibereho", 'التنمية الاجتماعية'),
       description: tri(
         'Empowering communities through health, poverty alleviation, and welfare initiatives.',
@@ -47,6 +52,7 @@ export const AREAS_DEFAULT: AreasContent = {
     },
     {
       icon: 'GraduationCap',
+      slug: 'education',
       title: tri('Education', 'Uburezi', 'التعليم'),
       description: tri(
         'Providing quality secular and Islamic education to the youth across the nation.',
@@ -56,6 +62,7 @@ export const AREAS_DEFAULT: AreasContent = {
     },
     {
       icon: 'Globe',
+      slug: 'foreign-affairs',
       title: tri('Foreign Affairs', "Imibanire n'Amahanga", 'الشؤون الخارجية'),
       description: tri(
         'Building and maintaining strong international relations and partnerships.',

@@ -21,9 +21,9 @@ export const publicApi = {
       asr: string; maghrib: string; isha: string; date: string;
     }>(api.get('/prayer-times', { params: { lat, lng, mosqueId } })),
 
-  getAnnouncements: () =>
-    unwrap<Array<{ id: string; title: string; content: string; priority: string; publishAt: string }>>(
-      api.get('/public/announcements'),
+  getAnnouncements: (type?: string, limit?: number) =>
+    unwrap<Array<{ id: string; title: string; content: string; priority: string; publishAt: string; expiresAt: string | null; type: string }>>(
+      api.get('/public/announcements', { params: { type, limit } }),
     ),
 
   getMosques: (districtId?: string) =>

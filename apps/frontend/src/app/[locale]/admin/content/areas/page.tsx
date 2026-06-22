@@ -36,6 +36,7 @@ const ICON_OPTIONS = ['BookOpen', 'Heart', 'GraduationCap', 'Globe'];
 
 const EMPTY_ITEM: AreaItem = {
   icon: 'Globe',
+  slug: '',
   title: tri(''),
   description: tri(''),
 };
@@ -109,7 +110,7 @@ function AreasManager() {
   const openEdit = (index: number) => {
     setEditingIndex(index);
     const item = content.items[index];
-    setFormData({ icon: item.icon, title: { ...item.title }, description: { ...item.description } });
+    setFormData({ icon: item.icon, slug: item.slug ?? '', title: { ...item.title }, description: { ...item.description } });
     setIsModalOpen(true);
   };
 
@@ -239,12 +240,27 @@ function AreasManager() {
         </ModalHeader>
         <ModalBody className="space-y-5">
           {/* Appearance */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Icon</label>
-            <select value={formData.icon} onChange={(e) => setFormData((p) => ({ ...p, icon: e.target.value }))}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-              {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Icon</label>
+              <select value={formData.icon} onChange={(e) => setFormData((p) => ({ ...p, icon: e.target.value }))}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Slug <span className="text-red-500">*</span>
+                <span className="ml-1 text-gray-400 font-normal">(URL path)</span>
+              </label>
+              <input
+                type="text"
+                value={formData.slug}
+                onChange={(e) => setFormData((p) => ({ ...p, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
+                placeholder="e.g. education"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
           </div>
 
           {/* Language tabs in modal */}

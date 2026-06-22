@@ -33,8 +33,10 @@ export class PublicController {
   @Get('announcements')
   @Public()
   @ApiOperation({ summary: 'Get active announcements' })
-  getAnnouncements() {
-    return this.service.getActiveAnnouncements();
+  @ApiQuery({ name: 'type', required: false, description: 'Filter by type: announcement | tender' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getAnnouncements(@Query('type') type?: string, @Query('limit') limit?: string) {
+    return this.service.getActiveAnnouncements(type, limit ? parseInt(limit, 10) : 10);
   }
 
   @Post('announcements')

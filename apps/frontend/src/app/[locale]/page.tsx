@@ -5,6 +5,7 @@ import { WhoWeAreSection } from '@/components/home/WhoWeAreSection';
 import { AreasOfInterventionSection } from '@/components/home/AreasOfInterventionSection';
 import { ActivitiesEventsSection } from '@/components/home/ActivitiesEventsSection';
 import { AnnouncementsSection } from '@/components/home/AnnouncementsSection';
+import { TendersSection } from '@/components/home/TendersSection';
 import { StatsSection } from '@/components/home/StatsSection';
 import { PartnersSection } from '@/components/home/PartnersSection';
 import { SocialMediaSection } from '@/components/home/SocialMediaSection';
@@ -44,6 +45,11 @@ export default function HomePage() {
         {/* 7. Announcements */}
         <Reveal>
           <AnnouncementsSection />
+        </Reveal>
+
+        {/* 7b. Tenders */}
+        <Reveal>
+          <TendersSection />
         </Reveal>
 
         {/* 8. RMC in Statistics */}

@@ -25,6 +25,7 @@ import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
 import { SocialModule } from './social/social.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -60,6 +61,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     DonationsModule,
     SocialModule,
     ContactMessagesModule,
+    IntegrationsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

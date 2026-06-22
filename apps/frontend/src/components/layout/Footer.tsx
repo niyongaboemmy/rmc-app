@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio } from 'lucide-react';
+import { IJWI_RADIO_URL } from '@/lib/constants';
 
 const socialLinks = [
   { Icon: Facebook, href: '#', label: 'Facebook' },
@@ -115,6 +116,16 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <a
+                  href={IJWI_RADIO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-rmc-gold/70 hover:text-rmc-gold text-sm transition-colors"
+                >
+                  <Radio className="w-3.5 h-3.5 shrink-0" /> Ijwi Radio
+                </a>
+              </li>
             </ul>
           </div>
 

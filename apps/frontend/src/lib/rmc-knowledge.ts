@@ -46,7 +46,7 @@ awareness, and youth empowerment programs.
 2. Funeral Services — Coordination of Islamic burial rites, imam assignment, and logistics support for families.
 3. Good Conduct Certificate — Official certificates of good Islamic conduct for members, required for various administrative processes.
 4. Scholarships — Financial support for Muslim students pursuing education at all levels.
-5. Hijra Support — Documentation and support services for community relocation and migration needs.
+5. Hija Services — Documentation and support services for community Hajj and Umra needs.
 6. Tenders — Business opportunities published by RMC for qualified organizations and contractors.
 7. Job Opportunities — Employment vacancies at RMC and affiliated organizations across Rwanda.
 To apply for services (marriage certificate, scholarships, etc.) a visitor must register as a member.

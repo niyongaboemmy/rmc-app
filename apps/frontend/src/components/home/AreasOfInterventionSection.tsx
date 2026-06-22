@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { BookOpen, Heart, GraduationCap, Globe, type LucideIcon } from 'lucide-react';
+import Link from 'next/link';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import {
   ContentKeys,
@@ -35,13 +36,17 @@ function PillarCard({
   const arFont = locale === 'ar' ? 'font-arabic' : '';
 
   return (
-    <article
+    <div
       ref={ref}
-      dir={rtl ? 'rtl' : 'ltr'}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-gray-200/70 bg-white p-7 lg:p-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_64px_-24px_rgba(26,122,74,0.3)] ${
+      className={`transition-all duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none h-full ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
+    >
+    <Link
+      href={`/${locale}/areas/${item.slug}`}
+      dir={rtl ? 'rtl' : 'ltr'}
+      className="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-gray-200/70 bg-white p-7 lg:p-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-300 hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_64px_-24px_rgba(26,122,74,0.3)] cursor-pointer"
     >
       {/* Ghosted index numeral — anchors the card. -webkit-text-stroke draws a hairline outline;
           a faint solid green fill is the cross-engine fallback so it never vanishes.
@@ -76,7 +81,13 @@ function PillarCard({
       <p className={`relative mt-4 text-sm leading-relaxed text-gray-500 ${arFont}`}>
         {pick(item.description, locale)}
       </p>
-    </article>
+
+      {/* "Learn more" cue */}
+      <p className="relative mt-5 text-xs font-semibold text-rmc-green opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        Learn more →
+      </p>
+    </Link>
+    </div>
   );
 }
 

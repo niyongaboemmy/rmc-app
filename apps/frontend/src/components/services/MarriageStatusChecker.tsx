@@ -20,7 +20,79 @@ import {
   Award,
   XCircle,
   AlertTriangle,
+  CheckCircle,
+  Clock,
+  Users,
 } from 'lucide-react';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+
+const ROLE_LABELS: Record<string, string> = {
+  bride: 'Bride (Umugeni)',
+  groom: 'Groom (Umugabo)',
+  wali: "Guardian (Wali)",
+  imam: 'Officiating Imam',
+};
+
+function PartyConfirmationsPanel({ applicationNumber }: { applicationNumber: string }) {
+  const [parties, setParties] = useState<Array<{ role: string; confirmedAt: string | null }>>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/marriage/applications/by-number/${applicationNumber}/parties`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (json) {
+          const data = Array.isArray(json) ? json : json?.data ?? [];
+          setParties(data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [applicationNumber]);
+
+  if (!loaded || parties.length === 0) return null;
+
+  const allConfirmed = parties.every((p) => p.confirmedAt);
+
+  return (
+    <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6 sm:p-8">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-8 h-8 rounded-xl bg-rmc-green/10 flex items-center justify-center">
+          <Users className="w-4 h-4 text-rmc-green" />
+        </div>
+        <h3 className="font-bold text-gray-900">Party Confirmations</h3>
+        {allConfirmed && (
+          <span className="ml-auto text-xs font-semibold text-rmc-green bg-rmc-green/10 px-2.5 py-1 rounded-full">
+            All confirmed
+          </span>
+        )}
+      </div>
+      <ul className="space-y-3">
+        {parties.map((p) => (
+          <li key={p.role} className="flex items-center gap-3">
+            {p.confirmedAt ? (
+              <CheckCircle className="w-5 h-5 text-rmc-green shrink-0" />
+            ) : (
+              <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900">{ROLE_LABELS[p.role] ?? p.role}</p>
+              {p.confirmedAt && (
+                <p className="text-xs text-gray-400">
+                  Confirmed {new Date(p.confirmedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              )}
+            </div>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.confirmedAt ? 'bg-rmc-green/10 text-rmc-green' : 'bg-amber-50 text-amber-600'}`}>
+              {p.confirmedAt ? 'Confirmed' : 'Pending'}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
@@ -297,6 +369,9 @@ function StatusResult({ app, locale }: { app: MarriageApplication; locale: strin
           />
         </div>
       )}
+
+      {/* Party Confirmations */}
+      <PartyConfirmationsPanel applicationNumber={app.applicationNumber} />
 
       {/* Status tracker — hidden for terminal states (a banner already explains them) */}
       {!isTerminal && (

@@ -32,6 +32,9 @@ export class Announcement {
   @Column({ name: 'is_published', type: 'boolean', default: false })
   isPublished: boolean;
 
+  @Column({ type: 'varchar', length: 30, default: 'announcement' })
+  type: string; // 'announcement' | 'tender'
+
   @Column({ name: 'broadcast_sent', type: 'boolean', default: false })
   broadcastSent: boolean;
 

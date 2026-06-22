@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
+import { HistoryTimeline } from '@/components/about/HistoryTimeline';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { ArrowRight, Images } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
@@ -200,7 +201,12 @@ export default async function AboutPage() {
         </section>
 
         {/* ===================================================================
-            5. GALLERY PREVIEW — 3D carousel + link to full gallery
+            5. HISTORY TIMELINE
+        =================================================================== */}
+        <HistoryTimeline locale={locale} />
+
+        {/* ===================================================================
+            6. GALLERY PREVIEW — 3D carousel + link to full gallery
         =================================================================== */}
         <section className="py-20 px-4 sm:px-6 lg:px-8 bg-transparent">
           <div className="max-w-7xl mx-auto">

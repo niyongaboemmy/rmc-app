@@ -13,8 +13,9 @@ import Image from 'next/image';
 import { useScrollProgress } from '@/hooks/useScrollProgress';
 import {
   Menu, X, ChevronDown, User, LayoutDashboard,
-  Lock, Users, Shield, LogOut, Heart,
+  Lock, Users, Shield, LogOut, Heart, Radio,
 } from 'lucide-react';
+import { IJWI_RADIO_URL } from '@/lib/constants';
 
 function LogoBadge() {
   /* Frosted glass pill — sits over the dark / translucent navbar in every state */
@@ -212,8 +213,19 @@ export function Navbar() {
             <LogoBadge />
           </Link>
 
-          {/* ── Right — Donate + Sign in + Language ── */}
+          {/* ── Right — Radio + Donate + Sign in + Language ── */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Islamic Radio */}
+            <a
+              href={IJWI_RADIO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1 text-xs font-semibold text-rmc-gold hover:text-rmc-gold-light transition-colors"
+              title="Ijwi ry'Ihanga Radio"
+            >
+              <Radio className="w-4 h-4" /> Ijwi
+            </a>
+
             {/* Donate */}
             <Link
               href={`/${locale}/donate`}

@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Patch, Param, Body, ParseUUIDPipe,
+  Controller, Get, Post, Put, Patch, Param, Body, ParseUUIDPipe, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MarriageService } from './marriage.service';
@@ -84,5 +84,53 @@ export class MarriageController {
   @ApiOperation({ summary: 'Public QR code certificate verification' })
   publicVerify(@Param('applicationNumber') applicationNumber: string) {
     return this.service.publicVerify(applicationNumber);
+  }
+
+  // ── Party Confirmations ───────────────────────────────────────────────────────
+
+  @Post('applications/:id/parties')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add party phone numbers to trigger confirmation requests' })
+  addParties(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { parties: Array<{ role: string; name?: string; nid?: string; phone?: string }> },
+  ) {
+    return this.service.addParties(id, user.id, dto.parties as any);
+  }
+
+  @Get('applications/:id/parties')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get confirmation status for all parties' })
+  getParties(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getPartyConfirmations(id);
+  }
+
+  @Get('applications/by-number/:number/parties')
+  @Public()
+  @ApiOperation({ summary: 'Get party confirmation status by application number (public — no PII)' })
+  async getPartiesByNumber(@Param('number') number: string) {
+    const app = await this.service.findByApplicationNumber(number);
+    if (!app) return [];
+    const parties = await this.service.getPartyConfirmations(app.id);
+    return parties.map((p) => ({
+      role: p.role,
+      confirmedAt: p.confirmedAt,
+    }));
+  }
+
+  @Get('confirm/:token')
+  @Public()
+  @ApiOperation({ summary: 'Look up a party confirmation request by token' })
+  lookupToken(@Param('token') token: string) {
+    return this.service.lookupByToken(token);
+  }
+
+  @Post('confirm/:token')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Submit party confirmation' })
+  confirmParty(@Param('token') token: string, @Body() dto: { notes?: string }) {
+    return this.service.confirmParty(token, dto.notes);
   }
 }

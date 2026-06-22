@@ -14,7 +14,9 @@ import {
 import { MarriageDocument, DocumentType } from './entities/marriage-document.entity';
 import { MarriageStatusHistory } from './entities/marriage-status-history.entity';
 import { MarriageTransaction } from './entities/marriage-transaction.entity';
+import { MarriagePartyConfirmation, PartyRole } from './entities/marriage-party-confirmation.entity';
 import { User } from '../users/entities/user.entity';
+import * as crypto from 'crypto';
 import { CreateMarriageApplicationDto } from './dto/create-marriage-application.dto';
 import { SaveDocumentDto } from './dto/save-document.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
@@ -38,6 +40,8 @@ export class MarriageService {
     private readonly transactionRepo: Repository<MarriageTransaction>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(MarriagePartyConfirmation)
+    private readonly confirmationRepo: Repository<MarriagePartyConfirmation>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
@@ -592,5 +596,83 @@ export class MarriageService {
       phone,
       `RMC Nikah: Payment of ${fee} RWF received for application ${app.applicationNumber}. Your application is now being processed.`,
     );
+  }
+
+  // ── Party Confirmations ─────────────────────────────────────────────────────
+
+  async addParties(
+    applicationId: string,
+    requesterId: string,
+    parties: Array<{ role: PartyRole; name?: string; nid?: string; phone?: string }>,
+  ): Promise<MarriagePartyConfirmation[]> {
+    const app = await this.applicationRepo.findOne({ where: { id: applicationId } });
+    if (!app) throw new NotFoundException('Application not found');
+    if (app.applicantId !== requesterId) throw new ForbiddenException('Not your application');
+
+    const frontendUrl = this.configService.get<string>('app.frontendUrl', 'http://localhost:3001');
+
+    const results: MarriagePartyConfirmation[] = [];
+    for (const party of parties) {
+      const token = crypto.randomBytes(40).toString('hex');
+      const entry = this.confirmationRepo.create({
+        applicationId,
+        role: party.role,
+        name: party.name ?? null,
+        nid: party.nid ?? null,
+        phone: party.phone ?? null,
+        confirmationToken: token,
+      });
+      const saved = await this.confirmationRepo.save(entry);
+      results.push(saved);
+
+      if (party.phone) {
+        const link = `${frontendUrl}/en/services/marriage/confirm/${token}`;
+        await this.sendSms(
+          party.phone,
+          `RMC Nikah (${app.applicationNumber}): You have been listed as ${party.role}. Please confirm your participation: ${link}`,
+        );
+      } else {
+        this.logger.log(`[Confirmation token for ${party.role}] ${token}`);
+      }
+    }
+
+    return results;
+  }
+
+  async getPartyConfirmations(applicationId: string): Promise<MarriagePartyConfirmation[]> {
+    return this.confirmationRepo.find({
+      where: { applicationId },
+      order: { role: 'ASC' },
+    });
+  }
+
+  async lookupByToken(token: string): Promise<{
+    confirmation: MarriagePartyConfirmation;
+    application: Partial<MarriageApplication>;
+  }> {
+    const conf = await this.confirmationRepo.findOne({ where: { confirmationToken: token } });
+    if (!conf) throw new NotFoundException('Confirmation link not found or already used');
+    const app = await this.applicationRepo.findOne({ where: { id: conf.applicationId } });
+    if (!app) throw new NotFoundException('Application not found');
+    return {
+      confirmation: conf,
+      application: {
+        applicationNumber: app.applicationNumber,
+        groomName: app.groomName,
+        brideName: app.brideName,
+        ceremonyDate: app.ceremonyDate,
+        status: app.status,
+      },
+    };
+  }
+
+  async confirmParty(token: string, notes?: string): Promise<MarriagePartyConfirmation> {
+    const conf = await this.confirmationRepo.findOne({ where: { confirmationToken: token } });
+    if (!conf) throw new NotFoundException('Confirmation link not found');
+    if (conf.confirmedAt) throw new ConflictException('Already confirmed');
+    conf.confirmedAt = new Date();
+    if (notes) conf.notes = notes;
+    conf.confirmationToken = null; // consume token so it can't be reused
+    return this.confirmationRepo.save(conf);
   }
 }

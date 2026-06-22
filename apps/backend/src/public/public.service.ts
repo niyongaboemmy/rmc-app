@@ -26,15 +26,16 @@ export class PublicService {
     return this.verses.save(verse);
   }
 
-  getActiveAnnouncements() {
+  getActiveAnnouncements(type?: string, limit = 10) {
     const now = new Date();
     return this.announcements.find({
       where: {
         isPublished: true,
         publishAt: LessThanOrEqual(now),
+        ...(type ? { type } : {}),
       },
       order: { priority: 'DESC', publishAt: 'DESC' },
-      take: 10,
+      take: limit,
     });
   }
 
