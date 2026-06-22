@@ -20,12 +20,12 @@ import { IJWI_RADIO_URL } from '@/lib/constants';
 function LogoBadge() {
   /* Frosted glass pill — sits over the dark / translucent navbar in every state */
   return (
-    <div className="w-12 h-12 flex items-center justify-center overflow-hidden transition-all duration-300 motion-safe:group-hover:scale-105">
+    <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center overflow-hidden transition-all duration-300 motion-safe:group-hover:scale-105">
       <Image
         src="/logo.webp"
         alt="RMC Logo"
-        width={48}
-        height={48}
+        width={80}
+        height={80}
         className="w-full h-full object-contain drop-shadow-sm"
       />
     </div>
