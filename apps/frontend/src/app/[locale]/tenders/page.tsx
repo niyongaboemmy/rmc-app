@@ -102,7 +102,7 @@ export default function TendersPage() {
           subtitle={t('subtitle')}
           ornament
           minHeightClassName="min-h-[38vh]"
-          paddingClassName="pt-28 pb-10"
+          paddingClassName="pt-36 pb-10"
         />
 
         <section className="py-14 bg-gray-50 pattern-light">

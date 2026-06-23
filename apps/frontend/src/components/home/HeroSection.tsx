@@ -176,7 +176,7 @@ export function HeroSection() {
       <div className="absolute bottom-0 left-0 right-0 h-28 z-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent pointer-events-none" />
 
       {/* ── Main content ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-24 pb-24">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-36 pb-24">
         <div className="max-w-xl ml-auto text-right">
           {/* Greeting eyebrow — Arabic salam with a gold rule */}
           <div className="animate-fade-up flex items-center justify-end gap-3" style={{ animationDelay: '160ms' }}>

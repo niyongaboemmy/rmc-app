@@ -68,9 +68,10 @@ export default function ContactPage() {
   };
 
   const contactInfo = [
-    { label: t('address'), value: 'KN 4 Ave, Kigali, Rwanda', icon: MapPin },
-    { label: t('phone'), value: '+250 788 000 000', icon: Phone, href: 'tel:+250788000000' },
-    { label: t('email'), value: 'info@rmc.rw', icon: Mail, href: 'mailto:info@rmc.rw' },
+    { label: t('address'), value: 'Kigali, Rwanda — RMC Head Office', icon: MapPin },
+    { label: t('phone'), value: '(+250) 788 308 436', icon: Phone, href: 'tel:+250788308436' },
+    { label: t('email'), value: 'rwandamuslimc@gmail.com', icon: Mail, href: 'mailto:rwandamuslimc@gmail.com' },
+    { label: t('email2'), value: 'islamrwanda18@gmail.com', icon: Mail, href: 'mailto:islamrwanda18@gmail.com' },
     { label: t('hours'), value: t('hoursValue'), icon: Clock },
   ];
 
@@ -85,7 +86,7 @@ export default function ContactPage() {
           subtitle={t('subtitle')}
           ornament
           minHeightClassName="min-h-[25vh]"
-          paddingClassName="pt-24 pb-8"
+          paddingClassName="pt-36 pb-8"
         />
 
         {/* ===================================================================

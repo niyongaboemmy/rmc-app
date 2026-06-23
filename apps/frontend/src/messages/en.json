@@ -663,6 +663,7 @@
     "address": "Address",
     "phone": "Phone",
     "email": "Email",
+    "email2": "Email",
     "hours": "Office Hours",
     "hoursValue": "Mon – Fri, 8:00 AM – 5:00 PM",
     "form": {

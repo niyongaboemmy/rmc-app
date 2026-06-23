@@ -47,7 +47,7 @@ export function ActivitiesHero() {
       <div className="absolute inset-0 pattern-islamic opacity-30" />
 
       {/* ── Content — centered, no verse ticker, no buttons ── */}
-      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-24 pb-14 text-center sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-36 pb-14 text-center sm:px-6 lg:px-8">
         <div className="animate-fade-up">
           {/* Arabic blessing — matches the home hero greeting's size & style */}
           <p className="mb-3 font-arabic text-lg leading-loose text-rmc-gold-light drop-shadow md:text-xl" dir="rtl">

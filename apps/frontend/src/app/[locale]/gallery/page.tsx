@@ -94,7 +94,7 @@ export default async function GalleryPage() {
           subtitle={t('subtitle')}
           ornament
           minHeightClassName="min-h-[25vh]"
-          paddingClassName="pt-24 pb-8"
+          paddingClassName="pt-36 pb-8"
         />
 
         {isEmpty ? (

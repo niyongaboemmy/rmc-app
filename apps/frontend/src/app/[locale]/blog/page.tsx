@@ -32,7 +32,7 @@ export default async function BlogPage({
           title={t('subtitle')}
           titleClassName="text-2xl md:text-3xl"
           minHeightClassName="min-h-[26vh]"
-          paddingClassName="pt-32 pb-20"
+          paddingClassName="pt-36 pb-20"
           ornament
         />
 
