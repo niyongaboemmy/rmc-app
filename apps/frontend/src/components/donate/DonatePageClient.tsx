@@ -7,6 +7,7 @@ import { ShoppingBag, HandHeart, ShieldCheck, Plus } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { donationsApi } from '@/lib/donationsApi';
+import { donationCategoriesApi, type PublicCategory } from '@/lib/donationCategoriesApi';
 import { buildDonationMessage } from '@/lib/donationMeta';
 import { useDonationCart } from '@/contexts/DonationCartContext';
 import {
@@ -62,6 +63,15 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
     liveCampaigns.forEach((c) => m.set(c.slug, c));
     return m;
   }, [liveCampaigns]);
+
+  // Admin-managed categories & sub-funds (localized to the current locale).
+  const [categories, setCategories] = useState<PublicCategory[]>([]);
+  useEffect(() => {
+    donationCategoriesApi
+      .listPublic(locale)
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, [locale]);
 
   const niyyahLabel = t(`niyyah.${niyyah}.label`);
   const methodName = t(`methods.${method}.title`);
@@ -155,6 +165,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
                       <h2 className="mb-1 text-xl font-bold text-gray-900">{t('sectionHeading')}</h2>
                       <p className="mb-4 text-sm text-gray-500">{t('sectionSub')}</p>
                       <CategoryGrid
+                        categories={categories}
                         currency={currency}
                         liveBySlug={liveBySlug}
                         onAdd={addItem}

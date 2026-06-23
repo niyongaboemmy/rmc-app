@@ -42,7 +42,13 @@ export const publicApi = {
     }>(api.get(`/public/announcements/${id}`)),
 
   getMosques: (districtId?: string) =>
-    unwrap<Array<{ id: string; name: string; address: string | null; gpsLat: number | null; gpsLng: number | null; districtId: string | null; imamName: string | null; imamPhoto: string | null }>>(
+    unwrap<Array<{
+      id: string; name: string; address: string | null;
+      gpsLat: number | null; gpsLng: number | null; districtId: string | null;
+      capacity: number | null; foundingYear: number | null;
+      phone: string | null; email: string | null; fridayPrayerTime: string | null;
+      imamName: string | null; imamPhone: string | null; imamPhoto: string | null;
+    }>>(
       api.get('/mosques', { params: { districtId, status: 'active' } }),
     ),
 

@@ -13,7 +13,7 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import type { Feature, FeatureCollection } from 'geojson';
-import { Navigation, X } from 'lucide-react';
+import { Navigation, X, Users, Clock, Phone } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import 'leaflet/dist/leaflet.css';
 
@@ -22,7 +22,12 @@ export interface MapMosque {
   name: string;
   address: string | null;
   imamName: string | null;
+  imamPhone: string | null;
   imamPhoto: string | null;
+  capacity: number | null;
+  fridayPrayerTime: string | null;
+  phone: string | null;
+  email: string | null;
   gpsLat: number | null;
   gpsLng: number | null;
   provinceCode: string | null;
@@ -263,6 +268,9 @@ interface Props {
   locatingLabel: string;
   routeErrorLabel: string;
   nearestLabel: string;
+  imamLabel: string;
+  capacityLabel: string;
+  jumuahLabel: string;
 }
 
 export default function MosqueMap({
@@ -278,6 +286,9 @@ export default function MosqueMap({
   locatingLabel,
   routeErrorLabel,
   nearestLabel,
+  imamLabel,
+  capacityLabel,
+  jumuahLabel,
 }: Props) {
   const [status, setStatus] = useState<DirStatus>('idle');
   const [info, setInfo] = useState<{ km: number; min: number | null } | null>(null);
@@ -371,12 +382,45 @@ export default function MosqueMap({
                 )}
                 <span className="block font-semibold text-gray-900">{m.name}</span>
                 {m.address && <span className="block text-gray-500 text-xs mt-0.5">{m.address}</span>}
+
+                {/* Mosque details */}
+                {(m.capacity != null || m.fridayPrayerTime || m.phone) && (
+                  <span className="mt-1.5 flex flex-col gap-1 text-[11px] text-gray-600">
+                    {m.capacity != null && (
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-3 h-3 shrink-0 text-gray-400" />
+                        {capacityLabel}: <span className="font-medium text-gray-800">{m.capacity.toLocaleString()}</span>
+                      </span>
+                    )}
+                    {m.fridayPrayerTime && (
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 shrink-0 text-gray-400" />
+                        {jumuahLabel}: <span className="font-medium text-gray-800">{m.fridayPrayerTime.slice(0, 5)}</span>
+                      </span>
+                    )}
+                    {m.phone && (
+                      <a href={`tel:${m.phone.replace(/\s+/g, '')}`} className="flex items-center gap-1.5 hover:underline">
+                        <Phone className="w-3 h-3 shrink-0 text-gray-400" />
+                        <span className="font-medium text-gray-800">{m.phone}</span>
+                      </a>
+                    )}
+                  </span>
+                )}
+
                 {m.imamName && (
                   <span className="mt-1.5 flex items-center gap-2">
                     <Avatar name={m.imamName} photo={m.imamPhoto} size={30} />
                     <span className="leading-tight">
-                      <span className="block text-[10px] uppercase tracking-wide text-gray-400">Imam</span>
+                      <span className="block text-[10px] uppercase tracking-wide text-gray-400">{imamLabel}</span>
                       <span className="block text-xs font-medium text-gray-800">{m.imamName}</span>
+                      {m.imamPhone && (
+                        <a
+                          href={`tel:${m.imamPhone.replace(/\s+/g, '')}`}
+                          className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-rmc-green hover:underline"
+                        >
+                          <Phone className="w-2.5 h-2.5 shrink-0" /> {m.imamPhone}
+                        </a>
+                      )}
                     </span>
                   </span>
                 )}
