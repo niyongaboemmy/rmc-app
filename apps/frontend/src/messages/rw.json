@@ -14,6 +14,7 @@
     "download": "Pakurura"
   },
   "auth": {
+    "backToHome": "Subira Ahabanza",
     "login": {
       "title": "Injira",
       "subtitle": "Injira muri konti yawe ya RMC",
@@ -1030,7 +1031,10 @@
       "religious": "Imihango y'Idini",
       "education": "Uburezi no Kwiga",
       "community": "Imibereho Rusange n'Amateraniro",
-      "mosques": "Imisigiti n'Ibikoresho"
+      "mosques": "Imisigiti n'Ibikoresho",
+      "events": "Ibirori",
+      "ceremonies": "Imihango",
+      "other": "Ibindi"
     }
   },
   "blog": {

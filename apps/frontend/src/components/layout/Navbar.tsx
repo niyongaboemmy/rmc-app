@@ -233,7 +233,7 @@ export function Navbar() {
               className="hidden sm:inline-flex items-center gap-1.5 bg-rmc-green text-white px-3.5 py-1.5 rounded-full text-[13px] font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 transition-all duration-300 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
               <Heart className="w-3.5 h-3.5 shrink-0" />
-              Donate
+              {t('donate')}
             </Link>
 
             {isAuthenticated && user ? (
@@ -391,7 +391,7 @@ export function Navbar() {
                     onClick={() => setMobileOpen(false)}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 bg-rmc-green text-white rounded-2xl text-sm font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark transition-colors"
                   >
-                    <Heart className="w-3.5 h-3.5" /> Donate
+                    <Heart className="w-3.5 h-3.5" /> {t('donate')}
                   </Link>
                   <Link
                     href={`/${locale}/login`}

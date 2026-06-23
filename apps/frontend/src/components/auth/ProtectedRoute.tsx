@@ -19,7 +19,7 @@ export function ProtectedRoute({ children, permissions, roles, redirectTo }: Pro
   const { user, isAuthenticated, isLoading, hasPermission } = useAuth();
   const router = useRouter();
   const params = useParams<{ locale: string }>();
-  const locale = params?.locale ?? 'en';
+  const locale = params?.locale ?? 'rw';
 
   useEffect(() => {
     if (isLoading) return;

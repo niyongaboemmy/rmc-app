@@ -14,6 +14,7 @@
     "download": "Download"
   },
   "auth": {
+    "backToHome": "Back to home",
     "login": {
       "title": "Sign In",
       "subtitle": "Sign in to your RMC account",
@@ -1030,7 +1031,10 @@
       "religious": "Religious Events",
       "education": "Education & Learning",
       "community": "Community Life & Gatherings",
-      "mosques": "Mosques & Facilities"
+      "mosques": "Mosques & Facilities",
+      "events": "Events",
+      "ceremonies": "Ceremonies",
+      "other": "Other"
     }
   },
   "blog": {
