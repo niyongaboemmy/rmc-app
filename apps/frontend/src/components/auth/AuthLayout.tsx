@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft } from 'lucide-react';
 
 // ─── Islamic-themed Unsplash images ──────────────────────────────────────────
@@ -68,8 +69,9 @@ function IslamicBorder() {
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const params   = useParams<{ locale?: string }>();
-  const locale   = params?.locale ?? 'en';
+  const locale   = params?.locale ?? 'rw';
   const config   = getConfig(pathname);
+  const t        = useTranslations('auth');
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -151,7 +153,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to home
+            {t('backToHome')}
           </Link>
         </div>
         <div className="w-full max-w-sm">{children}</div>

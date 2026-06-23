@@ -8,7 +8,7 @@ import { GalleryCategories } from '@/components/gallery/GalleryCategories';
 import { publicApi } from '@/lib/public-api';
 import {
   CATEGORY_KEYS,
-  type GalleryItem, type CategoryKey,
+  type GalleryItem,
 } from '@/components/gallery/galleryData';
 
 // Always fetch fresh so newly uploaded images appear without a rebuild.
@@ -61,7 +61,10 @@ export default async function GalleryPage() {
   ];
   const categories = orderedKeys.map((key) => ({
     key,
-    label: KNOWN_CATEGORIES.has(key) ? t(`categories.${key as CategoryKey}`) : humanize(key),
+    // Localise any category that has a translation (covers both the curated
+    // keys and the admin-defined ones like "events"/"ceremonies"/"other");
+    // fall back to a humanised label for anything still untranslated.
+    label: t.has(`categories.${key}`) ? t(`categories.${key}`) : humanize(key),
   }));
 
   // Periods: the distinct months present (most recent first), localised.

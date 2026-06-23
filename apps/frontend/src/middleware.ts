@@ -2,9 +2,12 @@ import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 
 const intlMiddleware = createMiddleware({
-  locales: ['en', 'rw', 'ar'],
-  defaultLocale: 'en',
+  locales: ['rw', 'en', 'ar'],
+  defaultLocale: 'rw',
   localePrefix: 'always',
+  // First visits always land on Kinyarwanda, ignoring the browser's
+  // Accept-Language header. Users can still switch via the language switcher.
+  localeDetection: false,
 });
 
 // Paths that require authentication (locale-agnostic, checked after stripping locale prefix)
@@ -35,7 +38,7 @@ export default function middleware(req: NextRequest) {
 
   // Strip locale prefix to get the route path
   const localeMatch = pathname.match(/^\/(en|rw|ar)(\/.*)?$/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = localeMatch?.[1] ?? 'rw';
   const routePath = localeMatch?.[2] ?? '/';
 
   // Check auth tokens from cookies (set by the API client after login).

@@ -42,7 +42,7 @@ export default async function BlogPostPage({
             align="left"
             titleClassName="text-xl md:text-2xl lg:text-3xl"
             minHeightClassName="min-h-[32vh]"
-            paddingClassName="pt-24 pb-8"
+            paddingClassName="pt-32 pb-20"
           >
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-white/15 pt-5 text-sm text-white/70">
               {post.author && (
