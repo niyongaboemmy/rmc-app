@@ -686,6 +686,7 @@
   },
   "member": {
     "register": {
+      "eyebrow": "Ubuyobozi bw'Abanyamuryango",
       "title": "Uzuza Dosiye ya Nyirawo",
       "subtitle": "Uzuza amakuru yawe kugira ngo usohoze ubusabe bwo kwiyandikisha",
       "nationalId": "Indangamuntu (imibare 16)",
@@ -1525,6 +1526,9 @@
       "schools": "Shaka Amashuri",
       "announcements": "Amatangazo",
       "blog": "Amakuru",
+      "gallery": "Inzira za Amashusho",
+      "tenders": "Itumba",
+      "donate": "Gutera Inkunga",
       "contact": "Twandikire",
       "join": "Injira muri RMC"
     },

@@ -84,8 +84,8 @@ export function Navbar() {
     { href: `/${locale}/about`, label: t('about') },
     { href: `/${locale}/services`, label: t('services') },
     { href: `/${locale}/schools`, label: t('schools') },
-    { href: `/${locale}/blog`, label: t('blog') },
-    { href: `/${locale}/gallery`, label: t('gallery') },
+    { href: `/${locale}/blog`, label: t('blog'), mobileOnly: true },
+    { href: `/${locale}/gallery`, label: t('gallery'), mobileOnly: true },
     { href: `/${locale}/contact`, label: t('contact') },
   ];
 
@@ -187,7 +187,7 @@ export function Navbar() {
             </button>
             {/* Desktop nav links */}
             <div className="hidden lg:flex items-center gap-0.5">
-              {navLinks.map((link) => (
+              {navLinks.filter((l) => !l.mobileOnly).map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}

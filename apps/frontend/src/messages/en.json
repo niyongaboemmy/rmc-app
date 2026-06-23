@@ -686,6 +686,7 @@
   },
   "member": {
     "register": {
+      "eyebrow": "Membership",
       "title": "Complete Member Profile",
       "subtitle": "Fill in your details to submit your membership application",
       "nationalId": "National ID (16 digits)",
@@ -1525,6 +1526,9 @@
       "schools": "Find Schools",
       "announcements": "Announcements",
       "blog": "Blog & News",
+      "gallery": "Gallery",
+      "tenders": "Tenders",
+      "donate": "Donate",
       "contact": "Contact Us",
       "join": "Join RMC"
     },
