@@ -166,19 +166,25 @@ export function Footer() {
                 <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
                   <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
                 </span>
-                <a href="mailto:info@rmc.rw" className="text-white/55 hover:text-white text-sm transition-colors">info@rmc.rw</a>
+                <a href="mailto:rwandamuslimc@gmail.com" className="text-white/55 hover:text-white text-sm transition-colors">rwandamuslimc@gmail.com</a>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                  <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
+                </span>
+                <a href="mailto:islamrwanda18@gmail.com" className="text-white/55 hover:text-white text-sm transition-colors">islamrwanda18@gmail.com</a>
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
                   <Phone className="w-3.5 h-3.5 text-rmc-gold-light" />
                 </span>
-                <a href="tel:+250788000000" className="text-white/55 hover:text-white text-sm transition-colors">+250 788 000 000</a>
+                <a href="tel:+250788308436" className="text-white/55 hover:text-white text-sm transition-colors">(+250) 788 308 436</a>
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
                   <MapPin className="w-3.5 h-3.5 text-rmc-gold-light" />
                 </span>
-                <span className="text-white/55 text-sm">{t('address')}</span>
+                <span className="text-white/55 text-sm">Kigali, Rwanda</span>
               </li>
             </ul>
           </CollapsibleColumn>
