@@ -63,6 +63,16 @@ export class Donation {
   @Column({ name: 'payment_method', type: 'varchar', length: 20, nullable: true })
   paymentMethod: string | null;
 
+  // Payer's mobile number (required to initiate a Mobile Money collection).
+  @Column({ name: 'donor_phone', type: 'varchar', length: 20, nullable: true })
+  donorPhone: string | null;
+
+  // Gateway transaction reference (e.g. MoMo requestToPay id) used to confirm
+  // the payment status.
+  @Index('IDX_donations_payment_reference')
+  @Column({ name: 'payment_reference', type: 'varchar', length: 100, nullable: true })
+  paymentReference: string | null;
+
   @Index('IDX_donations_status')
   @Column({ type: 'varchar', length: 20, default: DonationStatus.PENDING })
   status: DonationStatus;

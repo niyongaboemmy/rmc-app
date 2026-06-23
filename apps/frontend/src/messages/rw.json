@@ -78,7 +78,8 @@
     "memberPortal": "Urubuga rw'Umunyamuryango",
     "profile": "Umwirondoro Wanjye",
     "changePassword": "Hindura Ijambo ry'Ibanga",
-    "admin": "Ubuyobozi"
+    "admin": "Ubuyobozi",
+    "schools": "Amashuri"
   },
   "home": {
     "hero": {
@@ -664,6 +665,7 @@
       "dashboard": "Ikibaho",
       "members": "Abanyamuryango",
       "mosques": "Masaliti",
+      "schools": "Amashuri",
       "prayer": "Amasaha yo Gusenga",
       "donations": "Inkunga",
       "inbox": "Ubutumwa",
@@ -883,6 +885,54 @@
         "monthly": "Buri kwezi",
         "yearly": "Buri mwaka"
       }
+    },
+    "schools": {
+      "title": "Amashuri",
+      "subtitle": "Genzura urutonde rw'amashuri y'Abayisilamu agaragara ku ikarita rusange.",
+      "refresh": "Vugurura",
+      "new": "Ishuri rishya",
+      "edit": "Hindura",
+      "delete": "Siba",
+      "searchPlaceholder": "Shakisha izina cyangwa aho riherereye…",
+      "allLevels": "Inzego zose",
+      "noneTitle": "Nta mashuri arahari",
+      "col": {
+        "name": "Ishuri",
+        "level": "Urwego",
+        "location": "Aho riherereye",
+        "contact": "Aderesi",
+        "status": "Uko rimeze"
+      },
+      "status": {
+        "active": "Rirakora",
+        "inactive": "Ntirikora"
+      },
+      "newTitle": "Ongeraho ishuri",
+      "editTitle": "Hindura ishuri",
+      "field": {
+        "name": "Izina ry'ishuri",
+        "level": "Urwego",
+        "status": "Uko rimeze",
+        "principal": "Umuyobozi",
+        "phone": "Telefone",
+        "email": "Imeyili",
+        "province": "Intara",
+        "district": "Akarere / aho riherereye",
+        "lat": "Latitude",
+        "lng": "Longitude"
+      },
+      "gpsHint": "Ibipimo bishyira akamenyetso k'ishuri ku ikarita. Inama: kanda iburyo ku Google Maps ukoporore lat/long.",
+      "required": "Birakenewe",
+      "cancel": "Reka",
+      "save": "Bika impinduka",
+      "create": "Kora",
+      "saving": "Kubika…",
+      "saveError": "Ntibyakunze kubika. Ongera ugerageze.",
+      "deleteTitle": "Siba ishuri",
+      "deletePrompt": "Siba “{name}”? Ibi ntibishobora gusubizwamo.",
+      "confirmDelete": "Siba",
+      "deleting": "Gusiba…",
+      "deleteError": "Ntibyakunze gusiba. Ongera ugerageze."
     }
   },
   "galleryPage": {
@@ -1170,7 +1220,10 @@
       "secure": "Kwishyura kwizewe kandi gufite umutekano",
       "close": "Funga",
       "remove": "Kuraho {label}",
-      "error": "Ntitwashoboye kwandika impano yawe. Nyamuneka ongera ugerageze."
+      "error": "Ntitwashoboye kwandika impano yawe. Nyamuneka ongera ugerageze.",
+      "phonePlaceholder": "Nimero ya Mobile Money",
+      "phoneHint": "Tuzakohereza ubusabe bwo kwishyura kuri iyi nimero kugira ngo wemeze.",
+      "phoneRequired": "Andika nimero yawe ya Mobile Money kugira ngo ukomeze."
     },
     "methods": {
       "momo": {
@@ -1228,6 +1281,47 @@
     "zakatItem": {
       "category": "Impuhwe",
       "label": "Zakat"
+    },
+    "payment": {
+      "pendingTitle": "Emeza kwishyura kuri telefone yawe",
+      "pendingHint": "Twohereje ubusabe bwa Mobile Money. Bwemeze kugira ngo urangize impano yawe.",
+      "checking": "Turimo kureba aho kwishyura kugeze…",
+      "completed": "Kwishyura byakiriwe — murakoze!",
+      "failed": "Kwishyura ntibyemejwe. Ongera ugerageze cyangwa ukoreshe ubundi buryo."
+    }
+  },
+  "schools": {
+    "eyebrow": "Uburezi",
+    "title": "Shaka Amashuri y'Abayisilamu",
+    "subtitle": "Menya amashuri abanza, ayisumbuye, madrassa n'imyuga y'Abayisilamu mu Rwanda — shakisha, hitamo urwego, ubone n'inzira.",
+    "searchPlaceholder": "Shakisha izina ry'ishuri…",
+    "clear": "Siba",
+    "mapHint": "Inama: kanda intara ku ikarita kugira ngo uyungurure.",
+    "allLevels": "Byose",
+    "level": {
+      "primary": "Abanza",
+      "secondary": "Ayisumbuye",
+      "madrassa": "Madrassa",
+      "tvet": "Imyuga"
+    },
+    "directions": "Inzira",
+    "locating": "Turimo gushaka aho uri…",
+    "locationError": "Ntibyakunze kubona aho uri",
+    "nearest": "Iri hafi yawe",
+    "noResults": "Nta shuri rihuye n’ubushakashatsi bwawe.",
+    "feature": {
+      "locate": {
+        "title": "Shaka amashuri",
+        "text": "Reba amashuri yose ku ikarita unakande intara kugira ngo uyungurure."
+      },
+      "levels": {
+        "title": "Yungurura ku rwego",
+        "text": "Abanza, ayisumbuye, madrassa cyangwa imyuga — shaka irikwiye."
+      },
+      "directions": {
+        "title": "Bona inzira",
+        "text": "Inzira uhereye aho uri ugana ku ishuri."
+      }
     }
   }
 }

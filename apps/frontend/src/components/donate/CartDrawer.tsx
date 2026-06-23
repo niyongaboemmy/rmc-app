@@ -20,6 +20,8 @@ export function CartDrawer({
   setName,
   email,
   setEmail,
+  phone,
+  setPhone,
   anonymous,
   setAnonymous,
   onRemove,
@@ -41,6 +43,8 @@ export function CartDrawer({
   setName: (v: string) => void;
   email: string;
   setEmail: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
   anonymous: boolean;
   setAnonymous: (v: boolean) => void;
   onRemove: (id: string) => void;
@@ -209,6 +213,21 @@ export function CartDrawer({
                     );
                   })}
                 </div>
+
+                {/* Mobile Money number — required to send the payment request */}
+                {method === 'momo' && (
+                  <div className="mt-3">
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder={t('cart.phonePlaceholder')}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-[13.5px] text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                    />
+                    <p className="mt-1.5 text-[11px] text-gray-400">{t('cart.phoneHint')}</p>
+                  </div>
+                )}
               </div>
             </>
           )}

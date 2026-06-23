@@ -188,12 +188,27 @@ export function MosqueFinder() {
               {visible.map((mosque) => {
                 const hasGps = mosque.gpsLat != null && mosque.gpsLng != null;
                 return (
-                  <button
+                  <div
                     key={mosque.id}
-                    type="button"
-                    onClick={() => focusMosque(mosque)}
-                    disabled={!hasGps}
-                    className="w-full text-left p-2.5 rounded-lg border border-transparent transition-all hover:border-rmc-green/20 hover:bg-rmc-green/[0.04] disabled:opacity-60 disabled:hover:border-transparent disabled:hover:bg-transparent"
+                    role={hasGps ? 'button' : undefined}
+                    tabIndex={hasGps ? 0 : undefined}
+                    aria-disabled={!hasGps}
+                    onClick={hasGps ? () => focusMosque(mosque) : undefined}
+                    onKeyDown={
+                      hasGps
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              focusMosque(mosque);
+                            }
+                          }
+                        : undefined
+                    }
+                    className={`w-full rounded-lg border border-transparent p-2.5 text-left transition-all ${
+                      hasGps
+                        ? 'cursor-pointer hover:border-rmc-green/20 hover:bg-rmc-green/[0.04]'
+                        : 'opacity-60'
+                    }`}
                   >
                     <div className="flex items-start gap-2.5">
                       <div className="w-7 h-7 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
@@ -226,7 +241,7 @@ export function MosqueFinder() {
                         )}
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>

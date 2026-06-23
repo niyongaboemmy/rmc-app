@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CheckCircle2, Printer, Heart, Home, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Printer, Heart, Home, RotateCcw, Loader2, Smartphone, XCircle } from 'lucide-react';
+import { donationsApi } from '@/lib/donationsApi';
 import { money, type CartItem } from './donateData';
 
 export interface DonationSummary {
@@ -15,6 +16,8 @@ export interface DonationSummary {
   recurring: boolean;
   methodName: string;
   niyyahLabel: string;
+  /** Donations awaiting payment-gateway confirmation (empty when already paid). */
+  pendingPaymentIds: string[];
 }
 
 export function SuccessState({
@@ -27,8 +30,47 @@ export function SuccessState({
   onReset: () => void;
 }) {
   const t = useTranslations('donate');
-  const { reference, dateStr, items, currency, total, recurring, methodName, niyyahLabel } = summary;
+  const { reference, dateStr, items, currency, total, recurring, methodName, niyyahLabel, pendingPaymentIds } = summary;
   const [dua, setDua] = useState('');
+
+  // Poll the gateway for donations still awaiting confirmation (e.g. a Mobile
+  // Money prompt the donor approves on their phone). Resolves to completed/failed,
+  // or gives up after a window and leaves the banner in its "pending" state.
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed' | null>(
+    pendingPaymentIds.length ? 'pending' : null,
+  );
+  useEffect(() => {
+    if (!pendingPaymentIds.length) return;
+    let cancelled = false;
+    let remaining = [...pendingPaymentIds];
+    let sawFailure = false;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 15;
+
+    const tick = async () => {
+      attempts += 1;
+      const results = await Promise.all(
+        remaining.map((id) => donationsApi.checkStatus(id).catch(() => null)),
+      );
+      if (cancelled) return;
+      const next: string[] = [];
+      results.forEach((d, i) => {
+        if (!d || d.status === 'pending') next.push(remaining[i]);
+        else if (d.status === 'failed' || d.status === 'refunded') sawFailure = true;
+      });
+      remaining = next;
+      if (remaining.length === 0) {
+        setPaymentStatus(sawFailure ? 'failed' : 'completed');
+        clearInterval(timer);
+      } else if (attempts >= MAX_ATTEMPTS) {
+        clearInterval(timer); // give up; leave it "pending" for the donor to retry
+      }
+    };
+
+    const timer = setInterval(tick, 4000);
+    tick();
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [pendingPaymentIds]);
 
   const printReceipt = () => {
     const rows = items
@@ -74,6 +116,32 @@ export function SuccessState({
   return (
     <div className="mx-auto max-w-xl animate-fade-up">
       <div className="rounded-3xl border border-gray-100 bg-white p-8 text-center shadow-sm ring-1 ring-black/5 sm:p-10">
+        {/* Payment-confirmation banner (gateway-backed payments only) */}
+        {paymentStatus === 'pending' && (
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left rtl:text-right">
+            <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <p className="text-[13.5px] font-bold text-amber-900">{t('payment.pendingTitle')}</p>
+              <p className="mt-0.5 text-[12.5px] leading-relaxed text-amber-700">{t('payment.pendingHint')}</p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] font-medium text-amber-600">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {t('payment.checking')}
+              </p>
+            </div>
+          </div>
+        )}
+        {paymentStatus === 'failed' && (
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-left rtl:text-right">
+            <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <p className="text-[13px] leading-relaxed text-red-700">{t('payment.failed')}</p>
+          </div>
+        )}
+        {paymentStatus === 'completed' && (
+          <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-rmc-green/20 bg-rmc-green-light/40 p-4 text-left rtl:text-right">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-rmc-green" />
+            <p className="text-[13px] font-semibold text-rmc-green-dark">{t('payment.completed')}</p>
+          </div>
+        )}
         <span className="mx-auto mb-5 flex h-16 w-16 animate-scale-in items-center justify-center rounded-full bg-rmc-green-light ring-1 ring-rmc-green/15">
           <CheckCircle2 className="h-8 w-8 text-rmc-green" />
         </span>
