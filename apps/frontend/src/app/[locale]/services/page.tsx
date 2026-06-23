@@ -169,7 +169,7 @@ export default async function ServicesPage({ params: { locale } }: { params: { l
       <Navbar />
       <main>
         <PageHero
-          eyebrow="Our Services"
+          eyebrow={t('services.eyebrow')}
           title={t('services.title')}
           subtitle={t('services.subtitle')}
           ornament

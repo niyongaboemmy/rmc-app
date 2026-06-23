@@ -325,6 +325,19 @@
   "services": {
     "title": "Serivisi z'Umuryango",
     "subtitle": "RMC itanga serivisi 7 z'ingenzi kuri abanyamuryango",
+    "eyebrow": "Serivisi Zacu",
+    "comingSoon": {
+      "backToAll": "Subira ku Serivisi Zose",
+      "badge": "Eza Vuba",
+      "inProgress": "Biratunganywa",
+      "etaLabel": "Itariki Iteganyijwe yo Gutangira",
+      "etaDesc": "Itsinda ryacu riratekereza ku serivisi iyi. Subira hano vuba kugira ngo ubone amakuru mashya.",
+      "whatToExpect": "Ibyo Witegere",
+      "expectP1": "Iyo serivisi iyi itangiye, uzashobora gusaba, kureba aho ubusabe bwawe bugeze, kohereza inyandiko z'ingirakamaro, no kubona amakuru — byose ku rubuga rwa RMC.",
+      "expectP2": "Mu gihe cyitabirwa, twandikire kandi itsinda ryacu rizagufasha gutuza ubusabe bwawe mu biro byacu.",
+      "contactUs": "Twandikire",
+      "viewOtherServices": "Reba Izindi Serivisi"
+    },
     "marriage": {
       "title": "Serivisi y'Ubukwe",
       "desc": "Ibirori by'ubukwe bw'Islamimu, impapuro, n'inyandiko kuri abakobwa n'abasore mu muryango.",
@@ -493,6 +506,40 @@
           "south": "Intara y'Amajyepfo",
           "east": "Intara y'Iburasirazuba",
           "west": "Intara y'Iburengerazuba"
+        },
+        "applyHeroBadge": "Serivisi ya RMC Nikah",
+        "applyHeroTitle": "Ohereza Ubusabe bw'Ubukwe",
+        "requirementsHeroTitle": "Ubusabe bwa Nikah — Ibisabwa",
+        "requirementsHeroSubtitle": "Reba ibyo ukeneye mbere yo kwinjira kugira ngo usohoze ubusabe bwawe.",
+        "backToMarriage": "Subira ku Serivisi y'Ubukwe",
+        "signInToApply": "Injira kugira ngo Usabe",
+        "signInPrompt": "Injira kugira ngo usohoze ubusabe bwawe.",
+        "docsTitle": "Inyandiko Zisabwa",
+        "processTitle": "Inzira y'Ubusabe",
+        "witnessTitle": "Ibisabwa kuri Abatangabuhamya n'Umurinzi",
+        "signInToSubmit": "Injira kugira ngo Usohoze Ubusabe",
+        "noAccount": "Nta konti ufite?",
+        "requestAccess": "Saba kwinjira",
+        "draftNote": "Uzuza intambwe esheshatu. Aho ugeze kubikwa — ushobora gusubira gukurikira igihe cyose.",
+        "feesPaymentNote": "Ubwishyu bwemerwa binyuze kuri Mobile Money (MoMo), amafaranga atangwa intoki ku biro bya RMC, cyangwa kohereza kuri banki.",
+        "docs": {
+          "d1": { "label": "Irangamuntu y'Umukwe", "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda" },
+          "d2": { "label": "Irangamuntu y'Umugeni", "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda" },
+          "d3": { "label": "Uruhushya rwa Wali", "detail": "Uruhushya rwashyizweho umukono na wali (umurinzi w'umugeni)" },
+          "d4": { "label": "Ifoto y'Abashyingiranwa", "detail": "Ifoto yashywe ya vuba y'umukwe n'umugeni hamwe" }
+        },
+        "process": {
+          "p1": { "label": "Tanga Ubusabe", "desc": "Uzuza iformi ifite amakuru y'abashyingiranwa, umuhango, n'inyandiko." },
+          "p2": { "label": "Burimo Gusuzumwa", "desc": "Itsinda rya RMC risuzuma inyandiko zawe (iminsi 1–3 y'akazi)." },
+          "p3": { "label": "Kwemezwa n'Imamu", "desc": "Ubusabe bwemejwe kandi imamu aharirwa gukora umuhango." },
+          "p4": { "label": "Umuhango wa Nikah", "desc": "Nikah ikorerwa ahantu wahisemo cyangwa mu musigiti." },
+          "p5": { "label": "Icyemezo Gitangwa", "desc": "Icyemezo cy'ubukwe cyemewe gishyizweho umukono kandi gitangwa." }
+        },
+        "witnessReqs": {
+          "w1": "Abatangabuhamya babiri b'Abayisilamu basabwa (bagomba kwerekana irangamuntu)",
+          "w2": "Wali w'umugeni (umurinzi) agomba gutanga uruhushya rwashyizweho umukono",
+          "w3": "Abatangabuhamya bagomba kuba Abayisilamu bakuru bafite imvugo nziza",
+          "w4": "Imamu wahisemo ushobora gusabwa ariko ni bitewe n'uboneka"
         }
       },
       "status": {

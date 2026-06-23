@@ -325,6 +325,19 @@
   "services": {
     "title": "Community Services",
     "subtitle": "RMC offers 7 core services to support our community",
+    "eyebrow": "Our Services",
+    "comingSoon": {
+      "backToAll": "Back to All Services",
+      "badge": "Coming Soon",
+      "inProgress": "In Progress",
+      "etaLabel": "Estimated Launch",
+      "etaDesc": "Our team is actively building this service. Check back soon for updates.",
+      "whatToExpect": "What to expect",
+      "expectP1": "When this service launches, you will be able to submit requests, track their status, upload supporting documents, and receive notifications — all from this platform.",
+      "expectP2": "In the meantime, please contact us directly and our team will assist you with your request through our office.",
+      "contactUs": "Contact Us",
+      "viewOtherServices": "View Other Services"
+    },
     "marriage": {
       "title": "Marriage Services",
       "desc": "Official Islamic marriage ceremonies, certificates, and documentation for couples in the community.",
@@ -493,6 +506,40 @@
           "south": "Southern Province",
           "east": "Eastern Province",
           "west": "Western Province"
+        },
+        "applyHeroBadge": "RMC Nikah Service",
+        "applyHeroTitle": "Submit Marriage Application",
+        "requirementsHeroTitle": "Nikah Application — Requirements",
+        "requirementsHeroSubtitle": "Review what you need before signing in to submit your application.",
+        "backToMarriage": "Back to Marriage Services",
+        "signInToApply": "Sign in to Apply",
+        "signInPrompt": "Sign in to submit your application.",
+        "docsTitle": "Required Documents",
+        "processTitle": "Application Process",
+        "witnessTitle": "Witness & Guardian Requirements",
+        "signInToSubmit": "Sign in to Submit Application",
+        "noAccount": "Don't have an account?",
+        "requestAccess": "Request access",
+        "draftNote": "Complete all six steps. Your progress is saved as a draft — you can return to continue at any time.",
+        "feesPaymentNote": "Payment accepted via Mobile Money (MoMo), cash at the RMC office, or bank transfer.",
+        "docs": {
+          "d1": { "label": "Groom's National ID", "detail": "Valid Rwandan National ID (NID) or passport" },
+          "d2": { "label": "Bride's National ID", "detail": "Valid Rwandan National ID (NID) or passport" },
+          "d3": { "label": "Wali's Consent Letter", "detail": "Signed consent from the bride's guardian (Wali)" },
+          "d4": { "label": "Couple Portrait Photo", "detail": "Recent clear photo of both the groom and bride together" }
+        },
+        "process": {
+          "p1": { "label": "Submit Application", "desc": "Fill the form with couple, ceremony, and document details." },
+          "p2": { "label": "Under Review", "desc": "RMC team reviews your documents (1–3 business days)." },
+          "p3": { "label": "Approval & Imam", "desc": "Application approved and an imam is assigned to officiate." },
+          "p4": { "label": "Ceremony (Nikah)", "desc": "Nikah conducted at your chosen venue or mosque." },
+          "p5": { "label": "Certificate Issued", "desc": "Official marriage certificate signed and delivered." }
+        },
+        "witnessReqs": {
+          "w1": "Two Muslim witnesses are required (must present their NIDs)",
+          "w2": "The bride's Wali (guardian) must provide a signed consent letter",
+          "w3": "Witnesses must be adult Muslims in good standing",
+          "w4": "The preferred imam may be requested but is subject to availability"
         }
       },
       "status": {

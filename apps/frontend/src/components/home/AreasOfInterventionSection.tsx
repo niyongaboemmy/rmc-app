@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { BookOpen, Heart, GraduationCap, Globe, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
+import { fileUrl } from '@/lib/api';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import {
   ContentKeys,
@@ -58,10 +59,17 @@ function PillarCard({
         {index}
       </span>
 
-      {/* Icon tile — self-contained green+gold brand object: green gradient body + inset gold ring */}
-      <span className="relative grid place-items-center w-16 h-16 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md shadow-rmc-green/25 ring-1 ring-inset ring-rmc-gold/30">
-        <Icon className="w-8 h-8" />
-      </span>
+      {/* Icon tile or hero image */}
+      {item.imageKey ? (
+        <span className="relative block w-16 h-16 rounded-2xl overflow-hidden shadow-md ring-1 ring-inset ring-rmc-gold/30 shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={fileUrl(item.imageKey)} alt="" className="w-full h-full object-cover" aria-hidden />
+        </span>
+      ) : (
+        <span className="relative grid place-items-center w-16 h-16 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md shadow-rmc-green/25 ring-1 ring-inset ring-rmc-gold/30">
+          <Icon className="w-8 h-8" />
+        </span>
+      )}
 
       {/* Always-visible gold pillar label + title — gold reads at rest, not only on hover */}
       <p className="relative mt-7 text-[11px] font-semibold uppercase tracking-[0.22em] text-rmc-gold">

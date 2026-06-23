@@ -7,15 +7,24 @@ import { FileText, Clock, ArrowRight } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { publicApi } from '@/lib/public-api';
 
+type I18n = { en: string; rw: string; ar: string };
+
 type Tender = {
   id: string;
   title: string;
   content: string;
+  titleI18n:   I18n | null;
+  contentI18n: I18n | null;
   priority: string;
   publishAt: string;
   expiresAt: string | null;
   type: string;
 };
+
+function resolveText(i18n: I18n | null | undefined, fallback: string, locale: string): string {
+  if (!i18n) return fallback;
+  return i18n[locale as keyof I18n] || i18n.en || fallback;
+}
 
 function deadlineLabel(expiresAt: string | null): string {
   if (!expiresAt) return 'Open';
@@ -97,7 +106,11 @@ export function TendersSection() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tenders.map((tender, i) => (
+            {tenders.map((tender, i) => {
+              const isRtl = locale === 'ar';
+              const displayTitle   = resolveText(tender.titleI18n,   tender.title,   locale);
+              const displayContent = resolveText(tender.contentI18n, tender.content, locale);
+              return (
               <div
                 key={tender.id}
                 className={`flex flex-col p-5 rounded-2xl border border-rmc-gold/20 bg-white shadow-sm hover:shadow-md transition-all duration-500 group ${
@@ -109,12 +122,18 @@ export function TendersSection() {
                   <div className="w-9 h-9 rounded-xl bg-rmc-gold/10 flex items-center justify-center shrink-0">
                     <FileText className="w-4 h-4 text-rmc-gold" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-rmc-green transition-colors">
-                    {tender.title}
+                  <h3
+                    dir={isRtl ? 'rtl' : 'ltr'}
+                    className={`font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-rmc-green transition-colors ${isRtl ? 'font-arabic' : ''}`}
+                  >
+                    {displayTitle}
                   </h3>
                 </div>
-                <p className="text-gray-500 text-xs leading-relaxed line-clamp-2 mb-4">
-                  {tender.content}
+                <p
+                  dir={isRtl ? 'rtl' : 'ltr'}
+                  className={`text-gray-500 text-xs leading-relaxed line-clamp-2 mb-4 ${isRtl ? 'font-arabic' : ''}`}
+                >
+                  {displayContent}
                 </p>
                 <div className="mt-auto flex items-center gap-1.5">
                   <Clock className={`w-3.5 h-3.5 shrink-0 ${deadlineColor(tender.expiresAt)}`} />
@@ -128,7 +147,8 @@ export function TendersSection() {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
