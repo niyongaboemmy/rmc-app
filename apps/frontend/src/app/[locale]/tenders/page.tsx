@@ -232,7 +232,7 @@ export default function TendersPage() {
                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-2">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${styles.badge}`}>
                           <Clock className={`w-3 h-3 ${styles.icon}`} />
-                          {deadlineLabel(tender.expiresAt, (key, values) => t(key as Parameters<typeof t>[0], values))}
+                          {deadlineLabel(tender.expiresAt, (key, values) => t(key as Parameters<typeof t>[0], values as Parameters<typeof t>[1]))}
                         </span>
                         <span className="text-[10px] font-semibold text-gray-300 group-hover:text-rmc-green transition-colors flex items-center gap-0.5">
                           {t('card.view')} <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
