@@ -55,6 +55,12 @@ export class CreateDonationDto {
   @MaxLength(150)
   donorEmail?: string;
 
+  @ApiPropertyOptional({ description: 'Payer mobile number (required for Mobile Money)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  donorPhone?: string;
+
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   @IsBoolean()

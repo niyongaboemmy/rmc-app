@@ -48,6 +48,7 @@ export function Footer() {
     { href: `/${locale}`, label: 'Home' },
     { href: `/${locale}/about`, label: 'About RMC' },
     { href: `/${locale}/services`, label: 'Our Services' },
+    { href: `/${locale}/schools`, label: 'Find Schools' },
     { href: `/${locale}/blog`, label: 'Blog & News' },
     { href: `/${locale}/contact`, label: 'Contact Us' },
     { href: `/${locale}/member/register`, label: 'Join RMC' },

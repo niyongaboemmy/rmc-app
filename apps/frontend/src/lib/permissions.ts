@@ -37,6 +37,9 @@ export enum Permission {
   DONATIONS_VIEW = 'donations:view',
   DONATIONS_MANAGE = 'donations:manage',
 
+  SCHOOLS_VIEW = 'schools:view',
+  SCHOOLS_MANAGE = 'schools:manage',
+
   CONTACT_MESSAGES_VIEW = 'contact_messages:view',
   CONTACT_MESSAGES_MANAGE = 'contact_messages:manage',
 

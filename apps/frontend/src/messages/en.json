@@ -78,7 +78,8 @@
     "memberPortal": "Member Portal",
     "profile": "My Profile",
     "changePassword": "Change Password",
-    "admin": "Admin"
+    "admin": "Admin",
+    "schools": "Schools"
   },
   "home": {
     "hero": {
@@ -711,6 +712,7 @@
       "dashboard": "Dashboard",
       "members": "Members",
       "mosques": "Mosques",
+      "schools": "Schools",
       "prayer": "Prayer Times",
       "donations": "Donations",
       "inbox": "Inbox",
@@ -931,6 +933,54 @@
         "monthly": "Monthly",
         "yearly": "Yearly"
       }
+    },
+    "schools": {
+      "title": "Schools",
+      "subtitle": "Manage the Islamic schools directory shown on the public map.",
+      "refresh": "Refresh",
+      "new": "New school",
+      "edit": "Edit",
+      "delete": "Delete",
+      "searchPlaceholder": "Search by name or location…",
+      "allLevels": "All levels",
+      "noneTitle": "No schools yet",
+      "col": {
+        "name": "School",
+        "level": "Level",
+        "location": "Location",
+        "contact": "Contact",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "newTitle": "Add school",
+      "editTitle": "Edit school",
+      "field": {
+        "name": "School name",
+        "level": "Level",
+        "status": "Status",
+        "principal": "Principal",
+        "phone": "Phone",
+        "email": "Email",
+        "province": "Province",
+        "district": "District / location",
+        "lat": "Latitude",
+        "lng": "Longitude"
+      },
+      "gpsHint": "Coordinates place the school pin on the map. Tip: right-click a spot in Google Maps to copy its lat/long.",
+      "required": "Required",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "create": "Create",
+      "saving": "Saving…",
+      "saveError": "Could not save. Please try again.",
+      "deleteTitle": "Delete school",
+      "deletePrompt": "Delete “{name}”? This cannot be undone.",
+      "confirmDelete": "Delete",
+      "deleting": "Deleting…",
+      "deleteError": "Could not delete. Please try again."
     }
   },
   "galleryPage": {
@@ -1218,7 +1268,10 @@
       "secure": "Secure & encrypted payment",
       "close": "Close",
       "remove": "Remove {label}",
-      "error": "We could not record your donation. Please try again."
+      "error": "We could not record your donation. Please try again.",
+      "phonePlaceholder": "Mobile Money number",
+      "phoneHint": "We'll send a payment request to this number to confirm.",
+      "phoneRequired": "Enter your Mobile Money number to continue."
     },
     "methods": {
       "momo": {
@@ -1276,6 +1329,47 @@
     "zakatItem": {
       "category": "Charity",
       "label": "Zakat"
+    },
+    "payment": {
+      "pendingTitle": "Confirm payment on your phone",
+      "pendingHint": "We sent a Mobile Money request. Approve it to complete your donation.",
+      "checking": "Checking payment status…",
+      "completed": "Payment received — thank you!",
+      "failed": "Payment could not be confirmed. Please try again or use another method."
+    }
+  },
+  "schools": {
+    "eyebrow": "Education",
+    "title": "Find Islamic Schools",
+    "subtitle": "Discover Islamic primary, secondary, madrassa and vocational schools across Rwanda — search, filter by level, and get directions.",
+    "searchPlaceholder": "Search by school name…",
+    "clear": "Clear",
+    "mapHint": "Tip: click a province on the map to filter.",
+    "allLevels": "All",
+    "level": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "madrassa": "Madrassa",
+      "tvet": "Vocational"
+    },
+    "directions": "Directions",
+    "locating": "Finding your location…",
+    "locationError": "Couldn't get your location",
+    "nearest": "Nearest to you",
+    "noResults": "No schools match your search.",
+    "feature": {
+      "locate": {
+        "title": "Locate schools",
+        "text": "See every Islamic school on the map and click a province to narrow down."
+      },
+      "levels": {
+        "title": "Filter by level",
+        "text": "Primary, secondary, madrassa or vocational — find the right fit."
+      },
+      "directions": {
+        "title": "Get directions",
+        "text": "Route from your current location straight to the school gate."
+      }
     }
   }
 }

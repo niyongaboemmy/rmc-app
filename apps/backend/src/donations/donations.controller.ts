@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -22,5 +22,15 @@ export class DonationsController {
   @ApiOperation({ summary: 'Record a donation made from the public donate page' })
   create(@Body() dto: CreateDonationDto, @CurrentUser('id') userId: string | undefined) {
     return this.service.create(dto, userId ?? null);
+  }
+
+  @Get(':id/status')
+  @Public()
+  @ApiOperation({
+    summary:
+      'Re-check a pending donation against the payment gateway and return its current status',
+  })
+  checkStatus(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.refreshPaymentStatus(id);
   }
 }

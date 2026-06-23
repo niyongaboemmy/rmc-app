@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import {
   donationsApi, Donation, DonationStats, CampaignWithStats,
-  CampaignStatus, formatCurrency, STATUS_COLORS,
+  CampaignStatus, DonationStatus, UpdateDonationPayload, formatCurrency, STATUS_COLORS,
 } from '@/lib/donationsApi';
 import { fileUrl } from '@/lib/api';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
@@ -105,6 +105,7 @@ function DonationsAdmin() {
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [campaignModal, setCampaignModal] = useState<{ open: boolean; campaign: CampaignWithStats | null }>({ open: false, campaign: null });
+  const [editDonation, setEditDonation] = useState<Donation | null>(null);
 
   const fetchDonations = useCallback(async () => {
     setLoading(true);
@@ -441,6 +442,16 @@ function DonationsAdmin() {
                                     {new Date(d.donatedAt).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' })}
                                   </DetailField>
                                 </div>
+                                {canManage && (
+                                  <div className="mt-4 flex justify-end">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setEditDonation(d); }}
+                                      className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+                                    >
+                                      <Pencil className="w-4 h-4" /> {t('edit')}
+                                    </button>
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           )}
@@ -472,6 +483,14 @@ function DonationsAdmin() {
       {/* Modals */}
       {campaignModal.open && (
         <CampaignModal campaign={campaignModal.campaign} onClose={() => setCampaignModal({ open: false, campaign: null })} onSaved={() => { setCampaignModal({ open: false, campaign: null }); refreshAll(); }} />
+      )}
+      {editDonation && (
+        <EditDonationModal
+          donation={editDonation}
+          campaigns={campaigns}
+          onClose={() => setEditDonation(null)}
+          onSaved={() => { setEditDonation(null); refreshAll(); }}
+        />
       )}
     </div>
   );
@@ -924,6 +943,106 @@ function CampaignModal({ campaign, onClose, onSaved }: {
         </div>
       </FormSection>
       )}
+    </ModalShell>
+  );
+}
+
+const EDIT_STATUSES: DonationStatus[] = ['completed', 'pending', 'failed', 'refunded'];
+const EDIT_CURRENCIES = ['RWF', 'USD', 'EUR', 'GBP'];
+
+/* Edit a single donation — status, amount, currency, program and donor details.
+   The donor's original intention/category/fund is shown read-only for context. */
+function EditDonationModal({ donation, campaigns, onClose, onSaved }: {
+  donation: Donation;
+  campaigns: CampaignWithStats[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const t = useTranslations('admin.donations');
+  const td = useTranslations('donate') as unknown as DonateTranslator;
+
+  const [status, setStatus] = useState<DonationStatus>(donation.status);
+  const [amount, setAmount] = useState(String(donation.amount));
+  const [currency, setCurrency] = useState(donation.currency);
+  const [campaignId, setCampaignId] = useState(donation.campaignId ?? '');
+  const [donorName, setDonorName] = useState(donation.donorName ?? '');
+  const [donorEmail, setDonorEmail] = useState(donation.donorEmail ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const ml = metaLabels(td, parseDonationMeta(donation.message));
+  const selection = [ml.niyyah, ml.category, ml.fund].filter(Boolean).join(' · ') || '—';
+
+  const save = async () => {
+    setSaving(true);
+    setError('');
+    // Only send fields that actually changed.
+    const payload: UpdateDonationPayload = {};
+    if (status !== donation.status) payload.status = status;
+    if (Number(amount) !== donation.amount) payload.amount = Number(amount);
+    if (currency !== donation.currency) payload.currency = currency;
+    if ((campaignId || null) !== donation.campaignId) payload.campaignId = campaignId || null;
+    if (donorName.trim() !== (donation.donorName ?? '')) payload.donorName = donorName.trim();
+    if (donorEmail.trim() !== (donation.donorEmail ?? '')) payload.donorEmail = donorEmail.trim();
+
+    if (Object.keys(payload).length === 0) { onClose(); return; }
+    try {
+      await donationsApi.admin.updateDonation(donation.id, payload);
+      onSaved();
+    } catch {
+      setError(t('editModal.error'));
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ModalShell
+      title={t('editModal.title')}
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            {t('editModal.cancel')}
+          </button>
+          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
+            {saving ? t('editModal.saving') : t('editModal.save')}
+          </button>
+        </>
+      }
+    >
+      {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+
+      <Field label={t('editModal.selection')}>
+        <p className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2.5 text-sm text-gray-700">{selection}</p>
+      </Field>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label={t('editModal.status')}>
+          <select value={status} onChange={(e) => setStatus(e.target.value as DonationStatus)} className={inputClass}>
+            {EDIT_STATUSES.map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
+          </select>
+        </Field>
+        <Field label={t('editModal.program')}>
+          <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className={inputClass}>
+            <option value="">{t('generalFund')}</option>
+            {campaigns.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+        </Field>
+        <Field label={t('editModal.amount')}>
+          <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} />
+        </Field>
+        <Field label={t('editModal.currency')}>
+          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
+            {EDIT_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </Field>
+        <Field label={t('editModal.donorName')}>
+          <input value={donorName} onChange={(e) => setDonorName(e.target.value)} className={inputClass} />
+        </Field>
+        <Field label={t('editModal.donorEmail')}>
+          <input type="email" value={donorEmail} onChange={(e) => setDonorEmail(e.target.value)} className={inputClass} />
+        </Field>
+      </div>
     </ModalShell>
   );
 }

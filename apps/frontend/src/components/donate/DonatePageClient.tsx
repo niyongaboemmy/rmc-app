@@ -8,6 +8,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { donationsApi } from '@/lib/donationsApi';
 import { buildDonationMessage } from '@/lib/donationMeta';
+import { useDonationCart } from '@/contexts/DonationCartContext';
 import {
   CURRENCY_KEYS,
   money,
@@ -30,16 +31,17 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
   // Events category with that event pre-selected.
   const initialEvent = initialCause && EVENTS.some((e) => e.id === initialCause) ? initialCause : null;
 
-  const [niyyah, setNiyyah] = useState('sadaqah');
-  const [currency, setCurrency] = useState('RWF');
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [seq, setSeq] = useState(1);
+  // Cart, currency and niyyah live in a persisted context (survives page
+  // navigation and reloads); donor details below stay ephemeral.
+  const { cart, currency, niyyah, total, addItem, removeItem, clear, setCurrency, setNiyyah } =
+    useDonationCart();
   const [cartOpen, setCartOpen] = useState(false);
 
   const [recurring, setRecurring] = useState(false);
   const [method, setMethod] = useState('momo');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [anonymous, setAnonymous] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -61,32 +63,20 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
     return m;
   }, [liveCampaigns]);
 
-  const total = useMemo(() => cart.reduce((s, it) => s + it.amount, 0), [cart]);
   const niyyahLabel = t(`niyyah.${niyyah}.label`);
   const methodName = t(`methods.${method}.title`);
 
-  const addItem = useCallback(
-    (item: Omit<CartItem, 'id'>) => {
-      setCart((prev) => [...prev, { ...item, id: `i${seq}` }]);
-      setSeq((s) => s + 1);
-    },
-    [seq],
-  );
-  const removeItem = useCallback((id: string) => setCart((prev) => prev.filter((it) => it.id !== id)), []);
-
-  // Switching currency clears the cart (line items are in the old currency).
-  const onCurrency = (cur: string) => {
-    if (cur === currency) return;
-    setCurrency(cur);
-    setCart([]);
-  };
-
   const onCheckout = async () => {
     if (total <= 0 || submitting) return;
+    // Mobile Money needs a phone number to send the payment request to.
+    if (method === 'momo' && !phone.trim()) {
+      setError(t('cart.phoneRequired'));
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
-      await Promise.all(
+      const created = await Promise.all(
         cart.map((it) =>
           donationsApi.donate({
             campaignSlug: it.campaignSlug,
@@ -96,11 +86,16 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
             paymentMethod: method,
             donorName: anonymous ? undefined : name.trim() || undefined,
             donorEmail: email.includes('@') ? email.trim() : undefined,
+            donorPhone: method === 'momo' ? phone.trim() : undefined,
             isAnonymous: anonymous,
             message: buildDonationMessage({ niyyah, category: it.category, fund: it.fundKey }),
           }),
         ),
       );
+      // Donations awaiting gateway confirmation (e.g. a Mobile Money prompt the
+      // donor still has to approve). When none, the success screen shows no
+      // payment banner — the gift is already recorded.
+      const pendingPaymentIds = created.filter((d) => d.status === 'pending').map((d) => d.id);
       const now = new Date();
       setSummary({
         reference: `RMC-${now.getTime().toString(36).toUpperCase()}`,
@@ -111,7 +106,10 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
         recurring,
         methodName,
         niyyahLabel,
+        pendingPaymentIds,
       });
+      // Pledges committed — empty the persisted cart (summary keeps its own snapshot).
+      clear();
       setCartOpen(false);
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
@@ -123,7 +121,8 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
 
   const reset = () => {
     setSummary(null);
-    setCart([]);
+    clear();
+    setPhone('');
     setError('');
   };
 
@@ -148,7 +147,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
 
               <div className="relative mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
                 {/* Quick give + currency */}
-                <QuickGive currency={currency} onCurrency={onCurrency} onAdd={addItem} />
+                <QuickGive currency={currency} onCurrency={setCurrency} onAdd={addItem} />
 
                 <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <div className="space-y-6 lg:col-span-2">
@@ -214,6 +213,8 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
         setName={setName}
         email={email}
         setEmail={setEmail}
+        phone={phone}
+        setPhone={setPhone}
         anonymous={anonymous}
         setAnonymous={setAnonymous}
         onRemove={removeItem}
