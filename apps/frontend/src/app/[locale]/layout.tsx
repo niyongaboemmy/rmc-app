@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Poppins, Noto_Naskh_Arabic } from 'next/font/google';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { DonationCartProvider } from '@/contexts/DonationCartContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import '../globals.css';
 
@@ -52,7 +53,9 @@ export default function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
             <ToastProvider position="top-right">
-              {children}
+              <DonationCartProvider>
+                {children}
+              </DonationCartProvider>
             </ToastProvider>
           </AuthProvider>
         </NextIntlClientProvider>

@@ -55,6 +55,7 @@ export interface Donation {
   currency: string;
   frequency: DonationFrequency;
   paymentMethod: string | null;
+  paymentReference: string | null;
   status: DonationStatus;
   message: string | null;
   donatedAt: string;
@@ -84,6 +85,7 @@ export interface CreateDonationPayload {
   paymentMethod?: string;
   donorName?: string;
   donorEmail?: string;
+  donorPhone?: string;
   isAnonymous?: boolean;
   message?: string;
 }
@@ -100,6 +102,7 @@ export interface DonationFilters {
 
 export interface CampaignPayload {
   title?: string;
+  slug?: string;
   description?: string;
   targetAmount?: number;
   raisedAmount?: number;
@@ -155,6 +158,12 @@ export const donationsApi = {
 
   donate: async (payload: CreateDonationPayload): Promise<Donation> => {
     const { data } = await apiClient.post('/donations', payload);
+    return data.data ?? data;
+  },
+
+  /** Re-check a pending (gateway-backed) donation and get its current status. */
+  checkStatus: async (id: string): Promise<Donation> => {
+    const { data } = await apiClient.get(`/donations/${id}/status`);
     return data.data ?? data;
   },
 

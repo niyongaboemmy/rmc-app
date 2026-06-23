@@ -27,6 +27,8 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.FINANCE_VIEW,
   Permission.DONATIONS_VIEW,
   Permission.DONATIONS_MANAGE,
+  Permission.SCHOOLS_VIEW,
+  Permission.SCHOOLS_MANAGE,
   Permission.CONTACT_MESSAGES_VIEW,
   Permission.CONTACT_MESSAGES_MANAGE,
   Permission.REPORTS_EXPORT,

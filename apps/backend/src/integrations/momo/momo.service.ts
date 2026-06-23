@@ -22,6 +22,18 @@ export class MoMoService {
 
   constructor(private readonly config: ConfigService) {}
 
+  /**
+   * Whether real MoMo credentials are configured. When false, callers should
+   * treat the gateway as unavailable (no live payment is initiated or polled).
+   */
+  isConfigured(): boolean {
+    return !!(
+      this.config.get<string>('MOMO_SUBSCRIPTION_KEY') &&
+      this.config.get<string>('MOMO_API_USER') &&
+      this.config.get<string>('MOMO_API_KEY')
+    );
+  }
+
   async requestToPay(request: MoMoPaymentRequest): Promise<MoMoPaymentResult> {
     const subscriptionKey = this.config.get<string>('MOMO_SUBSCRIPTION_KEY');
     const apiUser = this.config.get<string>('MOMO_API_USER');
