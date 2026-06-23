@@ -679,6 +679,7 @@
       "marriage": "Marriage"
     },
     "topbar": {
+      "viewSite": "View site",
       "search": "Search...",
       "notifications": "Notifications",
       "markAllRead": "Mark all read",

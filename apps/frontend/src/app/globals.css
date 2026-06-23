@@ -424,3 +424,13 @@ main {
 .count-flash {
   animation: countFlash 0.3s ease-out;
 }
+
+/* Leaflet custom SVG pins — strip the default white box/border so the
+   teardrop markers (mosque finder + nearest-school map) render cleanly. */
+.rmc-mosque-pin,
+.rmc-school-pin,
+.rmc-school-pin-nearest,
+.rmc-user-pin {
+  background: transparent;
+  border: 0;
+}

@@ -20,7 +20,7 @@ import { IJWI_RADIO_URL } from '@/lib/constants';
 function LogoBadge() {
   /* Frosted glass pill — sits over the dark / translucent navbar in every state */
   return (
-    <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center overflow-hidden transition-all duration-300 motion-safe:group-hover:scale-105">
+    <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center overflow-hidden transition-all duration-300 motion-safe:group-hover:scale-105">
       <Image
         src="/logo.webp"
         alt="RMC Logo"
@@ -139,11 +139,11 @@ export function Navbar() {
       </div>
 
       {/* ── Verse of the day — slim right-to-left ticker sitting just below the Bismillah;
-            collapses once scrolled (and while the mobile menu is open so the panel aligns). ── */}
+            stays visible while scrolling, collapsing only while the mobile menu is open so the panel aligns. ── */}
       <div
-        aria-hidden={scrolled || mobileOpen}
+        aria-hidden={mobileOpen}
         className={`relative z-10 overflow-hidden transition-all duration-300 ${
-          scrolled || mobileOpen ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-10 opacity-100'
+          mobileOpen ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-10 opacity-100'
         }`}
       >
         <div className="relative overflow-hidden border-y border-white/10 bg-rmc-green-deep/90 backdrop-blur-sm">

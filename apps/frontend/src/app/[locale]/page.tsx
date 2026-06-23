@@ -2,6 +2,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { HeroSection } from '@/components/home/HeroSection';
 import { WelcomeCarouselSection } from '@/components/home/WelcomeCarouselSection';
 import { WhoWeAreSection } from '@/components/home/WhoWeAreSection';
+import { HowToBecomeMuslimSection } from '@/components/home/HowToBecomeMuslimSection';
 import { AreasOfInterventionSection } from '@/components/home/AreasOfInterventionSection';
 import { ActivitiesEventsSection } from '@/components/home/ActivitiesEventsSection';
 import { AnnouncementsSection } from '@/components/home/AnnouncementsSection';
@@ -30,6 +31,11 @@ export default function HomePage() {
         {/* 3. Welcome — Updates & Programs (with live prayer times) */}
         <Reveal>
           <WelcomeCarouselSection />
+        </Reveal>
+
+        {/* 3b. How to Become a Muslim — auto-playing muted video, the Shahada, and steps */}
+        <Reveal>
+          <HowToBecomeMuslimSection />
         </Reveal>
 
         {/* 5. Areas of Intervention: Dawa, Social & Dev, Education, Foreign Affairs */}
