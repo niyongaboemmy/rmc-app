@@ -105,8 +105,8 @@ export default function TendersPage() {
           paddingClassName="pt-28 pb-10"
         />
 
-        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-gray-50 pattern-light">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-14 bg-gray-50 pattern-light">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {/* Back link */}
             <Link

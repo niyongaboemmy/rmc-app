@@ -158,8 +158,8 @@ export default function TenderDetailPage() {
         </PageHero>
 
         {/* Body */}
-        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-gray-50 pattern-light">
-          <div className="max-w-4xl mx-auto">
+        <section className="py-14 bg-gray-50 pattern-light">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {/* Loading skeletons */}
             {loading && (

@@ -39,9 +39,9 @@ export function GalleryCategories({ categories, items, periods, viewAllLabel }: 
           <section
             key={cat.key}
             id={cat.key}
-            className={`scroll-mt-24 py-8 md:py-10 px-4 sm:px-6 lg:px-8 ${tinted ? 'bg-rmc-green/[0.03] border-y border-rmc-green/10' : 'bg-transparent'}`}
+            className={`scroll-mt-24 py-8 md:py-10 ${tinted ? 'bg-rmc-green/[0.03] border-y border-rmc-green/10' : 'bg-transparent'}`}
           >
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {/* Category label */}
               <div className="text-center mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{cat.label}</h2>

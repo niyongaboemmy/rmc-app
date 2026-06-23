@@ -88,11 +88,11 @@ export function HowToBecomeMuslimSection() {
   };
 
   return (
-    <section className="relative bg-white py-16 md:py-24 px-4 overflow-hidden">
+    <section className="relative bg-white py-16 md:py-24 overflow-hidden">
       <div className="absolute inset-0 pattern-light opacity-70 pointer-events-none" />
       <div className="absolute top-0 left-0 w-[480px] h-[480px] bg-rmc-green-light rounded-full -translate-y-1/2 -translate-x-1/3 opacity-50 blur-[90px] pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
           ref={headerRef}

@@ -1372,6 +1372,56 @@
       }
     }
   },
+  "announcements": {
+    "eyebrow": "آخر الأخبار",
+    "title": "الإعلانات",
+    "subtitle": "أخبار وتحديثات وإشعارات مهمة من المجتمع الإسلامي الرواندي.",
+    "backToHome": "العودة إلى الرئيسية",
+    "filters": {
+      "all": "الكل",
+      "urgent": "عاجل",
+      "high": "مهم",
+      "normal": "عام"
+    },
+    "priority": {
+      "normal": "عادي",
+      "high": "مهم",
+      "urgent": "عاجل"
+    },
+    "empty": {
+      "title": "لا توجد إعلانات",
+      "allSubtitle": "لا توجد إعلانات منشورة في الوقت الحالي.",
+      "viewAll": "عرض جميع الإعلانات"
+    },
+    "card": {
+      "view": "اقرأ المزيد"
+    },
+    "detail": {
+      "heroTitle": "إعلان",
+      "notFoundHeroTitle": "غير موجود",
+      "backLabel": "العودة إلى الإعلانات",
+      "published": "نُشر",
+      "expiresLabel": "تنتهي صلاحيته في",
+      "description": "تفاصيل الإعلان",
+      "attachments": "المرفقات ({count})",
+      "cta": {
+        "title": "هل لديك أسئلة حول هذا الإعلان؟",
+        "subtitle": "تواصل مع فريق RMC وسنرد عليك في أقرب وقت.",
+        "button": "تواصل مع RMC ←"
+      },
+      "notFound": {
+        "message": "الإعلان غير موجود",
+        "subtitle": "ربما تمت إزالته أو الرابط غير صحيح.",
+        "backLink": "عرض جميع الإعلانات"
+      },
+      "attachment": {
+        "preview": "معاينة",
+        "download": "تنزيل",
+        "open": "فتح",
+        "noPreview": "لا تتوفر معاينة لهذا النوع من الملفات."
+      }
+    }
+  },
   "tenders": {
     "eyebrow": "فرص الأعمال",
     "title": "المناقصات المفتوحة",
@@ -1443,6 +1493,7 @@
       "about": "عن RMC",
       "services": "خدماتنا",
       "schools": "البحث عن مدارس",
+      "announcements": "الإعلانات",
       "blog": "المدونة والأخبار",
       "contact": "تواصل معنا",
       "join": "انضم إلى RMC"

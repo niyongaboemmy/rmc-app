@@ -133,7 +133,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
         {summary ? (
           <section className="relative bg-transparent py-12 md:py-16">
             <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
-            <div className="relative mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
+            <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <SuccessState locale={locale} summary={summary} onReset={reset} />
             </div>
           </section>
@@ -145,7 +145,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
               <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent" />
 
-              <div className="relative mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
+              <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Quick give + currency */}
                 <QuickGive currency={currency} onCurrency={setCurrency} onAdd={addItem} />
 

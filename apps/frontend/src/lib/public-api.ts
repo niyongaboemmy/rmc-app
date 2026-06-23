@@ -41,6 +41,15 @@ export const publicApi = {
       attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
     }>(api.get(`/public/announcements/${id}`)),
 
+  getAnnouncement: (id: string) =>
+    unwrap<{
+      id: string; title: string; content: string; priority: string;
+      publishAt: string; expiresAt: string | null; type: string;
+      titleI18n:   { en: string; rw: string; ar: string } | null;
+      contentI18n: { en: string; rw: string; ar: string } | null;
+      attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
+    }>(api.get(`/public/announcements/${id}`)),
+
   getMosques: (districtId?: string) =>
     unwrap<Array<{ id: string; name: string; address: string | null; gpsLat: number | null; gpsLng: number | null; districtId: string | null; imamName: string | null; imamPhoto: string | null }>>(
       api.get('/mosques', { params: { districtId, status: 'active' } }),

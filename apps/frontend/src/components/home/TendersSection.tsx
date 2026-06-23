@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { FileText, Clock, ArrowRight, ExternalLink } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { publicApi } from '@/lib/public-api';
+import { useTranslations } from 'next-intl';
 
 type I18n = { en: string; rw: string; ar: string };
 
@@ -26,31 +27,35 @@ function resolveText(i18n: I18n | null | undefined, fallback: string, locale: st
   return i18n[locale as keyof I18n] || i18n.en || fallback;
 }
 
-function deadlineLabel(expiresAt: string | null): string {
-  if (!expiresAt) return 'Open';
-  const d = new Date(expiresAt);
-  const now = new Date();
-  const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86_400_000);
-  if (diffDays < 0) return 'Closed';
-  if (diffDays === 0) return 'Closes today';
-  if (diffDays === 1) return 'Closes tomorrow';
-  return `Closes in ${diffDays} days`;
+function getDiffDays(expiresAt: string | null): number | null {
+  if (!expiresAt) return null;
+  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
 }
 
 function deadlineColor(expiresAt: string | null): string {
-  if (!expiresAt) return 'text-rmc-green';
-  const diffDays = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
-  if (diffDays < 0) return 'text-gray-400';
-  if (diffDays <= 3) return 'text-red-500';
-  if (diffDays <= 7) return 'text-amber-500';
+  const diff = getDiffDays(expiresAt);
+  if (diff === null) return 'text-rmc-green';
+  if (diff < 0) return 'text-gray-400';
+  if (diff <= 3) return 'text-red-500';
+  if (diff <= 7) return 'text-amber-500';
   return 'text-rmc-green';
 }
 
 export function TendersSection() {
   const { locale } = useParams<{ locale: string }>();
+  const t = useTranslations('tenders');
   const { ref, visible } = useScrollReveal(0.1);
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
+
+  function deadlineLabel(expiresAt: string | null): string {
+    const diff = getDiffDays(expiresAt);
+    if (diff === null) return t('filters.open');
+    if (diff < 0)  return t('deadline.closed');
+    if (diff === 0) return t('deadline.today');
+    if (diff === 1) return t('deadline.tomorrow');
+    return t('deadline.inDays', { days: diff });
+  }
 
   useEffect(() => {
     let active = true;
@@ -82,10 +87,10 @@ export function TendersSection() {
             </div>
             <div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900">
-                Open Tenders
+                {t('title')}
               </h2>
               <p className="text-gray-400 text-xs mt-0.5">
-                Business opportunities published by RMC
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -93,7 +98,7 @@ export function TendersSection() {
             href={`/${locale}/tenders`}
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark transition-colors"
           >
-            View All <ArrowRight className="w-4 h-4" />
+            {t('card.view')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -159,7 +164,7 @@ export function TendersSection() {
             href={`/${locale}/tenders`}
             className="flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark transition-colors"
           >
-            View All Tenders <ArrowRight className="w-4 h-4" />
+            {t('empty.viewAll')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

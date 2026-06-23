@@ -1372,6 +1372,56 @@
       }
     }
   },
+  "announcements": {
+    "eyebrow": "Latest Updates",
+    "title": "Announcements",
+    "subtitle": "News, updates, and important notices from the Rwanda Muslim Community.",
+    "backToHome": "Back to Home",
+    "filters": {
+      "all": "All",
+      "urgent": "Urgent",
+      "high": "Important",
+      "normal": "General"
+    },
+    "priority": {
+      "normal": "Normal",
+      "high": "Important",
+      "urgent": "Urgent"
+    },
+    "empty": {
+      "title": "No announcements found",
+      "allSubtitle": "No announcements are published at this time.",
+      "viewAll": "View all announcements"
+    },
+    "card": {
+      "view": "Read more"
+    },
+    "detail": {
+      "heroTitle": "Announcement",
+      "notFoundHeroTitle": "Not Found",
+      "backLabel": "Back to Announcements",
+      "published": "Published",
+      "expiresLabel": "Expires",
+      "description": "Announcement Details",
+      "attachments": "Attachments ({count})",
+      "cta": {
+        "title": "Questions about this announcement?",
+        "subtitle": "Reach out to the RMC team and we will get back to you.",
+        "button": "Contact RMC →"
+      },
+      "notFound": {
+        "message": "Announcement not found",
+        "subtitle": "It may have been removed or the link is invalid.",
+        "backLink": "View all announcements"
+      },
+      "attachment": {
+        "preview": "Preview",
+        "download": "Download",
+        "open": "Open",
+        "noPreview": "No preview available for this file type."
+      }
+    }
+  },
   "tenders": {
     "eyebrow": "Business Opportunities",
     "title": "Open Tenders",
@@ -1443,6 +1493,7 @@
       "about": "About RMC",
       "services": "Our Services",
       "schools": "Find Schools",
+      "announcements": "Announcements",
       "blog": "Blog & News",
       "contact": "Contact Us",
       "join": "Join RMC"

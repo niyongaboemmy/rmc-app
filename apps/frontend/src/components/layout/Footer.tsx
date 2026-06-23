@@ -47,6 +47,7 @@ export function Footer() {
     { href: `/${locale}/about`, labelKey: 'links.about' },
     { href: `/${locale}/services`, labelKey: 'links.services' },
     { href: `/${locale}/schools`, labelKey: 'links.schools' },
+    { href: `/${locale}/announcements`, labelKey: 'links.announcements' },
     { href: `/${locale}/blog`, labelKey: 'links.blog' },
     { href: `/${locale}/contact`, labelKey: 'links.contact' },
     { href: `/${locale}/member/register`, labelKey: 'links.join' },

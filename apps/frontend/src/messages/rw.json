@@ -1372,6 +1372,56 @@
       }
     }
   },
+  "announcements": {
+    "eyebrow": "Amakuru Mashya",
+    "title": "Itangazo",
+    "subtitle": "Amakuru, ibisobanuro, n'impanuro z'ingenzi ziva ku Muryango w'Abasilamu bo mu Rwanda.",
+    "backToHome": "Subira Ahabanza",
+    "filters": {
+      "all": "Byose",
+      "urgent": "Byihutirwa",
+      "high": "Bikomeye",
+      "normal": "Bisanzwe"
+    },
+    "priority": {
+      "normal": "Bisanzwe",
+      "high": "Bikomeye",
+      "urgent": "Byihutirwa"
+    },
+    "empty": {
+      "title": "Nta matangazo yabonetse",
+      "allSubtitle": "Nta matangazo atangazwa ubu.",
+      "viewAll": "Reba amatangazo yose"
+    },
+    "card": {
+      "view": "Soma birenzeho"
+    },
+    "detail": {
+      "heroTitle": "Itangazo",
+      "notFoundHeroTitle": "Ntabwo Byabonetse",
+      "backLabel": "Subira ku Matangazo",
+      "published": "Itangazwa",
+      "expiresLabel": "Irarangira",
+      "description": "Ibisobanuro by'Itangazo",
+      "attachments": "Inyandiko ({count})",
+      "cta": {
+        "title": "Ufite ibibazo ku tangazo?",
+        "subtitle": "Watumanahane na RMC kandi tuzagusubiza vuba.",
+        "button": "Watumanahane →"
+      },
+      "notFound": {
+        "message": "Itangazo ntiboneka",
+        "subtitle": "Rishobora kuba rakuweho cyangwa uhuze ntabwo ari wo.",
+        "backLink": "Reba amatangazo yose"
+      },
+      "attachment": {
+        "preview": "Reba",
+        "download": "Pakurura",
+        "open": "Fungura",
+        "noPreview": "Nta burebure bwabonetse kuri ubu bwoko bwa dosiye."
+      }
+    }
+  },
   "tenders": {
     "eyebrow": "Amahirwe y'Ubucuruzi",
     "title": "Itangazo ry'Umushinga",
@@ -1443,6 +1493,7 @@
       "about": "Ibyerekeye RMC",
       "services": "Serivisi Zacu",
       "schools": "Shaka Amashuri",
+      "announcements": "Amatangazo",
       "blog": "Amakuru",
       "contact": "Twandikire",
       "join": "Injira muri RMC"
