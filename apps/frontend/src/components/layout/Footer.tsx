@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio } from 'lucide-react';
+import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio, ChevronDown } from 'lucide-react';
 import { IJWI_RADIO_URL } from '@/lib/constants';
 
 const socialLinks = [
@@ -13,13 +14,30 @@ const socialLinks = [
   { Icon: Youtube, href: '#', label: 'YouTube' },
 ];
 
-/* Shared, hero-consistent column heading — gold dot + uppercase tracking */
-function ColumnHeading({ children }: { children: React.ReactNode }) {
+/**
+ * Collapsible footer column — on mobile the details are hidden and the heading
+ * acts as a toggle; on md+ it's always open and the toggle is inert.
+ */
+function CollapsibleColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
   return (
-    <h4 className="flex items-center gap-2 mb-5 text-xs font-bold uppercase tracking-[0.15em] text-white">
-      <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-      {children}
-    </h4>
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-2 mb-5 md:cursor-default md:pointer-events-none"
+      >
+        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-white">
+          <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+          {title}
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 text-white/50 transition-transform duration-200 md:hidden ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <div className={`${open ? 'block' : 'hidden'} md:block`}>{children}</div>
+    </div>
   );
 }
 
@@ -105,9 +123,8 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <ColumnHeading>Quick Links</ColumnHeading>
+          {/* Quick Links — collapsible on mobile, open column on md+ */}
+          <CollapsibleColumn title="Quick Links">
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.href}>
@@ -127,11 +144,10 @@ export function Footer() {
                 </a>
               </li>
             </ul>
-          </div>
+          </CollapsibleColumn>
 
-          {/* Services */}
-          <div>
-            <ColumnHeading>Services</ColumnHeading>
+          {/* Services — collapsible on mobile, open column on md+ */}
+          <CollapsibleColumn title="Services">
             <ul className="space-y-3">
               {services.map((link) => (
                 <li key={link.label}>
@@ -141,11 +157,10 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </CollapsibleColumn>
 
-          {/* Contact */}
-          <div>
-            <ColumnHeading>Contact</ColumnHeading>
+          {/* Contact — collapsible on mobile, open column on md+ */}
+          <CollapsibleColumn title="Contact">
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
@@ -166,7 +181,7 @@ export function Footer() {
                 <span className="text-white/55 text-sm">Rebero, Kigali</span>
               </li>
             </ul>
-          </div>
+          </CollapsibleColumn>
         </div>
 
         {/* Alhamdulillah — closing praise (the page opens with Bismillah in the navbar) */}

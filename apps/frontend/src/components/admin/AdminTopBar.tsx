@@ -6,7 +6,7 @@ import { useParams, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
-import { Bell, Search, ChevronRight, Home, X, PanelLeft, Menu } from 'lucide-react';
+import { Bell, Search, ChevronRight, Home, X, PanelLeft, Menu, ExternalLink } from 'lucide-react';
 
 /* ── Breadcrumbs ── */
 function useBreadcrumbs(locale: string, t: ReturnType<typeof useTranslations>) {
@@ -121,6 +121,19 @@ export function AdminTopBar({ onExpandSidebar, sidebarCollapsed, onMobileMenuOpe
 
       {/* ── Right actions ── */}
       <div className="flex items-center gap-0.5 shrink-0">
+
+        {/* Back to website */}
+        <Link
+          href={`/${locale}`}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium text-gray-500 hover:text-rmc-green hover:bg-rmc-green/[0.06] transition-colors"
+          title={t('topbar.viewSite')}
+        >
+          <ExternalLink className="w-4 h-4 shrink-0" />
+          <span className="hidden md:inline">{t('topbar.viewSite')}</span>
+        </Link>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block" />
 
         {/* Search */}
         {searchOpen ? (

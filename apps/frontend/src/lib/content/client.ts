@@ -42,6 +42,7 @@ export const ContentKeys = {
   social: 'social-media',
   hero: 'hero',
   blog: 'blog',
+  howToBecomeMuslim: 'how-to-become-muslim',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

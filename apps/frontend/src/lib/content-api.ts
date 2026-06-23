@@ -18,3 +18,4 @@ export * from './content/announcements';
 export * from './content/social';
 export * from './content/hero';
 export * from './content/blog';
+export * from './content/how-to-become-muslim';

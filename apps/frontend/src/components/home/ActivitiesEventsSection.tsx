@@ -126,7 +126,7 @@ export function ActivitiesEventsSection() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-12">
           {/* ════════ LATEST ACTIVITIES — left, wider (3 cols) ════════ */}
-          <div className="lg:col-span-3 animate-fade-up" style={{ animationDelay: '120ms' }}>
+          <div className="lg:col-span-3 flex flex-col animate-fade-up" style={{ animationDelay: '120ms' }}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <span className="w-9 h-9 rounded-xl bg-rmc-green-light flex items-center justify-center ring-1 ring-rmc-green/10">
@@ -152,7 +152,7 @@ export function ActivitiesEventsSection() {
             </div>
 
             {/* News rows joined by hairlines — each opens an image gallery */}
-            <div className="rounded-2xl border border-gray-100 ring-1 ring-black/5 bg-white shadow-sm divide-y divide-gray-100 overflow-hidden">
+            <div className="flex-1 rounded-2xl border border-gray-100 ring-1 ring-black/5 bg-white shadow-sm divide-y divide-gray-100 overflow-hidden">
               {activities.map((activity, i) => {
                 const title = pick(activity.title, locale);
                 const excerpt = pick(activity.excerpt, locale);
@@ -219,7 +219,7 @@ export function ActivitiesEventsSection() {
           </div>
 
           {/* ════════ UPCOMING EVENTS — right (2 cols) ════════ */}
-          <div className="lg:col-span-2 animate-fade-up" style={{ animationDelay: '220ms' }}>
+          <div className="lg:col-span-2 flex flex-col animate-fade-up" style={{ animationDelay: '220ms' }}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <span className="w-9 h-9 rounded-xl bg-rmc-gold/10 flex items-center justify-center ring-1 ring-rmc-gold/20">
@@ -303,7 +303,7 @@ export function ActivitiesEventsSection() {
             )}
 
             {/* Remaining events */}
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 space-y-3 flex-1">
               {rest.map((event, i) => {
                 const d = parseISO(event.date);
                 return (
