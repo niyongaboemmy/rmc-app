@@ -54,8 +54,13 @@ export default function middleware(req: NextRequest) {
   const isLoggedIn =
     (accessToken ? isTokenValid(accessToken) : false) || Boolean(refreshToken);
 
-  // Redirect authenticated users away from guest-only pages
-  if (isLoggedIn && GUEST_ONLY_PATTERNS.some((p) => p.test(routePath))) {
+  // Redirect authenticated users away from guest-only pages.
+  // Use a stricter check here: only redirect if the access token is confirmed
+  // valid. A stale refresh token cookie (e.g. after localStorage was cleared)
+  // must not lock users out of /login — the refresh token's job is to mint a
+  // new access token, not to prove the session is still active.
+  const hasValidAccessToken = accessToken ? isTokenValid(accessToken) : false;
+  if (hasValidAccessToken && GUEST_ONLY_PATTERNS.some((p) => p.test(routePath))) {
     return NextResponse.redirect(new URL(`/${locale}`, req.url));
   }
 

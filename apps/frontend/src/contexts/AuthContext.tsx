@@ -67,6 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserFromStorage = useCallback(async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
     if (!token) {
+      // If localStorage has no token but cookies may still exist (e.g. storage was
+      // cleared externally), clear the cookies so the middleware doesn't redirect
+      // the user away from /login when they're effectively logged out.
+      clearAuthCookie('rmc_access_token');
+      clearAuthCookie('rmc_refresh_token');
       setIsLoading(false);
       return;
     }
