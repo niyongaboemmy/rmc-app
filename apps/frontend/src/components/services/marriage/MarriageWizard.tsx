@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   Users, Calendar, UserCheck, Heart, FileText, CreditCard,
-  CheckCircle2, Copy, Check, Search, ArrowRight,
+  CheckCircle2, Copy, Check, Search, Phone, Send, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { WizardLayout, WizardStep } from './WizardLayout';
 import { Step1Couple } from './steps/Step1Couple';
@@ -45,6 +45,93 @@ const STEP_TITLES: Record<number, { title: string; subtitle: string }> = {
   5: { title: 'Supporting Documents', subtitle: 'Upload the required identity documents and photos.' },
   6: { title: 'Payment & Review', subtitle: 'Choose a payment method and review your application before submitting.' },
 };
+
+const PARTY_ROLES = [
+  { role: 'groom', label: 'Groom (Umugabo)',          placeholder: '+250 7XX XXX XXX' },
+  { role: 'bride', label: 'Bride (Umugeni)',           placeholder: '+250 7XX XXX XXX' },
+  { role: 'wali',  label: "Bride's Wali / Guardian",  placeholder: '+250 7XX XXX XXX' },
+  { role: 'imam',  label: 'Imam (Officiant)',          placeholder: '+250 7XX XXX XXX' },
+] as const;
+
+type PartyRole = typeof PARTY_ROLES[number]['role'];
+
+interface PartyPhonesFormProps {
+  applicationId: string;
+}
+
+function PartyPhonesForm({ applicationId }: PartyPhonesFormProps) {
+  const [open, setOpen] = useState(false);
+  const [phones, setPhones] = useState<Record<PartyRole, string>>({
+    groom: '', bride: '', wali: '', imam: '',
+  });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const handleSend = async () => {
+    const parties = PARTY_ROLES
+      .map(({ role }) => ({ role, phone: phones[role].trim() }))
+      .filter((p) => p.phone);
+    if (parties.length === 0) { setErr('Enter at least one phone number.'); return; }
+    setSending(true); setErr(null);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+      const res = await fetch(`${base}/marriage/applications/${applicationId}/parties`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ parties }),
+      });
+      if (!res.ok) throw new Error('Failed to send confirmations');
+      setSent(true);
+    } catch {
+      setErr('Could not send confirmation requests. You can do this later from your application status page.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <div className="max-w-xs mx-auto mt-4 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-xs text-green-700 text-left flex items-start gap-2">
+        <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-green-600" />
+        Confirmation SMS requests sent to all provided party numbers.
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-sm mx-auto mt-6">
+      <button onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-dashed border-gray-300 hover:border-rose-400 text-sm text-gray-600 hover:text-rose-700 transition-colors">
+        <span className="flex items-center gap-2">
+          <Phone className="w-4 h-4" /> Send confirmation requests to parties
+        </span>
+        {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </button>
+
+      {open && (
+        <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+          <p className="text-xs text-gray-500">Enter phone numbers for each party. They will receive an SMS with a link to confirm their participation.</p>
+          {PARTY_ROLES.map(({ role, label, placeholder }) => (
+            <div key={role}>
+              <label className="block text-[11px] font-semibold text-gray-600 mb-1">{label}</label>
+              <input type="tel" value={phones[role]} onChange={(e) => setPhones((p) => ({ ...p, [role]: e.target.value }))}
+                placeholder={placeholder}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-400/50 focus:border-rose-400" />
+            </div>
+          ))}
+          {err && <p className="text-xs text-red-600">{err}</p>}
+          <button onClick={handleSend} disabled={sending}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-sm font-semibold transition-colors">
+            {sending ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+            {sending ? 'Sending…' : 'Send Confirmation Requests'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface SuccessScreenProps {
   app: MarriageApplication;
@@ -105,7 +192,10 @@ function SuccessScreen({ app, locale, onReset }: SuccessScreenProps) {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        {/* Party confirmation phones */}
+        <PartyPhonesForm applicationId={app.id} />
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
           <Link
             href={`/${locale}/services/marriage/status?id=${app.applicationNumber}`}
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors"

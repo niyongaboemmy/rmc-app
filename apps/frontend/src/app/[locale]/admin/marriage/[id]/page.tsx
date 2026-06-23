@@ -8,7 +8,7 @@ import {
   Users, Shield, DollarSign, UserCheck, CheckCircle2, XCircle,
   AlertTriangle, FileText, Download, Clock, RefreshCw, Send,
   Banknote, X, Camera, ImageIcon, Eye, ZoomIn, ChevronLeft, ChevronRight,
-  Mail, ShieldCheck,
+  Mail, ShieldCheck, CheckCheck,
 } from 'lucide-react';
 import { fileUrl } from '@/lib/api';
 import axios from 'axios';
@@ -288,6 +288,11 @@ export default function AdminMarriageDetailPage() {
   const [weddingPhotoFile, setWeddingPhotoFile] = useState<File | null>(null);
   const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
 
+  // Party confirmations
+  interface PartyConfirmation { role: string; name: string | null; confirmedAt: string | null; }
+  const [parties, setParties] = useState<PartyConfirmation[]>([]);
+  const [loadingParties, setLoadingParties] = useState(false);
+
   const fetchApp = useCallback(async () => {
     try {
       setLoading(true);
@@ -301,6 +306,15 @@ export default function AdminMarriageDetailPage() {
   }, [id]);
 
   useEffect(() => { fetchApp(); }, [fetchApp]);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoadingParties(true);
+    marriageApi.admin.getParties(id)
+      .then((data) => setParties(data))
+      .catch(() => {})
+      .finally(() => setLoadingParties(false));
+  }, [id]);
 
   const handleStatusUpdate = async (status: MarriageApplicationStatus, notes: string, action = status) => {
     setActiveAction(action);
@@ -915,6 +929,56 @@ export default function AdminMarriageDetailPage() {
               )}
             </div>
           )}
+
+          {/* Party Confirmations */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
+              <CheckCheck className="w-4 h-4 text-rose-500" /> Party Confirmations
+            </h3>
+            {loadingParties ? (
+              <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Loading…
+              </div>
+            ) : parties.length === 0 ? (
+              <p className="text-xs text-gray-400">No party confirmations recorded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {parties.map((p) => {
+                  const confirmed = !!p.confirmedAt;
+                  const ROLE_LABELS: Record<string, string> = {
+                    groom: 'Groom', bride: 'Bride', wali: 'Wali', imam: 'Imam',
+                  };
+                  return (
+                    <div key={p.role} className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm',
+                      confirmed ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200',
+                    )}>
+                      {confirmed
+                        ? <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                        : <Clock className="w-4 h-4 text-amber-500 shrink-0" />}
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('text-xs font-semibold', confirmed ? 'text-green-800' : 'text-amber-800')}>
+                          {ROLE_LABELS[p.role] ?? p.role}
+                          {p.name && <span className="font-normal"> — {p.name}</span>}
+                        </p>
+                        {confirmed && (
+                          <p className="text-[10px] text-green-600 mt-0.5">
+                            {new Date(p.confirmedAt!).toLocaleString()}
+                          </p>
+                        )}
+                        {!confirmed && <p className="text-[10px] text-amber-600 mt-0.5">Pending</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+                {parties.every((p) => p.confirmedAt) && (
+                  <p className="text-[11px] text-green-700 font-semibold text-center pt-1">
+                    ✓ All parties confirmed
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Certificate */}
           {app.status === 'closed' && app.certificateUrl && (

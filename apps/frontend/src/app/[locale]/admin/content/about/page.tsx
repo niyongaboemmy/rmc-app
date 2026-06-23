@@ -1,12 +1,20 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
-import { Building2, ArrowLeft, Save, Target, Eye, BookOpen, CheckCircle } from 'lucide-react';
+import {
+  Modal, ModalHeader, ModalBody, ModalFooter,
+  ModalTitle, ModalDescription, ConfirmModal,
+} from '@/components/ui/Modal';
+import { apiClient } from '@/lib/api';
+import {
+  Building2, ArrowLeft, Save, Target, Eye, BookOpen, CheckCircle,
+  Clock, Plus, Edit2, Trash2, RefreshCw, Image,
+} from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
 
@@ -15,6 +23,8 @@ const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = 
   { key: 'rw', label: 'Kinyarwanda', dir: 'ltr', flag: 'RW' },
   { key: 'ar', label: 'Arabic', dir: 'rtl', flag: 'AR' },
 ];
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 interface AboutContent {
   titleEn: string; titleRw: string; titleAr: string;
@@ -25,32 +35,51 @@ interface AboutContent {
   valuesEn: string; valuesRw: string; valuesAr: string;
 }
 
+interface HistoryEntry {
+  id: string;
+  year: number;
+  titleEn: string; titleRw: string; titleAr: string;
+  descriptionEn: string; descriptionRw: string; descriptionAr: string;
+  imageKey: string | null;
+  sortOrder: number;
+}
+
+type HistoryEntryForm = Omit<HistoryEntry, 'id'>;
+
 const INITIAL: AboutContent = {
   titleEn: 'About RMC', titleRw: 'Ibyerekeye RMC', titleAr: 'حول RMC',
   subtitleEn: 'Rwanda Muslim Community — Building a United Ummah',
-  subtitleRw: 'Umuryango w\'Abasilamu bo mu Rwanda — Kubaka Ummah Umwe',
+  subtitleRw: "Umuryango w'Abasilamu bo mu Rwanda — Kubaka Ummah Umwe",
   subtitleAr: 'مجتمع المسلمين في رواندا — بناء أمة متحدة',
-  historyEn: 'The Rwanda Muslim Community has been serving Muslims across Rwanda since its founding. With a network spanning all provinces and districts, RMC coordinates religious, educational, and social services for over 500,000 Muslims nationwide.',
-  historyRw: 'Umuryango w\'Abasilamu bo mu Rwanda ukorera Abasilamu bose muri Rwanda kuva yarishingwa. Ufite intera yagutse muri leta zose n\'uturere, RMC ihuza serivisi z\'amadini, z\'uburezi n\'imibereho myiza y\'Abasilamu basaga 500,000 mu Rwanda.',
-  historyAr: 'يخدم مجتمع المسلمين في رواندا المسلمين في جميع أنحاء رواندا منذ تأسيسه. مع شبكة تمتد عبر جميع المقاطعات والمقاطعات الفرعية، ينسق RMC الخدمات الدينية والتعليمية والاجتماعية لأكثر من 500,000 مسلم على المستوى الوطني.',
-  missionEn: 'To unite and serve the Muslim community in Rwanda through digital innovation, promoting Islamic values, education, and social welfare.',
-  missionRw: 'Guhuza no gukorera umuryango w\'Abasilamu mu Rwanda binyuze mu buhanga bwa digital, guteza imbere indangagaciro z\'Ubusilamu, uburezi n\'imibereho myiza.',
-  missionAr: 'توحيد وخدمة المجتمع المسلم في رواندا من خلال الابتكار الرقمي، وتعزيز القيم الإسلامية والتعليم والرعاية الاجتماعية.',
-  visionEn: 'A digitally empowered, unified, and prosperous Muslim community contributing to the development of Rwanda.',
-  visionRw: 'Umuryango w\'Abasilamu uhuye, ukoresheje ikoranabuhanga kandi ugira inyungu, utera inkunga iterambere rya Rwanda.',
-  visionAr: 'مجتمع مسلم ممكّن رقمياً، موحد ومزدهر، يساهم في تطوير رواندا.',
-  valuesEn: 'Unity — Bringing Muslims together across all regions of Rwanda\nEducation — Promoting Islamic and secular education for all members\nService — Providing essential services to community members in need\nTransparency — Open and accountable governance of community resources',
-  valuesRw: 'Ubumwe — Guhuza Abasilamu muri leta zose z\'u Rwanda\nUburezi — Guteza imbere uburezi bw\'Ubusilamu n\'ubw\'isi mu nyamuryango zose\nSerivisi — Gutanga serivisi ngombwa ku nyamuryango zikeneye\nIngeri — Ubuyobozi bugarukira kandi bumara inshingano',
-  valuesAr: 'الوحدة — جمع المسلمين في جميع مناطق رواندا\nالتعليم — تعزيز التعليم الإسلامي والعلماني لجميع الأعضاء\nالخدمة — تقديم الخدمات الأساسية للأعضاء المحتاجين\nالشفافية — حوكمة مفتوحة ومسؤولة للموارد المجتمعية',
+  historyEn: 'The Rwanda Muslim Community has been serving Muslims across Rwanda since its founding.',
+  historyRw: "Umuryango w'Abasilamu bo mu Rwanda ukorera Abasilamu bose muri Rwanda kuva yarishingwa.",
+  historyAr: 'يخدم مجتمع المسلمين في رواندا المسلمين في جميع أنحاء رواندا منذ تأسيسه.',
+  missionEn: 'To unite and serve the Muslim community in Rwanda through digital innovation.',
+  missionRw: "Guhuza no gukorera umuryango w'Abasilamu mu Rwanda binyuze mu buhanga bwa digital.",
+  missionAr: 'توحيد وخدمة المجتمع المسلم في رواندا من خلال الابتكار الرقمي.',
+  visionEn: 'A digitally empowered, unified, and prosperous Muslim community.',
+  visionRw: "Umuryango w'Abasilamu uhuye, ukoresheje ikoranabuhanga kandi ugira inyungu.",
+  visionAr: 'مجتمع مسلم ممكّن رقمياً، موحد ومزدهر.',
+  valuesEn: 'Unity — Bringing Muslims together\nEducation — Promoting Islamic and secular education\nService — Providing essential services\nTransparency — Open governance',
+  valuesRw: "Ubumwe — Guhuza Abasilamu\nUburezi — Guteza imbere uburezi\nSerivisi — Gutanga serivisi\nIngeri — Ubuyobozi bugarukira",
+  valuesAr: 'الوحدة — جمع المسلمين\nالتعليم — تعزيز التعليم\nالخدمة — تقديم الخدمات\nالشفافية — حوكمة مفتوحة',
+};
+
+const EMPTY_ENTRY: HistoryEntryForm = {
+  year: new Date().getFullYear(),
+  titleEn: '', titleRw: '', titleAr: '',
+  descriptionEn: '', descriptionRw: '', descriptionAr: '',
+  imageKey: null,
+  sortOrder: 0,
 };
 
 const CONTENT_SECTIONS = [
-  { key: 'title', label: 'Page Title', rows: 1, icon: Building2 },
+  { key: 'title',    label: 'Page Title',        rows: 1, icon: Building2 },
   { key: 'subtitle', label: 'Subtitle / Tagline', rows: 1, icon: null },
-  { key: 'history', label: 'History & Overview', rows: 4, icon: BookOpen },
-  { key: 'mission', label: 'Mission Statement', rows: 2, icon: Target },
-  { key: 'vision', label: 'Vision Statement', rows: 2, icon: Eye },
-  { key: 'values', label: 'Values (one per line: Name — Description)', rows: 5, icon: CheckCircle },
+  { key: 'history',  label: 'History & Overview', rows: 4, icon: BookOpen },
+  { key: 'mission',  label: 'Mission Statement',  rows: 2, icon: Target },
+  { key: 'vision',   label: 'Vision Statement',   rows: 2, icon: Eye },
+  { key: 'values',   label: 'Values (one per line: Name — Description)', rows: 5, icon: CheckCircle },
 ] as const;
 
 export default function AboutRMCPage() {
@@ -63,10 +92,36 @@ export default function AboutRMCPage() {
 
 function AboutRMCManager() {
   const { locale } = useParams<{ locale: string }>();
-  const { success } = useToast();
+  const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
   const [form, setForm] = useState<AboutContent>(INITIAL);
   const [saving, setSaving] = useState(false);
+
+  // History entries state
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [loadingEntries, setLoadingEntries] = useState(true);
+  const [entryModal, setEntryModal] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<HistoryEntry | null>(null);
+  const [entryForm, setEntryForm] = useState<HistoryEntryForm>(EMPTY_ENTRY);
+  const [entryLang, setEntryLang] = useState<Lang>('en');
+  const [savingEntry, setSavingEntry] = useState(false);
+  const [deleteEntry, setDeleteEntry] = useState<HistoryEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState(false);
+
+  const loadEntries = useCallback(async () => {
+    setLoadingEntries(true);
+    try {
+      const res = await fetch(`${API_BASE}/content/history/entries`);
+      const json = await res.json();
+      setEntries(json.data ?? []);
+    } catch {
+      /* keep empty */
+    } finally {
+      setLoadingEntries(false);
+    }
+  }, []);
+
+  useEffect(() => { loadEntries(); }, [loadEntries]);
 
   const getField = useCallback((key: string, l: Lang): string => {
     const f = form as unknown as Record<string, string>;
@@ -85,6 +140,70 @@ function AboutRMCManager() {
     setSaving(false);
     success('About RMC content saved successfully.');
   }, [success]);
+
+  // ── Entry CRUD ──────────────────────────────────────────────────────────────
+
+  const openCreateEntry = () => {
+    setEditingEntry(null);
+    setEntryForm({ ...EMPTY_ENTRY, sortOrder: entries.length });
+    setEntryLang('en');
+    setEntryModal(true);
+  };
+
+  const openEditEntry = (e: HistoryEntry) => {
+    setEditingEntry(e);
+    setEntryForm({
+      year: e.year, sortOrder: e.sortOrder, imageKey: e.imageKey,
+      titleEn: e.titleEn, titleRw: e.titleRw, titleAr: e.titleAr,
+      descriptionEn: e.descriptionEn, descriptionRw: e.descriptionRw, descriptionAr: e.descriptionAr,
+    });
+    setEntryLang('en');
+    setEntryModal(true);
+  };
+
+  const handleSaveEntry = useCallback(async () => {
+    if (!entryForm.titleEn.trim() || !entryForm.descriptionEn.trim()) {
+      error('English title and description are required.'); return;
+    }
+    if (!entryForm.year || entryForm.year < 1900 || entryForm.year > 2100) {
+      error('Enter a valid year (1900–2100).'); return;
+    }
+    setSavingEntry(true);
+    try {
+      if (editingEntry) {
+        const res = await apiClient.put(`/content/history/entries/${editingEntry.id}`, entryForm);
+        setEntries((prev) => prev.map((e) => e.id === editingEntry.id ? res.data.data : e));
+        success('Entry updated.');
+      } else {
+        const res = await apiClient.post('/content/history/entries', entryForm);
+        setEntries((prev) => [...prev, res.data.data].sort((a, b) => a.year - b.year));
+        success('Entry added.');
+      }
+      setEntryModal(false);
+    } catch {
+      error('Could not save entry. Please try again.');
+    } finally {
+      setSavingEntry(false);
+    }
+  }, [entryForm, editingEntry, error, success]);
+
+  const handleDeleteEntry = useCallback(async () => {
+    if (!deleteEntry) return;
+    setDeletingEntry(true);
+    try {
+      await apiClient.delete(`/content/history/entries/${deleteEntry.id}`);
+      setEntries((prev) => prev.filter((e) => e.id !== deleteEntry.id));
+      success('Entry deleted.');
+      setDeleteEntry(null);
+    } catch {
+      error('Could not delete entry.');
+    } finally {
+      setDeletingEntry(false);
+    }
+  }, [deleteEntry, error, success]);
+
+  const setEF = <K extends keyof HistoryEntryForm>(k: K, v: HistoryEntryForm[K]) =>
+    setEntryForm((p) => ({ ...p, [k]: v }));
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
@@ -120,7 +239,6 @@ function AboutRMCManager() {
         <h2 className="text-sm font-bold text-gray-700 pb-3 border-b border-gray-50">
           Content — {LANGS.find((l) => l.key === lang)?.label}
         </h2>
-
         {CONTENT_SECTIONS.map(({ key, label, rows, icon: Icon }) => (
           <div key={key}>
             <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1.5">
@@ -128,25 +246,166 @@ function AboutRMCManager() {
               {label}
             </label>
             {rows === 1 ? (
-              <input
-                dir={dir}
-                type="text"
-                value={getField(key, lang)}
-                onChange={(e) => setField(key, lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fontClass}`}
-              />
+              <input dir={dir} type="text" value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
+                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fontClass}`} />
             ) : (
-              <textarea
-                dir={dir}
-                rows={rows}
-                value={getField(key, lang)}
-                onChange={(e) => setField(key, lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none ${fontClass}`}
-              />
+              <textarea dir={dir} rows={rows} value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
+                className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none ${fontClass}`} />
             )}
           </div>
         ))}
       </div>
+
+      {/* ── History Entries CRUD ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-bold text-gray-700">History Timeline Entries</h2>
+            <span className="text-xs text-gray-400 font-normal">({entries.length} entries)</span>
+          </div>
+          <button onClick={openCreateEntry} disabled={loadingEntries}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors">
+            <Plus className="w-3.5 h-3.5" /> Add Entry
+          </button>
+        </div>
+
+        {loadingEntries ? (
+          <div className="flex items-center gap-2 py-6 justify-center text-gray-400">
+            <RefreshCw className="w-4 h-4 animate-spin" /> Loading entries…
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="text-center py-10 text-gray-300">
+            <Clock className="w-8 h-8 mx-auto mb-2 opacity-40" />
+            <p className="text-sm">No history entries yet. Add the first one.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {entries.map((e) => (
+              <div key={e.id} className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-slate-200 transition-colors bg-gray-50/50">
+                <div className="w-14 h-14 rounded-xl bg-rmc-gold/10 border border-rmc-gold/20 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-rmc-gold">{e.year}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 line-clamp-1">{e.titleEn || '—'}</p>
+                  <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{e.descriptionEn}</p>
+                  {e.imageKey && (
+                    <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                      <Image className="w-3 h-3" /> {e.imageKey}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => openEditEntry(e)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => setDeleteEntry(e)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Entry modal */}
+      <Modal isOpen={entryModal} onClose={() => setEntryModal(false)} size="xl">
+        <ModalHeader>
+          <ModalTitle>{editingEntry ? 'Edit History Entry' : 'Add History Entry'}</ModalTitle>
+          <ModalDescription>Fill in the event details in all three languages.</ModalDescription>
+        </ModalHeader>
+        <ModalBody className="space-y-5">
+          {/* Year + Sort Order */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Year <span className="text-red-500">*</span></label>
+              <input type="number" min={1900} max={2100} value={entryForm.year}
+                onChange={(e) => setEF('year', parseInt(e.target.value) || 0)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Sort Order <span className="ml-1 font-normal text-gray-400">(lower = earlier)</span>
+              </label>
+              <input type="number" min={0} value={entryForm.sortOrder}
+                onChange={(e) => setEF('sortOrder', parseInt(e.target.value) || 0)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+            </div>
+          </div>
+
+          {/* Image key */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              Image Key <span className="ml-1 font-normal text-gray-400">(file-server key — optional)</span>
+            </label>
+            <input type="text" value={entryForm.imageKey ?? ''}
+              onChange={(e) => setEF('imageKey', e.target.value || null)}
+              placeholder="e.g. history/1962-founding.jpg"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent font-mono" />
+          </div>
+
+          {/* Language tabs */}
+          <div className="border rounded-2xl border-gray-100 overflow-hidden">
+            <div className="flex border-b border-gray-100 bg-gray-50/50">
+              {LANGS.map((l) => (
+                <button key={l.key} onClick={() => setEntryLang(l.key)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-colors ${entryLang === l.key ? 'bg-white text-slate-700 border-b-2 border-slate-700' : 'text-gray-500 hover:text-gray-700'}`}>
+                  <span>{l.flag}</span> {l.label}
+                </button>
+              ))}
+            </div>
+            <div className="p-4 space-y-4">
+              {LANGS.map(({ key: l, dir: d }) => {
+                if (l !== entryLang) return null;
+                const fc = l === 'ar' ? 'font-arabic' : '';
+                const titleKey = `title${l === 'en' ? 'En' : l === 'rw' ? 'Rw' : 'Ar'}` as keyof HistoryEntryForm;
+                const descKey = `description${l === 'en' ? 'En' : l === 'rw' ? 'Rw' : 'Ar'}` as keyof HistoryEntryForm;
+                return (
+                  <div key={l} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                        Title {l === 'en' && <span className="text-red-500">*</span>}
+                      </label>
+                      <input dir={d} type="text" value={entryForm[titleKey] as string}
+                        onChange={(e) => setEF(titleKey, e.target.value)}
+                        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fc}`} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                        Description {l === 'en' && <span className="text-red-500">*</span>}
+                      </label>
+                      <textarea dir={d} rows={4} value={entryForm[descKey] as string}
+                        onChange={(e) => setEF(descKey, e.target.value)}
+                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none ${fc}`} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <button type="button" onClick={() => setEntryModal(false)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
+          <button type="button" onClick={handleSaveEntry} disabled={savingEntry}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+            {savingEntry && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+            {editingEntry ? 'Save Changes' : 'Add Entry'}
+          </button>
+        </ModalFooter>
+      </Modal>
+
+      <ConfirmModal
+        isOpen={deleteEntry !== null}
+        onClose={() => setDeleteEntry(null)}
+        onConfirm={handleDeleteEntry}
+        title={`Delete ${deleteEntry?.year} — ${deleteEntry?.titleEn}?`}
+        description="This will permanently remove the history entry from the timeline."
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        variant="danger"
+        isLoading={deletingEntry}
+      />
     </div>
   );
 }
