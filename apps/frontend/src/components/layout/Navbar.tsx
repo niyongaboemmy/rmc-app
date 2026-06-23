@@ -321,9 +321,9 @@ export function Navbar() {
             ) : (
               <Link
                 href={`/${locale}/login`}
-                className="hidden md:inline-flex items-center px-3.5 py-1.5 rounded-full border border-white/30 text-white text-[13px] font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
+                className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-white/30 text-white text-[13px] font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
               >
-                Sign in
+                {t('login')}
               </Link>
             )}
 

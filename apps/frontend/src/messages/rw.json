@@ -524,17 +524,44 @@
         "draftNote": "Uzuza intambwe esheshatu. Aho ugeze kubikwa — ushobora gusubira gukurikira igihe cyose.",
         "feesPaymentNote": "Ubwishyu bwemerwa binyuze kuri Mobile Money (MoMo), amafaranga atangwa intoki ku biro bya RMC, cyangwa kohereza kuri banki.",
         "docs": {
-          "d1": { "label": "Irangamuntu y'Umukwe", "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda" },
-          "d2": { "label": "Irangamuntu y'Umugeni", "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda" },
-          "d3": { "label": "Uruhushya rwa Wali", "detail": "Uruhushya rwashyizweho umukono na wali (umurinzi w'umugeni)" },
-          "d4": { "label": "Ifoto y'Abashyingiranwa", "detail": "Ifoto yashywe ya vuba y'umukwe n'umugeni hamwe" }
+          "d1": {
+            "label": "Irangamuntu y'Umukwe",
+            "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda"
+          },
+          "d2": {
+            "label": "Irangamuntu y'Umugeni",
+            "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda"
+          },
+          "d3": {
+            "label": "Uruhushya rwa Wali",
+            "detail": "Uruhushya rwashyizweho umukono na wali (umurinzi w'umugeni)"
+          },
+          "d4": {
+            "label": "Ifoto y'Abashyingiranwa",
+            "detail": "Ifoto yashywe ya vuba y'umukwe n'umugeni hamwe"
+          }
         },
         "process": {
-          "p1": { "label": "Tanga Ubusabe", "desc": "Uzuza iformi ifite amakuru y'abashyingiranwa, umuhango, n'inyandiko." },
-          "p2": { "label": "Burimo Gusuzumwa", "desc": "Itsinda rya RMC risuzuma inyandiko zawe (iminsi 1–3 y'akazi)." },
-          "p3": { "label": "Kwemezwa n'Imamu", "desc": "Ubusabe bwemejwe kandi imamu aharirwa gukora umuhango." },
-          "p4": { "label": "Umuhango wa Nikah", "desc": "Nikah ikorerwa ahantu wahisemo cyangwa mu musigiti." },
-          "p5": { "label": "Icyemezo Gitangwa", "desc": "Icyemezo cy'ubukwe cyemewe gishyizweho umukono kandi gitangwa." }
+          "p1": {
+            "label": "Tanga Ubusabe",
+            "desc": "Uzuza iformi ifite amakuru y'abashyingiranwa, umuhango, n'inyandiko."
+          },
+          "p2": {
+            "label": "Burimo Gusuzumwa",
+            "desc": "Itsinda rya RMC risuzuma inyandiko zawe (iminsi 1–3 y'akazi)."
+          },
+          "p3": {
+            "label": "Kwemezwa n'Imamu",
+            "desc": "Ubusabe bwemejwe kandi imamu aharirwa gukora umuhango."
+          },
+          "p4": {
+            "label": "Umuhango wa Nikah",
+            "desc": "Nikah ikorerwa ahantu wahisemo cyangwa mu musigiti."
+          },
+          "p5": {
+            "label": "Icyemezo Gitangwa",
+            "desc": "Icyemezo cy'ubukwe cyemewe gishyizweho umukono kandi gitangwa."
+          }
         },
         "witnessReqs": {
           "w1": "Abatangabuhamya babiri b'Abayisilamu basabwa (bagomba kwerekana irangamuntu)",
@@ -653,7 +680,9 @@
         "subject": "Nyamuneka andika impamvu.",
         "message": "Ubutumwa bugomba kuba nibura inyuguti 10."
       }
-    }
+    },
+    "capacity": "Ubushobozi",
+    "jumuah": "Iya Kane"
   },
   "member": {
     "register": {
@@ -809,6 +838,7 @@
       "gifts": "impano",
       "tabDonations": "Impano",
       "tabPrograms": "Gahunda",
+      "tabCategories": "Ibyiciro",
       "period": "Igihe",
       "preset": {
         "all": "Igihe cyose",

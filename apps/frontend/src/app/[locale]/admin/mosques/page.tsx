@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { publicApi } from '@/lib/public-api';
 import { mosqueApi, type Mosque, type MosqueInput } from '@/lib/mosqueApi';
 import { Avatar } from '@/components/ui/Avatar';
+import { ImageUploadField } from '@/components/ui/ImageUploadField';
 import {
   Modal, ModalHeader, ModalBody, ModalFooter,
   ModalTitle, ModalDescription, ConfirmModal,
@@ -44,6 +45,7 @@ const EMPTY: MosqueInput = {
   email: '',
   fridayPrayerTime: '',
   imamName: '',
+  imamPhone: '',
   imamPhoto: '',
 };
 
@@ -145,6 +147,7 @@ function MosquesManager() {
       email: m.email ?? '',
       fridayPrayerTime: m.fridayPrayerTime ?? '',
       imamName: m.imamName ?? '',
+      imamPhone: m.imamPhone ?? '',
       imamPhoto: m.imamPhoto ?? '',
     });
     setIsModalOpen(true);
@@ -412,8 +415,11 @@ function MosquesManager() {
                   <input type="text" value={form.imamName ?? ''} onChange={(e) => set('imamName', e.target.value)} className={inputCls} placeholder="Sheikh…" />
                 </div>
               </Field>
-              <Field label="Imam Photo URL">
-                <input type="url" value={form.imamPhoto ?? ''} onChange={(e) => set('imamPhoto', e.target.value)} className={inputCls} placeholder="https://… (leave empty to use initials)" />
+              <Field label="Imam Phone">
+                <input type="tel" value={form.imamPhone ?? ''} onChange={(e) => set('imamPhone', e.target.value)} className={inputCls} placeholder="+250…" />
+              </Field>
+              <Field label="Imam Photo">
+                <ImageUploadField value={form.imamPhoto ?? ''} onChange={(url) => set('imamPhoto', url)} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Phone">

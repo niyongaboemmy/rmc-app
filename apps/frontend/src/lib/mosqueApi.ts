@@ -20,6 +20,7 @@ export interface Mosque {
   email: string | null;
   fridayPrayerTime: string | null;
   imamName: string | null;
+  imamPhone: string | null;
   imamPhoto: string | null;
   status: MosqueStatus;
   createdAt: string;
@@ -42,6 +43,7 @@ export interface MosqueInput {
   email?: string | null;
   fridayPrayerTime?: string | null;
   imamName?: string | null;
+  imamPhone?: string | null;
   imamPhoto?: string | null;
 }
 

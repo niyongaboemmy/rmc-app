@@ -71,7 +71,7 @@
     "contact": "Contact",
     "blog": "Blog",
     "gallery": "Gallery",
-    "login": "Login",
+    "login": "Sign in",
     "register": "Register",
     "logout": "Logout",
     "dashboard": "Dashboard",
@@ -524,17 +524,44 @@
         "draftNote": "Complete all six steps. Your progress is saved as a draft — you can return to continue at any time.",
         "feesPaymentNote": "Payment accepted via Mobile Money (MoMo), cash at the RMC office, or bank transfer.",
         "docs": {
-          "d1": { "label": "Groom's National ID", "detail": "Valid Rwandan National ID (NID) or passport" },
-          "d2": { "label": "Bride's National ID", "detail": "Valid Rwandan National ID (NID) or passport" },
-          "d3": { "label": "Wali's Consent Letter", "detail": "Signed consent from the bride's guardian (Wali)" },
-          "d4": { "label": "Couple Portrait Photo", "detail": "Recent clear photo of both the groom and bride together" }
+          "d1": {
+            "label": "Groom's National ID",
+            "detail": "Valid Rwandan National ID (NID) or passport"
+          },
+          "d2": {
+            "label": "Bride's National ID",
+            "detail": "Valid Rwandan National ID (NID) or passport"
+          },
+          "d3": {
+            "label": "Wali's Consent Letter",
+            "detail": "Signed consent from the bride's guardian (Wali)"
+          },
+          "d4": {
+            "label": "Couple Portrait Photo",
+            "detail": "Recent clear photo of both the groom and bride together"
+          }
         },
         "process": {
-          "p1": { "label": "Submit Application", "desc": "Fill the form with couple, ceremony, and document details." },
-          "p2": { "label": "Under Review", "desc": "RMC team reviews your documents (1–3 business days)." },
-          "p3": { "label": "Approval & Imam", "desc": "Application approved and an imam is assigned to officiate." },
-          "p4": { "label": "Ceremony (Nikah)", "desc": "Nikah conducted at your chosen venue or mosque." },
-          "p5": { "label": "Certificate Issued", "desc": "Official marriage certificate signed and delivered." }
+          "p1": {
+            "label": "Submit Application",
+            "desc": "Fill the form with couple, ceremony, and document details."
+          },
+          "p2": {
+            "label": "Under Review",
+            "desc": "RMC team reviews your documents (1–3 business days)."
+          },
+          "p3": {
+            "label": "Approval & Imam",
+            "desc": "Application approved and an imam is assigned to officiate."
+          },
+          "p4": {
+            "label": "Ceremony (Nikah)",
+            "desc": "Nikah conducted at your chosen venue or mosque."
+          },
+          "p5": {
+            "label": "Certificate Issued",
+            "desc": "Official marriage certificate signed and delivered."
+          }
         },
         "witnessReqs": {
           "w1": "Two Muslim witnesses are required (must present their NIDs)",
@@ -653,7 +680,9 @@
         "subject": "Please enter a subject.",
         "message": "Your message must be at least 10 characters."
       }
-    }
+    },
+    "capacity": "Capacity",
+    "jumuah": "Jumuʿah"
   },
   "member": {
     "register": {
@@ -809,6 +838,7 @@
       "gifts": "gifts",
       "tabDonations": "Donations",
       "tabPrograms": "Programs",
+      "tabCategories": "Categories",
       "period": "Period",
       "preset": {
         "all": "All time",

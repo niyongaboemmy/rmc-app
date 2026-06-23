@@ -4,20 +4,20 @@ import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Check, Plus, CheckCircle2, X, Sparkles } from 'lucide-react';
-import { EVENTS, badgeClass, fundedPercent, formatMoney, type PublicCampaignLike } from './eventsBridge';
-import { CATEGORIES, SUBFUNDS, EVENT_IMAGE, toneChip, money, type CartItem } from './donateData';
+import { fundedPercent, formatMoney, type PublicCampaignLike } from './eventsBridge';
+import { toneChip, money, type CartItem } from './donateData';
+import { resolveIcon } from './categoryIcons';
+import type { PublicCategory } from '@/lib/donationCategoriesApi';
 import { AmountPicker } from './AmountPicker';
 
 type NewItem = Omit<CartItem, 'id'>;
 
-/* Funding figures shown on event cause cards. */
+/* Funding figures shown on cause cards linked to a live campaign. */
 interface Funding {
   raised: number;
   goal: number;
   pct: number;
   funded: boolean;
-  badge: string;
-  type: string;
 }
 
 /* A unified "cause" shape covering both static sub-funds and live events.
@@ -34,11 +34,13 @@ interface Cause {
 }
 
 export function CategoryGrid({
+  categories,
   currency,
   liveBySlug,
   onAdd,
   initialEvent,
 }: {
+  categories: PublicCategory[];
   currency: string;
   liveBySlug: Map<string, PublicCampaignLike>;
   onAdd: (item: NewItem) => void;
@@ -70,54 +72,51 @@ export function CategoryGrid({
 
   return (
     <div className="space-y-8">
-      {CATEGORIES.map((cat) => {
-        const catTitle = t(`categories.${cat.key}.title`);
-        const causes: Cause[] =
-          cat.key === 'events'
-            ? EVENTS.map((ev) => {
-                const live = liveBySlug.get(ev.id);
-                const raised = live ? live.receivedAmount : ev.raisedAmount;
-                const goal = live ? live.targetAmount : ev.goalAmount;
-                const pct = fundedPercent(raised, goal);
-                return {
-                  fundKey: ev.id,
-                  label: t(`events.${ev.id}.title`),
-                  long: t(`events.${ev.id}.long`),
-                  examples: t.raw(`events.${ev.id}.examples`) as string[],
-                  impact: '',
-                  image: EVENT_IMAGE[ev.id] ?? cat.image,
-                  campaignSlug: ev.id,
-                  funding: { raised, goal, pct, funded: pct >= 100, badge: badgeClass(ev.tone), type: t(`events.${ev.id}.type`) },
-                };
-              })
-            : (SUBFUNDS[cat.key] ?? []).map((sf) => ({
-                fundKey: sf.key,
-                label: t(`funds.${cat.key}.${sf.key}.label`),
-                long: t(`funds.${cat.key}.${sf.key}.long`),
-                examples: t.raw(`funds.${cat.key}.${sf.key}.examples`) as string[],
-                impact: t(`funds.${cat.key}.${sf.key}.impact`),
-                image: sf.image,
-                campaignSlug: null,
-              }));
+      {categories.map((cat) => {
+        const catTitle = cat.title;
+        const Icon = resolveIcon(cat.icon);
+        const causes: Cause[] = cat.subfunds.map((sf) => {
+          const live = sf.campaignSlug ? liveBySlug.get(sf.campaignSlug) : undefined;
+          const funding: Funding | undefined = live
+            ? {
+                raised: live.receivedAmount,
+                goal: live.targetAmount,
+                pct: fundedPercent(live.receivedAmount, live.targetAmount),
+                funded: fundedPercent(live.receivedAmount, live.targetAmount) >= 100,
+              }
+            : undefined;
+          return {
+            fundKey: sf.key,
+            label: sf.label,
+            long: sf.long,
+            examples: sf.examples ?? [],
+            impact: sf.impact,
+            image: sf.image || cat.image || '',
+            campaignSlug: sf.campaignSlug,
+            funding,
+          };
+        });
 
         return (
           <section key={cat.key}>
             {/* Category banner */}
             <div className="relative mb-4 overflow-hidden rounded-2xl border border-gray-100 shadow-sm ring-1 ring-black/5">
-              <Image src={cat.image} alt="" fill className="object-cover object-center" sizes="(min-width: 1024px) 680px, 100vw" />
+              {cat.image && <Image src={cat.image} alt="" fill className="object-cover object-center" sizes="(min-width: 1024px) 680px, 100vw" />}
               <div className="absolute inset-0 bg-gradient-to-r from-rmc-green-deep/95 via-rmc-green-deep/80 to-rmc-green-deep/45 rtl:bg-gradient-to-l" />
               <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-15" />
               <div className="relative flex items-start gap-3.5 p-5 sm:p-6">
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${toneChip(cat.tone, true)}`}>
-                  <cat.Icon className="h-5 w-5" />
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${toneChip(cat.tone === 'gold' ? 'gold' : 'green', true)}`}>
+                  <Icon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
                   <h3 className="text-lg font-bold text-white">{catTitle}</h3>
-                  <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-white/80">{t(`categories.${cat.key}.long`)}</p>
-                  <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-rmc-gold-light ring-1 ring-white/15">
-                    <Sparkles className="h-3 w-3" />
-                    {t(`categories.${cat.key}.impact`)}
-                  </span>
+                  {cat.long && <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-white/80">{cat.long}</p>}
+                  {cat.impact && (
+                    <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-rmc-gold-light ring-1 ring-white/15">
+                      <Sparkles className="h-3 w-3" />
+                      {cat.impact}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -181,10 +180,9 @@ function CauseCard({
       }`}
     >
       {/* Image */}
-      <div className="relative h-40 w-full">
-        <Image src={cause.image} alt="" fill className="object-cover object-center" sizes="(min-width: 1024px) 320px, 100vw" />
+      <div className="relative h-40 w-full bg-rmc-green-light">
+        {cause.image && <Image src={cause.image} alt="" fill className="object-cover object-center" sizes="(min-width: 1024px) 320px, 100vw" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        {f && <span className={`absolute left-3 top-3 rtl:left-auto rtl:right-3 ${f.badge}`}>{f.type}</span>}
         {wasAdded && (
           <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-rmc-green px-2.5 py-1 text-[10px] font-bold text-white shadow-sm rtl:right-auto rtl:left-3">
             <Check className="h-3 w-3" /> {t('card.added')}

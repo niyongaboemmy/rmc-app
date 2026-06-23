@@ -76,6 +76,12 @@ export class CreateMosqueDto {
   @MaxLength(200)
   imamName?: string;
 
+  @ApiPropertyOptional({ description: "Imam's phone number" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  imamPhone?: string;
+
   @ApiPropertyOptional({ description: 'URL of the mosque imam photo' })
   @IsOptional()
   @IsString()
