@@ -57,8 +57,10 @@ export function ActivitiesEventsSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [imgIndex, setImgIndex] = useState(0);
 
-  const activities = content.activities;
-  const events = content.events;
+  // The home page surfaces only the 3 latest activities and the 3 upcoming
+  // events — the full lists live on the /activities page ("View all").
+  const activities = content.activities.slice(0, 3);
+  const events = content.events.slice(0, 3);
 
   const [featured, ...rest] = events;
   const fDate = featured ? parseISO(featured.date) : null;
