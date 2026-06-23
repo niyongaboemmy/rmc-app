@@ -209,6 +209,29 @@ export async function uploadGalleryVersions(opts: UploadGalleryImageOptions): Pr
   return { thumbnailKey, mediumKey, fileKey };
 }
 
+/**
+ * Upload a single image file directly to the file server without resizing.
+ * Returns the file-server key (e.g. "areas/uuid.jpg").
+ */
+export async function uploadAreaImage(
+  file: File,
+  folder: string,
+  onProgress?: (pct: number) => void,
+): Promise<string> {
+  const stableBlob = await materialize(file);
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
+  try {
+    return await sendUpload(stableBlob, file.name, folder, token, onProgress);
+  } catch (err) {
+    if (err instanceof UploadHttpError && err.status === 401) {
+      const fresh = await refreshAccessToken();
+      if (fresh) return sendUpload(stableBlob, file.name, folder, fresh, onProgress);
+    }
+    throw err;
+  }
+}
+
 // ── Gallery CRUD API ──────────────────────────────────────────────────────────
 
 function unwrap<T>(p: Promise<{ data: { data: T } }>): Promise<T> {

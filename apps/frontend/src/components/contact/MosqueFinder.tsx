@@ -6,6 +6,7 @@ import { Building2, Navigation, Search, X, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { FeatureCollection } from 'geojson';
 import { publicApi } from '@/lib/public-api';
+import { Avatar } from '@/components/ui/Avatar';
 import type { MapMosque, DirectionsTarget } from './MosqueMap';
 
 // Leaflet touches `window`, so the map must only load on the client.
@@ -18,6 +19,8 @@ interface ApiMosque {
   id: string;
   name: string;
   address: string | null;
+  imamName: string | null;
+  imamPhoto: string | null;
   gpsLat: number | null;
   gpsLng: number | null;
   districtId: string | null;
@@ -33,16 +36,16 @@ interface Province { id: string; name: string; code: string; }
  * TODO: remove this once real mosque data is seeded in the backend.
  * ----------------------------------------------------------------------- */
 const PLACEHOLDER_MOSQUES: MapMosque[] = [
-  { id: 'tmp-kig-1', name: 'Nyamirambo Grand Mosque', address: 'Nyamirambo, Kigali', gpsLat: -1.9806, gpsLng: 30.0469, provinceCode: 'KIG' },
-  { id: 'tmp-kig-2', name: 'Kigali Islamic Centre', address: 'Nyarugenge, Kigali', gpsLat: -1.9495, gpsLng: 30.0588, provinceCode: 'KIG' },
-  { id: 'tmp-nor-1', name: 'Musanze Central Mosque', address: 'Musanze, Northern Province', gpsLat: -1.4998, gpsLng: 29.6340, provinceCode: 'NOR' },
-  { id: 'tmp-nor-2', name: 'Byumba Friday Mosque', address: 'Gicumbi, Northern Province', gpsLat: -1.5763, gpsLng: 30.0675, provinceCode: 'NOR' },
-  { id: 'tmp-sou-1', name: 'Huye Jamia Mosque', address: 'Huye, Southern Province', gpsLat: -2.5967, gpsLng: 29.7390, provinceCode: 'SOU' },
-  { id: 'tmp-sou-2', name: 'Muhanga Central Mosque', address: 'Muhanga, Southern Province', gpsLat: -2.0780, gpsLng: 29.7560, provinceCode: 'SOU' },
-  { id: 'tmp-eas-1', name: 'Rwamagana Main Mosque', address: 'Rwamagana, Eastern Province', gpsLat: -1.9487, gpsLng: 30.4347, provinceCode: 'EAS' },
-  { id: 'tmp-eas-2', name: 'Nyagatare Friday Mosque', address: 'Nyagatare, Eastern Province', gpsLat: -1.2920, gpsLng: 30.3258, provinceCode: 'EAS' },
-  { id: 'tmp-wes-1', name: 'Rubavu Central Mosque', address: 'Rubavu, Western Province', gpsLat: -1.6777, gpsLng: 29.2580, provinceCode: 'WES' },
-  { id: 'tmp-wes-2', name: 'Karongi Lakeside Mosque', address: 'Karongi, Western Province', gpsLat: -2.0000, gpsLng: 29.3833, provinceCode: 'WES' },
+  { id: 'tmp-kig-1', name: 'Nyamirambo Grand Mosque', address: 'Nyamirambo, Kigali', imamName: 'Sheikh Abdul Karim Harelimana', imamPhoto: 'https://i.pravatar.cc/120?img=12', gpsLat: -1.9806, gpsLng: 30.0469, provinceCode: 'KIG' },
+  { id: 'tmp-kig-2', name: 'Kigali Islamic Centre', address: 'Nyarugenge, Kigali', imamName: 'Sheikh Musa Sindayigaya', imamPhoto: null, gpsLat: -1.9495, gpsLng: 30.0588, provinceCode: 'KIG' },
+  { id: 'tmp-nor-1', name: 'Musanze Central Mosque', address: 'Musanze, Northern Province', imamName: 'Sheikh Yusuf Niyonzima', imamPhoto: null, gpsLat: -1.4998, gpsLng: 29.6340, provinceCode: 'NOR' },
+  { id: 'tmp-nor-2', name: 'Byumba Friday Mosque', address: 'Gicumbi, Northern Province', imamName: 'Sheikh Idris Habimana', imamPhoto: null, gpsLat: -1.5763, gpsLng: 30.0675, provinceCode: 'NOR' },
+  { id: 'tmp-sou-1', name: 'Huye Jamia Mosque', address: 'Huye, Southern Province', imamName: 'Sheikh Ramadhan Munyaneza', imamPhoto: 'https://i.pravatar.cc/120?img=33', gpsLat: -2.5967, gpsLng: 29.7390, provinceCode: 'SOU' },
+  { id: 'tmp-sou-2', name: 'Muhanga Central Mosque', address: 'Muhanga, Southern Province', imamName: 'Sheikh Salim Bizimana', imamPhoto: null, gpsLat: -2.0780, gpsLng: 29.7560, provinceCode: 'SOU' },
+  { id: 'tmp-eas-1', name: 'Rwamagana Main Mosque', address: 'Rwamagana, Eastern Province', imamName: 'Sheikh Hamza Nkurunziza', imamPhoto: null, gpsLat: -1.9487, gpsLng: 30.4347, provinceCode: 'EAS' },
+  { id: 'tmp-eas-2', name: 'Nyagatare Friday Mosque', address: 'Nyagatare, Eastern Province', imamName: 'Sheikh Omar Uwimana', imamPhoto: null, gpsLat: -1.2920, gpsLng: 30.3258, provinceCode: 'EAS' },
+  { id: 'tmp-wes-1', name: 'Rubavu Central Mosque', address: 'Rubavu, Western Province', imamName: 'Sheikh Bilal Ntaganda', imamPhoto: null, gpsLat: -1.6777, gpsLng: 29.2580, provinceCode: 'WES' },
+  { id: 'tmp-wes-2', name: 'Karongi Lakeside Mosque', address: 'Karongi, Western Province', imamName: 'Sheikh Ismail Hakizimana', imamPhoto: null, gpsLat: -2.0000, gpsLng: 29.3833, provinceCode: 'WES' },
 ];
 
 export function MosqueFinder() {
@@ -80,6 +83,8 @@ export function MosqueFinder() {
           id: m.id,
           name: m.name,
           address: m.address,
+          imamName: m.imamName,
+          imamPhoto: m.imamPhoto,
           gpsLat: m.gpsLat,
           gpsLng: m.gpsLng,
           provinceCode: m.districtId ? provinceCodeByDistrict.get(m.districtId) ?? null : null,
@@ -183,12 +188,27 @@ export function MosqueFinder() {
               {visible.map((mosque) => {
                 const hasGps = mosque.gpsLat != null && mosque.gpsLng != null;
                 return (
-                  <button
+                  <div
                     key={mosque.id}
-                    type="button"
-                    onClick={() => focusMosque(mosque)}
-                    disabled={!hasGps}
-                    className="w-full text-left p-2.5 rounded-lg border border-transparent transition-all hover:border-rmc-green/20 hover:bg-rmc-green/[0.04] disabled:opacity-60 disabled:hover:border-transparent disabled:hover:bg-transparent"
+                    role={hasGps ? 'button' : undefined}
+                    tabIndex={hasGps ? 0 : undefined}
+                    aria-disabled={!hasGps}
+                    onClick={hasGps ? () => focusMosque(mosque) : undefined}
+                    onKeyDown={
+                      hasGps
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              focusMosque(mosque);
+                            }
+                          }
+                        : undefined
+                    }
+                    className={`w-full rounded-lg border border-transparent p-2.5 text-left transition-all ${
+                      hasGps
+                        ? 'cursor-pointer hover:border-rmc-green/20 hover:bg-rmc-green/[0.04]'
+                        : 'opacity-60'
+                    }`}
                   >
                     <div className="flex items-start gap-2.5">
                       <div className="w-7 h-7 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
@@ -198,6 +218,14 @@ export function MosqueFinder() {
                         <h3 className="text-[13px] font-semibold leading-tight text-gray-900">{mosque.name}</h3>
                         {mosque.address && (
                           <p className="text-gray-500 text-[11px] mt-0.5 truncate">{mosque.address}</p>
+                        )}
+                        {mosque.imamName && (
+                          <span className="mt-1 flex items-center gap-1.5">
+                            <Avatar name={mosque.imamName} photo={mosque.imamPhoto} size={20} />
+                            <span className="min-w-0 truncate text-[11px] text-gray-600">
+                              <span className="text-gray-400">{t('imam')}:</span> {mosque.imamName}
+                            </span>
+                          </span>
                         )}
                         {hasGps && (
                           <button
@@ -213,7 +241,7 @@ export function MosqueFinder() {
                         )}
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -238,6 +266,7 @@ export function MosqueFinder() {
             onClearDirections={() => setDirections(null)}
             locatingLabel={t('locating')}
             routeErrorLabel={t('locationError')}
+            nearestLabel={t('nearest')}
           />
         )}
       </div>

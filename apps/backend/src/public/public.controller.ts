@@ -39,6 +39,23 @@ export class PublicController {
     return this.service.getActiveAnnouncements(type, limit ? parseInt(limit, 10) : 10);
   }
 
+  @Get('announcements/admin-all')
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Get all announcements including unpublished (admin)' })
+  @ApiQuery({ name: 'type', required: false })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  adminGetAllAnnouncements(@Query('type') type?: string, @Query('limit') limit?: string) {
+    return this.service.adminGetAllAnnouncements(type, limit ? parseInt(limit, 10) : 100);
+  }
+
+  @Get('announcements/:id')
+  @Public()
+  @ApiOperation({ summary: 'Get a single announcement/tender by ID' })
+  getAnnouncementById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getAnnouncementById(id);
+  }
+
   @Post('announcements')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)

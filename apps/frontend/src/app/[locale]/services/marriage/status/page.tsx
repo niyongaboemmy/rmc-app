@@ -32,7 +32,7 @@ export default async function MarriageStatusPage({
           <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-rose-950/70 to-black/55" />
           <div className="absolute inset-0 pattern-islamic opacity-25" />
           <div className="relative max-w-4xl mx-auto text-center w-full">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-4 pt-24">
               <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-lg ring-1 ring-white/20">
                 <Search className="w-6 h-6 text-white" strokeWidth={2.25} />
               </div>

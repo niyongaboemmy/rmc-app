@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -14,12 +14,15 @@ import {
 import L from 'leaflet';
 import type { Feature, FeatureCollection } from 'geojson';
 import { Navigation, X } from 'lucide-react';
+import { Avatar } from '@/components/ui/Avatar';
 import 'leaflet/dist/leaflet.css';
 
 export interface MapMosque {
   id: string;
   name: string;
   address: string | null;
+  imamName: string | null;
+  imamPhoto: string | null;
   gpsLat: number | null;
   gpsLng: number | null;
   provinceCode: string | null;
@@ -60,6 +63,19 @@ const pinIcon = L.divIcon({
   iconSize: [26, 38],
   iconAnchor: [13, 38],
   popupAnchor: [0, -34],
+});
+
+/* Amber pin for the mosque nearest the user — larger, with a glow so it stands
+   out from the green pins. */
+const nearestIcon = L.divIcon({
+  className: 'rmc-mosque-pin rmc-mosque-pin--nearest',
+  html: `<svg width="34" height="50" viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+    <path d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 24 12 24s12-15.6 12-24C24 5.4 18.6 0 12 0z" fill="#f59e0b"/>
+    <circle cx="12" cy="12" r="4.6" fill="#fff"/>
+  </svg>`,
+  iconSize: [34, 50],
+  iconAnchor: [17, 50],
+  popupAnchor: [0, -46],
 });
 
 /* Blue dot for the user's current position. */
@@ -115,6 +131,22 @@ function FlyToMosque({ focus }: { focus: { lat: number; lng: number; nonce: numb
   useEffect(() => {
     if (focus) map.flyTo([focus.lat, focus.lng], 15, { duration: 0.8 });
   }, [focus, map]);
+  return null;
+}
+
+/**
+ * Zoom to the mosque nearest the user once it's resolved — but only on the first
+ * load and only while the user hasn't taken over (no province picked, no manual
+ * focus), so we never yank the map out from under them.
+ */
+function FlyToNearest({ pos, enabled }: { pos: [number, number] | null; enabled: boolean }) {
+  const map = useMap();
+  const done = useRef(false);
+  useEffect(() => {
+    if (!pos || done.current || !enabled) return;
+    done.current = true;
+    map.flyTo(pos, 13, { duration: 0.9 });
+  }, [pos, enabled, map]);
   return null;
 }
 
@@ -230,6 +262,7 @@ interface Props {
   onClearDirections: () => void;
   locatingLabel: string;
   routeErrorLabel: string;
+  nearestLabel: string;
 }
 
 export default function MosqueMap({
@@ -244,9 +277,35 @@ export default function MosqueMap({
   onClearDirections,
   locatingLabel,
   routeErrorLabel,
+  nearestLabel,
 }: Props) {
   const [status, setStatus] = useState<DirStatus>('idle');
   const [info, setInfo] = useState<{ km: number; min: number | null } | null>(null);
+  const [userPos, setUserPos] = useState<[number, number] | null>(null);
+
+  // Ask for the user's location once on mount so we can highlight the nearest
+  // mosque. Failure (denied / unsupported) just leaves every pin green.
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
+      () => setUserPos(null),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }, []);
+
+  // The mosque closest to the user, among those currently shown.
+  const nearest = useMemo(() => {
+    if (!userPos) return null;
+    let best: { id: string; km: number; pos: [number, number] } | null = null;
+    for (const m of mosques) {
+      if (m.gpsLat == null || m.gpsLng == null) continue;
+      const km = haversineKm(userPos, [m.gpsLat, m.gpsLng]);
+      if (!best || km < best.km) best = { id: m.id, km, pos: [m.gpsLat, m.gpsLng] };
+    }
+    return best;
+  }, [userPos, mosques]);
+  const nearestId = nearest?.id ?? null;
 
   return (
     <div className="relative h-full w-full">
@@ -289,16 +348,38 @@ export default function MosqueMap({
 
         <FitToProvince geo={geo} code={selectedProvince} />
         <FlyToMosque focus={focus} />
+        <FlyToNearest pos={nearest?.pos ?? null} enabled={!selectedProvince && !focus} />
         <DirectionsLayer target={directionsTarget} onStatus={setStatus} onInfo={setInfo} />
 
         {/* Mosque markers */}
         {mosques
           .filter((m) => m.gpsLat != null && m.gpsLng != null)
-          .map((m) => (
-            <Marker key={m.id} position={[m.gpsLat as number, m.gpsLng as number]} icon={pinIcon}>
+          .map((m) => {
+            const isNearest = m.id === nearestId;
+            return (
+            <Marker
+              key={m.id}
+              position={[m.gpsLat as number, m.gpsLng as number]}
+              icon={isNearest ? nearestIcon : pinIcon}
+              zIndexOffset={isNearest ? 1000 : 0}
+            >
               <Popup>
+                {isNearest && (
+                  <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                    {nearestLabel}
+                  </span>
+                )}
                 <span className="block font-semibold text-gray-900">{m.name}</span>
                 {m.address && <span className="block text-gray-500 text-xs mt-0.5">{m.address}</span>}
+                {m.imamName && (
+                  <span className="mt-1.5 flex items-center gap-2">
+                    <Avatar name={m.imamName} photo={m.imamPhoto} size={30} />
+                    <span className="leading-tight">
+                      <span className="block text-[10px] uppercase tracking-wide text-gray-400">Imam</span>
+                      <span className="block text-xs font-medium text-gray-800">{m.imamName}</span>
+                    </span>
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => onRequestDirections(m)}
@@ -308,7 +389,8 @@ export default function MosqueMap({
                 </button>
               </Popup>
             </Marker>
-          ))}
+            );
+          })}
       </MapContainer>
 
       {/* Directions status / distance badge */}

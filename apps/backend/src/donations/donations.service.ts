@@ -7,6 +7,7 @@ import { CreateDonationDto } from './dto/create-donation.dto';
 import { UpdateDonationDto } from './dto/update-donation.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
+import { MoMoService } from '../integrations/momo/momo.service';
 
 export interface DonationFilters {
   dateFrom?: string;
@@ -25,6 +26,7 @@ export class DonationsService {
     private readonly donations: Repository<Donation>,
     @InjectRepository(DonationCampaign)
     private readonly campaigns: Repository<DonationCampaign>,
+    private readonly momo: MoMoService,
   ) {}
 
   // ── Public ───────────────────────────────────────────────────────────────
@@ -56,9 +58,15 @@ export class DonationsService {
   }
 
   /**
-   * Record a donation from the public donate page. There is no separate payment
-   * gateway step yet, so a submitted donation is treated as received
-   * (status "completed") and counts toward the program total immediately.
+   * Record a donation from the public donate page.
+   *
+   * When a real payment gateway drives the transaction (Mobile Money, with
+   * credentials configured and a payer phone supplied) the donation starts as
+   * "pending" and a collection request is initiated; its status is confirmed
+   * later via {@link refreshPaymentStatus} (gateway polling). Without an active
+   * gateway there is nothing to verify, so the donation is treated as received
+   * immediately ("completed") — this also covers offline/manual methods, which
+   * an admin can correct from the donations report if needed.
    */
   async create(dto: CreateDonationDto, donorId: string | null): Promise<Donation> {
     let campaignId: string | null = null;
@@ -67,21 +75,72 @@ export class DonationsService {
       campaignId = campaign?.id ?? null;
     }
 
+    const useGateway = dto.paymentMethod === 'momo' && !!dto.donorPhone && this.momo.isConfigured();
+
     const donation = this.donations.create({
       campaignId,
       donorId,
       donorName: dto.isAnonymous ? null : (dto.donorName ?? null),
       donorEmail: dto.donorEmail ?? null,
+      donorPhone: dto.donorPhone ?? null,
       isAnonymous: dto.isAnonymous ?? false,
       amount: dto.amount,
       currency: dto.currency ?? 'RWF',
       frequency: dto.frequency ?? DonationFrequency.ONCE,
       paymentMethod: dto.paymentMethod ?? null,
-      status: DonationStatus.COMPLETED,
+      status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
       message: dto.message ?? null,
       donatedAt: new Date(),
     });
-    return this.donations.save(donation);
+    const saved = await this.donations.save(donation);
+
+    if (useGateway) {
+      // Initiate the Mobile Money collection; the donor approves it on their
+      // phone. requestToPay returns PENDING (or FAILED if it could not be sent).
+      const result = await this.momo.requestToPay({
+        amount: saved.amount,
+        currency: saved.currency,
+        externalId: saved.id,
+        payerPhone: dto.donorPhone as string,
+        payerMessage: 'RMC donation',
+        payeeNote: `Donation ${saved.id}`,
+      });
+      saved.paymentReference = result.referenceId;
+      if (result.status === 'FAILED') saved.status = DonationStatus.FAILED;
+      await this.donations.save(saved);
+    }
+
+    return saved;
+  }
+
+  /**
+   * Re-check a pending gateway-backed donation against the payment provider and
+   * advance its status (pending → completed/failed). Safe to call repeatedly;
+   * it only contacts the gateway while the donation is still pending and has a
+   * payment reference. Returns the (possibly updated) donation.
+   */
+  async refreshPaymentStatus(id: string): Promise<Donation> {
+    const donation = await this.donations.findOne({
+      where: { id },
+      relations: ['campaign'],
+    });
+    if (!donation) throw new NotFoundException('Donation not found');
+
+    if (
+      donation.status === DonationStatus.PENDING &&
+      donation.paymentReference &&
+      this.momo.isConfigured()
+    ) {
+      const result = await this.momo.getPaymentStatus(donation.paymentReference);
+      if (result.status === 'SUCCESSFUL') {
+        donation.status = DonationStatus.COMPLETED;
+      } else if (result.status === 'FAILED') {
+        donation.status = DonationStatus.FAILED;
+      }
+      if (result.status !== 'PENDING') await this.donations.save(donation);
+    }
+
+    return donation;
   }
 
   // ── Admin: donations report ──────────────────────────────────────────────

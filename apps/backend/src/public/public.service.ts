@@ -39,6 +39,20 @@ export class PublicService {
     });
   }
 
+  async getAnnouncementById(id: string): Promise<Announcement> {
+    const a = await this.announcements.findOne({ where: { id } });
+    if (!a) throw new NotFoundException('Announcement not found');
+    return a;
+  }
+
+  adminGetAllAnnouncements(type?: string, limit = 100) {
+    return this.announcements.find({
+      where: { ...(type ? { type } : {}) },
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+  }
+
   async createAnnouncement(dto: Partial<Announcement>): Promise<Announcement> {
     const announcement = this.announcements.create(dto);
     return this.announcements.save(announcement);

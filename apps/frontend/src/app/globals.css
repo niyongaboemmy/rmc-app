@@ -14,9 +14,11 @@
   * {
     box-sizing: border-box;
   }
+
   html {
     scroll-behavior: smooth;
   }
+
   body {
     @apply text-gray-900;
     /* App-wide diagonal crosshatch — a brand-tinted diamond lattice canvas */
@@ -32,31 +34,92 @@
 
   /* ── EXPLICIT font-family on every element — prevents any system-serif fallback ── */
   /* LTR locales (en / rw): Poppins everywhere */
-  h1, h2, h3, h4, h5, h6,
-  p, a, li, span, button, input, label, select, textarea {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a,
+  li,
+  span,
+  button,
+  input,
+  label,
+  select,
+  textarea {
     font-family: var(--font-latin), system-ui, sans-serif;
   }
 
   /* Heading weight hierarchy — Poppins circular forms at every size */
-  h1 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;  }
-  h2 { font-weight: 700; letter-spacing: -0.015em; line-height: 1.25; }
-  h3 { font-weight: 600; letter-spacing: -0.01em;  line-height: 1.3;  }
-  h4 { font-weight: 600; line-height: 1.4; }
-  h5, h6 { font-weight: 500; }
-  p, li { line-height: 1.75; }
+  h1 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+
+  h4 {
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  h5,
+  h6 {
+    font-weight: 500;
+  }
+
+  p,
+  li {
+    line-height: 1.75;
+  }
 
   /* ── RTL locale (ar): Noto Naskh Arabic for all elements ── */
-  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3,
-  [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6,
-  [dir="rtl"] p,  [dir="rtl"] a,  [dir="rtl"] li,
-  [dir="rtl"] span, [dir="rtl"] button,
-  [dir="rtl"] input, [dir="rtl"] label {
+  [dir="rtl"] h1,
+  [dir="rtl"] h2,
+  [dir="rtl"] h3,
+  [dir="rtl"] h4,
+  [dir="rtl"] h5,
+  [dir="rtl"] h6,
+  [dir="rtl"] p,
+  [dir="rtl"] a,
+  [dir="rtl"] li,
+  [dir="rtl"] span,
+  [dir="rtl"] button,
+  [dir="rtl"] input,
+  [dir="rtl"] label {
     font-family: var(--font-arabic), serif;
-    letter-spacing: 0;       /* never letter-space Arabic connected script */
+    letter-spacing: 0;
+    /* never letter-space Arabic connected script */
   }
-  [dir="rtl"] h1 { font-size: 1.1em; line-height: 1.6; }
-  [dir="rtl"] h2 { font-size: 1.1em; line-height: 1.6; }
-  [dir="rtl"] p, [dir="rtl"] li { font-size: 1.0625rem; line-height: 1.9; }
+
+  [dir="rtl"] h1 {
+    font-size: 1.1em;
+    line-height: 1.6;
+  }
+
+  [dir="rtl"] h2 {
+    font-size: 1.1em;
+    line-height: 1.6;
+  }
+
+  [dir="rtl"] p,
+  [dir="rtl"] li {
+    font-size: 1.0625rem;
+    line-height: 1.9;
+  }
 
   /* ── Inline Arabic text on any locale (Quran verses, pillar names) ── */
   [lang="ar"] {
@@ -64,20 +127,27 @@
     letter-spacing: 0;
     line-height: 1.85;
   }
+
   /* GPU-accelerate all interactive elements */
-  a, button, [role="button"] {
+  a,
+  button,
+  [role="button"] {
     will-change: transform;
     transform: translateZ(0);
   }
+
   img {
     will-change: opacity;
   }
+
   ::-webkit-scrollbar {
     width: 5px;
   }
+
   ::-webkit-scrollbar-track {
     background: #f1f5f9;
   }
+
   ::-webkit-scrollbar-thumb {
     background: var(--rmc-green);
     border-radius: 4px;
@@ -85,10 +155,19 @@
 }
 
 @layer utilities {
+
   /* Admin flat UI */
-  .bg-rmc-green\/8  { background-color: rgba(26, 122, 74, 0.08); }
-  .bg-rmc-green\/5  { background-color: rgba(26, 122, 74, 0.05); }
-  .duration-250     { transition-duration: 250ms; }
+  .bg-rmc-green\/8 {
+    background-color: rgba(26, 122, 74, 0.08);
+  }
+
+  .bg-rmc-green\/5 {
+    background-color: rgba(26, 122, 74, 0.05);
+  }
+
+  .duration-250 {
+    transition-duration: 250ms;
+  }
 
   /* Gradient text */
   .text-gradient-gold {
@@ -98,6 +177,7 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
   .text-gradient-green {
     background: linear-gradient(135deg, #1a7a4a 0%, #2ea05c 100%);
     -webkit-background-clip: text;
@@ -112,6 +192,7 @@
     background-color: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
+
   .glass-white {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -120,15 +201,41 @@
   }
 
   /* Animation delays */
-  .delay-75  { animation-delay: 75ms; }
-  .delay-100 { animation-delay: 100ms; }
-  .delay-150 { animation-delay: 150ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
-  .delay-600 { animation-delay: 600ms; }
-  .delay-700 { animation-delay: 700ms; }
+  .delay-75 {
+    animation-delay: 75ms;
+  }
+
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-150 {
+    animation-delay: 150ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .delay-500 {
+    animation-delay: 500ms;
+  }
+
+  .delay-600 {
+    animation-delay: 600ms;
+  }
+
+  .delay-700 {
+    animation-delay: 700ms;
+  }
 
   /* Card hover lift */
   .card-hover {
@@ -136,6 +243,7 @@
     will-change: transform;
     transform: translateZ(0);
   }
+
   .card-hover:hover {
     transform: translateY(-7px) translateZ(0);
     box-shadow: 0 24px 64px rgba(26, 122, 74, 0.12);
@@ -149,6 +257,7 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L33.5 19 L47 19 L36.5 27.5 L40 42 L30 33.5 L20 42 L23.5 27.5 L13 19 L26.5 19 Z' fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.12'/%3E%3C/svg%3E");
   background-size: 60px 60px;
 }
+
 .pattern-light {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L33.5 19 L47 19 L36.5 27.5 L40 42 L30 33.5 L20 42 L23.5 27.5 L13 19 L26.5 19 Z' fill='none' stroke='%231a7a4a' stroke-width='0.6' opacity='0.06'/%3E%3C/svg%3E");
   background-size: 60px 60px;
@@ -161,32 +270,47 @@
   opacity: 0;
   transform: translateY(24px) translateZ(0);
   transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
-.reveal.visible { opacity: 1; transform: translateY(0) translateZ(0); }
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0) translateZ(0);
+}
 
 .reveal-left {
   opacity: 0;
   transform: translateX(-24px) translateZ(0);
   transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
-.reveal-left.visible { opacity: 1; transform: translateX(0) translateZ(0); }
+
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0) translateZ(0);
+}
 
 .reveal-right {
   opacity: 0;
   transform: translateX(24px) translateZ(0);
   transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
-.reveal-right.visible { opacity: 1; transform: translateX(0) translateZ(0); }
+
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0) translateZ(0);
+}
 
 /* Reduced-motion: show content immediately, no reveal animation */
 @media (prefers-reduced-motion: reduce) {
-  .reveal, .reveal-left, .reveal-right {
+
+  .reveal,
+  .reveal-left,
+  .reveal-right {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -197,13 +321,25 @@
    Hero animated gradient blob (used as pseudo-element bg)
 -------------------------------------------------------- */
 @keyframes blobPulse {
-  0%, 100% { transform: scale(1) translate(0, 0); }
-  33%       { transform: scale(1.08) translate(15px, -10px); }
-  66%       { transform: scale(0.94) translate(-10px, 12px); }
+
+  0%,
+  100% {
+    transform: scale(1) translate(0, 0);
+  }
+
+  33% {
+    transform: scale(1.08) translate(15px, -10px);
+  }
+
+  66% {
+    transform: scale(0.94) translate(-10px, 12px);
+  }
 }
+
 .hero-blob {
   animation: blobPulse 12s ease-in-out infinite;
 }
+
 .hero-blob-2 {
   animation: blobPulse 16s ease-in-out infinite reverse;
 }
@@ -213,36 +349,66 @@
    Content is duplicated in markup; -50% gives a seamless loop.
 -------------------------------------------------------- */
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
+
 .animate-marquee {
   animation: marquee 90s linear infinite;
 }
+
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee { animation: none; }
+  .animate-marquee {
+    animation: none;
+  }
 }
 
 /* --------------------------------------------------------
    Floating particle dots for hero
 -------------------------------------------------------- */
 @keyframes particleDrift {
-  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.15; }
-  50%  { transform: translateY(-40px) translateX(20px) scale(1.1); opacity: 0.35; }
-  100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.15; }
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.15;
+  }
+
+  50% {
+    transform: translateY(-40px) translateX(20px) scale(1.1);
+    opacity: 0.35;
+  }
+
+  100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.15;
+  }
 }
-.particle { animation: particleDrift var(--dur, 8s) ease-in-out infinite var(--delay, 0s); }
+
+.particle {
+  animation: particleDrift var(--dur, 8s) ease-in-out infinite var(--delay, 0s);
+}
 
 /* --------------------------------------------------------
    Shimmer loading skeleton
 -------------------------------------------------------- */
 @keyframes shimmerLoad {
-  from { background-position: -200% center; }
-  to   { background-position: 200% center; }
+  from {
+    background-position: -200% center;
+  }
+
+  to {
+    background-position: 200% center;
+  }
 }
+
 .skeleton {
   background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
   background-size: 200% 100%;
@@ -257,6 +423,7 @@
   align-items: center;
   gap: 12px;
 }
+
 .ornament-divider::before,
 .ornament-divider::after {
   content: '';
@@ -264,6 +431,7 @@
   height: 1px;
   background: linear-gradient(to right, transparent, rgba(212, 160, 23, 0.5));
 }
+
 .ornament-divider::after {
   background: linear-gradient(to left, transparent, rgba(212, 160, 23, 0.5));
 }
@@ -274,6 +442,7 @@
 .nav-underline {
   position: relative;
 }
+
 .nav-underline::after {
   content: '';
   position: absolute;
@@ -285,8 +454,9 @@
   border-radius: 1px;
   transform: scaleX(0);
   transform-origin: center;
-  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  transition: transform 0.25s cubic-bezier(.4, 0, .2, 1);
 }
+
 .nav-underline:hover::after,
 .nav-underline.active::after {
   transform: scaleX(1);
@@ -297,7 +467,7 @@
 -------------------------------------------------------- */
 .tilt-card {
   transform-style: preserve-3d;
-  transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+  transition: transform 0.4s cubic-bezier(.4, 0, .2, 1);
   will-change: transform;
 }
 
@@ -305,9 +475,17 @@
    Glow border animation
 -------------------------------------------------------- */
 @keyframes glowBorder {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(26,122,74,0); }
-  50%       { box-shadow: 0 0 0 3px rgba(26,122,74,0.25); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(26, 122, 74, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 3px rgba(26, 122, 74, 0.25);
+  }
 }
+
 .glow-border-pulse {
   animation: glowBorder 2.5s ease-in-out infinite;
 }
@@ -316,9 +494,17 @@
    Page transition fade-in
 -------------------------------------------------------- */
 @keyframes pageFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 main {
   animation: pageFadeIn 0.5s ease-out both;
 }
@@ -331,14 +517,24 @@ main {
   position: relative;
   border-radius: 16px;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(26,122,74,0.3), rgba(212,160,23,0.3), rgba(26,122,74,0.3));
+  background: linear-gradient(135deg, rgba(26, 122, 74, 0.3), rgba(212, 160, 23, 0.3), rgba(26, 122, 74, 0.3));
   background-size: 300% 300%;
 }
+
 @keyframes gradientShift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
+
 .grad-border:hover {
   animation: gradientShift 3s ease infinite;
   background-size: 300% 300%;
@@ -351,19 +547,19 @@ main {
   position: relative;
   overflow: hidden;
 }
+
 .shimmer-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.18) 50%,
-    transparent 60%
-  );
+  background: linear-gradient(105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.18) 50%,
+      transparent 60%);
   transform: translateX(-100%);
   transition: none;
 }
+
 .shimmer-card:hover::after {
   transform: translateX(100%);
   transition: transform 0.55s ease;
@@ -376,6 +572,7 @@ main {
   position: relative;
   display: inline-block;
 }
+
 .title-underline::after {
   content: '';
   position: absolute;
@@ -392,23 +589,42 @@ main {
 /* Gentle green↔gold text-colour cycle for heading accent words.
    Override --tc-from / --tc-to inline for dark backgrounds. */
 @keyframes textColorCycle {
-  0%, 100% { color: var(--tc-from, #1A7A4A); }
-  50%      { color: var(--tc-to, #D4A017); }
+
+  0%,
+  100% {
+    color: var(--tc-from, #1A7A4A);
+  }
+
+  50% {
+    color: var(--tc-to, #D4A017);
+  }
 }
+
 .animate-text-color {
   animation: textColorCycle 4.5s ease-in-out infinite;
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-text-color { animation: none !important; }
+  .animate-text-color {
+    animation: none !important;
+  }
 }
 
 /* --------------------------------------------------------
    Scroll progress bar glow
 -------------------------------------------------------- */
 @keyframes progressGlow {
-  0%, 100% { filter: drop-shadow(0 0 3px rgba(26,122,74,0.5)); }
-  50%       { filter: drop-shadow(0 0 8px rgba(212,160,23,0.6)); }
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(26, 122, 74, 0.5));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgba(212, 160, 23, 0.6));
+  }
 }
+
 .progress-bar-glow {
   animation: progressGlow 2s ease-in-out infinite;
 }
@@ -417,10 +633,19 @@ main {
    Stat card number count animation flash
 -------------------------------------------------------- */
 @keyframes countFlash {
-  0%   { color: white; }
-  50%  { color: #D4A017; }
-  100% { color: white; }
+  0% {
+    color: white;
+  }
+
+  50% {
+    color: #D4A017;
+  }
+
+  100% {
+    color: white;
+  }
 }
+
 .count-flash {
   animation: countFlash 0.3s ease-out;
 }
@@ -433,4 +658,58 @@ main {
 .rmc-user-pin {
   background: transparent;
   border: 0;
+
+  /* Nearest-mosque marker: a gentle bounce on the pin plus a pulsing ring at its
+   base, so the closest mosque draws the eye. Transform is applied to the inner
+   SVG only — never the root element, which Leaflet uses for positioning. */
+  @keyframes nearestBounce {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes nearestPing {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.7;
+    }
+
+    100% {
+      transform: scale(2.8);
+      opacity: 0;
+    }
+  }
+
+  .rmc-mosque-pin--nearest svg {
+    transform-origin: 50% 100%;
+    animation: nearestBounce 1.2s ease-in-out infinite;
+  }
+
+  .rmc-mosque-pin--nearest::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    border-radius: 9999px;
+    background: rgba(245, 158, 11, 0.45);
+    animation: nearestPing 1.6s ease-out infinite;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .rmc-mosque-pin--nearest svg,
+    .rmc-mosque-pin--nearest::after {
+      animation: none;
+    }
+  }
 }

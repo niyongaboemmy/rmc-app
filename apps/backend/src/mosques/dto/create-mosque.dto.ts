@@ -70,6 +70,17 @@ export class CreateMosqueDto {
   @IsString()
   fridayPrayerTime?: string;
 
+  @ApiPropertyOptional({ description: 'Name of the mosque imam' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  imamName?: string;
+
+  @ApiPropertyOptional({ description: 'URL of the mosque imam photo' })
+  @IsOptional()
+  @IsString()
+  imamPhoto?: string;
+
   @ApiPropertyOptional({ enum: ['active', 'inactive'] })
   @IsOptional()
   @IsIn(['active', 'inactive'])

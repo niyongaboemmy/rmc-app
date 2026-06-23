@@ -51,6 +51,12 @@ export class Mosque {
   @Column({ name: 'friday_prayer_time', type: 'time', nullable: true })
   fridayPrayerTime: string | null;
 
+  @Column({ name: 'imam_name', type: 'varchar', length: 200, nullable: true })
+  imamName: string | null;
+
+  @Column({ name: 'imam_photo', type: 'text', nullable: true })
+  imamPhoto: string | null;
+
   @Column({ type: 'varchar', length: 20, default: 'active' })
   status: string;
 

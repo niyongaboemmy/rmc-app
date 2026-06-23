@@ -102,7 +102,7 @@ export function PageHero({
       <div className="absolute inset-0 pattern-islamic opacity-30" />
 
       {/* ── Content ── */}
-      <div className={`relative z-10 mx-auto w-full max-w-3xl px-4 ${paddingClassName} sm:px-6 lg:px-8`}>
+      <div className={`relative z-10 mx-auto w-full max-w-7xl px-4 ${paddingClassName} sm:px-6 lg:px-8`}>
         <div className="animate-fade-up">
           {backHref && (
             <Link
@@ -114,7 +114,7 @@ export function PageHero({
             </Link>
           )}
 
-          <div className={centered ? 'text-center' : 'text-left'}>
+          <div className={centered ? 'text-center mx-auto max-w-3xl' : 'text-left max-w-2xl'}>
             {eyebrow && (
               <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-white/75 backdrop-blur-sm sm:text-xs">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />

@@ -47,7 +47,10 @@ export default async function MarriageServicePage({
         {/* ===================================================================
             HERO
         =================================================================== */}
-        <section className="relative text-white min-h-[38vh] py-10 px-4 sm:px-6 lg:px-8 overflow-hidden flex items-center">
+        <section
+          className="relative text-white overflow-hidden flex flex-col"
+          style={{ minHeight: 'max(42vh, 320px)' }}
+        >
           <Image
             src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=80"
             alt="Islamic marriage celebration"
@@ -57,20 +60,30 @@ export default async function MarriageServicePage({
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rose-950/65 to-black/45" />
           <div className="absolute inset-0 pattern-islamic opacity-25" />
-          <div className="relative max-w-4xl mx-auto text-center w-full">
+
+          {/* Centered hero content */}
+          <div className="relative flex-1 flex items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+            <div className="max-w-2xl mx-auto">
+              <div className="flex justify-center mb-4 pt-24">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-600 to-rose-800 flex items-center justify-center shadow-xl shadow-rose-900/50 ring-1 ring-white/20">
+                  <Heart className="w-7 h-7 text-white" strokeWidth={2.25} />
+                </div>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{t('title')}</h1>
+              <p className="text-white/75 text-base max-w-2xl mx-auto leading-relaxed">
+                {t('desc')}
+              </p>
+            </div>
+          </div>
+
+          {/* Back button — bottom of hero, always visible */}
+          <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
             <Link
               href={`/${locale}/services`}
-              className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm font-medium mb-4 transition-colors"
+              className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/25 hover:border-white/50 shadow-sm"
             >
-              <ArrowLeft className="w-4 h-4" /> {t('detail.backToServices')}
+              <ArrowLeft className="w-3.5 h-3.5" /> {t('detail.backToServices')}
             </Link>
-            <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-600 to-rose-800 flex items-center justify-center shadow-lg shadow-rose-900/40 ring-1 ring-white/20">
-                <Heart className="w-6 h-6 text-white" strokeWidth={2.25} />
-              </div>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{t('title')}</h1>
-            <p className="text-white/75 text-base max-w-2xl mx-auto">{t('desc')}</p>
           </div>
         </section>
 
@@ -111,12 +124,8 @@ export default async function MarriageServicePage({
                 {t('detail.overviewHeading')}{' '}
                 <span className="text-rose-700">{t('detail.overviewHeadingHighlight')}</span>
               </h2>
-              <p className="text-gray-600 leading-relaxed mb-3 text-sm">
-                {t('detail.overviewP1')}
-              </p>
-              <p className="text-gray-600 leading-relaxed mb-5 text-sm">
-                {t('detail.overviewP2')}
-              </p>
+              <p className="text-gray-600 leading-relaxed mb-3 text-sm">{t('detail.overviewP1')}</p>
+              <p className="text-gray-600 leading-relaxed mb-5 text-sm">{t('detail.overviewP2')}</p>
               <div className="flex flex-col sm:flex-row gap-2.5">
                 <Link
                   href={`/${locale}/services/marriage/apply`}
@@ -142,7 +151,9 @@ export default async function MarriageServicePage({
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('detail.includesTitle')}</h2>
-              <p className="text-gray-500 text-sm max-w-2xl mx-auto">{t('detail.includesSubtitle')}</p>
+              <p className="text-gray-500 text-sm max-w-2xl mx-auto">
+                {t('detail.includesSubtitle')}
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {includeKeys.map((key) => {
@@ -177,7 +188,9 @@ export default async function MarriageServicePage({
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-7">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('detail.processTitle')}</h2>
-              <p className="text-gray-500 text-sm max-w-2xl mx-auto">{t('detail.processSubtitle')}</p>
+              <p className="text-gray-500 text-sm max-w-2xl mx-auto">
+                {t('detail.processSubtitle')}
+              </p>
             </div>
 
             <div className="relative">
@@ -266,7 +279,9 @@ export default async function MarriageServicePage({
             <div className="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-5">
               <Wallet className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-amber-900 text-sm mb-1">{t('detail.fees.clauseTitle')}</h3>
+                <h3 className="font-bold text-amber-900 text-sm mb-1">
+                  {t('detail.fees.clauseTitle')}
+                </h3>
                 <p className="text-amber-900/80 text-sm leading-relaxed">
                   {t('detail.fees.clause')}
                 </p>

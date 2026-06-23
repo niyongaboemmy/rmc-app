@@ -14,6 +14,14 @@ export class Announcement {
   @Column({ type: 'text' })
   content: string;
 
+  /** Multilingual title. Falls back to `title` when absent. */
+  @Column({ name: 'title_i18n', type: 'jsonb', nullable: true })
+  titleI18n: { en: string; rw: string; ar: string } | null;
+
+  /** Multilingual content. Falls back to `content` when absent. */
+  @Column({ name: 'content_i18n', type: 'jsonb', nullable: true })
+  contentI18n: { en: string; rw: string; ar: string } | null;
+
   @Column({ type: 'varchar', length: 10, default: 'normal' })
   priority: string;
 
@@ -34,6 +42,9 @@ export class Announcement {
 
   @Column({ type: 'varchar', length: 30, default: 'announcement' })
   type: string; // 'announcement' | 'tender'
+
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'" })
+  attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
 
   @Column({ name: 'broadcast_sent', type: 'boolean', default: false })
   broadcastSent: boolean;
