@@ -3,7 +3,8 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { IsOptional, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Public } from '../common/decorators/public.decorator';
-import { Roles, Role } from '../common/decorators/roles.decorator';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/types/permissions.enum';
 import { PrayerTimesService } from './prayer-times.service';
 
 class AdjustmentsDto {
@@ -63,7 +64,7 @@ export class PrayerTimesController {
 
   @Put('mosque/:mosqueId/adjustments')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.PRAYER_TIMES_MANAGE)
   @ApiOperation({ summary: 'Set prayer time minute adjustments for a mosque' })
   setAdjustments(
     @Param('mosqueId', ParseUUIDPipe) mosqueId: string,

@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { Permission } from '@/lib/permissions';
 
 interface MemberRow {
   id: string;
@@ -43,8 +46,11 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function AdminMembersPage() {
+function AdminMembersContent() {
   const t = useTranslations('admin.members');
+  const { hasPermission } = useAuth();
+  const canApprove = hasPermission(Permission.MEMBERS_APPROVE);
+  const canDownloadIdCard = hasPermission(Permission.MEMBERS_ID_CARD);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -192,7 +198,7 @@ export default function AdminMembersPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {m.approvalStatus === 'pending' && (
+                          {m.approvalStatus === 'pending' && canApprove && (
                             <>
                               <button
                                 onClick={() => handleApprove(m.id)}
@@ -209,7 +215,7 @@ export default function AdminMembersPage() {
                               </button>
                             </>
                           )}
-                          {m.approvalStatus === 'approved' && (
+                          {m.approvalStatus === 'approved' && canDownloadIdCard && (
                             <button
                               onClick={() => downloadIdCard(m.id)}
                               className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-200 transition-colors"
@@ -287,5 +293,13 @@ export default function AdminMembersPage() {
           </div>
         )}
     </div>
+  );
+}
+
+export default function AdminMembersPage() {
+  return (
+    <ProtectedRoute permissions={[Permission.MEMBERS_VIEW]}>
+      <AdminMembersContent />
+    </ProtectedRoute>
   );
 }

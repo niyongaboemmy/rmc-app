@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { marriageApi, MarriageApplication, MarriageApplicationStatus, STATUS_COLORS } from '@/lib/marriageApi';
 import { cn } from '@/lib/utils';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { Permission } from '@/lib/permissions';
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'All statuses' },
@@ -73,7 +75,7 @@ interface StatsData {
   revenue: number;
 }
 
-export default function AdminMarriagePage() {
+function AdminMarriageContent() {
   const { locale } = useParams<{ locale: string }>();
   const [apps, setApps] = useState<MarriageApplication[]>([]);
   const [total, setTotal] = useState(0);
@@ -293,5 +295,13 @@ export default function AdminMarriagePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdminMarriagePage() {
+  return (
+    <ProtectedRoute permissions={[Permission.MARRIAGE_VIEW]}>
+      <AdminMarriageContent />
+    </ProtectedRoute>
   );
 }

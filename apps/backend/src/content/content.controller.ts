@@ -10,7 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
-import { Roles, Role } from '../common/decorators/roles.decorator';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/types/permissions.enum';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ContentService } from './content.service';
 import { UpdateContentDto } from './dto/update-content.dto';
@@ -36,7 +37,7 @@ export class ContentController {
 
   @Put(':key')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.CONTENT_EDIT)
   @ApiOperation({ summary: 'Create or update a content section' })
   upsert(
     @Param('key') key: string,
@@ -57,7 +58,7 @@ export class ContentController {
 
   @Post('history/entries')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.CONTENT_CREATE)
   @ApiOperation({ summary: 'Create a history entry (admin)' })
   createHistory(@Body() dto: any) {
     return this.service.createHistoryEntry(dto);
@@ -65,7 +66,7 @@ export class ContentController {
 
   @Put('history/entries/:id')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.CONTENT_EDIT)
   @ApiOperation({ summary: 'Update a history entry (admin)' })
   updateHistory(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
     return this.service.updateHistoryEntry(id, dto);
@@ -73,7 +74,7 @@ export class ContentController {
 
   @Delete('history/entries/:id')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.CONTENT_DELETE)
   @ApiOperation({ summary: 'Delete a history entry (admin)' })
   deleteHistory(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.deleteHistoryEntry(id);
