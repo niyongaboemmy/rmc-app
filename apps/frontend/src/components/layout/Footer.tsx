@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio, ChevronDown } from 'lucide-react';
 import { IJWI_RADIO_URL } from '@/lib/constants';
+import { useTranslations } from 'next-intl';
 
 const socialLinks = [
   { Icon: Facebook, href: '#', label: 'Facebook' },
@@ -14,10 +15,6 @@ const socialLinks = [
   { Icon: Youtube, href: '#', label: 'YouTube' },
 ];
 
-/**
- * Collapsible footer column — on mobile the details are hidden and the heading
- * acts as a toggle; on md+ it's always open and the toggle is inert.
- */
 function CollapsibleColumn({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -43,37 +40,35 @@ function CollapsibleColumn({ title, children }: { title: string; children: React
 
 export function Footer() {
   const { locale } = useParams<{ locale: string }>();
+  const t = useTranslations('footer');
 
   const quickLinks = [
-    { href: `/${locale}`, label: 'Home' },
-    { href: `/${locale}/about`, label: 'About RMC' },
-    { href: `/${locale}/services`, label: 'Our Services' },
-    { href: `/${locale}/schools`, label: 'Find Schools' },
-    { href: `/${locale}/blog`, label: 'Blog & News' },
-    { href: `/${locale}/contact`, label: 'Contact Us' },
-    { href: `/${locale}/member/register`, label: 'Join RMC' },
-  ];
+    { href: `/${locale}`, labelKey: 'links.home' },
+    { href: `/${locale}/about`, labelKey: 'links.about' },
+    { href: `/${locale}/services`, labelKey: 'links.services' },
+    { href: `/${locale}/schools`, labelKey: 'links.schools' },
+    { href: `/${locale}/blog`, labelKey: 'links.blog' },
+    { href: `/${locale}/contact`, labelKey: 'links.contact' },
+    { href: `/${locale}/member/register`, labelKey: 'links.join' },
+  ] as const;
 
   const services = [
-    { href: `/${locale}/services`, label: 'Marriage Documents' },
-    { href: `/${locale}/services`, label: 'Scholarships' },
-    { href: `/${locale}/services`, label: 'Good Conduct Letter' },
-    { href: `/${locale}/services`, label: 'Funeral Coordination' },
-    { href: `/${locale}/services`, label: 'Job Opportunities' },
-    { href: `/${locale}/services`, label: 'Tenders' },
-  ];
+    { href: `/${locale}/services/marriage`, labelKey: 'serviceLinks.marriage' },
+    { href: `/${locale}/services/scholarship`, labelKey: 'serviceLinks.scholarship' },
+    { href: `/${locale}/services/conduct`, labelKey: 'serviceLinks.conduct' },
+    { href: `/${locale}/services/funeral`, labelKey: 'serviceLinks.funeral' },
+    { href: `/${locale}/services/jobs`, labelKey: 'serviceLinks.jobs' },
+    { href: `/${locale}/services/tender`, labelKey: 'serviceLinks.tenders' },
+  ] as const;
 
   const linkClass =
     'inline-block text-white/55 hover:text-white text-sm transition-all duration-200 hover:translate-x-1';
 
   return (
     <footer className="relative bg-black mt-48">
-      {/* Islamic geometric pattern — the same motif used across the app */}
       <div className="absolute inset-0 pattern-islamic opacity-30 pointer-events-none" />
-      {/* Gold hairline at the very top — the app's signature accent */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent pointer-events-none z-20" />
 
-      {/* Mosque skyline — sits fully ABOVE the footer (same green), fading up into the section above */}
       <div
         aria-hidden="true"
         className="absolute inset-x-0 top-0 -translate-y-full z-10 h-24 sm:h-32 md:h-36 pointer-events-none"
@@ -107,7 +102,7 @@ export function Footer() {
             </Link>
 
             <p className="text-white/45 text-sm leading-relaxed mb-7 max-w-xs">
-              Spreading the light of Islam through education, community, and service across Rwanda.
+              {t('tagline')}
             </p>
 
             <div className="flex items-center gap-2.5">
@@ -124,13 +119,13 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Quick Links — collapsible on mobile, open column on md+ */}
-          <CollapsibleColumn title="Quick Links">
+          {/* Quick Links */}
+          <CollapsibleColumn title={t('quickLinks')}>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className={linkClass}>
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -147,21 +142,21 @@ export function Footer() {
             </ul>
           </CollapsibleColumn>
 
-          {/* Services — collapsible on mobile, open column on md+ */}
-          <CollapsibleColumn title="Services">
+          {/* Services */}
+          <CollapsibleColumn title={t('services')}>
             <ul className="space-y-3">
               {services.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link href={link.href} className={linkClass}>
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
             </ul>
           </CollapsibleColumn>
 
-          {/* Contact — collapsible on mobile, open column on md+ */}
-          <CollapsibleColumn title="Contact">
+          {/* Contact */}
+          <CollapsibleColumn title={t('contact')}>
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
@@ -179,13 +174,13 @@ export function Footer() {
                 <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
                   <MapPin className="w-3.5 h-3.5 text-rmc-gold-light" />
                 </span>
-                <span className="text-white/55 text-sm">Rebero, Kigali</span>
+                <span className="text-white/55 text-sm">{t('address')}</span>
               </li>
             </ul>
           </CollapsibleColumn>
         </div>
 
-        {/* Alhamdulillah — closing praise (the page opens with Bismillah in the navbar) */}
+        {/* Alhamdulillah — always in Arabic, not translated */}
         <div className="ornament-divider max-w-sm mx-auto mb-8">
           <p className="font-arabic text-rmc-gold-light/90 text-lg md:text-xl text-center px-3 leading-loose" dir="rtl">
             الْحَمْدُ لِلَّٰهِ رَبِّ الْعَالَمِينَ
@@ -194,11 +189,11 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/35">
-          <p>© {new Date().getFullYear()} Rwanda Muslim Community. All rights reserved.</p>
+          <p>{t('copyright', { year: new Date().getFullYear() })}</p>
           <div className="flex items-center gap-4">
-            <Link href={`/${locale}/contact`} className="hover:text-rmc-gold-light transition-colors">Privacy Policy</Link>
+            <Link href={`/${locale}/contact`} className="hover:text-rmc-gold-light transition-colors">{t('privacy')}</Link>
             <span className="text-white/20">·</span>
-            <Link href={`/${locale}/contact`} className="hover:text-rmc-gold-light transition-colors">Terms of Use</Link>
+            <Link href={`/${locale}/contact`} className="hover:text-rmc-gold-light transition-colors">{t('terms')}</Link>
           </div>
         </div>
       </div>

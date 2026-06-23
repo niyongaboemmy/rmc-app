@@ -1371,5 +1371,93 @@
         "text": "Inzira uhereye aho uri ugana ku ishuri."
       }
     }
+  },
+  "tenders": {
+    "eyebrow": "Amahirwe y'Ubucuruzi",
+    "title": "Itangazo ry'Umushinga",
+    "subtitle": "Amahirwe yo gupiganira imishinga yakuwe na Sosiyete y'Abasilamu yo mu Rwanda.",
+    "backToHome": "Subira Ahabanza",
+    "filters": {
+      "all": "Imishinga Yose",
+      "open": "Ifunguye",
+      "closing": "Ifunga Vuba",
+      "closed": "Ifunze"
+    },
+    "deadline": {
+      "none": "Nta gihe",
+      "noneSet": "Nta gihe gishyizweho",
+      "closed": "Ifunze",
+      "submissionClosed": "Igihe cy'iyinjiza rirangiye",
+      "today": "Ifunga uyu munsi",
+      "todayUrgent": "Ifunga uyu munsi!",
+      "tomorrow": "Ifunga ejo",
+      "inDays": "Ifunga mu minsi {days}",
+      "remaining": "{pct}% y'igihe gisigaye"
+    },
+    "empty": {
+      "title": "Nta mishinga yabonetse",
+      "allSubtitle": "Nta mishinga itangazwa ubu.",
+      "viewAll": "Reba imishinga yose"
+    },
+    "card": {
+      "view": "Reba"
+    },
+    "detail": {
+      "heroTitle": "Amakuru y'Umushinga",
+      "notFoundHeroTitle": "Ntabwo Byabonetse",
+      "backLabel": "Subira ku Mishinga",
+      "published": "Itangazwa",
+      "deadlineLabel": "Igihe cy'imperuka",
+      "priority": {
+        "normal": "Isanzwe",
+        "high": "Ikomeye",
+        "urgent": "Ihutirwa"
+      },
+      "description": "Ibisobanuro by'Umushinga",
+      "attachments": "Inyandiko ({count})",
+      "cta": {
+        "title": "Uzirikana uyu mushinga?",
+        "subtitle": "Ohereza igitekerezo cyawe cyangwa watumanahana na RMC mbere y'igihe.",
+        "button": "Watumanahane →"
+      },
+      "notFound": {
+        "message": "Umushinga ntuboneka",
+        "subtitle": "Ushobora kuba wakuweho cyangwa uhuze ntabwo ari wo.",
+        "backLink": "Reba imishinga yose"
+      },
+      "attachment": {
+        "preview": "Reba",
+        "download": "Pakurura",
+        "open": "Fungura",
+        "noPreview": "Nta burebure bwabonetse kuri ubu bwoko bwa dosiye."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Gusakaza urumuri rw'Isilamu binyuze mu burezi, umuryango, n'ubufasha mu Rwanda hose.",
+    "quickLinks": "Aho Ugana Vuba",
+    "services": "Serivisi",
+    "contact": "Twandikire",
+    "links": {
+      "home": "Ahabanza",
+      "about": "Ibyerekeye RMC",
+      "services": "Serivisi Zacu",
+      "schools": "Shaka Amashuri",
+      "blog": "Amakuru",
+      "contact": "Twandikire",
+      "join": "Injira muri RMC"
+    },
+    "serviceLinks": {
+      "marriage": "Inyandiko z'Ubukwe",
+      "scholarship": "Buruse",
+      "conduct": "Icyemezo cy'Imyitwarire Myiza",
+      "funeral": "Gutegura Gushyingura",
+      "jobs": "Amahirwe y'Akazi",
+      "tenders": "Itumba"
+    },
+    "address": "Rebero, Kigali",
+    "copyright": "© {year} Umuryango w'Abasilamu bo mu Rwanda. Uburenganzira bwose bwabitswe.",
+    "privacy": "Politiki y'Ubuzima bw'Amakuru",
+    "terms": "Amategeko y'Ikoreshwa"
   }
 }

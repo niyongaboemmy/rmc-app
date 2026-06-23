@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FileText, Clock, ArrowRight } from 'lucide-react';
+import { FileText, Clock, ArrowRight, ExternalLink } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { publicApi } from '@/lib/public-api';
 
@@ -111,9 +111,10 @@ export function TendersSection() {
               const displayTitle   = resolveText(tender.titleI18n,   tender.title,   locale);
               const displayContent = resolveText(tender.contentI18n, tender.content, locale);
               return (
-              <div
+              <Link
                 key={tender.id}
-                className={`flex flex-col p-5 rounded-2xl border border-rmc-gold/20 bg-white shadow-sm hover:shadow-md transition-all duration-500 group ${
+                href={`/${locale}/tenders/${tender.id}`}
+                className={`flex flex-col p-5 rounded-2xl border border-rmc-gold/20 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 group ${
                   visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                 }`}
                 style={{ transitionDelay: `${i * 100 + 200}ms` }}
@@ -145,8 +146,9 @@ export function TendersSection() {
                       {new Date(tender.expiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
                   )}
+                  <ExternalLink className="w-3 h-3 text-gray-300 group-hover:text-rmc-green ml-auto transition-colors" />
                 </div>
-              </div>
+              </Link>
               );
             })}
           </div>

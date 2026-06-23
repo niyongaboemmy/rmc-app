@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { VerseOfDay } from './entities/verse-of-day.entity';
 import { Announcement } from './entities/announcement.entity';
 import { BlogPost, BlogCategory } from './entities/blog-post.entity';
@@ -26,17 +26,28 @@ export class PublicService {
     return this.verses.save(verse);
   }
 
-  getActiveAnnouncements(type?: string, limit = 10) {
+  getActiveAnnouncements(type?: string, limit = 10, includeExpired = false) {
     const now = new Date();
-    return this.announcements.find({
-      where: {
-        isPublished: true,
-        publishAt: LessThanOrEqual(now),
-        ...(type ? { type } : {}),
-      },
-      order: { priority: 'DESC', publishAt: 'DESC' },
-      take: limit,
-    });
+    const qb = this.announcements
+      .createQueryBuilder('a')
+      .where('a.is_published = :pub', { pub: true })
+      .andWhere('a.publish_at <= :now', { now })
+      // Semantic priority ordering: urgent=3, high=2, normal=1
+      .orderBy(
+        `CASE a.priority WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 ELSE 1 END`,
+        'DESC',
+      )
+      .addOrderBy('a.publish_at', 'DESC')
+      .take(limit);
+
+    if (type) qb.andWhere('a.type = :type', { type });
+
+    // Exclude expired items unless caller explicitly requests them
+    if (!includeExpired) {
+      qb.andWhere('(a.expires_at IS NULL OR a.expires_at >= :exp)', { exp: now });
+    }
+
+    return qb.getMany();
   }
 
   async getAnnouncementById(id: string): Promise<Announcement> {

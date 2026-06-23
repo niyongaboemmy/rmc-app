@@ -1371,5 +1371,93 @@
         "text": "Route from your current location straight to the school gate."
       }
     }
+  },
+  "tenders": {
+    "eyebrow": "Business Opportunities",
+    "title": "Open Tenders",
+    "subtitle": "Procurement and contracting opportunities published by Rwanda Muslim Community.",
+    "backToHome": "Back to Home",
+    "filters": {
+      "all": "All Tenders",
+      "open": "Open",
+      "closing": "Closing Soon",
+      "closed": "Closed"
+    },
+    "deadline": {
+      "none": "No deadline",
+      "noneSet": "No deadline set",
+      "closed": "Closed",
+      "submissionClosed": "Submission closed",
+      "today": "Closes today",
+      "todayUrgent": "Closes today!",
+      "tomorrow": "Closes tomorrow",
+      "inDays": "Closes in {days} days",
+      "remaining": "{pct}% time remaining"
+    },
+    "empty": {
+      "title": "No tenders found",
+      "allSubtitle": "No tenders are published at this time.",
+      "viewAll": "View all tenders"
+    },
+    "card": {
+      "view": "View"
+    },
+    "detail": {
+      "heroTitle": "Tender Details",
+      "notFoundHeroTitle": "Not Found",
+      "backLabel": "Back to Tenders",
+      "published": "Published",
+      "deadlineLabel": "Deadline",
+      "priority": {
+        "normal": "Normal",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "description": "Tender Description",
+      "attachments": "Attachments ({count})",
+      "cta": {
+        "title": "Interested in this tender?",
+        "subtitle": "Submit your bid or contact RMC before the deadline.",
+        "button": "Contact RMC →"
+      },
+      "notFound": {
+        "message": "Tender not found",
+        "subtitle": "It may have been removed or the link is invalid.",
+        "backLink": "View all tenders"
+      },
+      "attachment": {
+        "preview": "Preview",
+        "download": "Download",
+        "open": "Open",
+        "noPreview": "No preview available for this file type."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Spreading the light of Islam through education, community, and service across Rwanda.",
+    "quickLinks": "Quick Links",
+    "services": "Services",
+    "contact": "Contact",
+    "links": {
+      "home": "Home",
+      "about": "About RMC",
+      "services": "Our Services",
+      "schools": "Find Schools",
+      "blog": "Blog & News",
+      "contact": "Contact Us",
+      "join": "Join RMC"
+    },
+    "serviceLinks": {
+      "marriage": "Marriage Documents",
+      "scholarship": "Scholarships",
+      "conduct": "Good Conduct Letter",
+      "funeral": "Funeral Coordination",
+      "jobs": "Job Opportunities",
+      "tenders": "Tenders"
+    },
+    "address": "Rebero, Kigali",
+    "copyright": "© {year} Rwanda Muslim Community. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use"
   }
 }

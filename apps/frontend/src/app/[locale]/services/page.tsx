@@ -88,6 +88,7 @@ function JobsIcon({ className }: { className?: string }) {
 
 // ── Service definitions ────────────────────────────────────────────────────────
 // All hover/accent Tailwind classes must be spelled out fully for JIT to detect them.
+// `href` overrides the default `/services/{slug}` destination when provided.
 const services = [
   {
     key: 'marriage', slug: 'marriage',
@@ -140,7 +141,7 @@ const services = [
     cardHover: 'hover:shadow-amber-100',
   },
   {
-    key: 'tender', slug: 'tender',
+    key: 'tender', slug: 'tender', href: '/tenders',
     Icon: TenderIcon,
     bar: 'bg-teal-500',
     iconIdle: 'text-gray-300',
@@ -178,10 +179,10 @@ export default async function ServicesPage({ params: { locale } }: { params: { l
         <section className="py-20 px-4 sm:px-6 lg:px-8 pattern-light">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {services.map(({ key, slug, Icon, bar, iconIdle, iconHover, cta, ctaHover, cardHover }, idx) => (
+              {services.map(({ key, slug, Icon, bar, iconIdle, iconHover, cta, ctaHover, cardHover, ...rest }, idx) => (
                 <Link
                   key={key}
-                  href={`/${locale}/services/${slug}`}
+                  href={'href' in rest ? `/${locale}${rest.href}` : `/${locale}/services/${slug}`}
                   className={`group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100/80 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl ${cardHover}`}
                 >
                   {/* Sliding top-accent bar — reveals left-to-right on hover */}
