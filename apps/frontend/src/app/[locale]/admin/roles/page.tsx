@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { User, KeyRound, Users, Building2, Clock, FileText, Wallet, BarChart3, Settings } from 'lucide-react';
+import { User, KeyRound, Users, Building2, Clock, FileText, Wallet, BarChart3, Settings, MessageSquare } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
@@ -64,6 +64,10 @@ const PERMISSION_GROUPS: { group: string; color: string; icon: React.ElementType
   {
     group: 'System', color: 'red', icon: Settings,
     perms: ['system:settings', 'audit_log:view'],
+  },
+  {
+    group: 'SMS Config', color: 'purple', icon: MessageSquare,
+    perms: ['sms_config:view', 'sms_config:manage'],
   },
 ];
 

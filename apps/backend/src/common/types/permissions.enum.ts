@@ -68,6 +68,10 @@ export enum Permission {
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',
+
+  // ── SMS Configuration ─────────────────────────────────────────────
+  SMS_CONFIG_VIEW = 'sms_config:view',
+  SMS_CONFIG_MANAGE = 'sms_config:manage',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);

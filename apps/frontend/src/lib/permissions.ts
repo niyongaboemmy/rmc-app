@@ -55,6 +55,10 @@ export enum Permission {
 
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',
+
+  // ── SMS Configuration ─────────────────────────────────────────
+  SMS_CONFIG_VIEW = 'sms_config:view',
+  SMS_CONFIG_MANAGE = 'sms_config:manage',
 }
 
 export function hasPermission(userPermissions: string[], permission: Permission): boolean {
