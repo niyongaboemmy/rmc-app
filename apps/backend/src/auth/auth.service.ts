@@ -481,12 +481,18 @@ export class AuthService {
 
   // ── Profile ───────────────────────────────────────────────────────────────────
 
-  async getProfile(userId: string): Promise<Partial<User>> {
+  async getProfile(userId: string): Promise<Partial<User> & { membershipNumber?: string; joinedDate?: Date }> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, mfaSecret, ...safe } = user as User & { passwordHash: string; mfaSecret: string };
-    return safe;
+
+    const member = await this.memberProfileRepo.findOne({ where: { userId } });
+    return {
+      ...safe,
+      membershipNumber: member?.membershipNumber ?? undefined,
+      joinedDate: member?.joinedDate ?? undefined,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto): Promise<Partial<User>> {

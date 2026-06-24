@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsDateString, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsIn, IsUrl, MaxLength } from 'class-validator';
 
 export class UpdateProfileDto {
   @ApiPropertyOptional()
@@ -21,4 +21,10 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsIn(['male', 'female'])
   gender?: string;
+
+  @ApiPropertyOptional({ description: 'URL of profile photo stored on file server' })
+  @IsOptional()
+  @IsUrl({}, { message: 'profilePhotoUrl must be a valid URL' })
+  @MaxLength(500)
+  profilePhotoUrl?: string;
 }

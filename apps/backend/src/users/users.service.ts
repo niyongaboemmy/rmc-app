@@ -110,6 +110,8 @@ export class UsersService {
       ...(dto.dateOfBirth && { dateOfBirth: new Date(dto.dateOfBirth) }),
       ...(dto.gender && { gender: dto.gender }),
       ...(dto.status && { status: dto.status }),
+      // Allow explicit null to clear the photo
+      ...(dto.profilePhotoUrl !== undefined && { profilePhotoUrl: dto.profilePhotoUrl || null }),
     });
     return this.userRepo.save(user);
   }
