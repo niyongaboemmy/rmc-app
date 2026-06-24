@@ -21,14 +21,19 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (identifier: string, password: string, mfaCode?: string) => Promise<LoginResult>;
+  verify2fa: (tempToken: string, otp: string) => Promise<LoginResult>;
+  resend2fa: (tempToken: string) => Promise<{ maskedPhone: string; expiresAt: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   hasPermission: (permission: Permission) => boolean;
   isSuperAdmin: boolean;
 }
 
-interface LoginResult {
+export interface LoginResult {
   requiresMfa?: boolean;
+  requires2fa?: boolean;
+  tempToken?: string;
+  maskedPhone?: string;
   user?: AuthUser;
 }
 
@@ -115,38 +120,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const applyTokens = useCallback((accessToken: string, refreshToken: string, userData: AuthUser): AuthUser => {
+    localStorage.setItem('rmc_access_token', accessToken);
+    setAuthCookie('rmc_access_token', accessToken, 15 * 60);
+    localStorage.setItem('rmc_refresh_token', refreshToken);
+    setAuthCookie('rmc_refresh_token', refreshToken, 7 * 24 * 60 * 60);
+
+    const jwtData = parseJwtPayload(accessToken);
+    const fullUser: AuthUser = { ...userData, permissions: jwtData?.permissions ?? [] };
+    setUser(fullUser);
+    return fullUser;
+  }, []);
+
   const login = useCallback(async (identifier: string, password: string, mfaCode?: string): Promise<LoginResult> => {
     const res = await apiClient.post<{
       success: boolean;
-      data: { accessToken?: string; refreshToken?: string; requiresMfa?: boolean; user?: AuthUser };
+      data: {
+        accessToken?: string;
+        refreshToken?: string;
+        requiresMfa?: boolean;
+        requires2fa?: boolean;
+        tempToken?: string;
+        maskedPhone?: string;
+        user?: AuthUser;
+      };
     }>('/auth/login', { identifier, password, ...(mfaCode ? { mfaCode } : {}) });
 
     const data = res.data.data;
 
     if (data.requiresMfa) return { requiresMfa: true };
 
-    if (data.accessToken) {
-      localStorage.setItem('rmc_access_token', data.accessToken);
-      setAuthCookie('rmc_access_token', data.accessToken, 15 * 60); // 15 min
-    }
-    if (data.refreshToken) {
-      localStorage.setItem('rmc_refresh_token', data.refreshToken);
-      setAuthCookie('rmc_refresh_token', data.refreshToken, 7 * 24 * 60 * 60); // 7 days
+    if (data.requires2fa) {
+      return { requires2fa: true, tempToken: data.tempToken, maskedPhone: data.maskedPhone };
     }
 
-    // Parse permissions from the JWT we just received
-    const jwtData = data.accessToken ? parseJwtPayload(data.accessToken) : null;
-
-    if (data.user) {
-      const fullUser: AuthUser = {
-        ...data.user,
-        permissions: jwtData?.permissions ?? [],
-      };
-      setUser(fullUser);
+    if (data.accessToken && data.refreshToken && data.user) {
+      const fullUser = applyTokens(data.accessToken, data.refreshToken, data.user);
       return { user: fullUser };
     }
 
     return {};
+  }, [applyTokens]);
+
+  const verify2fa = useCallback(async (tempToken: string, otp: string): Promise<LoginResult> => {
+    const res = await apiClient.post<{
+      success: boolean;
+      data: { accessToken: string; refreshToken: string; user: AuthUser };
+    }>('/auth/2fa/verify-login', { tempToken, otp });
+
+    const data = res.data.data;
+    const fullUser = applyTokens(data.accessToken, data.refreshToken, data.user);
+    return { user: fullUser };
+  }, [applyTokens]);
+
+  const resend2fa = useCallback(async (tempToken: string) => {
+    const res = await apiClient.post<{
+      success: boolean;
+      data: { maskedPhone: string; expiresAt: string };
+    }>('/auth/2fa/resend', { tempToken });
+    return res.data.data;
   }, []);
 
   const logout = useCallback(async () => {
@@ -185,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, login, logout, refreshUser, hasPermission, isSuperAdmin }}
+      value={{ user, isAuthenticated: !!user, isLoading, login, verify2fa, resend2fa, logout, refreshUser, hasPermission, isSuperAdmin }}
     >
       {children}
     </AuthContext.Provider>

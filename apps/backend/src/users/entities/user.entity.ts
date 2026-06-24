@@ -69,6 +69,9 @@ export class User {
   @Column({ name: 'mfa_secret', type: 'varchar', length: 500, nullable: true })
   mfaSecret: string | null;
 
+  @Column({ name: 'two_factor_enabled', type: 'boolean', default: false })
+  twoFactorEnabled: boolean;
+
   @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
   lastLoginAt: Date | null;
 

@@ -62,6 +62,26 @@ export interface SmsHistoryItem {
   createdAt: string;
 }
 
+export interface NotificationSetting {
+  id: string;
+  eventKey: string;
+  label: string;
+  description: string | null;
+  groupName: string;
+  emailApplicable: boolean;
+  smsApplicable: boolean;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+}
+
+export interface UpdateNotificationSettingsPayload {
+  updates: Array<{
+    eventKey: string;
+    emailEnabled?: boolean;
+    smsEnabled?: boolean;
+  }>;
+}
+
 export interface SmsHistoryPage {
   data: SmsHistoryItem[];
   total: number;
@@ -102,6 +122,18 @@ export const settingsApi = {
   getSmsHistory(page = 1, limit = 20): Promise<SmsHistoryPage> {
     return apiClient
       .get(`/admin/system/sms-config/history?page=${page}&limit=${limit}`)
+      .then((r) => r.data.data ?? r.data);
+  },
+
+  getNotificationSettings(): Promise<NotificationSetting[]> {
+    return apiClient
+      .get('/admin/system/notification-settings')
+      .then((r) => r.data.data ?? r.data);
+  },
+
+  updateNotificationSettings(payload: UpdateNotificationSettingsPayload): Promise<{ message: string }> {
+    return apiClient
+      .patch('/admin/system/notification-settings', payload)
       .then((r) => r.data.data ?? r.data);
   },
 };

@@ -27,6 +27,12 @@ import { VerifyPhoneDto } from './dto/verify-phone.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MfaVerifySetupDto, MfaDisableDto } from './dto/mfa-verify-setup.dto';
+import {
+  TwoFactorVerifySetupDto,
+  TwoFactorDisableDto,
+  TwoFactorVerifyLoginDto,
+  TwoFactorResendDto,
+} from './dto/two-factor.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Public } from '../common/decorators/public.decorator';
@@ -204,5 +210,84 @@ export class AuthController {
     @Body() dto: MfaDisableDto,
   ): Promise<{ message: string }> {
     return this.authService.mfaDisable(user.id, dto.password, dto.totp);
+  }
+
+  // ── Two-Factor Auth (SMS OTP) ─────────────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard)
+  @Get('2fa/status')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get 2FA status' })
+  async twoFactorStatus(@CurrentUser() user: User) {
+    return this.authService.twoFactorStatus(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/setup')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Initiate 2FA setup', description: 'Send an OTP to the user\'s phone to begin 2FA enrollment.' })
+  @ApiResponse({ status: 200, description: 'OTP sent to phone' })
+  @ApiResponse({ status: 400, description: '2FA already enabled' })
+  async twoFactorSetup(@CurrentUser() user: User) {
+    return this.authService.twoFactorSetup(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/verify-setup')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Confirm 2FA setup', description: 'Verify the OTP and enable 2-Step Verification.' })
+  @ApiBody({ type: TwoFactorVerifySetupDto })
+  @ApiResponse({ status: 200, description: '2FA enabled' })
+  async twoFactorVerifySetup(
+    @CurrentUser() user: User,
+    @Body() dto: TwoFactorVerifySetupDto,
+  ): Promise<{ message: string }> {
+    return this.authService.twoFactorVerifySetup(user.id, dto.otp);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/disable')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Disable 2FA', description: 'Disable 2-Step Verification. Requires current password.' })
+  @ApiBody({ type: TwoFactorDisableDto })
+  @ApiResponse({ status: 200, description: '2FA disabled' })
+  async twoFactorDisable(
+    @CurrentUser() user: User,
+    @Body() dto: TwoFactorDisableDto,
+  ): Promise<{ message: string }> {
+    return this.authService.twoFactorDisable(user.id, dto.password);
+  }
+
+  @Public()
+  @Post('2fa/verify-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Complete 2FA login', description: 'Submit the SMS OTP to complete the 2-step login flow.' })
+  @ApiBody({ type: TwoFactorVerifyLoginDto })
+  @ApiResponse({ status: 200, description: 'Full tokens issued' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired temp token' })
+  @ApiResponse({ status: 400, description: 'Invalid OTP' })
+  async twoFactorVerifyLogin(
+    @Body() dto: TwoFactorVerifyLoginDto,
+    @Request() req: ExpressRequest,
+  ) {
+    return this.authService.twoFactorVerifyLogin(
+      dto.tempToken,
+      dto.otp,
+      req.ip,
+      req.headers['user-agent'],
+    );
+  }
+
+  @Public()
+  @Post('2fa/resend')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend 2FA login OTP', description: 'Re-send the SMS OTP during a pending 2FA login. Rate limited to 3 per 10 minutes.' })
+  @ApiBody({ type: TwoFactorResendDto })
+  @ApiResponse({ status: 200, description: 'OTP resent' })
+  async twoFactorResend(@Body() dto: TwoFactorResendDto) {
+    return this.authService.twoFactorResend(dto.tempToken);
   }
 }

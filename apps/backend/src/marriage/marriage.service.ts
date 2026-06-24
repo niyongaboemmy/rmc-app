@@ -17,6 +17,9 @@ import { MarriageTransaction } from './entities/marriage-transaction.entity';
 import { MarriagePartyConfirmation, PartyRole } from './entities/marriage-party-confirmation.entity';
 import { User } from '../users/entities/user.entity';
 import * as crypto from 'crypto';
+import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
+import { SmsService } from '../integrations/sms/sms.service';
+import { SmsTemplates } from './sms-templates';
 import { CreateMarriageApplicationDto } from './dto/create-marriage-application.dto';
 import { SaveDocumentDto } from './dto/save-document.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
@@ -45,6 +48,8 @@ export class MarriageService {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
+    private readonly notifSettings: NotificationSettingsService,
+    private readonly smsService: SmsService,
   ) {}
 
   // ── Application Number ──────────────────────────────────────────────────────
@@ -504,98 +509,68 @@ export class MarriageService {
     return (user as any)?.phone ?? '';
   }
 
-  // ── SMS notifications ──────────────────────────────────────────────────────
+  // ── SMS notifications (via InTouch SmsService) ────────────────────────────
 
-  private async sendSms(to: string, message: string): Promise<void> {
+  /**
+   * Dispatch an SMS through the InTouch gateway.
+   * Skips silently when the recipient phone is missing.
+   * Never throws — a failed SMS must not break the caller's operation.
+   */
+  private dispatchSms(to: string, message: string): void {
     if (!to) {
       this.logger.warn('SMS skipped: no recipient phone number');
       return;
     }
-
-    const apiKey  = this.configService.get<string>('app.sms.apiKey');
-    const username = this.configService.get<string>('app.sms.username');
-    const from    = this.configService.get<string>('app.sms.from', 'RMC');
-
-    if (!apiKey || !username) {
-      this.logger.log(`[SMS→${to}] ${message}`);
-      return;
-    }
-
-    try {
-      const body = new URLSearchParams({
-        username,
-        to,
-        message,
-        from,
-      });
-
-      const res = await fetch('https://api.africastalking.com/version1/messaging', {
-        method: 'POST',
-        headers: {
-          apiKey,
-          Accept: 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body.toString(),
-      });
-
-      if (!res.ok) {
-        this.logger.warn(`SMS send failed (${res.status}): ${await res.text()}`);
-      }
-    } catch (err) {
-      this.logger.warn(`SMS error: ${err}`);
-    }
+    // Fire-and-forget — SmsService.sendSms() catches all errors internally
+    void this.smsService.sendSms(to, message);
   }
 
   private async sendSubmissionSms(app: MarriageApplication): Promise<void> {
+    if (!this.notifSettings.isSmsEnabled('marriage.submission')) return;
     const phone = await this.getRecipientPhone(app);
-
-    // Payment is settled automatically on submission, so there are no payment
-    // instructions to send — just confirm receipt and let them track it.
-    await this.sendSms(
-      phone,
-      `RMC Nikah: Application ${app.applicationNumber} submitted for ${app.groomName} & ${app.brideName}. Payment received — our team will review it shortly. Track: rmc.org.rw`,
-    );
+    this.dispatchSms(phone, SmsTemplates.submission(app.applicationNumber, app.groomName, app.brideName));
   }
 
   private async sendStatusChangeSms(app: MarriageApplication, _previousStatus: string): Promise<void> {
+    if (!this.notifSettings.isSmsEnabled('marriage.status_change')) return;
     const phone = await this.getRecipientPhone(app);
 
-    const statusMessages: Record<string, string> = {
-      under_review: `Your Nikah application ${app.applicationNumber} is now under review. We'll notify you of any updates.`,
-      approved: `Congratulations! Your Nikah application ${app.applicationNumber} has been approved. Our team will confirm your ceremony date soon.`,
-      rejected: `Your Nikah application ${app.applicationNumber} could not be approved. ${app.rejectionReason ? 'Reason: ' + app.rejectionReason : ''} Contact nikah@rmc.rw for assistance.`,
-      amendments_requested: `Amendments required for application ${app.applicationNumber}. ${app.amendmentsRequestedText ?? ''} Log in to update your application.`,
-      completed: `Your Nikah ceremony is complete! Application ${app.applicationNumber}. Your certificate will be issued shortly.`,
-      closed: `Your RMC marriage certificate is ready. Application ${app.applicationNumber}. Visit rmc.org.rw to download it.`,
-    };
-
-    const message = statusMessages[app.status];
+    const message = this.buildStatusMessage(app);
     if (!message) return;
 
-    await this.sendSms(phone, message);
+    this.dispatchSms(phone, message);
+  }
+
+  private buildStatusMessage(app: MarriageApplication): string | null {
+    switch (app.status) {
+      case 'under_review':         return SmsTemplates.underReview(app.applicationNumber);
+      case 'approved':             return SmsTemplates.approved(app.applicationNumber);
+      case 'rejected':             return SmsTemplates.rejected(app.applicationNumber, app.rejectionReason);
+      case 'amendments_requested': return SmsTemplates.amendmentsRequested(app.applicationNumber, app.amendmentsRequestedText);
+      case 'completed':            return SmsTemplates.completed(app.applicationNumber);
+      case 'closed':               return SmsTemplates.closed(app.applicationNumber);
+      default:                     return null;
+    }
   }
 
   private async sendCeremonyScheduledSms(app: MarriageApplication): Promise<void> {
+    if (!this.notifSettings.isSmsEnabled('marriage.ceremony_scheduled')) return;
     const phone = await this.getRecipientPhone(app);
     const date = app.ceremonyDate
-      ? new Date(app.ceremonyDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      ? new Date(app.ceremonyDate).toLocaleDateString('en-GB', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        })
       : 'TBC';
 
-    await this.sendSms(
-      phone,
-      `RMC Nikah: Your ceremony date is confirmed — ${date}. Application: ${app.applicationNumber}. Assalamu Alaikum!`,
-    );
+    this.dispatchSms(phone, SmsTemplates.ceremonyScheduled(app.applicationNumber, date));
   }
 
   private async sendPaymentConfirmedSms(app: MarriageApplication): Promise<void> {
+    if (!this.notifSettings.isSmsEnabled('marriage.payment_confirmed')) return;
     const phone = await this.getRecipientPhone(app);
-    const fee = Number(app.amountPaid || app.amountDue).toLocaleString('en-RW');
+    const amount = Number(app.amountPaid || app.amountDue).toLocaleString('en-RW');
 
-    await this.sendSms(
-      phone,
-      `RMC Nikah: Payment of ${fee} RWF received for application ${app.applicationNumber}. Your application is now being processed.`,
-    );
+    this.dispatchSms(phone, SmsTemplates.paymentConfirmed(app.applicationNumber, amount));
   }
 
   // ── Party Confirmations ─────────────────────────────────────────────────────
@@ -625,11 +600,11 @@ export class MarriageService {
       const saved = await this.confirmationRepo.save(entry);
       results.push(saved);
 
-      if (party.phone) {
+      if (party.phone && this.notifSettings.isSmsEnabled('marriage.party_confirmation')) {
         const link = `${frontendUrl}/en/services/marriage/confirm/${token}`;
-        await this.sendSms(
+        this.dispatchSms(
           party.phone,
-          `RMC Nikah (${app.applicationNumber}): You have been listed as ${party.role}. Please confirm your participation: ${link}`,
+          SmsTemplates.partyConfirmation(app.applicationNumber, party.role, link),
         );
       } else {
         this.logger.log(`[Confirmation token for ${party.role}] ${token}`);

@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { TwoFactorSection } from '@/components/auth/TwoFactorSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -101,14 +102,17 @@ function ProfileContent() {
           </form>
         </div>
 
-        {/* Security */}
+        {/* Password */}
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Security</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Password</h2>
           <p className="text-gray-500 text-sm mb-4">Update your password. All active sessions will be revoked.</p>
           <Link href={`/${locale}/change-password`}>
             <Button variant="outline">Change Password</Button>
           </Link>
         </div>
+
+        {/* Two-Factor Authentication */}
+        <TwoFactorSection />
       </div>
     </div>
   );
