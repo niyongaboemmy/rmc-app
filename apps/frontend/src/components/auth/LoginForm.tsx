@@ -203,8 +203,9 @@ export function LoginForm() {
   const nav = useTranslations('nav');
   const { locale }                   = useParams<{ locale: string }>();
   const router                       = useRouter();
-  const { login, isLoading }         = useAuth();
+  const { login }                    = useAuth();
   const [step, setStep]              = useState<Step>('credentials');
+  const [submitting, setSubmitting]  = useState(false);
   const [apiError, setApiError]      = useState<string | null>(null);
   const [twoFactorState, set2faState] = useState<{ tempToken: string; maskedPhone: string } | null>(null);
 
@@ -214,6 +215,7 @@ export function LoginForm() {
 
   const onSubmit = async (data: CredentialsData) => {
     setApiError(null);
+    setSubmitting(true);
     try {
       const result = await login(data.identifier, data.password, data.mfaCode || undefined);
 
@@ -229,6 +231,8 @@ export function LoginForm() {
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setApiError(e?.response?.data?.error?.message || 'Login failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -330,7 +334,7 @@ export function LoginForm() {
 
               {/* Submit */}
               <div className="animate-fade-up pt-1" style={{ animationDelay: '320ms' }}>
-                <Button type="submit" isLoading={isLoading} size="lg" className="w-full group">
+                <Button type="submit" isLoading={submitting} size="lg" className="w-full group">
                   <span className="flex items-center gap-2">
                     {step === 'mfa' ? 'Verify' : t('submit')}
                     <svg className="w-4 h-4 translate-x-0 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
