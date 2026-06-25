@@ -3,14 +3,15 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowRight, MessageSquare } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
 import { Button } from '@/components/ui/Button';
 import { WizardFormData } from '../MarriageWizard';
 
 const nid = z.string().regex(/^\d{16}$/, 'Must be exactly 16 digits');
 const fullName = z.string().trim().min(3, 'At least 3 characters required');
-const phone = z.string().trim().min(9, 'Enter a valid phone number');
+const phone = z.string().regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX');
 
 const schema = z.object({
   groomName: fullName,
@@ -56,8 +57,16 @@ export function Step1Couple({ initialData, onNext }: Props) {
 
   const nidProps = { inputMode: 'numeric' as const, maxLength: 16, placeholder: '16-digit National ID' };
 
+  const handleNext = (data: FormData) =>
+    onNext({
+      ...data,
+      groomPhone:        toE164(data.groomPhone),
+      bridePhone:        toE164(data.bridePhone),
+      notificationPhone: toE164(data.notificationPhone),
+    });
+
   return (
-    <form onSubmit={handleSubmit(onNext)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleNext)} className="space-y-6">
       {/* Groom */}
       <div>
         <SectionLabel color="blue">Groom</SectionLabel>
@@ -77,10 +86,9 @@ export function Step1Couple({ initialData, onNext }: Props) {
             {...register('groomNid')}
           />
           <div className="sm:col-span-2">
-            <Input
+            <PhoneInput
               label="Phone number"
               required
-              placeholder="+250 7XX XXX XXX"
               error={errors.groomPhone?.message}
               {...register('groomPhone')}
             />
@@ -109,10 +117,9 @@ export function Step1Couple({ initialData, onNext }: Props) {
             {...register('brideNid')}
           />
           <div className="sm:col-span-2">
-            <Input
+            <PhoneInput
               label="Phone number"
               required
-              placeholder="+250 7XX XXX XXX"
               error={errors.bridePhone?.message}
               {...register('bridePhone')}
             />
@@ -125,11 +132,9 @@ export function Step1Couple({ initialData, onNext }: Props) {
       {/* SMS notifications */}
       <div>
         <SectionLabel color="rose">SMS Notifications</SectionLabel>
-        <Input
+        <PhoneInput
           label="Phone number for SMS updates"
           required
-          leftIcon={<MessageSquare className="w-4 h-4" />}
-          placeholder="+250 7XX XXX XXX"
           hint="Your Application ID and all status updates will be sent via SMS to this number"
           error={errors.notificationPhone?.message}
           {...register('notificationPhone')}

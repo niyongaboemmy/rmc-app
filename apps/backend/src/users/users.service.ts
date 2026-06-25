@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindManyOptions } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -104,13 +104,33 @@ export class UsersService {
   async updateProfile(id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
+
+    // Email uniqueness check
+    if (dto.email && dto.email.toLowerCase() !== user.email.toLowerCase()) {
+      const existing = await this.userRepo.findOne({ where: { email: dto.email.toLowerCase() } });
+      if (existing) throw new ConflictException('Email already in use by another account');
+    }
+
+    // Phone normalization + uniqueness check
+    let normalizedPhone: string | undefined;
+    if (dto.phone) {
+      normalizedPhone = dto.phone.startsWith('07')
+        ? `+250${dto.phone.slice(1)}`
+        : dto.phone;
+      if (normalizedPhone !== user.phone) {
+        const existing = await this.userRepo.findOne({ where: { phone: normalizedPhone } });
+        if (existing) throw new ConflictException('Phone number already in use by another account');
+      }
+    }
+
     Object.assign(user, {
       ...(dto.firstName && { firstName: dto.firstName }),
       ...(dto.lastName && { lastName: dto.lastName }),
       ...(dto.dateOfBirth && { dateOfBirth: new Date(dto.dateOfBirth) }),
       ...(dto.gender && { gender: dto.gender }),
       ...(dto.status && { status: dto.status }),
-      // Allow explicit null to clear the photo
+      ...(dto.email && { email: dto.email.toLowerCase(), isEmailVerified: false }),
+      ...(normalizedPhone && { phone: normalizedPhone, isPhoneVerified: false }),
       ...(dto.profilePhotoUrl !== undefined && { profilePhotoUrl: dto.profilePhotoUrl || null }),
     });
     return this.userRepo.save(user);

@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { TwoFactorSection } from '@/components/auth/TwoFactorSection';
 import { AvatarUploader } from '@/components/ui/AvatarUploader';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -41,10 +42,14 @@ interface ProfileData {
 // ── Schema ─────────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  firstName:  z.string().min(1, 'First name is required'),
-  lastName:   z.string().min(1, 'Last name is required'),
+  firstName:   z.string().min(1, 'First name is required'),
+  lastName:    z.string().min(1, 'Last name is required'),
+  email:       z.string().email('Enter a valid email address').min(1, 'Email is required'),
+  phone:       z.string()
+    .min(1, 'Phone is required')
+    .regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX'),
   dateOfBirth: z.string().optional(),
-  gender: z.enum(['male', 'female', '']).optional(),
+  gender:      z.enum(['male', 'female', '']).optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -118,6 +123,8 @@ function ProfileContent() {
       reset({
         firstName:   p.firstName,
         lastName:    p.lastName,
+        email:       p.email,
+        phone:       toLocalPhone(p.phone),
         dateOfBirth: p.dateOfBirth ? p.dateOfBirth.split('T')[0] : '',
         gender:      (p.gender as FormData['gender']) ?? '',
       });
@@ -135,9 +142,10 @@ function ProfileContent() {
       const payload: Record<string, unknown> = {
         firstName:  data.firstName,
         lastName:   data.lastName,
+        email:      data.email,
+        phone:      toE164(data.phone),
         ...(data.dateOfBirth ? { dateOfBirth: data.dateOfBirth } : {}),
         ...(data.gender       ? { gender: data.gender }           : {}),
-        // Include pending photo if one was uploaded since last save
         ...(pendingPhotoRef.current !== null ? { profilePhotoUrl: pendingPhotoRef.current } : {}),
       };
       await apiClient.put('/auth/profile', payload);
@@ -246,6 +254,22 @@ function ProfileContent() {
                   />
                 </div>
 
+                {/* Email + Phone */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    autoComplete="email"
+                    error={errors.email?.message}
+                    {...register('email')}
+                  />
+                  <PhoneInput
+                    label="Phone Number"
+                    error={errors.phone?.message}
+                    {...register('phone')}
+                  />
+                </div>
+
                 {/* DOB + Gender */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
@@ -261,12 +285,6 @@ function ProfileContent() {
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                   </Select>
-                </div>
-
-                {/* Read-only contact fields */}
-                <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ReadOnlyField label="Email address" value={profile?.email ?? ''} />
-                  <ReadOnlyField label="Phone number" value={profile?.phone ?? ''} />
                 </div>
 
                 {/* Read-only account info */}

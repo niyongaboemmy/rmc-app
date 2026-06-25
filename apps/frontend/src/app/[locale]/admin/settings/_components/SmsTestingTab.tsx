@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { settingsApi, TestSmsResult, SmsRecipientDetail } from '@/lib/settingsApi';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ export function SmsTestingTab({ gatewayActive }: Props) {
     setSending(true);
     setResult(null);
     try {
-      const res = await settingsApi.testSms(phone.trim(), message.trim());
+      const res = await settingsApi.testSms(toE164(phone.trim()), message.trim());
       setResult(res);
       if (res.success) {
         toast.success('Test SMS sent successfully!');
@@ -69,13 +69,11 @@ export function SmsTestingTab({ gatewayActive }: Props) {
         </div>
 
         <div className="px-6 py-5 space-y-4">
-          <Input
+          <PhoneInput
             label="Recipient Phone Number"
             required
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="0788123456"
-            hint="Rwanda format: 07xxxxxxxx / +2507xxxxxxxx / 2507xxxxxxxx"
           />
 
           <div>

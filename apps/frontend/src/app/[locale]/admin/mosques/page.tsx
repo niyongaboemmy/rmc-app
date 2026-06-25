@@ -17,6 +17,7 @@ import {
   Landmark, Plus, Edit2, Trash2, Search, MapPin, Users,
   Phone, RotateCcw,
 } from 'lucide-react';
+import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 
 interface Province { id: string; name: string; code: string; }
 interface District { id: string; name: string; provinceId: string; }
@@ -143,11 +144,11 @@ function MosquesManager() {
       sectorId: m.sectorId ?? '',
       capacity: m.capacity,
       foundingYear: m.foundingYear,
-      phone: m.phone ?? '',
+      phone: toLocalPhone(m.phone),
       email: m.email ?? '',
       fridayPrayerTime: m.fridayPrayerTime ?? '',
       imamName: m.imamName ?? '',
-      imamPhone: m.imamPhone ?? '',
+      imamPhone: toLocalPhone(m.imamPhone),
       imamPhoto: m.imamPhoto ?? '',
     });
     setIsModalOpen(true);
@@ -156,12 +157,17 @@ function MosquesManager() {
   const handleSave = useCallback(async () => {
     if (!form.name.trim()) { error('Mosque name is required.'); return; }
     setSaving(true);
+    const normalized = {
+      ...form,
+      phone: form.phone ? toE164(form.phone) : form.phone,
+      imamPhone: form.imamPhone ? toE164(form.imamPhone) : form.imamPhone,
+    };
     try {
       if (editing) {
-        await mosqueApi.update(editing.id, form);
+        await mosqueApi.update(editing.id, normalized);
         success('Mosque updated.');
       } else {
-        await mosqueApi.create(form);
+        await mosqueApi.create(normalized);
         success('Mosque added.');
       }
       setIsModalOpen(false);
@@ -416,14 +422,14 @@ function MosquesManager() {
                 </div>
               </Field>
               <Field label="Imam Phone">
-                <input type="tel" value={form.imamPhone ?? ''} onChange={(e) => set('imamPhone', e.target.value)} className={inputCls} placeholder="+250…" />
+                <PhoneInput value={form.imamPhone ?? ''} onChange={(e) => set('imamPhone', e.target.value)} />
               </Field>
               <Field label="Imam Photo">
                 <ImageUploadField value={form.imamPhoto ?? ''} onChange={(url) => set('imamPhoto', url)} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Phone">
-                  <input type="tel" value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} className={inputCls} placeholder="+250…" />
+                  <PhoneInput value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
                 </Field>
                 <Field label="Email">
                   <input type="email" value={form.email ?? ''} onChange={(e) => set('email', e.target.value)} className={inputCls} placeholder="info@mosque.rw" />

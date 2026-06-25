@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
 import { Button } from '@/components/ui/Button';
 import { WizardFormData } from '../MarriageWizard';
 
@@ -32,7 +33,7 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
     witness2Name: z.string().trim().min(3, 'Min. 3 characters'),
     waliName: z.string().trim().min(3, 'Min. 3 characters').optional().or(z.literal('')),
     waliNid: nid.optional().or(z.literal('')),
-    waliPhone: z.string().optional(),
+    waliPhone: z.string().regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX').optional().or(z.literal('')),
   }).superRefine((d, ctx) => {
     if (d.witness1Nid === d.witness2Nid) {
       ctx.addIssue({ code: 'custom', path: ['witness2Nid'], message: 'Witnesses cannot have the same NID' });
@@ -62,8 +63,11 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
 
   const nidProps = { inputMode: 'numeric' as const, maxLength: 16, placeholder: '16-digit National ID' };
 
+  const handleNext = (data: FormData) =>
+    onNext({ ...data, waliPhone: data.waliPhone ? toE164(data.waliPhone) : undefined });
+
   return (
-    <form onSubmit={handleSubmit(onNext)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleNext)} className="space-y-6">
       {/* Islamic context note */}
       <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-xs text-gray-500">
         Both witnesses (Shahidain) must be adult Muslim males. Their identities are verified during the ceremony.
@@ -105,9 +109,9 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
             {...nidProps}
             {...register('waliNid')}
           />
-          <Input
+          <PhoneInput
             label="Phone number"
-            placeholder="+250 7XX XXX XXX"
+            error={errors.waliPhone?.message}
             {...register('waliPhone')}
           />
         </div>

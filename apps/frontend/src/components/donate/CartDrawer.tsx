@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { X, Trash2, Lock, Repeat, ShoppingBag, ArrowRight, Sparkles } from 'lucide-react';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { METHODS, money, type CartItem } from './donateData';
 
 export function CartDrawer({
@@ -217,15 +218,11 @@ export function CartDrawer({
                 {/* Mobile Money number — required to send the payment request */}
                 {method === 'momo' && (
                   <div className="mt-3">
-                    <input
-                      type="tel"
-                      inputMode="tel"
+                    <PhoneInput
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder={t('cart.phonePlaceholder')}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-[13.5px] text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                      hint={t('cart.phoneHint')}
                     />
-                    <p className="mt-1.5 text-[11px] text-gray-400">{t('cart.phoneHint')}</p>
                   </div>
                 )}
               </div>

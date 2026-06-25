@@ -21,6 +21,7 @@ import { CategoryGrid } from './CategoryGrid';
 import { ZakatCalculator } from './ZakatCalculator';
 import { ImpactBars } from './ImpactBars';
 import { CartDrawer } from './CartDrawer';
+import { toE164 } from '@/components/ui/PhoneInput';
 import { AmountPicker } from './AmountPicker';
 import { SuccessState, type DonationSummary } from './SuccessState';
 
@@ -96,7 +97,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
             paymentMethod: method,
             donorName: anonymous ? undefined : name.trim() || undefined,
             donorEmail: email.includes('@') ? email.trim() : undefined,
-            donorPhone: method === 'momo' ? phone.trim() : undefined,
+            donorPhone: method === 'momo' ? toE164(phone.trim()) : undefined,
             isAnonymous: anonymous,
             message: buildDonationMessage({ niyyah, category: it.category, fund: it.fundKey }),
           }),
