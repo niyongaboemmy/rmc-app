@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -98,6 +99,7 @@ type Tab = 'info' | 'security';
 function ProfileContent() {
   const { user, refreshUser } = useAuth();
   const { locale }            = useParams<{ locale: string }>();
+  const router                = useRouter();
 
   const [activeTab, setActiveTab]     = useState<Tab>('info');
   const [profile, setProfile]         = useState<ProfileData | null>(null);
@@ -182,6 +184,15 @@ function ProfileContent() {
     <div className="min-h-screen bg-gray-50">
       {/* ── Hero / header ── */}
       <div className="bg-gradient-to-br from-rmc-green to-rmc-green-dark pt-10 pb-20 px-4">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-1.5 text-green-200 hover:text-white text-sm font-medium mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+        </div>
         <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-5">
           <AvatarUploader
             currentUrl={profile?.profilePhotoUrl}
@@ -315,6 +326,13 @@ function ProfileContent() {
           {/* ── Security tab ── */}
           {activeTab === 'security' && (
             <div className="p-6 space-y-4">
+              <button
+                onClick={() => setActiveTab('info')}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors -mt-1"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Profile
+              </button>
               {/* Change password */}
               <div className="rounded-xl border border-gray-100 p-4 flex items-start justify-between gap-4">
                 <div>
