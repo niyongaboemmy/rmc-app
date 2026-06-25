@@ -10,9 +10,9 @@ import {
   ArrowRight,
   Newspaper,
   Bell,
-  BellRing,
   Images,
 } from 'lucide-react';
+import { InlineSubscribe } from '@/components/subscribe/InlineSubscribe';
 import {
   MONTHS,
   badgeClass,
@@ -470,35 +470,30 @@ export function ActivitiesEventsSection() {
 
             {/* Subscribe CTA — matches the home-page system */}
             <div
-              className="mt-4 flex items-center gap-4 p-4 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/50 animate-fade-up"
+              className="mt-4 p-4 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/50 animate-fade-up"
               style={{ animationDelay: '620ms' }}
             >
-              <span className="w-10 h-10 shrink-0 rounded-xl bg-white flex items-center justify-center ring-1 ring-rmc-green/15 shadow-sm">
-                <Bell className="w-4 h-4 text-rmc-green" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 leading-tight">
-                  {pick({ en: 'Never miss an event', rw: 'Ntuzigere usiba igikorwa', ar: 'لا تفوّت أي فعالية' }, locale)}
-                </p>
-                <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
-                  {pick(
-                    {
-                      en: 'Get notified about upcoming RMC events near you.',
-                      rw: 'Menyeshwa ibikorwa bya RMC bigiye kuba hafi yawe.',
-                      ar: 'احصل على إشعارات بفعاليات المجتمع الإسلامي الرواندي القادمة بالقرب منك.',
-                    },
-                    locale,
-                  )}
-                </p>
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 shrink-0 rounded-xl bg-white flex items-center justify-center ring-1 ring-rmc-green/15 shadow-sm">
+                  <Bell className="w-4 h-4 text-rmc-green" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900 leading-tight">
+                    {pick({ en: 'Never miss an event', rw: 'Ntuzigere usiba igikorwa', ar: 'لا تفوّت أي فعالية' }, locale)}
+                  </p>
+                  <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
+                    {pick(
+                      {
+                        en: 'Get notified about upcoming RMC events near you.',
+                        rw: 'Menyeshwa ibikorwa bya RMC bigiye kuba hafi yawe.',
+                        ar: 'احصل على إشعارات بفعاليات المجتمع الإسلامي الرواندي القادمة بالقرب منك.',
+                      },
+                      locale,
+                    )}
+                  </p>
+                </div>
               </div>
-              <Link
-                href={`/${locale}/contact`}
-                className="group inline-flex items-center gap-1.5 px-4 py-2 shrink-0 bg-rmc-green text-white text-xs font-bold rounded-full shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 motion-safe:hover:scale-105 transition-all duration-300"
-              >
-                <BellRing className="w-3.5 h-3.5 shrink-0" />
-                {pick({ en: 'Subscribe', rw: 'Iyandikishe', ar: 'اشترك' }, locale)}
-                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
+              <InlineSubscribe source="events-home" className="mt-3.5" />
             </div>
           </div>
         </div>

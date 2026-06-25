@@ -285,11 +285,19 @@ function SocialMediaManager() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Image URL <span className="text-gray-400 font-normal">(optional)</span></label>
-                <input type="url" value={post.image ?? ''} placeholder="https://…"
-                  onChange={(e) => setPostField(idx, 'image', e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Post link <span className="text-gray-400 font-normal">(optional — opens on click)</span></label>
+                  <input type="url" value={post.url ?? ''} placeholder="https://x.com/islamrwanda/status/…"
+                    onChange={(e) => setPostField(idx, 'url', e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Image URL <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input type="url" value={post.image ?? ''} placeholder="https://…"
+                    onChange={(e) => setPostField(idx, 'image', e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                </div>
               </div>
             </div>
           ))}
@@ -308,6 +316,12 @@ function SocialMediaManager() {
             <Plus className="w-3.5 h-3.5" /> Add Channel
           </button>
         </div>
+
+        <p className="text-xs text-gray-500 bg-sky-50/60 border border-sky-100 rounded-lg px-3 py-2">
+          The <span className="font-semibold">YouTube</span> channel link powers the homepage&apos;s
+          featured “Latest video”. Paste the channel URL (e.g. <span className="font-mono">youtube.com/@yourchannel</span>),
+          a <span className="font-mono">/channel/UC…</span> link, or the raw <span className="font-mono">UC…</span> id.
+        </p>
 
         {form.channels.length === 0 && (
           <p className="text-sm text-gray-300 text-center py-8">No channels yet. Add one to get started.</p>
@@ -336,7 +350,7 @@ function SocialMediaManager() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Followers</label>
-                  <input type="text" value={channel.followers}
+                  <input type="text" value={channel.followers} placeholder="auto (live)"
                     onChange={(e) => setChannelField(idx, 'followers', e.target.value)}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
                 </div>

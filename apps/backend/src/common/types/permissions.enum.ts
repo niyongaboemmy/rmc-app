@@ -84,6 +84,10 @@ export enum Permission {
   // ── Payment Settings ──────────────────────────────────────────────
   PAYMENT_SETTINGS_VIEW = 'payment_settings:view',
   PAYMENT_SETTINGS_MANAGE = 'payment_settings:manage',
+
+  // ── Subscribers / Newsletter ──────────────────────────────────────
+  SUBSCRIBERS_VIEW = 'subscribers:view',
+  SUBSCRIBERS_MANAGE = 'subscribers:manage',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);

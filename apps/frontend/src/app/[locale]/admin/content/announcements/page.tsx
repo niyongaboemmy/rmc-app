@@ -15,6 +15,7 @@ import {
   type Announcement, type AnnouncementAttachment, type AnnouncementI18n, type CreateAnnouncementDto,
 } from '@/lib/announcementsApi';
 import { fileUrl } from '@/lib/api';
+import { NotifySubscribersButton } from '@/components/admin/NotifySubscribersButton';
 import {
   Bell, ArrowLeft, Plus, Edit2, Trash2, Save,
   Upload, X, Eye, Paperclip, AlertCircle,
@@ -375,6 +376,13 @@ function AnnouncementsManager() {
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
+                    {item.isPublished && (
+                      <NotifySubscribersButton
+                        compact
+                        subject={item.titleI18n?.en || item.title}
+                        html={`<p><strong>${item.titleI18n?.en || item.title}</strong></p><p>${item.contentI18n?.en || item.content || ''}</p>`}
+                      />
+                    )}
                   </div>
                   <span className="text-[10px] text-gray-300">{toDateInput(item.publishAt)}</span>
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import {
   Twitter,
   Instagram,
   Youtube,
+  ExternalLink,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
@@ -22,19 +23,22 @@ import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/Reveal';
 import { MosqueFinder } from '@/components/contact/MosqueFinder';
 import { submitContactMessage } from '@/lib/contactApi';
+import {
+  ContentKeys,
+  SOCIAL_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  type SocialChannel,
+} from '@/lib/content-api';
 
-const socialLinks = [
-  { Icon: Facebook, label: 'Facebook', followers: '24.5K', href: '#', bg: 'bg-blue-600' },
-  { Icon: Twitter, label: 'Twitter / X', followers: '12.8K', href: '#', bg: 'bg-gray-900' },
-  {
-    Icon: Instagram,
-    label: 'Instagram',
-    followers: '18.2K',
-    href: '#',
-    bg: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400',
-  },
-  { Icon: Youtube, label: 'YouTube', followers: '8.4K', href: '#', bg: 'bg-red-600' },
-];
+// Channel key → icon/background, mirroring the home Social Media section so both
+// surfaces show the same platforms and links (sourced from the social content store).
+const CHANNEL_CONFIG: Record<SocialChannel['key'], { Icon: typeof Facebook; bg: string }> = {
+  facebook: { Icon: Facebook, bg: 'bg-blue-600' },
+  twitter: { Icon: Twitter, bg: 'bg-gray-900' },
+  instagram: { Icon: Instagram, bg: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400' },
+  youtube: { Icon: Youtube, bg: 'bg-red-600' },
+};
 
 const buildContactSchema = (t: (key: string) => string) =>
   z.object({
@@ -50,6 +54,19 @@ export default function ContactPage() {
   const t = useTranslations('contact');
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
+
+  // Same social channels (and links) the home Social Media section shows — admin
+  // managed in Content → Social Media, so the two surfaces stay in sync.
+  const [channels, setChannels] = useState<SocialChannel[]>(SOCIAL_DEFAULT.channels);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, unknown>>(ContentKeys.social)
+      .then((data) => {
+        if (active && data) setChannels(mergeContent(SOCIAL_DEFAULT, data).channels);
+      })
+      .catch(() => {/* keep defaults */});
+    return () => { active = false; };
+  }, []);
 
   const {
     register,
@@ -137,18 +154,23 @@ export default function ContactPage() {
                   <div className="mt-8 pt-6 border-t border-rmc-green/10">
                     <p className="text-sm font-semibold text-gray-900">{t('socialTitle')}</p>
                     <div className="mt-3 flex flex-wrap gap-2.5">
-                      {socialLinks.map(({ Icon, label, href, bg }) => (
-                        <a
-                          key={label}
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={label}
-                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${bg} text-white shadow-sm transition-transform duration-200 hover:scale-110`}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </a>
-                      ))}
+                      {channels.map((channel) => {
+                        const cfg = CHANNEL_CONFIG[channel.key];
+                        const Icon = cfg?.Icon ?? ExternalLink;
+                        const bg = cfg?.bg ?? 'bg-gray-500';
+                        return (
+                          <a
+                            key={channel.key}
+                            href={channel.href || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={channel.label}
+                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${bg} text-white shadow-sm transition-transform duration-200 hover:scale-110`}
+                          >
+                            <Icon className="h-5 w-5" />
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

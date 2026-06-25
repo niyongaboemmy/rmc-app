@@ -80,7 +80,8 @@
     "profile": "Umwirondoro Wanjye",
     "changePassword": "Hindura Ijambo ry'Ibanga",
     "admin": "Ubuyobozi",
-    "schools": "Amashuri"
+    "schools": "Amashuri",
+    "projects": "Imishinga"
   },
   "home": {
     "hero": {
@@ -750,6 +751,7 @@
       "finance": "Imari",
       "inbox": "Ubutumwa",
       "content": "Gucunga Ibikubiye",
+      "subscribers": "Abiyandikishije",
       "users": "Abakoresha",
       "roles": "Inshingano",
       "reports": "Raporo",
@@ -894,7 +896,14 @@
         "raisedNote": "{amount} yakusanyijwe mu mpano zarangiye",
         "statusActive": "Irakora",
         "statusPaused": "Yahagaritswe",
-        "statusClosed": "Yafunzwe"
+        "statusClosed": "Yafunzwe",
+        "delete": "Siba",
+        "deleteConfirmTitle": "Siba porogaramu",
+        "deleteConfirmMessage": "Siba “{title}”? Ibi ntibishobora gusubizwa inyuma.",
+        "restore": "Garura",
+        "restoring": "Biragarurwa…",
+        "deletedSectionTitle": "Byasibwe vuba",
+        "deletedEmpty": "Nta porogaramu yasibwe"
       },
       "editModal": {
         "title": "Hindura impano",
@@ -920,6 +929,9 @@
         "fundType": "Ubwoko bw'ikigega",
         "category": "Icyiciro",
         "categoryHint": "Ihuza iyi gahunda n'icyiciro cyo ku rupapuro rw'impano.",
+        "subFund": "Agace k'ingoboka",
+        "subFundHint": "Agace k'ingoboka k'iki cyiciro iyi gahunda irimo.",
+        "subFundPlaceholder": "Hitamo agace k'ingoboka…",
         "slug": "Slug",
         "slugHint": "Ihuza n'igikorwa rusange ku nkunga itaha (urugero e1).",
         "heroImage": "Ifoto nkuru",
@@ -1001,9 +1013,12 @@
         "province": "Intara",
         "district": "Akarere / aho riherereye",
         "lat": "Latitude",
-        "lng": "Longitude"
+        "lng": "Longitude",
+        "location": "Aho riherereye"
       },
-      "gpsHint": "Ibipimo bishyira akamenyetso k'ishuri ku ikarita. Inama: kanda iburyo ku Google Maps ukoporore lat/long.",
+      "findMyLocation": "Shaka aho ndi",
+      "locating": "Turimo gushaka aho uri…",
+      "gpsHint": "Hitamo ahantu ku ikarita, koresha «Shaka aho ndi», cyangwa wandike ibipimo hano.",
       "required": "Birakenewe",
       "cancel": "Reka",
       "save": "Bika impinduka",
@@ -1052,6 +1067,7 @@
     "noResults": "Nta nkuru zabonetse"
   },
   "donate": {
+    "programsLabel": "Gahunda",
     "sectionHeading": "Hitamo aho impano yawe igana",
     "sectionSub": "Reba buri cyiciro hano hasi maze wongereho impamvu iyo ari yo yose ku mpano yawe.",
     "header": {
@@ -1080,7 +1096,7 @@
       "addToGift": "ku mpano"
     },
     "card": {
-      "addToGift": "Ongera ku mpano",
+      "addToGift": "Tanga",
       "addAgain": "Ongera nanone",
       "added": "Byongewe",
       "add": "Ongera",
@@ -1520,8 +1536,28 @@
       }
     }
   },
+  "projects": {
+    "title": "Imishinga Yacu",
+    "desc": "Imishinga n'ibikorwa by'umuryango w'Abayisilamu mu Rwanda biri hafi kugaragazwa.",
+    "badge": "Bigiye Kuza",
+    "inProgress": "Birimo Gukorwa",
+    "etaLabel": "Igihe Giteganyijwe",
+    "eta": "Q4 2026",
+    "etaDesc": "Itsinda ryacu ririmo gukora iyi paji. Garuka vuba kureba ibishya.",
+    "whatToExpect": "Icyo Witeze",
+    "expectP1": "Iyi paji nimara gushyirwaho, uzashobora kureba imishinga ya RMC iri gukorwa n'iyarangiye — kubaka imisigiti, amashuri, n'iterambere ry'abaturage — hamwe n'amafoto, amakuru y'aho igeze, n'inkuru z'ingaruka.",
+    "expectP2": "Mu gihe utegereje, twandikire kandi itsinda ryacu rizishimira kukubwira byinshi ku mishinga iriho.",
+    "contactUs": "Twandikire",
+    "backToHome": "Subira Ahabanza"
+  },
   "footer": {
     "tagline": "Gusakaza urumuri rw'Isilamu binyuze mu burezi, umuryango, n'ubufasha mu Rwanda hose.",
+    "newsletterTitle": "Komeza umenye amakuru",
+    "newsletterText": "Akira amatangazo n'amakuru aheruka kuri imeyili.",
+    "newsletterPlaceholder": "Imeyili yawe",
+    "newsletterButton": "Iyandikishe",
+    "newsletterSuccess": "Wiyandikishije",
+    "newsletterError": "Ntibyashobotse kwiyandikisha. Ongera ugerageze.",
     "quickLinks": "Aho Ugana Vuba",
     "services": "Serivisi",
     "contact": "Twandikire",
@@ -1530,6 +1566,7 @@
       "about": "Ibyerekeye RMC",
       "services": "Serivisi Zacu",
       "schools": "Shaka Amashuri",
+      "projects": "Imishinga",
       "announcements": "Amatangazo",
       "blog": "Amakuru",
       "gallery": "Inzira za Amashusho",

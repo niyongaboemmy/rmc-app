@@ -8,7 +8,14 @@ import { fundedPercent, formatMoney, type PublicCampaignLike } from './eventsBri
 import { toneChip, money, type CartItem } from './donateData';
 import { resolveIcon } from './categoryIcons';
 import type { PublicCategory } from '@/lib/donationCategoriesApi';
+import type { PublicCampaign } from '@/lib/donationsApi';
+import { fileUrl } from '@/lib/api';
 import { AmountPicker } from './AmountPicker';
+
+/** Resolve a program hero image (file-server key, or a pass-through URL/path). */
+function resolveImg(v: string): string {
+  return /^https?:\/\//.test(v) || v.startsWith('/') ? v : fileUrl(v);
+}
 
 type NewItem = Omit<CartItem, 'id'>;
 
@@ -37,12 +44,14 @@ export function CategoryGrid({
   categories,
   currency,
   liveBySlug,
+  campaigns,
   onAdd,
   initialEvent,
 }: {
   categories: PublicCategory[];
   currency: string;
   liveBySlug: Map<string, PublicCampaignLike>;
+  campaigns: PublicCampaign[];
   onAdd: (item: NewItem) => void;
   initialEvent?: string | null;
 }) {
@@ -69,6 +78,66 @@ export function CategoryGrid({
     },
     [onAdd],
   );
+
+  // Group programs (campaigns) by the sub-fund they belong to; programs without a
+  // sub-fund fall back to their category (fundType key).
+  const programsBySubFundId = new Map<string, PublicCampaign[]>();
+  const programsByCatKey = new Map<string, PublicCampaign[]>();
+  for (const p of campaigns) {
+    const bucket = p.subFundId ? programsBySubFundId : programsByCatKey;
+    const k = p.subFundId ?? p.fundType;
+    const list = bucket.get(k);
+    if (list) list.push(p); else bucket.set(k, [p]);
+  }
+
+  const programToCause = (p: PublicCampaign): Cause => {
+    const pct = fundedPercent(p.receivedAmount, p.targetAmount);
+    return {
+      fundKey: p.slug,
+      label: p.title,
+      long: p.description,
+      examples: [],
+      impact: '',
+      image: p.heroImageUrl ? resolveImg(p.heroImageUrl) : '',
+      campaignSlug: p.slug,
+      funding: { raised: p.receivedAmount, goal: p.targetAmount, pct, funded: pct >= 100 },
+    };
+  };
+
+  // A program records its own category in `fundType`; catTitle is display-only.
+  const handleAddProgram = (p: PublicCampaign, amount: number, catTitle?: string) => {
+    onAdd({ category: p.fundType, categoryTitle: catTitle ?? p.fundType, fundKey: p.slug, label: p.title, campaignSlug: p.slug, amount });
+    setAdded((prev) => ({ ...prev, [`prog:${p.slug}`]: true }));
+    setActiveKey(null);
+  };
+
+  const renderProgramCards = (progs: PublicCampaign[], catTitle?: string) => (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {progs.map((p) => {
+        const key = `prog:${p.slug}`;
+        return (
+          <CauseCard
+            key={key}
+            cause={programToCause(p)}
+            currency={currency}
+            active={activeKey === key}
+            wasAdded={!!added[key]}
+            onToggle={() => toggle(key)}
+            onAdd={(amount) => handleAddProgram(p, amount, catTitle)}
+          />
+        );
+      })}
+    </div>
+  );
+
+  // Programs the category/sub-fund grouping below won't place anywhere (their
+  // category isn't shown, or they're category-level under "general") — surfaced
+  // in a fallback section so no active program is ever hidden from donors.
+  const shownCatKeys = new Set(categories.map((c) => c.key));
+  const shownSubFundIds = new Set(categories.flatMap((c) => c.subfunds.map((s) => s.id)));
+  const isPlaced = (p: PublicCampaign) =>
+    p.subFundId ? shownSubFundIds.has(p.subFundId) : shownCatKeys.has(p.fundType);
+  const unplacedPrograms = campaigns.filter((p) => !isPlaced(p));
 
   return (
     <div className="space-y-8">
@@ -138,9 +207,39 @@ export function CategoryGrid({
                 );
               })}
             </div>
+
+            {/* Programs grouped under their sub-fund, then category-level programs. */}
+            {cat.subfunds.map((sf) => {
+              const progs = programsBySubFundId.get(sf.id);
+              if (!progs?.length) return null;
+              return (
+                <div key={`progs-${sf.id}`} className="mt-5">
+                  <h4 className="mb-2.5 text-[12px] font-bold uppercase tracking-wide text-gray-400">
+                    {t('programsLabel')} · {sf.label}
+                  </h4>
+                  {renderProgramCards(progs, catTitle)}
+                </div>
+              );
+            })}
+            {(programsByCatKey.get(cat.key)?.length ?? 0) > 0 && (
+              <div className="mt-5">
+                <h4 className="mb-2.5 text-[12px] font-bold uppercase tracking-wide text-gray-400">
+                  {t('programsLabel')}
+                </h4>
+                {renderProgramCards(programsByCatKey.get(cat.key)!, catTitle)}
+              </div>
+            )}
           </section>
         );
       })}
+
+      {/* Programs not tied to a shown category/sub-fund — still donor-visible. */}
+      {unplacedPrograms.length > 0 && (
+        <section>
+          <h3 className="mb-4 text-lg font-bold text-gray-900">{t('programsLabel')}</h3>
+          {renderProgramCards(unplacedPrograms)}
+        </section>
+      )}
     </div>
   );
 }
@@ -263,7 +362,7 @@ function CauseCard({
               className="flex w-full items-center justify-center gap-1.5 rounded-full border border-rmc-green/30 px-4 py-2 text-[13px] font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green hover:text-white"
             >
               <Plus className="h-3.5 w-3.5" />
-              {wasAdded ? t('card.addAgain') : t('card.addToGift')}
+              {t('card.addToGift')}
             </button>
           )}
         </div>

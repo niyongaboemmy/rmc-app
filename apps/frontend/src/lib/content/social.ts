@@ -46,50 +46,50 @@ export const SOCIAL_DEFAULT: SocialContent = {
   ),
   channels: [
     { key: 'facebook', label: 'Facebook', followers: '24.5K', href: '#' },
-    { key: 'twitter', label: 'Twitter / X', followers: '12.8K', href: '#' },
+    { key: 'twitter', label: 'X / Twitter', followers: '', href: 'https://x.com/islamrwanda' },
     { key: 'instagram', label: 'Instagram', followers: '18.2K', href: '#' },
-    { key: 'youtube', label: 'YouTube', followers: '8.4K', href: '#' },
+    { key: 'youtube', label: 'YouTube', followers: '', href: 'https://www.youtube.com/@islamrwanda6069' },
   ],
+  // Curated X / Twitter highlights (admin-editable in Content → Social Media).
+  // Shown in the home "Latest on X" column when the live feed is unavailable —
+  // seeded with real @islamrwanda posts. Replace/add via the admin editor.
   posts: [
     {
-      platform: 'facebook',
+      platform: 'twitter',
       handle: 'Rwanda Muslim Community',
       content: tri(
-        'Alhamdulillah! Our annual Eid celebration brought together over 10,000 Muslims at Amahoro Stadium. May Allah accept our prayers and strengthen our community. 🤲 #EidMubarak #RwandaMuslims',
-        "Alhamdulillah! Umunsi mukuru wa Eid wa buri mwaka wahuje Abayisilamu barenga 10,000 kuri sitade Amahoro. Allah yakire amasengesho yacu kandi akomeze umuryango wacu. 🤲 #EidMubarak #RwandaMuslims",
-        'الحمد لله! جمع احتفالنا السنوي بعيد الفطر أكثر من 10,000 مسلم في ملعب أماهورو. تقبل الله صلواتنا وقوّى مجتمعنا. 🤲 #EidMubarak #RwandaMuslims',
+        `Ubutumwa bwa Nyakubahwa Mufti w'uRwanda busoza Igisibo gitagatifu cy'Ukwezi kwa #Ramadhan1446_2025`,
       ),
-      likes: '1.2K',
-      comments: '234',
-      date: '2h ago',
+      likes: '160',
+      comments: '1',
+      date: 'Mar 2025',
       image:
-        'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=600&auto=format&fit=crop',
+        'https://pbs.twimg.com/ext_tw_video_thumb/1906115841759854592/pu/img/bTXK8oUaoKF3TdL3.jpg',
+      url: 'https://twitter.com/islamrwanda/status/1906116453440385383',
     },
     {
       platform: 'twitter',
-      handle: '@RMC_Rwanda',
+      handle: 'Rwanda Muslim Community',
       content: tri(
-        "REMINDER 📢 Scholarship applications for the 2025/2026 academic year close on June 30th. Apply now at our website. All Muslim students from Rwanda are eligible. Don't miss your chance! #RMCScholarship",
-        "URWIBUTSO 📢 Gusaba buruse y'umwaka w'amashuri wa 2025/2026 bifunga ku ya 30 Kamena. Saba ubu kuri urubuga rwacu. Abanyeshuri bose b'Abayisilamu bo mu Rwanda barabyemerewe. Ntukabure amahirwe yawe! #RMCScholarship",
-        'تذكير 📢 يُغلق التقديم على المنح الدراسية للعام الدراسي 2025/2026 في 30 يونيو. قدّم الآن عبر موقعنا. جميع الطلاب المسلمين من رواندا مؤهلون. لا تفوّت فرصتك! #RMCScholarship',
+        `The Leadership of #RMC wishes to inform all Muslims and general public that Wednesday 10th April is #EidAlFitr2024 festive. Eid prayers at National level will be held at Kigali Pele Stadium from 6:30am; His Eminence the @MuftiRwanda Sheikh Salim HITIMANA will lead the prayers.`,
       ),
-      likes: '847',
-      comments: '156',
-      date: '5h ago',
+      likes: '159',
+      comments: '4',
+      date: 'Apr 2024',
+      image: 'https://pbs.twimg.com/media/GKqvMeeWkAAvPyF.jpg',
+      url: 'https://twitter.com/islamrwanda/status/1777425647033335921',
     },
     {
-      platform: 'instagram',
-      handle: '@rmc_rwanda',
+      platform: 'twitter',
+      handle: 'Rwanda Muslim Community',
       content: tri(
-        'Our Ramadan food drive was a huge success! Together we distributed 5,000 food packages to families in need across all 5 provinces. JazakAllahu Khairan to all volunteers and donors! ❤️',
-        "Igikorwa cyacu cyo gutanga ibiribwa muri Ramadan cyagenze neza cyane! Hamwe twatanze ibyfunyiko 5,000 by'ibiribwa ku miryango ikennye mu ntara zose 5. JazakAllahu Khairan ku bakorerabushake bose n'abaterankunga! ❤️",
-        'حملتنا لتوزيع الطعام في رمضان حققت نجاحًا كبيرًا! وزّعنا معًا 5,000 طرد غذائي على الأسر المحتاجة في جميع المقاطعات الخمس. جزاكم الله خيرًا لكل المتطوعين والمتبرعين! ❤️',
+        `🚨Breaking:🚨\nThe Leadership of Rwanda Muslim Community has announced that Friday 21st April, 2023 is EID AL FITR (Festival of Fast-Breaking) day marking the end of the month of #Ramadhan. #EidMubarak2023`,
       ),
-      likes: '2.3K',
-      comments: '412',
-      date: '1d ago',
-      image:
-        'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=600&auto=format&fit=crop',
+      likes: '141',
+      comments: '5',
+      date: 'Apr 2023',
+      image: 'https://pbs.twimg.com/media/FuK02LsWIAEqQre.jpg',
+      url: 'https://twitter.com/islamrwanda/status/1649079264774332418',
     },
   ],
 };
@@ -127,6 +127,8 @@ export interface SocialFeed {
 
 const feedHttp = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
+  // Never let a slow feed stall the section — fall back to curated content.
+  timeout: 8000,
 });
 
 /** Fetch the cached live feed. Returns null on any error (caller keeps defaults). */

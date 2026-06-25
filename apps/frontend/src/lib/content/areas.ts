@@ -165,7 +165,9 @@ export const AREAS_DEFAULT: AreasContent = {
 </ul>
 
 <h3>Milestones</h3>
-<p>In 2023, RMC-affiliated schools recorded an average national exam pass rate of 94%, surpassing the national average of 81%. Our scholarship graduates are now serving as doctors, engineers, lawyers, and civil servants across Rwanda and beyond.</p>`,
+<p>In 2023, RMC-affiliated schools recorded an average national exam pass rate of 94%, surpassing the national average of 81%. Our scholarship graduates are now serving as doctors, engineers, lawyers, and civil servants across Rwanda and beyond.</p>
+
+<p><a href="/en/schools">Explore our schools →</a></p>`,
 
         `<h2>Guteza Imbere Ikirunga Gikurikira</h2>
 <p>Uburezi ni isoko y'umuryango w'Abayisilamu utera imbere. Inkingi y'Uburezi ya RMC igenzura amashuri, inzego zo kwiga Quran, porogaramu z'inkunga, n'amahugurwa y'abarimu — byose bigamije gutunga inzobere zifite inyigisho z'isi no gushingira ku mico ya Isilamu.</p>
@@ -178,7 +180,9 @@ export const AREAS_DEFAULT: AreasContent = {
   <li><strong>Porogaramu y'Inkunga:</strong> Inkunga y'imyaka yose ishingiye ku gikorwa kiboneye ku banyeshuri b'Abayisilamu bakunda mu bigeragezo by'igihugu, iriko amafaranga ya kaminuza, utuzu, n'inkunga y'amafaranga yo kubaho. Ubu ishyigikira abanyeshuri ba kaminuza 210.</li>
 </ul>
 
-<p>Mu 2023, amashuri yomezwa na RMC yanditse ijanisha ryo gutsinda ry'ubugeni bwa 94%, irenganye ijanisha ry'igihugu rya 81%.</p>`,
+<p>Mu 2023, amashuri yomezwa na RMC yanditse ijanisha ryo gutsinda ry'ubugeni bwa 94%, irenganye ijanisha ry'igihugu rya 81%.</p>
+
+<p><a href="/rw/schools">Reba amashuri yacu →</a></p>`,
 
         `<h2>تنشئة الجيل القادم</h2>
 <p>التعليم هو أساس مجتمع مسلم مزدهر. تُشغّل ركيزة التعليم في RMC شبكة من المدارس ومراكز حفظ القرآن الكريم وبرامج المنح الدراسية ومبادرات تدريب المعلمين — كلها مصمّمة لتخريج خريجين متكاملين متجذّرين في المعرفة الحديثة والقيم الإسلامية.</p>
@@ -192,7 +196,9 @@ export const AREAS_DEFAULT: AreasContent = {
   <li><strong>تدريب المعلمين:</strong> ورش عمل سنوية لمعلمي الدراسات الإسلامية لتحسين أساليب التدريس.</li>
 </ul>
 
-<p>في عام 2023، سجّلت المدارس المنتسبة إلى RMC معدل نجاح بلغ 94% في الامتحانات الوطنية، متجاوزةً المعدل الوطني البالغ 81%.</p>`,
+<p>في عام 2023، سجّلت المدارس المنتسبة إلى RMC معدل نجاح بلغ 94% في الامتحانات الوطنية، متجاوزةً المعدل الوطني البالغ 81%.</p>
+
+<p><a href="/ar/schools">استكشف مدارسنا ←</a></p>`,
       ),
     },
     {

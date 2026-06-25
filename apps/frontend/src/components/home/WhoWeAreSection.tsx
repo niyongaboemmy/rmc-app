@@ -69,30 +69,23 @@ export function WhoWeAreSection() {
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 mb-5 ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
           >
-            {pick({ en: 'Rwanda Muslim Community —', rw: "Umuryango w'Abasilamu bo mu Rwanda —", ar: 'المجتمع الإسلامي الرواندي —' }, locale)}{' '}
+            {pickLang(content, 'heading', locale)}{' '}
             <span className="text-rmc-green">
-              {pick({ en: 'Serving the Ummah', rw: 'Dukorera Umat', ar: 'في خدمة الأمة' }, locale)}
+              {pickLang(content, 'headingHighlight', locale)}
             </span>
           </h2>
 
           {/* Arabic touch framed by gold ornament — echoes the hero's scripture centerpiece */}
           <div className="ornament-divider max-w-md mx-auto mb-3">
             <p className="font-arabic text-rmc-green-dark text-lg md:text-xl leading-loose text-center px-2" dir="rtl">
-              وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا
+              {pickLang(content, 'verse', locale)}
             </p>
           </div>
           <p
             className={`text-rmc-gold text-[11px] font-semibold tracking-wide mb-6 ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
           >
-            {pick(
-              {
-                en: '"Hold firmly to the rope of Allah, all together" — Aal-Imran 3:103',
-                rw: '"Mufatane mwese ku mugozi w\'Imana" — Aal-Imran 3:103',
-                ar: 'سورة آل عمران — الآية ١٠٣',
-              },
-              locale,
-            )}
+            {pickLang(content, 'verseRef', locale)}
           </p>
 
           <p

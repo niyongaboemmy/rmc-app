@@ -15,6 +15,7 @@ export interface DonationCampaign {
   raisedAmount: number;
   currency: string;
   fundType: string;
+  subFundId: string | null;
   startDate: string;
   endDate: string | null;
   heroImageUrl: string | null;
@@ -38,6 +39,7 @@ export interface PublicCampaign {
   receivedAmount: number;
   currency: string;
   fundType: string;
+  subFundId: string | null;
   heroImageUrl: string | null;
   startDate: string;
   endDate: string | null;
@@ -125,6 +127,7 @@ export interface CampaignPayload {
   raisedAmount?: number;
   currency?: string;
   fundType?: string;
+  subFundId?: string | null;
   startDate?: string;
   endDate?: string | null;
   heroImageUrl?: string | null;
@@ -209,6 +212,15 @@ export const donationsApi = {
     listCampaigns: async (): Promise<CampaignWithStats[]> => {
       const { data } = await apiClient.get('/admin/donations/campaigns');
       return data.data ?? data;
+    },
+
+    listDeletedCampaigns: async (): Promise<CampaignWithStats[]> => {
+      const { data } = await apiClient.get('/admin/donations/campaigns/deleted');
+      return data.data ?? data;
+    },
+
+    restoreCampaign: async (id: string): Promise<void> => {
+      await apiClient.post(`/admin/donations/campaigns/${id}/restore`);
     },
 
     createCampaign: async (payload: CampaignPayload): Promise<DonationCampaign> => {

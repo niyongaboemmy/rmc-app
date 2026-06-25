@@ -32,6 +32,7 @@ import {
 } from '@/lib/content-api';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { NotifySubscribersButton } from '@/components/admin/NotifySubscribersButton';
 
 type Lang = 'en' | 'rw' | 'ar';
 
@@ -311,6 +312,13 @@ function BlogManager() {
                 <div className="flex items-center gap-1 mt-3 pt-3 border-t border-gray-50">
                   <button onClick={() => openEdit(index)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
                   <button onClick={() => setDeleteIndex(index)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                  {post.status === 'published' && (
+                    <NotifySubscribersButton
+                      compact
+                      subject={post.title.en || title}
+                      html={`<p>New on the RMC blog: <strong>${post.title.en || title}</strong></p><p>Read it at /${lang}/blog/${post.slug}</p>`}
+                    />
+                  )}
                 </div>
               </div>
             </div>

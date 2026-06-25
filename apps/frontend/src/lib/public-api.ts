@@ -88,4 +88,12 @@ export const publicApi = {
       }>;
       total: number; page: number; pages: number;
     }>(api.get('/public/gallery', { params: { category, page } })),
+
+  /** Subscribe an email to platform updates (single opt-in). */
+  subscribe: (email: string, locale?: string, source = 'footer') =>
+    api.post('/public/subscribe', { email, locale, source }).then((r) => r.data?.data),
+
+  /** Unsubscribe via the token from an email link. */
+  unsubscribe: (token: string) =>
+    api.post('/public/unsubscribe', { token }).then((r) => r.data?.data),
 };

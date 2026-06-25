@@ -1,44 +1,35 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { TrendingUp } from 'lucide-react';
-import { EVENTS, fundedPercent, formatMoney, type PublicCampaignLike } from './eventsBridge';
+import { fundedPercent, formatMoney } from './eventsBridge';
+import type { PublicCampaign } from '@/lib/donationsApi';
 
-/* Live-impact section: the top active campaigns with progress bars that
-   animate (count-up + fill) the first time they scroll into view. */
-export function ImpactBars({ liveBySlug }: { liveBySlug: Map<string, PublicCampaignLike> }) {
+/* Live-impact section: the most under-funded active programs (real campaigns)
+   with progress bars that animate (fill) in once on mount. */
+export function ImpactBars({ campaigns }: { campaigns: PublicCampaign[] }) {
   const t = useTranslations('donate');
-  const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
 
+  // Reveal once mounted (a frame after first paint, so the bars animate from 0
+  // to their real value). Previously gated on an IntersectionObserver, which
+  // could leave the bars stuck at 0% if it never fired — making the live
+  // percentages look static.
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setShown(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShown(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.25 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
-  // Top 3 still-open campaigns by funding need (least funded first).
-  const top = EVENTS.map((ev) => {
-    const live = liveBySlug.get(ev.id);
-    const raised = live ? live.receivedAmount : ev.raisedAmount;
-    const goal = live ? live.targetAmount : ev.goalAmount;
-    return { ev, raised, goal, pct: fundedPercent(raised, goal) };
-  })
+  // Top 3 still-open programs by funding need (least funded first).
+  const top = campaigns
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      raised: c.receivedAmount,
+      goal: c.targetAmount,
+      pct: fundedPercent(c.receivedAmount, c.targetAmount),
+    }))
     .filter((c) => c.pct < 100)
     .sort((a, b) => a.pct - b.pct)
     .slice(0, 3);
@@ -46,7 +37,7 @@ export function ImpactBars({ liveBySlug }: { liveBySlug: Map<string, PublicCampa
   if (top.length === 0) return null;
 
   return (
-    <div ref={ref} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-black/5">
+    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-black/5">
       <div className="mb-5 flex items-center gap-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rmc-green-light text-rmc-green ring-1 ring-rmc-green/15">
           <TrendingUp className="h-4 w-4" />
@@ -58,10 +49,10 @@ export function ImpactBars({ liveBySlug }: { liveBySlug: Map<string, PublicCampa
       </div>
 
       <div className="space-y-5">
-        {top.map(({ ev, raised, goal, pct }, i) => (
-          <div key={ev.id}>
+        {top.map(({ id, title, raised, goal, pct }, i) => (
+          <div key={id}>
             <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <span className="truncate text-[13.5px] font-semibold text-gray-900">{t(`events.${ev.id}.title`)}</span>
+              <span className="truncate text-[13.5px] font-semibold text-gray-900">{title}</span>
               <span className="shrink-0 text-[12px] font-bold tabular-nums text-rmc-green">{shown ? pct : 0}%</span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">

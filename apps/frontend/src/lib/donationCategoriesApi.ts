@@ -3,6 +3,7 @@ import { apiClient } from './api';
 // ── Public (localized) shape — consumed by the donate page ───────────────────
 
 export interface PublicSubFund {
+  id: string;
   key: string;
   image: string | null;
   campaignSlug: string | null;
@@ -13,6 +14,7 @@ export interface PublicSubFund {
 }
 
 export interface PublicCategory {
+  id: string;
   key: string;
   icon: string;
   tone: string;
@@ -99,6 +101,13 @@ export const donationCategoriesApi = {
     list: async (): Promise<AdminCategory[]> => {
       const { data } = await apiClient.get('/admin/donations/categories');
       return data.data ?? data;
+    },
+    listDeleted: async (): Promise<AdminCategory[]> => {
+      const { data } = await apiClient.get('/admin/donations/categories/deleted');
+      return data.data ?? data;
+    },
+    restoreCategory: async (id: string): Promise<void> => {
+      await apiClient.post(`/admin/donations/categories/${id}/restore`);
     },
     createCategory: async (payload: CategoryPayload): Promise<AdminCategory> => {
       const { data } = await apiClient.post('/admin/donations/categories', payload);

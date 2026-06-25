@@ -35,5 +35,8 @@ export default registerAs('social', () => ({
   twitter: {
     bearer: process.env.TWITTER_BEARER_TOKEN || '',
     userId: process.env.TWITTER_USER_ID || '',
+    // Free, key-less path: a public @handle (no leading @). Uses X's public
+    // syndication timeline (the same data that powers embedded timelines).
+    username: (process.env.TWITTER_USERNAME || '').replace(/^@/, ''),
   },
 }));
