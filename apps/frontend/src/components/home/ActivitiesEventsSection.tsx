@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
@@ -19,6 +19,7 @@ import {
   countdownLabel,
   formatLong,
   parseISO,
+  isUpcoming,
   type Activity,
 } from '@/components/activities/data';
 import { GalleryModal } from '@/components/activities/GalleryModal';
@@ -31,6 +32,13 @@ import {
   isRtl,
   type ActivitiesContent,
 } from '@/lib/content-api';
+
+// Activity dates are free-form display strings (e.g. "June 4, 2026"); parse to a
+// timestamp for recency sorting, falling back to 0 when unparseable.
+function activityDateTs(date: string): number {
+  const t = new Date(date).getTime();
+  return Number.isNaN(t) ? 0 : t;
+}
 
 export function ActivitiesEventsSection() {
   const { locale } = useParams<{ locale: string }>();
@@ -57,29 +65,69 @@ export function ActivitiesEventsSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [imgIndex, setImgIndex] = useState(0);
 
-  // The home page surfaces only the 3 latest activities and the 3 upcoming
-  // events — the full lists live on the /activities page ("View all").
-  const activities = content.activities.slice(0, 3);
-  const events = content.events.slice(0, 3);
+  // The home page surfaces only 3 rows per column — the full lists live on the
+  // /activities page ("View all").
 
-  const [featured, ...rest] = events;
+  // Upcoming events are derived dynamically from each event's date against
+  // today: past events drop off automatically, the remainder is ordered
+  // soonest-first, and the very next one is featured. Recomputes whenever the
+  // content changes so the section always reflects the current date.
+  const upcomingEvents = useMemo(
+    () =>
+      [...content.events]
+        .filter((e) => isUpcoming(e.date))
+        .sort((a, b) => parseISO(a.date).dateObj.getTime() - parseISO(b.date).dateObj.getTime())
+        .slice(0, 3),
+    [content.events],
+  );
+
+  // Completed events (date already passed) are NOT dropped — they roll into the
+  // "Latest" column, most-recent-first, so nothing the community did disappears.
+  const pastEvents = useMemo(
+    () =>
+      [...content.events]
+        .filter((e) => !isUpcoming(e.date))
+        .sort((a, b) => parseISO(b.date).dateObj.getTime() - parseISO(a.date).dateObj.getTime())
+        .slice(0, 3),
+    [content.events],
+  );
+
+  const [featured, ...rest] = upcomingEvents;
   const fDate = featured ? parseISO(featured.date) : null;
+
+  // "Latest" = activity news + completed events, merged most-recent-first and
+  // capped at 3 rows. Activity rows carry their original index so the gallery
+  // modal still opens the right story.
+  const latestItems = useMemo(() => {
+    const acts = content.activities.map((activity, activityIndex) => ({
+      kind: 'activity' as const,
+      ts: activityDateTs(activity.date),
+      activity,
+      activityIndex,
+    }));
+    const past = pastEvents.map((event) => ({
+      kind: 'event' as const,
+      ts: parseISO(event.date).dateObj.getTime(),
+      event,
+    }));
+    return [...acts, ...past].sort((a, b) => b.ts - a.ts).slice(0, 3);
+  }, [content.activities, pastEvents]);
 
   // The GalleryModal renders plain strings, so resolve the active activity's
   // Tri fields to the current locale into the Activity shape it expects.
   const activeActivity: Activity | null =
-    openIndex !== null && activities[openIndex]
+    openIndex !== null && content.activities[openIndex]
       ? {
           id: `a${openIndex}`,
-          category: pick(activities[openIndex].category, locale),
-          tone: activities[openIndex].tone,
-          title: pick(activities[openIndex].title, locale),
-          excerpt: pick(activities[openIndex].excerpt, locale),
-          date: activities[openIndex].date,
-          image: activities[openIndex].image,
-          gallery: activities[openIndex].gallery,
-          peopleHelped: activities[openIndex].peopleHelped,
-          budgetUsed: activities[openIndex].budgetUsed,
+          category: pick(content.activities[openIndex].category, locale),
+          tone: content.activities[openIndex].tone,
+          title: pick(content.activities[openIndex].title, locale),
+          excerpt: pick(content.activities[openIndex].excerpt, locale),
+          date: content.activities[openIndex].date,
+          image: content.activities[openIndex].image,
+          gallery: content.activities[openIndex].gallery,
+          peopleHelped: content.activities[openIndex].peopleHelped,
+          budgetUsed: content.activities[openIndex].budgetUsed,
         }
       : null;
 
@@ -155,66 +203,122 @@ export function ActivitiesEventsSection() {
 
             {/* News rows joined by hairlines — each opens an image gallery */}
             <div className="flex-1 rounded-2xl border border-gray-100 ring-1 ring-black/5 bg-white shadow-sm divide-y divide-gray-100 overflow-hidden">
-              {activities.map((activity, i) => {
-                const title = pick(activity.title, locale);
-                const excerpt = pick(activity.excerpt, locale);
-                const category = pick(activity.category, locale);
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => openGallery(i)}
-                    aria-label={`Open photo gallery: ${title}`}
-                    className="group w-full text-left flex gap-4 p-4 sm:p-5 hover:bg-rmc-green-light/30 outline-none focus-visible:bg-rmc-green-light/40 transition-colors duration-300 animate-fade-up"
-                    style={{ animationDelay: `${i * 90 + 220}ms` }}
-                  >
-                    {/* Thumbnail with gallery affordance */}
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 ring-1 ring-black/5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={activity.image}
-                        alt={title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-105"
-                      />
-                      {/* Hover overlay — signals it opens a gallery */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-rmc-green-deep/0 group-hover:bg-rmc-green-deep/35 transition-colors duration-300">
-                        <span className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300">
-                          <Images className="w-3.5 h-3.5 text-rmc-green" />
+              {latestItems.map((item, i) => {
+                const delay = { animationDelay: `${i * 90 + 220}ms` };
+
+                if (item.kind === 'activity') {
+                  const { activity, activityIndex } = item;
+                  const title = pick(activity.title, locale);
+                  const excerpt = pick(activity.excerpt, locale);
+                  const category = pick(activity.category, locale);
+                  return (
+                    <button
+                      key={`act-${activityIndex}`}
+                      type="button"
+                      onClick={() => openGallery(activityIndex)}
+                      aria-label={`Open photo gallery: ${title}`}
+                      className="group w-full text-left flex gap-4 p-4 sm:p-5 hover:bg-rmc-green-light/30 outline-none focus-visible:bg-rmc-green-light/40 transition-colors duration-300 animate-fade-up"
+                      style={delay}
+                    >
+                      {/* Thumbnail with gallery affordance */}
+                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 ring-1 ring-black/5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={activity.image}
+                          alt={title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-105"
+                        />
+                        {/* Hover overlay — signals it opens a gallery */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-rmc-green-deep/0 group-hover:bg-rmc-green-deep/35 transition-colors duration-300">
+                          <span className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300">
+                            <Images className="w-3.5 h-3.5 text-rmc-green" />
+                          </span>
+                        </div>
+                        {/* Photo count badge */}
+                        <span className="absolute bottom-1 right-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-black/55 text-white text-[9px] font-bold backdrop-blur-sm">
+                          <Images className="w-2.5 h-2.5" />
+                          {activity.gallery.length}
                         </span>
                       </div>
-                      {/* Photo count badge */}
-                      <span className="absolute bottom-1 right-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-black/55 text-white text-[9px] font-bold backdrop-blur-sm">
-                        <Images className="w-2.5 h-2.5" />
-                        {activity.gallery.length}
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`${badgeClass(activity.tone)} ${arFont}`}>{category}</span>
+                          <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                            <Calendar className="w-3 h-3 shrink-0" />
+                            {activity.date}
+                          </span>
+                        </div>
+                        <h4
+                          className={`text-sm sm:text-[15px] font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2 group-hover:text-rmc-green transition-colors duration-200 ${arFont}`}
+                          dir={rtl ? 'rtl' : 'ltr'}
+                        >
+                          {title}
+                        </h4>
+                        <p
+                          className={`text-xs sm:text-[13px] text-gray-500 leading-relaxed line-clamp-2 ${arFont}`}
+                          dir={rtl ? 'rtl' : 'ltr'}
+                        >
+                          {excerpt}
+                        </p>
+                      </div>
+
+                      <Images className="hidden sm:block w-4 h-4 text-gray-300 shrink-0 self-center transition-colors duration-300 group-hover:text-rmc-green" />
+                    </button>
+                  );
+                }
+
+                // Completed event row — rolled into Latest once its date passed.
+                const { event } = item;
+                const d = parseISO(event.date);
+                return (
+                  <Link
+                    key={`past-${i}`}
+                    href={`/${locale}/activities`}
+                    className="group w-full flex gap-4 p-4 sm:p-5 hover:bg-rmc-green-light/30 transition-colors duration-300 animate-fade-up"
+                    style={delay}
+                  >
+                    {/* Muted date tile — this event has already happened */}
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl bg-gray-100 ring-1 ring-black/5 flex flex-col items-center justify-center">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400 leading-none">
+                        {MONTHS[d.m]}
                       </span>
+                      <span className="text-2xl font-bold text-gray-500 tabular-nums leading-tight">
+                        {d.d}
+                      </span>
+                      <span className="text-[9px] text-gray-400 leading-none">{d.y}</span>
                     </div>
 
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`${badgeClass(activity.tone)} ${arFont}`}>{category}</span>
-                        <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                          <Calendar className="w-3 h-3 shrink-0" />
-                          {activity.date}
+                        <span className={`${badgeClass(event.tone)} ${arFont}`}>
+                          {pick(event.type, locale)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
+                          {pick({ en: 'Completed', rw: 'Byarangiye', ar: 'منتهية' }, locale)}
                         </span>
                       </div>
                       <h4
                         className={`text-sm sm:text-[15px] font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2 group-hover:text-rmc-green transition-colors duration-200 ${arFont}`}
                         dir={rtl ? 'rtl' : 'ltr'}
                       >
-                        {title}
+                        {pick(event.title, locale)}
                       </h4>
-                      <p
-                        className={`text-xs sm:text-[13px] text-gray-500 leading-relaxed line-clamp-2 ${arFont}`}
-                        dir={rtl ? 'rtl' : 'ltr'}
-                      >
-                        {excerpt}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                          <Clock className="w-3 h-3 shrink-0" />
+                          {event.time}
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] text-gray-400 min-w-0">
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{event.location.split(',')[0]}</span>
+                        </span>
+                      </div>
                     </div>
-
-                    <Images className="hidden sm:block w-4 h-4 text-gray-300 shrink-0 self-center transition-colors duration-300 group-hover:text-rmc-green" />
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -245,6 +349,19 @@ export function ActivitiesEventsSection() {
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
             </div>
+
+            {/* Empty state — every event is in the past relative to today */}
+            {upcomingEvents.length === 0 && (
+              <div className="flex-1 rounded-2xl border border-dashed border-gray-200 bg-white/50 p-8 text-center flex flex-col items-center justify-center animate-fade-up">
+                <Calendar className="w-8 h-8 text-gray-300 mb-2" aria-hidden="true" />
+                <p className={`text-sm font-semibold text-gray-600 ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
+                  {pick({ en: 'No upcoming events', rw: 'Nta birori biteganyijwe', ar: 'لا توجد فعاليات قادمة' }, locale)}
+                </p>
+                <p className={`text-[11px] text-gray-400 mt-1 ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
+                  {pick({ en: 'Check back soon for new events.', rw: 'Garuka vuba urebe ibindi birori.', ar: 'تحقق قريباً من الفعاليات الجديدة.' }, locale)}
+                </p>
+              </div>
+            )}
 
             {/* Featured — the soonest event, elevated */}
             {featured && fDate && (

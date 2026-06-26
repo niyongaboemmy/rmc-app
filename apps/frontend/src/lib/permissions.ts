@@ -62,6 +62,10 @@ export enum Permission {
 
   NOTIFICATION_SETTINGS_VIEW = 'notification_settings:view',
   NOTIFICATION_SETTINGS_MANAGE = 'notification_settings:manage',
+
+  // ── AI Assistant ──────────────────────────────────────────────
+  AI_SETTINGS_VIEW = 'ai_settings:view',
+  AI_SETTINGS_MANAGE = 'ai_settings:manage',
 }
 
 export function hasPermission(userPermissions: string[], permission: Permission): boolean {

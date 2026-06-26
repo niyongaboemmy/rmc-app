@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, MessageSquare, Send, History, Bell } from 'lucide-react';
+import { Settings, MessageSquare, Send, History, Bell, Sparkles } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { settingsApi } from '@/lib/settingsApi';
 import { SmsConfigTab } from './_components/SmsConfigTab';
 import { SmsTestingTab } from './_components/SmsTestingTab';
 import { SmsHistoryTab } from './_components/SmsHistoryTab';
+import { AiSettingsTab } from './_components/AiSettingsTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 
 // ─── Top-level tab definition ─────────────────────────────────────────────────
@@ -22,6 +23,7 @@ interface TopTab {
 }
 
 const TOP_TABS: TopTab[] = [
+  { key: 'ai',            label: 'AI Assistant',   icon: Sparkles,      permission: Permission.AI_SETTINGS_VIEW            },
   { key: 'sms',           label: 'SMS Gateway',   icon: MessageSquare, permission: Permission.SMS_CONFIG_VIEW              },
   { key: 'notifications', label: 'Notifications',  icon: Bell,          permission: Permission.NOTIFICATION_SETTINGS_VIEW  },
 ];
@@ -87,6 +89,7 @@ export default function SettingsPage() {
           </nav>
         </div>
 
+        {activeTab === 'ai'            && <AiSettingsTab />}
         {activeTab === 'sms'           && <SmsGatewaySection />}
         {activeTab === 'notifications' && <NotificationsTab />}
       </div>

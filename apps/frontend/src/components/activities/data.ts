@@ -179,11 +179,28 @@ export function formatLong(iso: string) {
   });
 }
 
-/** Friendly "how soon" label, measured from today (12 Jun 2026). */
+/** Local midnight today — the single basis for every past/upcoming check, so
+ *  the section always reflects the real current date. */
+export function startOfToday(): Date {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+/** Whole days from today to the given ISO date (negative = already past). */
+export function daysFromToday(iso: string): number {
+  return Math.round((parseISO(iso).dateObj.getTime() - startOfToday().getTime()) / 86_400_000);
+}
+
+/** True when an ISO date (YYYY-MM-DD) is today or still in the future. */
+export function isUpcoming(iso: string): boolean {
+  return daysFromToday(iso) >= 0;
+}
+
+/** Friendly "how soon" label, measured from the real current date. */
 export function countdownLabel(iso: string) {
-  const today = new Date(2026, 5, 12);
-  const days = Math.round((parseISO(iso).dateObj.getTime() - today.getTime()) / 86_400_000);
-  if (days <= 0) return 'Today';
+  const days = daysFromToday(iso);
+  if (days < 0) return 'Past';
+  if (days === 0) return 'Today';
   if (days === 1) return 'Tomorrow';
   if (days < 7) return `In ${days} days`;
   if (days < 14) return 'Next week';

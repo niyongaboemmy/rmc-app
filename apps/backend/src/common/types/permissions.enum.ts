@@ -76,6 +76,10 @@ export enum Permission {
   // ── Notification Settings ─────────────────────────────────────────
   NOTIFICATION_SETTINGS_VIEW = 'notification_settings:view',
   NOTIFICATION_SETTINGS_MANAGE = 'notification_settings:manage',
+
+  // ── AI Assistant Settings ─────────────────────────────────────────
+  AI_SETTINGS_VIEW = 'ai_settings:view',
+  AI_SETTINGS_MANAGE = 'ai_settings:manage',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);

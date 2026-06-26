@@ -14,7 +14,16 @@ async function bootstrap(): Promise<void> {
 
   // Security
   app.use(helmet());
-  app.use(compression());
+  app.use(
+    compression({
+      // Don't compress the streaming AI chat response — buffering would defeat
+      // token-by-token streaming.
+      filter: (req, res) => {
+        if (req.path?.includes('/ai/ask')) return false;
+        return compression.filter(req, res);
+      },
+    }),
+  );
 
   // CORS
   app.enableCors({

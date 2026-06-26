@@ -23,6 +23,7 @@
     "seed:run": "node dist/database/seeds/run-seeds.js"
   },
   "dependencies": {
+    "@google/genai": "^2.10.0",
     "@nestjs/bull": "^10.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
@@ -43,6 +44,7 @@
     "helmet": "^7.1.0",
     "ioredis": "^5.3.0",
     "nodemailer": "^6.9.7",
+    "openai": "^6.45.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
