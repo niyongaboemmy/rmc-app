@@ -1,0 +1,199 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { Download, Printer, Shield, ArrowLeft, Loader2, FileWarning, Stamp } from 'lucide-react';
+import { marriageApi, type MarriageApplication } from '@/lib/marriageApi';
+import {
+  buildProvisionalCertificateBlob,
+  canDownloadProvisional,
+  provisionalCertificateFileName,
+} from '@/lib/provisionalCertificate';
+
+type Phase = 'loading' | 'unavailable' | 'building' | 'ready' | 'error';
+
+export default function ProvisionalCertificatePage() {
+  const { locale, number } = useParams<{ locale: string; number: string }>();
+  const [app, setApp] = useState<MarriageApplication | null>(null);
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // 1) Load the application.
+  useEffect(() => {
+    let cancelled = false;
+    marriageApi
+      .getByNumber(number)
+      .then((result) => {
+        if (cancelled) return;
+        if (!result || !canDownloadProvisional(result)) {
+          setApp(result);
+          setPhase('unavailable');
+          return;
+        }
+        setApp(result);
+        setPhase('building');
+      })
+      .catch(() => {
+        if (!cancelled) setPhase('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [number]);
+
+  // 2) Build the PDF once the application is available + paid.
+  useEffect(() => {
+    if (phase !== 'building' || !app) return;
+    let cancelled = false;
+    let url: string | null = null;
+    buildProvisionalCertificateBlob(app)
+      .then((blob) => {
+        if (cancelled) return;
+        url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+        setPhase('ready');
+      })
+      .catch(() => {
+        if (!cancelled) setPhase('error');
+      });
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [phase, app]);
+
+  const handlePrint = () => {
+    iframeRef.current?.contentWindow?.focus();
+    iframeRef.current?.contentWindow?.print();
+  };
+
+  // ── Loading / building ────────────────────────────────────────────────────
+  if (phase === 'loading' || phase === 'building') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-6 h-6 text-rose-500 animate-spin" />
+        <p className="text-sm text-gray-500">
+          {phase === 'loading' ? 'Loading your certificate…' : 'Preparing your provisional certificate…'}
+        </p>
+      </div>
+    );
+  }
+
+  // ── Not available (not found / not paid) ──────────────────────────────────
+  if (phase === 'unavailable') {
+    const notFound = !app;
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
+          <Shield className="w-6 h-6 text-amber-500" />
+        </div>
+        <p className="text-gray-900 font-semibold text-lg">
+          {notFound ? 'Application not found' : 'Provisional certificate not available yet'}
+        </p>
+        <p className="text-gray-500 text-sm text-center max-w-sm">
+          {notFound ? (
+            <>No application was found for <span className="font-mono">{number}</span>.</>
+          ) : (
+            <>
+              The provisional certificate becomes available once payment is completed for{' '}
+              <span className="font-mono">{number}</span>.
+            </>
+          )}
+        </p>
+        <Link
+          href={`/${locale}/services/marriage/status?id=${number}`}
+          className="text-sm text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Check application status
+        </Link>
+      </div>
+    );
+  }
+
+  // ── Error ─────────────────────────────────────────────────────────────────
+  if (phase === 'error' || !pdfUrl) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+          <FileWarning className="w-6 h-6 text-red-500" />
+        </div>
+        <p className="text-gray-900 font-semibold text-lg">Could not generate the certificate</p>
+        <p className="text-gray-500 text-sm text-center max-w-sm">
+          Something went wrong while preparing the document. Please try again in a moment.
+        </p>
+        <button
+          onClick={() => setPhase('building')}
+          className="text-sm text-rose-600 hover:text-rose-700 font-medium"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  // ── Ready — preview + actions ─────────────────────────────────────────────
+  const fileName = app ? provisionalCertificateFileName(app) : 'provisional-certificate.pdf';
+
+  return (
+    <div className="min-h-screen bg-gray-100 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Heading + actions */}
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          <Link
+            href={`/${locale}/services/marriage/status?id=${number}`}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </Link>
+          <div className="flex-1 min-w-[1rem]" />
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium hover:border-gray-300 transition-colors"
+          >
+            <Printer className="w-4 h-4" /> Print
+          </button>
+          <a
+            href={pdfUrl}
+            download={fileName}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors"
+          >
+            <Download className="w-4 h-4" /> Download
+          </a>
+        </div>
+
+        {/* Title strip */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+            <Stamp className="w-5 h-5 text-green-700" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900 leading-tight">Provisional Marriage Certificate</h1>
+            <p className="text-sm text-gray-500">
+              {app?.groomName} &amp; {app?.brideName} ·{' '}
+              <span className="font-mono">{app?.applicationNumber}</span>
+            </p>
+          </div>
+        </div>
+
+        {/* PDF preview (A4 landscape) */}
+        <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
+          <iframe
+            ref={iframeRef}
+            src={pdfUrl}
+            title="Provisional Marriage Certificate"
+            className="w-full bg-gray-200"
+            style={{ aspectRatio: '842 / 595', minHeight: '60vh' }}
+          />
+        </div>
+
+        <p className="text-xs text-gray-400 text-center mt-4 max-w-2xl mx-auto">
+          This is a provisional certificate. The signature lines are intentionally left blank for the
+          witnesses, officiant, and the couple to sign. The official certificate is issued by the RMC
+          after the ceremony is completed.
+        </p>
+      </div>
+    </div>
+  );
+}

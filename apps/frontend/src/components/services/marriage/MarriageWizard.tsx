@@ -33,17 +33,28 @@ import { cn } from '@/lib/utils';
 export interface WizardFormData extends CreateMarriageApplicationPayload {
   groomIdFile?: File;
   brideIdFile?: File;
+  groomPhotoFile?: File;
+  bridePhotoFile?: File;
   waliConsentFile?: File;
   portraitFile?: File;
   mobilePhone?: string;
 }
+
+// File fields are stripped before persisting (File can't survive JSON).
+type FileFieldKey =
+  | 'groomIdFile'
+  | 'brideIdFile'
+  | 'groomPhotoFile'
+  | 'bridePhotoFile'
+  | 'waliConsentFile'
+  | 'portraitFile';
 
 type PaymentPhase = 'idle' | 'waiting' | 'confirmed';
 
 // Serialisable slice — File objects can't survive JSON.stringify
 type PersistedState = {
   step: number;
-  formData: Omit<WizardFormData, 'groomIdFile' | 'brideIdFile' | 'waliConsentFile' | 'portraitFile'>;
+  formData: Omit<WizardFormData, FileFieldKey>;
   draftId: string | null;
   paymentPhase: PaymentPhase;
   pendingAppId: string | null;
@@ -52,6 +63,12 @@ type PersistedState = {
 };
 
 const WIZARD_KEY = 'rmc_marriage_wizard_v1';
+
+// In local development (`next dev`), skip the real MoMo charge: mark the payment
+// as completed on the backend and go straight to the provisional certificate.
+// This branch is statically eliminated from production builds, and the backend
+// endpoint it calls is itself hard-blocked in production.
+const IS_DEV = process.env.NODE_ENV === 'development';
 
 function loadPersistedState(): PersistedState | null {
   if (typeof window === 'undefined') return null;
@@ -210,6 +227,20 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
           </div>
           <p className="text-xs text-gray-400 mt-2">Save this — you need it to track your application.</p>
         </div>
+        {app.paymentStatus === 'paid' && (
+          <Link
+            href={`/${locale}/certificates/${app.applicationNumber}/provisional`}
+            className="group max-w-md mx-auto mb-2 flex items-center gap-4 rounded-2xl bg-gradient-to-br from-green-600 to-emerald-700 text-white p-4 shadow-md hover:shadow-lg transition-shadow text-left"
+          >
+            <div className="w-11 h-11 rounded-xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center shrink-0">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm">Download provisional certificate</p>
+              <p className="text-white/80 text-xs">Your payment is confirmed — preview &amp; download it now.</p>
+            </div>
+          </Link>
+        )}
         <PartyPhonesForm applicationId={app.id} />
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
           <Link href={`/${locale}/services/marriage/status?id=${app.applicationNumber}`}
@@ -389,7 +420,7 @@ async function uploadFileToServer(file: File, folder: string): Promise<string> {
 }
 
 type DocSlot = { file: File; docType: SaveDocumentPayload['documentType'] };
-const DOC_LABELS: Record<string, string> = { groom_id:"Groom's National ID", bride_id:"Bride's National ID", wali_consent:'Wali consent letter', portrait:'Portrait photo' };
+const DOC_LABELS: Record<string, string> = { groom_id:"Groom's National ID", bride_id:"Bride's National ID", groom_photo:"Groom's photo", bride_photo:"Bride's photo", wali_consent:'Wali consent letter', portrait:'Couple portrait' };
 
 async function uploadDocuments(draftId: string, slots: DocSlot[]): Promise<void> {
   const failed: string[] = [];
@@ -432,7 +463,10 @@ export function MarriageWizard() {
     phase: PaymentPhase,
     pApp: MarriageApplication | null,
   ) => {
-    const { groomIdFile: _a, brideIdFile: _b, waliConsentFile: _c, portraitFile: _d, ...serializableFormData } = fd as WizardFormData;
+    const {
+      groomIdFile: _a, brideIdFile: _b, groomPhotoFile: _e, bridePhotoFile: _f,
+      waliConsentFile: _c, portraitFile: _d, ...serializableFormData
+    } = fd as WizardFormData;
     savePersistedState({
       step: s,
       formData: serializableFormData,
@@ -581,12 +615,24 @@ export function MarriageWizard() {
       const docSlots: DocSlot[] = [
         merged.groomIdFile     && { file: merged.groomIdFile,     docType: 'groom_id'    as const },
         merged.brideIdFile     && { file: merged.brideIdFile,     docType: 'bride_id'    as const },
+        merged.groomPhotoFile  && { file: merged.groomPhotoFile,  docType: 'groom_photo' as const },
+        merged.bridePhotoFile  && { file: merged.bridePhotoFile,  docType: 'bride_photo' as const },
         merged.waliConsentFile && { file: merged.waliConsentFile, docType: 'wali_consent' as const },
         merged.portraitFile    && { file: merged.portraitFile,    docType: 'portrait'    as const },
       ].filter(Boolean) as DocSlot[];
       if (docSlots.length > 0) await uploadDocuments(draft.id, docSlots);
 
       if (merged.paymentMethod === 'momo') {
+        if (IS_DEV) {
+          // Dev shortcut: mark paid without MoMo, then submit and show success
+          // (with the provisional-certificate download).
+          await marriageApi.devCompletePayment(draft.id);
+          const submitted = await marriageApi.submit(draft.id);
+          clearPersistedState();
+          setSubmittedApp(submitted);
+          setIsSubmitting(false);
+          return;
+        }
         await marriageApi.initiateUserMomoPayment(draft.id, merged.mobilePhone!);
         updateData(merged);
         setPendingDraftApp(draft);

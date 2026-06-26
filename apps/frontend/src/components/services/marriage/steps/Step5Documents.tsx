@@ -6,8 +6,13 @@ import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { WizardFormData } from '../MarriageWizard';
 
+type FileSlotKey = keyof Pick<
+  WizardFormData,
+  'groomIdFile' | 'brideIdFile' | 'groomPhotoFile' | 'bridePhotoFile' | 'waliConsentFile' | 'portraitFile'
+>;
+
 interface FileUploadSlot {
-  key: keyof Pick<WizardFormData, 'groomIdFile' | 'brideIdFile' | 'waliConsentFile' | 'portraitFile'>;
+  key: FileSlotKey;
   label: string;
   accept: string;
   maxMb: number;
@@ -18,8 +23,10 @@ interface FileUploadSlot {
 const SLOTS: FileUploadSlot[] = [
   { key: 'groomIdFile',     label: "Groom's National ID",        accept: 'image/jpeg,image/png',                    maxMb: 5,  required: true,  hint: 'JPG or PNG · 5 MB' },
   { key: 'brideIdFile',     label: "Bride's National ID",        accept: 'image/jpeg,image/png',                    maxMb: 5,  required: true,  hint: 'JPG or PNG · 5 MB' },
+  { key: 'groomPhotoFile',  label: "Groom's photo",              accept: 'image/jpeg,image/png',                    maxMb: 5,  required: true,  hint: 'Passport-style · appears on certificate' },
+  { key: 'bridePhotoFile',  label: "Bride's photo",              accept: 'image/jpeg,image/png',                    maxMb: 5,  required: true,  hint: 'Passport-style · appears on certificate' },
   { key: 'waliConsentFile', label: 'Wali consent letter',        accept: 'application/pdf,image/jpeg,image/png',    maxMb: 10, required: false, hint: 'PDF, JPG or PNG · 10 MB' },
-  { key: 'portraitFile',    label: 'Portrait (for certificate)', accept: 'image/jpeg,image/png',                    maxMb: 5,  required: true,  hint: 'Passport-style · 5 MB' },
+  { key: 'portraitFile',    label: 'Couple portrait (optional)', accept: 'image/jpeg,image/png',                    maxMb: 5,  required: false, hint: 'Optional · JPG or PNG · 5 MB' },
 ];
 
 interface DropZoneProps {
@@ -128,11 +135,11 @@ interface Props {
 }
 
 export function Step5Documents({ initialData, onNext, onBack }: Props) {
-  const [files, setFiles] = useState<
-    Partial<Record<keyof Pick<WizardFormData, 'groomIdFile' | 'brideIdFile' | 'waliConsentFile' | 'portraitFile'>, File | null>>
-  >({
+  const [files, setFiles] = useState<Partial<Record<FileSlotKey, File | null>>>({
     groomIdFile:     initialData.groomIdFile     ?? null,
     brideIdFile:     initialData.brideIdFile     ?? null,
+    groomPhotoFile:  initialData.groomPhotoFile  ?? null,
+    bridePhotoFile:  initialData.bridePhotoFile  ?? null,
     waliConsentFile: initialData.waliConsentFile ?? null,
     portraitFile:    initialData.portraitFile    ?? null,
   });

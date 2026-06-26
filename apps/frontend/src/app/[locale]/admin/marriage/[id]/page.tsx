@@ -36,6 +36,7 @@ import {
   ShieldCheck,
   CheckCheck,
   Smartphone,
+  FileSignature,
 } from 'lucide-react';
 import { fileUrl } from '@/lib/api';
 import axios from 'axios';
@@ -394,6 +395,7 @@ function AdminMarriageDetailContent() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [weddingPhotoFile, setWeddingPhotoFile] = useState<File | null>(null);
+  const [signedProvisionalFile, setSignedProvisionalFile] = useState<File | null>(null);
   const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
 
   // MoMo payment
@@ -542,6 +544,44 @@ function AdminMarriageDetailContent() {
     }
   };
 
+  const handleUploadSignedProvisional = async () => {
+    if (!signedProvisionalFile) return;
+    setActiveAction('signed-provisional');
+    setActionError(null);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
+      const form = new FormData();
+      form.append('file', signedProvisionalFile);
+      const uploadRes = await axios.post(
+        `${FILE_SERVER_URL}/api/v1/upload?folder=signed-provisional`,
+        form,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        },
+      );
+      const uploaded = uploadRes.data.data ?? uploadRes.data;
+      const fileKey: string = uploaded.key;
+      const updated = await marriageApi.admin.uploadSignedProvisional(id, {
+        fileKey,
+        fileName: signedProvisionalFile.name,
+        fileSize: signedProvisionalFile.size,
+        // Browsers leave File.type empty for some files; prefer the type the
+        // file-server detected, and never send an empty string.
+        mimeType: uploaded.mimeType || signedProvisionalFile.type || 'application/octet-stream',
+      });
+      setApp(updated);
+      setSignedProvisionalFile(null);
+      setSuccessMsg('Signed provisional certificate uploaded');
+      setTimeout(() => setSuccessMsg(null), 4000);
+    } catch {
+      setActionError('Failed to upload signed provisional certificate');
+    } finally {
+      setActiveAction(null);
+    }
+  };
+
   const handleVerifyDoc = async (docId: string, verified: boolean) => {
     setActiveAction(`verify-${docId}`);
     setActionError(null);
@@ -628,8 +668,12 @@ function AdminMarriageDetailContent() {
   const canMarkCompleted = app.status === 'approved' && !!app.ceremonyDate;
   const certStatusReady = ['approved', 'completed'].includes(app.status);
   const hasWeddingPhoto = !!app.weddingPhotoUrl;
-  // Certificate may only be issued once the marriage photo has been uploaded.
-  const canIssueCert = certStatusReady && hasWeddingPhoto;
+  const hasSignedProvisional = (app.documents ?? []).some(
+    (d) => d.documentType === 'signed_provisional',
+  );
+  // The official certificate may only be issued once the signed provisional
+  // certificate has been uploaded.
+  const canIssueCert = certStatusReady && hasSignedProvisional;
   const needsPaymentConfirm =
     app.paymentStatus !== 'paid' && ['pending_cash', 'processing'].includes(app.paymentStatus);
 
@@ -1246,10 +1290,10 @@ function AdminMarriageDetailContent() {
                 <div>
                   <button
                     onClick={handleIssueCertificate}
-                    disabled={actionLoading || !hasWeddingPhoto}
+                    disabled={actionLoading || !canIssueCert}
                     title={
-                      !hasWeddingPhoto
-                        ? 'Upload the marriage photo first to enable this'
+                      !hasSignedProvisional
+                        ? 'Attach the signed provisional certificate first to enable this'
                         : undefined
                     }
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
@@ -1261,10 +1305,10 @@ function AdminMarriageDetailContent() {
                     )}
                     {activeAction === 'certificate' ? 'Issuing...' : 'Issue Certificate'}
                   </button>
-                  {!hasWeddingPhoto && (
+                  {!hasSignedProvisional && (
                     <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-600">
-                      <Camera className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                      Upload the marriage photo below to enable certificate issuance.
+                      <FileSignature className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      Upload the signed provisional certificate below to enable certificate issuance.
                     </p>
                   )}
                 </div>
@@ -1298,6 +1342,85 @@ function AdminMarriageDetailContent() {
               </button>
             </div>
           )}
+
+          {/* Signed provisional certificate — required before issuing the official one */}
+          {certStatusReady && permCertificate && (() => {
+            const signedDoc = (app.documents ?? []).find(
+              (d) => d.documentType === 'signed_provisional',
+            );
+            return (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                  <FileSignature className="w-4 h-4 text-rose-500" /> Signed Provisional Certificate
+                </h3>
+                {signedDoc ? (
+                  <div className="space-y-2">
+                    {signedDoc.mimeType?.startsWith('image/') && (
+                      <a href={fileUrl(signedDoc.fileKey)} target="_blank" rel="noreferrer">
+                        <img
+                          src={fileUrl(signedDoc.fileKey)}
+                          alt="Signed provisional certificate"
+                          className="w-full rounded-xl object-cover max-h-48 border border-gray-100"
+                        />
+                      </a>
+                    )}
+                    <div className="flex items-center gap-2 rounded-xl border border-green-100 bg-green-50 px-3 py-2.5">
+                      <FileSignature className="w-4 h-4 text-green-600 shrink-0" />
+                      <span className="text-xs text-gray-700 flex-1 truncate">{signedDoc.fileName}</span>
+                      <a
+                        href={fileUrl(signedDoc.fileKey)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-medium text-green-700 hover:text-green-800"
+                      >
+                        View
+                      </a>
+                    </div>
+                    <p className="text-xs text-gray-400 text-center">Signed provisional uploaded ✓</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-500">
+                      Upload the provisional certificate signed by the witnesses, officiant and couple.
+                    </p>
+                    <label
+                      className={cn(
+                        'flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors',
+                        signedProvisionalFile
+                          ? 'border-rose-300 bg-rose-50'
+                          : 'border-gray-200 hover:border-rose-300',
+                      )}
+                    >
+                      <FileSignature className="w-6 h-6 text-gray-300" />
+                      <span className="text-xs text-gray-500">
+                        {signedProvisionalFile
+                          ? signedProvisionalFile.name
+                          : 'Click to select signed certificate (image or PDF)'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => setSignedProvisionalFile(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                    <button
+                      onClick={handleUploadSignedProvisional}
+                      disabled={!signedProvisionalFile || actionLoading}
+                      className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                    >
+                      {activeAction === 'signed-provisional' ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FileSignature className="w-4 h-4" />
+                      )}
+                      {activeAction === 'signed-provisional' ? 'Uploading...' : 'Upload Signed Certificate'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Wedding photo upload — available during validation and after ceremony */}
           {['submitted', 'under_review', 'amendments_requested', 'approved', 'completed'].includes(
