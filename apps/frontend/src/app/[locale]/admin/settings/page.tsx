@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, MessageSquare, Send, History, Bell } from 'lucide-react';
+import { Settings, MessageSquare, Send, History, Bell, CreditCard, Zap } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,8 +11,13 @@ import { SmsConfigTab } from './_components/SmsConfigTab';
 import { SmsTestingTab } from './_components/SmsTestingTab';
 import { SmsHistoryTab } from './_components/SmsHistoryTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
+import { PaymentMethodsTab } from './_components/payment/PaymentMethodsTab';
+import { PaymentTypesTab } from './_components/payment/PaymentTypesTab';
+import { PaymentMethodSettingsTab } from './_components/payment/PaymentMethodSettingsTab';
+import PaymentTestingTab from './_components/payment/PaymentTestingTab';
+import { paymentSettingsApi, PaymentMethod, PaymentType } from '@/lib/paymentSettingsApi';
 
-// ─── Top-level tab definition ─────────────────────────────────────────────────
+// ─── Top-level tab definition ──────────────────────────────────────────────────
 
 interface TopTab {
   key: string;
@@ -22,11 +27,12 @@ interface TopTab {
 }
 
 const TOP_TABS: TopTab[] = [
-  { key: 'sms',           label: 'SMS Gateway',   icon: MessageSquare, permission: Permission.SMS_CONFIG_VIEW              },
-  { key: 'notifications', label: 'Notifications',  icon: Bell,          permission: Permission.NOTIFICATION_SETTINGS_VIEW  },
+  { key: 'sms',      label: 'SMS Gateway',      icon: MessageSquare, permission: Permission.SMS_CONFIG_VIEW              },
+  { key: 'payments', label: 'Payment Settings',  icon: CreditCard,    permission: Permission.PAYMENT_SETTINGS_VIEW       },
+  { key: 'notifications', label: 'Notifications', icon: Bell,         permission: Permission.NOTIFICATION_SETTINGS_VIEW  },
 ];
 
-// ─── SMS subtab definition ────────────────────────────────────────────────────
+// ─── SMS subtab definition ─────────────────────────────────────────────────────
 
 interface SubTab {
   key: string;
@@ -41,7 +47,14 @@ const SMS_SUBTABS: SubTab[] = [
   { key: 'history',  label: 'History',     icon: History,      permission: Permission.SMS_CONFIG_VIEW   },
 ];
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+const PAYMENT_SUBTABS: SubTab[] = [
+  { key: 'methods',       label: 'Payment Methods', icon: CreditCard, permission: Permission.PAYMENT_SETTINGS_VIEW   },
+  { key: 'service-areas', label: 'Service Areas',   icon: Settings,   permission: Permission.PAYMENT_SETTINGS_VIEW   },
+  { key: 'credentials',   label: 'Credentials',     icon: Settings,   permission: Permission.PAYMENT_SETTINGS_MANAGE },
+  { key: 'testing',       label: 'Testing',         icon: Zap,        permission: Permission.PAYMENT_SETTINGS_MANAGE },
+];
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const { hasPermission } = useAuth();
@@ -49,7 +62,11 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(visibleTabs[0]?.key ?? '');
 
   return (
-    <ProtectedRoute permissions={[Permission.SMS_CONFIG_VIEW, Permission.NOTIFICATION_SETTINGS_VIEW]}>
+    <ProtectedRoute permissions={[
+      Permission.SMS_CONFIG_VIEW,
+      Permission.NOTIFICATION_SETTINGS_VIEW,
+      Permission.PAYMENT_SETTINGS_VIEW,
+    ]}>
       <div className="space-y-6">
         {/* Page header */}
         <div className="flex items-center gap-3">
@@ -88,13 +105,14 @@ export default function SettingsPage() {
         </div>
 
         {activeTab === 'sms'           && <SmsGatewaySection />}
+        {activeTab === 'payments'      && <PaymentSettingsSection />}
         {activeTab === 'notifications' && <NotificationsTab />}
       </div>
     </ProtectedRoute>
   );
 }
 
-// ─── Testing tab wrapper — fetches gateway status on its own ──────────────────
+// ─── SMS Testing tab wrapper ───────────────────────────────────────────────────
 
 function SmsTestingTabWrapper() {
   const [gatewayActive, setGatewayActive] = useState(false);
@@ -102,13 +120,13 @@ function SmsTestingTabWrapper() {
   useEffect(() => {
     settingsApi.getSmsConfig()
       .then((c) => setGatewayActive(c.isActive))
-      .catch(() => {/* silently ignore — the tab still works */});
+      .catch(() => {/* ignore */});
   }, []);
 
   return <SmsTestingTab gatewayActive={gatewayActive} />;
 }
 
-// ─── SMS Gateway Section with subtabs ────────────────────────────────────────
+// ─── SMS Gateway Section ───────────────────────────────────────────────────────
 
 function SmsGatewaySection() {
   const { hasPermission } = useAuth();
@@ -117,33 +135,83 @@ function SmsGatewaySection() {
 
   return (
     <div className="space-y-5">
-      {/* Subtab bar */}
-      <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {visibleSubtabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = active === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActive(tab.key)}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap',
-                isActive
-                  ? 'bg-white text-rmc-green shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700',
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Subtab content */}
+      <SubTabBar tabs={visibleSubtabs} active={active} onChange={setActive} />
       {active === 'config'  && <SmsConfigTab />}
       {active === 'testing' && <SmsTestingTabWrapper />}
       {active === 'history' && <SmsHistoryTab />}
+    </div>
+  );
+}
+
+// ─── Payment Settings Section ──────────────────────────────────────────────────
+
+function PaymentSettingsSection() {
+  const { hasPermission } = useAuth();
+  const visibleSubtabs = PAYMENT_SUBTABS.filter((t) => hasPermission(t.permission));
+  const [active, setActive] = useState(visibleSubtabs[0]?.key ?? 'methods');
+
+  const [focusMethod, setFocusMethod] = useState<PaymentMethod | null>(null);
+  const [allMethods, setAllMethods]   = useState<PaymentMethod[]>([]);
+  const [allTypes,   setAllTypes]     = useState<PaymentType[]>([]);
+
+  useEffect(() => {
+    paymentSettingsApi.listMethods().then(setAllMethods).catch(() => {});
+    paymentSettingsApi.listTypes().then(setAllTypes).catch(() => {});
+  }, []);
+
+  const handleConfigureClick = (method: PaymentMethod) => {
+    setFocusMethod(method);
+    setActive('credentials');
+  };
+
+  return (
+    <div className="space-y-5">
+      <SubTabBar tabs={visibleSubtabs} active={active} onChange={setActive} />
+      {active === 'methods'       && <PaymentMethodsTab onConfigureClick={handleConfigureClick} />}
+      {active === 'service-areas' && <PaymentTypesTab />}
+      {active === 'credentials'   && (
+        <PaymentMethodSettingsTab
+          initialMethod={focusMethod}
+          methods={allMethods}
+        />
+      )}
+      {active === 'testing' && (
+        <PaymentTestingTab methods={allMethods} types={allTypes} />
+      )}
+    </div>
+  );
+}
+
+// ─── Shared sub-tab bar component ─────────────────────────────────────────────
+
+interface SubTabBarProps {
+  tabs: SubTab[];
+  active: string;
+  onChange: (key: string) => void;
+}
+
+function SubTabBar({ tabs, active, onChange }: SubTabBarProps) {
+  return (
+    <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = active === tab.key;
+        return (
+          <button
+            key={tab.key}
+            onClick={() => onChange(tab.key)}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap',
+              isActive
+                ? 'bg-white text-rmc-green shadow-sm'
+                : 'text-gray-500 hover:text-gray-700',
+            )}
+          >
+            <Icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

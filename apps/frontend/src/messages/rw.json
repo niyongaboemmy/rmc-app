@@ -1562,10 +1562,12 @@
       },
       "auto": {
         "title": "Injiza App ya RMC",
+        "subtitle": "Kwinjira vuba • Gukora nta internet",
         "subtitleIOS": "Ongeraho kuri ekran ya mbere kugirango ubibonere vuba",
         "subtitleDesktop": "Injiza kuri desktop yawe kugirango ubibonere vuba",
         "install": "Injiza",
-        "later": "Ubu ntabwo",
+        "getApp": "Injira App",
+        "later": "Noneho ntabwo",
         "dismiss": "Funga ikibazo cyo guterura",
         "ios": {
           "step1": "Kanda buto ya <strong>Share</strong> (↑) muri Safari.",

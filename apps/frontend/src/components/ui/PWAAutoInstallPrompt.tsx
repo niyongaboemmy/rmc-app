@@ -91,7 +91,6 @@ export function PWAAutoInstallPrompt() {
     setDevice(det);
     setPlatform(plt);
 
-    // iOS — show instructions banner after delay (no beforeinstallprompt)
     if (plt === 'ios') {
       const timer = window.setTimeout(() => {
         if (!isStandalone() && !wasDismissedRecently()) setVisible(true);
@@ -99,14 +98,12 @@ export function PWAAutoInstallPrompt() {
       return () => window.clearTimeout(timer);
     }
 
-    // Chrome / Chromium-based
     if (plt === 'chrome') {
       const handler = async (e: Event) => {
         e.preventDefault();
         const bip = e as BeforeInstallPromptEvent;
 
         if (det === 'phone' || det === 'tablet') {
-          // Auto-trigger native install dialog — no custom banner needed
           await new Promise<void>((r) => window.setTimeout(r, AUTO_PROMPT_DELAY[det]));
           if (isStandalone() || wasDismissedRecently()) return;
           await bip.prompt();
@@ -114,7 +111,6 @@ export function PWAAutoInstallPrompt() {
           if (outcome === 'accepted') setInstalled(true);
           else saveDismissed();
         } else {
-          // Desktop — save prompt and show floating banner
           setDeferredPrompt(bip);
           window.setTimeout(() => {
             if (!isStandalone() && !wasDismissedRecently()) setVisible(true);
@@ -155,21 +151,21 @@ export function PWAAutoInstallPrompt() {
   if (platform === 'ios') {
     return (
       <div className="fixed inset-x-0 bottom-0 z-[300] p-3 sm:p-4 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-sm bg-zinc-950 border border-white/10 rounded-2xl p-5 shadow-2xl">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-rmc-green/15 border border-rmc-green/25 flex items-center justify-center">
-                <DeviceIcon className="w-4 h-4 text-rmc-green-light" />
+        <div className="pointer-events-auto w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shrink-0">
+                <DeviceIcon className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">{t('title')}</p>
-                <p className="text-[11px] text-white/40">{t('subtitleIOS')}</p>
+                <p className="text-sm font-bold text-gray-900">{t('title')}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t('subtitle')}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={dismiss}
-              className="text-white/30 hover:text-white/60 transition-colors p-1"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 ml-2"
               aria-label={t('dismiss')}
             >
               <X className="w-4 h-4" />
@@ -177,34 +173,34 @@ export function PWAAutoInstallPrompt() {
           </div>
 
           {showIOSSteps ? (
-            <ol className="space-y-2.5 text-xs text-white/60 leading-relaxed mt-3">
+            <ol className="space-y-2.5 text-xs text-gray-600 leading-relaxed mt-3">
               <li className="flex gap-2.5">
-                <span className="w-4 h-4 rounded-full bg-rmc-green/20 text-rmc-green-light text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
                 <span dangerouslySetInnerHTML={{ __html: t.raw('ios.step1') }} />
               </li>
               <li className="flex gap-2.5">
-                <span className="w-4 h-4 rounded-full bg-rmc-green/20 text-rmc-green-light text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
                 <span dangerouslySetInnerHTML={{ __html: t.raw('ios.step2') }} />
               </li>
               <li className="flex gap-2.5">
-                <span className="w-4 h-4 rounded-full bg-rmc-green/20 text-rmc-green-light text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
                 <span dangerouslySetInnerHTML={{ __html: t.raw('ios.step3') }} />
               </li>
             </ol>
           ) : (
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-1">
               <button
                 type="button"
                 onClick={handleInstall}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-rmc-green text-white text-xs font-semibold hover:bg-rmc-green/90 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors"
               >
-                <Download className="w-3.5 h-3.5" />
-                {t('install')}
+                <Download className="w-4 h-4" />
+                {t('getApp')}
               </button>
               <button
                 type="button"
                 onClick={dismiss}
-                className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-xs hover:text-white/70 transition-colors"
+                className="px-4 py-2.5 rounded-full bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 {t('later')}
               </button>
@@ -217,21 +213,21 @@ export function PWAAutoInstallPrompt() {
 
   // Desktop Chrome — floating card (bottom-right)
   return (
-    <div className="fixed bottom-4 right-4 z-[300] w-72 bg-zinc-950 border border-white/10 rounded-2xl p-4 shadow-2xl animate-in slide-in-from-bottom-4 fade-in duration-300">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-rmc-green/15 border border-rmc-green/25 flex items-center justify-center">
-            <DeviceIcon className="w-4.5 h-4.5 text-rmc-green-light" />
+    <div className="fixed bottom-4 right-4 z-[300] w-72 bg-white rounded-2xl p-4 shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 fade-in duration-300">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shrink-0">
+            <DeviceIcon className="w-6 h-6 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{t('title')}</p>
-            <p className="text-[11px] text-white/40">{t('subtitleDesktop')}</p>
+            <p className="text-sm font-bold text-gray-900">{t('title')}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('subtitle')}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={dismiss}
-          className="text-white/30 hover:text-white/60 transition-colors p-0.5 mt-0.5"
+          className="text-gray-400 hover:text-gray-600 transition-colors p-1 ml-1 shrink-0"
           aria-label={t('dismiss')}
         >
           <X className="w-4 h-4" />
@@ -242,15 +238,15 @@ export function PWAAutoInstallPrompt() {
         <button
           type="button"
           onClick={handleInstall}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-rmc-green text-white text-xs font-semibold hover:bg-rmc-green/90 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors"
         >
-          <Download className="w-3.5 h-3.5" />
-          {t('install')}
+          <Download className="w-4 h-4" />
+          {t('getApp')}
         </button>
         <button
           type="button"
           onClick={dismiss}
-          className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-xs hover:text-white/70 transition-colors"
+          className="px-4 py-2.5 rounded-full bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors"
         >
           {t('later')}
         </button>

@@ -1562,10 +1562,12 @@
       },
       "auto": {
         "title": "Install RMC App",
+        "subtitle": "Quick access • Offline mode",
         "subtitleIOS": "Add to your home screen for quick access",
         "subtitleDesktop": "Install on your desktop for quick access",
         "install": "Install",
-        "later": "Not now",
+        "getApp": "Get App",
+        "later": "Later",
         "dismiss": "Dismiss install prompt",
         "ios": {
           "step1": "Tap the <strong>Share</strong> button (↑) in Safari's toolbar.",

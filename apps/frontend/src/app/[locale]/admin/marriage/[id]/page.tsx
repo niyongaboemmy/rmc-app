@@ -8,7 +8,7 @@ import {
   Users, Shield, DollarSign, UserCheck, CheckCircle2, XCircle,
   AlertTriangle, FileText, Download, Clock, RefreshCw, Send,
   Banknote, X, Camera, ImageIcon, Eye, ZoomIn, ChevronLeft, ChevronRight,
-  Mail, ShieldCheck, CheckCheck,
+  Mail, ShieldCheck, CheckCheck, Smartphone,
 } from 'lucide-react';
 import { fileUrl } from '@/lib/api';
 import axios from 'axios';
@@ -295,6 +295,13 @@ function AdminMarriageDetailContent() {
   const [weddingPhotoFile, setWeddingPhotoFile] = useState<File | null>(null);
   const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
 
+  // MoMo payment
+  const [momoPhone,     setMomoPhone]     = useState('');
+  const [momoLoading,   setMomoLoading]   = useState(false);
+  const [momoTx,        setMomoTx]        = useState<{ id: string; status: string; providerRef: string | null } | null>(null);
+  const [momoStatusMsg, setMomoStatusMsg] = useState<string | null>(null);
+  const [momoError,     setMomoError]     = useState<string | null>(null);
+
   // Party confirmations
   interface PartyConfirmation { role: string; name: string | null; confirmedAt: string | null; }
   const [parties, setParties] = useState<PartyConfirmation[]>([]);
@@ -422,6 +429,43 @@ function AdminMarriageDetailContent() {
       setActionError('Failed to update document verification');
     } finally {
       setActiveAction(null);
+    }
+  };
+
+  const handleInitiateMomo = async () => {
+    const phone = momoPhone.trim().replace(/\s/g, '');
+    if (!phone) { setMomoError('Enter the payer mobile number'); return; }
+    setMomoLoading(true);
+    setMomoError(null);
+    setMomoStatusMsg(null);
+    setMomoTx(null);
+    try {
+      const result = await marriageApi.admin.initiateMomoPayment(id, phone);
+      setMomoTx(result.transaction);
+      setApp(result.application);
+      setMomoStatusMsg(`Payment request sent — status: ${result.transaction.status}`);
+    } catch (err: unknown) {
+      setMomoError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to initiate payment');
+    } finally {
+      setMomoLoading(false);
+    }
+  };
+
+  const handleCheckMomoStatus = async () => {
+    if (!momoTx) return;
+    setMomoLoading(true);
+    setMomoError(null);
+    try {
+      const result = await marriageApi.admin.checkMomoStatus(id, momoTx.id);
+      setMomoTx((prev) => prev ? { ...prev, status: result.status.toLowerCase() } : null);
+      setMomoStatusMsg(`Status: ${result.status} — ${result.message}`);
+      if (result.status === 'SUCCESSFUL') {
+        await fetchApp(); // refresh app to show PAID
+      }
+    } catch {
+      setMomoError('Status check failed');
+    } finally {
+      setMomoLoading(false);
     }
   };
 
@@ -774,6 +818,62 @@ function AdminMarriageDetailContent() {
                   : <Banknote className="w-4 h-4" />}
                 {activeAction === 'payment' ? 'Confirming...' : 'Confirm Payment'}
               </button>
+            )}
+
+            {/* MoMo Payment */}
+            {app.paymentStatus !== 'paid' && permManage && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                  <Smartphone className="w-3.5 h-3.5 text-violet-500" /> MoMo Payment (IntouchPay)
+                </p>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <input
+                      type="tel"
+                      value={momoPhone}
+                      onChange={(e) => { setMomoPhone(e.target.value); setMomoError(null); }}
+                      placeholder={app.groomPhone ? app.groomPhone.replace(/[^0-9]/g, '') : '250788000000'}
+                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400">
+                    Default: groom's phone. Another person can pay — enter their number above.
+                  </p>
+                  {momoError && (
+                    <p className="text-[10px] text-red-600">{momoError}</p>
+                  )}
+                  {momoStatusMsg && (
+                    <p className={cn(
+                      'text-[10px] font-medium',
+                      momoTx?.status === 'completed' ? 'text-green-700' :
+                      momoTx?.status === 'failed'    ? 'text-red-600'   : 'text-amber-700',
+                    )}>
+                      {momoStatusMsg}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleInitiateMomo}
+                      disabled={momoLoading}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold disabled:opacity-50 transition-colors"
+                    >
+                      {momoLoading && !momoTx ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Smartphone className="w-3.5 h-3.5" />}
+                      Send Request
+                    </button>
+                    {momoTx && momoTx.status === 'pending' && (
+                      <button
+                        onClick={handleCheckMomoStatus}
+                        disabled={momoLoading}
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-gray-200 hover:border-violet-300 text-xs font-medium text-gray-600 disabled:opacity-50 transition-colors"
+                      >
+                        <RefreshCw className={cn('w-3.5 h-3.5', momoLoading && 'animate-spin')} />
+                        Check
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 

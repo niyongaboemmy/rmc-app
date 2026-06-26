@@ -1,6 +1,5 @@
-import {
-  Controller, Get, Post, Patch, Param, Body, Query, ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { IsBoolean } from 'class-validator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MarriageService } from './marriage.service';
@@ -14,6 +13,12 @@ import { User } from '../users/entities/user.entity';
 class VerifyDocumentDto {
   @IsBoolean()
   verified: boolean;
+}
+
+class InitiateMomoDto {
+  @IsString()
+  @IsNotEmpty()
+  mobilePhone: string;
 }
 
 @ApiTags('Marriage — Admin')
@@ -40,7 +45,10 @@ export class MarriageAdminController {
     @Query('limit') limit?: string,
   ) {
     return this.service.adminFindAll({
-      status, paymentStatus, venueType, search,
+      status,
+      paymentStatus,
+      venueType,
+      search,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 20,
     });
@@ -78,11 +86,29 @@ export class MarriageAdminController {
   @Post('applications/:id/payment/confirm')
   @Permissions(Permission.MARRIAGE_MANAGE)
   @ApiOperation({ summary: 'Confirm cash or bank payment' })
-  confirmPayment(
+  confirmPayment(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.adminConfirmCashPayment(id, user.id);
+  }
+
+  @Post('applications/:id/payment/initiate-momo')
+  @Permissions(Permission.MARRIAGE_MANAGE)
+  @ApiOperation({ summary: 'Initiate MoMo payment request via IntouchPay' })
+  initiateMomo(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: InitiateMomoDto,
   ) {
-    return this.service.adminConfirmCashPayment(id, user.id);
+    return this.service.adminInitiateMomoPayment(id, user.id, dto.mobilePhone);
+  }
+
+  @Get('applications/:id/payment/:txId/status')
+  @Permissions(Permission.MARRIAGE_VIEW)
+  @ApiOperation({ summary: 'Check MoMo payment status from IntouchPay' })
+  checkMomoStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('txId', ParseUUIDPipe) txId: string,
+  ) {
+    return this.service.adminGetMomoPaymentStatus(id, txId);
   }
 
   @Patch('applications/:id/documents/:docId/verify')
@@ -111,10 +137,7 @@ export class MarriageAdminController {
   @Post('applications/:id/certificate')
   @Permissions(Permission.MARRIAGE_CERTIFICATE)
   @ApiOperation({ summary: 'Issue marriage certificate' })
-  issueCertificate(
-    @CurrentUser() user: User,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  issueCertificate(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.adminIssueCertificate(id, user.id);
   }
 

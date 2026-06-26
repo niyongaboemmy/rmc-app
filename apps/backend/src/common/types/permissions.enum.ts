@@ -76,6 +76,10 @@ export enum Permission {
   // ── Notification Settings ─────────────────────────────────────────
   NOTIFICATION_SETTINGS_VIEW = 'notification_settings:view',
   NOTIFICATION_SETTINGS_MANAGE = 'notification_settings:manage',
+
+  // Payment Settings
+  PAYMENT_SETTINGS_VIEW = 'payment_settings:view',
+  PAYMENT_SETTINGS_MANAGE = 'payment_settings:manage',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);

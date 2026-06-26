@@ -286,6 +286,22 @@ export const marriageApi = {
       return data.data ?? data;
     },
 
+    initiateMomoPayment: async (
+      id: string,
+      mobilePhone: string,
+    ): Promise<{ application: MarriageApplication; transaction: { id: string; status: string; providerRef: string | null }; gatewayResponse: unknown }> => {
+      const { data } = await apiClient.post(`/admin/marriage/applications/${id}/payment/initiate-momo`, { mobilePhone });
+      return data.data ?? data;
+    },
+
+    checkMomoStatus: async (
+      id: string,
+      txId: string,
+    ): Promise<{ status: string; responseCode: string; message: string }> => {
+      const { data } = await apiClient.get(`/admin/marriage/applications/${id}/payment/${txId}/status`);
+      return data.data ?? data;
+    },
+
     uploadWeddingPhoto: async (id: string, photoUrl: string): Promise<MarriageApplication> => {
       const { data } = await apiClient.post(`/admin/marriage/applications/${id}/wedding-photo`, { photoUrl });
       return data.data ?? data;

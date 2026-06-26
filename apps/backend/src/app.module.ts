@@ -27,6 +27,8 @@ import { SchoolsModule } from './schools/schools.module';
 import { SocialModule } from './social/social.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { PaymentSettingsModule } from './payment-settings/payment-settings.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -64,6 +66,8 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     SocialModule,
     ContactMessagesModule,
     IntegrationsModule,
+    PaymentSettingsModule,
+    WebhooksModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
