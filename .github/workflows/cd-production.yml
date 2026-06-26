@@ -70,6 +70,22 @@ jobs:
           "
 
       # ── Rsync artifacts directly to EC2 ─────────
+      - name: Rsync — package manifests
+        run: |
+          rsync -az \
+            package.json \
+            package-lock.json \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/
+          rsync -az \
+            apps/backend/package.json \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/backend/
+          rsync -az \
+            apps/frontend/package.json \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/frontend/
+          rsync -az \
+            apps/file-server/package.json \
+            ubuntu@${{ secrets.PRODUCTION_HOST }}:/opt/rmc-platform/apps/file-server/
+
       - name: Rsync — backend dist
         run: |
           rsync -az --delete \
