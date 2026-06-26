@@ -1559,6 +1559,19 @@
         "step1": "Kanda buto ya <strong>Share</strong> (↑) muri Safari.",
         "step2": "Manuka hasi maze ukande <strong>Add to Home Screen</strong>.",
         "step3": "Kanda <strong>Add</strong> gusobanura."
+      },
+      "auto": {
+        "title": "Injiza App ya RMC",
+        "subtitleIOS": "Ongeraho kuri ekran ya mbere kugirango ubibonere vuba",
+        "subtitleDesktop": "Injiza kuri desktop yawe kugirango ubibonere vuba",
+        "install": "Injiza",
+        "later": "Ubu ntabwo",
+        "dismiss": "Funga ikibazo cyo guterura",
+        "ios": {
+          "step1": "Kanda buto ya <strong>Share</strong> (↑) muri Safari.",
+          "step2": "Manuka hasi maze ukande <strong>Add to Home Screen</strong>.",
+          "step3": "Kanda <strong>Add</strong> gusobanura."
+        }
       }
     }
   }
