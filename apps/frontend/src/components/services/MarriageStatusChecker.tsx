@@ -244,7 +244,7 @@ function StatusResult({ app, locale }: { app: MarriageApplication; locale: strin
   const venueTitle =
     app.venueType === 'mosque' ? t('apply.venueMosqueTitle') : t('apply.venueOutsideTitle');
   const VenueIcon = app.venueType === 'mosque' ? Building2 : MapPin;
-  const fee = app.venueType === 'mosque' ? t('apply.feeMosque') : t('apply.feeOutside');
+  const fee = app.amountDue ? `${Number(app.amountDue).toLocaleString()} RWF` : (app.venueType === 'mosque' ? t('apply.feeMosque') : t('apply.feeOutside'));
 
   const payment = app.paymentMethod
     ? t(`apply.pay${app.paymentMethod === 'momo' ? 'Momo' : app.paymentMethod === 'bank' ? 'Bank' : 'Cash'}`)
