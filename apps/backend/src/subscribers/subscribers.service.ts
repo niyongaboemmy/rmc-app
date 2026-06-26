@@ -20,8 +20,14 @@ export class SubscribersService {
     private readonly config: ConfigService,
   ) {}
 
+  /**
+   * Base URL used for every link in outgoing email (logo, unsubscribe, website).
+   * Reads FRONTEND_URL; when unset the fallback is the LIVE domain — never
+   * localhost — so a broadcast from a misconfigured server can't ship dead
+   * localhost links to real subscribers. Local dev sets FRONTEND_URL in .env.
+   */
   private get appUrl(): string {
-    return this.config.get<string>('FRONTEND_URL') || 'http://localhost:3001';
+    return this.config.get<string>('FRONTEND_URL') || 'https://isengesho.com';
   }
 
   // ── Public ──────────────────────────────────────────────────────────────────
@@ -198,8 +204,22 @@ export class SubscribersService {
    * The logo is a PNG (WebP isn't supported by many email clients) served from
    * the frontend's public dir; in production FRONTEND_URL is the live domain.
    */
+  /**
+   * Rewrite root-relative links/images (href="/..", src="/..") in admin-authored
+   * email HTML to absolute URLs on the live domain. Email clients have no page
+   * origin, so a relative link is dead in the inbox — this makes them resolve.
+   * Skips protocol-relative ("//cdn..."), anchors ("#..") and already-absolute URLs.
+   */
+  private absolutizeLinks(html: string, baseUrl: string): string {
+    return html.replace(
+      /(\b(?:href|src)\s*=\s*)(["'])(\/(?!\/)[^"']*)\2/gi,
+      (_m, attr: string, quote: string, path: string) => `${attr}${quote}${baseUrl}${path}${quote}`,
+    );
+  }
+
   private wrapHtml(bodyHtml: string, sub?: Subscriber): string {
     const url = this.appUrl;
+    const body = this.absolutizeLinks(bodyHtml, url);
     const year = new Date().getFullYear();
     const sans = 'Arial,Helvetica,sans-serif';
 
@@ -235,7 +255,7 @@ export class SubscribersService {
                 <!-- Body -->
                 <tr>
                   <td style="padding:28px;color:#1f2937;font-family:${sans};font-size:15px;line-height:1.65;">
-                    ${bodyHtml}
+                    ${body}
                   </td>
                 </tr>
                 <!-- Footer -->

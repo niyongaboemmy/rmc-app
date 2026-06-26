@@ -316,7 +316,7 @@ function BlogManager() {
                     <NotifySubscribersButton
                       compact
                       subject={post.title.en || title}
-                      html={`<p>New on the RMC blog: <strong>${post.title.en || title}</strong></p><p>Read it at /${lang}/blog/${post.slug}</p>`}
+                      html={`<p>New on the RMC blog: <strong>${post.title.en || title}</strong></p><p><a href="/${lang}/blog/${post.slug}" style="color:#1a7a4a;font-weight:bold;text-decoration:underline">Read the full post →</a></p>`}
                     />
                   )}
                 </div>
