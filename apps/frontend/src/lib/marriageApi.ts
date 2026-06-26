@@ -244,6 +244,13 @@ export const marriageApi = {
     }
   },
 
+  checkPaymentStatus: async (
+    id: string,
+  ): Promise<{ paymentStatus: string; gatewayStatus: string; responseCode: string; message: string }> => {
+    const { data } = await apiClient.get(`/marriage/applications/${id}/payment/check`);
+    return data.data ?? data;
+  },
+
   initiateUserMomoPayment: async (
     id: string,
     mobilePhone: string,

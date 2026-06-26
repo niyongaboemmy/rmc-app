@@ -39,6 +39,16 @@ export class MarriageController {
     return this.service.submit(id, user.id);
   }
 
+  @Get('applications/:id/payment/check')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Poll IntouchPay gateway for payment status and sync DB' })
+  checkPaymentStatus(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.service.checkUserMomoPaymentStatus(id, user.id);
+  }
+
   @Post('applications/:id/payment/initiate-momo')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Initiate MoMo (IntouchPay) payment for a draft application' })

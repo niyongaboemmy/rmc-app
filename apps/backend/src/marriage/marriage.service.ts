@@ -733,6 +733,68 @@ export class MarriageService {
     return { application: app, transaction: savedTx, gatewayResponse: result };
   }
 
+  /** Polls IntouchPay gateway directly and updates DB — used by the applicant's waiting screen. */
+  async checkUserMomoPaymentStatus(
+    id: string,
+    applicantId: string,
+  ): Promise<{ paymentStatus: string; gatewayStatus: string; responseCode: string; message: string }> {
+    const app = await this.findOwnApplication(id, applicantId);
+
+    // Already resolved — no need to hit the gateway
+    if (app.paymentStatus === PaymentStatus.PAID) {
+      return { paymentStatus: 'paid', gatewayStatus: 'SUCCESSFUL', responseCode: '01', message: 'Payment already confirmed' };
+    }
+    if (app.paymentStatus === PaymentStatus.FAILED) {
+      return { paymentStatus: 'failed', gatewayStatus: 'FAILED', responseCode: '', message: 'Payment failed' };
+    }
+
+    // Find the most recent pending MoMo transaction for this application
+    const tx = await this.transactionRepo.findOne({
+      where: { applicationId: id, method: 'momo', status: 'pending' },
+      order: { initiatedAt: 'DESC' },
+    });
+    if (!tx) {
+      return { paymentStatus: app.paymentStatus, gatewayStatus: 'PENDING', responseCode: '1000', message: 'No active MoMo transaction found' };
+    }
+
+    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+      return { paymentStatus: app.paymentStatus, gatewayStatus: 'PENDING', responseCode: '', message: 'Credentials not configured' };
+    }
+
+    const statusResult = await this.intouchPay.getTransactionStatus({
+      username: creds.username,
+      partnerPassword: creds.partnerPassword,
+      accountNo: creds.accountNo,
+      requestTransactionId: tx.providerRef ?? '',
+      transactionId: String((tx.metadata as Record<string, unknown>)?.gatewayTransactionId ?? ''),
+      gatewayBaseUrl: creds.gatewayUrl,
+    });
+
+    if (statusResult.status !== 'PENDING') {
+      tx.status = statusResult.status === 'SUCCESSFUL' ? 'completed' : 'failed';
+      tx.completedAt = new Date();
+      await this.transactionRepo.save(tx);
+
+      if (statusResult.status === 'SUCCESSFUL') {
+        app.paymentStatus = PaymentStatus.PAID;
+        app.amountPaid = app.amountDue;
+        await this.applicationRepo.save(app);
+        await this.sendPaymentConfirmedSms(app);
+      } else {
+        app.paymentStatus = PaymentStatus.FAILED;
+        await this.applicationRepo.save(app);
+      }
+    }
+
+    return {
+      paymentStatus: app.paymentStatus,
+      gatewayStatus: statusResult.status,
+      responseCode: statusResult.responseCode,
+      message: statusResult.message,
+    };
+  }
+
   async adminGetMomoPaymentStatus(
     id: string,
     transactionId: string,

@@ -492,16 +492,20 @@ export function MarriageWizard() {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const app = await marriageApi.getById(appId);
-        if (app.paymentStatus === 'paid') {
+        // Actively polls IntouchPay gateway + syncs DB, so this works even
+        // when the webhook callback can't reach the local dev server.
+        const result = await marriageApi.checkPaymentStatus(appId);
+        if (result.paymentStatus === 'paid' || result.gatewayStatus === 'SUCCESSFUL') {
           stopPolling();
+          // Refresh the full app object to get updated fields
+          const app = await marriageApi.getById(appId);
           setPendingDraftApp(app);
           setPaymentPhase('confirmed');
-        } else if (app.paymentStatus === 'failed') {
+        } else if (result.paymentStatus === 'failed' || result.gatewayStatus === 'FAILED') {
           stopPolling();
           setPaymentPhase('idle');
           setIsSubmitting(false);
-          setSubmitError('MoMo payment failed. Please try again.');
+          setSubmitError('MoMo payment failed or was declined. Please try again.');
         }
       } catch { /* ignore transient fetch errors */ }
     }, 5000);
