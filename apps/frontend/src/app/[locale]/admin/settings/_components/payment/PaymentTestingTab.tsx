@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Phone, Zap, RefreshCw, CheckCircle2, XCircle, Clock,
   ChevronDown, AlertCircle, Activity, Wallet, X,
@@ -77,6 +78,9 @@ function PaymentSuccessPopup({
   const isSuccess = event.type === 'payment.confirmed';
   const [elapsed,  setElapsed]  = useState(0);
   const [entered,  setEntered]  = useState(false);
+  const [mounted,  setMounted]  = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setEntered(true));
@@ -101,7 +105,9 @@ function PaymentSuccessPopup({
   const bgBand  = isSuccess ? '#ecfdf5' : '#fef2f2';
   const ringBg  = isSuccess ? '#a7f3d0' : '#fecaca';
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       <style>{`
         @keyframes _overlay-in {
@@ -334,7 +340,8 @@ function PaymentSuccessPopup({
 
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 

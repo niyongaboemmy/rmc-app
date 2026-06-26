@@ -4,39 +4,87 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, Heart, User, Fingerprint, Phone, Calendar, MapPin, Building2,
-  Users, Shield, DollarSign, UserCheck, CheckCircle2, XCircle,
-  AlertTriangle, FileText, Download, Clock, RefreshCw, Send,
-  Banknote, X, Camera, ImageIcon, Eye, ZoomIn, ChevronLeft, ChevronRight,
-  Mail, ShieldCheck, CheckCheck, Smartphone,
+  ArrowLeft,
+  Heart,
+  User,
+  Fingerprint,
+  Phone,
+  Calendar,
+  MapPin,
+  Building2,
+  Users,
+  Shield,
+  DollarSign,
+  UserCheck,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  FileText,
+  Download,
+  Clock,
+  RefreshCw,
+  Send,
+  Banknote,
+  X,
+  Camera,
+  ImageIcon,
+  Eye,
+  ZoomIn,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  ShieldCheck,
+  CheckCheck,
+  Smartphone,
 } from 'lucide-react';
 import { fileUrl } from '@/lib/api';
 import axios from 'axios';
 import { FILE_SERVER_URL } from '@/lib/api';
-import { marriageApi, type MarriageApplication, type MarriageApplicationStatus, STATUS_COLORS } from '@/lib/marriageApi';
+import {
+  marriageApi,
+  type MarriageApplication,
+  type MarriageApplicationStatus,
+  STATUS_COLORS,
+} from '@/lib/marriageApi';
 import { cn } from '@/lib/utils';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'Draft', submitted: 'Submitted', under_review: 'Under Review',
-  amendments_requested: 'Amendments Requested', approved: 'Approved',
-  completed: 'Completed', rejected: 'Rejected', cancelled: 'Cancelled', closed: 'Closed',
+  draft: 'Draft',
+  submitted: 'Submitted',
+  under_review: 'Under Review',
+  amendments_requested: 'Amendments Requested',
+  approved: 'Approved',
+  completed: 'Completed',
+  rejected: 'Rejected',
+  cancelled: 'Cancelled',
+  closed: 'Closed',
 };
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={cn(
-      'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
-      STATUS_COLORS[status as MarriageApplicationStatus] ?? 'bg-gray-100 text-gray-700',
-    )}>
+    <span
+      className={cn(
+        'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
+        STATUS_COLORS[status as MarriageApplicationStatus] ?? 'bg-gray-100 text-gray-700',
+      )}
+    >
       {STATUS_LABELS[status] ?? status}
     </span>
   );
 }
 
-function InfoRow({ label, value, icon }: { label: string; value?: string | null; icon?: React.ReactNode }) {
+function InfoRow({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value?: string | null;
+  icon?: React.ReactNode;
+}) {
   if (!value) return null;
   return (
     <div className="flex items-start gap-3 py-2.5 border-b border-gray-100 last:border-0">
@@ -49,7 +97,15 @@ function InfoRow({ label, value, icon }: { label: string; value?: string | null;
   );
 }
 
-function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
@@ -71,19 +127,33 @@ interface ActionModalProps {
   confirmClass?: string;
 }
 
-function ActionModal({ title, onClose, onConfirm, placeholder, required, confirmLabel = 'Confirm', confirmClass }: ActionModalProps) {
+function ActionModal({
+  title,
+  onClose,
+  onConfirm,
+  placeholder,
+  required,
+  confirmLabel = 'Confirm',
+  confirmClass,
+}: ActionModalProps) {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleConfirm = async () => {
-    if (required && !notes.trim()) { setError('This field is required.'); return; }
+    if (required && !notes.trim()) {
+      setError('This field is required.');
+      return;
+    }
     setLoading(true);
     try {
       await onConfirm(notes);
       onClose();
     } catch (err: unknown) {
-      setError((err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Action failed');
+      setError(
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ?? 'Action failed',
+      );
     } finally {
       setLoading(false);
     }
@@ -94,26 +164,38 @@ function ActionModal({ title, onClose, onConfirm, placeholder, required, confirm
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
         <textarea
           rows={4}
           value={notes}
-          onChange={(e) => { setNotes(e.target.value); setError(''); }}
+          onChange={(e) => {
+            setNotes(e.target.value);
+            setError('');
+          }}
           placeholder={placeholder ?? 'Notes (optional)'}
           className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 resize-none"
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex gap-3 mt-4">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className={cn('flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass ?? 'bg-rose-600 hover:bg-rose-700')}
+            className={cn(
+              'flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50',
+              confirmClass ?? 'bg-rose-600 hover:bg-rose-700',
+            )}
           >
             {loading ? 'Processing...' : confirmLabel}
           </button>
@@ -124,19 +206,19 @@ function ActionModal({ title, onClose, onConfirm, placeholder, required, confirm
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
-  groom_id:      "Groom's National ID",
-  bride_id:      "Bride's National ID",
-  wali_consent:  'Wali Consent Letter',
-  mahr_agreement:'Mahr Agreement',
-  portrait:      'Portrait Photo',
-  additional:    'Additional Document',
+  groom_id: "Groom's National ID",
+  bride_id: "Bride's National ID",
+  wali_consent: 'Wali Consent Letter',
+  mahr_agreement: 'Mahr Agreement',
+  portrait: 'Portrait Photo',
+  additional: 'Additional Document',
 };
 
 // Document types the applicant is expected to provide (mirrors the public wizard).
 const EXPECTED_DOCS: { type: string; required: boolean }[] = [
-  { type: 'groom_id',     required: true  },
-  { type: 'bride_id',     required: true  },
-  { type: 'portrait',     required: true  },
+  { type: 'groom_id', required: true },
+  { type: 'bride_id', required: true },
+  { type: 'portrait', required: true },
   { type: 'wali_consent', required: false },
 ];
 
@@ -165,7 +247,7 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft')  setIndex((i) => Math.max(i - 1, 0));
+      if (e.key === 'ArrowLeft') setIndex((i) => Math.max(i - 1, 0));
       if (e.key === 'ArrowRight') setIndex((i) => Math.min(i + 1, docs.length - 1));
     };
     window.addEventListener('keydown', handler);
@@ -173,13 +255,22 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
   }, [docs.length, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm"
+      onClick={onClose}
+    >
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex items-center justify-between px-4 py-3 shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         <p className="text-white text-sm font-medium truncate max-w-xs">{current.name}</p>
         <div className="flex items-center gap-2">
           <button
-            onClick={(e) => { e.stopPropagation(); onVerify(current.id, !current.verified); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onVerify(current.id, !current.verified);
+            }}
             disabled={verifying}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50',
@@ -188,9 +279,13 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
                 : 'bg-white/10 hover:bg-white/20 text-white',
             )}
           >
-            {verifying
-              ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              : current.verified ? <CheckCircle2 className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+            {verifying ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : current.verified ? (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            ) : (
+              <ShieldCheck className="w-3.5 h-3.5" />
+            )}
             {current.verified ? 'Verified' : 'Mark verified'}
           </button>
           <a
@@ -212,7 +307,10 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
       </div>
 
       {/* Main viewer */}
-      <div className="flex-1 flex items-center justify-center relative min-h-0 px-12" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex-1 flex items-center justify-center relative min-h-0 px-12"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Prev */}
         {index > 0 && (
           <button
@@ -251,7 +349,10 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
 
       {/* Thumbnail strip */}
       {docs.length > 1 && (
-        <div className="shrink-0 flex items-center justify-center gap-2 py-3 px-4 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="shrink-0 flex items-center justify-center gap-2 py-3 px-4 overflow-x-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           {docs.map((d, i) => (
             <button
               key={i}
@@ -296,14 +397,22 @@ function AdminMarriageDetailContent() {
   const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
 
   // MoMo payment
-  const [momoPhone,     setMomoPhone]     = useState('');
-  const [momoLoading,   setMomoLoading]   = useState(false);
-  const [momoTx,        setMomoTx]        = useState<{ id: string; status: string; providerRef: string | null } | null>(null);
+  const [momoPhone, setMomoPhone] = useState('');
+  const [momoLoading, setMomoLoading] = useState(false);
+  const [momoTx, setMomoTx] = useState<{
+    id: string;
+    status: string;
+    providerRef: string | null;
+  } | null>(null);
   const [momoStatusMsg, setMomoStatusMsg] = useState<string | null>(null);
-  const [momoError,     setMomoError]     = useState<string | null>(null);
+  const [momoError, setMomoError] = useState<string | null>(null);
 
   // Party confirmations
-  interface PartyConfirmation { role: string; name: string | null; confirmedAt: string | null; }
+  interface PartyConfirmation {
+    role: string;
+    name: string | null;
+    confirmedAt: string | null;
+  }
   const [parties, setParties] = useState<PartyConfirmation[]>([]);
   const [loadingParties, setLoadingParties] = useState(false);
 
@@ -319,18 +428,25 @@ function AdminMarriageDetailContent() {
     }
   }, [id]);
 
-  useEffect(() => { fetchApp(); }, [fetchApp]);
+  useEffect(() => {
+    fetchApp();
+  }, [fetchApp]);
 
   useEffect(() => {
     if (!id) return;
     setLoadingParties(true);
-    marriageApi.admin.getParties(id)
+    marriageApi.admin
+      .getParties(id)
       .then((data) => setParties(data))
       .catch(() => {})
       .finally(() => setLoadingParties(false));
   }, [id]);
 
-  const handleStatusUpdate = async (status: MarriageApplicationStatus, notes: string, action = status) => {
+  const handleStatusUpdate = async (
+    status: MarriageApplicationStatus,
+    notes: string,
+    action = status,
+  ) => {
     setActiveAction(action);
     setActionError(null);
     try {
@@ -339,7 +455,10 @@ function AdminMarriageDetailContent() {
       setSuccessMsg(`Status updated to ${STATUS_LABELS[status]}`);
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: unknown) {
-      setActionError((err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Action failed');
+      setActionError(
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ?? 'Action failed',
+      );
     } finally {
       setActiveAction(null);
     }
@@ -400,11 +519,15 @@ function AdminMarriageDetailContent() {
       const token = typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
       const form = new FormData();
       form.append('file', weddingPhotoFile);
-      const uploadRes = await axios.post(`${FILE_SERVER_URL}/api/v1/upload?folder=wedding-photos`, form, {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      const uploadRes = await axios.post(
+        `${FILE_SERVER_URL}/api/v1/upload?folder=wedding-photos`,
+        form,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         },
-      });
+      );
       const fileKey: string = (uploadRes.data.data ?? uploadRes.data).key;
       const photoUrl = `${FILE_SERVER_URL}/api/v1/files/${fileKey}`;
       const updated = await marriageApi.admin.uploadWeddingPhoto(id, photoUrl);
@@ -434,7 +557,10 @@ function AdminMarriageDetailContent() {
 
   const handleInitiateMomo = async () => {
     const phone = momoPhone.trim().replace(/\s/g, '');
-    if (!phone) { setMomoError('Enter the payer mobile number'); return; }
+    if (!phone) {
+      setMomoError('Enter the payer mobile number');
+      return;
+    }
     setMomoLoading(true);
     setMomoError(null);
     setMomoStatusMsg(null);
@@ -445,7 +571,10 @@ function AdminMarriageDetailContent() {
       setApp(result.application);
       setMomoStatusMsg(`Payment request sent — status: ${result.transaction.status}`);
     } catch (err: unknown) {
-      setMomoError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to initiate payment');
+      setMomoError(
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to initiate payment',
+      );
     } finally {
       setMomoLoading(false);
     }
@@ -457,7 +586,7 @@ function AdminMarriageDetailContent() {
     setMomoError(null);
     try {
       const result = await marriageApi.admin.checkMomoStatus(id, momoTx.id);
-      setMomoTx((prev) => prev ? { ...prev, status: result.status.toLowerCase() } : null);
+      setMomoTx((prev) => (prev ? { ...prev, status: result.status.toLowerCase() } : null));
       setMomoStatusMsg(`Status: ${result.status} — ${result.message}`);
       if (result.status === 'SUCCESSFUL') {
         await fetchApp(); // refresh app to show PAID
@@ -482,7 +611,10 @@ function AdminMarriageDetailContent() {
     return (
       <div className="text-center py-16">
         <p className="text-red-600 font-medium">{error ?? 'Application not found'}</p>
-        <Link href={`/${locale}/admin/marriage`} className="text-rose-600 text-sm mt-2 inline-block hover:underline">
+        <Link
+          href={`/${locale}/admin/marriage`}
+          className="text-rose-600 text-sm mt-2 inline-block hover:underline"
+        >
           Back to applications
         </Link>
       </div>
@@ -498,7 +630,8 @@ function AdminMarriageDetailContent() {
   const hasWeddingPhoto = !!app.weddingPhotoUrl;
   // Certificate may only be issued once the marriage photo has been uploaded.
   const canIssueCert = certStatusReady && hasWeddingPhoto;
-  const needsPaymentConfirm = app.paymentStatus !== 'paid' && ['pending_cash', 'processing'].includes(app.paymentStatus);
+  const needsPaymentConfirm =
+    app.paymentStatus !== 'paid' && ['pending_cash', 'processing'].includes(app.paymentStatus);
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -516,7 +649,9 @@ function AdminMarriageDetailContent() {
               <Heart className="w-5 h-5 text-rose-600" />
               <h1 className="text-xl font-bold text-gray-900 font-mono">{app.applicationNumber}</h1>
             </div>
-            <p className="text-gray-500 text-sm">{app.groomName} & {app.brideName}</p>
+            <p className="text-gray-500 text-sm">
+              {app.groomName} & {app.brideName}
+            </p>
           </div>
           <StatusBadge status={app.status} />
         </div>
@@ -540,10 +675,26 @@ function AdminMarriageDetailContent() {
           {/* Submission */}
           <Section title="Submission" icon={<UserCheck className="w-4 h-4" />}>
             <div className="grid sm:grid-cols-2 gap-x-6">
-              <InfoRow label="Submitted by" value={app.applicant?.name} icon={<User className="w-4 h-4" />} />
-              <InfoRow label="Applicant email" value={app.applicant?.email} icon={<Mail className="w-4 h-4" />} />
-              <InfoRow label="Applicant phone" value={app.applicant?.phone} icon={<Phone className="w-4 h-4" />} />
-              <InfoRow label="Notification phone" value={app.notificationPhone} icon={<Phone className="w-4 h-4" />} />
+              <InfoRow
+                label="Submitted by"
+                value={app.applicant?.name}
+                icon={<User className="w-4 h-4" />}
+              />
+              <InfoRow
+                label="Applicant email"
+                value={app.applicant?.email}
+                icon={<Mail className="w-4 h-4" />}
+              />
+              <InfoRow
+                label="Applicant phone"
+                value={app.applicant?.phone}
+                icon={<Phone className="w-4 h-4" />}
+              />
+              <InfoRow
+                label="Notification phone"
+                value={app.notificationPhone}
+                icon={<Phone className="w-4 h-4" />}
+              />
               <InfoRow
                 label="Submitted on"
                 value={app.submittedAt ? new Date(app.submittedAt).toLocaleString() : null}
@@ -561,16 +712,44 @@ function AdminMarriageDetailContent() {
           <Section title="Couple Details" icon={<Heart className="w-4 h-4" />}>
             <div className="grid sm:grid-cols-2 gap-x-6">
               <div>
-                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">Groom</p>
-                <InfoRow label="Full name" value={app.groomName} icon={<User className="w-4 h-4" />} />
-                <InfoRow label="National ID" value={app.groomNid} icon={<Fingerprint className="w-4 h-4" />} />
-                <InfoRow label="Phone" value={app.groomPhone} icon={<Phone className="w-4 h-4" />} />
+                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">
+                  Groom
+                </p>
+                <InfoRow
+                  label="Full name"
+                  value={app.groomName}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="National ID"
+                  value={app.groomNid}
+                  icon={<Fingerprint className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="Phone"
+                  value={app.groomPhone}
+                  icon={<Phone className="w-4 h-4" />}
+                />
               </div>
               <div>
-                <p className="text-xs font-semibold text-rose-700 uppercase tracking-wide mb-2">Bride</p>
-                <InfoRow label="Full name" value={app.brideName} icon={<User className="w-4 h-4" />} />
-                <InfoRow label="National ID" value={app.brideNid} icon={<Fingerprint className="w-4 h-4" />} />
-                <InfoRow label="Phone" value={app.bridePhone} icon={<Phone className="w-4 h-4" />} />
+                <p className="text-xs font-semibold text-rose-700 uppercase tracking-wide mb-2">
+                  Bride
+                </p>
+                <InfoRow
+                  label="Full name"
+                  value={app.brideName}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="National ID"
+                  value={app.brideNid}
+                  icon={<Fingerprint className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="Phone"
+                  value={app.bridePhone}
+                  icon={<Phone className="w-4 h-4" />}
+                />
               </div>
             </div>
           </Section>
@@ -579,24 +758,58 @@ function AdminMarriageDetailContent() {
           <Section title="Witnesses & Guardian" icon={<Users className="w-4 h-4" />}>
             <div className="grid sm:grid-cols-2 gap-x-6">
               <div>
-                <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">Witness 1</p>
-                <InfoRow label="National ID" value={app.witness1Nid} icon={<Fingerprint className="w-4 h-4" />} />
-                <InfoRow label="Name" value={app.witness1Name} icon={<User className="w-4 h-4" />} />
+                <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">
+                  Witness 1
+                </p>
+                <InfoRow
+                  label="National ID"
+                  value={app.witness1Nid}
+                  icon={<Fingerprint className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="Name"
+                  value={app.witness1Name}
+                  icon={<User className="w-4 h-4" />}
+                />
               </div>
               <div>
-                <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">Witness 2</p>
-                <InfoRow label="National ID" value={app.witness2Nid} icon={<Fingerprint className="w-4 h-4" />} />
-                <InfoRow label="Name" value={app.witness2Name} icon={<User className="w-4 h-4" />} />
+                <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">
+                  Witness 2
+                </p>
+                <InfoRow
+                  label="National ID"
+                  value={app.witness2Nid}
+                  icon={<Fingerprint className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="Name"
+                  value={app.witness2Name}
+                  icon={<User className="w-4 h-4" />}
+                />
               </div>
             </div>
             {app.waliName && (
               <>
                 <div className="border-t border-gray-100 mt-4 pt-4">
-                  <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">Wali (Guardian)</p>
+                  <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">
+                    Wali (Guardian)
+                  </p>
                   <div className="grid sm:grid-cols-3 gap-x-6">
-                    <InfoRow label="Name" value={app.waliName} icon={<Shield className="w-4 h-4" />} />
-                    <InfoRow label="National ID" value={app.waliNid} icon={<Fingerprint className="w-4 h-4" />} />
-                    <InfoRow label="Phone" value={app.waliPhone} icon={<Phone className="w-4 h-4" />} />
+                    <InfoRow
+                      label="Name"
+                      value={app.waliName}
+                      icon={<Shield className="w-4 h-4" />}
+                    />
+                    <InfoRow
+                      label="National ID"
+                      value={app.waliNid}
+                      icon={<Fingerprint className="w-4 h-4" />}
+                    />
+                    <InfoRow
+                      label="Phone"
+                      value={app.waliPhone}
+                      icon={<Phone className="w-4 h-4" />}
+                    />
                   </div>
                 </div>
               </>
@@ -608,13 +821,39 @@ function AdminMarriageDetailContent() {
             <InfoRow
               label="Venue type"
               value={app.venueType === 'mosque' ? 'Mosque ceremony' : 'Outside mosque'}
-              icon={app.venueType === 'mosque' ? <Building2 className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+              icon={
+                app.venueType === 'mosque' ? (
+                  <Building2 className="w-4 h-4" />
+                ) : (
+                  <MapPin className="w-4 h-4" />
+                )
+              }
             />
-            <InfoRow label="Location" value={[app.province, app.district].filter(Boolean).join(' — ')} icon={<MapPin className="w-4 h-4" />} />
-            <InfoRow label="Venue address" value={app.venueAddress} icon={<MapPin className="w-4 h-4" />} />
-            <InfoRow label="Preferred dates" value={[app.preferredDateFrom, app.preferredDateTo].filter(Boolean).join(' → ')} icon={<Calendar className="w-4 h-4" />} />
-            <InfoRow label="Confirmed ceremony date" value={app.ceremonyDate ? new Date(app.ceremonyDate).toLocaleString() : null} icon={<Calendar className="w-4 h-4" />} />
-            <InfoRow label="Requested officiant" value={app.requestedOfficiant} icon={<UserCheck className="w-4 h-4" />} />
+            <InfoRow
+              label="Location"
+              value={[app.province, app.district].filter(Boolean).join(' — ')}
+              icon={<MapPin className="w-4 h-4" />}
+            />
+            <InfoRow
+              label="Venue address"
+              value={app.venueAddress}
+              icon={<MapPin className="w-4 h-4" />}
+            />
+            <InfoRow
+              label="Preferred dates"
+              value={[app.preferredDateFrom, app.preferredDateTo].filter(Boolean).join(' → ')}
+              icon={<Calendar className="w-4 h-4" />}
+            />
+            <InfoRow
+              label="Confirmed ceremony date"
+              value={app.ceremonyDate ? new Date(app.ceremonyDate).toLocaleString() : null}
+              icon={<Calendar className="w-4 h-4" />}
+            />
+            <InfoRow
+              label="Requested officiant"
+              value={app.requestedOfficiant}
+              icon={<UserCheck className="w-4 h-4" />}
+            />
             {app.mahrAmount != null && (
               <InfoRow
                 label="Mahr"
@@ -647,7 +886,11 @@ function AdminMarriageDetailContent() {
                               : 'bg-gray-50 border-gray-200 text-gray-400',
                         )}
                       >
-                        {present ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                        {present ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : (
+                          <XCircle className="w-3 h-3" />
+                        )}
                         {DOC_TYPE_LABELS[e.type] ?? e.type}
                         {!e.required && <span className="opacity-60">· optional</span>}
                       </span>
@@ -659,7 +902,9 @@ function AdminMarriageDetailContent() {
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <FileText className="w-8 h-8 text-gray-300 mb-2" />
                     <p className="text-sm font-medium text-gray-500">No documents submitted</p>
-                    <p className="text-xs text-gray-400 mt-1">The applicant has not uploaded any supporting documents.</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      The applicant has not uploaded any supporting documents.
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -710,7 +955,9 @@ function AdminMarriageDetailContent() {
                               <p className="text-[11px] font-semibold text-gray-700 leading-tight truncate">
                                 {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType}
                               </p>
-                              <p className="text-[10px] text-gray-400 mt-0.5 truncate">{doc.fileName}</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5 truncate">
+                                {doc.fileName}
+                              </p>
                               <p className="text-[10px] text-gray-300 mt-0.5">
                                 {(doc.fileSize / 1024).toFixed(0)} KB
                               </p>
@@ -726,11 +973,17 @@ function AdminMarriageDetailContent() {
                                       : 'border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-700',
                                   )}
                                 >
-                                  {verifying
-                                    ? <RefreshCw className="w-3 h-3 animate-spin" />
-                                    : doc.verified
-                                      ? <><CheckCircle2 className="w-3 h-3" /> Verified</>
-                                      : <><ShieldCheck className="w-3 h-3" /> Mark verified</>}
+                                  {verifying ? (
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                  ) : doc.verified ? (
+                                    <>
+                                      <CheckCircle2 className="w-3 h-3" /> Verified
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShieldCheck className="w-3 h-3" /> Mark verified
+                                    </>
+                                  )}
                                 </button>
                               )}
                             </div>
@@ -742,7 +995,10 @@ function AdminMarriageDetailContent() {
                     {/* View-all strip */}
                     <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2">
                       <Eye className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="text-xs text-gray-400">{docs.length} file{docs.length !== 1 ? 's' : ''} — click any to preview or download</span>
+                      <span className="text-xs text-gray-400">
+                        {docs.length} file{docs.length !== 1 ? 's' : ''} — click any to preview or
+                        download
+                      </span>
                     </div>
                   </>
                 )}
@@ -759,7 +1015,8 @@ function AdminMarriageDetailContent() {
                     <div className="w-2 h-2 rounded-full bg-rose-400 mt-2 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {h.fromStatus ? `${STATUS_LABELS[h.fromStatus] ?? h.fromStatus} → ` : ''}{STATUS_LABELS[h.toStatus] ?? h.toStatus}
+                        {h.fromStatus ? `${STATUS_LABELS[h.fromStatus] ?? h.fromStatus} → ` : ''}
+                        {STATUS_LABELS[h.toStatus] ?? h.toStatus}
                       </p>
                       {h.notes && <p className="text-xs text-gray-500 mt-0.5">{h.notes}</p>}
                       <p className="text-xs text-gray-400 mt-0.5">
@@ -791,13 +1048,21 @@ function AdminMarriageDetailContent() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Status</span>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-xs font-medium',
-                  app.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
-                  app.paymentStatus === 'pending_cash' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-red-100 text-red-700',
-                )}>
-                  {app.paymentStatus === 'paid' ? 'Paid' : app.paymentStatus === 'pending_cash' ? 'Cash Pending' : app.paymentStatus}
+                <span
+                  className={cn(
+                    'px-2 py-0.5 rounded-full text-xs font-medium',
+                    app.paymentStatus === 'paid'
+                      ? 'bg-green-100 text-green-700'
+                      : app.paymentStatus === 'pending_cash'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700',
+                  )}
+                >
+                  {app.paymentStatus === 'paid'
+                    ? 'Paid'
+                    : app.paymentStatus === 'pending_cash'
+                      ? 'Cash Pending'
+                      : app.paymentStatus}
                 </span>
               </div>
               {app.paymentMethod && (
@@ -813,9 +1078,11 @@ function AdminMarriageDetailContent() {
                 disabled={actionLoading}
                 className="w-full px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
-                {activeAction === 'payment'
-                  ? <RefreshCw className="w-4 h-4 animate-spin" />
-                  : <Banknote className="w-4 h-4" />}
+                {activeAction === 'payment' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Banknote className="w-4 h-4" />
+                )}
                 {activeAction === 'payment' ? 'Confirming...' : 'Confirm Payment'}
               </button>
             )}
@@ -832,23 +1099,31 @@ function AdminMarriageDetailContent() {
                     <input
                       type="tel"
                       value={momoPhone}
-                      onChange={(e) => { setMomoPhone(e.target.value); setMomoError(null); }}
-                      placeholder={app.groomPhone ? app.groomPhone.replace(/[^0-9]/g, '') : '250788000000'}
+                      onChange={(e) => {
+                        setMomoPhone(e.target.value);
+                        setMomoError(null);
+                      }}
+                      placeholder={
+                        app.groomPhone ? app.groomPhone.replace(/[^0-9]/g, '') : '250788000000'
+                      }
                       className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400"
                     />
                   </div>
                   <p className="text-[10px] text-gray-400">
                     Default: groom's phone. Another person can pay — enter their number above.
                   </p>
-                  {momoError && (
-                    <p className="text-[10px] text-red-600">{momoError}</p>
-                  )}
+                  {momoError && <p className="text-[10px] text-red-600">{momoError}</p>}
                   {momoStatusMsg && (
-                    <p className={cn(
-                      'text-[10px] font-medium',
-                      momoTx?.status === 'completed' ? 'text-green-700' :
-                      momoTx?.status === 'failed'    ? 'text-red-600'   : 'text-amber-700',
-                    )}>
+                    <p
+                      className={cn(
+                        'text-[10px] font-medium',
+                        momoTx?.status === 'completed'
+                          ? 'text-green-700'
+                          : momoTx?.status === 'failed'
+                            ? 'text-red-600'
+                            : 'text-amber-700',
+                      )}
+                    >
                       {momoStatusMsg}
                     </p>
                   )}
@@ -856,9 +1131,13 @@ function AdminMarriageDetailContent() {
                     <button
                       onClick={handleInitiateMomo}
                       disabled={momoLoading}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold disabled:opacity-50 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold disabled:opacity-50 transition-colors"
                     >
-                      {momoLoading && !momoTx ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Smartphone className="w-3.5 h-3.5" />}
+                      {momoLoading && !momoTx ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Smartphone className="w-3.5 h-3.5" />
+                      )}
                       Send Request
                     </button>
                     {momoTx && momoTx.status === 'pending' && (
@@ -889,9 +1168,11 @@ function AdminMarriageDetailContent() {
                   disabled={actionLoading}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-60 transition-colors"
                 >
-                  {activeAction === 'approved'
-                    ? <RefreshCw className="w-4 h-4 animate-spin" />
-                    : <CheckCircle2 className="w-4 h-4" />}
+                  {activeAction === 'approved' ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
                   {activeAction === 'approved' ? 'Approving...' : 'Approve Application'}
                 </button>
               )}
@@ -901,9 +1182,11 @@ function AdminMarriageDetailContent() {
                   disabled={actionLoading}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-60 transition-colors"
                 >
-                  {activeAction === 'amendments_requested'
-                    ? <RefreshCw className="w-4 h-4 animate-spin" />
-                    : <AlertTriangle className="w-4 h-4" />}
+                  {activeAction === 'amendments_requested' ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4" />
+                  )}
                   {activeAction === 'amendments_requested' ? 'Sending...' : 'Request Amendments'}
                 </button>
               )}
@@ -913,33 +1196,49 @@ function AdminMarriageDetailContent() {
                   disabled={actionLoading}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors"
                 >
-                  {activeAction === 'rejected'
-                    ? <RefreshCw className="w-4 h-4 animate-spin" />
-                    : <XCircle className="w-4 h-4" />}
+                  {activeAction === 'rejected' ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XCircle className="w-4 h-4" />
+                  )}
                   {activeAction === 'rejected' ? 'Rejecting...' : 'Reject Application'}
                 </button>
               )}
               {['submitted', 'under_review'].includes(app.status) && permApprove && (
                 <button
-                  onClick={() => handleStatusUpdate('under_review' as MarriageApplicationStatus, 'Moved to under review')}
+                  onClick={() =>
+                    handleStatusUpdate(
+                      'under_review' as MarriageApplicationStatus,
+                      'Moved to under review',
+                    )
+                  }
                   disabled={actionLoading || app.status === 'under_review'}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors disabled:opacity-50"
                 >
-                  {activeAction === 'under_review'
-                    ? <RefreshCw className="w-4 h-4 animate-spin" />
-                    : <Clock className="w-4 h-4" />}
+                  {activeAction === 'under_review' ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Clock className="w-4 h-4" />
+                  )}
                   {activeAction === 'under_review' ? 'Updating...' : 'Mark Under Review'}
                 </button>
               )}
               {canMarkCompleted && permApprove && (
                 <button
-                  onClick={() => handleStatusUpdate('completed' as MarriageApplicationStatus, 'Nikah ceremony completed')}
+                  onClick={() =>
+                    handleStatusUpdate(
+                      'completed' as MarriageApplicationStatus,
+                      'Nikah ceremony completed',
+                    )
+                  }
                   disabled={actionLoading}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                 >
-                  {activeAction === 'completed'
-                    ? <RefreshCw className="w-4 h-4 animate-spin" />
-                    : <CheckCircle2 className="w-4 h-4" />}
+                  {activeAction === 'completed' ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
                   {activeAction === 'completed' ? 'Updating...' : 'Mark Ceremony Completed'}
                 </button>
               )}
@@ -948,12 +1247,18 @@ function AdminMarriageDetailContent() {
                   <button
                     onClick={handleIssueCertificate}
                     disabled={actionLoading || !hasWeddingPhoto}
-                    title={!hasWeddingPhoto ? 'Upload the marriage photo first to enable this' : undefined}
+                    title={
+                      !hasWeddingPhoto
+                        ? 'Upload the marriage photo first to enable this'
+                        : undefined
+                    }
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                   >
-                    {activeAction === 'certificate'
-                      ? <RefreshCw className="w-4 h-4 animate-spin" />
-                      : <Download className="w-4 h-4" />}
+                    {activeAction === 'certificate' ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
                     {activeAction === 'certificate' ? 'Issuing...' : 'Issue Certificate'}
                   </button>
                   {!hasWeddingPhoto && (
@@ -984,60 +1289,73 @@ function AdminMarriageDetailContent() {
                 disabled={!scheduleDate || actionLoading}
                 className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
-                {activeAction === 'schedule'
-                  ? <RefreshCw className="w-4 h-4 animate-spin" />
-                  : <Calendar className="w-4 h-4" />}
+                {activeAction === 'schedule' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Calendar className="w-4 h-4" />
+                )}
                 {activeAction === 'schedule' ? 'Scheduling...' : 'Set Ceremony Date'}
               </button>
             </div>
           )}
 
           {/* Wedding photo upload — available during validation and after ceremony */}
-          {['submitted', 'under_review', 'amendments_requested', 'approved', 'completed'].includes(app.status) && permManage && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
-                <Camera className="w-4 h-4 text-rose-500" /> Marriage Photo
-              </h3>
-              {app.weddingPhotoUrl ? (
-                <div className="space-y-2">
-                  <img
-                    src={app.weddingPhotoUrl}
-                    alt="Wedding"
-                    className="w-full rounded-xl object-cover aspect-video border border-gray-100"
-                  />
-                  <p className="text-xs text-gray-400 text-center">Photo uploaded ✓</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className={cn(
-                    'flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors',
-                    weddingPhotoFile ? 'border-rose-300 bg-rose-50' : 'border-gray-200 hover:border-rose-300',
-                  )}>
-                    <ImageIcon className="w-6 h-6 text-gray-300" />
-                    <span className="text-xs text-gray-500">
-                      {weddingPhotoFile ? weddingPhotoFile.name : 'Click to select marriage photo'}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => setWeddingPhotoFile(e.target.files?.[0] ?? null)}
+          {['submitted', 'under_review', 'amendments_requested', 'approved', 'completed'].includes(
+            app.status,
+          ) &&
+            permManage && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-rose-500" /> Marriage Photo
+                </h3>
+                {app.weddingPhotoUrl ? (
+                  <div className="space-y-2">
+                    <img
+                      src={app.weddingPhotoUrl}
+                      alt="Wedding"
+                      className="w-full rounded-xl object-cover aspect-video border border-gray-100"
                     />
-                  </label>
-                  <button
-                    onClick={handleUploadWeddingPhoto}
-                    disabled={!weddingPhotoFile || actionLoading}
-                    className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-                  >
-                    {activeAction === 'wedding-photo'
-                      ? <RefreshCw className="w-4 h-4 animate-spin" />
-                      : <Camera className="w-4 h-4" />}
-                    {activeAction === 'wedding-photo' ? 'Uploading...' : 'Upload Photo'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                    <p className="text-xs text-gray-400 text-center">Photo uploaded ✓</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label
+                      className={cn(
+                        'flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors',
+                        weddingPhotoFile
+                          ? 'border-rose-300 bg-rose-50'
+                          : 'border-gray-200 hover:border-rose-300',
+                      )}
+                    >
+                      <ImageIcon className="w-6 h-6 text-gray-300" />
+                      <span className="text-xs text-gray-500">
+                        {weddingPhotoFile
+                          ? weddingPhotoFile.name
+                          : 'Click to select marriage photo'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => setWeddingPhotoFile(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                    <button
+                      onClick={handleUploadWeddingPhoto}
+                      disabled={!weddingPhotoFile || actionLoading}
+                      className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                    >
+                      {activeAction === 'wedding-photo' ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4" />
+                      )}
+                      {activeAction === 'wedding-photo' ? 'Uploading...' : 'Upload Photo'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Party Confirmations */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -1055,18 +1373,31 @@ function AdminMarriageDetailContent() {
                 {parties.map((p) => {
                   const confirmed = !!p.confirmedAt;
                   const ROLE_LABELS: Record<string, string> = {
-                    groom: 'Groom', bride: 'Bride', wali: 'Wali', imam: 'Imam',
+                    groom: 'Groom',
+                    bride: 'Bride',
+                    wali: 'Wali',
+                    imam: 'Imam',
                   };
                   return (
-                    <div key={p.role} className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm',
-                      confirmed ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200',
-                    )}>
-                      {confirmed
-                        ? <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                        : <Clock className="w-4 h-4 text-amber-500 shrink-0" />}
+                    <div
+                      key={p.role}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm',
+                        confirmed ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200',
+                      )}
+                    >
+                      {confirmed ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                      )}
                       <div className="flex-1 min-w-0">
-                        <p className={cn('text-xs font-semibold', confirmed ? 'text-green-800' : 'text-amber-800')}>
+                        <p
+                          className={cn(
+                            'text-xs font-semibold',
+                            confirmed ? 'text-green-800' : 'text-amber-800',
+                          )}
+                        >
                           {ROLE_LABELS[p.role] ?? p.role}
                           {p.name && <span className="font-normal"> — {p.name}</span>}
                         </p>
@@ -1141,7 +1472,9 @@ function AdminMarriageDetailContent() {
           index={lightbox.index}
           onClose={() => setLightbox(null)}
           onVerify={handleVerifyDoc}
-          verifyingId={activeAction?.startsWith('verify-') ? activeAction.slice('verify-'.length) : null}
+          verifyingId={
+            activeAction?.startsWith('verify-') ? activeAction.slice('verify-'.length) : null
+          }
         />
       )}
 
@@ -1208,4 +1541,3 @@ export default function AdminMarriageDetailPage() {
     </ProtectedRoute>
   );
 }
-
