@@ -69,7 +69,7 @@ export default async function AreaDetailPage({
         align="left"
         ornament={false}
         minHeightClassName="min-h-[58vh]"
-        paddingClassName="pt-28 pb-16"
+        paddingClassName="pt-36 pb-16"
       />
 
       {/* ═══════════════════════════════════════════════════════════════════

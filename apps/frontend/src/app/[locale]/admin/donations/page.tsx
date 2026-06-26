@@ -19,10 +19,12 @@ import { fileUrl } from '@/lib/api';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
 import { parseDonationMeta, metaLabels, type DonateTranslator } from '@/lib/donationMeta';
 import { CATEGORIES, NIYYAH, METHODS } from '@/components/donate/donateData';
+import { CategoriesTab } from '@/components/admin/donations/CategoriesTab';
+import { donationCategoriesApi, type AdminCategory } from '@/lib/donationCategoriesApi';
 import { formatMoney, fundedPercent } from '@/components/activities/data';
 import { cn } from '@/lib/utils';
 
-type Tab = 'report' | 'programs';
+type Tab = 'report' | 'programs' | 'categories';
 
 interface Filters {
   dateFrom: string;
@@ -102,6 +104,7 @@ function DonationsAdmin() {
 
   const [stats, setStats] = useState<DonationStats | null>(null);
   const [campaigns, setCampaigns] = useState<CampaignWithStats[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [campaignModal, setCampaignModal] = useState<{ open: boolean; campaign: CampaignWithStats | null }>({ open: false, campaign: null });
@@ -148,11 +151,18 @@ function DonationsAdmin() {
     } catch { /* ignore */ }
   }, []);
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      setCategories(await donationCategoriesApi.admin.list());
+    } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => { fetchDonations(); }, [fetchDonations]);
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchCampaigns(); }, [fetchCampaigns]);
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
-  const refreshAll = () => { fetchDonations(); fetchStats(); fetchCampaigns(); };
+  const refreshAll = () => { fetchDonations(); fetchStats(); fetchCampaigns(); fetchCategories(); };
 
   const patch = (p: Partial<Filters>) => { setFilters((f) => ({ ...f, ...p })); setPage(1); };
   const applyPreset = (key: string) => { setFilters((f) => ({ ...f, ...presetRange(key) })); setPage(1); };
@@ -271,6 +281,7 @@ function DonationsAdmin() {
       <div className="flex items-center gap-1 border-b border-gray-100">
         <TabButton active={tab === 'report'} onClick={() => setTab('report')} icon={<Receipt className="w-4 h-4" />} label={t('tabDonations')} count={total} />
         <TabButton active={tab === 'programs'} onClick={() => setTab('programs')} icon={<Layers className="w-4 h-4" />} label={t('tabPrograms')} count={campaigns.length} />
+        <TabButton active={tab === 'categories'} onClick={() => setTab('categories')} icon={<Sparkles className="w-4 h-4" />} label={t('tabCategories')} count={categories.length} />
       </div>
 
       {tab === 'report' ? (
@@ -476,8 +487,10 @@ function DonationsAdmin() {
             )}
           </div>
         </>
-      ) : (
+      ) : tab === 'programs' ? (
         <ProgramsTab campaigns={campaigns} canManage={canManage} onNew={() => setCampaignModal({ open: true, campaign: null })} onEdit={(c) => setCampaignModal({ open: true, campaign: c })} />
+      ) : (
+        <CategoriesTab categories={categories} canManage={canManage} onChanged={fetchCategories} />
       )}
 
       {/* Modals */}

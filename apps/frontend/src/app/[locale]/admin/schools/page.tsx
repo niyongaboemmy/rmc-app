@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import {
   GraduationCap, Plus, Pencil, Trash2, X, RefreshCw, Search, MapPin,
 } from 'lucide-react';
+import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
@@ -270,7 +271,7 @@ function SchoolModal({ school, onClose, onSaved }: {
   const [name, setName] = useState(school?.name ?? '');
   const [level, setLevel] = useState<SchoolLevel>(school?.level ?? 'primary');
   const [principalName, setPrincipalName] = useState(school?.principalName ?? '');
-  const [phone, setPhone] = useState(school?.phone ?? '');
+  const [phone, setPhone] = useState(toLocalPhone(school?.phone));
   const [email, setEmail] = useState(school?.email ?? '');
   const [district, setDistrict] = useState(school?.district ?? '');
   const [provinceCode, setProvinceCode] = useState(school?.provinceCode ?? 'KIG');
@@ -289,7 +290,7 @@ function SchoolModal({ school, onClose, onSaved }: {
       name: name.trim(),
       level,
       principalName: principalName.trim() || undefined,
-      phone: phone.trim() || undefined,
+      phone: phone.trim() ? toE164(phone.trim()) : undefined,
       email: email.trim() || undefined,
       district: district.trim() || undefined,
       provinceCode,
@@ -351,7 +352,7 @@ function SchoolModal({ school, onClose, onSaved }: {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>{t('field.phone')}</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+            <PhoneInput value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
           <div>
             <label className={labelClass}>{t('field.email')}</label>

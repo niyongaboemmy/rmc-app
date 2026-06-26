@@ -7,7 +7,8 @@ import { MosquesService } from './mosques.service';
 import { CreateMosqueDto } from './dto/create-mosque.dto';
 import { AssignImamDto } from './dto/assign-imam.dto';
 import { Public } from '../common/decorators/public.decorator';
-import { Roles, Role } from '../common/decorators/roles.decorator';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/types/permissions.enum';
 
 @ApiTags('Mosques')
 @Controller('mosques')
@@ -46,6 +47,7 @@ export class MosquesController {
 
   @Get(':id/imams')
   @ApiBearerAuth()
+  @Permissions(Permission.MOSQUES_VIEW)
   @ApiOperation({ summary: 'Get imams assigned to a mosque' })
   getImams(@Param('id', ParseUUIDPipe) id: string) {
     return this.mosques.getImams(id);
@@ -53,7 +55,7 @@ export class MosquesController {
 
   @Post()
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MOSQUES_CREATE)
   @ApiOperation({ summary: 'Create a mosque' })
   create(@Body() dto: CreateMosqueDto) {
     return this.mosques.create(dto);
@@ -61,7 +63,7 @@ export class MosquesController {
 
   @Put(':id')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MOSQUES_EDIT)
   @ApiOperation({ summary: 'Update a mosque' })
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CreateMosqueDto) {
     return this.mosques.update(id, dto);
@@ -69,7 +71,7 @@ export class MosquesController {
 
   @Delete(':id')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MOSQUES_DELETE)
   @ApiOperation({ summary: 'Deactivate a mosque' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.mosques.remove(id);
@@ -77,7 +79,7 @@ export class MosquesController {
 
   @Post(':id/imams')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MOSQUES_MANAGE_IMAMS)
   @ApiOperation({ summary: 'Assign an imam to a mosque' })
   assignImam(@Param('id', ParseUUIDPipe) id: string, @Body() dto: AssignImamDto) {
     return this.mosques.assignImam(id, dto);

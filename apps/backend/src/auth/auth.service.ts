@@ -20,6 +20,8 @@ import * as nodemailer from 'nodemailer';
 import type Redis from 'ioredis';
 
 import { UsersService } from '../users/users.service';
+import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
+import { SmsService } from '../integrations/sms/sms.service';
 import { User } from '../users/entities/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
@@ -57,6 +59,8 @@ export class AuthService {
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
     @InjectRedis() private readonly redis: Redis,
+    private readonly notifSettings: NotificationSettingsService,
+    private readonly smsService: SmsService,
   ) {}
 
   // ── Register ─────────────────────────────────────────────────────────────────
@@ -110,6 +114,9 @@ export class AuthService {
     accessToken?: string;
     refreshToken?: string;
     requiresMfa?: boolean;
+    requires2fa?: boolean;
+    tempToken?: string;
+    maskedPhone?: string;
     user?: Partial<User>;
   }> {
     const user = await this.usersService.findByEmailOrPhone(dto.identifier);
@@ -126,6 +133,7 @@ export class AuthService {
       throw new ForbiddenException({ code: ErrorCode.AUTH_ACCOUNT_INACTIVE, message: 'Account is inactive' });
     }
 
+    // Step 1: TOTP (authenticator app) check
     if (user.mfaEnabled) {
       if (!dto.mfaCode) {
         return { requiresMfa: true };
@@ -133,11 +141,24 @@ export class AuthService {
       this.verifyTotp(user, dto.mfaCode);
     }
 
-    const { accessToken, refreshToken } = await this.issueTokens(user, ipAddress, userAgent);
+    // Step 2: SMS 2FA check
+    if (user.twoFactorEnabled) {
+      const tempToken = await this.issue2faTempToken(user.id);
+      await this.send2faOtp(user.id, user.phone, '2fa_login_otp');
+      return {
+        requires2fa: true,
+        tempToken,
+        maskedPhone: this.maskPhone(user.phone),
+      };
+    }
 
+    return this.completLogin(user, ipAddress, userAgent);
+  }
+
+  private async completLogin(user: User, ipAddress?: string, userAgent?: string) {
+    const { accessToken, refreshToken } = await this.issueTokens(user, ipAddress, userAgent);
     await this.usersService.update(user.id, { lastLoginAt: new Date() });
     await this.writeAuditLog('user', user.id, 'login', user.id, user.role);
-
     return {
       accessToken,
       refreshToken,
@@ -375,14 +396,103 @@ export class AuthService {
     return { message: 'MFA disabled successfully' };
   }
 
+  // ── Two-Factor Auth (SMS OTP) ─────────────────────────────────────────────────
+
+  async twoFactorStatus(userId: string): Promise<{ enabled: boolean; maskedPhone: string | null }> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+    return {
+      enabled: user.twoFactorEnabled,
+      maskedPhone: user.twoFactorEnabled ? this.maskPhone(user.phone) : null,
+    };
+  }
+
+  async twoFactorSetup(userId: string): Promise<{ message: string; maskedPhone: string; expiresAt: Date }> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    if (user.twoFactorEnabled) {
+      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_ALREADY_ENABLED, message: '2FA is already enabled' });
+    }
+
+    const expiresAt = await this.send2faOtp(userId, user.phone, '2fa_setup_otp');
+    return { message: 'OTP sent to your phone', maskedPhone: this.maskPhone(user.phone), expiresAt };
+  }
+
+  async twoFactorVerifySetup(userId: string, otp: string): Promise<{ message: string }> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    if (user.twoFactorEnabled) {
+      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_ALREADY_ENABLED, message: '2FA is already enabled' });
+    }
+
+    await this.verify2faOtp(userId, otp, '2fa_setup_otp');
+    await this.usersService.update(userId, { twoFactorEnabled: true });
+    await this.writeAuditLog('user', userId, 'two_factor_enabled', userId, 'user');
+
+    return { message: '2-Step Verification enabled successfully' };
+  }
+
+  async twoFactorDisable(userId: string, password: string): Promise<{ message: string }> {
+    const user = await this.usersService.findByIdRaw(userId);
+    if (!user) throw new UnauthorizedException();
+
+    if (!user.twoFactorEnabled) {
+      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_NOT_ENABLED, message: '2FA is not enabled' });
+    }
+
+    if (!(await bcrypt.compare(password, user.passwordHash))) {
+      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'Invalid password' });
+    }
+
+    await this.usersService.update(userId, { twoFactorEnabled: false });
+    await this.writeAuditLog('user', userId, 'two_factor_disabled', userId, 'user');
+
+    return { message: '2-Step Verification disabled successfully' };
+  }
+
+  /** Called during login: validates tempToken + OTP, then issues full session tokens. */
+  async twoFactorVerifyLogin(
+    tempToken: string,
+    otp: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ accessToken: string; refreshToken: string; user: Partial<User> }> {
+    const userId = this.verify2faTempToken(tempToken);
+    await this.verify2faOtp(userId, otp, '2fa_login_otp');
+
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'User not found' });
+
+    const result = await this.completLogin(user, ipAddress, userAgent);
+    return result as { accessToken: string; refreshToken: string; user: Partial<User> };
+  }
+
+  /** Resend OTP during a pending 2FA login (validates tempToken first). */
+  async twoFactorResend(tempToken: string): Promise<{ message: string; maskedPhone: string; expiresAt: Date }> {
+    const userId = this.verify2faTempToken(tempToken);
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    const expiresAt = await this.send2faOtp(userId, user.phone, '2fa_login_otp');
+    return { message: 'OTP resent', maskedPhone: this.maskPhone(user.phone), expiresAt };
+  }
+
   // ── Profile ───────────────────────────────────────────────────────────────────
 
-  async getProfile(userId: string): Promise<Partial<User>> {
+  async getProfile(userId: string): Promise<Partial<User> & { membershipNumber?: string; joinedDate?: Date }> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, mfaSecret, ...safe } = user as User & { passwordHash: string; mfaSecret: string };
-    return safe;
+
+    const member = await this.memberProfileRepo.findOne({ where: { userId } });
+    return {
+      ...safe,
+      membershipNumber: member?.membershipNumber ?? undefined,
+      joinedDate: member?.joinedDate ?? undefined,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto): Promise<Partial<User>> {
@@ -536,6 +646,7 @@ export class AuthService {
   }
 
   private async sendWelcomeEmail(user: User): Promise<void> {
+    if (!this.notifSettings.isEmailEnabled('auth.welcome_email')) return;
     try {
       const transporter = this.createMailTransporter();
       await transporter.sendMail({
@@ -555,6 +666,7 @@ export class AuthService {
   }
 
   private async sendPasswordResetEmail(user: User, resetUrl: string): Promise<void> {
+    if (!this.notifSettings.isEmailEnabled('auth.password_reset')) return;
     try {
       const transporter = this.createMailTransporter();
       await transporter.sendMail({
@@ -576,6 +688,7 @@ export class AuthService {
   }
 
   private async sendPasswordChangedEmail(user: User): Promise<void> {
+    if (!this.notifSettings.isEmailEnabled('auth.password_changed')) return;
     try {
       const transporter = this.createMailTransporter();
       await transporter.sendMail({
@@ -592,6 +705,88 @@ export class AuthService {
     } catch (err) {
       this.logger.error(`Failed to send password changed email: ${err}`);
     }
+  }
+
+  /** Issue a short-lived temp token used to complete a 2FA login. */
+  private async issue2faTempToken(userId: string): Promise<string> {
+    return this.jwtService.sign(
+      { sub: userId, stage: 'pending_2fa' },
+      { expiresIn: '5m' },
+    );
+  }
+
+  /** Validate a 2FA temp token; throws if invalid/expired. Returns userId. */
+  private verify2faTempToken(tempToken: string): string {
+    try {
+      const payload = this.jwtService.verify<{ sub: string; stage: string }>(tempToken);
+      if (payload.stage !== 'pending_2fa') throw new Error('wrong stage');
+      return payload.sub;
+    } catch {
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_2FA_TEMP_TOKEN_INVALID,
+        message: 'Invalid or expired 2FA session. Please log in again.',
+      });
+    }
+  }
+
+  /**
+   * Generate an OTP, store its hash in Redis, and send it via SMS.
+   * `purpose` keys: '2fa_login_otp' | '2fa_setup_otp'
+   */
+  private async send2faOtp(userId: string, phone: string, purpose: string): Promise<Date> {
+    const rateKey = `${purpose}_rate:${userId}`;
+    const count = await this.redis.incr(rateKey);
+    if (count === 1) await this.redis.expire(rateKey, 600);
+    if (count > 3) {
+      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_OTP_RATE_LIMITED, message: 'Too many OTP requests. Try again in 10 minutes.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    const ttlSeconds = this.configService.get<number>('app.otpExpiryMinutes', 5) * 60;
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+
+    await this.redis.setex(`${purpose}:${userId}`, ttlSeconds, JSON.stringify({ hash: otpHash, attempts: 0 }));
+
+    this.logger.log(`[2FA OTP] userId=${userId} | phone=${phone} | code=${otp} | expires=${expiresAt.toTimeString().split(' ')[0]}`);
+
+    if (this.notifSettings.isSmsEnabled('auth.otp_sms')) {
+      void this.smsService.sendSms(phone, `RMC Platform: Your verification code is ${otp}. Valid for 5 minutes. Do not share it.`);
+    }
+
+    return expiresAt;
+  }
+
+  /** Verify a 2FA OTP from Redis. Throws on invalid/expired/max-attempts. */
+  private async verify2faOtp(userId: string, otp: string, purpose: string): Promise<void> {
+    const raw = await this.redis.get(`${purpose}:${userId}`);
+    if (!raw) {
+      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_SETUP_NOT_INITIATED, message: 'OTP not found or expired. Request a new one.' });
+    }
+
+    const stored = JSON.parse(raw) as { hash: string; attempts: number };
+
+    if (stored.attempts >= 5) {
+      await this.redis.del(`${purpose}:${userId}`);
+      throw new BadRequestException({ code: ErrorCode.AUTH_OTP_MAX_ATTEMPTS, message: 'Maximum attempts exceeded. Request a new code.' });
+    }
+
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    if (otpHash !== stored.hash) {
+      stored.attempts += 1;
+      const ttl = await this.redis.ttl(`${purpose}:${userId}`);
+      if (ttl > 0) {
+        await this.redis.setex(`${purpose}:${userId}`, ttl, JSON.stringify(stored));
+      }
+      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_INVALID_CODE, message: 'Invalid verification code' });
+    }
+
+    await this.redis.del(`${purpose}:${userId}`);
+  }
+
+  private maskPhone(phone: string): string {
+    if (!phone || phone.length < 6) return phone;
+    return phone.slice(0, 4) + '****' + phone.slice(-2);
   }
 
   private createMailTransporter(): nodemailer.Transporter {

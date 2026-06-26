@@ -15,6 +15,9 @@ import axios from 'axios';
 import { FILE_SERVER_URL } from '@/lib/api';
 import { marriageApi, type MarriageApplication, type MarriageApplicationStatus, STATUS_COLORS } from '@/lib/marriageApi';
 import { cn } from '@/lib/utils';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { Permission } from '@/lib/permissions';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft', submitted: 'Submitted', under_review: 'Under Review',
@@ -274,8 +277,12 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
   );
 }
 
-export default function AdminMarriageDetailPage() {
+function AdminMarriageDetailContent() {
   const { locale, id } = useParams<{ locale: string; id: string }>();
+  const { hasPermission } = useAuth();
+  const permApprove = hasPermission(Permission.MARRIAGE_APPROVE);
+  const permManage = hasPermission(Permission.MARRIAGE_MANAGE);
+  const permCertificate = hasPermission(Permission.MARRIAGE_CERTIFICATE);
   const [app, setApp] = useState<MarriageApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -663,23 +670,25 @@ export default function AdminMarriageDetailPage() {
                               <p className="text-[10px] text-gray-300 mt-0.5">
                                 {(doc.fileSize / 1024).toFixed(0)} KB
                               </p>
-                              <button
-                                type="button"
-                                onClick={() => handleVerifyDoc(doc.id, !doc.verified)}
-                                disabled={verifying}
-                                className={cn(
-                                  'mt-2 w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors disabled:opacity-50',
-                                  doc.verified
-                                    ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                                    : 'border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-700',
-                                )}
-                              >
-                                {verifying
-                                  ? <RefreshCw className="w-3 h-3 animate-spin" />
-                                  : doc.verified
-                                    ? <><CheckCircle2 className="w-3 h-3" /> Verified</>
-                                    : <><ShieldCheck className="w-3 h-3" /> Mark verified</>}
-                              </button>
+                              {permManage && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleVerifyDoc(doc.id, !doc.verified)}
+                                  disabled={verifying}
+                                  className={cn(
+                                    'mt-2 w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors disabled:opacity-50',
+                                    doc.verified
+                                      ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                                      : 'border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-700',
+                                  )}
+                                >
+                                  {verifying
+                                    ? <RefreshCw className="w-3 h-3 animate-spin" />
+                                    : doc.verified
+                                      ? <><CheckCircle2 className="w-3 h-3" /> Verified</>
+                                      : <><ShieldCheck className="w-3 h-3" /> Mark verified</>}
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
@@ -754,7 +763,7 @@ export default function AdminMarriageDetailPage() {
                 </div>
               )}
             </div>
-            {needsPaymentConfirm && (
+            {needsPaymentConfirm && permManage && (
               <button
                 onClick={handleConfirmPayment}
                 disabled={actionLoading}
@@ -774,7 +783,7 @@ export default function AdminMarriageDetailPage() {
               <Send className="w-4 h-4 text-rose-500" /> Actions
             </h3>
             <div className="space-y-2.5">
-              {canApprove && (
+              {canApprove && permApprove && (
                 <button
                   onClick={() => setModal('approve')}
                   disabled={actionLoading}
@@ -786,7 +795,7 @@ export default function AdminMarriageDetailPage() {
                   {activeAction === 'approved' ? 'Approving...' : 'Approve Application'}
                 </button>
               )}
-              {canAmendments && (
+              {canAmendments && permApprove && (
                 <button
                   onClick={() => setModal('amendments')}
                   disabled={actionLoading}
@@ -798,7 +807,7 @@ export default function AdminMarriageDetailPage() {
                   {activeAction === 'amendments_requested' ? 'Sending...' : 'Request Amendments'}
                 </button>
               )}
-              {canReject && (
+              {canReject && permApprove && (
                 <button
                   onClick={() => setModal('reject')}
                   disabled={actionLoading}
@@ -810,7 +819,7 @@ export default function AdminMarriageDetailPage() {
                   {activeAction === 'rejected' ? 'Rejecting...' : 'Reject Application'}
                 </button>
               )}
-              {['submitted', 'under_review'].includes(app.status) && (
+              {['submitted', 'under_review'].includes(app.status) && permApprove && (
                 <button
                   onClick={() => handleStatusUpdate('under_review' as MarriageApplicationStatus, 'Moved to under review')}
                   disabled={actionLoading || app.status === 'under_review'}
@@ -822,7 +831,7 @@ export default function AdminMarriageDetailPage() {
                   {activeAction === 'under_review' ? 'Updating...' : 'Mark Under Review'}
                 </button>
               )}
-              {canMarkCompleted && (
+              {canMarkCompleted && permApprove && (
                 <button
                   onClick={() => handleStatusUpdate('completed' as MarriageApplicationStatus, 'Nikah ceremony completed')}
                   disabled={actionLoading}
@@ -834,7 +843,7 @@ export default function AdminMarriageDetailPage() {
                   {activeAction === 'completed' ? 'Updating...' : 'Mark Ceremony Completed'}
                 </button>
               )}
-              {certStatusReady && (
+              {certStatusReady && permCertificate && (
                 <div>
                   <button
                     onClick={handleIssueCertificate}
@@ -859,7 +868,7 @@ export default function AdminMarriageDetailPage() {
           </div>
 
           {/* Schedule ceremony */}
-          {canSchedule && (
+          {canSchedule && permApprove && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-rose-500" /> Schedule Ceremony
@@ -884,7 +893,7 @@ export default function AdminMarriageDetailPage() {
           )}
 
           {/* Wedding photo upload — available during validation and after ceremony */}
-          {['submitted', 'under_review', 'amendments_requested', 'approved', 'completed'].includes(app.status) && (
+          {['submitted', 'under_review', 'amendments_requested', 'approved', 'completed'].includes(app.status) && permManage && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
                 <Camera className="w-4 h-4 text-rose-500" /> Marriage Photo
@@ -1089,6 +1098,14 @@ export default function AdminMarriageDetailPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminMarriageDetailPage() {
+  return (
+    <ProtectedRoute permissions={[Permission.MARRIAGE_VIEW]}>
+      <AdminMarriageDetailContent />
+    </ProtectedRoute>
   );
 }
 

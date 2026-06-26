@@ -7,6 +7,7 @@ import { ShoppingBag, HandHeart, ShieldCheck, Plus } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { donationsApi } from '@/lib/donationsApi';
+import { donationCategoriesApi, type PublicCategory } from '@/lib/donationCategoriesApi';
 import { buildDonationMessage } from '@/lib/donationMeta';
 import { useDonationCart } from '@/contexts/DonationCartContext';
 import {
@@ -20,6 +21,7 @@ import { CategoryGrid } from './CategoryGrid';
 import { ZakatCalculator } from './ZakatCalculator';
 import { ImpactBars } from './ImpactBars';
 import { CartDrawer } from './CartDrawer';
+import { toE164 } from '@/components/ui/PhoneInput';
 import { AmountPicker } from './AmountPicker';
 import { SuccessState, type DonationSummary } from './SuccessState';
 
@@ -63,6 +65,15 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
     return m;
   }, [liveCampaigns]);
 
+  // Admin-managed categories & sub-funds (localized to the current locale).
+  const [categories, setCategories] = useState<PublicCategory[]>([]);
+  useEffect(() => {
+    donationCategoriesApi
+      .listPublic(locale)
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, [locale]);
+
   const niyyahLabel = t(`niyyah.${niyyah}.label`);
   const methodName = t(`methods.${method}.title`);
 
@@ -86,7 +97,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
             paymentMethod: method,
             donorName: anonymous ? undefined : name.trim() || undefined,
             donorEmail: email.includes('@') ? email.trim() : undefined,
-            donorPhone: method === 'momo' ? phone.trim() : undefined,
+            donorPhone: method === 'momo' ? toE164(phone.trim()) : undefined,
             isAnonymous: anonymous,
             message: buildDonationMessage({ niyyah, category: it.category, fund: it.fundKey }),
           }),
@@ -133,7 +144,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
         {summary ? (
           <section className="relative bg-transparent py-12 md:py-16">
             <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
-            <div className="relative mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
+            <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <SuccessState locale={locale} summary={summary} onReset={reset} />
             </div>
           </section>
@@ -145,7 +156,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
               <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent" />
 
-              <div className="relative mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
+              <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Quick give + currency */}
                 <QuickGive currency={currency} onCurrency={setCurrency} onAdd={addItem} />
 
@@ -155,6 +166,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
                       <h2 className="mb-1 text-xl font-bold text-gray-900">{t('sectionHeading')}</h2>
                       <p className="mb-4 text-sm text-gray-500">{t('sectionSub')}</p>
                       <CategoryGrid
+                        categories={categories}
                         currency={currency}
                         liveBySlug={liveBySlug}
                         onAdd={addItem}

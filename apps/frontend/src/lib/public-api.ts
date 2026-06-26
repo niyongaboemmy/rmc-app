@@ -21,7 +21,7 @@ export const publicApi = {
       asr: string; maghrib: string; isha: string; date: string;
     }>(api.get('/prayer-times', { params: { lat, lng, mosqueId } })),
 
-  getAnnouncements: (type?: string, limit?: number) =>
+  getAnnouncements: (type?: string, limit?: number, includeExpired?: boolean) =>
     unwrap<Array<{
       id: string; title: string; content: string; priority: string;
       publishAt: string; expiresAt: string | null; type: string;
@@ -29,7 +29,7 @@ export const publicApi = {
       contentI18n: { en: string; rw: string; ar: string } | null;
       attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
     }>>(
-      api.get('/public/announcements', { params: { type, limit } }),
+      api.get('/public/announcements', { params: { type, limit, includeExpired } }),
     ),
 
   getTender: (id: string) =>
@@ -41,8 +41,23 @@ export const publicApi = {
       attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
     }>(api.get(`/public/announcements/${id}`)),
 
+  getAnnouncement: (id: string) =>
+    unwrap<{
+      id: string; title: string; content: string; priority: string;
+      publishAt: string; expiresAt: string | null; type: string;
+      titleI18n:   { en: string; rw: string; ar: string } | null;
+      contentI18n: { en: string; rw: string; ar: string } | null;
+      attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
+    }>(api.get(`/public/announcements/${id}`)),
+
   getMosques: (districtId?: string) =>
-    unwrap<Array<{ id: string; name: string; address: string | null; gpsLat: number | null; gpsLng: number | null; districtId: string | null; imamName: string | null; imamPhoto: string | null }>>(
+    unwrap<Array<{
+      id: string; name: string; address: string | null;
+      gpsLat: number | null; gpsLng: number | null; districtId: string | null;
+      capacity: number | null; foundingYear: number | null;
+      phone: string | null; email: string | null; fridayPrayerTime: string | null;
+      imamName: string | null; imamPhone: string | null; imamPhoto: string | null;
+    }>>(
       api.get('/mosques', { params: { districtId, status: 'active' } }),
     ),
 

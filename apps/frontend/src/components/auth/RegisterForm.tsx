@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +20,7 @@ const registerSchema = z.object({
   firstName: z.string().min(2, 'Minimum 2 characters'),
   lastName:  z.string().min(2, 'Minimum 2 characters'),
   email:     z.string().email('Invalid email address'),
-  phone:     z.string().regex(/^\+250[0-9]{9}$/, 'Format: +250XXXXXXXXX'),
+  phone:     z.string().regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX'),
   password: z
     .string()
     .min(8, 'Minimum 8 characters')
@@ -41,11 +42,7 @@ const MailIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
   </svg>
 );
-const PhoneIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-  </svg>
-);
+
 const LockIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -73,7 +70,7 @@ export function RegisterForm() {
     setApiError(null);
     setIsLoading(true);
     try {
-      await apiClient.post('/auth/register', data);
+      await apiClient.post('/auth/register', { ...data, phone: toE164(data.phone) });
       setSuccess(true);
       setTimeout(() => router.push(`/${locale}/login`), 2500);
     } catch (err: unknown) {
@@ -166,12 +163,8 @@ export function RegisterForm() {
           </div>
 
           <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
-            <Input
+            <PhoneInput
               label={t('phone')}
-              type="tel"
-              placeholder="+250781234567"
-              autoComplete="tel"
-              leftIcon={<PhoneIcon />}
               hint={t('phoneHelp')}
               error={errors.phone?.message}
               {...register('phone')}

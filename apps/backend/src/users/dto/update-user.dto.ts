@@ -6,6 +6,8 @@ import {
   IsIn,
   IsUUID,
   IsEmail,
+  IsUrl,
+  MaxLength,
   Matches,
 } from 'class-validator';
 
@@ -44,6 +46,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsIn(['active', 'pending', 'suspended', 'inactive'])
   status?: string;
+
+  @ApiPropertyOptional({ description: 'Profile photo URL from file server' })
+  @IsOptional()
+  @IsUrl({}, { message: 'profilePhotoUrl must be a valid URL' })
+  @MaxLength(500)
+  profilePhotoUrl?: string;
 }
 
 export class AssignRoleDto {

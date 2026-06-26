@@ -25,7 +25,7 @@ export function SchoolsPageClient() {
 
         <section className="relative bg-transparent py-10 md:py-14">
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
-          <div className="relative mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Reveal>
               <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {features.map(({ Icon, title, text }) => (

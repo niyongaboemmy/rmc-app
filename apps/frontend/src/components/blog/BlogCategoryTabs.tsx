@@ -55,8 +55,8 @@ export function BlogCategoryTabs({
   });
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8 py-6 bg-transparent">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-6 bg-transparent">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Search bar (left) + category tabs with a sliding underline (right) */}
         <div className="mb-6 flex flex-col gap-5 md:flex-row-reverse md:items-center md:justify-start">
           {/* Search bar */}

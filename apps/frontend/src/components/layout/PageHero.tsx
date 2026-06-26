@@ -56,7 +56,7 @@ export function PageHero({
   align = 'center',
   ornament = false,
   minHeightClassName = 'min-h-[50vh]',
-  paddingClassName = 'pt-24 pb-14',
+  paddingClassName = 'pt-36 pb-14',
   children,
 }: PageHeroProps) {
   const [current, setCurrent] = useState(0);

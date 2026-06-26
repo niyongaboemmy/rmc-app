@@ -9,9 +9,13 @@ import { MarriageService } from './marriage.service';
 import { MarriageController } from './marriage.controller';
 import { MarriageAdminController } from './marriage-admin.controller';
 import { User } from '../users/entities/user.entity';
+import { NotificationSettingsModule } from '../integrations/notifications/notification-settings.module';
+import { SmsModule } from '../integrations/sms/sms.module';
 
 @Module({
   imports: [
+    NotificationSettingsModule,
+    SmsModule,
     TypeOrmModule.forFeature([
       MarriageApplication,
       MarriageDocument,

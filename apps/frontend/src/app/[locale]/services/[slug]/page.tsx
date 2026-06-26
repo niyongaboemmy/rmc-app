@@ -3,7 +3,7 @@ import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import {
   ArrowLeft,
   Moon,
@@ -133,6 +133,7 @@ export default async function ServiceComingSoonPage({
   params: { locale: string; slug: string };
 }) {
   if (!VALID_SLUGS.includes(slug as ServiceSlug)) notFound();
+  if (slug === 'tender') redirect(`/${locale}/tenders`);
 
   const meta = SERVICE_META[slug as ServiceSlug];
   const { Icon } = meta;

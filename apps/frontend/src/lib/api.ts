@@ -132,7 +132,7 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         localStorage.removeItem('rmc_access_token');
         localStorage.removeItem('rmc_refresh_token');
-        const locale = window.location.pathname.split('/')[1] || 'en';
+        const locale = window.location.pathname.split('/')[1] || 'rw';
         window.location.href = `/${locale}/login`;
         return Promise.reject(error);
       }

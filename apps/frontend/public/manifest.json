@@ -1,0 +1,19 @@
+{
+  "name": "Rwanda Muslim Community",
+  "short_name": "RMC",
+  "description": "Rwanda Muslim Community Digital Platform — services, news, and community.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#1a6b3c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.webp",
+      "sizes": "128x128",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "social", "lifestyle"]
+}

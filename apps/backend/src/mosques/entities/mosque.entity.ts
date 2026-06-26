@@ -54,6 +54,9 @@ export class Mosque {
   @Column({ name: 'imam_name', type: 'varchar', length: 200, nullable: true })
   imamName: string | null;
 
+  @Column({ name: 'imam_phone', type: 'varchar', length: 20, nullable: true })
+  imamPhone: string | null;
+
   @Column({ name: 'imam_photo', type: 'text', nullable: true })
   imamPhoto: string | null;
 

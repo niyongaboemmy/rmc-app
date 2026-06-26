@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
-import { Bell, Search, ChevronRight, Home, X, PanelLeft, Menu, ExternalLink } from 'lucide-react';
+import { Bell, Search, ChevronRight, Home, X, PanelLeft, Menu, ExternalLink, User, LogOut, Settings } from 'lucide-react';
 
 /* ── Breadcrumbs ── */
 function useBreadcrumbs(locale: string, t: ReturnType<typeof useTranslations>) {
@@ -55,21 +55,31 @@ interface Props {
 export function AdminTopBar({ onExpandSidebar, sidebarCollapsed, onMobileMenuOpen }: Props) {
   const t = useTranslations('admin');
   const { locale } = useParams<{ locale: string }>();
-  const { user } = useAuth();
+  const router     = useRouter();
+  const { user, logout } = useAuth();
   const crumbs = useBreadcrumbs(locale, t);
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [notifOpen, setNotifOpen]   = useState(false);
-  const [notifs, setNotifs]         = useState(INIT_NOTIFS);
+  const [searchOpen, setSearchOpen]   = useState(false);
+  const [notifOpen, setNotifOpen]     = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifs, setNotifs]           = useState(INIT_NOTIFS);
 
-  const notifRef  = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const unread    = notifs.filter((n) => !n.read).length;
+  const notifRef   = useRef<HTMLDivElement>(null);
+  const userRef    = useRef<HTMLDivElement>(null);
+  const searchRef  = useRef<HTMLInputElement>(null);
+  const unread     = notifs.filter((n) => !n.read).length;
+
+  const handleLogout = async () => {
+    setUserMenuOpen(false);
+    await logout();
+    router.push(`/${locale}/login`);
+  };
 
   useEffect(() => { if (searchOpen) searchRef.current?.focus(); }, [searchOpen]);
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (userRef.current  && !userRef.current.contains(e.target as Node))  setUserMenuOpen(false);
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
@@ -211,15 +221,70 @@ export function AdminTopBar({ onExpandSidebar, sidebarCollapsed, onMobileMenuOpe
         {/* Divider */}
         <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block" />
 
-        {/* User pill */}
-        <div className="hidden sm:flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-rmc-green flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-            {user?.firstName?.[0]}{user?.lastName?.[0]}
-          </div>
-          <div className="hidden md:block leading-none">
-            <p className="text-[12px] font-semibold text-gray-900">{user?.firstName}</p>
-            <p className="text-[10px] text-gray-400 capitalize">{user?.role}</p>
-          </div>
+        {/* User pill + dropdown */}
+        <div className="relative hidden sm:block" ref={userRef}>
+          <button
+            onClick={() => setUserMenuOpen((v) => !v)}
+            className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="User menu"
+            aria-expanded={userMenuOpen}
+          >
+            {user?.profilePhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.profilePhotoUrl}
+                alt=""
+                className="w-7 h-7 rounded-full object-cover shrink-0 ring-2 ring-rmc-green/20"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-rmc-green flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
+              </div>
+            )}
+            <div className="hidden md:block leading-none text-left">
+              <p className="text-[12px] font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>
+              <p className="text-[10px] text-gray-400 capitalize">{user?.role}</p>
+            </div>
+            <ChevronRight className={`hidden md:block w-3 h-3 text-gray-400 transition-transform duration-150 ${userMenuOpen ? 'rotate-90' : ''}`} />
+          </button>
+
+          {userMenuOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-slide-down">
+              {/* User info header */}
+              <div className="px-4 py-3 border-b border-gray-50">
+                <p className="text-[13px] font-semibold text-gray-900 truncate">{user?.firstName} {user?.lastName}</p>
+                <p className="text-[11px] text-gray-400 truncate">{user?.email}</p>
+              </div>
+              {/* Menu items */}
+              <div className="py-1">
+                <Link
+                  href={`/${locale}/profile`}
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 hover:text-rmc-green transition-colors"
+                >
+                  <User className="w-4 h-4 text-gray-400" />
+                  My Profile
+                </Link>
+                <Link
+                  href={`/${locale}/admin/settings`}
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 hover:text-rmc-green transition-colors"
+                >
+                  <Settings className="w-4 h-4 text-gray-400" />
+                  Settings
+                </Link>
+              </div>
+              <div className="border-t border-gray-50 py-1">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

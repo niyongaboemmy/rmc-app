@@ -8,6 +8,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
 import { publicApi } from '@/lib/public-api';
+import { useTranslations } from 'next-intl';
 
 type I18n = { en: string; rw: string; ar: string };
 
@@ -44,13 +45,16 @@ function getStatus(expiresAt: string | null): 'open' | 'closing' | 'closed' {
   return 'open';
 }
 
-function deadlineLabel(expiresAt: string | null): string {
+function deadlineLabel(
+  expiresAt: string | null,
+  t: (key: string, values?: Record<string, unknown>) => string,
+): string {
   const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'No deadline';
-  if (diff < 0) return 'Closed';
-  if (diff === 0) return 'Closes today';
-  if (diff === 1) return 'Closes tomorrow';
-  return `Closes in ${diff} days`;
+  if (diff === null) return t('deadline.none');
+  if (diff < 0)  return t('deadline.closed');
+  if (diff === 0) return t('deadline.today');
+  if (diff === 1) return t('deadline.tomorrow');
+  return t('deadline.inDays', { days: diff });
 }
 
 const STATUS_STYLES = {
@@ -59,22 +63,18 @@ const STATUS_STYLES = {
   closed:  { bar: 'bg-gray-300',     badge: 'bg-gray-100 text-gray-400 border-gray-200',              icon: 'text-gray-400' },
 };
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all',     label: 'All Tenders'  },
-  { key: 'open',    label: 'Open'         },
-  { key: 'closing', label: 'Closing Soon' },
-  { key: 'closed',  label: 'Closed'       },
-];
+const FILTER_KEYS: Filter[] = ['all', 'open', 'closing', 'closed'];
 
 export default function TendersPage() {
   const { locale } = useParams<{ locale: string }>();
+  const t = useTranslations('tenders');
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
 
   useEffect(() => {
     publicApi
-      .getAnnouncements('tender', 50)
+      .getAnnouncements('tender', 50, true)
       .then(setTenders)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -82,51 +82,43 @@ export default function TendersPage() {
 
   const filtered = useMemo(() => {
     if (filter === 'all') return tenders;
-    return tenders.filter((t) => getStatus(t.expiresAt) === filter);
+    return tenders.filter((tender) => getStatus(tender.expiresAt) === filter);
   }, [tenders, filter]);
 
   const counts = useMemo(() => ({
     all:     tenders.length,
-    open:    tenders.filter((t) => getStatus(t.expiresAt) === 'open').length,
-    closing: tenders.filter((t) => getStatus(t.expiresAt) === 'closing').length,
-    closed:  tenders.filter((t) => getStatus(t.expiresAt) === 'closed').length,
+    open:    tenders.filter((tender) => getStatus(tender.expiresAt) === 'open').length,
+    closing: tenders.filter((tender) => getStatus(tender.expiresAt) === 'closing').length,
+    closed:  tenders.filter((tender) => getStatus(tender.expiresAt) === 'closed').length,
   }), [tenders]);
 
   return (
     <div className="min-h-screen">
       <Navbar />
       <main>
-        {/* Hero — static strings are intentionally EN; locale switch is per-card below */}
         <PageHero
-          eyebrow={locale === 'rw' ? "Amahirwe y'Ubucuruzi" : locale === 'ar' ? 'فرص الأعمال' : 'Business Opportunities'}
-          title={locale === 'rw' ? 'Itangazo ry\'Umushinga' : locale === 'ar' ? 'المناقصات المفتوحة' : 'Open Tenders'}
-          subtitle={
-            locale === 'rw'
-              ? 'Amahirwe yo gupiganira imishinga yakuwe na Sosiyete y\'Abasilamu yo mu Rwanda.'
-              : locale === 'ar'
-              ? 'فرص المشتريات والتعاقدات الصادرة عن المجتمع الإسلامي الرواندي.'
-              : 'Procurement and contracting opportunities published by Rwanda Muslim Community.'
-          }
+          eyebrow={t('eyebrow')}
+          title={t('title')}
+          subtitle={t('subtitle')}
           ornament
           minHeightClassName="min-h-[38vh]"
-          paddingClassName="pt-28 pb-10"
+          paddingClassName="pt-36 pb-10"
         />
 
-        {/* Body */}
-        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-gray-50 pattern-light">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-14 bg-gray-50 pattern-light">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {/* Back link */}
             <Link
               href={`/${locale}`}
               className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-rmc-green transition-colors mb-8"
             >
-              ← Back to Home
+              ← {t('backToHome')}
             </Link>
 
             {/* Filter tabs */}
             <div className="flex flex-wrap gap-2 mb-8">
-              {FILTERS.map(({ key, label }) => {
+              {FILTER_KEYS.map((key) => {
                 const active = filter === key;
                 return (
                   <button
@@ -138,7 +130,7 @@ export default function TendersPage() {
                         : 'bg-white text-gray-500 border-gray-200 hover:border-rmc-green/40 hover:text-rmc-green'
                     }`}
                   >
-                    {label}
+                    {t(`filters.${key}`)}
                     {!loading && (
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                         active ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'
@@ -165,16 +157,16 @@ export default function TendersPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100 mb-5">
                   <AlertCircle className="w-7 h-7 text-gray-300" />
                 </div>
-                <p className="text-base font-semibold text-gray-400">No tenders found</p>
+                <p className="text-base font-semibold text-gray-400">{t('empty.title')}</p>
                 <p className="text-sm text-gray-300 mt-1">
-                  {filter === 'all' ? 'No tenders are published at this time.' : `No ${filter} tenders right now.`}
+                  {filter === 'all' ? t('empty.allSubtitle') : t(`filters.${filter}`)}
                 </p>
                 {filter !== 'all' && (
                   <button
                     onClick={() => setFilter('all')}
                     className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark transition-colors"
                   >
-                    View all tenders <ArrowRight className="w-4 h-4" />
+                    {t('empty.viewAll')} <ArrowRight className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -238,15 +230,12 @@ export default function TendersPage() {
 
                       {/* Footer row */}
                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-2">
-                        {/* Status badge */}
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${styles.badge}`}>
                           <Clock className={`w-3 h-3 ${styles.icon}`} />
-                          {deadlineLabel(tender.expiresAt)}
+                          {deadlineLabel(tender.expiresAt, (key, values) => t(key as Parameters<typeof t>[0], values as Parameters<typeof t>[1]))}
                         </span>
-
-                        {/* View details cue */}
                         <span className="text-[10px] font-semibold text-gray-300 group-hover:text-rmc-green transition-colors flex items-center gap-0.5">
-                          View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                          {t('card.view')} <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                         </span>
                       </div>
 

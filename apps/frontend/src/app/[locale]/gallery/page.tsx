@@ -8,7 +8,7 @@ import { GalleryCategories } from '@/components/gallery/GalleryCategories';
 import { publicApi } from '@/lib/public-api';
 import {
   CATEGORY_KEYS,
-  type GalleryItem, type CategoryKey,
+  type GalleryItem,
 } from '@/components/gallery/galleryData';
 
 // Always fetch fresh so newly uploaded images appear without a rebuild.
@@ -61,7 +61,10 @@ export default async function GalleryPage() {
   ];
   const categories = orderedKeys.map((key) => ({
     key,
-    label: KNOWN_CATEGORIES.has(key) ? t(`categories.${key as CategoryKey}`) : humanize(key),
+    // Localise any category that has a translation (covers both the curated
+    // keys and the admin-defined ones like "events"/"ceremonies"/"other");
+    // fall back to a humanised label for anything still untranslated.
+    label: t.has(`categories.${key}`) ? t(`categories.${key}`) : humanize(key),
   }));
 
   // Periods: the distinct months present (most recent first), localised.
@@ -91,13 +94,13 @@ export default async function GalleryPage() {
           subtitle={t('subtitle')}
           ornament
           minHeightClassName="min-h-[25vh]"
-          paddingClassName="pt-24 pb-8"
+          paddingClassName="pt-36 pb-8"
         />
 
         {isEmpty ? (
           /* Empty state — gallery is now purely API-driven */
-          <section className="py-24 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md mx-auto text-center">
+          <section className="py-24">
+            <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <ImageIcon className="w-12 h-12 mx-auto mb-4 text-rmc-green/30" />
               <h2 className="text-xl font-bold text-gray-900">{t('empty.title')}</h2>
               <p className="mt-2 text-sm text-gray-500">{t('empty.subtitle')}</p>
@@ -106,8 +109,8 @@ export default async function GalleryPage() {
         ) : (
           <>
             {/* ALL — 3D carousel of every photo */}
-            <section className="py-8 md:py-10 px-4 sm:px-6 lg:px-8 bg-transparent">
-              <div className="max-w-7xl mx-auto">
+            <section className="py-8 md:py-10 bg-transparent">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative rounded-3xl overflow-hidden w-full max-w-4xl mx-auto min-h-[340px] md:min-h-[440px]">
                   <ImageCarousel3D images={allImages} />
                 </div>

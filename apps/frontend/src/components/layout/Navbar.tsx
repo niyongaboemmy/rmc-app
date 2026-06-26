@@ -84,8 +84,8 @@ export function Navbar() {
     { href: `/${locale}/about`, label: t('about') },
     { href: `/${locale}/services`, label: t('services') },
     { href: `/${locale}/schools`, label: t('schools') },
-    { href: `/${locale}/blog`, label: t('blog') },
-    { href: `/${locale}/gallery`, label: t('gallery') },
+    { href: `/${locale}/blog`, label: t('blog'), mobileOnly: true },
+    { href: `/${locale}/gallery`, label: t('gallery'), mobileOnly: true },
     { href: `/${locale}/contact`, label: t('contact') },
   ];
 
@@ -178,7 +178,7 @@ export function Navbar() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden flex items-center justify-center w-11 h-11 -ml-2 rounded-lg transition-all duration-200 outline-none text-white hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
+              className="lg:hidden flex items-center justify-center w-11 h-11 -ml-2 rounded-lg transition-all duration-200 outline-none text-white hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileOpen}
               aria-controls="mobile-menu"
@@ -186,8 +186,8 @@ export function Navbar() {
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             {/* Desktop nav links */}
-            <div className="hidden md:flex items-center gap-0.5">
-              {navLinks.map((link) => (
+            <div className="hidden lg:flex items-center gap-0.5">
+              {navLinks.filter((l) => !l.mobileOnly).map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -233,11 +233,11 @@ export function Navbar() {
               className="hidden sm:inline-flex items-center gap-1.5 bg-rmc-green text-white px-3.5 py-1.5 rounded-full text-[13px] font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 transition-all duration-300 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
               <Heart className="w-3.5 h-3.5 shrink-0" />
-              Donate
+              {t('donate')}
             </Link>
 
             {isAuthenticated && user ? (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
                   <Link
                     href={`/${locale}/admin/members`}
@@ -321,9 +321,9 @@ export function Navbar() {
             ) : (
               <Link
                 href={`/${locale}/login`}
-                className="hidden md:inline-flex items-center px-3.5 py-1.5 rounded-full border border-white/30 text-white text-[13px] font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
+                className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-white/30 text-white text-[13px] font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
               >
-                Sign in
+                {t('login')}
               </Link>
             )}
 
@@ -336,7 +336,7 @@ export function Navbar() {
       {mobileOpen && (
         <div
           id="mobile-menu"
-          className="md:hidden fixed inset-x-0 top-[76px] bottom-0 z-40 bg-rmc-green-deep overflow-y-auto overscroll-contain animate-fade-in"
+          className="lg:hidden fixed inset-x-0 top-[76px] bottom-0 z-40 bg-rmc-green-deep overflow-y-auto overscroll-contain animate-fade-in"
         >
           <div aria-hidden className="absolute inset-0 pattern-islamic opacity-20 pointer-events-none" />
           <div aria-hidden className="absolute top-0 right-0 w-72 h-72 bg-rmc-green/20 rounded-full blur-[90px] pointer-events-none" />
@@ -391,7 +391,7 @@ export function Navbar() {
                     onClick={() => setMobileOpen(false)}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 bg-rmc-green text-white rounded-2xl text-sm font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark transition-colors"
                   >
-                    <Heart className="w-3.5 h-3.5" /> Donate
+                    <Heart className="w-3.5 h-3.5" /> {t('donate')}
                   </Link>
                   <Link
                     href={`/${locale}/login`}

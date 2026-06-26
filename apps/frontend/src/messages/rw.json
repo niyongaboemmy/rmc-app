@@ -14,6 +14,7 @@
     "download": "Pakurura"
   },
   "auth": {
+    "backToHome": "Subira Ahabanza",
     "login": {
       "title": "Injira",
       "subtitle": "Injira muri konti yawe ya RMC",
@@ -524,17 +525,44 @@
         "draftNote": "Uzuza intambwe esheshatu. Aho ugeze kubikwa — ushobora gusubira gukurikira igihe cyose.",
         "feesPaymentNote": "Ubwishyu bwemerwa binyuze kuri Mobile Money (MoMo), amafaranga atangwa intoki ku biro bya RMC, cyangwa kohereza kuri banki.",
         "docs": {
-          "d1": { "label": "Irangamuntu y'Umukwe", "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda" },
-          "d2": { "label": "Irangamuntu y'Umugeni", "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda" },
-          "d3": { "label": "Uruhushya rwa Wali", "detail": "Uruhushya rwashyizweho umukono na wali (umurinzi w'umugeni)" },
-          "d4": { "label": "Ifoto y'Abashyingiranwa", "detail": "Ifoto yashywe ya vuba y'umukwe n'umugeni hamwe" }
+          "d1": {
+            "label": "Irangamuntu y'Umukwe",
+            "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda"
+          },
+          "d2": {
+            "label": "Irangamuntu y'Umugeni",
+            "detail": "Irangamuntu cyangwa pasiporo yemewe y'u Rwanda"
+          },
+          "d3": {
+            "label": "Uruhushya rwa Wali",
+            "detail": "Uruhushya rwashyizweho umukono na wali (umurinzi w'umugeni)"
+          },
+          "d4": {
+            "label": "Ifoto y'Abashyingiranwa",
+            "detail": "Ifoto yashywe ya vuba y'umukwe n'umugeni hamwe"
+          }
         },
         "process": {
-          "p1": { "label": "Tanga Ubusabe", "desc": "Uzuza iformi ifite amakuru y'abashyingiranwa, umuhango, n'inyandiko." },
-          "p2": { "label": "Burimo Gusuzumwa", "desc": "Itsinda rya RMC risuzuma inyandiko zawe (iminsi 1–3 y'akazi)." },
-          "p3": { "label": "Kwemezwa n'Imamu", "desc": "Ubusabe bwemejwe kandi imamu aharirwa gukora umuhango." },
-          "p4": { "label": "Umuhango wa Nikah", "desc": "Nikah ikorerwa ahantu wahisemo cyangwa mu musigiti." },
-          "p5": { "label": "Icyemezo Gitangwa", "desc": "Icyemezo cy'ubukwe cyemewe gishyizweho umukono kandi gitangwa." }
+          "p1": {
+            "label": "Tanga Ubusabe",
+            "desc": "Uzuza iformi ifite amakuru y'abashyingiranwa, umuhango, n'inyandiko."
+          },
+          "p2": {
+            "label": "Burimo Gusuzumwa",
+            "desc": "Itsinda rya RMC risuzuma inyandiko zawe (iminsi 1–3 y'akazi)."
+          },
+          "p3": {
+            "label": "Kwemezwa n'Imamu",
+            "desc": "Ubusabe bwemejwe kandi imamu aharirwa gukora umuhango."
+          },
+          "p4": {
+            "label": "Umuhango wa Nikah",
+            "desc": "Nikah ikorerwa ahantu wahisemo cyangwa mu musigiti."
+          },
+          "p5": {
+            "label": "Icyemezo Gitangwa",
+            "desc": "Icyemezo cy'ubukwe cyemewe gishyizweho umukono kandi gitangwa."
+          }
         },
         "witnessReqs": {
           "w1": "Abatangabuhamya babiri b'Abayisilamu basabwa (bagomba kwerekana irangamuntu)",
@@ -635,6 +663,7 @@
     "address": "Aderesi",
     "phone": "Telefoni",
     "email": "Imeri",
+    "email2": "Imeri",
     "hours": "Amasaha y'Akazi",
     "hoursValue": "Kuwa mbere – Kuwa gatanu, 8:00 – 17:00",
     "form": {
@@ -653,10 +682,13 @@
         "subject": "Nyamuneka andika impamvu.",
         "message": "Ubutumwa bugomba kuba nibura inyuguti 10."
       }
-    }
+    },
+    "capacity": "Ubushobozi",
+    "jumuah": "Iya Kane"
   },
   "member": {
     "register": {
+      "eyebrow": "Ubuyobozi bw'Abanyamuryango",
       "title": "Uzuza Dosiye ya Nyirawo",
       "subtitle": "Uzuza amakuru yawe kugira ngo usohoze ubusabe bwo kwiyandikisha",
       "nationalId": "Indangamuntu (imibare 16)",
@@ -809,6 +841,7 @@
       "gifts": "impano",
       "tabDonations": "Impano",
       "tabPrograms": "Gahunda",
+      "tabCategories": "Ibyiciro",
       "period": "Igihe",
       "preset": {
         "all": "Igihe cyose",
@@ -999,7 +1032,10 @@
       "religious": "Imihango y'Idini",
       "education": "Uburezi no Kwiga",
       "community": "Imibereho Rusange n'Amateraniro",
-      "mosques": "Imisigiti n'Ibikoresho"
+      "mosques": "Imisigiti n'Ibikoresho",
+      "events": "Ibirori",
+      "ceremonies": "Imihango",
+      "other": "Ibindi"
     }
   },
   "blog": {
@@ -1369,6 +1405,173 @@
       "directions": {
         "title": "Bona inzira",
         "text": "Inzira uhereye aho uri ugana ku ishuri."
+      }
+    }
+  },
+  "announcements": {
+    "eyebrow": "Amakuru Mashya",
+    "title": "Itangazo",
+    "subtitle": "Amakuru, ibisobanuro, n'impanuro z'ingenzi ziva ku Muryango w'Abasilamu bo mu Rwanda.",
+    "backToHome": "Subira Ahabanza",
+    "filters": {
+      "all": "Byose",
+      "urgent": "Byihutirwa",
+      "high": "Bikomeye",
+      "normal": "Bisanzwe"
+    },
+    "priority": {
+      "normal": "Bisanzwe",
+      "high": "Bikomeye",
+      "urgent": "Byihutirwa"
+    },
+    "empty": {
+      "title": "Nta matangazo yabonetse",
+      "allSubtitle": "Nta matangazo atangazwa ubu.",
+      "viewAll": "Reba amatangazo yose"
+    },
+    "card": {
+      "view": "Soma birenzeho"
+    },
+    "detail": {
+      "heroTitle": "Itangazo",
+      "notFoundHeroTitle": "Ntabwo Byabonetse",
+      "backLabel": "Subira ku Matangazo",
+      "published": "Itangazwa",
+      "expiresLabel": "Irarangira",
+      "description": "Ibisobanuro by'Itangazo",
+      "attachments": "Inyandiko ({count})",
+      "cta": {
+        "title": "Ufite ibibazo ku tangazo?",
+        "subtitle": "Watumanahane na RMC kandi tuzagusubiza vuba.",
+        "button": "Watumanahane →"
+      },
+      "notFound": {
+        "message": "Itangazo ntiboneka",
+        "subtitle": "Rishobora kuba rakuweho cyangwa uhuze ntabwo ari wo.",
+        "backLink": "Reba amatangazo yose"
+      },
+      "attachment": {
+        "preview": "Reba",
+        "download": "Pakurura",
+        "open": "Fungura",
+        "noPreview": "Nta burebure bwabonetse kuri ubu bwoko bwa dosiye."
+      }
+    }
+  },
+  "tenders": {
+    "eyebrow": "Amahirwe y'Ubucuruzi",
+    "title": "Itangazo ry'Umushinga",
+    "subtitle": "Amahirwe yo gupiganira imishinga yakuwe na Sosiyete y'Abasilamu yo mu Rwanda.",
+    "backToHome": "Subira Ahabanza",
+    "filters": {
+      "all": "Imishinga Yose",
+      "open": "Ifunguye",
+      "closing": "Ifunga Vuba",
+      "closed": "Ifunze"
+    },
+    "deadline": {
+      "none": "Nta gihe",
+      "noneSet": "Nta gihe gishyizweho",
+      "closed": "Ifunze",
+      "submissionClosed": "Igihe cy'iyinjiza rirangiye",
+      "today": "Ifunga uyu munsi",
+      "todayUrgent": "Ifunga uyu munsi!",
+      "tomorrow": "Ifunga ejo",
+      "inDays": "Ifunga mu minsi {days}",
+      "remaining": "{pct}% y'igihe gisigaye"
+    },
+    "empty": {
+      "title": "Nta mishinga yabonetse",
+      "allSubtitle": "Nta mishinga itangazwa ubu.",
+      "viewAll": "Reba imishinga yose"
+    },
+    "card": {
+      "view": "Reba"
+    },
+    "detail": {
+      "heroTitle": "Amakuru y'Umushinga",
+      "notFoundHeroTitle": "Ntabwo Byabonetse",
+      "backLabel": "Subira ku Mishinga",
+      "published": "Itangazwa",
+      "deadlineLabel": "Igihe cy'imperuka",
+      "priority": {
+        "normal": "Isanzwe",
+        "high": "Ikomeye",
+        "urgent": "Ihutirwa"
+      },
+      "description": "Ibisobanuro by'Umushinga",
+      "attachments": "Inyandiko ({count})",
+      "cta": {
+        "title": "Uzirikana uyu mushinga?",
+        "subtitle": "Ohereza igitekerezo cyawe cyangwa watumanahana na RMC mbere y'igihe.",
+        "button": "Watumanahane →"
+      },
+      "notFound": {
+        "message": "Umushinga ntuboneka",
+        "subtitle": "Ushobora kuba wakuweho cyangwa uhuze ntabwo ari wo.",
+        "backLink": "Reba imishinga yose"
+      },
+      "attachment": {
+        "preview": "Reba",
+        "download": "Pakurura",
+        "open": "Fungura",
+        "noPreview": "Nta burebure bwabonetse kuri ubu bwoko bwa dosiye."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Gusakaza urumuri rw'Isilamu binyuze mu burezi, umuryango, n'ubufasha mu Rwanda hose.",
+    "quickLinks": "Aho Ugana Vuba",
+    "services": "Serivisi",
+    "contact": "Twandikire",
+    "links": {
+      "home": "Ahabanza",
+      "about": "Ibyerekeye RMC",
+      "services": "Serivisi Zacu",
+      "schools": "Shaka Amashuri",
+      "announcements": "Amatangazo",
+      "blog": "Amakuru",
+      "gallery": "Inzira za Amashusho",
+      "tenders": "Itumba",
+      "donate": "Gutera Inkunga",
+      "contact": "Twandikire",
+      "join": "Injira muri RMC"
+    },
+    "serviceLinks": {
+      "marriage": "Inyandiko z'Ubukwe",
+      "scholarship": "Buruse",
+      "conduct": "Icyemezo cy'Imyitwarire Myiza",
+      "funeral": "Gutegura Gushyingura",
+      "jobs": "Amahirwe y'Akazi",
+      "tenders": "Itumba"
+    },
+    "address": "Rebero, Kigali",
+    "copyright": "© {year} Umuryango w'Abasilamu bo mu Rwanda. Uburenganzira bwose bwabitswe.",
+    "privacy": "Politiki y'Ubuzima bw'Amakuru",
+    "terms": "Amategeko y'Ikoreshwa",
+    "pwa": {
+      "install": "Injiza App",
+      "installAriaLabel": "Injiza app ya RMC kuri telefone yawe",
+      "useChrome": "Fungura urubuga rw'iyi site muri Chrome (cyangwa Edge) kugirango ushobore gushyira app kuri telefone yawe.",
+      "chromeNotReady": "Reba ikimenyetso cyo guterura (⊕) mu nshundura ya Chrome, cyangwa suzuma andi mapeji maze ugerageze nanone.",
+      "ios": {
+        "title": "Ongeraho kuri Ekran ya Mbere",
+        "step1": "Kanda buto ya <strong>Share</strong> (↑) muri Safari.",
+        "step2": "Manuka hasi maze ukande <strong>Add to Home Screen</strong>.",
+        "step3": "Kanda <strong>Add</strong> gusobanura."
+      },
+      "auto": {
+        "title": "Injiza App ya RMC",
+        "subtitleIOS": "Ongeraho kuri ekran ya mbere kugirango ubibonere vuba",
+        "subtitleDesktop": "Injiza kuri desktop yawe kugirango ubibonere vuba",
+        "install": "Injiza",
+        "later": "Ubu ntabwo",
+        "dismiss": "Funga ikibazo cyo guterura",
+        "ios": {
+          "step1": "Kanda buto ya <strong>Share</strong> (↑) muri Safari.",
+          "step2": "Manuka hasi maze ukande <strong>Add to Home Screen</strong>.",
+          "step3": "Kanda <strong>Add</strong> gusobanura."
+        }
       }
     }
   }

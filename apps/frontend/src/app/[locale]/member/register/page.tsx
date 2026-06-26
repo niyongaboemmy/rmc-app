@@ -7,9 +7,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
+import { PageHero } from '@/components/layout/PageHero';
 import { Select } from '@/components/ui/Select';
 import { publicApi } from '@/lib/public-api';
-import { User } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 
 const schema = z.object({
@@ -82,130 +83,137 @@ export default function MemberRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navbar />
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="bg-white rounded-2xl shadow-sm p-8">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-rmc-green-light rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-rmc-green" />
+      <main>
+        <PageHero
+          eyebrow={t('eyebrow')}
+          title={t('title')}
+          subtitle={t('subtitle')}
+          ornament
+          minHeightClassName="min-h-[38vh]"
+          paddingClassName="pt-36 pb-10"
+        />
+
+        <section className="py-14 bg-gray-50 pattern-light">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div className="bg-white rounded-2xl shadow-sm p-8">
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                {/* National ID */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('nationalId')}</label>
+                  <input
+                    type="text"
+                    maxLength={16}
+                    placeholder="1234567890123456"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    {...register('nationalId')}
+                  />
+                  {errors.nationalId && <p className="text-red-500 text-xs mt-1">{errors.nationalId.message}</p>}
+                </div>
+
+                {/* Category */}
+                <Select label={t('category')} {...register('category')}>
+                  {(['standard', 'student', 'scholar', 'partner', 'vip'] as const).map((cat) => (
+                    <option key={cat} value={cat}>{t(`categories.${cat}`)}</option>
+                  ))}
+                </Select>
+
+                {/* Occupation */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('occupation')}</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    {...register('occupation')}
+                  />
+                </div>
+
+                {/* Education */}
+                <Select label={t('education')} placeholder="Select level" {...register('educationLevel')}>
+                  {['primary', 'secondary', 'bachelors', 'masters', 'phd', 'other'].map((level) => (
+                    <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
+                  ))}
+                </Select>
+
+                {/* Location cascade */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Select label={t('province')} placeholder="Select Province" {...register('provinceId')}>
+                    {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </Select>
+                  <Select
+                    label={t('district')}
+                    placeholder="Select District"
+                    disabled={!provinceId}
+                    {...register('districtId')}
+                  >
+                    {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </Select>
+                </div>
+
+                {/* Mosque */}
+                {mosques.length > 0 && (
+                  <Select label={t('mosque')} placeholder="Select Mosque" {...register('mosqueId')}>
+                    {mosques.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </Select>
+                )}
+
+                {/* Emergency Contact */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyName')}</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                      {...register('emergencyContactName')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyPhone')}</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                      {...register('emergencyContactPhone')}
+                    />
+                  </div>
+                </div>
+
+                {/* Consent */}
+                <div className="flex items-start gap-3 p-4 bg-rmc-green-light rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="consent"
+                    className="mt-0.5 h-4 w-4 text-rmc-green rounded border-gray-300"
+                    {...register('consentGiven')}
+                  />
+                  <label htmlFor="consent" className="text-sm text-gray-700 cursor-pointer">
+                    {t('consent')}
+                  </label>
+                </div>
+                {errors.consentGiven && (
+                  <p className="text-red-500 text-xs">{errors.consentGiven.message}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-3.5 bg-rmc-green text-white font-semibold rounded-xl hover:bg-rmc-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? '...' : t('submit')}
+                </button>
+              </form>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-            <p className="text-gray-500 text-sm mt-1">{t('subtitle')}</p>
           </div>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* National ID */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('nationalId')}</label>
-              <input
-                type="text"
-                maxLength={16}
-                placeholder="1234567890123456"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
-                {...register('nationalId')}
-              />
-              {errors.nationalId && <p className="text-red-500 text-xs mt-1">{errors.nationalId.message}</p>}
-            </div>
-
-            {/* Category */}
-            <Select label={t('category')} {...register('category')}>
-              {(['standard', 'student', 'scholar', 'partner', 'vip'] as const).map((cat) => (
-                <option key={cat} value={cat}>{t(`categories.${cat}`)}</option>
-              ))}
-            </Select>
-
-            {/* Occupation */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('occupation')}</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
-                {...register('occupation')}
-              />
-            </div>
-
-            {/* Education */}
-            <Select label={t('education')} placeholder="Select level" {...register('educationLevel')}>
-              {['primary', 'secondary', 'bachelors', 'masters', 'phd', 'other'].map((level) => (
-                <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
-              ))}
-            </Select>
-
-            {/* Location cascade */}
-            <div className="grid grid-cols-2 gap-4">
-              <Select label={t('province')} placeholder="Select Province" {...register('provinceId')}>
-                {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </Select>
-              <Select
-                label={t('district')}
-                placeholder="Select District"
-                disabled={!provinceId}
-                {...register('districtId')}
-              >
-                {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </Select>
-            </div>
-
-            {/* Mosque */}
-            {mosques.length > 0 && (
-              <Select label={t('mosque')} placeholder="Select Mosque" {...register('mosqueId')}>
-                {mosques.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </Select>
-            )}
-
-            {/* Emergency Contact */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyName')}</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
-                  {...register('emergencyContactName')}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyPhone')}</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
-                  {...register('emergencyContactPhone')}
-                />
-              </div>
-            </div>
-
-            {/* Consent */}
-            <div className="flex items-start gap-3 p-4 bg-rmc-green-light rounded-lg">
-              <input
-                type="checkbox"
-                id="consent"
-                className="mt-0.5 h-4 w-4 text-rmc-green rounded border-gray-300"
-                {...register('consentGiven')}
-              />
-              <label htmlFor="consent" className="text-sm text-gray-700 cursor-pointer">
-                {t('consent')}
-              </label>
-            </div>
-            {errors.consentGiven && (
-              <p className="text-red-500 text-xs">{errors.consentGiven.message}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3.5 bg-rmc-green text-white font-semibold rounded-xl hover:bg-rmc-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? '...' : t('submit')}
-            </button>
-          </form>
-        </div>
+        </section>
       </main>
+      <Footer />
     </div>
   );
 }

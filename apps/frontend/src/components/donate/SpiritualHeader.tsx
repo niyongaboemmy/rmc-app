@@ -17,14 +17,14 @@ export function SpiritualHeader({
   const t = useTranslations('donate');
 
   return (
-    <section className="relative flex min-h-[46vh] items-center overflow-hidden bg-rmc-green-deep">
+    <section className="relative overflow-hidden bg-rmc-green-deep">
       <Image src={HERO_IMG} alt="" fill priority className="object-cover object-center" sizes="100vw" />
       <div className="absolute inset-0 bg-black/55" />
       <div className="absolute inset-0 bg-gradient-to-t from-rmc-green-deep via-black/35 to-black/40" />
       <div className="absolute inset-0 pattern-islamic opacity-30" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/50 to-transparent" />
 
-      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-24 pb-14 text-center sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-6 pt-28 pb-16 text-center sm:px-8 lg:px-12">
         <div className="animate-fade-up">
           <p className="mb-3 font-arabic text-lg leading-loose text-rmc-gold-light drop-shadow md:text-xl" dir="rtl">
             وَتَعَاوَنُوا عَلَى الْبِرِّ وَالتَّقْوَىٰ
@@ -33,7 +33,7 @@ export function SpiritualHeader({
             {t('header.title1')}
             <span className="block text-gradient-gold">{t('header.title2')}</span>
           </h1>
-          <p className="mx-auto max-w-xl text-sm leading-relaxed text-white/75 md:text-base">
+          <p className="w-full text-sm leading-relaxed text-white/75 md:text-base">
             {t.rich('header.intro', { b: (c) => <span className="font-semibold text-white">{c}</span> })}
           </p>
         </div>
@@ -44,7 +44,7 @@ export function SpiritualHeader({
             <Sparkles className="h-3.5 w-3.5" />
             {t('header.setIntention')}
           </p>
-          <div className="mx-auto grid max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-3">
+          <div className="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-3">
             {NIYYAH.map((n) => {
               const active = niyyah === n.key;
               return (

@@ -14,12 +14,16 @@ import { MemberProfile } from '../members/entities/member-profile.entity';
 import { AuditLog } from '../finance/entities/audit-log.entity';
 import { Role } from '../roles/entities/role.entity';
 import { UsersModule } from '../users/users.module';
+import { NotificationSettingsModule } from '../integrations/notifications/notification-settings.module';
+import { SmsModule } from '../integrations/sms/sms.module';
 
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
     UsersModule,
+    NotificationSettingsModule,
+    SmsModule,
     TypeOrmModule.forFeature([
       RefreshToken,
       PasswordResetToken,

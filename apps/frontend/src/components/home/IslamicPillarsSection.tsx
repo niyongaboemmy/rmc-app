@@ -59,11 +59,11 @@ export function IslamicPillarsSection() {
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
 
   return (
-    <section className="relative bg-white py-20 md:py-24 px-4 overflow-hidden">
+    <section className="relative bg-white py-20 md:py-24 overflow-hidden">
       {/* Subtle pattern */}
       <div className="absolute inset-0 pattern-light" />
 
-      <div className="relative max-w-7xl mx-auto">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Title */}
         <div
           ref={titleRef}

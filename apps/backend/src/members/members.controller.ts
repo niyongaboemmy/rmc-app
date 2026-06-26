@@ -9,8 +9,8 @@ import { RegisterMemberDto } from './dto/register-member.dto';
 import { ApproveMemberDto } from './dto/approve-member.dto';
 import { UpdateMemberStatusDto } from './dto/update-member-status.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Roles, Role } from '../common/decorators/roles.decorator';
-import { Public } from '../common/decorators/public.decorator';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/types/permissions.enum';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 
 @ApiTags('Members')
@@ -27,7 +27,7 @@ export class MembersController {
 
   @Get()
   @ApiBearerAuth()
-  @Roles(Role.OPERATOR, Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MEMBERS_VIEW)
   @ApiOperation({ summary: 'List members with filtering and pagination' })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'mosqueId', required: false })
@@ -56,7 +56,7 @@ export class MembersController {
 
   @Get('stats')
   @ApiBearerAuth()
-  @Roles(Role.OPERATOR, Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MEMBERS_VIEW)
   @ApiOperation({ summary: 'Get member statistics' })
   getStats() {
     return this.members.getStatistics();
@@ -71,7 +71,7 @@ export class MembersController {
 
   @Get(':id')
   @ApiBearerAuth()
-  @Roles(Role.OPERATOR, Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MEMBERS_VIEW)
   @ApiOperation({ summary: 'Get member by id' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.members.findById(id);
@@ -79,7 +79,7 @@ export class MembersController {
 
   @Put(':id/approve')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MEMBERS_APPROVE)
   @ApiOperation({ summary: 'Approve or reject a member registration' })
   approve(
     @Param('id', ParseUUIDPipe) id: string,
@@ -91,7 +91,7 @@ export class MembersController {
 
   @Put(':id/status')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Permissions(Permission.MEMBERS_EDIT)
   @ApiOperation({ summary: 'Update member status (active/inactive/suspended/deceased)' })
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
@@ -103,6 +103,7 @@ export class MembersController {
 
   @Get(':id/id-card')
   @ApiBearerAuth()
+  @Permissions(Permission.MEMBERS_ID_CARD)
   @ApiOperation({ summary: 'Download digital member ID card as PDF' })
   async downloadIdCard(
     @Param('id', ParseUUIDPipe) id: string,

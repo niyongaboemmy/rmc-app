@@ -4,6 +4,7 @@ import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { DonationCartProvider } from '@/contexts/DonationCartContext';
 import { ToastProvider } from '@/components/ui/Toast';
+import { PWAAutoInstallPrompt } from '@/components/ui/PWAAutoInstallPrompt';
 import '../globals.css';
 
 // Poppins — perfect circular geometric bowls, zero serifs, zero sharp angles.
@@ -26,6 +27,11 @@ const notoNaskh = Noto_Naskh_Arabic({
 export const metadata: Metadata = {
   title: 'RMC Digital Platform',
   description: 'Rwanda Muslim Community Digital Platform',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    statusBarStyle: 'black-translucent',
+    title: 'RMC',
+  },
   icons: {
     icon: '/logo.webp',
     shortcut: '/logo.webp',
@@ -55,6 +61,7 @@ export default function LocaleLayout({
             <ToastProvider position="top-right">
               <DonationCartProvider>
                 {children}
+                <PWAAutoInstallPrompt />
               </DonationCartProvider>
             </ToastProvider>
           </AuthProvider>

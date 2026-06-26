@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   Users, UserCheck, Clock, CheckCircle2, XCircle, Landmark,
   TrendingUp, TrendingDown, ArrowUpRight, RefreshCw,
@@ -152,7 +153,7 @@ function StatusRow({ label, ok }: { label: string; ok: boolean }) {
 }
 
 /* ═══════════════════════ PAGE ═══════════════════════ */
-export default function AdminDashboardPage() {
+function AdminDashboardContent() {
   const t = useTranslations('admin');
   const { locale } = useParams<{ locale: string }>();
   const { user } = useAuth();
@@ -353,5 +354,13 @@ export default function AdminDashboardPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <ProtectedRoute roles={['operator', 'admin', 'superadmin', 'marriage_officer']}>
+      <AdminDashboardContent />
+    </ProtectedRoute>
   );
 }

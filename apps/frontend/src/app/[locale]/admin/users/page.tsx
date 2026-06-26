@@ -7,6 +7,7 @@ import { Permission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
 import { Select } from '@/components/ui/Select';
 import { Alert } from '@/components/ui/Alert';
 import { StatusBadge } from '@/components/ui/Badge';
@@ -145,7 +146,7 @@ function CreateUserModal({
     setIsLoading(true);
     setError(null);
     try {
-      await apiClient.post('/users', { ...form, roleId: form.roleId || undefined });
+      await apiClient.post('/users', { ...form, phone: toE164(form.phone), roleId: form.roleId || undefined });
       success('User created successfully');
       onSaved();
     } catch (err: unknown) {
@@ -176,7 +177,7 @@ function CreateUserModal({
             <Input label="Last Name" required value={form.lastName} onChange={set('lastName')} />
           </div>
           <Input label="Email" type="email" required value={form.email} onChange={set('email')} />
-          <Input label="Phone (+250...)" required value={form.phone} onChange={set('phone')} />
+          <PhoneInput label="Phone" required value={form.phone} onChange={set('phone')} />
           <Input label="Password" type="password" required value={form.password} onChange={set('password')} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select label="System Role" value={form.role} onChange={set('role')} options={SYSTEM_ROLE_OPTIONS} />
