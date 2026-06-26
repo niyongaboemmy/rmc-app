@@ -13,6 +13,7 @@ interface ModalProps {
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
   className?: string;
+  zIndex?: number;
 }
 
 const sizeClasses = {
@@ -24,7 +25,7 @@ const sizeClasses = {
   '3xl': 'max-w-6xl',
 };
 
-export function Modal({ open, isOpen, onClose, children, size = 'md', className }: ModalProps) {
+export function Modal({ open, isOpen, onClose, children, size = 'md', className, zIndex }: ModalProps) {
   const visible = open ?? isOpen ?? false;
   const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -45,7 +46,8 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
   return createPortal(
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      style={{ zIndex: zIndex ?? 9999 }}
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
@@ -136,7 +138,7 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const text = message ?? description ?? '';
   return (
-    <Modal open={open} isOpen={isOpen} onClose={onClose} size="sm">
+    <Modal open={open} isOpen={isOpen} onClose={onClose} size="sm" zIndex={10000}>
       <ModalHeader>
         <ModalTitle>{title}</ModalTitle>
       </ModalHeader>

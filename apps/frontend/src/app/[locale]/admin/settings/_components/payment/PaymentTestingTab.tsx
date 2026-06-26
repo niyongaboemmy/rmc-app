@@ -53,6 +53,20 @@ function fmt(n: number) {
 
 // ── Success Popup ─────────────────────────────────────────────────────────────
 
+const POPUP_TIMEOUT = 60_000; // 1 minute
+
+const SPARKLES = [
+  { top: '8%',  left: '7%',   delay: '0s',    size: 8,  color: '#34d399' },
+  { top: '12%', right: '9%',  delay: '0.15s', size: 6,  color: '#fbbf24' },
+  { top: '22%', left: '4%',   delay: '0.3s',  size: 10, color: '#60a5fa' },
+  { top: '4%',  left: '42%',  delay: '0.1s',  size: 7,  color: '#f472b6' },
+  { top: '18%', right: '4%',  delay: '0.4s',  size: 9,  color: '#a78bfa' },
+  { top: '68%', left: '5%',   delay: '0.2s',  size: 7,  color: '#34d399' },
+  { top: '74%', right: '7%',  delay: '0.35s', size: 8,  color: '#fbbf24' },
+  { top: '84%', left: '22%',  delay: '0.05s', size: 6,  color: '#60a5fa' },
+  { top: '79%', right: '19%', delay: '0.25s', size: 10, color: '#f472b6' },
+];
+
 function PaymentSuccessPopup({
   event,
   onClose,
@@ -61,90 +75,266 @@ function PaymentSuccessPopup({
   onClose: () => void;
 }) {
   const isSuccess = event.type === 'payment.confirmed';
+  const [elapsed,  setElapsed]  = useState(0);
+  const [entered,  setEntered]  = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(onClose, 8000);
-    return () => clearTimeout(t);
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    const tick  = setInterval(() => setElapsed((e) => e + 250), 250);
+    const timer = setTimeout(onClose, POPUP_TIMEOUT);
+    return () => { clearInterval(tick); clearTimeout(timer); };
   }, [onClose]);
 
+  const progress  = Math.min(elapsed / POPUP_TIMEOUT, 1);
+  const remaining = Math.max(0, Math.ceil((POPUP_TIMEOUT - elapsed) / 1000));
+
+  // SVG ring
+  const R  = 22;
+  const C  = 2 * Math.PI * R;
+  const strokeOffset = C * progress;
+
+  const accent  = isSuccess ? '#10b981' : '#ef4444';
+  const bgBand  = isSuccess ? '#ecfdf5' : '#fef2f2';
+  const ringBg  = isSuccess ? '#a7f3d0' : '#fecaca';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <>
+      <style>{`
+        @keyframes _overlay-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes _card-in {
+          from { opacity: 0; transform: translateY(28px) scale(0.94); }
+          to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+        @keyframes _icon-pop {
+          0%   { transform: scale(0.4) rotate(-10deg); opacity: 0; }
+          55%  { transform: scale(1.18) rotate(4deg);  opacity: 1; }
+          75%  { transform: scale(0.94) rotate(-2deg); }
+          100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
+        }
+        @keyframes _check-draw {
+          from { stroke-dashoffset: 64; }
+          to   { stroke-dashoffset: 0; }
+        }
+        @keyframes _cross-a {
+          from { stroke-dashoffset: 42; }
+          to   { stroke-dashoffset: 0; }
+        }
+        @keyframes _cross-b {
+          from { stroke-dashoffset: 42; }
+          to   { stroke-dashoffset: 0; }
+        }
+        @keyframes _ring-ripple {
+          0%   { opacity: .7; transform: scale(1); }
+          100% { opacity: 0;  transform: scale(1.55); }
+        }
+        @keyframes _sparkle {
+          0%   { opacity: 0; transform: scale(0)   translateY(0); }
+          45%  { opacity: 1; transform: scale(1.3) translateY(-16px); }
+          100% { opacity: 0; transform: scale(.6)  translateY(-30px); }
+        }
+        @keyframes _btn-hover {
+          0%,100% { box-shadow: 0 4px 14px ${accent}55; }
+          50%      { box-shadow: 0 6px 22px ${accent}88; }
+        }
+      `}</style>
+
+      {/* Backdrop */}
       <div
-        className={cn(
-          'relative w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 duration-300',
-          isSuccess ? 'bg-white' : 'bg-white',
-        )}
+        className="fixed inset-0 flex items-center justify-center p-4"
+        style={{
+          zIndex: 10001,
+          backdropFilter: 'blur(8px)',
+          background: 'rgba(2,8,23,0.6)',
+          animation: '_overlay-in 0.22s ease forwards',
+        }}
+        onClick={onClose}
       >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:bg-slate-100 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        {/* Icon */}
+        {/* Card */}
         <div
-          className={cn(
-            'mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-5',
-            isSuccess ? 'bg-emerald-100' : 'bg-red-100',
-          )}
+          className="relative w-full max-w-md overflow-hidden"
+          style={{
+            borderRadius: 28,
+            background: '#fff',
+            boxShadow: '0 32px 80px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.06)',
+            animation: entered ? '_card-in 0.42s cubic-bezier(0.34,1.3,0.64,1) forwards' : 'none',
+            opacity: 0,
+          }}
+          onClick={(e) => e.stopPropagation()}
         >
-          {isSuccess ? (
-            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
-          ) : (
-            <XCircle className="w-10 h-10 text-red-500" />
-          )}
-        </div>
 
-        {/* Title */}
-        <h2 className={cn('text-2xl font-bold mb-1', isSuccess ? 'text-emerald-700' : 'text-red-600')}>
-          {isSuccess ? 'Payment Confirmed!' : 'Payment Failed'}
-        </h2>
-        <p className="text-slate-500 text-sm mb-5">
-          {isSuccess
-            ? 'The subscriber confirmed the payment. Funds have been received.'
-            : event.message || 'The payment was not completed.'}
-        </p>
-
-        {/* Details */}
-        <div className="bg-slate-50 rounded-2xl p-4 text-left text-xs space-y-2 mb-6">
-          <div className="flex justify-between">
-            <span className="text-slate-400 uppercase tracking-wide">Transaction ID</span>
-            <span className="font-mono text-slate-700 truncate max-w-[160px]">{event.requestTransactionId}</span>
-          </div>
-          {event.transactionId && (
-            <div className="flex justify-between">
-              <span className="text-slate-400 uppercase tracking-wide">Gateway Ref</span>
-              <span className="font-mono text-slate-700">{event.transactionId}</span>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <span className="text-slate-400 uppercase tracking-wide">Code</span>
-            <span className="font-medium text-slate-700">{event.responseCode}</span>
-          </div>
-        </div>
-
-        <button
-          onClick={onClose}
-          className={cn(
-            'w-full py-2.5 rounded-xl font-semibold text-sm transition-all',
-            isSuccess
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-700',
-          )}
-        >
-          {isSuccess ? 'Great, thanks!' : 'Dismiss'}
-        </button>
-
-        {/* Auto-close bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-3xl overflow-hidden">
+          {/* ── Hero band ── */}
           <div
-            className={cn('h-full animate-[shrink_8s_linear_forwards]', isSuccess ? 'bg-emerald-400' : 'bg-red-300')}
-          />
+            className="relative flex flex-col items-center pt-12 pb-9 px-8 overflow-hidden select-none"
+            style={{ background: bgBand }}
+          >
+            {/* Sparkles */}
+            {isSuccess && SPARKLES.map((s, i) => (
+              <span
+                key={i}
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  top: s.top, left: (s as { left?: string }).left, right: (s as { right?: string }).right,
+                  width: s.size, height: s.size,
+                  background: s.color,
+                  animation: `_sparkle 0.7s ease-out ${s.delay} both`,
+                }}
+              />
+            ))}
+
+            {/* Ripple ring */}
+            <span
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 130, height: 130,
+                border: `3px solid ${ringBg}`,
+                animation: '_ring-ripple 1.6s ease-out 0.3s infinite',
+              }}
+            />
+            <span
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 110, height: 110,
+                border: `3px solid ${ringBg}`,
+                animation: '_ring-ripple 1.6s ease-out 0.6s infinite',
+              }}
+            />
+
+            {/* Icon */}
+            <div
+              className="relative flex items-center justify-center rounded-full"
+              style={{
+                width: 92, height: 92,
+                background: accent,
+                boxShadow: `0 8px 24px ${accent}66`,
+                animation: '_icon-pop 0.55s cubic-bezier(0.34,1.4,0.64,1) 0.08s both',
+              }}
+            >
+              {isSuccess ? (
+                <svg viewBox="0 0 52 52" width={48} height={48} fill="none">
+                  <polyline
+                    points="12,27 22,37 40,17"
+                    stroke="white"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeDasharray="64"
+                    strokeDashoffset="64"
+                    style={{ animation: '_check-draw 0.4s ease 0.48s forwards' }}
+                  />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 44 44" width={40} height={40} fill="none">
+                  <line x1="11" y1="11" x2="33" y2="33"
+                    stroke="white" strokeWidth="5" strokeLinecap="round"
+                    strokeDasharray="42" strokeDashoffset="42"
+                    style={{ animation: '_cross-a 0.28s ease 0.3s forwards' }}
+                  />
+                  <line x1="33" y1="11" x2="11" y2="33"
+                    stroke="white" strokeWidth="5" strokeLinecap="round"
+                    strokeDasharray="42" strokeDashoffset="42"
+                    style={{ animation: '_cross-b 0.28s ease 0.52s forwards' }}
+                  />
+                </svg>
+              )}
+            </div>
+
+            {/* Heading */}
+            <h2
+              className="mt-6 text-[1.65rem] font-extrabold tracking-tight leading-tight text-center"
+              style={{ color: isSuccess ? '#064e3b' : '#7f1d1d' }}
+            >
+              {isSuccess ? 'Payment Received!' : 'Payment Failed'}
+            </h2>
+            <p
+              className="mt-2 text-sm text-center max-w-[260px] leading-relaxed"
+              style={{ color: isSuccess ? '#065f46' : '#991b1b', opacity: 0.85 }}
+            >
+              {isSuccess
+                ? 'The subscriber approved the request. Funds have been collected successfully.'
+                : event.message || 'The transaction could not be completed.'}
+            </p>
+
+            {/* Close button inside band */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 active:scale-90"
+              style={{ background: 'rgba(0,0,0,0.08)', color: isSuccess ? '#065f46' : '#7f1d1d' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.14)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.08)')}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* ── Detail rows ── */}
+          <div className="px-7 pt-5 pb-3 divide-y divide-slate-100">
+            {[
+              { label: 'Transaction ID', value: event.requestTransactionId, mono: true  },
+              ...(event.transactionId ? [{ label: 'Gateway Ref', value: event.transactionId, mono: true }] : []),
+              { label: 'Response Code',  value: event.responseCode || '—',  mono: false },
+              ...(event.message         ? [{ label: 'Message',     value: event.message,          mono: false }] : []),
+            ].map(({ label, value, mono }) => (
+              <div key={label} className="flex items-start justify-between gap-4 py-2.5 text-sm">
+                <span className="text-slate-400 text-[11px] uppercase tracking-wider shrink-0 pt-0.5 font-medium">{label}</span>
+                <span className={cn('text-slate-700 font-semibold text-right break-all', mono && 'font-mono text-xs')}>
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Footer: countdown ring + CTA ── */}
+          <div className="flex items-center gap-3 px-7 pt-3 pb-7">
+            {/* Circular timer */}
+            <div className="relative shrink-0 flex items-center justify-center" style={{ width: 56, height: 56 }}>
+              <svg width="56" height="56" viewBox="0 0 56 56" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="28" cy="28" r={R} fill="none" stroke="#e2e8f0" strokeWidth="4.5" />
+                <circle
+                  cx="28" cy="28" r={R}
+                  fill="none"
+                  stroke={accent}
+                  strokeWidth="4.5"
+                  strokeLinecap="round"
+                  strokeDasharray={C}
+                  strokeDashoffset={strokeOffset}
+                  style={{ transition: 'stroke-dashoffset 0.25s linear' }}
+                />
+              </svg>
+              <span
+                className="absolute text-[11px] font-bold tabular-nums"
+                style={{ color: accent }}
+              >
+                {remaining}s
+              </span>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={onClose}
+              className="flex-1 py-3.5 rounded-2xl font-bold text-[15px] tracking-wide transition-transform duration-100 active:scale-95"
+              style={{
+                background: accent,
+                color: '#fff',
+                boxShadow: `0 4px 18px ${accent}55`,
+                animation: '_btn-hover 2.4s ease-in-out 1s infinite',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
+            >
+              {isSuccess ? '🎉  Great, thanks!' : 'Dismiss'}
+            </button>
+          </div>
+
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
