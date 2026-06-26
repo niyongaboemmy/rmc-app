@@ -10,12 +10,16 @@ import { DonationsController } from './donations.controller';
 import { DonationsAdminController } from './donations-admin.controller';
 import { DonationCategoriesController } from './donation-categories.controller';
 import { DonationCategoriesAdminController } from './donation-categories-admin.controller';
-import { MoMoModule } from '../integrations/momo/momo.module';
+import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module';
+import { PaymentSettingsModule } from '../payment-settings/payment-settings.module';
+import { SmsModule } from '../integrations/sms/sms.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Donation, DonationCampaign, DonationCategory, DonationSubFund]),
-    MoMoModule,
+    IntouchPayModule,
+    PaymentSettingsModule,
+    SmsModule,
   ],
   providers: [DonationsService, DonationCategoriesService],
   controllers: [

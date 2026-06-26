@@ -333,7 +333,7 @@ export class MarriageService {
     }
 
     const requestTxnId = `MAR-${app.applicationNumber}-${Date.now()}`;
-    const fallbackCallback = `${this.configService.get('app.apiUrl', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+    const fallbackCallback = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
 
     const result = await this.intouchPay.requestPayment({
       username: creds.username,
@@ -681,7 +681,7 @@ export class MarriageService {
     }
 
     const requestTxnId = `MAR-${app.applicationNumber}-${Date.now()}`;
-    const callbackUrl = `${this.configService.get('app.apiUrl', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+    const callbackUrl = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
 
     const result = await this.intouchPay.requestPayment({
       username: creds.username,

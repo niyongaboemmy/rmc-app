@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Donation, DonationStatus, DonationFrequency } from './entities/donation.entity';
@@ -7,7 +8,11 @@ import { CreateDonationDto } from './dto/create-donation.dto';
 import { UpdateDonationDto } from './dto/update-donation.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
-import { MoMoService } from '../integrations/momo/momo.service';
+import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
+import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
+import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
+import { SmsService } from '../integrations/sms/sms.service';
+import { DonationSmsTemplates } from './donation-sms-templates';
 
 export interface DonationFilters {
   dateFrom?: string;
@@ -26,7 +31,10 @@ export class DonationsService {
     private readonly donations: Repository<Donation>,
     @InjectRepository(DonationCampaign)
     private readonly campaigns: Repository<DonationCampaign>,
-    private readonly momo: MoMoService,
+    private readonly intouchPay: IntouchPayService,
+    private readonly paymentSettings: PaymentSettingsService,
+    private readonly smsService: SmsService,
+    private readonly configService: ConfigService,
   ) {}
 
   // ── Public ───────────────────────────────────────────────────────────────
@@ -75,7 +83,10 @@ export class DonationsService {
       campaignId = campaign?.id ?? null;
     }
 
-    const useGateway = dto.paymentMethod === 'momo' && !!dto.donorPhone && this.momo.isConfigured();
+    const creds = dto.paymentMethod === 'momo' && dto.donorPhone
+      ? await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH)
+      : null;
+    const useGateway = !!(creds?.username && creds?.partnerPassword && creds?.accountNo);
 
     const donation = this.donations.create({
       campaignId,
@@ -94,19 +105,31 @@ export class DonationsService {
     });
     const saved = await this.donations.save(donation);
 
-    if (useGateway) {
-      // Initiate the Mobile Money collection; the donor approves it on their
-      // phone. requestToPay returns PENDING (or FAILED if it could not be sent).
-      const result = await this.momo.requestToPay({
-        amount: saved.amount,
-        currency: saved.currency,
-        externalId: saved.id,
-        payerPhone: dto.donorPhone as string,
-        payerMessage: 'RMC donation',
-        payeeNote: `Donation ${saved.id}`,
+    if (useGateway && creds) {
+      const requestTxnId = `DON-${saved.id.slice(0, 8)}-${Date.now()}`;
+      const fallbackCallback = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+
+      const result = await this.intouchPay.requestPayment({
+        username: creds.username,
+        partnerPassword: creds.partnerPassword,
+        accountNo: creds.accountNo,
+        amount: Number(saved.amount),
+        mobilePhone: dto.donorPhone as string,
+        transactionId: requestTxnId,
+        callbackUrl: creds.callbackUrl || fallbackCallback,
+        gatewayUrl: creds.gatewayUrl || undefined,
       });
-      saved.paymentReference = result.referenceId;
-      if (result.status === 'FAILED') saved.status = DonationStatus.FAILED;
+
+      // Store requestTxnId and gateway txnId separated by | for status polling
+      saved.paymentReference = result.transactionId
+        ? `${requestTxnId}|${result.transactionId}`
+        : requestTxnId;
+
+      if (result.status === 'SUCCESSFUL') {
+        saved.status = DonationStatus.COMPLETED;
+      } else if (result.status === 'FAILED') {
+        saved.status = DonationStatus.FAILED;
+      }
       await this.donations.save(saved);
     }
 
@@ -126,18 +149,35 @@ export class DonationsService {
     });
     if (!donation) throw new NotFoundException('Donation not found');
 
-    if (
-      donation.status === DonationStatus.PENDING &&
-      donation.paymentReference &&
-      this.momo.isConfigured()
-    ) {
-      const result = await this.momo.getPaymentStatus(donation.paymentReference);
-      if (result.status === 'SUCCESSFUL') {
-        donation.status = DonationStatus.COMPLETED;
-      } else if (result.status === 'FAILED') {
-        donation.status = DonationStatus.FAILED;
+    if (donation.status === DonationStatus.PENDING && donation.paymentReference) {
+      const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+      if (creds?.username && creds?.partnerPassword && creds?.accountNo) {
+        // paymentReference is stored as "requestTxnId|gatewayTxnId" (gatewayTxnId may be absent)
+        const [requestTxnId, gatewayTxnId] = donation.paymentReference.split('|');
+        const result = await this.intouchPay.getTransactionStatus({
+          username: creds.username,
+          partnerPassword: creds.partnerPassword,
+          accountNo: creds.accountNo,
+          requestTransactionId: requestTxnId,
+          transactionId: gatewayTxnId || requestTxnId,
+          gatewayBaseUrl: creds.gatewayUrl || undefined,
+        });
+
+        if (result.status === 'SUCCESSFUL') {
+          donation.status = DonationStatus.COMPLETED;
+        } else if (result.status === 'FAILED') {
+          donation.status = DonationStatus.FAILED;
+        }
+
+        if (result.status !== 'PENDING') {
+          await this.donations.save(donation);
+          if (donation.status === DonationStatus.COMPLETED && donation.donorPhone) {
+            const amountStr = Number(donation.amount).toLocaleString('en-US');
+            const msg = DonationSmsTemplates.paymentConfirmed(amountStr, donation.currency, donation.donorName);
+            void this.smsService.sendSms(donation.donorPhone, msg);
+          }
+        }
       }
-      if (result.status !== 'PENDING') await this.donations.save(donation);
     }
 
     return donation;

@@ -56,6 +56,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
 
+      # ── Patch APP_URL in server .env ─────────────
+      - name: Set APP_URL on server
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.PRODUCTION_HOST }} \
+            "sed -i 's|^APP_URL=.*|APP_URL=https://api.isengesho.com|' /opt/rmc-platform/apps/backend/.env"
+
       # ── Rsync artifacts directly to EC2 ─────────
       - name: Rsync — backend dist
         run: |

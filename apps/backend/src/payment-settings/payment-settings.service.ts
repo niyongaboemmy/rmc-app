@@ -266,7 +266,7 @@ export class PaymentSettingsService {
     const requestTxnId = `TEST-${crypto.randomUUID().replace(/-/g, '').slice(0, 20).toUpperCase()}`;
     const settingsRecord = await this.getMethodSettingsRecord(PaymentMethodCode.MOMO_INTOUCH);
 
-    const callbackUrl = `${this.configService.get('app.apiUrl', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+    const callbackUrl = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
 
     const result = await this.intouchPay.requestPayment({
       username: creds.username,

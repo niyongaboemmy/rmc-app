@@ -8,7 +8,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { donationsApi } from '@/lib/donationsApi';
 import { donationCategoriesApi, type PublicCategory } from '@/lib/donationCategoriesApi';
-import { buildDonationMessage } from '@/lib/donationMeta';
 import { useDonationCart } from '@/contexts/DonationCartContext';
 import {
   CURRENCY_KEYS,
@@ -21,7 +20,6 @@ import { CategoryGrid } from './CategoryGrid';
 import { ZakatCalculator } from './ZakatCalculator';
 import { ImpactBars } from './ImpactBars';
 import { CartDrawer } from './CartDrawer';
-import { toE164 } from '@/components/ui/PhoneInput';
 import { AmountPicker } from './AmountPicker';
 import { SuccessState, type DonationSummary } from './SuccessState';
 
@@ -38,16 +36,6 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
   const { cart, currency, niyyah, total, addItem, removeItem, clear, setCurrency, setNiyyah } =
     useDonationCart();
   const [cartOpen, setCartOpen] = useState(false);
-
-  const [recurring, setRecurring] = useState(false);
-  const [method, setMethod] = useState('momo');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [anonymous, setAnonymous] = useState(false);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const [summary, setSummary] = useState<DonationSummary | null>(null);
 
   // Live campaign funding (raised = completed transactions) — same figures as
@@ -75,66 +63,16 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
   }, [locale]);
 
   const niyyahLabel = t(`niyyah.${niyyah}.label`);
-  const methodName = t(`methods.${method}.title`);
 
-  const onCheckout = async () => {
-    if (total <= 0 || submitting) return;
-    // Mobile Money needs a phone number to send the payment request to.
-    if (method === 'momo' && !phone.trim()) {
-      setError(t('cart.phoneRequired'));
-      return;
-    }
-    setSubmitting(true);
-    setError('');
-    try {
-      const created = await Promise.all(
-        cart.map((it) =>
-          donationsApi.donate({
-            campaignSlug: it.campaignSlug,
-            amount: it.amount,
-            currency,
-            frequency: recurring ? 'monthly' : 'once',
-            paymentMethod: method,
-            donorName: anonymous ? undefined : name.trim() || undefined,
-            donorEmail: email.includes('@') ? email.trim() : undefined,
-            donorPhone: method === 'momo' ? toE164(phone.trim()) : undefined,
-            isAnonymous: anonymous,
-            message: buildDonationMessage({ niyyah, category: it.category, fund: it.fundKey }),
-          }),
-        ),
-      );
-      // Donations awaiting gateway confirmation (e.g. a Mobile Money prompt the
-      // donor still has to approve). When none, the success screen shows no
-      // payment banner — the gift is already recorded.
-      const pendingPaymentIds = created.filter((d) => d.status === 'pending').map((d) => d.id);
-      const now = new Date();
-      setSummary({
-        reference: `RMC-${now.getTime().toString(36).toUpperCase()}`,
-        dateStr: now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-        items: cart,
-        currency,
-        total,
-        recurring,
-        methodName,
-        niyyahLabel,
-        pendingPaymentIds,
-      });
-      // Pledges committed — empty the persisted cart (summary keeps its own snapshot).
-      clear();
-      setCartOpen(false);
-      if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch {
-      setError(t('cart.error'));
-    } finally {
-      setSubmitting(false);
-    }
+  const handleSuccess = (donationSummary: DonationSummary) => {
+    clear();
+    setSummary(donationSummary);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const reset = () => {
     setSummary(null);
     clear();
-    setPhone('');
-    setError('');
   };
 
   return (
@@ -217,22 +155,10 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
         currency={currency}
         total={total}
         niyyahLabel={niyyahLabel}
-        recurring={recurring}
-        setRecurring={setRecurring}
-        method={method}
-        setMethod={setMethod}
-        name={name}
-        setName={setName}
-        email={email}
-        setEmail={setEmail}
-        phone={phone}
-        setPhone={setPhone}
-        anonymous={anonymous}
-        setAnonymous={setAnonymous}
+        niyyah={niyyah}
+        locale={locale}
         onRemove={removeItem}
-        onCheckout={onCheckout}
-        submitting={submitting}
-        error={error}
+        onSuccess={handleSuccess}
       />
     </div>
   );
