@@ -14,7 +14,7 @@ import { donationsApi } from '@/lib/donationsApi';
 import { buildDonationMessage } from '@/lib/donationMeta';
 import type { DonationSummary } from './SuccessState';
 
-type Phase = 'form' | 'waiting' | 'failed';
+type Phase = 'form' | 'waiting' | 'timeout' | 'failed';
 
 const DISABLED_METHODS = ['card', 'bank', 'paypal'];
 
@@ -169,6 +169,7 @@ function ConfirmedPopup({
 // ── Waiting screen (inside drawer body) ──────────────────────────────────────
 
 const POLL_INTERVAL_S = 3;
+const MAX_POLL_ATTEMPTS = 30; // 90 seconds then show timeout state
 
 function WaitingScreen({
   phone,
@@ -355,9 +356,11 @@ export function CartDrawer({
   const startPolling = useCallback((ids: string[]) => {
     stopPolling();
     let remaining = [...ids];
+    let attempts = 0;
 
     const tick = async () => {
-      setCheckCount((c) => c + 1); // triggers countdown reset in WaitingScreen
+      attempts += 1;
+      setCheckCount((c) => c + 1);
       const results = await Promise.all(remaining.map((id) => donationsApi.checkStatus(id).catch(() => null)));
       const next: string[] = [];
       let anyFailed = false;
@@ -371,14 +374,19 @@ export function CartDrawer({
         stopPolling();
         if (anyFailed) {
           setPhase('failed');
-          setError('Payment failed. Please try again.');
+          setError('Payment failed. Please check your MoMo balance and try again.');
         } else {
           setShowPopup(true);
         }
       } else if (anyFailed) {
         stopPolling();
         setPhase('failed');
-        setError('One or more payments failed. Please try again.');
+        setError('Payment failed. Please check your MoMo balance and try again.');
+      } else if (attempts >= MAX_POLL_ATTEMPTS) {
+        // IntouchPay hasn't resolved in 90s — show timeout state.
+        // The backend reconciliation job will update the record when IntouchPay responds.
+        stopPolling();
+        setPhase('timeout');
       }
     };
 
@@ -441,6 +449,8 @@ export function CartDrawer({
   const handleResend = async () => {
     if (isResending || submitting) return;
     setIsResending(true);
+    setPhase('waiting');
+    setError('');
     stopPolling();
     try {
       // Re-create a fresh IntouchPay payment request by calling donate() again.
@@ -599,6 +609,37 @@ export function CartDrawer({
                 isResending={isResending}
                 error={error}
               />
+            ) : phase === 'timeout' ? (
+              <div className="flex h-full flex-col items-center justify-center px-6 py-8 text-center">
+                <span className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 ring-4 ring-amber-100">
+                  <Loader2 className="h-8 w-8 text-amber-500" />
+                </span>
+                <h3 className="mb-2 text-base font-bold text-gray-900">Still waiting for confirmation</h3>
+                <p className="mb-1 text-sm text-gray-600">
+                  Your payment of <span className="font-bold text-gray-900">{money(currency, confirmedTotal)}</span> is being processed.
+                </p>
+                <p className="mb-6 text-[12.5px] leading-relaxed text-gray-400">
+                  MTN MoMo can take a few minutes to confirm. If you approved the prompt on your phone, your donation will be recorded automatically — you'll receive an SMS.
+                </p>
+                <div className="flex w-full flex-col gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-rmc-green px-4 py-2.5 text-sm font-bold text-rmc-green transition-colors hover:bg-rmc-green-light/50 disabled:opacity-50"
+                  >
+                    {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Try again with a new request
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="text-sm font-medium text-gray-400 underline-offset-2 transition-colors hover:text-gray-600 hover:underline"
+                  >
+                    Close — I'll wait for the SMS
+                  </button>
+                </div>
+              </div>
             ) : (
               /* ── Desktop: 2-col grid so all content is visible without scrolling ── */
               <div className="grid h-full grid-cols-1 md:grid-cols-2 md:divide-x md:divide-gray-100">
@@ -738,7 +779,7 @@ export function CartDrawer({
           </div>
 
           {/* Footer */}
-          {!empty && phase !== 'waiting' && (
+          {!empty && phase !== 'waiting' && phase !== 'timeout' && (
             <div className="border-t border-gray-100 bg-white px-5 py-4">
               <div className="mb-3 flex items-baseline justify-between">
                 <span className="text-[13px] font-medium text-gray-500">

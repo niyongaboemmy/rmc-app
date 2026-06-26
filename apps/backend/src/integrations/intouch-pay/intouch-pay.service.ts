@@ -8,6 +8,8 @@ export interface IntouchPayRequest {
   amount: number;
   mobilePhone: string;
   transactionId: string;
+  /** Human-readable description shown on the donor's MoMo USSD prompt and SMS. */
+  reason?: string;
   callbackUrl?: string;
   gatewayUrl?: string;
 }
@@ -123,6 +125,7 @@ export class IntouchPayService {
       mobilephone: this.normalizePhone(req.mobilePhone),
       requesttransactionid: req.transactionId,
       accountno: req.accountNo,
+      reason: req.reason ?? 'RMC Donation',
     });
     if (req.callbackUrl) params.set('callbackurl', req.callbackUrl);
 

@@ -6,6 +6,7 @@ import { DonationCategory } from './entities/donation-category.entity';
 import { DonationSubFund } from './entities/donation-subfund.entity';
 import { DonationsService } from './donations.service';
 import { DonationCategoriesService } from './donation-categories.service';
+import { DonationReconciliationService } from './donation-reconciliation.service';
 import { DonationsController } from './donations.controller';
 import { DonationsAdminController } from './donations-admin.controller';
 import { DonationCategoriesController } from './donation-categories.controller';
@@ -21,7 +22,7 @@ import { SmsModule } from '../integrations/sms/sms.module';
     PaymentSettingsModule,
     SmsModule,
   ],
-  providers: [DonationsService, DonationCategoriesService],
+  providers: [DonationsService, DonationCategoriesService, DonationReconciliationService],
   controllers: [
     DonationsController,
     DonationsAdminController,

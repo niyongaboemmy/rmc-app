@@ -126,6 +126,7 @@ export class DonationsService {
         amount: Number(saved.amount),
         mobilePhone: dto.donorPhone as string,
         transactionId: requestTxnId,
+        reason: 'RMC Donation – Rwanda Muslim Council',
         callbackUrl: creds.callbackUrl || fallbackCallback,
         gatewayUrl: creds.gatewayUrl || undefined,
       });
