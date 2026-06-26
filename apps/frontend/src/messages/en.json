@@ -1548,6 +1548,18 @@
     "address": "Rebero, Kigali",
     "copyright": "© {year} Rwanda Muslim Community. All rights reserved.",
     "privacy": "Privacy Policy",
-    "terms": "Terms of Use"
+    "terms": "Terms of Use",
+    "pwa": {
+      "install": "Install App",
+      "installAriaLabel": "Install the RMC app on your device",
+      "useChrome": "Open this site in Chrome (or Edge) on your device to install the app.",
+      "chromeNotReady": "Look for the install icon (⊕) in Chrome's address bar, or visit a few more pages and try again.",
+      "ios": {
+        "title": "Add to Home Screen",
+        "step1": "Tap the <strong>Share</strong> button (↑) in Safari's toolbar.",
+        "step2": "Scroll down and tap <strong>Add to Home Screen</strong>.",
+        "step3": "Tap <strong>Add</strong> to confirm."
+      }
+    }
   }
 }

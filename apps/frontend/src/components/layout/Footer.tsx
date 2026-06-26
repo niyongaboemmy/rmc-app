@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio, ChevronDown } from 'lucide-react';
 import { IJWI_RADIO_URL } from '@/lib/constants';
 import { useTranslations } from 'next-intl';
+import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 
 const socialLinks = [
   { Icon: Facebook, href: '#', label: 'Facebook' },
@@ -109,7 +110,7 @@ export function Footer() {
               {t('tagline')}
             </p>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 mb-5">
               {socialLinks.map(({ Icon, href, label }) => (
                 <a
                   key={label}
@@ -121,6 +122,8 @@ export function Footer() {
                 </a>
               ))}
             </div>
+
+            <PWAInstallButton />
           </div>
 
           {/* Quick Links */}

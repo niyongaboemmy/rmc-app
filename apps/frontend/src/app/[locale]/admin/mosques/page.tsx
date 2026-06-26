@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,19 +10,49 @@ import { mosqueApi, type Mosque, type MosqueInput } from '@/lib/mosqueApi';
 import { Avatar } from '@/components/ui/Avatar';
 import { ImageUploadField } from '@/components/ui/ImageUploadField';
 import {
-  Modal, ModalHeader, ModalBody, ModalFooter,
-  ModalTitle, ModalDescription, ConfirmModal,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalTitle,
+  ModalDescription,
+  ConfirmModal,
 } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import {
-  Landmark, Plus, Edit2, Trash2, Search, MapPin, Users,
-  Phone, RotateCcw,
+  Landmark,
+  Plus,
+  Edit2,
+  Trash2,
+  Search,
+  MapPin,
+  Users,
+  Phone,
+  RotateCcw,
 } from 'lucide-react';
 import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
-interface Province { id: string; name: string; code: string; }
-interface District { id: string; name: string; provinceId: string; }
-interface Sector { id: string; name: string; districtId: string; }
+const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full rounded-xl bg-gray-100 animate-pulse" />,
+});
+
+interface Province {
+  id: string;
+  name: string;
+  code: string;
+}
+interface District {
+  id: string;
+  name: string;
+  provinceId: string;
+}
+interface Sector {
+  id: string;
+  name: string;
+  districtId: string;
+}
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
@@ -53,7 +84,9 @@ const EMPTY: MosqueInput = {
 export default function MosquesPage() {
   return (
     <ProtectedRoute permissions={[Permission.MOSQUES_VIEW]}>
-      <ToastProvider><MosquesManager /></ToastProvider>
+      <ToastProvider>
+        <MosquesManager />
+      </ToastProvider>
     </ProtectedRoute>
   );
 }
@@ -82,6 +115,7 @@ function MosquesManager() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Mosque | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
 
   const fetchMosques = useCallback(async () => {
     setLoading(true);
@@ -94,18 +128,54 @@ function MosquesManager() {
     }
   }, [error]);
 
-  useEffect(() => { fetchMosques(); }, [fetchMosques]);
+  useEffect(() => {
+    fetchMosques();
+  }, [fetchMosques]);
 
   // Location reference data for the dropdowns (public endpoints).
   useEffect(() => {
-    Promise.all([publicApi.getProvinces(), publicApi.getDistricts(), publicApi.getSectors()])
-      .then(([p, d, s]) => {
+    Promise.all([publicApi.getProvinces(), publicApi.getDistricts()])
+      .then(([p, d]) => {
         setProvinces(p as Province[]);
         setDistricts(d as District[]);
-        setSectors(s as Sector[]);
       })
-      .catch(() => { /* dropdowns degrade to ids if reference data is unavailable */ });
+      .catch(() => {
+        /* dropdowns degrade to ids if reference data is unavailable */
+      });
   }, []);
+
+  // Load sectors whenever the district selection changes in the form.
+  useEffect(() => {
+    if (!form.districtId) {
+      setSectors([]);
+      return;
+    }
+    publicApi
+      .getSectors(form.districtId)
+      .then((s) => setSectors(s as Sector[]))
+      .catch(() => setSectors([]));
+  }, [form.districtId]);
+
+  // Geocode the most-specific selected location and fly the map there.
+  useEffect(() => {
+    const districtLabel = districts.find((d) => d.id === form.districtId)?.name;
+    const provinceLabel = provinces.find((p) => p.id === form.provinceId)?.name;
+    const query = districtLabel
+      ? `${districtLabel}, Rwanda`
+      : provinceLabel
+        ? `${provinceLabel}, Rwanda`
+        : null;
+    if (!query) return;
+    let cancelled = false;
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data[0]) return;
+        setMapCenter([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [form.districtId, form.provinceId, districts, provinces]);
 
   const provinceName = useCallback(
     (id: string | null) => provinces.find((p) => p.id === id)?.name ?? null,
@@ -116,20 +186,21 @@ function MosquesManager() {
     [districts],
   );
 
-  // Districts / sectors available in the modal, scoped to the current selection.
+  // Districts available in the modal, scoped to the selected province.
   const formDistricts = useMemo(
     () => (form.provinceId ? districts.filter((d) => d.provinceId === form.provinceId) : districts),
     [districts, form.provinceId],
-  );
-  const formSectors = useMemo(
-    () => (form.districtId ? sectors.filter((s) => s.districtId === form.districtId) : sectors),
-    [sectors, form.districtId],
   );
 
   const set = <K extends keyof MosqueInput>(field: K, value: MosqueInput[K]) =>
     setForm((p) => ({ ...p, [field]: value }));
 
-  const openCreate = () => { setEditing(null); setForm(EMPTY); setStep(0); setIsModalOpen(true); };
+  const openCreate = () => {
+    setEditing(null);
+    setForm(EMPTY);
+    setStep(0);
+    setIsModalOpen(true);
+  };
   const openEdit = (m: Mosque) => {
     setEditing(m);
     setStep(0);
@@ -155,7 +226,10 @@ function MosquesManager() {
   };
 
   const handleSave = useCallback(async () => {
-    if (!form.name.trim()) { error('Mosque name is required.'); return; }
+    if (!form.name.trim()) {
+      error('Mosque name is required.');
+      return;
+    }
     setSaving(true);
     const normalized = {
       ...form,
@@ -194,22 +268,26 @@ function MosquesManager() {
     }
   }, [deleteTarget, success, error, fetchMosques]);
 
-  const handleReactivate = useCallback(async (m: Mosque) => {
-    try {
-      await mosqueApi.reactivate(m.id, { name: m.name });
-      success('Mosque reactivated.');
-      await fetchMosques();
-    } catch {
-      error('Could not reactivate the mosque.');
-    }
-  }, [success, error, fetchMosques]);
+  const handleReactivate = useCallback(
+    async (m: Mosque) => {
+      try {
+        await mosqueApi.reactivate(m.id, { name: m.name });
+        success('Mosque reactivated.');
+        await fetchMosques();
+      } catch {
+        error('Could not reactivate the mosque.');
+      }
+    },
+    [success, error, fetchMosques],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return mosques.filter((m) => {
       if (statusFilter !== 'all' && m.status !== statusFilter) return false;
       if (provinceFilter !== 'all' && m.provinceId !== provinceFilter) return false;
-      if (q && !m.name.toLowerCase().includes(q) && !(m.address ?? '').toLowerCase().includes(q)) return false;
+      if (q && !m.name.toLowerCase().includes(q) && !(m.address ?? '').toLowerCase().includes(q))
+        return false;
       return true;
     });
   }, [mosques, search, statusFilter, provinceFilter]);
@@ -232,11 +310,16 @@ function MosquesManager() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Mosques</h1>
-            <p className="text-xs text-gray-400">{mosques.length} total · {activeCount} active</p>
+            <p className="text-xs text-gray-400">
+              {mosques.length} total · {activeCount} active
+            </p>
           </div>
         </div>
         {canCreate && (
-          <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl shadow-sm shadow-rmc-green/20 transition-colors">
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl shadow-sm shadow-rmc-green/20 transition-colors"
+          >
             <Plus className="w-4 h-4" /> Add Mosque
           </button>
         )}
@@ -256,8 +339,11 @@ function MosquesManager() {
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
           {(['all', 'active', 'inactive'] as StatusFilter[]).map((s) => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${statusFilter === s ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${statusFilter === s ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
               {s}
             </button>
           ))}
@@ -268,14 +354,20 @@ function MosquesManager() {
           className="py-2.5 px-3 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green/50"
         >
           <option value="all">All provinces</option>
-          {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {provinces.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </select>
       </div>
 
       {/* List */}
       {loading ? (
         <div className="space-y-3">
-          {[...Array(5)].map((_, i) => <div key={i} className="animate-pulse h-20 bg-gray-100 rounded-2xl" />)}
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse h-20 bg-gray-100 rounded-2xl" />
+          ))}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-300">
@@ -286,35 +378,86 @@ function MosquesManager() {
         <div className="space-y-3">
           {filtered.map((m) => {
             const inactive = m.status !== 'active';
-            const loc = [districtName(m.districtId), provinceName(m.provinceId)].filter(Boolean).join(', ');
+            const loc = [districtName(m.districtId), provinceName(m.provinceId)]
+              .filter(Boolean)
+              .join(', ');
             return (
-              <div key={m.id} className={`group flex gap-4 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md ${inactive ? 'bg-gray-50/60 border-gray-100 opacity-70' : 'bg-white border-gray-100 hover:border-rmc-green/20'}`}>
+              <div
+                key={m.id}
+                className={`group flex gap-4 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md ${inactive ? 'bg-gray-50/60 border-gray-100 opacity-70' : 'bg-white border-gray-100 hover:border-rmc-green/20'}`}
+              >
                 <div className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
                   <Landmark className="w-5 h-5 text-rmc-green" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-sm font-bold text-gray-900 truncate">{m.name}</p>
-                    {inactive && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-gray-200 text-gray-600">Inactive</span>}
-                    {m.parentMosqueId && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-100 text-amber-700">Branch</span>}
+                    {inactive && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-gray-200 text-gray-600">
+                        Inactive
+                      </span>
+                    )}
+                    {m.parentMosqueId && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-100 text-amber-700">
+                        Branch
+                      </span>
+                    )}
                   </div>
                   {m.address && <p className="text-xs text-gray-500 line-clamp-1">{m.address}</p>}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[11px] text-gray-400">
-                    {loc && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{loc}</span>}
-                    {m.capacity != null && <span className="inline-flex items-center gap-1"><Users className="w-3 h-3" />{m.capacity}</span>}
-                    {m.imamName && <span className="inline-flex items-center gap-1.5"><Avatar name={m.imamName} photo={m.imamPhoto} size={16} />{m.imamName}</span>}
-                    {m.phone && <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{m.phone}</span>}
+                    {loc && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {loc}
+                      </span>
+                    )}
+                    {m.capacity != null && (
+                      <span className="inline-flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {m.capacity}
+                      </span>
+                    )}
+                    {m.imamName && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Avatar name={m.imamName} photo={m.imamPhoto} size={16} />
+                        {m.imamName}
+                      </span>
+                    )}
+                    {m.phone && (
+                      <span className="inline-flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        {m.phone}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {canEdit && (
-                    <button onClick={() => openEdit(m)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green-light transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                    <button
+                      onClick={() => openEdit(m)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green-light transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
                   )}
-                  {canDelete && (inactive ? (
-                    <button onClick={() => handleReactivate(m)} title="Reactivate" className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green-light transition-colors"><RotateCcw className="w-3.5 h-3.5" /></button>
-                  ) : (
-                    <button onClick={() => setDeleteTarget(m)} title="Deactivate" className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                  ))}
+                  {canDelete &&
+                    (inactive ? (
+                      <button
+                        onClick={() => handleReactivate(m)}
+                        title="Reactivate"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green-light transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setDeleteTarget(m)}
+                        title="Deactivate"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    ))}
                 </div>
               </div>
             );
@@ -323,7 +466,7 @@ function MosquesManager() {
       )}
 
       {/* Create / Edit modal — multi-step wizard */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="md">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="3xl">
         <ModalHeader>
           <ModalTitle>{editing ? 'Edit Mosque' : 'New Mosque'}</ModalTitle>
           <ModalDescription>{STEPS[step].subtitle}</ModalDescription>
@@ -335,34 +478,64 @@ function MosquesManager() {
             <button
               key={s.title}
               type="button"
-              onClick={() => { if (i < step || form.name.trim()) setStep(i); }}
+              onClick={() => {
+                if (i < step || form.name.trim()) setStep(i);
+              }}
               className="flex items-center gap-2 flex-1"
             >
-              <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold shrink-0 transition-colors ${
-                i === step ? 'bg-rmc-green text-white' : i < step ? 'bg-rmc-green-light text-rmc-green' : 'bg-gray-100 text-gray-400'
-              }`}>{i + 1}</span>
-              <span className={`text-[11px] font-semibold truncate ${i === step ? 'text-gray-900' : 'text-gray-400'}`}>{s.title}</span>
-              {i < STEPS.length - 1 && <span className={`flex-1 h-px ${i < step ? 'bg-rmc-green/40' : 'bg-gray-200'}`} />}
+              <span
+                className={`flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold shrink-0 transition-colors ${
+                  i === step
+                    ? 'bg-rmc-green text-white'
+                    : i < step
+                      ? 'bg-rmc-green-light text-rmc-green'
+                      : 'bg-gray-100 text-gray-400'
+                }`}
+              >
+                {i + 1}
+              </span>
+              <span
+                className={`text-[11px] font-semibold truncate ${i === step ? 'text-gray-900' : 'text-gray-400'}`}
+              >
+                {s.title}
+              </span>
+              {i < STEPS.length - 1 && (
+                <span className={`flex-1 h-px ${i < step ? 'bg-rmc-green/40' : 'bg-gray-200'}`} />
+              )}
             </button>
           ))}
         </div>
 
-        <ModalBody className="space-y-3 max-h-[60vh] overflow-y-auto">
+        <ModalBody className="space-y-3 min-h-[50vh] max-h-[100vh] overflow-y-auto">
           {step === 0 && (
             <>
               <Field label="Name" required>
-                <input type="text" value={form.name} onChange={(e) => set('name', e.target.value)}
-                  className={inputCls} placeholder="e.g. Nyamirambo Grand Mosque" autoFocus />
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => set('name', e.target.value)}
+                  className={inputCls}
+                  placeholder="e.g. Nyamirambo Grand Mosque"
+                  autoFocus
+                />
               </Field>
               <Field label="Address">
-                <textarea rows={2} value={form.address ?? ''} onChange={(e) => set('address', e.target.value)}
-                  className={`${inputCls} resize-none`} placeholder="Street, area" />
+                <textarea
+                  rows={2}
+                  value={form.address ?? ''}
+                  onChange={(e) => set('address', e.target.value)}
+                  className={`${inputCls} resize-none`}
+                  placeholder="Street, area"
+                />
               </Field>
               <Field label="Parent Mosque (for branches)">
-                <select value={form.parentMosqueId ?? ''} onChange={(e) => set('parentMosqueId', e.target.value)} className={inputCls}>
-                  <option value="">— None (standalone / root) —</option>
-                  {parentOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={form.parentMosqueId ?? ''}
+                  onChange={(v) => set('parentMosqueId', v)}
+                  options={parentOptions.map((p) => ({ value: p.id, label: p.name }))}
+                  noneLabel="— None (standalone / root) —"
+                  searchPlaceholder="Search mosques…"
+                />
               </Field>
             </>
           )}
@@ -370,35 +543,88 @@ function MosquesManager() {
           {step === 1 && (
             <>
               <Field label="Province">
-                <select value={form.provinceId ?? ''} onChange={(e) => { set('provinceId', e.target.value); set('districtId', ''); set('sectorId', ''); }} className={inputCls}>
-                  <option value="">—</option>
-                  {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={form.provinceId ?? ''}
+                  onChange={(v) => {
+                    set('provinceId', v);
+                    set('districtId', '');
+                    set('sectorId', '');
+                  }}
+                  options={provinces.map((p) => ({ value: p.id, label: p.name }))}
+                  noneLabel="— Select province —"
+                  searchPlaceholder="Search provinces…"
+                />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="District">
-                  <select value={form.districtId ?? ''} onChange={(e) => { set('districtId', e.target.value); set('sectorId', ''); }} className={inputCls}>
-                    <option value="">—</option>
-                    {formDistricts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
+                  <SearchableSelect
+                    value={form.districtId ?? ''}
+                    onChange={(v) => {
+                      set('districtId', v);
+                      set('sectorId', '');
+                    }}
+                    options={formDistricts.map((d) => ({ value: d.id, label: d.name }))}
+                    noneLabel="— Select district —"
+                    searchPlaceholder="Search districts…"
+                  />
                 </Field>
                 <Field label="Sector">
-                  <select value={form.sectorId ?? ''} onChange={(e) => set('sectorId', e.target.value)} className={inputCls}>
-                    <option value="">—</option>
-                    {formSectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <SearchableSelect
+                    value={form.sectorId ?? ''}
+                    onChange={(v) => set('sectorId', v)}
+                    options={sectors.map((s) => ({ value: s.id, label: s.name }))}
+                    noneLabel={form.districtId ? '— Select sector —' : '— Pick district first —'}
+                    searchPlaceholder="Search sectors…"
+                    disabled={!form.districtId}
+                  />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="GPS Latitude">
-                  <input type="number" step="any" value={form.gpsLat ?? ''} onChange={(e) => set('gpsLat', e.target.value === '' ? null : Number(e.target.value))}
-                    className={inputCls} placeholder="-1.9806" />
-                </Field>
-                <Field label="GPS Longitude">
-                  <input type="number" step="any" value={form.gpsLng ?? ''} onChange={(e) => set('gpsLng', e.target.value === '' ? null : Number(e.target.value))}
-                    className={inputCls} placeholder="30.0469" />
-                </Field>
-              </div>
+              {/* Map picker */}
+              <Field label="GPS Coordinates">
+                <div className="h-64 w-full mb-2">
+                  <LocationPicker
+                    lat={form.gpsLat ?? null}
+                    lng={form.gpsLng ?? null}
+                    onPick={(lat, lng) => {
+                      set('gpsLat', lat);
+                      set('gpsLng', lng);
+                    }}
+                    flyToCenter={mapCenter}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                      Latitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={form.gpsLat ?? ''}
+                      onChange={(e) =>
+                        set('gpsLat', e.target.value === '' ? null : Number(e.target.value))
+                      }
+                      className={inputCls}
+                      placeholder="-1.9806"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                      Longitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={form.gpsLng ?? ''}
+                      onChange={(e) =>
+                        set('gpsLng', e.target.value === '' ? null : Number(e.target.value))
+                      }
+                      className={inputCls}
+                      placeholder="30.0469"
+                    />
+                  </div>
+                </div>
+              </Field>
             </>
           )}
 
@@ -406,33 +632,77 @@ function MosquesManager() {
             <>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Capacity">
-                  <input type="number" min={0} value={form.capacity ?? ''} onChange={(e) => set('capacity', e.target.value === '' ? null : Number(e.target.value))} className={inputCls} />
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.capacity ?? ''}
+                    onChange={(e) =>
+                      set('capacity', e.target.value === '' ? null : Number(e.target.value))
+                    }
+                    className={inputCls}
+                  />
                 </Field>
                 <Field label="Founding Year">
-                  <input type="number" value={form.foundingYear ?? ''} onChange={(e) => set('foundingYear', e.target.value === '' ? null : Number(e.target.value))} className={inputCls} placeholder="1985" />
+                  <input
+                    type="number"
+                    value={form.foundingYear ?? ''}
+                    onChange={(e) =>
+                      set('foundingYear', e.target.value === '' ? null : Number(e.target.value))
+                    }
+                    className={inputCls}
+                    placeholder="1985"
+                  />
                 </Field>
               </div>
               <Field label="Friday Prayer Time">
-                <input type="time" value={form.fridayPrayerTime ?? ''} onChange={(e) => set('fridayPrayerTime', e.target.value)} className={inputCls} />
+                <input
+                  type="time"
+                  value={form.fridayPrayerTime ?? ''}
+                  onChange={(e) => set('fridayPrayerTime', e.target.value)}
+                  className={inputCls}
+                />
               </Field>
               <Field label="Imam">
                 <div className="flex items-center gap-3">
-                  {form.imamName && <Avatar name={form.imamName} photo={form.imamPhoto} size={40} />}
-                  <input type="text" value={form.imamName ?? ''} onChange={(e) => set('imamName', e.target.value)} className={inputCls} placeholder="Sheikh…" />
+                  {form.imamName && (
+                    <Avatar name={form.imamName} photo={form.imamPhoto} size={40} />
+                  )}
+                  <input
+                    type="text"
+                    value={form.imamName ?? ''}
+                    onChange={(e) => set('imamName', e.target.value)}
+                    className={inputCls}
+                    placeholder="Sheikh…"
+                  />
                 </div>
               </Field>
               <Field label="Imam Phone">
-                <PhoneInput value={form.imamPhone ?? ''} onChange={(e) => set('imamPhone', e.target.value)} />
+                <PhoneInput
+                  value={form.imamPhone ?? ''}
+                  onChange={(e) => set('imamPhone', e.target.value)}
+                />
               </Field>
               <Field label="Imam Photo">
-                <ImageUploadField value={form.imamPhoto ?? ''} onChange={(url) => set('imamPhoto', url)} />
+                <ImageUploadField
+                  value={form.imamPhoto ?? ''}
+                  onChange={(url) => set('imamPhoto', url)}
+                />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Phone">
-                  <PhoneInput value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
+                  <PhoneInput
+                    value={form.phone ?? ''}
+                    onChange={(e) => set('phone', e.target.value)}
+                  />
                 </Field>
                 <Field label="Email">
-                  <input type="email" value={form.email ?? ''} onChange={(e) => set('email', e.target.value)} className={inputCls} placeholder="info@mosque.rw" />
+                  <input
+                    type="email"
+                    value={form.email ?? ''}
+                    onChange={(e) => set('email', e.target.value)}
+                    className={inputCls}
+                    placeholder="info@mosque.rw"
+                  />
                 </Field>
               </div>
             </>
@@ -450,14 +720,27 @@ function MosquesManager() {
           {step < STEPS.length - 1 ? (
             <button
               type="button"
-              onClick={() => { if (!form.name.trim()) { error('Mosque name is required.'); return; } setStep((s) => s + 1); }}
+              onClick={() => {
+                if (!form.name.trim()) {
+                  error('Mosque name is required.');
+                  return;
+                }
+                setStep((s) => s + 1);
+              }}
               className="px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors"
             >
               Next
             </button>
           ) : (
-            <button type="button" onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
-              {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              {saving && (
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              )}
               {editing ? 'Save Changes' : 'Add Mosque'}
             </button>
           )}
@@ -479,9 +762,18 @@ function MosquesManager() {
   );
 }
 
-const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-1.5 text-[13px] text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/50 focus:border-transparent';
+const inputCls =
+  'w-full rounded-lg border border-gray-200 px-3 py-1.5 text-[13px] text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/50 focus:border-transparent';
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="block text-[11px] font-semibold text-gray-700 mb-1">

@@ -11,7 +11,7 @@ interface ModalProps {
   isOpen?: boolean;
   onClose: () => void;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
   className?: string;
 }
 
@@ -21,6 +21,7 @@ const sizeClasses = {
   lg: 'max-w-lg',
   xl: 'max-w-2xl',
   '2xl': 'max-w-4xl',
+  '3xl': 'max-w-6xl',
 };
 
 export function Modal({ open, isOpen, onClose, children, size = 'md', className }: ModalProps) {
@@ -54,7 +55,7 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className 
           'relative w-full bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden',
           // Cap at viewport height and lay out as a column so the body can scroll
           // while the header and footer stay pinned in view.
-          'max-h-[calc(100vh-2rem)] flex flex-col',
+          'max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col',
           'animate-fade-up',
           sizeClasses[size],
           className,

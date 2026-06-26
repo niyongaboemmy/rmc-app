@@ -1548,6 +1548,18 @@
     "address": "Rebero, Kigali",
     "copyright": "© {year} Umuryango w'Abasilamu bo mu Rwanda. Uburenganzira bwose bwabitswe.",
     "privacy": "Politiki y'Ubuzima bw'Amakuru",
-    "terms": "Amategeko y'Ikoreshwa"
+    "terms": "Amategeko y'Ikoreshwa",
+    "pwa": {
+      "install": "Injiza App",
+      "installAriaLabel": "Injiza app ya RMC kuri telefone yawe",
+      "useChrome": "Fungura urubuga rw'iyi site muri Chrome (cyangwa Edge) kugirango ushobore gushyira app kuri telefone yawe.",
+      "chromeNotReady": "Reba ikimenyetso cyo guterura (⊕) mu nshundura ya Chrome, cyangwa suzuma andi mapeji maze ugerageze nanone.",
+      "ios": {
+        "title": "Ongeraho kuri Ekran ya Mbere",
+        "step1": "Kanda buto ya <strong>Share</strong> (↑) muri Safari.",
+        "step2": "Manuka hasi maze ukande <strong>Add to Home Screen</strong>.",
+        "step3": "Kanda <strong>Add</strong> gusobanura."
+      }
+    }
   }
 }
