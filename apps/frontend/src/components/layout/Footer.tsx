@@ -110,18 +110,10 @@ export function Footer() {
   const t = useTranslations('footer');
 
   const quickLinks = [
-    { href: `/${locale}`, labelKey: 'links.home' },
-    { href: `/${locale}/about`, labelKey: 'links.about' },
-    { href: `/${locale}/services`, labelKey: 'links.services' },
-    { href: `/${locale}/schools`, labelKey: 'links.schools' },
-    { href: `/${locale}/projects`, labelKey: 'links.projects' },
-    { href: `/${locale}/announcements`, labelKey: 'links.announcements' },
     { href: `/${locale}/blog`, labelKey: 'links.blog' },
-    { href: `/${locale}/gallery`, labelKey: 'links.gallery' },
-    { href: `/${locale}/tenders`, labelKey: 'links.tenders' },
-    { href: `/${locale}/donate`, labelKey: 'links.donate' },
-    { href: `/${locale}/contact`, labelKey: 'links.contact' },
     { href: `/${locale}/member/register`, labelKey: 'links.join' },
+    { href: `/${locale}/donate`, labelKey: 'links.donate' },
+    { href: `/${locale}/activities`, labelKey: 'links.trends' },
   ] as const;
 
   const services = [
@@ -129,7 +121,6 @@ export function Footer() {
     { href: `/${locale}/services/scholarship`, labelKey: 'serviceLinks.scholarship' },
     { href: `/${locale}/services/conduct`, labelKey: 'serviceLinks.conduct' },
     { href: `/${locale}/services/funeral`, labelKey: 'serviceLinks.funeral' },
-    { href: `/${locale}/services/jobs`, labelKey: 'serviceLinks.jobs' },
     { href: `/${locale}/services/tender`, labelKey: 'serviceLinks.tenders' },
   ] as const;
 
@@ -212,7 +203,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-rmc-gold/70 hover:text-rmc-gold text-sm transition-colors"
                 >
-                  <Radio className="w-3.5 h-3.5 shrink-0" /> Ijwi Radio
+                  <Radio className="w-3.5 h-3.5 shrink-0" /> {t('learnIslam')}
                 </a>
               </li>
             </ul>

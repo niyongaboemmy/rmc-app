@@ -173,3 +173,7 @@ apps/backend/dist/
 
 # Next.js backup directory
 apps/frontend/.next_bak_root/
+
+# Screenshots (PNG) — keep real app assets under public/
+*.png
+!apps/frontend/public/**/*.png

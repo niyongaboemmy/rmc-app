@@ -1,6 +1,7 @@
 'use client';
 
-import { Twitter, Heart, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { Heart, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { XLogo } from '@/components/icons/XLogo';
 import { pick, type SocialPost } from '@/lib/content-api';
 
 /**
@@ -37,8 +38,8 @@ export function TweetColumn({
         className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 text-center shadow-sm ring-1 ring-black/5 no-underline transition-colors hover:from-gray-100 hover:to-gray-200"
         style={{ minHeight: height }}
       >
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition-transform group-hover:scale-110">
-          <Twitter className="h-6 w-6" />
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white shadow-lg transition-transform group-hover:scale-110">
+          <XLogo className="h-5 w-5" />
         </span>
         <span className={`text-sm font-semibold text-gray-500 ${rtl ? 'font-arabic' : ''}`}>
           {pick(
@@ -62,7 +63,8 @@ export function TweetColumn({
       className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-black/5"
       style={{ height }}
     >
-      <ul className="flex-1 divide-y divide-gray-100 overflow-y-auto">
+      <div className="relative min-h-0 flex-1">
+        <ul className="h-full divide-y divide-gray-100 overflow-y-auto">
         {items.map((t, i) => (
           <li key={t.url ?? i}>
             <a
@@ -72,8 +74,8 @@ export function TweetColumn({
               className="block p-4 no-underline transition-colors hover:bg-gray-50"
             >
               <div className="mb-1.5 flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 text-white">
-                  <Twitter className="h-3.5 w-3.5" />
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-white">
+                  <XLogo className="h-3 w-3" />
                 </span>
                 <span className="truncate text-xs font-bold text-gray-900">{t.handle}</span>
                 <span className="ms-auto shrink-0 text-xs text-gray-400">{t.date}</span>
@@ -110,7 +112,12 @@ export function TweetColumn({
             </a>
           </li>
         ))}
-      </ul>
+        </ul>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent"
+        />
+      </div>
       <a
         href={profileUrl}
         target="_blank"

@@ -1568,13 +1568,15 @@
       "schools": "Find Schools",
       "projects": "Projects",
       "announcements": "Announcements",
-      "blog": "Blog & News",
+      "blog": "Blogs",
       "gallery": "Gallery",
       "tenders": "Tenders",
       "donate": "Donate",
       "contact": "Contact Us",
-      "join": "Join RMC"
+      "join": "Join RMC",
+      "trends": "RMC Trends"
     },
+    "learnIslam": "Learn Islam",
     "serviceLinks": {
       "marriage": "Marriage Documents",
       "scholarship": "Scholarships",

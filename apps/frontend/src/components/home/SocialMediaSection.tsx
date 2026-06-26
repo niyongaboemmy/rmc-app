@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Facebook, Twitter, Instagram, Youtube, ExternalLink } from 'lucide-react';
+import { Facebook, Instagram, Youtube, ExternalLink } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { XLogo } from '@/components/icons/XLogo';
 import { TweetColumn } from './TweetColumn';
 import {
   ContentKeys,
@@ -21,9 +22,9 @@ import {
 } from '@/lib/content-api';
 
 // Channel key → icon/background. Owned by the landing (not the content store).
-const CHANNEL_CONFIG: Record<SocialChannel['key'], { Icon: typeof Facebook; bg: string }> = {
+const CHANNEL_CONFIG: Record<SocialChannel['key'], { Icon: React.ComponentType<{ className?: string }>; bg: string }> = {
   facebook: { Icon: Facebook, bg: 'bg-blue-600' },
-  twitter: { Icon: Twitter, bg: 'bg-gray-900' },
+  twitter: { Icon: XLogo, bg: 'bg-black' },
   instagram: { Icon: Instagram, bg: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400' },
   youtube: { Icon: Youtube, bg: 'bg-red-600' },
 };
@@ -175,7 +176,7 @@ export function SocialMediaSection() {
           {showX && (
             <div className="lg:col-span-2">
               <div className={`inline-flex items-center gap-2 mb-3 text-gray-900 text-xs font-bold ${rtl ? 'font-arabic' : 'uppercase tracking-[0.15em]'}`}>
-                <Twitter className="w-4 h-4" />
+                <XLogo className="w-3.5 h-3.5" />
                 {pick({ en: 'Latest on X', rw: 'Ibyanyuma kuri X', ar: 'الأحدث على X' }, locale)}
               </div>
               <TweetColumn
@@ -206,7 +207,7 @@ export function SocialMediaSection() {
                 href={liveLinks[channel.key] || channel.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`group flex items-center gap-3 p-4 w-[calc(50%-0.5rem)] sm:w-64 rounded-2xl bg-white border border-gray-100 hover:border-transparent hover:shadow-xl transition-all duration-300 hover:scale-105 ${
+                className={`group flex items-center gap-3 p-4 w-[calc(50%-0.5rem)] sm:w-64 rounded-2xl bg-white border border-gray-100 hover:border-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${
                   titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
                 }`}
                 style={{ transitionDelay: `${i * 80}ms` }}
