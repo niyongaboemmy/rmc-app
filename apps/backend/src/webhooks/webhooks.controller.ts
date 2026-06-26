@@ -4,6 +4,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
 import { PaymentEventsService } from '../payment-settings/payment-events.service';
 import { MarriageWebhookService } from './marriage-webhook.service';
+import { DonationWebhookService } from '../donations/donation-webhook.service';
 
 /**
  * Public webhook endpoints called by IntouchPay after payment completion.
@@ -18,6 +19,7 @@ export class WebhooksController {
     private readonly paymentSettings: PaymentSettingsService,
     private readonly paymentEvents: PaymentEventsService,
     private readonly marriageWebhook: MarriageWebhookService,
+    private readonly donationWebhook: DonationWebhookService,
   ) {}
 
   /**
@@ -66,8 +68,9 @@ export class WebhooksController {
         });
       }
 
-      // Also update any domain-specific records (marriage, donation, etc.)
+      // Also update any domain-specific records (marriage, donations, etc.)
       await this.marriageWebhook.handleCallback(payload);
+      await this.donationWebhook.handleCallback(payload);
     } catch (err) {
       // Never reject the callback — always return 200 OK
       this.logger.error(`[IntouchPay Callback] Processing error: ${err}`);

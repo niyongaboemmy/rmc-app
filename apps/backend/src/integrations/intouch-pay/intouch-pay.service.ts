@@ -184,13 +184,15 @@ export class IntouchPayService {
         message: String(data['message'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
       };
     } catch (err) {
-      this.logger.error(`[IntouchPay] GetTransactionStatus error: ${err}`);
+      // Network error — we cannot determine the payment outcome.
+      // Return PENDING so callers do NOT permanently mark the donation as failed.
+      this.logger.error(`[IntouchPay] GetTransactionStatus network error: ${err}`);
       return {
         requestTransactionId: opts.requestTransactionId,
         transactionId: opts.transactionId,
-        status: 'FAILED',
-        responseCode: '500',
-        message: 'Status check failed',
+        status: 'PENDING',
+        responseCode: 'NETWORK_ERROR',
+        message: 'Status check unreachable — will retry',
       };
     }
   }
@@ -317,13 +319,15 @@ export class IntouchPayService {
         raw: data,
       };
     } catch (err) {
-      this.logger.error(`[IntouchPay] POST ${url} failed: ${err}`);
+      // Network error — IntouchPay may have received and processed the request.
+      // Return PENDING so the donation is not permanently marked as failed.
+      this.logger.error(`[IntouchPay] POST ${url} network error: ${err}`);
       return {
         requestTransactionId: txId,
         transactionId: '',
-        status: 'FAILED',
-        responseCode: '500',
-        message: 'Gateway request failed',
+        status: 'PENDING',
+        responseCode: 'NETWORK_ERROR',
+        message: 'Gateway unreachable — treat as pending',
       };
     }
   }
