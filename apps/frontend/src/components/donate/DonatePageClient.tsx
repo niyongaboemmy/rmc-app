@@ -80,12 +80,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
       <Navbar />
       <main>
         {summary ? (
-          <section className="relative bg-transparent py-12 md:py-16">
-            <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
-            <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <SuccessState locale={locale} summary={summary} onReset={reset} />
-            </div>
-          </section>
+          <SuccessState locale={locale} summary={summary} onReset={reset} />
         ) : (
           <>
             <SpiritualHeader niyyah={niyyah} onNiyyah={setNiyyah} />

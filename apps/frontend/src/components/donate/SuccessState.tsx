@@ -1,11 +1,21 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CheckCircle2, Printer, Heart, Home, RotateCcw, Loader2, Smartphone, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  Printer,
+  Heart,
+  Home,
+  RotateCcw,
+  Loader2,
+  Smartphone,
+  XCircle,
+} from 'lucide-react';
 import { donationsApi } from '@/lib/donationsApi';
-import { money, type CartItem } from './donateData';
+import { money, type CartItem, HERO_IMG } from './donateData';
 
 export interface DonationSummary {
   reference: string;
@@ -30,12 +40,10 @@ export function SuccessState({
   onReset: () => void;
 }) {
   const t = useTranslations('donate');
-  const { reference, dateStr, items, currency, total, recurring, methodName, niyyahLabel, pendingPaymentIds } = summary;
+  const { reference, dateStr, items, currency, total, recurring, methodName, niyyahLabel, pendingPaymentIds } =
+    summary;
   const [dua, setDua] = useState('');
 
-  // Poll the gateway for donations still awaiting confirmation (e.g. a Mobile
-  // Money prompt the donor approves on their phone). Resolves to completed/failed,
-  // or gives up after a window and leaves the banner in its "pending" state.
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed' | null>(
     pendingPaymentIds.length ? 'pending' : null,
   );
@@ -63,13 +71,16 @@ export function SuccessState({
         setPaymentStatus(sawFailure ? 'failed' : 'completed');
         clearInterval(timer);
       } else if (attempts >= MAX_ATTEMPTS) {
-        clearInterval(timer); // give up; leave it "pending" for the donor to retry
+        clearInterval(timer);
       }
     };
 
     const timer = setInterval(tick, 4000);
     tick();
-    return () => { cancelled = true; clearInterval(timer); };
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, [pendingPaymentIds]);
 
   const printReceipt = () => {
@@ -114,93 +125,132 @@ export function SuccessState({
   };
 
   return (
-    <div className="mx-auto max-w-xl animate-fade-up">
-      <div className="rounded-3xl border border-gray-100 bg-white p-8 text-center shadow-sm ring-1 ring-black/5 sm:p-10">
-        {/* Payment-confirmation banner (gateway-backed payments only) */}
-        {paymentStatus === 'pending' && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left rtl:text-right">
-            <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-            <div className="min-w-0">
-              <p className="text-[13.5px] font-bold text-amber-900">{t('payment.pendingTitle')}</p>
-              <p className="mt-0.5 text-[12.5px] leading-relaxed text-amber-700">{t('payment.pendingHint')}</p>
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] font-medium text-amber-600">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                {t('payment.checking')}
+    <>
+      {/* ── Hero ── */}
+      <section className="relative flex min-h-[52vh] items-center overflow-hidden bg-rmc-green-deep">
+        <Image
+          src={HERO_IMG}
+          alt=""
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/35" />
+        <div className="absolute inset-0 pattern-islamic opacity-30" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/50 to-transparent" />
+
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-6 pt-32 pb-16 text-center sm:px-8">
+          <div className="animate-fade-up">
+            {/* Animated check badge */}
+            <span className="mx-auto mb-5 flex h-16 w-16 animate-scale-in items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 backdrop-blur-sm">
+              <CheckCircle2 className="h-8 w-8 text-rmc-gold-light" />
+            </span>
+
+            <p className="mb-2 font-arabic text-2xl text-rmc-gold-light drop-shadow" dir="rtl">
+              جَزَاكَ اللَّهُ خَيْرًا
+            </p>
+            <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-lg md:text-4xl">
+              {t('success.thankYou')}
+            </h1>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-white/70 md:text-base">
+              {t.rich('success.summary', {
+                amount: money(currency, total),
+                recurring: recurring ? t('success.monthly') : '',
+                count: items.length,
+                fundWord: items.length === 1 ? t('success.fundWordOne') : t('success.fundWordOther'),
+                method: methodName,
+                b: (c) => <span className="font-bold text-white">{c}</span>,
+              })}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Content ── */}
+      <section className="relative bg-gray-50 py-14">
+        <div className="pointer-events-none absolute inset-0 pattern-light opacity-60" />
+        <div className="relative mx-auto max-w-xl px-4 sm:px-6">
+          <div className="animate-fade-up rounded-3xl border border-gray-100 bg-white p-8 shadow-sm ring-1 ring-black/5">
+
+            {/* Payment status banners */}
+            {paymentStatus === 'pending' && (
+              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left rtl:text-right">
+                <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <div className="min-w-0">
+                  <p className="text-[13.5px] font-bold text-amber-900">{t('payment.pendingTitle')}</p>
+                  <p className="mt-0.5 text-[12.5px] leading-relaxed text-amber-700">{t('payment.pendingHint')}</p>
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] font-medium text-amber-600">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {t('payment.checking')}
+                  </p>
+                </div>
+              </div>
+            )}
+            {paymentStatus === 'failed' && (
+              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-left rtl:text-right">
+                <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                <p className="text-[13px] leading-relaxed text-red-700">{t('payment.failed')}</p>
+              </div>
+            )}
+            {paymentStatus === 'completed' && (
+              <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-rmc-green/20 bg-rmc-green-light/40 p-4 text-left rtl:text-right">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-rmc-green" />
+                <p className="text-[13px] font-semibold text-rmc-green-dark">{t('payment.completed')}</p>
+              </div>
+            )}
+
+            {/* Du'ā section */}
+            <div className="mb-8 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/30 p-5">
+              <p className="mb-3 flex items-center gap-1.5 text-[13px] font-bold text-rmc-green-dark">
+                <Heart className="h-4 w-4" />
+                {t('success.duaTitle')}
               </p>
+              <textarea
+                value={dua}
+                onChange={(e) => setDua(e.target.value)}
+                rows={3}
+                placeholder={t('success.duaPlaceholder')}
+                className="w-full resize-none rounded-xl border border-rmc-green/20 bg-white px-3.5 py-2.5 text-[13px] text-gray-800 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+              />
+              {dua.trim() && (
+                <p className="mt-2 text-[12px] italic text-rmc-green-dark">{t('success.duaAmin')}</p>
+              )}
+            </div>
+
+            {/* Action buttons — single row, professional */}
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={printReceipt}
+                className="col-span-1 flex min-w-0 items-center justify-center gap-1.5 truncate rounded-full bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-rmc-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+              >
+                <Printer className="h-4 w-4 shrink-0" />
+                <span className="truncate">{t('success.downloadReceipt')}</span>
+              </button>
+
+              <Link
+                href={`/${locale}`}
+                className="col-span-1 flex min-w-0 items-center justify-center gap-1.5 truncate rounded-full border border-rmc-green/30 px-4 py-2.5 text-sm font-semibold text-rmc-green transition-all duration-200 hover:bg-rmc-green hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+              >
+                <Home className="h-4 w-4 shrink-0" />
+                <span className="truncate">{t('success.backHome')}</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={onReset}
+                className="col-span-1 flex min-w-0 items-center justify-center gap-1.5 truncate rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-all duration-200 hover:border-rmc-green/30 hover:bg-rmc-green-light/40 hover:text-rmc-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+              >
+                <RotateCcw className="h-4 w-4 shrink-0" />
+                <span className="truncate">{t('success.giveAgain')}</span>
+              </button>
             </div>
           </div>
-        )}
-        {paymentStatus === 'failed' && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-left rtl:text-right">
-            <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-            <p className="text-[13px] leading-relaxed text-red-700">{t('payment.failed')}</p>
-          </div>
-        )}
-        {paymentStatus === 'completed' && (
-          <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-rmc-green/20 bg-rmc-green-light/40 p-4 text-left rtl:text-right">
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-rmc-green" />
-            <p className="text-[13px] font-semibold text-rmc-green-dark">{t('payment.completed')}</p>
-          </div>
-        )}
-        <span className="mx-auto mb-5 flex h-16 w-16 animate-scale-in items-center justify-center rounded-full bg-rmc-green-light ring-1 ring-rmc-green/15">
-          <CheckCircle2 className="h-8 w-8 text-rmc-green" />
-        </span>
-        <p className="mb-1 font-arabic text-xl text-rmc-green-dark" dir="rtl">جَزَاكَ اللَّهُ خَيْرًا</p>
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">{t('success.thankYou')}</h2>
-        <p className="mb-6 text-sm leading-relaxed text-gray-500">
-          {t.rich('success.summary', {
-            amount: money(currency, total),
-            recurring: recurring ? t('success.monthly') : '',
-            count: items.length,
-            fundWord: items.length === 1 ? t('success.fundWordOne') : t('success.fundWordOther'),
-            method: methodName,
-            b: (c) => <span className="font-bold text-gray-900">{c}</span>,
-          })}
-        </p>
-
-        {/* Dua */}
-        <div className="mb-6 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/30 p-4 text-left rtl:text-right">
-          <p className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-rmc-green-dark">
-            <Heart className="h-4 w-4" />
-            {t('success.duaTitle')}
-          </p>
-          <textarea
-            value={dua}
-            onChange={(e) => setDua(e.target.value)}
-            rows={3}
-            placeholder={t('success.duaPlaceholder')}
-            className="w-full resize-none rounded-xl border border-rmc-green/20 bg-white px-3.5 py-2.5 text-[13px] text-gray-800 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
-          />
-          {dua.trim() && <p className="mt-2 text-[12px] italic text-rmc-green-dark">{t('success.duaAmin')}</p>}
         </div>
-
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-center">
-          <button
-            type="button"
-            onClick={printReceipt}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-rmc-green px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-300 hover:bg-rmc-green-dark"
-          >
-            <Printer className="h-4 w-4" />
-            {t('success.downloadReceipt')}
-          </button>
-          <Link
-            href={`/${locale}`}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-rmc-green/30 px-5 py-2.5 text-sm font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green hover:text-white"
-          >
-            <Home className="h-4 w-4" />
-            {t('success.backHome')}
-          </Link>
-          <button
-            type="button"
-            onClick={onReset}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-gray-500 transition-colors hover:text-rmc-green"
-          >
-            <RotateCcw className="h-4 w-4" />
-            {t('success.giveAgain')}
-          </button>
-        </div>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }
 

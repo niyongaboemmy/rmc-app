@@ -178,6 +178,7 @@ function WaitingScreen({
   onCancel,
   onResend,
   isResending,
+  error,
 }: {
   phone: string;
   total: number;
@@ -187,6 +188,7 @@ function WaitingScreen({
   onCancel: () => void;
   onResend: () => void;
   isResending: boolean;
+  error?: string;
 }) {
   const [countdown, setCountdown] = useState(POLL_INTERVAL_S);
   const [isChecking, setIsChecking] = useState(false);
@@ -251,6 +253,13 @@ function WaitingScreen({
       <p className="mb-5 text-[12px] text-gray-400">
         Approve the MoMo prompt on your phone — this page will update automatically.
       </p>
+
+      {error && (
+        <div className="mb-4 flex w-full items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-left">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <p className="text-[12.5px] text-red-700">{error}</p>
+        </div>
+      )}
 
       <div className="flex w-full flex-col gap-2.5">
         <button
@@ -403,15 +412,21 @@ export function CartDrawer({
       );
 
       const pending = donations.filter((d) => d.status === 'pending').map((d) => d.id);
+      const anyImmediateFailure = donations.some((d) => d.status === 'failed' || d.status === 'refunded');
 
       setConfirmedTotal(total);
       setPendingIds(pending);
       setCheckCount(0);
 
       if (pending.length === 0) {
-        // All donations completed synchronously (gateway returned SUCCESSFUL immediately,
-        // or IntouchPay not configured — in both cases treat as confirmed).
-        setShowPopup(true);
+        if (anyImmediateFailure) {
+          // Gateway rejected the payment immediately — show error, do not show success popup.
+          setPhase('failed');
+          setError(t('cart.error'));
+        } else {
+          // IntouchPay confirmed synchronously (or gateway not configured in dev).
+          setShowPopup(true);
+        }
       } else {
         setPhase('waiting');
         startPolling(pending);
@@ -448,9 +463,17 @@ export function CartDrawer({
         ),
       );
       const pending = donations.filter((d) => d.status === 'pending').map((d) => d.id);
+      const anyImmediateFailure = donations.some((d) => d.status === 'failed' || d.status === 'refunded');
       setPendingIds(pending);
       setCheckCount(0);
-      if (pending.length > 0) startPolling(pending);
+      if (pending.length === 0) {
+        // Gateway rejected the resent request immediately — go back to form with error.
+        setPhase('failed');
+        setError(anyImmediateFailure ? 'Payment failed. Please check your MoMo number and try again.' : t('cart.error'));
+      } else {
+        setError('');
+        startPolling(pending);
+      }
     } catch {
       setError('Failed to resend payment request. Please try again.');
     } finally {
@@ -574,6 +597,7 @@ export function CartDrawer({
                 onCancel={handleCancel}
                 onResend={handleResend}
                 isResending={isResending}
+                error={error}
               />
             ) : (
               /* ── Desktop: 2-col grid so all content is visible without scrolling ── */
