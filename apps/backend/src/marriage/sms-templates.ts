@@ -9,7 +9,7 @@
 export const SmsTemplates = {
   /** Sent immediately after a new application is submitted. */
   submission(appNo: string, groomName: string, brideName: string): string {
-    return `RMC Nikah | App ${appNo}: ${groomName} & ${brideName} received. Under review shortly. Track at rmc.org.rw`;
+    return `RMC Nikah | App ${appNo}: ${groomName} & ${brideName} received. Under review shortly. Track at rwandamuslim.org`;
   },
 
   /** Sent when the application moves to "under review". */
@@ -24,7 +24,9 @@ export const SmsTemplates = {
 
   /** Sent when the application is rejected. */
   rejected(appNo: string, reason?: string | null): string {
-    const suffix = reason ? ` Reason: ${reason.slice(0, 60)}` : ' Contact nikah@rmc.rw for details.';
+    const suffix = reason
+      ? ` Reason: ${reason.slice(0, 60)}`
+      : ' Contact nikah@rmc.rw for details.';
     return `RMC Nikah | App ${appNo}: NOT APPROVED.${suffix}`;
   },
 
@@ -41,7 +43,7 @@ export const SmsTemplates = {
 
   /** Sent when the certificate is ready and the case is closed. */
   closed(appNo: string): string {
-    return `RMC Nikah | App ${appNo}: Certificate ready. Download at rmc.org.rw`;
+    return `RMC Nikah | App ${appNo}: Certificate ready. Download at rwandamuslim.org`;
   },
 
   /** Sent when a ceremony date is confirmed. */
