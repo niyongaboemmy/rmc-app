@@ -34,6 +34,10 @@ export class MarriageAdminController {
   @ApiQuery({ name: 'paymentStatus', required: false })
   @ApiQuery({ name: 'venueType', required: false })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'dateFrom', required: false })
+  @ApiQuery({ name: 'dateTo', required: false })
+  @ApiQuery({ name: 'sort', required: false, enum: ['date', 'amount', 'couple', 'payment', 'status'] })
+  @ApiQuery({ name: 'order', required: false, enum: ['ASC', 'DESC'] })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
@@ -41,6 +45,10 @@ export class MarriageAdminController {
     @Query('paymentStatus') paymentStatus?: string,
     @Query('venueType') venueType?: string,
     @Query('search') search?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('sort') sort?: string,
+    @Query('order') order?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -49,6 +57,10 @@ export class MarriageAdminController {
       paymentStatus,
       venueType,
       search,
+      dateFrom,
+      dateTo,
+      sort,
+      order,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 20,
     });

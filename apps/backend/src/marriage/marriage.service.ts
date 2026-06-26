@@ -468,21 +468,45 @@ export class MarriageService {
     paymentStatus?: string;
     venueType?: string;
     search?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    sort?: string;
+    order?: string;
     page?: number;
     limit?: number;
   }) {
-    const { status, paymentStatus, venueType, search, page = 1, limit = 20 } = filters;
+    const {
+      status, paymentStatus, venueType, search, dateFrom, dateTo, sort, order,
+      page = 1, limit = 20,
+    } = filters;
+
+    const SORT_COLUMNS: Record<string, string> = {
+      date: 'app.createdAt',
+      amount: 'app.amountPaid',
+      couple: 'app.groomName',
+      payment: 'app.paymentStatus',
+      status: 'app.status',
+    };
+    const sortCol = SORT_COLUMNS[sort ?? 'date'] ?? SORT_COLUMNS.date;
+    const dir = (order ?? '').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     const qb = this.applicationRepo
       .createQueryBuilder('app')
       .leftJoinAndSelect('app.documents', 'docs')
-      .orderBy('app.createdAt', 'DESC')
+      .orderBy(sortCol, dir)
+      .addOrderBy('app.id', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
     if (status) qb.andWhere('app.status = :status', { status });
     if (paymentStatus) qb.andWhere('app.paymentStatus = :paymentStatus', { paymentStatus });
     if (venueType) qb.andWhere('app.venueType = :venueType', { venueType });
+    if (dateFrom) qb.andWhere('app.createdAt >= :dateFrom', { dateFrom });
+    if (dateTo) {
+      const end = new Date(dateTo);
+      end.setDate(end.getDate() + 1); // inclusive end date
+      qb.andWhere('app.createdAt < :dateTo', { dateTo: end.toISOString() });
+    }
     if (search) {
       qb.andWhere(
         '(app.groomName ILIKE :q OR app.brideName ILIKE :q OR app.applicationNumber ILIKE :q)',

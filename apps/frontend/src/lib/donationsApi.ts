@@ -90,6 +90,9 @@ export interface CreateDonationPayload {
   message?: string;
 }
 
+export type DonationSort = 'date' | 'amount' | 'donor' | 'status';
+export type SortOrder = 'ASC' | 'DESC';
+
 export interface DonationFilters {
   dateFrom?: string;
   dateTo?: string;
@@ -98,6 +101,20 @@ export interface DonationFilters {
   search?: string;
   page?: number;
   limit?: number;
+  sort?: DonationSort;
+  order?: SortOrder;
+}
+
+/** One day in the dashboard daily-received series. */
+export interface DailyPoint {
+  date: string;
+  received: number;
+  count: number;
+}
+export interface DailyReceived {
+  currency: string;
+  days: number;
+  series: DailyPoint[];
 }
 
 export interface CampaignPayload {
@@ -176,6 +193,11 @@ export const donationsApi = {
 
     getStats: async (filters?: Omit<DonationFilters, 'page' | 'limit' | 'search'>): Promise<DonationStats> => {
       const { data } = await apiClient.get('/admin/donations/stats', { params: filters });
+      return data.data ?? data;
+    },
+
+    getDaily: async (days = 30, currency = 'RWF'): Promise<DailyReceived> => {
+      const { data } = await apiClient.get('/admin/donations/daily', { params: { days, currency } });
       return data.data ?? data;
     },
 

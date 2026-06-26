@@ -17,7 +17,17 @@ export interface DonationFilters {
   search?: string;
   page?: number;
   limit?: number;
+  sort?: string;
+  order?: string;
 }
+
+/** Whitelist of sortable columns for the admin donations list. */
+const DONATION_SORT_COLUMNS: Record<string, string> = {
+  date: 'donation.donatedAt',
+  amount: 'donation.amount',
+  donor: 'donation.donorName',
+  status: 'donation.status',
+};
 
 @Injectable()
 export class DonationsService {
@@ -168,9 +178,13 @@ export class DonationsService {
       qb.andWhere('donation.status = :status', { status: filters.status });
     }
     if (filters.search) {
-      qb.andWhere('(donation.donorName ILIKE :s OR donation.donorEmail ILIKE :s)', {
-        s: `%${filters.search}%`,
-      });
+      // Match donor name/email, or the raw transaction id (with a leading
+      // "TXN-" reference prefix stripped so a pasted reference still matches).
+      const raw = filters.search.trim().replace(/^txn-/i, '');
+      qb.andWhere(
+        '(donation.donorName ILIKE :s OR donation.donorEmail ILIKE :s OR donation.id::text ILIKE :ids)',
+        { s: `%${filters.search}%`, ids: `%${raw}%` },
+      );
     }
     return qb;
   }
@@ -179,10 +193,15 @@ export class DonationsService {
     const page = filters.page && filters.page > 0 ? filters.page : 1;
     const limit = filters.limit && filters.limit > 0 ? filters.limit : 20;
 
+    const sortCol = DONATION_SORT_COLUMNS[filters.sort ?? 'date'] ?? DONATION_SORT_COLUMNS.date;
+    const order = (filters.order ?? '').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     const qb = this.donations
       .createQueryBuilder('donation')
       .leftJoinAndSelect('donation.campaign', 'campaign')
-      .orderBy('donation.donatedAt', 'DESC')
+      .orderBy(sortCol, order)
+      // Stable secondary ordering so paging is deterministic on ties.
+      .addOrderBy('donation.id', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -191,6 +210,42 @@ export class DonationsService {
     const [items, total] = await qb.getManyAndCount();
 
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+
+  /**
+   * Daily completed-donation totals for the dashboard chart — a continuous,
+   * zero-filled series of the last `days` days in the given currency.
+   */
+  async adminGetDailyReceived(days = 30, currency = 'RWF') {
+    const span = Math.min(Math.max(Math.trunc(days) || 30, 1), 365);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (span - 1));
+    const startKey = start.toISOString().slice(0, 10);
+
+    const rows = await this.donations
+      .createQueryBuilder('donation')
+      .select("TO_CHAR(donation.donatedAt::date, 'YYYY-MM-DD')", 'date')
+      .addSelect(
+        `COALESCE(SUM(donation.amount) FILTER (WHERE donation.status = 'completed'), 0)`,
+        'received',
+      )
+      .addSelect(`COUNT(*) FILTER (WHERE donation.status = 'completed')`, 'count')
+      .where('donation.currency = :currency', { currency })
+      .andWhere('donation.donatedAt::date >= :start', { start: startKey })
+      .groupBy('donation.donatedAt::date')
+      .getRawMany<{ date: string; received: string; count: string }>();
+
+    const byDate = new Map(rows.map((r) => [r.date, r]));
+    const series: { date: string; received: number; count: number }[] = [];
+    for (let i = 0; i < span; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      const r = byDate.get(key);
+      series.push({ date: key, received: r ? Number(r.received) : 0, count: r ? Number(r.count) : 0 });
+    }
+    return { currency, days: span, series };
   }
 
   /** Top-line stats + per-program / per-currency / per-status breakdowns. */
