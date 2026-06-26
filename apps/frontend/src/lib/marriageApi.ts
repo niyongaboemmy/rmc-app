@@ -159,6 +159,17 @@ export interface AdminStats {
   revenue: number;
 }
 
+export interface MarriageFeeTier {
+  amount: number;
+  label: string;
+  description: string;
+}
+
+export interface MarriageFees {
+  mosque: MarriageFeeTier;
+  outside: MarriageFeeTier;
+}
+
 export interface PublicVerification {
   applicationNumber: string;
   groomName: string;
@@ -233,12 +244,31 @@ export const marriageApi = {
     }
   },
 
+  initiateUserMomoPayment: async (
+    id: string,
+    mobilePhone: string,
+  ): Promise<{
+    application: MarriageApplication;
+    transaction: { id: string; status: string; providerRef: string | null };
+    gatewayRef: string | null;
+    responseCode: string;
+    message: string;
+  }> => {
+    const { data } = await apiClient.post(`/marriage/applications/${id}/payment/initiate-momo`, { mobilePhone });
+    return data.data ?? data;
+  },
+
   saveDocument: async (id: string, payload: SaveDocumentPayload): Promise<void> => {
     await apiClient.post(`/marriage/applications/${id}/documents`, payload);
   },
 
   listMine: async (): Promise<MarriageApplication[]> => {
     const { data } = await apiClient.get('/marriage/applications');
+    return data.data ?? data;
+  },
+
+  getFees: async (): Promise<MarriageFees> => {
+    const { data } = await apiClient.get('/marriage/fees');
     return data.data ?? data;
   },
 
@@ -283,6 +313,22 @@ export const marriageApi = {
 
     confirmPayment: async (id: string): Promise<MarriageApplication> => {
       const { data } = await apiClient.post(`/admin/marriage/applications/${id}/payment/confirm`);
+      return data.data ?? data;
+    },
+
+    initiateMomoPayment: async (
+      id: string,
+      mobilePhone: string,
+    ): Promise<{ application: MarriageApplication; transaction: { id: string; status: string; providerRef: string | null }; gatewayResponse: unknown }> => {
+      const { data } = await apiClient.post(`/admin/marriage/applications/${id}/payment/initiate-momo`, { mobilePhone });
+      return data.data ?? data;
+    },
+
+    checkMomoStatus: async (
+      id: string,
+      txId: string,
+    ): Promise<{ status: string; responseCode: string; message: string }> => {
+      const { data } = await apiClient.get(`/admin/marriage/applications/${id}/payment/${txId}/status`);
       return data.data ?? data;
     },
 

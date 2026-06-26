@@ -1,5 +1,10 @@
 import {
-  Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException, Logger,
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
@@ -11,10 +16,13 @@ import {
   PaymentStatus,
   VenueType,
 } from './entities/marriage-application.entity';
-import { MarriageDocument, DocumentType } from './entities/marriage-document.entity';
+import { MarriageDocument } from './entities/marriage-document.entity';
 import { MarriageStatusHistory } from './entities/marriage-status-history.entity';
 import { MarriageTransaction } from './entities/marriage-transaction.entity';
-import { MarriagePartyConfirmation, PartyRole } from './entities/marriage-party-confirmation.entity';
+import {
+  MarriagePartyConfirmation,
+  PartyRole,
+} from './entities/marriage-party-confirmation.entity';
 import { User } from '../users/entities/user.entity';
 import * as crypto from 'crypto';
 import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
@@ -24,9 +32,16 @@ import { CreateMarriageApplicationDto } from './dto/create-marriage-application.
 import { SaveDocumentDto } from './dto/save-document.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { ScheduleCeremonyDto } from './dto/schedule-ceremony.dto';
+import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
+import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
+import { PaymentTypeKey } from '../payment-settings/entities/payment-type.entity';
+import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
 
-const MOSQUE_FEE = 30000;
-const OUTSIDE_FEE = 200000;
+// Fallback constants — used if DB rates are not yet configured
+const MOSQUE_FEE_FALLBACK = 30000;
+const OUTSIDE_FEE_FALLBACK = 200000;
+const MOSQUE_RATE_CODE = 'MOSQUE';
+const OUTSIDE_MOSQUE_CODE = 'OUTSIDE_MOSQUE';
 
 @Injectable()
 export class MarriageService {
@@ -50,14 +65,50 @@ export class MarriageService {
     private readonly configService: ConfigService,
     private readonly notifSettings: NotificationSettingsService,
     private readonly smsService: SmsService,
+    private readonly paymentSettings: PaymentSettingsService,
+    private readonly intouchPay: IntouchPayService,
   ) {}
+
+  // ── Marriage Fee Lookup ────────────────────────────────────────────────────
+
+  /** Returns both fee tiers for public display (venue selector and payment step). */
+  async getMarriageFees(): Promise<{
+    mosque: { amount: number; label: string; description: string };
+    outside: { amount: number; label: string; description: string };
+  }> {
+    const rates = await this.paymentSettings.getActiveRates(PaymentTypeKey.MARRIAGE_FEE);
+    const mosqueRate = rates.find((r) => r.code === MOSQUE_RATE_CODE);
+    const outsideRate = rates.find((r) => r.code === OUTSIDE_MOSQUE_CODE);
+    return {
+      mosque: {
+        amount: mosqueRate ? Number(mosqueRate.amount) : MOSQUE_FEE_FALLBACK,
+        label: mosqueRate?.name ?? 'Mosque Ceremony',
+        description: mosqueRate?.description ?? 'Nikah ceremony inside the mosque',
+      },
+      outside: {
+        amount: outsideRate ? Number(outsideRate.amount) : OUTSIDE_FEE_FALLBACK,
+        label: outsideRate?.name ?? 'Outside Mosque',
+        description: outsideRate?.description ?? 'Nikah ceremony outside mosque premises',
+      },
+    };
+  }
+
+  /** Returns the configured fee for the given venue type, falling back to constants. */
+  private async resolveMarriageFee(venueType: VenueType): Promise<number> {
+    const rateCode = venueType === VenueType.MOSQUE ? MOSQUE_RATE_CODE : OUTSIDE_MOSQUE_CODE;
+    try {
+      const rate = await this.paymentSettings.getRateByCode(PaymentTypeKey.MARRIAGE_FEE, rateCode);
+      if (rate) return Number(rate.amount);
+    } catch {
+      // fall through to hardcoded fallback
+    }
+    return venueType === VenueType.MOSQUE ? MOSQUE_FEE_FALLBACK : OUTSIDE_FEE_FALLBACK;
+  }
 
   // ── Application Number ──────────────────────────────────────────────────────
 
   private async generateApplicationNumber(): Promise<string> {
-    const result = await this.dataSource.query(
-      `SELECT nextval('marriage_application_seq') AS seq`,
-    );
+    const result = await this.dataSource.query(`SELECT nextval('marriage_application_seq') AS seq`);
     const seq = String(result[0].seq).padStart(5, '0');
     const now = new Date();
     const year = now.getFullYear();
@@ -67,7 +118,10 @@ export class MarriageService {
 
   // ── Create / Draft ──────────────────────────────────────────────────────────
 
-  async createDraft(applicantId: string, dto: CreateMarriageApplicationDto): Promise<MarriageApplication> {
+  async createDraft(
+    applicantId: string,
+    dto: CreateMarriageApplicationDto,
+  ): Promise<MarriageApplication> {
     if (dto.groomNid === dto.brideNid) {
       throw new BadRequestException('Groom and bride cannot have the same National ID');
     }
@@ -83,20 +137,26 @@ export class MarriageService {
 
     const existing = await this.applicationRepo.findOne({
       where: [
-        { groomNid: dto.groomNid, status: In([
-          MarriageApplicationStatus.DRAFT,
-          MarriageApplicationStatus.SUBMITTED,
-          MarriageApplicationStatus.UNDER_REVIEW,
-          MarriageApplicationStatus.AMENDMENTS_REQUESTED,
-          MarriageApplicationStatus.APPROVED,
-        ]) },
-        { brideNid: dto.brideNid, status: In([
-          MarriageApplicationStatus.DRAFT,
-          MarriageApplicationStatus.SUBMITTED,
-          MarriageApplicationStatus.UNDER_REVIEW,
-          MarriageApplicationStatus.AMENDMENTS_REQUESTED,
-          MarriageApplicationStatus.APPROVED,
-        ]) },
+        {
+          groomNid: dto.groomNid,
+          status: In([
+            MarriageApplicationStatus.DRAFT,
+            MarriageApplicationStatus.SUBMITTED,
+            MarriageApplicationStatus.UNDER_REVIEW,
+            MarriageApplicationStatus.AMENDMENTS_REQUESTED,
+            MarriageApplicationStatus.APPROVED,
+          ]),
+        },
+        {
+          brideNid: dto.brideNid,
+          status: In([
+            MarriageApplicationStatus.DRAFT,
+            MarriageApplicationStatus.SUBMITTED,
+            MarriageApplicationStatus.UNDER_REVIEW,
+            MarriageApplicationStatus.AMENDMENTS_REQUESTED,
+            MarriageApplicationStatus.APPROVED,
+          ]),
+        },
       ],
     });
     if (existing) {
@@ -105,7 +165,7 @@ export class MarriageService {
       );
     }
 
-    const amountDue = dto.venueType === VenueType.MOSQUE ? MOSQUE_FEE : OUTSIDE_FEE;
+    const amountDue = await this.resolveMarriageFee(dto.venueType);
     const applicationNumber = await this.generateApplicationNumber();
 
     const app = this.applicationRepo.create({
@@ -142,15 +202,31 @@ export class MarriageService {
     });
 
     const saved = await this.applicationRepo.save(app);
-    await this.recordStatusChange(saved.id, null, MarriageApplicationStatus.DRAFT, applicantId, 'Application draft created');
+    await this.recordStatusChange(
+      saved.id,
+      null,
+      MarriageApplicationStatus.DRAFT,
+      applicantId,
+      'Application draft created',
+    );
     return saved;
   }
 
-  async updateDraft(id: string, applicantId: string, dto: Partial<CreateMarriageApplicationDto>): Promise<MarriageApplication> {
+  async updateDraft(
+    id: string,
+    applicantId: string,
+    dto: Partial<CreateMarriageApplicationDto>,
+  ): Promise<MarriageApplication> {
     const app = await this.findOwnApplication(id, applicantId);
 
-    if (![MarriageApplicationStatus.DRAFT, MarriageApplicationStatus.AMENDMENTS_REQUESTED].includes(app.status)) {
-      throw new ForbiddenException('Only draft or amendments-requested applications can be updated');
+    if (
+      ![MarriageApplicationStatus.DRAFT, MarriageApplicationStatus.AMENDMENTS_REQUESTED].includes(
+        app.status,
+      )
+    ) {
+      throw new ForbiddenException(
+        'Only draft or amendments-requested applications can be updated',
+      );
     }
 
     Object.assign(app, {
@@ -176,10 +252,12 @@ export class MarriageService {
       district: dto.district ?? app.district,
       mosqueId: dto.mosqueId ?? app.mosqueId,
       venueAddress: dto.venueAddress ?? app.venueAddress,
-      preferredDateFrom: dto.preferredDateFrom ? new Date(dto.preferredDateFrom) : app.preferredDateFrom,
+      preferredDateFrom: dto.preferredDateFrom
+        ? new Date(dto.preferredDateFrom)
+        : app.preferredDateFrom,
       preferredDateTo: dto.preferredDateTo ? new Date(dto.preferredDateTo) : app.preferredDateTo,
       paymentMethod: dto.paymentMethod ?? app.paymentMethod,
-      amountDue: dto.venueType ? (dto.venueType === VenueType.MOSQUE ? MOSQUE_FEE : OUTSIDE_FEE) : app.amountDue,
+      amountDue: dto.venueType ? await this.resolveMarriageFee(dto.venueType) : app.amountDue,
     });
 
     return this.applicationRepo.save(app);
@@ -188,53 +266,157 @@ export class MarriageService {
   async submit(id: string, applicantId: string): Promise<MarriageApplication> {
     const app = await this.findOwnApplication(id, applicantId);
 
-    if (app.status !== MarriageApplicationStatus.DRAFT && app.status !== MarriageApplicationStatus.AMENDMENTS_REQUESTED) {
-      throw new BadRequestException('Only draft or amendments-requested applications can be submitted');
+    if (
+      app.status !== MarriageApplicationStatus.DRAFT &&
+      app.status !== MarriageApplicationStatus.AMENDMENTS_REQUESTED
+    ) {
+      throw new BadRequestException(
+        'Only draft or amendments-requested applications can be submitted',
+      );
+    }
+
+    // MoMo payments must be confirmed by IntouchPay callback before submission
+    if (app.paymentMethod === 'momo' && app.paymentStatus !== PaymentStatus.PAID) {
+      throw new BadRequestException(
+        'Mobile Money payment must be completed before submitting the application.',
+      );
     }
 
     const prevStatus = app.status;
     app.status = MarriageApplicationStatus.SUBMITTED;
     app.submittedAt = new Date();
 
-    // Payment is auto-settled on submission — every application is marked paid
-    // (no separate payment / confirmation step).
-    const alreadyPaid = app.paymentStatus === PaymentStatus.PAID;
-    app.paymentStatus = PaymentStatus.PAID;
-    app.amountPaid = app.amountDue;
+    // Bank/cash payments are confirmed by admin after submission
+    if (app.paymentStatus === PaymentStatus.UNPAID) {
+      app.paymentStatus = PaymentStatus.PENDING_CASH;
+    }
 
     const saved = await this.applicationRepo.save(app);
 
-    if (!alreadyPaid) {
-      const tx = this.transactionRepo.create({
-        applicationId: saved.id,
-        method: app.paymentMethod ?? 'auto',
-        amount: app.amountDue,
-        status: 'completed',
-        completedAt: new Date(),
-        metadata: { auto: true, reason: 'Auto-marked paid on submission' },
-      });
-      await this.transactionRepo.save(tx);
-    }
-
-    await this.recordStatusChange(saved.id, prevStatus, MarriageApplicationStatus.SUBMITTED, applicantId, 'Application submitted');
+    await this.recordStatusChange(
+      saved.id,
+      prevStatus,
+      MarriageApplicationStatus.SUBMITTED,
+      applicantId,
+      'Application submitted',
+    );
     await this.sendSubmissionSms(saved);
     return saved;
   }
 
+  async initiateUserMomoPayment(
+    id: string,
+    applicantId: string,
+    mobilePhone: string,
+  ): Promise<{
+    application: MarriageApplication;
+    transaction: MarriageTransaction;
+    gatewayRef: string | null;
+    responseCode: string;
+    message: string;
+  }> {
+    const app = await this.findOwnApplication(id, applicantId);
+
+    if (app.paymentStatus === PaymentStatus.PAID) {
+      throw new BadRequestException('Payment has already been completed for this application');
+    }
+    if (
+      app.status !== MarriageApplicationStatus.DRAFT &&
+      app.status !== MarriageApplicationStatus.AMENDMENTS_REQUESTED
+    ) {
+      throw new BadRequestException('Application must be in draft status to initiate payment');
+    }
+
+    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+      throw new BadRequestException('MoMo (IntouchPay) credentials are not configured');
+    }
+
+    const requestTxnId = `MAR-${app.applicationNumber}-${Date.now()}`;
+    const fallbackCallback = `${this.configService.get('app.apiUrl', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+
+    const result = await this.intouchPay.requestPayment({
+      username: creds.username,
+      partnerPassword: creds.partnerPassword,
+      accountNo: creds.accountNo,
+      amount: Number(app.amountDue),
+      mobilePhone,
+      transactionId: requestTxnId,
+      callbackUrl: creds.callbackUrl || fallbackCallback,
+      gatewayUrl: creds.gatewayUrl || undefined,
+    });
+
+    app.paymentStatus = PaymentStatus.PROCESSING;
+    app.paymentMethod = 'momo';
+    await this.applicationRepo.save(app);
+
+    const tx = this.transactionRepo.create({
+      applicationId: app.id,
+      method: 'momo',
+      providerRef: requestTxnId,
+      amount: app.amountDue,
+      status:
+        result.status === 'SUCCESSFUL'
+          ? 'completed'
+          : result.status === 'FAILED'
+            ? 'failed'
+            : 'pending',
+      metadata: {
+        gatewayTransactionId: result.transactionId,
+        responseCode: result.responseCode,
+        mobilePhone,
+      },
+    });
+    const savedTx = await this.transactionRepo.save(tx);
+
+    if (result.status === 'SUCCESSFUL') {
+      app.paymentStatus = PaymentStatus.PAID;
+      app.amountPaid = app.amountDue;
+      savedTx.completedAt = new Date();
+      await this.applicationRepo.save(app);
+      await this.transactionRepo.save(savedTx);
+      await this.sendPaymentConfirmedSms(app);
+    }
+
+    return {
+      application: app,
+      transaction: savedTx,
+      gatewayRef: result.transactionId ?? null,
+      responseCode: result.responseCode,
+      message: result.message,
+    };
+  }
+
   async cancel(id: string, applicantId: string): Promise<MarriageApplication> {
     const app = await this.findOwnApplication(id, applicantId);
-    if ([MarriageApplicationStatus.APPROVED, MarriageApplicationStatus.COMPLETED, MarriageApplicationStatus.CLOSED].includes(app.status)) {
+    if (
+      [
+        MarriageApplicationStatus.APPROVED,
+        MarriageApplicationStatus.COMPLETED,
+        MarriageApplicationStatus.CLOSED,
+      ].includes(app.status)
+    ) {
       throw new ForbiddenException('Cannot cancel an approved or completed application');
     }
     const prev = app.status;
     app.status = MarriageApplicationStatus.CANCELLED;
     const saved = await this.applicationRepo.save(app);
-    await this.recordStatusChange(saved.id, prev, MarriageApplicationStatus.CANCELLED, applicantId, 'Cancelled by applicant');
+    await this.recordStatusChange(
+      saved.id,
+      prev,
+      MarriageApplicationStatus.CANCELLED,
+      applicantId,
+      'Cancelled by applicant',
+    );
     return saved;
   }
 
-  async saveDocument(id: string, applicantId: string, dto: SaveDocumentDto): Promise<MarriageDocument> {
-    const app = await this.findOwnApplication(id, applicantId);
+  async saveDocument(
+    id: string,
+    applicantId: string,
+    dto: SaveDocumentDto,
+  ): Promise<MarriageDocument> {
+    await this.findOwnApplication(id, applicantId);
     const existing = await this.documentRepo.findOne({
       where: { applicationId: id, documentType: dto.documentType },
     });
@@ -355,7 +537,11 @@ export class MarriageService {
     return this.adminFindOne(applicationId);
   }
 
-  async adminUpdateStatus(id: string, adminId: string, dto: UpdateApplicationStatusDto): Promise<MarriageApplication> {
+  async adminUpdateStatus(
+    id: string,
+    adminId: string,
+    dto: UpdateApplicationStatusDto,
+  ): Promise<MarriageApplication> {
     const app = await this.adminFindOne(id);
     const prev = app.status;
 
@@ -373,7 +559,11 @@ export class MarriageService {
     return saved;
   }
 
-  async adminScheduleCeremony(id: string, adminId: string, dto: ScheduleCeremonyDto): Promise<MarriageApplication> {
+  async adminScheduleCeremony(
+    id: string,
+    adminId: string,
+    dto: ScheduleCeremonyDto,
+  ): Promise<MarriageApplication> {
     const app = await this.adminFindOne(id);
     app.ceremonyDate = new Date(dto.ceremonyDate);
     app.ceremonyScheduledBy = adminId;
@@ -384,7 +574,11 @@ export class MarriageService {
     return saved;
   }
 
-  async adminSaveWeddingPhoto(id: string, adminId: string, photoUrl: string): Promise<MarriageApplication> {
+  async adminSaveWeddingPhoto(
+    id: string,
+    adminId: string,
+    photoUrl: string,
+  ): Promise<MarriageApplication> {
     const app = await this.adminFindOne(id);
     // Photo can be uploaded during any active validation stage or after completion
     const uploadableStatuses: MarriageApplicationStatus[] = [
@@ -420,7 +614,13 @@ export class MarriageService {
       const prev = app.status;
       app.status = MarriageApplicationStatus.SUBMITTED;
       app.submittedAt = new Date();
-      await this.recordStatusChange(id, prev, MarriageApplicationStatus.SUBMITTED, adminId, 'Payment confirmed — application submitted');
+      await this.recordStatusChange(
+        id,
+        prev,
+        MarriageApplicationStatus.SUBMITTED,
+        adminId,
+        'Payment confirmed — application submitted',
+      );
     }
 
     const saved = await this.applicationRepo.save(app);
@@ -430,7 +630,10 @@ export class MarriageService {
 
   async adminIssueCertificate(id: string, adminId: string): Promise<MarriageApplication> {
     const app = await this.adminFindOne(id);
-    if (app.status !== MarriageApplicationStatus.APPROVED && app.status !== MarriageApplicationStatus.COMPLETED) {
+    if (
+      app.status !== MarriageApplicationStatus.APPROVED &&
+      app.status !== MarriageApplicationStatus.COMPLETED
+    ) {
       throw new BadRequestException('Certificate can only be issued for approved applications');
     }
     if (!app.weddingPhotoUrl) {
@@ -446,9 +649,136 @@ export class MarriageService {
     const prev = app.status;
     app.status = MarriageApplicationStatus.CLOSED;
     const saved = await this.applicationRepo.save(app);
-    await this.recordStatusChange(saved.id, prev, MarriageApplicationStatus.CLOSED, adminId, 'Certificate issued');
+    await this.recordStatusChange(
+      saved.id,
+      prev,
+      MarriageApplicationStatus.CLOSED,
+      adminId,
+      'Certificate issued',
+    );
     await this.sendStatusChangeSms(saved, prev);
     return saved;
+  }
+
+  async adminInitiateMomoPayment(
+    id: string,
+    adminId: string,
+    mobilePhone: string,
+  ): Promise<{
+    application: MarriageApplication;
+    transaction: MarriageTransaction;
+    gatewayResponse: unknown;
+  }> {
+    const app = await this.adminFindOne(id);
+
+    if (app.paymentStatus === PaymentStatus.PAID) {
+      throw new BadRequestException('Payment has already been completed for this application');
+    }
+
+    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+      throw new BadRequestException('MoMo (IntouchPay) credentials are not configured');
+    }
+
+    const requestTxnId = `MAR-${app.applicationNumber}-${Date.now()}`;
+    const callbackUrl = `${this.configService.get('app.apiUrl', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+
+    const result = await this.intouchPay.requestPayment({
+      username: creds.username,
+      partnerPassword: creds.partnerPassword,
+      accountNo: creds.accountNo,
+      amount: Number(app.amountDue),
+      mobilePhone,
+      transactionId: requestTxnId,
+      callbackUrl: creds.callbackUrl || callbackUrl,
+      gatewayUrl: creds.gatewayUrl || undefined,
+    });
+
+    // Update application payment status to processing
+    app.paymentStatus = PaymentStatus.PROCESSING;
+    app.paymentMethod = 'momo';
+    await this.applicationRepo.save(app);
+
+    // Create a MarriageTransaction record
+    const tx = this.transactionRepo.create({
+      applicationId: app.id,
+      method: 'momo',
+      providerRef: requestTxnId,
+      amount: app.amountDue,
+      status:
+        result.status === 'SUCCESSFUL'
+          ? 'completed'
+          : result.status === 'FAILED'
+            ? 'failed'
+            : 'pending',
+      metadata: {
+        gatewayTransactionId: result.transactionId,
+        responseCode: result.responseCode,
+        mobilePhone,
+        initiatedBy: adminId,
+      },
+    });
+    const savedTx = await this.transactionRepo.save(tx);
+
+    // If immediately successful (edge case), mark paid
+    if (result.status === 'SUCCESSFUL') {
+      app.paymentStatus = PaymentStatus.PAID;
+      app.amountPaid = app.amountDue;
+      savedTx.completedAt = new Date();
+      await this.applicationRepo.save(app);
+      await this.transactionRepo.save(savedTx);
+      await this.sendPaymentConfirmedSms(app);
+    }
+
+    return { application: app, transaction: savedTx, gatewayResponse: result };
+  }
+
+  async adminGetMomoPaymentStatus(
+    id: string,
+    transactionId: string,
+  ): Promise<{ status: string; responseCode: string; message: string }> {
+    const app = await this.adminFindOne(id);
+    const tx = await this.transactionRepo.findOne({
+      where: { id: transactionId, applicationId: id },
+    });
+    if (!tx) throw new NotFoundException('Transaction not found');
+
+    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+      throw new BadRequestException('IntouchPay credentials not configured');
+    }
+
+    const statusResult = await this.intouchPay.getTransactionStatus({
+      username: creds.username,
+      partnerPassword: creds.partnerPassword,
+      accountNo: creds.accountNo,
+      requestTransactionId: tx.providerRef ?? '',
+      transactionId: String((tx.metadata as Record<string, unknown>)?.gatewayTransactionId ?? ''),
+      gatewayBaseUrl: creds.gatewayUrl,
+    });
+
+    // Update records if status changed
+    if (statusResult.status !== 'PENDING' && tx.status === 'pending') {
+      tx.status = statusResult.status === 'SUCCESSFUL' ? 'completed' : 'failed';
+      tx.completedAt = new Date();
+      await this.transactionRepo.save(tx);
+
+      if (statusResult.status === 'SUCCESSFUL' && app.paymentStatus !== PaymentStatus.PAID) {
+        app.paymentStatus = PaymentStatus.PAID;
+        app.amountPaid = app.amountDue;
+        await this.applicationRepo.save(app);
+        await this.sendPaymentConfirmedSms(app);
+      } else if (statusResult.status === 'FAILED') {
+        app.paymentStatus = PaymentStatus.FAILED;
+        await this.applicationRepo.save(app);
+      }
+    }
+
+    return {
+      status: statusResult.status,
+      responseCode: statusResult.responseCode,
+      message: statusResult.message,
+    };
   }
 
   async adminGetStats() {
@@ -473,7 +803,10 @@ export class MarriageService {
 
   async publicVerify(applicationNumber: string) {
     const app = await this.applicationRepo.findOne({
-      where: { applicationNumber: applicationNumber.toUpperCase(), status: MarriageApplicationStatus.CLOSED },
+      where: {
+        applicationNumber: applicationNumber.toUpperCase(),
+        status: MarriageApplicationStatus.CLOSED,
+      },
     });
     if (!app) throw new NotFoundException('Certificate not found or not yet issued');
     return {
@@ -495,7 +828,13 @@ export class MarriageService {
     changedBy: string | null,
     notes: string | null,
   ) {
-    const history = this.statusHistoryRepo.create({ applicationId, fromStatus, toStatus, changedBy, notes });
+    const history = this.statusHistoryRepo.create({
+      applicationId,
+      fromStatus,
+      toStatus,
+      changedBy,
+      notes,
+    });
     return this.statusHistoryRepo.save(history);
   }
 
@@ -528,10 +867,16 @@ export class MarriageService {
   private async sendSubmissionSms(app: MarriageApplication): Promise<void> {
     if (!this.notifSettings.isSmsEnabled('marriage.submission')) return;
     const phone = await this.getRecipientPhone(app);
-    this.dispatchSms(phone, SmsTemplates.submission(app.applicationNumber, app.groomName, app.brideName));
+    this.dispatchSms(
+      phone,
+      SmsTemplates.submission(app.applicationNumber, app.groomName, app.brideName),
+    );
   }
 
-  private async sendStatusChangeSms(app: MarriageApplication, _previousStatus: string): Promise<void> {
+  private async sendStatusChangeSms(
+    app: MarriageApplication,
+    _previousStatus: string,
+  ): Promise<void> {
     if (!this.notifSettings.isSmsEnabled('marriage.status_change')) return;
     const phone = await this.getRecipientPhone(app);
 
@@ -543,13 +888,20 @@ export class MarriageService {
 
   private buildStatusMessage(app: MarriageApplication): string | null {
     switch (app.status) {
-      case 'under_review':         return SmsTemplates.underReview(app.applicationNumber);
-      case 'approved':             return SmsTemplates.approved(app.applicationNumber);
-      case 'rejected':             return SmsTemplates.rejected(app.applicationNumber, app.rejectionReason);
-      case 'amendments_requested': return SmsTemplates.amendmentsRequested(app.applicationNumber, app.amendmentsRequestedText);
-      case 'completed':            return SmsTemplates.completed(app.applicationNumber);
-      case 'closed':               return SmsTemplates.closed(app.applicationNumber);
-      default:                     return null;
+      case 'under_review':
+        return SmsTemplates.underReview(app.applicationNumber);
+      case 'approved':
+        return SmsTemplates.approved(app.applicationNumber);
+      case 'rejected':
+        return SmsTemplates.rejected(app.applicationNumber, app.rejectionReason);
+      case 'amendments_requested':
+        return SmsTemplates.amendmentsRequested(app.applicationNumber, app.amendmentsRequestedText);
+      case 'completed':
+        return SmsTemplates.completed(app.applicationNumber);
+      case 'closed':
+        return SmsTemplates.closed(app.applicationNumber);
+      default:
+        return null;
     }
   }
 
@@ -558,7 +910,10 @@ export class MarriageService {
     const phone = await this.getRecipientPhone(app);
     const date = app.ceremonyDate
       ? new Date(app.ceremonyDate).toLocaleDateString('en-GB', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
         })
       : 'TBC';
 

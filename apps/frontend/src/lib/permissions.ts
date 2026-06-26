@@ -66,6 +66,10 @@ export enum Permission {
   // ── AI Assistant ──────────────────────────────────────────────
   AI_SETTINGS_VIEW = 'ai_settings:view',
   AI_SETTINGS_MANAGE = 'ai_settings:manage',
+
+  // ── Payment Settings ──────────────────────────────────────────
+  PAYMENT_SETTINGS_VIEW = 'payment_settings:view',
+  PAYMENT_SETTINGS_MANAGE = 'payment_settings:manage',
 }
 
 export function hasPermission(userPermissions: string[], permission: Permission): boolean {

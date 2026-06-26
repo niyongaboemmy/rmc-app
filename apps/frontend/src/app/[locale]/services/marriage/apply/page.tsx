@@ -250,7 +250,7 @@ export default function MarriageApplyPage() {
 
       {/* Authenticated: full wizard */}
       {!isLoading && isAuthenticated && (
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
           <p className="text-gray-500 text-sm mb-6">{t('draftNote')}</p>
           <MarriageWizard />
         </main>
