@@ -334,7 +334,7 @@ function PaymentSuccessPopup({
               onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
             >
-              {isSuccess ? '🎉  Great, thanks!' : 'Dismiss'}
+              {isSuccess ? 'Great, thanks!' : 'Dismiss'}
             </button>
           </div>
 
