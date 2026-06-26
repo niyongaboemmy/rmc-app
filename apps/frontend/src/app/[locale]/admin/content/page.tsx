@@ -10,13 +10,13 @@ import {
   BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
-  ListFilter, Images, Sparkles, Share2, Newspaper,
+  ListFilter, Images, Sparkles, Share2, Newspaper, Mail,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
 type SectionType = 'crud' | 'edit';
-type PageLocation = 'Homepage' | 'About Page' | 'Blog Page';
+type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page';
 
 interface SectionConfig {
   id: string;
@@ -232,12 +232,26 @@ const SECTIONS: SectionConfig[] = [
     badge: 'bg-cyan-100 text-cyan-700',
     accentBar: 'bg-cyan-400',
   },
+  {
+    id: 'contact',
+    icon: Mail,
+    title: 'Contact Page',
+    description: 'Hero, address, phone, email, office hours and section headings on the Contact page.',
+    type: 'edit', itemLabel: null,
+    page: 'Contact Page', positionOrder: 0,
+    locationLabel: 'Contact Page · Main Content',
+    keywords: ['contact', 'address', 'phone', 'email', 'hours', 'communication', 'reach', 'office', 'mosque finder', 'get in touch'],
+    bg: 'bg-teal-50', iconColor: 'text-teal-600', border: 'border-teal-100',
+    badge: 'bg-teal-100 text-teal-700',
+    accentBar: 'bg-teal-400',
+  },
 ];
 
 const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string; description: string }[] = [
   { page: 'Homepage', icon: Home, color: 'text-rmc-green', description: 'Sections visible on the main landing page' },
   { page: 'About Page', icon: FileText, color: 'text-slate-600', description: 'Content on the /about page' },
   { page: 'Blog Page', icon: Newspaper, color: 'text-cyan-600', description: 'Articles on the public /blog page' },
+  { page: 'Contact Page', icon: Mail, color: 'text-teal-600', description: 'Content on the /contact page' },
 ];
 
 type Tab = 'sections' | 'gallery';
@@ -364,6 +378,7 @@ export default function ManageContentPage() {
                     { value: 'Homepage' as const, label: 'Homepage', icon: Home, count: SECTIONS.filter((s) => s.page === 'Homepage').length },
                     { value: 'About Page' as const, label: 'About', icon: FileText, count: SECTIONS.filter((s) => s.page === 'About Page').length },
                     { value: 'Blog Page' as const, label: 'Blog', icon: Newspaper, count: SECTIONS.filter((s) => s.page === 'Blog Page').length },
+                    { value: 'Contact Page' as const, label: 'Contact', icon: Mail, count: SECTIONS.filter((s) => s.page === 'Contact Page').length },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     return (

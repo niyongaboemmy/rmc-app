@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ShoppingBag, HandHeart, ShieldCheck, Plus } from 'lucide-react';
+import { ShoppingBag, HandHeart, ArrowRight, Plus } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
@@ -17,8 +17,9 @@ import {
 import { EVENTS } from './eventsBridge';
 import { SpiritualHeader } from './SpiritualHeader';
 import { CategoryGrid } from './CategoryGrid';
-// import { ZakatCalculator } from './ZakatCalculator'; // hidden for now
+import { ZakatCalculator } from './ZakatCalculator';
 import { ImpactBars } from './ImpactBars';
+import { GiftSummary } from './GiftSummary';
 import { CartDrawer } from './CartDrawer';
 import { AmountPicker } from './AmountPicker';
 import { SuccessState, type DonationSummary } from './SuccessState';
@@ -90,10 +91,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent" />
 
               <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                {/* Quick give + currency */}
-                <QuickGive currency={currency} onCurrency={setCurrency} onAdd={addItem} />
-
-                <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <div className="space-y-6 lg:col-span-2">
                     <div>
                       <h2 className="mb-1 text-xl font-bold text-gray-900">{t('sectionHeading')}</h2>
@@ -107,20 +105,33 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
                         initialEvent={initialEvent}
                       />
                     </div>
-                    {/* Zakat calculator hidden for now — restore when ready.
-                    <ZakatCalculator currency={currency} onAddZakat={addItem} /> */}
+                    <ImpactBars campaigns={liveCampaigns} />
                   </div>
 
-                  <aside className="space-y-6">
-                    <ImpactBars campaigns={liveCampaigns} />
-                    <div className="flex items-start gap-3 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/40 p-4">
-                      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-rmc-green" />
-                      <p className="text-[12px] leading-relaxed text-gray-600">
-                        {t.rich('reassurance', { b: (c) => <span className="font-semibold text-gray-900">{c}</span> })}
-                      </p>
+                  {/* Right rail: quick-give + the always-visible cart, sticky on
+                      desktop and stacked beneath the categories on mobile (a
+                      quick-checkout bar floats below). */}
+                  <aside className="lg:col-span-1">
+                    <div className="space-y-6 lg:sticky lg:top-24">
+                      <QuickGive currency={currency} onCurrency={setCurrency} onAdd={addItem} />
+                      <GiftSummary
+                        items={cart}
+                        currency={currency}
+                        total={total}
+                        niyyahLabel={niyyahLabel}
+                        onRemove={removeItem}
+                        onCheckout={() => setCartOpen(true)}
+                      />
                     </div>
                   </aside>
                 </div>
+              </div>
+            </section>
+
+            {/* Zakat calculator — a self-serve estimator at the foot of the page */}
+            <section className="relative bg-transparent pb-12 md:pb-16">
+              <div className="relative mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+                <ZakatCalculator currency={currency} onAddZakat={addItem} />
               </div>
             </section>
           </>
@@ -128,21 +139,26 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
       </main>
       <Footer />
 
-      {/* Floating cart button */}
+      {/* Mobile quick-checkout bar — keeps the running total in reach while
+          scrolling categories (desktop uses the sticky sidebar instead). */}
       {!summary && cart.length > 0 && !cartOpen && (
-        <button
-          type="button"
-          onClick={() => setCartOpen(true)}
-          className="fixed bottom-6 right-6 z-[60] flex items-center gap-2.5 rounded-full bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-rmc-green/30 transition-all duration-300 hover:bg-rmc-green-dark motion-safe:hover:scale-[1.03] animate-fade-up"
-        >
-          <span className="relative">
-            <ShoppingBag className="h-5 w-5" />
-            <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rmc-gold px-1 text-[10px] font-bold text-rmc-green-deep">
-              {cart.length}
+        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-gray-100 bg-white/95 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden animate-fade-up">
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            className="flex w-full items-center gap-3 rounded-full bg-rmc-green px-5 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors duration-300 hover:bg-rmc-green-dark"
+          >
+            <span className="relative shrink-0">
+              <ShoppingBag className="h-5 w-5" />
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rmc-gold px-1 text-[10px] font-bold text-rmc-green-deep">
+                {cart.length}
+              </span>
             </span>
-          </span>
-          {t('floatingCart')} · {money(currency, total)}
-        </button>
+            <span className="flex-1 text-left">{t('floatingCart')}</span>
+            <span className="tabular-nums">{money(currency, total)}</span>
+            <ArrowRight className="h-4 w-4 shrink-0 rtl:rotate-180" />
+          </button>
+        </div>
       )}
 
       <CartDrawer
@@ -191,46 +207,51 @@ function QuickGive({
   };
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rmc-green-light text-rmc-green ring-1 ring-rmc-green/15">
-            <HandHeart className="h-5 w-5" />
-          </span>
-          <div>
-            <h2 className="text-base font-bold text-gray-900">{t('quickGive.title')}</h2>
-            <p className="mt-0.5 text-[12.5px] text-gray-500">{t('quickGive.subtitle')}</p>
-          </div>
-        </div>
-        {/* Currency switcher */}
-        <div className="flex gap-1 self-start rounded-lg border border-gray-200 bg-gray-50 p-1 lg:self-auto">
-          {CURRENCY_KEYS.map((cur) => (
-            <button
-              key={cur}
-              type="button"
-              onClick={() => onCurrency(cur)}
-              aria-pressed={currency === cur}
-              className={`rounded-md px-2.5 py-1 text-xs font-bold transition-colors ${
-                currency === cur ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'
-              }`}
-            >
-              {cur}
-            </button>
-          ))}
+    <div className="overflow-hidden rounded-2xl border border-rmc-green/15 bg-white shadow-sm ring-1 ring-black/5">
+      {/* Accent header */}
+      <div className="relative flex items-center gap-3 overflow-hidden border-b border-rmc-green/10 bg-gradient-to-br from-rmc-green-light/70 via-rmc-green-light/30 to-white px-5 py-4">
+        <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-rmc-gold/10 blur-2xl" />
+        <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rmc-green text-white shadow-sm shadow-rmc-green/30">
+          <HandHeart className="h-5 w-5" />
+        </span>
+        <div className="relative min-w-0">
+          <h2 className="text-[15px] font-bold leading-tight text-gray-900">{t('quickGive.title')}</h2>
+          <p className="mt-0.5 text-[12px] leading-snug text-gray-500">{t('quickGive.subtitle')}</p>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <AmountPicker key={`${currency}-${resetKey}`} currency={currency} onAmount={onAmount} />
+      <div className="space-y-3.5 p-5">
+        {/* Currency switcher — sets the currency for the whole page */}
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400">
+            {t('quickGive.currency')}
+          </span>
+          <div className="flex shrink-0 gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+            {CURRENCY_KEYS.map((cur) => (
+              <button
+                key={cur}
+                type="button"
+                onClick={() => onCurrency(cur)}
+                aria-pressed={currency === cur}
+                className={`rounded-md px-2.5 py-1 text-xs font-bold transition-colors ${
+                  currency === cur ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'
+                }`}
+              >
+                {cur}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <AmountPicker key={`${currency}-${resetKey}`} currency={currency} onAmount={onAmount} />
+
         <button
           type="button"
           onClick={add}
           disabled={amount <= 0}
-          className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-sm transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="group flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
           {t('card.addToGift')}
         </button>
       </div>

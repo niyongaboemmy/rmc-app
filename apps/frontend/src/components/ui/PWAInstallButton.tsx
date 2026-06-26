@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, Smartphone, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { usePWAInstall } from '@/contexts/PWAInstallContext';
@@ -9,6 +9,13 @@ export function PWAInstallButton() {
   const t = useTranslations('footer.pwa');
   const { isReady, isInstalled, isIOS, triggerInstall } = usePWAInstall();
   const [showIOSModal, setShowIOSModal] = useState(false);
+
+  // Visibility depends on client-only signals (navigator/beforeinstallprompt),
+  // so the server always renders nothing. Gate on a mounted flag so the first
+  // client render matches the server and hydration doesn't mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
 
   // Hide when already installed or when Chrome prompt isn't available (non-iOS)
   if (isInstalled) return null;

@@ -29,7 +29,7 @@ const includeIcons = {
   witness: ShieldCheck,
 } as const;
 const includeKeys = ['nikah', 'certificate', 'guidance', 'witness'] as const;
-const stepKeys = ['s1', 's2', 's3', 's4', 's5'] as const;
+const stepKeys = ['s1', 's2', 's3', 's4', 's5', 's6', 's7'] as const;
 const requirementKeys = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'] as const;
 const faqKeys = ['f1', 'f2', 'f3', 'f4'] as const;
 
@@ -55,6 +55,7 @@ export default async function MarriageServicePage({
             src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=80"
             alt="Islamic marriage celebration"
             fill
+            sizes="100vw"
             className="object-cover object-center"
             priority
           />
@@ -98,6 +99,7 @@ export default async function MarriageServicePage({
                   src="https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1200&q=80"
                   alt="Wedding rings"
                   fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover object-center"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-rose-950/45 to-transparent" />
@@ -327,6 +329,7 @@ export default async function MarriageServicePage({
             src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=1600&q=80"
             alt="Begin your marriage application"
             fill
+            sizes="100vw"
             className="object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-rose-950/90 via-black/75 to-black/85" />

@@ -34,6 +34,11 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'RMC',
   },
+  // Standard counterpart to apple-mobile-web-app-capable (which Next emits via
+  // appleWebApp); the iOS-only tag is deprecated on its own in modern browsers.
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   icons: {
     icon: '/logo.webp',
     shortcut: '/logo.webp',

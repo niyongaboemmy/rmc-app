@@ -375,27 +375,35 @@
           }
         },
         "processTitle": "How it works",
-        "processSubtitle": "Five simple steps from application to certificate.",
+        "processSubtitle": "Seven simple steps from application to certificate.",
         "steps": {
           "s1": {
-            "title": "Register as a member",
-            "text": "Both partners create or confirm their RMC membership accounts."
+            "title": "Couple details",
+            "text": "Enter the groom and bride information exactly as it appears on their National IDs."
           },
           "s2": {
-            "title": "Submit your application",
-            "text": "Provide personal details, guardian (wali) information, and choose a preferred date."
+            "title": "Ceremony details",
+            "text": "Choose where and when you would like to hold the Nikah ceremony."
           },
           "s3": {
-            "title": "Document verification",
-            "text": "RMC reviews your identity documents and confirms eligibility for the Nikah."
+            "title": "Witnesses & guardian",
+            "text": "Provide two Muslim witnesses and the bride's Wali (guardian)."
           },
           "s4": {
-            "title": "Pre-marital counselling",
-            "text": "Attend a short guidance session with an RMC scholar before the ceremony."
+            "title": "Mahr & officiant",
+            "text": "Enter the agreed Mahr (dowry) and your preferred imam."
           },
           "s5": {
-            "title": "Nikah & certification",
-            "text": "The ceremony is performed and your official marriage certificate is issued."
+            "title": "Upload documents",
+            "text": "Attach the required identity documents and photos."
+          },
+          "s6": {
+            "title": "Pay & submit",
+            "text": "Choose a fee tier and payment method, then submit your application."
+          },
+          "s7": {
+            "title": "Nikah & certificate",
+            "text": "Once RMC reviews and approves your application, the ceremony is performed and your official marriage certificate is issued."
           }
         },
         "requirementsTitle": "What you'll need",
@@ -1093,7 +1101,8 @@
     "quickGive": {
       "title": "Give where it's needed most",
       "subtitle": "Know your amount? Add it in one tap — RMC directs it to the greatest need.",
-      "addToGift": "to gift"
+      "addToGift": "to gift",
+      "currency": "Currency"
     },
     "card": {
       "addToGift": "Donate",
@@ -1389,6 +1398,9 @@
       "checking": "Checking payment status…",
       "completed": "Payment received — thank you!",
       "failed": "Payment could not be confirmed. Please try again or use another method."
+    },
+    "summary": {
+      "continue": "Continue to payment"
     }
   },
   "schools": {

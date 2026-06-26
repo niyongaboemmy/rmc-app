@@ -526,8 +526,8 @@ function FinanceAdmin() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rmc-green/10 flex items-center justify-center shrink-0">
-            <Wallet className="w-5 h-5 text-rmc-green" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rmc-green to-rmc-green-deep flex items-center justify-center shrink-0 shadow-sm shadow-rmc-green/30">
+            <Wallet className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 leading-tight">Finance</h1>
@@ -608,8 +608,8 @@ function FinanceAdmin() {
                             {funded && <CheckCircle2 className="h-3.5 w-3.5" />}{pct}%
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                          <div className={cn('h-full rounded-full', funded ? 'bg-rmc-gold-light' : 'bg-rmc-green')} style={{ width: `${pct}%` }} />
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                          <div className={cn('h-full rounded-full transition-all duration-700', funded ? 'bg-gradient-to-r from-rmc-gold to-rmc-gold-light' : 'bg-gradient-to-r from-rmc-green to-rmc-green-dark')} style={{ width: `${pct}%` }} />
                         </div>
                         <p className="mt-1 text-[11px] text-gray-400 tabular-nums">
                           {c.currency} {formatMoney(raised)} / {formatMoney(c.targetAmount)}
@@ -1340,8 +1340,8 @@ function DetailField({ label, children }: { label: string; children: React.React
 
 function StatCard({ icon, color, label, value, sub }: { icon: React.ReactNode; color: string; label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mb-3', color)}>{icon}</div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm ring-1 ring-black/5 p-5 transition-all duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-md">
+      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mb-3 ring-1 ring-inset ring-black/5', color)}>{icon}</div>
       <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight">{value}</p>
       <p className="text-xs text-gray-500 mt-0.5">{label}</p>
       {sub && <p className="text-[11px] text-gray-400 mt-0.5 truncate">{sub}</p>}
@@ -1414,8 +1414,8 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored
     <div className="space-y-4">
       {canManage && (
         <div className="flex justify-end">
-          <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark transition-colors">
-            <Plus className="w-4 h-4" /> {t('programs.new')}
+          <button onClick={onNew} className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rmc-green text-white text-sm font-bold shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark transition-all duration-300">
+            <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" /> {t('programs.new')}
           </button>
         </div>
       )}
@@ -1431,7 +1431,7 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored
             const pct = fundedPercent(raised, c.targetAmount);
             const funded = pct >= 100;
             return (
-              <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm ring-1 ring-black/5 p-5 transition-all duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
                     <h3 className="font-semibold text-gray-900 leading-tight truncate">{c.title}</h3>
@@ -1466,8 +1466,8 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored
                     {pct}%
                   </span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                  <div className={cn('h-full rounded-full', funded ? 'bg-rmc-gold-light' : 'bg-rmc-green')} style={{ width: `${pct}%` }} />
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                  <div className={cn('h-full rounded-full transition-all duration-700', funded ? 'bg-gradient-to-r from-rmc-gold to-rmc-gold-light' : 'bg-gradient-to-r from-rmc-green to-rmc-green-dark')} style={{ width: `${pct}%` }} />
                 </div>
                 <p className="mt-1.5 text-[11px] text-gray-400">
                   {t('programs.raisedNote', { amount: formatCurrency(c.currency, raised) })}
