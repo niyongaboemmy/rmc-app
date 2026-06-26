@@ -59,8 +59,15 @@ jobs:
       # ── Patch APP_URL in server .env ─────────────
       - name: Set APP_URL on server
         run: |
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.PRODUCTION_HOST }} \
-            "sed -i 's|^APP_URL=.*|APP_URL=https://api.isengesho.com|' /opt/rmc-platform/apps/backend/.env"
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.PRODUCTION_HOST }} "
+            mkdir -p /opt/rmc-platform/apps/backend
+            touch /opt/rmc-platform/apps/backend/.env
+            if grep -q '^APP_URL=' /opt/rmc-platform/apps/backend/.env; then
+              sed -i 's|^APP_URL=.*|APP_URL=https://api.isengesho.com|' /opt/rmc-platform/apps/backend/.env
+            else
+              echo 'APP_URL=https://api.isengesho.com' >> /opt/rmc-platform/apps/backend/.env
+            fi
+          "
 
       # ── Rsync artifacts directly to EC2 ─────────
       - name: Rsync — backend dist
