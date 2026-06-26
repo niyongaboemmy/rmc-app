@@ -18,8 +18,16 @@ const socialLinks = [
  * Collapsible footer column — on mobile the details are hidden and the heading
  * acts as a toggle; on md+ it's always open and the toggle is inert.
  */
-function CollapsibleColumn({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+function CollapsibleColumn({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
       <button
@@ -124,8 +132,8 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Quick Links — collapsible on mobile, open column on md+ */}
-          <CollapsibleColumn title="Quick Links">
+          {/* Quick Links — collapsible on mobile but open by default, open column on md+ */}
+          <CollapsibleColumn title="Quick Links" defaultOpen>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.href}>
