@@ -36,6 +36,8 @@ export class DonationsAdminController {
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'sort', required: false, enum: ['date', 'amount', 'donor', 'status'] })
+  @ApiQuery({ name: 'order', required: false, enum: ['ASC', 'DESC'] })
   findAll(
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
@@ -44,6 +46,8 @@ export class DonationsAdminController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('sort') sort?: string,
+    @Query('order') order?: string,
   ) {
     return this.service.adminFindAll({
       dateFrom,
@@ -53,7 +57,18 @@ export class DonationsAdminController {
       search,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
+      sort,
+      order,
     });
+  }
+
+  @Get('daily')
+  @Permissions(Permission.DONATIONS_VIEW)
+  @ApiOperation({ summary: 'Daily completed-donation totals for the dashboard chart' })
+  @ApiQuery({ name: 'days', required: false, type: Number })
+  @ApiQuery({ name: 'currency', required: false })
+  getDaily(@Query('days') days?: string, @Query('currency') currency?: string) {
+    return this.service.adminGetDailyReceived(days ? parseInt(days, 10) : 30, currency || 'RWF');
   }
 
   @Get('stats')

@@ -10,7 +10,6 @@ import { TendersSection } from '@/components/home/TendersSection';
 import { StatsSection } from '@/components/home/StatsSection';
 import { PartnersSection } from '@/components/home/PartnersSection';
 import { SocialMediaSection } from '@/components/home/SocialMediaSection';
-import { AskAIButton } from '@/components/home/AskAIButton';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 
@@ -75,9 +74,6 @@ export default function HomePage() {
       </main>
 
       <Footer />
-
-      {/* 11. Ask AI — floating widget */}
-      <AskAIButton />
     </div>
   );
 }

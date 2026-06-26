@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, MessageSquare, Send, History, Bell, CreditCard, Zap } from 'lucide-react';
+import { Settings, MessageSquare, Send, History, Bell, Sparkles, CreditCard, Zap } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { settingsApi } from '@/lib/settingsApi';
 import { SmsConfigTab } from './_components/SmsConfigTab';
 import { SmsTestingTab } from './_components/SmsTestingTab';
 import { SmsHistoryTab } from './_components/SmsHistoryTab';
+import { AiSettingsTab } from './_components/AiSettingsTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { PaymentMethodsTab } from './_components/payment/PaymentMethodsTab';
 import { PaymentTypesTab } from './_components/payment/PaymentTypesTab';
@@ -27,9 +28,10 @@ interface TopTab {
 }
 
 const TOP_TABS: TopTab[] = [
-  { key: 'sms',      label: 'SMS Gateway',      icon: MessageSquare, permission: Permission.SMS_CONFIG_VIEW              },
-  { key: 'payments', label: 'Payment Settings',  icon: CreditCard,    permission: Permission.PAYMENT_SETTINGS_VIEW       },
-  { key: 'notifications', label: 'Notifications', icon: Bell,         permission: Permission.NOTIFICATION_SETTINGS_VIEW  },
+  { key: 'ai',            label: 'AI Assistant',     icon: Sparkles,      permission: Permission.AI_SETTINGS_VIEW            },
+  { key: 'sms',           label: 'SMS Gateway',      icon: MessageSquare, permission: Permission.SMS_CONFIG_VIEW              },
+  { key: 'payments',      label: 'Payment Settings', icon: CreditCard,    permission: Permission.PAYMENT_SETTINGS_VIEW       },
+  { key: 'notifications', label: 'Notifications',    icon: Bell,          permission: Permission.NOTIFICATION_SETTINGS_VIEW  },
 ];
 
 // ─── SMS subtab definition ─────────────────────────────────────────────────────
@@ -104,6 +106,7 @@ export default function SettingsPage() {
           </nav>
         </div>
 
+        {activeTab === 'ai'            && <AiSettingsTab />}
         {activeTab === 'sms'           && <SmsGatewaySection />}
         {activeTab === 'payments'      && <PaymentSettingsSection />}
         {activeTab === 'notifications' && <NotificationsTab />}

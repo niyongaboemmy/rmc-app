@@ -16,8 +16,20 @@ const socialLinks = [
   { Icon: Youtube, href: '#', label: 'YouTube' },
 ];
 
-function CollapsibleColumn({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+/**
+ * Collapsible footer column — on mobile the details are hidden and the heading
+ * acts as a toggle; on md+ it's always open and the toggle is inert.
+ */
+function CollapsibleColumn({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
       <button
@@ -126,8 +138,8 @@ export function Footer() {
             <PWAInstallButton />
           </div>
 
-          {/* Quick Links */}
-          <CollapsibleColumn title={t('quickLinks')}>
+          {/* Quick Links — collapsible on mobile but open by default, open column on md+ */}
+          <CollapsibleColumn title={t('quickLinks')} defaultOpen>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.href}>

@@ -296,6 +296,10 @@ export const marriageApi = {
       paymentStatus?: string;
       venueType?: string;
       search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sort?: 'date' | 'amount' | 'couple' | 'payment' | 'status';
+      order?: 'ASC' | 'DESC';
       page?: number;
       limit?: number;
     }): Promise<AdminApplicationsResult> => {

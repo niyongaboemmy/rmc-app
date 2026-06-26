@@ -77,7 +77,11 @@ export enum Permission {
   NOTIFICATION_SETTINGS_VIEW = 'notification_settings:view',
   NOTIFICATION_SETTINGS_MANAGE = 'notification_settings:manage',
 
-  // Payment Settings
+  // ── AI Assistant Settings ─────────────────────────────────────────
+  AI_SETTINGS_VIEW = 'ai_settings:view',
+  AI_SETTINGS_MANAGE = 'ai_settings:manage',
+
+  // ── Payment Settings ──────────────────────────────────────────────
   PAYMENT_SETTINGS_VIEW = 'payment_settings:view',
   PAYMENT_SETTINGS_MANAGE = 'payment_settings:manage',
 }

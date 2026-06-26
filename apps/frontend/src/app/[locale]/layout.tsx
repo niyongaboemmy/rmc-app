@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { DonationCartProvider } from '@/contexts/DonationCartContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAAutoInstallPrompt } from '@/components/ui/PWAAutoInstallPrompt';
+import { AskAIButton } from '@/components/home/AskAIButton';
 import '../globals.css';
 
 // Poppins — perfect circular geometric bowls, zero serifs, zero sharp angles.
@@ -62,6 +63,8 @@ export default function LocaleLayout({
               <DonationCartProvider>
                 {children}
                 <PWAAutoInstallPrompt />
+                {/* Floating "Ask AI" assistant — shown on every public page */}
+                <AskAIButton />
               </DonationCartProvider>
             </ToastProvider>
           </AuthProvider>
