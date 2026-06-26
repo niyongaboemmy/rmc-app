@@ -71,6 +71,28 @@ export class MarriageService {
 
   // ── Marriage Fee Lookup ────────────────────────────────────────────────────
 
+  /** Returns both fee tiers for public display (venue selector and payment step). */
+  async getMarriageFees(): Promise<{
+    mosque: { amount: number; label: string; description: string };
+    outside: { amount: number; label: string; description: string };
+  }> {
+    const rates = await this.paymentSettings.getActiveRates(PaymentTypeKey.MARRIAGE_FEE);
+    const mosqueRate = rates.find((r) => r.code === MOSQUE_RATE_CODE);
+    const outsideRate = rates.find((r) => r.code === OUTSIDE_MOSQUE_CODE);
+    return {
+      mosque: {
+        amount: mosqueRate ? Number(mosqueRate.amount) : MOSQUE_FEE_FALLBACK,
+        label: mosqueRate?.name ?? 'Mosque Ceremony',
+        description: mosqueRate?.description ?? 'Nikah ceremony inside the mosque',
+      },
+      outside: {
+        amount: outsideRate ? Number(outsideRate.amount) : OUTSIDE_FEE_FALLBACK,
+        label: outsideRate?.name ?? 'Outside Mosque',
+        description: outsideRate?.description ?? 'Nikah ceremony outside mosque premises',
+      },
+    };
+  }
+
   /** Returns the configured fee for the given venue type, falling back to constants. */
   private async resolveMarriageFee(venueType: VenueType): Promise<number> {
     const rateCode = venueType === VenueType.MOSQUE ? MOSQUE_RATE_CODE : OUTSIDE_MOSQUE_CODE;
@@ -253,29 +275,23 @@ export class MarriageService {
       );
     }
 
+    // MoMo payments must be confirmed by IntouchPay callback before submission
+    if (app.paymentMethod === 'momo' && app.paymentStatus !== PaymentStatus.PAID) {
+      throw new BadRequestException(
+        'Mobile Money payment must be completed before submitting the application.',
+      );
+    }
+
     const prevStatus = app.status;
     app.status = MarriageApplicationStatus.SUBMITTED;
     app.submittedAt = new Date();
 
-    // Payment is auto-settled on submission — every application is marked paid
-    // (no separate payment / confirmation step).
-    const alreadyPaid = app.paymentStatus === PaymentStatus.PAID;
-    app.paymentStatus = PaymentStatus.PAID;
-    app.amountPaid = app.amountDue;
+    // Bank/cash payments are confirmed by admin after submission
+    if (app.paymentStatus === PaymentStatus.UNPAID) {
+      app.paymentStatus = PaymentStatus.PENDING_CASH;
+    }
 
     const saved = await this.applicationRepo.save(app);
-
-    if (!alreadyPaid) {
-      const tx = this.transactionRepo.create({
-        applicationId: saved.id,
-        method: app.paymentMethod ?? 'auto',
-        amount: app.amountDue,
-        status: 'completed',
-        completedAt: new Date(),
-        metadata: { auto: true, reason: 'Auto-marked paid on submission' },
-      });
-      await this.transactionRepo.save(tx);
-    }
 
     await this.recordStatusChange(
       saved.id,
@@ -286,6 +302,89 @@ export class MarriageService {
     );
     await this.sendSubmissionSms(saved);
     return saved;
+  }
+
+  async initiateUserMomoPayment(
+    id: string,
+    applicantId: string,
+    mobilePhone: string,
+  ): Promise<{
+    application: MarriageApplication;
+    transaction: MarriageTransaction;
+    gatewayRef: string | null;
+    responseCode: string;
+    message: string;
+  }> {
+    const app = await this.findOwnApplication(id, applicantId);
+
+    if (app.paymentStatus === PaymentStatus.PAID) {
+      throw new BadRequestException('Payment has already been completed for this application');
+    }
+    if (
+      app.status !== MarriageApplicationStatus.DRAFT &&
+      app.status !== MarriageApplicationStatus.AMENDMENTS_REQUESTED
+    ) {
+      throw new BadRequestException('Application must be in draft status to initiate payment');
+    }
+
+    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+      throw new BadRequestException('MoMo (IntouchPay) credentials are not configured');
+    }
+
+    const requestTxnId = `MAR-${app.applicationNumber}-${Date.now()}`;
+    const fallbackCallback = `${this.configService.get('app.apiUrl', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+
+    const result = await this.intouchPay.requestPayment({
+      username: creds.username,
+      partnerPassword: creds.partnerPassword,
+      accountNo: creds.accountNo,
+      amount: Number(app.amountDue),
+      mobilePhone,
+      transactionId: requestTxnId,
+      callbackUrl: creds.callbackUrl || fallbackCallback,
+      gatewayUrl: creds.gatewayUrl || undefined,
+    });
+
+    app.paymentStatus = PaymentStatus.PROCESSING;
+    app.paymentMethod = 'momo';
+    await this.applicationRepo.save(app);
+
+    const tx = this.transactionRepo.create({
+      applicationId: app.id,
+      method: 'momo',
+      providerRef: requestTxnId,
+      amount: app.amountDue,
+      status:
+        result.status === 'SUCCESSFUL'
+          ? 'completed'
+          : result.status === 'FAILED'
+            ? 'failed'
+            : 'pending',
+      metadata: {
+        gatewayTransactionId: result.transactionId,
+        responseCode: result.responseCode,
+        mobilePhone,
+      },
+    });
+    const savedTx = await this.transactionRepo.save(tx);
+
+    if (result.status === 'SUCCESSFUL') {
+      app.paymentStatus = PaymentStatus.PAID;
+      app.amountPaid = app.amountDue;
+      savedTx.completedAt = new Date();
+      await this.applicationRepo.save(app);
+      await this.transactionRepo.save(savedTx);
+      await this.sendPaymentConfirmedSms(app);
+    }
+
+    return {
+      application: app,
+      transaction: savedTx,
+      gatewayRef: result.transactionId ?? null,
+      responseCode: result.responseCode,
+      message: result.message,
+    };
   }
 
   async cancel(id: string, applicantId: string): Promise<MarriageApplication> {

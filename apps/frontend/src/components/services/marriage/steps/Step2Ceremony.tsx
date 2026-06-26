@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { WizardFormData } from '../MarriageWizard';
+import { MarriageFees } from '@/lib/marriageApi';
 import { useState } from 'react';
 
 const PROVINCE_KEYS = ['kigali', 'north', 'south', 'east', 'west'] as const;
@@ -45,6 +46,7 @@ interface Props {
   initialData: Partial<WizardFormData>;
   onNext: (data: Partial<WizardFormData>) => void;
   onBack: () => void;
+  fees?: MarriageFees;
 }
 
 function VenueOption({
@@ -90,7 +92,7 @@ function VenueOption({
   );
 }
 
-export function Step2Ceremony({ initialData, onNext, onBack }: Props) {
+export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
   const [venue, setVenue] = useState<'mosque' | 'outside' | undefined>(initialData.venueType);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
@@ -124,16 +126,16 @@ export function Step2Ceremony({ initialData, onNext, onBack }: Props) {
             selected={venue === 'mosque'}
             onChange={(v) => { setVenue(v); setValue('venueType', v); }}
             icon={<Building2 className="w-4 h-4" />}
-            title="At a mosque"
-            fee="30,000 RWF"
+            title={fees?.mosque.label ?? 'At a mosque'}
+            fee={fees ? `${fees.mosque.amount.toLocaleString()} RWF` : '30,000 RWF'}
           />
           <VenueOption
             value="outside"
             selected={venue === 'outside'}
             onChange={(v) => { setVenue(v); setValue('venueType', v); }}
             icon={<MapPin className="w-4 h-4" />}
-            title="Outside a mosque"
-            fee="200,000 RWF"
+            title={fees?.outside.label ?? 'Outside a mosque'}
+            fee={fees ? `${fees.outside.amount.toLocaleString()} RWF` : '200,000 RWF'}
           />
         </div>
         {errors.venueType && <p className="mt-2 text-xs text-red-500">{errors.venueType.message}</p>}

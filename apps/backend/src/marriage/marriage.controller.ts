@@ -39,6 +39,17 @@ export class MarriageController {
     return this.service.submit(id, user.id);
   }
 
+  @Post('applications/:id/payment/initiate-momo')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Initiate MoMo (IntouchPay) payment for a draft application' })
+  initiateMomoPayment(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { mobilePhone: string },
+  ) {
+    return this.service.initiateUserMomoPayment(id, user.id, dto.mobilePhone);
+  }
+
   @Post('applications/:id/documents')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Save an uploaded document record for an application' })
@@ -77,6 +88,13 @@ export class MarriageController {
   @ApiOperation({ summary: 'Get own application by UUID' })
   getOne(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.findOwnApplication(id, user.id);
+  }
+
+  @Get('fees')
+  @Public()
+  @ApiOperation({ summary: 'Get current marriage fee tiers (public)' })
+  getMarriageFees() {
+    return this.service.getMarriageFees();
   }
 
   @Get('public/verify/:applicationNumber')

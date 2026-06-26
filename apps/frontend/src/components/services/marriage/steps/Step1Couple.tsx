@@ -70,7 +70,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
       {/* Groom */}
       <div>
         <SectionLabel color="blue">Groom</SectionLabel>
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-3 gap-4">
           <Input
             label="Full name"
             required
@@ -85,14 +85,12 @@ export function Step1Couple({ initialData, onNext }: Props) {
             {...nidProps}
             {...register('groomNid')}
           />
-          <div className="sm:col-span-2">
-            <PhoneInput
-              label="Phone number"
-              required
-              error={errors.groomPhone?.message}
-              {...register('groomPhone')}
-            />
-          </div>
+          <PhoneInput
+            label="Phone number"
+            required
+            error={errors.groomPhone?.message}
+            {...register('groomPhone')}
+          />
         </div>
       </div>
 
@@ -101,7 +99,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
       {/* Bride */}
       <div>
         <SectionLabel color="rose">Bride</SectionLabel>
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-3 gap-4">
           <Input
             label="Full name"
             required
@@ -116,14 +114,12 @@ export function Step1Couple({ initialData, onNext }: Props) {
             {...nidProps}
             {...register('brideNid')}
           />
-          <div className="sm:col-span-2">
-            <PhoneInput
-              label="Phone number"
-              required
-              error={errors.bridePhone?.message}
-              {...register('bridePhone')}
-            />
-          </div>
+          <PhoneInput
+            label="Phone number"
+            required
+            error={errors.bridePhone?.message}
+            {...register('bridePhone')}
+          />
         </div>
       </div>
 
