@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { X, Maximize2, Star, ArrowRight } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
@@ -321,9 +322,10 @@ function EntryModal({
     };
   }, [onClose]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-overlay-in"
+      className="fixed inset-0 z-[99990] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-overlay-in"
       onClick={onClose}
     >
       <div
@@ -374,7 +376,8 @@ function EntryModal({
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

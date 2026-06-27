@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -160,8 +161,9 @@ function ActionModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-gray-900">{title}</h3>
@@ -202,7 +204,8 @@ function ActionModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -255,9 +258,10 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
     return () => window.removeEventListener('keydown', handler);
   }, [docs.length, onClose]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[99999] flex flex-col bg-black/95 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Top bar */}
@@ -375,7 +379,8 @@ function Lightbox({ docs, index: initialIndex, onClose, onVerify, verifyingId }:
           ))}
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 

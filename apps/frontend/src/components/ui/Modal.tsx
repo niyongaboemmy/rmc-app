@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, ReactNode, useState } from 'react';
+import React, { useEffect, useRef, ReactNode, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Button } from './Button';
@@ -24,6 +24,14 @@ const sizeClasses = {
   '2xl': 'max-w-4xl',
   '3xl': 'max-w-6xl',
 };
+
+/** Lightweight portal wrapper — renders children at document.body, escaping any stacking context */
+export function ModalPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted || typeof document === 'undefined') return null;
+  return createPortal(<>{children}</>, document.body);
+}
 
 export function Modal({ open, isOpen, onClose, children, size = 'md', className, zIndex }: ModalProps) {
   const visible = open ?? isOpen ?? false;

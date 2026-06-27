@@ -12,7 +12,6 @@ import {
   NotFoundException,
   HttpCode,
   HttpStatus,
-  Logger,
   Res,
   Headers,
 } from '@nestjs/common';
@@ -31,6 +30,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
 import { StorageService } from './storage.service';
+import { UploadSettingsService } from './upload-settings.service';
 import { PresignedUploadDto } from './dto/presigned-upload.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles, Role } from '../common/decorators/roles.decorator';
@@ -39,18 +39,11 @@ import { Roles, Role } from '../common/decorators/roles.decorator';
 @ApiBearerAuth()
 @Controller()
 export class StorageController {
-  private readonly logger = new Logger(StorageController.name);
-  private readonly allowedMimeTypes: string[];
-
-  private readonly maxFileSize: number;
-
   constructor(
     private readonly storageService: StorageService,
     private readonly config: ConfigService,
-  ) {
-    this.allowedMimeTypes = this.config.get<string[]>('app.allowedMimeTypes') || [];
-    this.maxFileSize = this.config.get<number>('app.maxFileSize') || 10 * 1024 * 1024;
-  }
+    private readonly uploadSettings: UploadSettingsService,
+  ) {}
 
   // ── Upload ────────────────────────────────────────────────────────────────
 
@@ -58,7 +51,7 @@ export class StorageController {
   // Bulk gallery uploads fire several requests per image (3 versions each). Skip
   // the aggressive per-second burst limiter; the 'medium' window still applies.
   @SkipThrottle({ short: true })
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 524288000 } }))
   @ApiOperation({ summary: 'Upload a file (server-side multipart)' })
   @ApiConsumes('multipart/form-data')
   @ApiQuery({ name: 'folder', required: false, example: 'avatars' })
@@ -79,11 +72,18 @@ export class StorageController {
     if (!file) {
       throw new BadRequestException({ code: 'NO_FILE', message: 'No file provided' });
     }
-    if (this.allowedMimeTypes.length && !this.allowedMimeTypes.includes(file.mimetype)) {
+    const constraints = await this.uploadSettings.getConstraints();
+    if (constraints.allowedMimeTypes.length && !constraints.allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException({
         code: 'UNSUPPORTED_MIME_TYPE',
         message: `MIME type "${file.mimetype}" is not allowed`,
-        details: [`Allowed: ${this.allowedMimeTypes.join(', ')}`],
+        details: [`Allowed: ${constraints.allowedMimeTypes.join(', ')}`],
+      });
+    }
+    if (constraints.maxFileSize > 0 && file.size > constraints.maxFileSize) {
+      throw new BadRequestException({
+        code: 'FILE_TOO_LARGE',
+        message: `File size ${file.size} exceeds the limit of ${constraints.maxFileSize} bytes`,
       });
     }
 
@@ -109,11 +109,12 @@ export class StorageController {
   @ApiResponse({ status: 400, description: 'Unsupported MIME type' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async presignedUpload(@Body() dto: PresignedUploadDto) {
-    if (this.allowedMimeTypes.length && !this.allowedMimeTypes.includes(dto.mimeType)) {
+    const constraints = await this.uploadSettings.getConstraints();
+    if (constraints.allowedMimeTypes.length && !constraints.allowedMimeTypes.includes(dto.mimeType)) {
       throw new BadRequestException({
         code: 'UNSUPPORTED_MIME_TYPE',
         message: `MIME type "${dto.mimeType}" is not allowed`,
-        details: [`Allowed: ${this.allowedMimeTypes.join(', ')}`],
+        details: [`Allowed: ${constraints.allowedMimeTypes.join(', ')}`],
       });
     }
 

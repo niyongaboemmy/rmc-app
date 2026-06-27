@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -697,8 +698,9 @@ function UploadRow({ item, onRemove }: { item: UploadItem; onRemove: () => void 
 
 function AttachmentPreviewModal({ att, onClose }: { att: AnnouncementAttachment; onClose: () => void }) {
   const url = fileUrl(att.key);
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[99990] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 shrink-0">
@@ -733,6 +735,7 @@ function AttachmentPreviewModal({ att, onClose }: { att: AnnouncementAttachment;
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
