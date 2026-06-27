@@ -30,6 +30,8 @@ import { ContactMessagesModule } from './contact-messages/contact-messages.modul
 import { IntegrationsModule } from './integrations/integrations.module';
 import { PaymentSettingsModule } from './payment-settings/payment-settings.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { DriveModule } from './drive/drive.module';
+import { UploadSettingsModule } from './upload-settings/upload-settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -70,6 +72,8 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     IntegrationsModule,
     PaymentSettingsModule,
     WebhooksModule,
+    DriveModule,
+    UploadSettingsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

@@ -88,6 +88,21 @@ export enum Permission {
   // ── Subscribers / Newsletter ──────────────────────────────────────
   SUBSCRIBERS_VIEW = 'subscribers:view',
   SUBSCRIBERS_MANAGE = 'subscribers:manage',
+
+  // ── Drive (File Manager) ──────────────────────────────────────────────────
+  DRIVE_VIEW = 'drive:view',
+  DRIVE_CREATE = 'drive:create',
+  DRIVE_EDIT = 'drive:edit',
+  DRIVE_DELETE = 'drive:delete',
+  DRIVE_SHARE = 'drive:share',
+  DRIVE_ADMIN = 'drive:admin',
+
+  // ── Upload Settings ────────────────────────────────────────────────
+  UPLOAD_SETTINGS_VIEW = 'upload_settings:view',
+  UPLOAD_SETTINGS_MANAGE = 'upload_settings:manage',
+
+  // ── User Drive (admin view of any user's drive) ────────────────────
+  USERS_VIEW_DRIVE = 'users:view_drive',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);
