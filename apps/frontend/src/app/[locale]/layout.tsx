@@ -3,6 +3,7 @@ import { Poppins, Noto_Naskh_Arabic } from 'next/font/google';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { DonationCartProvider } from '@/contexts/DonationCartContext';
+import { PWAInstallProvider } from '@/contexts/PWAInstallContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAAutoInstallPrompt } from '@/components/ui/PWAAutoInstallPrompt';
 import { AskAIButton } from '@/components/home/AskAIButton';
@@ -59,14 +60,16 @@ export default function LocaleLayout({
       <body className={isRtl ? 'font-arabic' : 'font-latin'}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            <ToastProvider position="top-right">
-              <DonationCartProvider>
-                {children}
-                <PWAAutoInstallPrompt />
-                {/* Floating "Ask AI" assistant — shown on every public page */}
-                <AskAIButton />
-              </DonationCartProvider>
-            </ToastProvider>
+            <PWAInstallProvider>
+              <ToastProvider position="top-right">
+                <DonationCartProvider>
+                  {children}
+                  <PWAAutoInstallPrompt />
+                  {/* Floating "Ask AI" assistant — shown on every public page */}
+                  <AskAIButton />
+                </DonationCartProvider>
+              </ToastProvider>
+            </PWAInstallProvider>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>
