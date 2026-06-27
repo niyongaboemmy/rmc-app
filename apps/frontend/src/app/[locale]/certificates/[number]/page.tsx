@@ -154,7 +154,7 @@ export default function CertificatePage() {
   // ── Ready — preview + actions ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Heading + actions */}
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <Link
@@ -192,14 +192,14 @@ export default function CertificatePage() {
           </div>
         </div>
 
-        {/* PDF preview (A4 landscape) */}
+        {/* PDF preview (A4 landscape) — fit to width, no viewer chrome for a clean, large view */}
         <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
           <iframe
             ref={iframeRef}
-            src={pdfUrl}
+            src={`${pdfUrl}#toolbar=0&navpanes=0&statusbar=0&view=FitH`}
             title="Official Marriage Certificate"
-            className="w-full bg-gray-200"
-            style={{ aspectRatio: '842 / 595', minHeight: '60vh' }}
+            className="w-full bg-white"
+            style={{ aspectRatio: '842 / 595', minHeight: '55vh' }}
           />
         </div>
 
