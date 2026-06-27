@@ -88,10 +88,15 @@ export class StorageService implements OnModuleInit {
 
     // The S3 client is cheap to construct (no network) — build it even in disk
     // mode so the type stays non-null; it's simply never used when driver=disk.
+    // requestChecksumCalculation / responseChecksumValidation: newer SDK versions
+    // default to 'WHEN_SUPPORTED' which adds x-amz-checksum-* headers that some
+    // MinIO versions reject with HTTP 400. Force 'WHEN_REQUIRED' for compatibility.
     const s3Config: S3ClientConfig = {
       region,
       credentials: { accessKeyId, secretAccessKey },
-      ...(endpoint ? { endpoint, forcePathStyle: !!forcePathStyle } : {}),
+      requestChecksumCalculation: 'WHEN_REQUIRED' as any,
+      responseChecksumValidation: 'WHEN_REQUIRED' as any,
+      ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
     };
     this.s3 = new S3Client(s3Config);
   }
@@ -120,12 +125,25 @@ export class StorageService implements OnModuleInit {
     try {
       await this.s3.send(new HeadBucketCommand({ Bucket: this.bucket }));
       this.logger.log(`Bucket "${this.bucket}" exists`);
-    } catch {
+    } catch (headErr: any) {
+      const status = headErr?.$metadata?.httpStatusCode;
+      // 404 = bucket doesn't exist → create it. Anything else (403, connection error) → log and bail.
+      if (status !== 404 && status !== 301) {
+        this.logger.error(
+          `Cannot access bucket "${this.bucket}" (HTTP ${status ?? 'unknown'}): ` +
+          `check S3_ENDPOINT, S3_BUCKET_NAME, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY`,
+          headErr,
+        );
+        return;
+      }
       try {
         await this.s3.send(new CreateBucketCommand({ Bucket: this.bucket }));
         this.logger.log(`Bucket "${this.bucket}" created`);
-      } catch (err) {
-        this.logger.error(`Failed to create bucket "${this.bucket}"`, err);
+      } catch (createErr: any) {
+        this.logger.error(
+          `Failed to create bucket "${this.bucket}": ` +
+          `${createErr?.message ?? createErr}`,
+        );
       }
     }
   }
@@ -147,6 +165,9 @@ export class StorageService implements OnModuleInit {
       return { key, bucket: 'local', size: buffer.length, mimeType, originalName };
     }
 
+    // S3/MinIO metadata values must be ASCII. Encode non-ASCII filenames.
+    const safeOriginalName = encodeURIComponent(originalName);
+
     try {
       await this.s3.send(
         new PutObjectCommand({
@@ -154,9 +175,10 @@ export class StorageService implements OnModuleInit {
           Key: key,
           Body: buffer,
           ContentType: mimeType,
-          ContentDisposition: `inline; filename="${originalName}"`,
+          // RFC 5987 encoding for non-ASCII filenames
+          ContentDisposition: `inline; filename*=UTF-8''${safeOriginalName}`,
           Metadata: {
-            originalName,
+            originalName: safeOriginalName,
             uploadedAt: new Date().toISOString(),
           },
         }),
