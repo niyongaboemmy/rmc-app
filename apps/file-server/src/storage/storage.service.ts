@@ -147,19 +147,29 @@ export class StorageService implements OnModuleInit {
       return { key, bucket: 'local', size: buffer.length, mimeType, originalName };
     }
 
-    await this.s3.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: buffer,
-        ContentType: mimeType,
-        ContentDisposition: `inline; filename="${originalName}"`,
-        Metadata: {
-          originalName,
-          uploadedAt: new Date().toISOString(),
-        },
-      }),
-    );
+    try {
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mimeType,
+          ContentDisposition: `inline; filename="${originalName}"`,
+          Metadata: {
+            originalName,
+            uploadedAt: new Date().toISOString(),
+          },
+        }),
+      );
+    } catch (err: any) {
+      const status = err?.$metadata?.httpStatusCode;
+      const code = err?.Code || err?.name || 'S3Error';
+      const msg = status
+        ? `S3 upload failed (HTTP ${status} ${code}): check bucket permissions and credentials`
+        : `S3 upload failed (${code}): check S3 endpoint, bucket, and credentials`;
+      this.logger.error(msg, err);
+      throw new Error(msg);
+    }
 
     this.logger.log(`Uploaded: ${key} (${buffer.length} bytes)`);
 

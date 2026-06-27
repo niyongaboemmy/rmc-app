@@ -9,6 +9,7 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  InternalServerErrorException,
   NotFoundException,
   HttpCode,
   HttpStatus,
@@ -87,12 +88,20 @@ export class StorageController {
       });
     }
 
-    const result = await this.storageService.upload(
-      file.buffer,
-      file.originalname,
-      file.mimetype,
-      folder || 'uploads',
-    );
+    let result: Awaited<ReturnType<StorageService['upload']>>;
+    try {
+      result = await this.storageService.upload(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+        folder || 'uploads',
+      );
+    } catch (err: any) {
+      throw new InternalServerErrorException({
+        code: 'STORAGE_ERROR',
+        message: err?.message ?? 'Failed to store file — check storage configuration',
+      });
+    }
 
     return {
       key: result.key,
