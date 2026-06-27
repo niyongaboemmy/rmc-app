@@ -271,6 +271,35 @@ function formatMahr(app: MarriageApplication): string {
   return app.mahrDescription ?? '';
 }
 
+// Official Rwanda district codes (NISR ordering, 01–30). The certificate number
+// uses the district code in place of the "MR" application-type segment, i.e.
+// RMC-MR-YYYYMM-NNNNN  →  RMC-<districtCode>-YYYYMM-NNNNN.
+const DISTRICT_CODES: Record<string, string> = {
+  // Kigali City
+  nyarugenge: '01', gasabo: '02', kicukiro: '03',
+  // Southern Province
+  nyanza: '04', gisagara: '05', nyaruguru: '06', huye: '07', nyamagabe: '08', ruhango: '09', muhanga: '10', kamonyi: '11',
+  // Western Province
+  karongi: '12', rutsiro: '13', rubavu: '14', nyabihu: '15', ngororero: '16', rusizi: '17', nyamasheke: '18',
+  // Northern Province
+  rulindo: '19', gakenke: '20', musanze: '21', burera: '22', gicumbi: '23',
+  // Eastern Province
+  rwamagana: '24', nyagatare: '25', gatsibo: '26', kayonza: '27', kirehe: '28', ngoma: '29', bugesera: '30',
+};
+
+/**
+ * Certificate number with the application-type segment ("MR") replaced by the
+ * district code, e.g. "RMC-MR-202606-00001" → "RMC-01-202606-00001". Falls back
+ * to the original number if the district isn't recognised.
+ */
+export function formatCertificateNumber(app: MarriageApplication): string {
+  const code = app.district ? DISTRICT_CODES[app.district.trim().toLowerCase()] : undefined;
+  if (!code) return app.applicationNumber;
+  const parts = app.applicationNumber.split('-');
+  if (parts.length >= 2) parts[1] = code; // replace the type segment
+  return parts.join('-');
+}
+
 /**
  * Shared engine: overlay the couple's details and photos onto a certificate
  * template (provisional or official — both share the same layout). Signature
@@ -316,13 +345,14 @@ export async function buildCertificatePdf(
   // The footer band already prints "RMC … - … - NY", so drop the leading "RMC-"
   // and centre the number in the dotted blank between "RMC" and "NY" (white on
   // the dark-green band), kept narrow so it never overlaps those labels.
-  // The template prints "RMC" (ends ≈x234) and "NY" (starts ≈x332); centre the
-  // number in the blank between them (≈x283) and keep it within that gap.
-  drawCentered(page, app.applicationNumber.replace(/^RMC[-\s]?/i, ''), font, {
+  // The template prints "RMC" (ends ≈x236) and "NY" (starts ≈x332); centre the
+  // number in the blank between them (≈x283) and keep it within that gap. The
+  // number uses the district code in place of "MR".
+  drawCentered(page, formatCertificateNumber(app).replace(/^RMC[-\s]?/i, ''), font, {
     centerXPx: 283,
     yPx: 792,
-    maxWidthPx: 86,
-    size: 8,
+    maxWidthPx: 84,
+    size: 7.5,
     color: LIGHT,
   });
 
