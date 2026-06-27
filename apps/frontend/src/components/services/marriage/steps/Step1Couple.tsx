@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
-import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
+import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 import { Button } from '@/components/ui/Button';
 import { WizardFormData } from '../MarriageWizard';
 
@@ -55,12 +55,12 @@ export function Step1Couple({ initialData, onNext }: Props) {
       groomName: initialData.groomName ?? '',
       groomNid: initialData.groomNid ?? '',
       groomBirthDate: initialData.groomBirthDate ?? '',
-      groomPhone: initialData.groomPhone ?? '',
+      groomPhone: toLocalPhone(initialData.groomPhone),
       brideName: initialData.brideName ?? '',
       brideNid: initialData.brideNid ?? '',
       brideBirthDate: initialData.brideBirthDate ?? '',
-      bridePhone: initialData.bridePhone ?? '',
-      notificationPhone: initialData.notificationPhone ?? '',
+      bridePhone: toLocalPhone(initialData.bridePhone),
+      notificationPhone: toLocalPhone(initialData.notificationPhone),
     },
   });
 

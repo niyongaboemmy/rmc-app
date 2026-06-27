@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
-import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
+import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 import { Button } from '@/components/ui/Button';
 import { WizardFormData } from '../MarriageWizard';
 
@@ -57,7 +57,7 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
       witness2Name: initialData.witness2Name ?? '',
       waliName: initialData.waliName ?? '',
       waliNid: initialData.waliNid ?? '',
-      waliPhone: initialData.waliPhone ?? '',
+      waliPhone: toLocalPhone(initialData.waliPhone),
     },
   });
 
