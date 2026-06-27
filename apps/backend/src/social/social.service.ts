@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { InjectRedis } from '../common/decorators/inject-redis.decorator';
+import { ContentService } from '../content/content.service';
 import { YoutubeProvider } from './providers/youtube.provider';
 import { FacebookProvider } from './providers/facebook.provider';
 import { InstagramProvider } from './providers/instagram.provider';
@@ -43,12 +44,29 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService,
     @InjectRedis() private readonly redis: Redis,
-    youtube: YoutubeProvider,
+    private readonly content: ContentService,
+    private readonly youtube: YoutubeProvider,
     facebook: FacebookProvider,
     instagram: InstagramProvider,
     twitter: TwitterProvider,
   ) {
-    this.providers = [youtube, facebook, instagram, twitter];
+    this.providers = [this.youtube, facebook, instagram, twitter];
+  }
+
+  /**
+   * Apply admin-managed overrides from the Social CMS (key: "social-media")
+   * before a refresh — currently the YouTube channel that drives the featured
+   * video, derived from that channel's link. Falls back to env when unset.
+   */
+  private async applyContentOverrides(): Promise<void> {
+    try {
+      const social = await this.content.getByKey('social-media');
+      const channels = (social?.channels ?? []) as Array<{ key?: string; href?: string }>;
+      const yt = channels.find((c) => c.key === 'youtube');
+      this.youtube.setChannel(yt?.href);
+    } catch (err) {
+      this.logger.warn(`Social content overrides unavailable: ${(err as Error).message}`);
+    }
   }
 
   onModuleInit(): void {
@@ -83,13 +101,26 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
 
   /** Public read — cached feed (Redis → memory → empty). */
   async getFeed(): Promise<SocialFeed> {
-    try {
-      const raw = await this.redis.get(CACHE_KEY);
-      if (raw) return JSON.parse(raw) as SocialFeed;
-    } catch (err) {
-      this.logger.warn(`Redis read failed, using memory feed: ${(err as Error).message}`);
+    // Never block the public feed on Redis: only read when the connection is
+    // actually ready, and even then guard with a short timeout. Falls back to
+    // the in-process feed (kept fresh by the poller) when Redis is down/slow.
+    if (this.redis.status === 'ready') {
+      try {
+        const raw = await this.withTimeout(this.redis.get(CACHE_KEY), 1500);
+        if (raw) return JSON.parse(raw) as SocialFeed;
+      } catch (err) {
+        this.logger.warn(`Redis read skipped, using memory feed: ${(err as Error).message}`);
+      }
     }
     return this.memoryFeed ?? this.emptyFeed();
+  }
+
+  /** Reject after `ms` so a hung Redis op never stalls a request/poll. */
+  private withTimeout<T>(op: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+      op,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`redis timeout (${ms}ms)`)), ms)),
+    ]);
   }
 
   /**
@@ -101,6 +132,7 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
     if (this.refreshing) return this.getFeed();
     this.refreshing = true;
     try {
+      await this.applyContentOverrides();
       const active = this.providers.filter((p) => p.isConfigured());
       const maxPosts = this.config.get<number>('social.maxPosts', 12);
 
@@ -132,10 +164,15 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
       };
 
       this.memoryFeed = feed;
-      try {
-        await this.redis.set(CACHE_KEY, JSON.stringify(feed), 'EX', CACHE_TTL_SECONDS);
-      } catch (err) {
-        this.logger.warn(`Redis write failed (memory cache kept): ${(err as Error).message}`);
+      if (this.redis.status === 'ready') {
+        try {
+          await this.withTimeout(
+            this.redis.set(CACHE_KEY, JSON.stringify(feed), 'EX', CACHE_TTL_SECONDS),
+            1500,
+          );
+        } catch (err) {
+          this.logger.warn(`Redis write failed (memory cache kept): ${(err as Error).message}`);
+        }
       }
       this.logger.log(
         `Social feed refreshed: ${feed.posts.length} posts from ${channels.length} platform(s).`,

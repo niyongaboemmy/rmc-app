@@ -10,7 +10,6 @@ import {
   ArrowRight,
   Images,
   Bell,
-  BellRing,
   Users,
   Wallet,
   CheckCircle2,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { InlineSubscribe } from '@/components/subscribe/InlineSubscribe';
 import {
   ACTIVITIES,
   EVENTS,
@@ -321,14 +321,7 @@ export function ActivitiesPageClient() {
                   Get notified about upcoming RMC events and how you can contribute.
                 </p>
               </div>
-              <Link
-                href={`/${locale}/contact`}
-                className="group inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rmc-green px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-300 hover:bg-rmc-green-dark motion-safe:hover:scale-105"
-              >
-                <BellRing className="h-3.5 w-3.5 shrink-0" />
-                Subscribe
-                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
+              <InlineSubscribe source="events-activities" />
             </div>
           </div>
         </section>

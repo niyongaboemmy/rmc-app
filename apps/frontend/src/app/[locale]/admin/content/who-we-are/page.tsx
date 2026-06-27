@@ -80,6 +80,7 @@ function WhoWeAreManager() {
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
+  const sfx = lang === 'en' ? 'En' : lang === 'rw' ? 'Rw' : 'Ar';
 
   return (
     <div className="space-y-6">
@@ -173,6 +174,28 @@ function WhoWeAreManager() {
             className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none ${fontClass}`}
           />
         </div>
+
+        {/* Headings & button labels */}
+        {([
+          { base: 'heading', label: 'Heading' },
+          { base: 'headingHighlight', label: 'Heading Highlight (green text)' },
+          { base: 'verse', label: 'Arabic Verse' },
+          { base: 'verseRef', label: 'Verse Reference / Translation' },
+        ] as const).map(({ base, label }) => {
+          const key = `${base}${sfx}` as keyof WhoWeAreContent;
+          return (
+            <div key={base}>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">{label}</label>
+              <input
+                dir={dir}
+                type="text"
+                value={form[key]}
+                onChange={(e) => set(key, e.target.value)}
+                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent ${fontClass}`}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

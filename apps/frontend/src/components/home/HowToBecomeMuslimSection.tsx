@@ -4,7 +4,8 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   HeartHandshake, Heart, MessageSquareQuote, Droplets,
-  Sparkles, MapPin, CheckCircle2, ExternalLink, type LucideIcon,
+  Sparkles, MapPin, CheckCircle2, ExternalLink, ArrowRight,
+  BookOpen, GraduationCap, type LucideIcon,
 } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import {
@@ -14,11 +15,11 @@ import {
   mergeContent,
   pick,
   type HowToBecomeMuslimContent,
-  type HowStep,
+  type HowLink,
 } from '@/lib/content-api';
 
-// lucide icon names used by the step cards → components.
-const STEP_ICONS: Record<string, LucideIcon> = {
+// lucide icon names selectable for link cards → components.
+const ICONS: Record<string, LucideIcon> = {
   Heart,
   MessageSquareQuote,
   Droplets,
@@ -26,10 +27,11 @@ const STEP_ICONS: Record<string, LucideIcon> = {
   MapPin,
   HeartHandshake,
   CheckCircle2,
+  BookOpen,
+  GraduationCap,
 };
 
-// Each step links out to the Ijwi Islam learning resource.
-const STEP_LINK = 'https://ijwi-islam.org/';
+const isExternal = (href: string) => /^https?:\/\//i.test(href);
 
 export function HowToBecomeMuslimSection() {
   const { locale } = useParams<{ locale: string }>();
@@ -115,20 +117,20 @@ export function HowToBecomeMuslimSection() {
             </div>
           </div>
 
-          {/* Right — steps + completion prompt + what's next */}
+          {/* Right — resource links to continue the journey */}
           <div>
             <h3
               className={`text-lg md:text-xl font-bold text-gray-900 mb-6 ${isAr ? 'font-arabic' : ''}`}
               dir={isAr ? 'rtl' : 'ltr'}
             >
-              {pick(content.stepsHeading, locale)}
+              {pick(content.linksHeading, locale)}
             </h3>
 
-            <ol className="space-y-4">
-              {content.steps.slice(0, 2).map((step, i) => (
-                <StepCard key={i} step={step} index={i} locale={locale} isAr={isAr} />
+            <ul className="space-y-4">
+              {content.links.map((link, i) => (
+                <LinkCard key={i} link={link} index={i} locale={locale} isAr={isAr} />
               ))}
-            </ol>
+            </ul>
           </div>
         </div>
       </div>
@@ -136,26 +138,28 @@ export function HowToBecomeMuslimSection() {
   );
 }
 
-function StepCard({
-  step,
+function LinkCard({
+  link,
   index,
   locale,
   isAr,
 }: {
-  step: HowStep;
+  link: HowLink;
   index: number;
   locale: string;
   isAr: boolean;
 }) {
   const { ref, visible } = useScrollReveal(0.1);
-  const Icon = STEP_ICONS[step.icon] ?? Sparkles;
+  const Icon = ICONS[link.icon] ?? Sparkles;
+  // Absolute URLs open in a new tab; in-app paths get the locale prefix.
+  const external = isExternal(link.href);
+  const href = external ? link.href : `/${locale}${link.href}`;
 
   return (
     <li ref={ref as React.MutableRefObject<HTMLLIElement | null>}>
       <a
-        href={STEP_LINK}
-        target="_blank"
-        rel="noopener noreferrer"
+        href={href}
+        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         className={`group relative flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 transition-all duration-500 hover:border-rmc-green/30 hover:shadow-lg ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
         }`}
@@ -164,22 +168,23 @@ function StepCard({
         <div className="shrink-0">
           <div className="relative w-12 h-12 rounded-xl bg-rmc-green-light flex items-center justify-center text-rmc-green group-hover:bg-rmc-green group-hover:text-white transition-colors">
             <Icon className="w-5 h-5" />
-            <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rmc-gold text-white text-xs font-bold flex items-center justify-center shadow">
-              {index + 1}
-            </span>
           </div>
         </div>
 
         <div className="min-w-0 flex-1" dir={isAr ? 'rtl' : 'ltr'}>
           <h4 className={`font-bold text-gray-900 text-base mb-1 ${isAr ? 'font-arabic' : ''}`}>
-            {pick(step.title, locale)}
+            {pick(link.title, locale)}
           </h4>
           <p className={`text-gray-500 text-sm leading-relaxed ${isAr ? 'font-arabic' : ''}`}>
-            {pick(step.description, locale)}
+            {pick(link.description, locale)}
           </p>
         </div>
 
-        <ExternalLink className="w-4 h-4 text-gray-300 shrink-0 transition-colors group-hover:text-rmc-green" aria-hidden="true" />
+        {external ? (
+          <ExternalLink className="w-4 h-4 text-gray-300 shrink-0 transition-colors group-hover:text-rmc-green" aria-hidden="true" />
+        ) : (
+          <ArrowRight className="w-4 h-4 text-gray-300 shrink-0 transition-colors group-hover:text-rmc-green" aria-hidden="true" />
+        )}
       </a>
     </li>
   );

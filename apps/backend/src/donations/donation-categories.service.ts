@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not, IsNull } from 'typeorm';
 import { DonationCategory } from './entities/donation-category.entity';
 import { DonationSubFund } from './entities/donation-subfund.entity';
 import {
@@ -31,6 +31,7 @@ export class DonationCategoriesService {
     });
     const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
     return cats.map((c) => ({
+      id: c.id,
       key: c.key,
       icon: c.icon,
       tone: c.tone,
@@ -43,6 +44,7 @@ export class DonationCategoriesService {
         .filter((s) => s.status === 'active')
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((s) => ({
+          id: s.id,
           key: s.key,
           image: s.image,
           campaignSlug: s.campaignSlug,
@@ -115,7 +117,27 @@ export class DonationCategoriesService {
   async deleteCategory(id: string): Promise<{ id: string }> {
     const c = await this.categories.findOne({ where: { id } });
     if (!c) throw new NotFoundException('Category not found');
-    await this.categories.remove(c); // cascades to sub-funds
+    // Soft-delete (archive): the row stays, hidden from admin/public lists. Its
+    // sub-funds are kept and restored alongside it.
+    await this.categories.softRemove(c);
+    return { id };
+  }
+
+  /** Archived (soft-deleted) categories, most-recently-deleted first, for the restore view. */
+  adminListDeletedCategories(): Promise<DonationCategory[]> {
+    return this.categories.find({
+      withDeleted: true,
+      where: { deletedAt: Not(IsNull()) },
+      relations: ['subfunds'],
+      order: { deletedAt: 'DESC' },
+    });
+  }
+
+  /** Restore an archived category. No-op if it isn't deleted. */
+  async restoreCategory(id: string): Promise<{ id: string }> {
+    const c = await this.categories.findOne({ where: { id }, withDeleted: true });
+    if (!c) throw new NotFoundException('Category not found');
+    if (c.deletedAt) await this.categories.recover(c);
     return { id };
   }
 

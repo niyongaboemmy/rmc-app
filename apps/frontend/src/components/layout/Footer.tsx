@@ -4,10 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio, ChevronDown } from 'lucide-react';
+import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio, ChevronDown, Send, Loader2, Check } from 'lucide-react';
 import { IJWI_RADIO_URL } from '@/lib/constants';
 import { useTranslations } from 'next-intl';
 import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
+import { publicApi } from '@/lib/public-api';
 
 const socialLinks = [
   { Icon: Facebook, href: '#', label: 'Facebook' },
@@ -51,22 +52,68 @@ function CollapsibleColumn({
   );
 }
 
+function NewsletterSignup() {
+  const t = useTranslations('footer');
+  const { locale } = useParams<{ locale: string }>();
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || status === 'loading') return;
+    setStatus('loading');
+    try {
+      await publicApi.subscribe(email.trim(), locale);
+      setStatus('done');
+      setEmail('');
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="mt-7">
+      <p className="text-white font-semibold text-sm mb-1">{t('newsletterTitle')}</p>
+      <p className="text-white/45 text-xs mb-3 max-w-xs">{t('newsletterText')}</p>
+      {status === 'done' ? (
+        <p className="inline-flex items-center gap-1.5 text-rmc-gold-light text-sm font-medium">
+          <Check className="w-4 h-4" /> {t('newsletterSuccess')}
+        </p>
+      ) : (
+        <form onSubmit={submit} className="flex max-w-xs gap-2 mb-4">
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); if (status === 'error') setStatus('idle'); }}
+            placeholder={t('newsletterPlaceholder')}
+            aria-label={t('newsletterPlaceholder')}
+            className="min-w-0 flex-1 rounded-full bg-white/[0.07] border border-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-rmc-green focus:ring-2 focus:ring-rmc-green/40"
+          />
+          <button
+            type="submit"
+            disabled={status === 'loading'}
+            aria-label={t('newsletterButton')}
+            className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full bg-rmc-green px-4 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-60 transition-colors"
+          >
+            {status === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </form>
+      )}
+      {status === 'error' && <p className="mt-2 text-xs text-red-400">{t('newsletterError')}</p>}
+    </div>
+  );
+}
+
 export function Footer() {
   const { locale } = useParams<{ locale: string }>();
   const t = useTranslations('footer');
 
   const quickLinks = [
-    { href: `/${locale}`, labelKey: 'links.home' },
-    { href: `/${locale}/about`, labelKey: 'links.about' },
-    { href: `/${locale}/services`, labelKey: 'links.services' },
-    { href: `/${locale}/schools`, labelKey: 'links.schools' },
-    { href: `/${locale}/announcements`, labelKey: 'links.announcements' },
     { href: `/${locale}/blog`, labelKey: 'links.blog' },
-    { href: `/${locale}/gallery`, labelKey: 'links.gallery' },
-    { href: `/${locale}/tenders`, labelKey: 'links.tenders' },
-    { href: `/${locale}/donate`, labelKey: 'links.donate' },
-    { href: `/${locale}/contact`, labelKey: 'links.contact' },
     { href: `/${locale}/member/register`, labelKey: 'links.join' },
+    { href: `/${locale}/donate`, labelKey: 'links.donate' },
+    { href: `/${locale}/activities`, labelKey: 'links.trends' },
   ] as const;
 
   const services = [
@@ -74,7 +121,6 @@ export function Footer() {
     { href: `/${locale}/services/scholarship`, labelKey: 'serviceLinks.scholarship' },
     { href: `/${locale}/services/conduct`, labelKey: 'serviceLinks.conduct' },
     { href: `/${locale}/services/funeral`, labelKey: 'serviceLinks.funeral' },
-    { href: `/${locale}/services/jobs`, labelKey: 'serviceLinks.jobs' },
     { href: `/${locale}/services/tender`, labelKey: 'serviceLinks.tenders' },
   ] as const;
 
@@ -135,6 +181,8 @@ export function Footer() {
               ))}
             </div>
 
+            <NewsletterSignup />
+
             <PWAInstallButton />
           </div>
 
@@ -155,7 +203,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-rmc-gold/70 hover:text-rmc-gold text-sm transition-colors"
                 >
-                  <Radio className="w-3.5 h-3.5 shrink-0" /> Ijwi Radio
+                  <Radio className="w-3.5 h-3.5 shrink-0" /> {t('learnIslam')}
                 </a>
               </li>
             </ul>

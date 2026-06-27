@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { ShoppingBag, HandHeart, ShieldCheck, Plus } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { donationsApi } from '@/lib/donationsApi';
+import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
 import { donationCategoriesApi, type PublicCategory } from '@/lib/donationCategoriesApi';
 import { useDonationCart } from '@/contexts/DonationCartContext';
 import {
@@ -17,7 +17,7 @@ import {
 import { EVENTS } from './eventsBridge';
 import { SpiritualHeader } from './SpiritualHeader';
 import { CategoryGrid } from './CategoryGrid';
-import { ZakatCalculator } from './ZakatCalculator';
+// import { ZakatCalculator } from './ZakatCalculator'; // hidden for now
 import { ImpactBars } from './ImpactBars';
 import { CartDrawer } from './CartDrawer';
 import { AmountPicker } from './AmountPicker';
@@ -40,15 +40,15 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
 
   // Live campaign funding (raised = completed transactions) — same figures as
   // the admin Programs tab; falls back to static data if unavailable.
-  const [liveCampaigns, setLiveCampaigns] = useState<{ slug: string; receivedAmount: number; targetAmount: number }[]>([]);
+  const [liveCampaigns, setLiveCampaigns] = useState<PublicCampaign[]>([]);
   useEffect(() => {
     donationsApi
       .listCampaigns()
-      .then((cs) => setLiveCampaigns(cs.map((c) => ({ slug: c.slug, receivedAmount: c.receivedAmount, targetAmount: c.targetAmount }))))
+      .then(setLiveCampaigns)
       .catch(() => {});
   }, []);
   const liveBySlug = useMemo(() => {
-    const m = new Map<string, { slug: string; receivedAmount: number; targetAmount: number }>();
+    const m = new Map<string, PublicCampaign>();
     liveCampaigns.forEach((c) => m.set(c.slug, c));
     return m;
   }, [liveCampaigns]);
@@ -102,15 +102,17 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
                         categories={categories}
                         currency={currency}
                         liveBySlug={liveBySlug}
+                        campaigns={liveCampaigns}
                         onAdd={addItem}
                         initialEvent={initialEvent}
                       />
                     </div>
-                    <ZakatCalculator currency={currency} onAddZakat={addItem} />
+                    {/* Zakat calculator hidden for now — restore when ready.
+                    <ZakatCalculator currency={currency} onAddZakat={addItem} /> */}
                   </div>
 
                   <aside className="space-y-6">
-                    <ImpactBars liveBySlug={liveBySlug} />
+                    <ImpactBars campaigns={liveCampaigns} />
                     <div className="flex items-start gap-3 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/40 p-4">
                       <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-rmc-green" />
                       <p className="text-[12px] leading-relaxed text-gray-600">
@@ -229,7 +231,7 @@ function QuickGive({
           className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-sm transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           <Plus className="h-4 w-4" />
-          {t('card.add')} {amount > 0 ? money(currency, amount) : t('quickGive.addToGift')}
+          {t('card.addToGift')}
         </button>
       </div>
     </div>

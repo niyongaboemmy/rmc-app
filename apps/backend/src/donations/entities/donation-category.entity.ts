@@ -1,6 +1,6 @@
 import {
   Entity, PrimaryGeneratedColumn, Column, Index,
-  CreateDateColumn, UpdateDateColumn, OneToMany,
+  CreateDateColumn, UpdateDateColumn, DeleteDateColumn, OneToMany,
 } from 'typeorm';
 import { DonationSubFund } from './donation-subfund.entity';
 
@@ -57,4 +57,7 @@ export class DonationCategory {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt: Date | null;
 }

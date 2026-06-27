@@ -43,6 +43,7 @@ export const ContentKeys = {
   hero: 'hero',
   blog: 'blog',
   howToBecomeMuslim: 'how-to-become-muslim',
+  about: 'about',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

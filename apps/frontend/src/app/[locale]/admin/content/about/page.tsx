@@ -11,8 +11,11 @@ import {
   ModalTitle, ModalDescription, ConfirmModal,
 } from '@/components/ui/Modal';
 import { apiClient } from '@/lib/api';
+import { ContentKeys, getSiteContent, saveSiteContent } from '@/lib/content-api';
+import { ImageUploadField } from '@/components/ui/ImageUploadField';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import {
-  Building2, ArrowLeft, Save, Target, Eye, BookOpen, CheckCircle,
+  Building2, ArrowLeft, Save, Target, Eye, BookOpen,
   Clock, Plus, Edit2, Trash2, RefreshCw, Image,
 } from 'lucide-react';
 
@@ -32,7 +35,8 @@ interface AboutContent {
   historyEn: string; historyRw: string; historyAr: string;
   missionEn: string; missionRw: string; missionAr: string;
   visionEn: string; visionRw: string; visionAr: string;
-  valuesEn: string; valuesRw: string; valuesAr: string;
+  // Section headings / subtitles + the Arabic verse (see CONTENT_SECTIONS below).
+  [key: string]: string;
 }
 
 interface HistoryEntry {
@@ -60,10 +64,39 @@ const INITIAL: AboutContent = {
   visionEn: 'A digitally empowered, unified, and prosperous Muslim community.',
   visionRw: "Umuryango w'Abasilamu uhuye, ukoresheje ikoranabuhanga kandi ugira inyungu.",
   visionAr: 'مجتمع مسلم ممكّن رقمياً، موحد ومزدهر.',
-  valuesEn: 'Unity — Bringing Muslims together\nEducation — Promoting Islamic and secular education\nService — Providing essential services\nTransparency — Open governance',
-  valuesRw: "Ubumwe — Guhuza Abasilamu\nUburezi — Guteza imbere uburezi\nSerivisi — Gutanga serivisi\nIngeri — Ubuyobozi bugarukira",
-  valuesAr: 'الوحدة — جمع المسلمين\nالتعليم — تعزيز التعليم\nالخدمة — تقديم الخدمات\nالشفافية — حوكمة مفتوحة',
+
+  // Section headings & subtitles (EN seeded; RW/AR fall back to EN until filled).
+  whoWeAreHeadingEn: 'One Ummah,', whoWeAreHeadingRw: '', whoWeAreHeadingAr: '',
+  whoWeAreHighlightEn: 'United Across Rwanda', whoWeAreHighlightRw: '', whoWeAreHighlightAr: '',
+  // The Arabic verse is the same script in every locale — seeded in the EN slot
+  // so it always renders; edit it under the Arabic tab if needed.
+  verseEn: 'وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا', verseRw: '', verseAr: '',
+  verseRefEn: '“Hold firmly to the rope of Allah, all together” — Aal-Imran 3:103', verseRefRw: '', verseRefAr: '',
+  missionTitleEn: 'Our Mission', missionTitleRw: '', missionTitleAr: '',
+  visionTitleEn: 'Our Vision', visionTitleRw: '', visionTitleAr: '',
+  leadershipTitleEn: 'Leadership', leadershipTitleRw: '', leadershipTitleAr: '',
+  leadershipSubtitleEn: 'Guided by dedicated leaders committed to serving the community', leadershipSubtitleRw: '', leadershipSubtitleAr: '',
+  galleryTitleEn: 'From Our Community', galleryTitleRw: '', galleryTitleAr: '',
+  gallerySubtitleEn: 'Moments from gatherings, programs, and events across Rwanda', gallerySubtitleRw: '', gallerySubtitleAr: '',
 };
+
+interface Leader {
+  id: string;
+  image: string;
+  nameEn: string; nameRw: string; nameAr: string;
+  roleEn: string; roleRw: string; roleAr: string;
+}
+
+// Seeded from the current About page leaders (photos + EN names/roles). Names are
+// the same across languages; RW/AR roles fall back to EN until an admin fills them.
+const LEADERS_DEFAULT: Leader[] = [
+  { id: 'm1', image: 'https://i.postimg.cc/8CKkfkMS/Mufti.jpg',   nameEn: 'Sheikh SINDAYIGAYA Musa',     nameRw: 'Sheikh SINDAYIGAYA Musa',     nameAr: 'Sheikh SINDAYIGAYA Musa',     roleEn: 'Mufti of Rwanda',                 roleRw: '', roleAr: '' },
+  { id: 'm2', image: 'https://i.postimg.cc/mkTL1ckm/V1A8567.jpg', nameEn: 'Sheikh MUSHUMBA Yunnus',      nameRw: 'Sheikh MUSHUMBA Yunnus',      nameAr: 'Sheikh MUSHUMBA Yunnus',      roleEn: 'Deputy Mufti of Rwanda',          roleRw: '', roleAr: '' },
+  { id: 'm3', image: 'https://i.postimg.cc/9f1JHK96/Qadh.jpg',    nameEn: 'Sheikh SEGISEKURE Ibrahim',   nameRw: 'Sheikh SEGISEKURE Ibrahim',   nameAr: 'Sheikh SEGISEKURE Ibrahim',   roleEn: 'Qadhwi of Rwanda',                roleRw: '', roleAr: '' },
+  { id: 'm4', image: 'https://i.postimg.cc/Cx0M5wJm/P1180223.jpg', nameEn: 'Sheikh NZANAHAYO Qassim',    nameRw: 'Sheikh NZANAHAYO Qassim',     nameAr: 'Sheikh NZANAHAYO Qassim',     roleEn: 'President of The Majlisi Shuyukh', roleRw: '', roleAr: '' },
+  { id: 'm5', image: 'https://i.postimg.cc/Fsym22m4/P1180220.jpg', nameEn: 'Sheikh MBARUSHIMANA Suleiman', nameRw: 'Sheikh MBARUSHIMANA Suleiman', nameAr: 'Sheikh MBARUSHIMANA Suleiman', roleEn: 'Advisor to the Mufti of Rwanda',  roleRw: '', roleAr: '' },
+  { id: 'm6', image: 'https://i.postimg.cc/YSxyqhck/ES-Salim.jpg', nameEn: 'Mr. SIBOMANA Salim',         nameRw: 'Mr. SIBOMANA Salim',          nameAr: 'Mr. SIBOMANA Salim',          roleEn: 'Executive Secretary',             roleRw: '', roleAr: '' },
+];
 
 const EMPTY_ENTRY: HistoryEntryForm = {
   year: new Date().getFullYear(),
@@ -75,11 +108,20 @@ const EMPTY_ENTRY: HistoryEntryForm = {
 
 const CONTENT_SECTIONS = [
   { key: 'title',    label: 'Page Title',        rows: 1, icon: Building2 },
-  { key: 'subtitle', label: 'Subtitle / Tagline', rows: 1, icon: null },
+  { key: 'subtitle', label: 'Hero Subtitle / Tagline', rows: 1, icon: null },
+  { key: 'whoWeAreHeading',   label: 'Who We Are — Heading', rows: 1, icon: null },
+  { key: 'whoWeAreHighlight', label: 'Who We Are — Heading Highlight', rows: 1, icon: null },
+  { key: 'verse',    label: 'Arabic Verse', rows: 1, icon: null },
+  { key: 'verseRef', label: 'Verse Reference / Translation', rows: 1, icon: null },
   { key: 'history',  label: 'History & Overview', rows: 4, icon: BookOpen },
+  { key: 'missionTitle', label: 'Mission — Title', rows: 1, icon: Target },
   { key: 'mission',  label: 'Mission Statement',  rows: 2, icon: Target },
+  { key: 'visionTitle', label: 'Vision — Title', rows: 1, icon: Eye },
   { key: 'vision',   label: 'Vision Statement',   rows: 2, icon: Eye },
-  { key: 'values',   label: 'Values (one per line: Name — Description)', rows: 5, icon: CheckCircle },
+  { key: 'leadershipTitle',    label: 'Leadership — Title', rows: 1, icon: Building2 },
+  { key: 'leadershipSubtitle', label: 'Leadership — Subtitle', rows: 1, icon: null },
+  { key: 'galleryTitle',    label: 'Gallery — Title', rows: 1, icon: Image },
+  { key: 'gallerySubtitle', label: 'Gallery — Subtitle', rows: 1, icon: null },
 ] as const;
 
 export default function AboutRMCPage() {
@@ -95,6 +137,7 @@ function AboutRMCManager() {
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
   const [form, setForm] = useState<AboutContent>(INITIAL);
+  const [leaders, setLeaders] = useState<Leader[]>(LEADERS_DEFAULT);
   const [saving, setSaving] = useState(false);
 
   // History entries state
@@ -123,6 +166,18 @@ function AboutRMCManager() {
 
   useEffect(() => { loadEntries(); }, [loadEntries]);
 
+  // Load saved About content (falls back to the seeded defaults above).
+  useEffect(() => {
+    getSiteContent<Partial<AboutContent> & { leaders?: Leader[] }>(ContentKeys.about)
+      .then((data) => {
+        if (!data) return;
+        const { leaders: savedLeaders, ...text } = data;
+        setForm((prev) => ({ ...prev, ...text } as AboutContent));
+        if (Array.isArray(savedLeaders) && savedLeaders.length) setLeaders(savedLeaders);
+      })
+      .catch(() => { /* keep defaults */ });
+  }, []);
+
   const getField = useCallback((key: string, l: Lang): string => {
     const f = form as unknown as Record<string, string>;
     const suffix = l === 'en' ? 'En' : l === 'rw' ? 'Rw' : 'Ar';
@@ -134,12 +189,30 @@ function AboutRMCManager() {
     setForm((prev) => ({ ...prev, [`${key}${suffix}`]: value } as AboutContent));
   }, []);
 
+  const setLeaderField = useCallback((id: string, key: keyof Leader, value: string) => {
+    setLeaders((prev) => prev.map((l) => (l.id === id ? { ...l, [key]: value } : l)));
+  }, []);
+  const addLeader = useCallback(() => {
+    setLeaders((prev) => [...prev, {
+      id: crypto.randomUUID(), image: '',
+      nameEn: '', nameRw: '', nameAr: '', roleEn: '', roleRw: '', roleAr: '',
+    }]);
+  }, []);
+  const removeLeader = useCallback((id: string) => {
+    setLeaders((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
   const handleSave = useCallback(async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setSaving(false);
-    success('About RMC content saved successfully.');
-  }, [success]);
+    try {
+      await saveSiteContent(ContentKeys.about, { ...form, leaders });
+      success('About RMC content saved successfully.');
+    } catch {
+      error('Could not save content. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [form, leaders, success, error]);
 
   // ── Entry CRUD ──────────────────────────────────────────────────────────────
 
@@ -239,21 +312,96 @@ function AboutRMCManager() {
         <h2 className="text-sm font-bold text-gray-700 pb-3 border-b border-gray-50">
           Content — {LANGS.find((l) => l.key === lang)?.label}
         </h2>
-        {CONTENT_SECTIONS.map(({ key, label, rows, icon: Icon }) => (
-          <div key={key}>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1.5">
-              {Icon && <Icon className="w-3.5 h-3.5 text-slate-500" />}
-              {label}
-            </label>
-            {rows === 1 ? (
-              <input dir={dir} type="text" value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fontClass}`} />
-            ) : (
-              <textarea dir={dir} rows={rows} value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none ${fontClass}`} />
-            )}
+        {CONTENT_SECTIONS.map(({ key, label, rows, icon: Icon }) => {
+          // History/Overview, Mission and Vision use a rich-text editor (HTML).
+          const isRich = key === 'history' || key === 'mission' || key === 'vision';
+          return (
+            <div key={key}>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1.5">
+                {Icon && <Icon className="w-3.5 h-3.5 text-slate-500" />}
+                {label}
+              </label>
+              {isRich ? (
+                // Remount per language so the editor seeds the right content.
+                <RichTextEditor
+                  key={`${key}-${lang}`}
+                  value={getField(key, lang)}
+                  onChange={(html) => setField(key, lang, html)}
+                  dir={dir}
+                  fontClassName={fontClass}
+                />
+              ) : rows === 1 ? (
+                <input dir={dir} type="text" value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
+                  className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fontClass}`} />
+              ) : (
+                <textarea dir={dir} rows={rows} value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
+                  className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none ${fontClass}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Leadership CRUD ───────────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-bold text-gray-700">Leadership</h2>
+            <span className="text-xs text-gray-400 font-normal">({leaders.length}) · editing {LANGS.find((l) => l.key === lang)?.label}</span>
           </div>
-        ))}
+          <button onClick={addLeader}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors">
+            <Plus className="w-3.5 h-3.5" /> Add Leader
+          </button>
+        </div>
+
+        {leaders.length === 0 ? (
+          <div className="text-center py-10 text-gray-300">
+            <Building2 className="w-8 h-8 mx-auto mb-2 opacity-40" />
+            <p className="text-sm">No leaders yet. Add the first one.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {leaders.map((l) => {
+              const suffix = lang === 'en' ? 'En' : lang === 'rw' ? 'Rw' : 'Ar';
+              const nameKey = `name${suffix}` as keyof Leader;
+              const roleKey = `role${suffix}` as keyof Leader;
+              return (
+                <div key={l.id} className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                  <div className="flex items-start gap-4">
+                    {/* Compact square photo so it fits neatly beside the fields */}
+                    <div className="w-24 sm:w-28 shrink-0">
+                      <ImageUploadField value={l.image} onChange={(url) => setLeaderField(l.id, 'image', url)} heightClass="h-24 sm:h-28" compact />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 truncate">{l.nameEn || 'New leader'}</span>
+                        <button onClick={() => removeLeader(l.id)} aria-label="Remove leader"
+                          className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Name ({lang.toUpperCase()})</label>
+                        <input dir={lang === 'ar' ? 'rtl' : 'ltr'} type="text" value={l[nameKey]}
+                          onChange={(e) => setLeaderField(l.id, nameKey, e.target.value)}
+                          className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Role ({lang.toUpperCase()})</label>
+                        <input dir={lang === 'ar' ? 'rtl' : 'ltr'} type="text" value={l[roleKey]}
+                          onChange={(e) => setLeaderField(l.id, roleKey, e.target.value)}
+                          className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-[11px] text-gray-400">Photos and names are shared across languages; switch the language tab above to edit RW/AR names &amp; roles. Remember to click <span className="font-semibold">Save Changes</span>.</p>
       </div>
 
       {/* ── History Entries CRUD ──────────────────────────────────────────────── */}

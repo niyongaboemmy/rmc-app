@@ -22,6 +22,13 @@ export class DonationCategoriesAdminController {
     return this.service.adminList();
   }
 
+  @Get('deleted')
+  @Permissions(Permission.DONATIONS_VIEW)
+  @ApiOperation({ summary: 'List archived (soft-deleted) donation categories' })
+  listDeleted() {
+    return this.service.adminListDeletedCategories();
+  }
+
   // ── Categories ──────────────────────────────────────────────────────────────
 
   @Post()
@@ -40,9 +47,16 @@ export class DonationCategoriesAdminController {
 
   @Delete(':id')
   @Permissions(Permission.DONATIONS_MANAGE)
-  @ApiOperation({ summary: 'Delete a donation category (and its sub-funds)' })
+  @ApiOperation({ summary: 'Archive (soft-delete) a donation category (sub-funds preserved)' })
   deleteCategory(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.deleteCategory(id);
+  }
+
+  @Post(':id/restore')
+  @Permissions(Permission.DONATIONS_MANAGE)
+  @ApiOperation({ summary: 'Restore an archived (soft-deleted) donation category' })
+  restoreCategory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.restoreCategory(id);
   }
 
   // ── Sub-funds ────────────────────────────────────────────────────────────────

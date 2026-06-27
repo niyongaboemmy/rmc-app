@@ -23,6 +23,7 @@ import { PublicModule } from './public/public.module';
 import { MarriageModule } from './marriage/marriage.module';
 import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
+import { SubscribersModule } from './subscribers/subscribers.module';
 import { SchoolsModule } from './schools/schools.module';
 import { SocialModule } from './social/social.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
@@ -62,6 +63,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     MarriageModule,
     ContentModule,
     DonationsModule,
+    SubscribersModule,
     SchoolsModule,
     SocialModule,
     ContactMessagesModule,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ContentModule } from '../content/content.module';
 import { SocialService } from './social.service';
 import { SocialController } from './social.controller';
 import { YoutubeProvider } from './providers/youtube.provider';
@@ -8,7 +9,7 @@ import { InstagramProvider } from './providers/instagram.provider';
 import { TwitterProvider } from './providers/twitter.provider';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, ContentModule],
   providers: [
     SocialService,
     YoutubeProvider,

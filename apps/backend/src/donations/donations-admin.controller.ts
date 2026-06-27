@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DonationsService } from './donations.service';
-import { UpdateDonationDto } from './dto/update-donation.dto';
+// import { UpdateDonationDto } from './dto/update-donation.dto'; // donation editing disabled
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -87,12 +87,14 @@ export class DonationsAdminController {
     return this.service.adminGetStats({ dateFrom, dateTo, campaignId, status });
   }
 
-  @Patch(':id')
-  @Permissions(Permission.DONATIONS_MANAGE)
-  @ApiOperation({ summary: 'Edit an individual donation record' })
-  updateDonation(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateDonationDto) {
-    return this.service.adminUpdateDonation(id, dto);
-  }
+  // Editing individual donation records is disabled for now — restore this
+  // route (and the UpdateDonationDto import) to re-enable.
+  // @Patch(':id')
+  // @Permissions(Permission.DONATIONS_MANAGE)
+  // @ApiOperation({ summary: 'Edit an individual donation record' })
+  // updateDonation(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateDonationDto) {
+  //   return this.service.adminUpdateDonation(id, dto);
+  // }
 
   // ── Programs / campaigns ────────────────────────────────────────────────────
 
@@ -101,6 +103,13 @@ export class DonationsAdminController {
   @ApiOperation({ summary: 'List donation programs with live received totals' })
   listCampaigns() {
     return this.service.adminListCampaigns();
+  }
+
+  @Get('campaigns/deleted')
+  @Permissions(Permission.DONATIONS_VIEW)
+  @ApiOperation({ summary: 'List archived (soft-deleted) donation programs' })
+  listDeletedCampaigns() {
+    return this.service.adminListDeletedCampaigns();
   }
 
   @Post('campaigns')
@@ -122,5 +131,12 @@ export class DonationsAdminController {
   @ApiOperation({ summary: 'Archive (soft-delete) a donation program' })
   deleteCampaign(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.deleteCampaign(id);
+  }
+
+  @Post('campaigns/:id/restore')
+  @Permissions(Permission.DONATIONS_MANAGE)
+  @ApiOperation({ summary: 'Restore an archived (soft-deleted) donation program' })
+  restoreCampaign(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.restoreCampaign(id);
   }
 }

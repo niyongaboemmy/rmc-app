@@ -6,6 +6,7 @@ import {
   Min,
   MaxLength,
   IsDateString,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CampaignStatus } from '../entities/donation-campaign.entity';
@@ -16,6 +17,12 @@ export class CreateCampaignDto {
   @IsString()
   @MaxLength(200)
   title: string;
+
+  @ApiPropertyOptional({ description: 'URL slug; auto-derived from the title when omitted' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  slug?: string;
 
   @ApiProperty()
   @IsString()
@@ -37,6 +44,11 @@ export class CreateCampaignDto {
   @IsString()
   @MaxLength(20)
   fundType?: string;
+
+  @ApiPropertyOptional({ description: 'Sub-fund this program belongs to (UUID); null for category-level programs' })
+  @IsOptional()
+  @IsUUID()
+  subFundId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()
