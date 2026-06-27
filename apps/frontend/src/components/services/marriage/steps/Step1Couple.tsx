@@ -11,7 +11,7 @@ import { WizardFormData } from '../MarriageWizard';
 
 const nid = z.string().regex(/^\d{16}$/, 'Must be exactly 16 digits');
 const fullName = z.string().trim().min(3, 'At least 3 characters required');
-const phone = z.string().regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX');
+const phone = z.string().regex(/^7[2389]\d{7}$/, 'Enter a valid Rwanda number: 7XXXXXXXX');
 const birthDate = z
   .string()
   .min(1, 'Date of birth is required')

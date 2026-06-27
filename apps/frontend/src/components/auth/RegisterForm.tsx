@@ -20,7 +20,7 @@ const registerSchema = z.object({
   firstName: z.string().min(2, 'Minimum 2 characters'),
   lastName:  z.string().min(2, 'Minimum 2 characters'),
   email:     z.string().email('Invalid email address'),
-  phone:     z.string().regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX'),
+  phone:     z.string().regex(/^7[2389]\d{7}$/, 'Enter a valid Rwanda number: 7XXXXXXXX'),
   password: z
     .string()
     .min(8, 'Minimum 8 characters')
