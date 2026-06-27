@@ -7,10 +7,13 @@ import { MarriageApplication } from './marriage-application.entity';
 export enum DocumentType {
   GROOM_ID = 'groom_id',
   BRIDE_ID = 'bride_id',
+  GROOM_PHOTO = 'groom_photo',
+  BRIDE_PHOTO = 'bride_photo',
   WALI_CONSENT = 'wali_consent',
   MAHR_AGREEMENT = 'mahr_agreement',
   PORTRAIT = 'portrait',
   ADDITIONAL = 'additional',
+  SIGNED_PROVISIONAL = 'signed_provisional',
 }
 
 @Entity('marriage_documents')

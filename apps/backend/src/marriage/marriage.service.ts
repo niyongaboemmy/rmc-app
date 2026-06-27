@@ -16,7 +16,7 @@ import {
   PaymentStatus,
   VenueType,
 } from './entities/marriage-application.entity';
-import { MarriageDocument } from './entities/marriage-document.entity';
+import { MarriageDocument, DocumentType } from './entities/marriage-document.entity';
 import { MarriageStatusHistory } from './entities/marriage-status-history.entity';
 import { MarriageTransaction } from './entities/marriage-transaction.entity';
 import {
@@ -387,6 +387,67 @@ export class MarriageService {
     };
   }
 
+  /**
+   * DEV ONLY — mark a draft application's payment as completed WITHOUT calling
+   * the IntouchPay gateway, so local development can skip the MoMo push and go
+   * straight to the provisional certificate. Hard-blocked in production: the
+   * NODE_ENV guard runs before any DB mutation, so it can never fire on a real
+   * deployment (which always sets NODE_ENV=production). Produces the same DB
+   * state as a real successful MoMo payment (paymentStatus=paid + a completed
+   * transaction); no SMS is sent in dev.
+   */
+  async devCompletePayment(id: string, applicantId: string): Promise<MarriageApplication> {
+    // Defense-in-depth, deny-by-default: enabled ONLY when (a) NODE_ENV is not
+    // 'production' AND (b) an explicit opt-in flag is set. The flag is NOT in
+    // .env.example, so copying the template to a prod box can never enable the
+    // bypass (which would otherwise let any authed user mark their own
+    // application paid for free). Raw process.env is read deliberately —
+    // ConfigService's 'app.nodeEnv' defaults to 'development' when unset.
+    const bypassEnabled =
+      process.env.NODE_ENV !== 'production' &&
+      process.env.ENABLE_DEV_PAYMENT_BYPASS === 'true';
+    if (!bypassEnabled) {
+      throw new ForbiddenException(
+        'Development payment bypass is disabled. To enable it locally, set NODE_ENV=development and ENABLE_DEV_PAYMENT_BYPASS=true.',
+      );
+    }
+
+    const app = await this.findOwnApplication(id, applicantId);
+
+    // Idempotent — already paid, nothing to do.
+    if (app.paymentStatus === PaymentStatus.PAID) return app;
+
+    if (
+      app.status !== MarriageApplicationStatus.DRAFT &&
+      app.status !== MarriageApplicationStatus.AMENDMENTS_REQUESTED
+    ) {
+      throw new BadRequestException('Application must be in draft status to complete payment');
+    }
+
+    // Ensure the fee is resolved (mirrors what draft creation stores).
+    if (!app.amountDue || Number(app.amountDue) <= 0) {
+      app.amountDue = await this.resolveMarriageFee(app.venueType);
+    }
+
+    app.paymentStatus = PaymentStatus.PAID;
+    app.amountPaid = app.amountDue;
+    app.paymentMethod = 'momo';
+    const saved = await this.applicationRepo.save(app);
+
+    const tx = this.transactionRepo.create({
+      applicationId: app.id,
+      method: 'momo',
+      providerRef: `DEV-${app.applicationNumber}-${Date.now()}`,
+      amount: app.amountDue,
+      status: 'completed',
+      completedAt: new Date(),
+      metadata: { dev: true, responseCode: 'DEV', note: 'Simulated payment (development mode)' },
+    });
+    await this.transactionRepo.save(tx);
+
+    return saved;
+  }
+
   async cancel(id: string, applicantId: string): Promise<MarriageApplication> {
     const app = await this.findOwnApplication(id, applicantId);
     if (
@@ -619,6 +680,35 @@ export class MarriageService {
     return this.applicationRepo.save(app);
   }
 
+  /**
+   * Attach the signed provisional certificate (a scan of the provisional cert
+   * physically signed by the witnesses, officiant and couple). Stored as a
+   * single `signed_provisional` document (one per application) and required
+   * before the official certificate can be issued.
+   */
+  async adminSaveSignedProvisional(
+    id: string,
+    adminId: string,
+    dto: { fileKey: string; fileName: string; fileSize: number; mimeType: string },
+  ): Promise<MarriageApplication> {
+    await this.adminFindOne(id);
+    const existing = await this.documentRepo.findOne({
+      where: { applicationId: id, documentType: DocumentType.SIGNED_PROVISIONAL },
+    });
+    if (existing) await this.documentRepo.remove(existing);
+    const doc = this.documentRepo.create({
+      applicationId: id,
+      documentType: DocumentType.SIGNED_PROVISIONAL,
+      fileKey: dto.fileKey,
+      fileName: dto.fileName,
+      fileSize: dto.fileSize,
+      mimeType: dto.mimeType,
+      uploadedBy: adminId,
+    });
+    await this.documentRepo.save(doc);
+    return this.adminFindOne(id);
+  }
+
   async adminConfirmCashPayment(id: string, adminId: string): Promise<MarriageApplication> {
     const app = await this.adminFindOne(id);
     app.paymentStatus = PaymentStatus.PAID;
@@ -660,8 +750,13 @@ export class MarriageService {
     ) {
       throw new BadRequestException('Certificate can only be issued for approved applications');
     }
-    if (!app.weddingPhotoUrl) {
-      throw new BadRequestException('Upload the marriage photo before issuing the certificate');
+    const hasSignedProvisional = app.documents?.some(
+      (d) => d.documentType === DocumentType.SIGNED_PROVISIONAL,
+    );
+    if (!hasSignedProvisional) {
+      throw new BadRequestException(
+        'Attach the signed provisional certificate before issuing the certificate',
+      );
     }
 
     const frontendUrl = this.configService.get<string>('app.frontendUrl', 'http://localhost:3001');

@@ -23,6 +23,8 @@ import {
   CheckCircle,
   Clock,
   Users,
+  FileText,
+  Download,
 } from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
@@ -241,6 +243,8 @@ function StatusResult({ app, locale }: { app: MarriageApplication; locale: strin
   const isClosed = app.status === 'closed' && !!app.certificateIssuedAt;
   const isTerminal = app.status === 'rejected' || app.status === 'cancelled';
 
+  const showProvisional = app.paymentStatus === 'paid' && !isClosed;
+
   const venueTitle =
     app.venueType === 'mosque' ? t('apply.venueMosqueTitle') : t('apply.venueOutsideTitle');
   const VenueIcon = app.venueType === 'mosque' ? Building2 : MapPin;
@@ -285,6 +289,27 @@ function StatusResult({ app, locale }: { app: MarriageApplication; locale: strin
           </div>
           <span className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 text-sm font-medium ring-1 ring-white/25 group-hover:bg-white/25 transition-colors shrink-0">
             <Award className="w-4 h-4" /> {t('status.viewCertificate')}
+          </span>
+        </Link>
+      )}
+
+      {/* Provisional certificate — available as soon as payment is completed */}
+      {showProvisional && (
+        <Link
+          href={`/${locale}/certificates/${app.applicationNumber}/provisional`}
+          className="group flex items-center gap-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 sm:p-6"
+        >
+          <div className="w-12 h-12 rounded-xl bg-rmc-green/10 flex items-center justify-center shrink-0">
+            <FileText className="w-6 h-6 text-rmc-green" strokeWidth={2.25} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-gray-900">Provisional certificate ready</p>
+            <p className="text-gray-500 text-sm">
+              Payment received — preview and download your provisional marriage certificate.
+            </p>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-rmc-green/10 px-4 py-2 text-sm font-medium text-rmc-green group-hover:bg-rmc-green/20 transition-colors shrink-0">
+            <Download className="w-4 h-4" /> Download
           </span>
         </Link>
       )}

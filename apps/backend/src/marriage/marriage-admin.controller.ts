@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
 import { IsBoolean } from 'class-validator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MarriageService } from './marriage.service';
@@ -19,6 +19,23 @@ class InitiateMomoDto {
   @IsString()
   @IsNotEmpty()
   mobilePhone: string;
+}
+
+class SignedProvisionalDto {
+  @IsString()
+  @IsNotEmpty()
+  fileKey: string;
+
+  @IsString()
+  @IsNotEmpty()
+  fileName: string;
+
+  @IsNumber()
+  fileSize: number;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
 }
 
 @ApiTags('Marriage — Admin')
@@ -144,6 +161,17 @@ export class MarriageAdminController {
     @Body() body: { photoUrl: string },
   ) {
     return this.service.adminSaveWeddingPhoto(id, user.id, body.photoUrl);
+  }
+
+  @Post('applications/:id/signed-provisional')
+  @Permissions(Permission.MARRIAGE_CERTIFICATE)
+  @ApiOperation({ summary: 'Attach the signed provisional certificate (required before issuing)' })
+  saveSignedProvisional(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SignedProvisionalDto,
+  ) {
+    return this.service.adminSaveSignedProvisional(id, user.id, dto);
   }
 
   @Post('applications/:id/certificate')

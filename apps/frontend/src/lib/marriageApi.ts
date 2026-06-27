@@ -146,7 +146,15 @@ export interface ScheduleCeremonyPayload {
 }
 
 export interface SaveDocumentPayload {
-  documentType: 'groom_id' | 'bride_id' | 'wali_consent' | 'mahr_agreement' | 'portrait' | 'additional';
+  documentType:
+    | 'groom_id'
+    | 'bride_id'
+    | 'groom_photo'
+    | 'bride_photo'
+    | 'wali_consent'
+    | 'mahr_agreement'
+    | 'portrait'
+    | 'additional';
   fileKey: string;
   fileName: string;
   fileSize: number;
@@ -251,6 +259,13 @@ export const marriageApi = {
     return data.data ?? data;
   },
 
+  // DEV ONLY — backend marks the payment as paid without the MoMo gateway.
+  // The backend hard-blocks this in production (returns 403).
+  devCompletePayment: async (id: string): Promise<MarriageApplication> => {
+    const { data } = await apiClient.post(`/marriage/applications/${id}/payment/dev-complete`);
+    return data.data ?? data;
+  },
+
   initiateUserMomoPayment: async (
     id: string,
     mobilePhone: string,
@@ -345,6 +360,14 @@ export const marriageApi = {
 
     uploadWeddingPhoto: async (id: string, photoUrl: string): Promise<MarriageApplication> => {
       const { data } = await apiClient.post(`/admin/marriage/applications/${id}/wedding-photo`, { photoUrl });
+      return data.data ?? data;
+    },
+
+    uploadSignedProvisional: async (
+      id: string,
+      doc: { fileKey: string; fileName: string; fileSize: number; mimeType: string },
+    ): Promise<MarriageApplication> => {
+      const { data } = await apiClient.post(`/admin/marriage/applications/${id}/signed-provisional`, doc);
       return data.data ?? data;
     },
 

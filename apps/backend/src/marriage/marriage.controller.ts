@@ -60,6 +60,13 @@ export class MarriageController {
     return this.service.initiateUserMomoPayment(id, user.id, dto.mobilePhone);
   }
 
+  @Post('applications/:id/payment/dev-complete')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[DEV ONLY] Mark payment as completed without the gateway (blocked in production)' })
+  devCompletePayment(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.devCompletePayment(id, user.id);
+  }
+
   @Post('applications/:id/documents')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Save an uploaded document record for an application' })
