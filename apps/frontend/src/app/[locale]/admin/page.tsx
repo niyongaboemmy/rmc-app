@@ -13,6 +13,16 @@ import {
   Activity, Minus,
 } from 'lucide-react';
 
+/* ─── Relative time ─── */
+function relativeTime(date: string): string {
+  const mins = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
 /* ─── Animated count-up ─── */
 function useCountUp(target: number, duration = 900, active = false) {
   const [v, setV] = useState(0);
@@ -153,34 +163,76 @@ function StatusRow({ label, ok }: { label: string; ok: boolean }) {
 }
 
 /* ═══════════════════════ PAGE ═══════════════════════ */
+interface RecentMember {
+  id: string;
+  approvalStatus: string;
+  category: string;
+  createdAt: string;
+  user: { firstName: string; lastName: string; email: string } | null;
+}
+
+interface WeeklyState {
+  counts: number[];
+  labels: string[];
+  total: number;
+  avg: number;
+  peakDay: string;
+}
+
 function AdminDashboardContent() {
   const t = useTranslations('admin');
   const { locale } = useParams<{ locale: string }>();
   const { user } = useAuth();
 
   const [stats, setStats] = useState({ totalMembers: 0, pendingMembers: 0, approvedMembers: 0, rejectedMembers: 0, totalMosques: 0, totalUsers: 0 });
+  const [recentActivity, setRecentActivity] = useState<RecentMember[]>([]);
+  const [weekly, setWeekly] = useState<WeeklyState>({ counts: [0,0,0,0,0,0,0], labels: ['','','','','','',''], total: 0, avg: 0, peakDay: '—' });
   const [loading, setLoading] = useState(true);
   const [cardsVisible, setCardsVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const WEEKLY_DATA   = [12, 19, 8, 24, 17, 31, 22];
-  const WEEKLY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
   const fetchStats = async () => {
     try {
-      const [mRes, mqRes, uRes] = await Promise.allSettled([
-        apiClient.get('/members?limit=1'),
-        apiClient.get('/mosques?limit=1'),
+      const [statsRes, mqRes, uRes, activityRes, weeklyRes] = await Promise.allSettled([
+        apiClient.get('/members/stats'),
+        apiClient.get('/mosques'),
         apiClient.get('/users?limit=1'),
+        apiClient.get('/members?limit=5'),
+        apiClient.get('/members/weekly-stats'),
       ]);
+
+      const s = statsRes.status === 'fulfilled' ? statsRes.value.data?.data : null;
       setStats({
-        totalMembers:    mRes.status === 'fulfilled'  ? (mRes.value.data?.data?.total  ?? 0) : 0,
-        pendingMembers:  0,
-        approvedMembers: 0,
-        rejectedMembers: 0,
-        totalMosques:    mqRes.status === 'fulfilled' ? (mqRes.value.data?.data?.total ?? 0) : 0,
+        totalMembers:    s?.total    ?? 0,
+        pendingMembers:  s?.pending  ?? 0,
+        approvedMembers: s?.approved ?? 0,
+        rejectedMembers: s?.rejected ?? 0,
+        totalMosques:    mqRes.status === 'fulfilled' ? (mqRes.value.data?.data?.length ?? 0) : 0,
         totalUsers:      uRes.status === 'fulfilled'  ? (uRes.value.data?.data?.total  ?? 0) : 0,
       });
+
+      if (activityRes.status === 'fulfilled') {
+        setRecentActivity(activityRes.value.data?.data?.data ?? []);
+      }
+
+      if (weeklyRes.status === 'fulfilled') {
+        const raw: { day: string; count: number }[] = weeklyRes.value.data?.data ?? [];
+        const days = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return {
+            date: d.toISOString().split('T')[0],
+            label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+          };
+        });
+        const countMap = Object.fromEntries(raw.map((r) => [r.day, r.count]));
+        const counts = days.map((d) => countMap[d.date] ?? 0);
+        const labels = days.map((d) => d.label);
+        const total = counts.reduce((a, b) => a + b, 0);
+        const avg = Math.round(total / 7);
+        const peakIdx = counts.indexOf(Math.max(...counts, 0));
+        setWeekly({ counts, labels, total, avg, peakDay: counts[peakIdx] > 0 ? labels[peakIdx] : '—' });
+      }
     } finally {
       setLoading(false);
       setTimeout(() => setCardsVisible(true), 80);
@@ -258,18 +310,15 @@ function AdminDashboardContent() {
               <p className="text-[13px] font-semibold text-gray-900">Weekly Registrations</p>
               <p className="text-[11px] text-gray-400 mt-0.5">Last 7 days</p>
             </div>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md shrink-0">
-              <TrendingUp className="w-3 h-3" /> +18% vs last week
-            </span>
           </div>
 
-          <BarChart data={WEEKLY_DATA} labels={WEEKLY_LABELS} />
+          <BarChart data={weekly.counts} labels={weekly.labels} />
 
           <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-3 divide-x divide-gray-100">
             {[
-              { label: 'Total this week', value: '133' },
-              { label: 'Daily average',   value: '19'  },
-              { label: 'Peak day',        value: 'Thu' },
+              { label: 'Total this week', value: String(weekly.total) },
+              { label: 'Daily average',   value: String(weekly.avg)   },
+              { label: 'Peak day',        value: weekly.peakDay       },
             ].map(({ label, value }) => (
               <div key={label} className="px-3 sm:px-4 first:pl-0 last:pr-0">
                 <p className="text-base sm:text-lg font-bold text-gray-900">{value}</p>
@@ -325,11 +374,28 @@ function AdminDashboardContent() {
               View all
             </Link>
           </div>
-          <ActivityItem initials="AU" name="Amina Uwase"    action="Applied for Standard membership" time="2m"  status="pending"  />
-          <ActivityItem initials="KM" name="Kalisa Mugabo"  action="Membership approved"             time="18m" status="approved" />
-          <ActivityItem initials="NN" name="Niyonzima N."   action="Application rejected"            time="1h"  status="rejected" />
-          <ActivityItem initials="FH" name="Fatuma Hassan"  action="Applied for Standard membership" time="2h"  status="pending"  />
-          <ActivityItem initials="IB" name="Ibrahim Bakari" action="Membership approved"             time="3h"  status="approved" />
+          {recentActivity.length === 0 ? (
+            <p className="text-[12px] text-gray-400 py-6 text-center">No recent activity</p>
+          ) : recentActivity.map((m) => {
+            const firstName = m.user?.firstName ?? '';
+            const lastName  = m.user?.lastName  ?? '';
+            const initials  = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase() || '??';
+            const name      = `${firstName} ${lastName}`.trim() || m.user?.email || 'Unknown';
+            const action    = m.approvalStatus === 'approved' ? 'Membership approved'
+                            : m.approvalStatus === 'rejected' ? 'Application rejected'
+                            : `Applied for ${m.category} membership`;
+            const status    = (m.approvalStatus as 'approved' | 'pending' | 'rejected') || 'pending';
+            return (
+              <ActivityItem
+                key={m.id}
+                initials={initials}
+                name={name}
+                action={action}
+                time={relativeTime(m.createdAt)}
+                status={status}
+              />
+            );
+          })}
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
