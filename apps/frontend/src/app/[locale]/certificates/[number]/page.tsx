@@ -19,6 +19,16 @@ export default function CertificatePage() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const pdfUrlRef = useRef<string | null>(null);
+
+  // Revoke the object URL only when the page unmounts — never while it's still
+  // displayed/downloadable (revoking on every effect re-run breaks downloads).
+  useEffect(
+    () => () => {
+      if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
+    },
+    [],
+  );
 
   // 1) Load the application.
   useEffect(() => {
@@ -47,11 +57,12 @@ export default function CertificatePage() {
   useEffect(() => {
     if (phase !== 'building' || !app) return;
     let cancelled = false;
-    let url: string | null = null;
     buildOfficialCertificateBlob(app)
       .then((blob) => {
         if (cancelled) return;
-        url = URL.createObjectURL(blob);
+        if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
+        const url = URL.createObjectURL(blob);
+        pdfUrlRef.current = url;
         setPdfUrl(url);
         setPhase('ready');
       })
@@ -60,13 +71,22 @@ export default function CertificatePage() {
       });
     return () => {
       cancelled = true;
-      if (url) URL.revokeObjectURL(url);
     };
   }, [phase, app]);
 
   const handlePrint = () => {
     iframeRef.current?.contentWindow?.focus();
     iframeRef.current?.contentWindow?.print();
+  };
+
+  const handleDownload = () => {
+    if (!pdfUrl) return;
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.download = app ? officialCertificateFileName(app) : 'marriage-certificate.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   // ── Loading / building ────────────────────────────────────────────────────
@@ -132,11 +152,9 @@ export default function CertificatePage() {
   }
 
   // ── Ready — preview + actions ─────────────────────────────────────────────
-  const fileName = app ? officialCertificateFileName(app) : 'marriage-certificate.pdf';
-
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Heading + actions */}
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <Link
@@ -152,13 +170,12 @@ export default function CertificatePage() {
           >
             <Printer className="w-4 h-4" /> Print
           </button>
-          <a
-            href={pdfUrl}
-            download={fileName}
+          <button
+            onClick={handleDownload}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-medium transition-colors"
           >
             <Download className="w-4 h-4" /> Download
-          </a>
+          </button>
         </div>
 
         {/* Title strip */}
@@ -175,14 +192,14 @@ export default function CertificatePage() {
           </div>
         </div>
 
-        {/* PDF preview (A4 landscape) */}
+        {/* PDF preview (A4 landscape) — fit to width, no viewer chrome for a clean, large view */}
         <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
           <iframe
             ref={iframeRef}
-            src={pdfUrl}
+            src={`${pdfUrl}#toolbar=0&navpanes=0&statusbar=0&view=FitH`}
             title="Official Marriage Certificate"
-            className="w-full bg-gray-200"
-            style={{ aspectRatio: '842 / 595', minHeight: '60vh' }}
+            className="w-full bg-white"
+            style={{ aspectRatio: '842 / 595', minHeight: '55vh' }}
           />
         </div>
 
