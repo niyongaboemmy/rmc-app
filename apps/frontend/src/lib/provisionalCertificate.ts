@@ -264,9 +264,10 @@ function formatPlaceOfMarriage(app: MarriageApplication): string {
 }
 
 function formatMahr(app: MarriageApplication): string {
-  if (app.mahrAmount != null && !Number.isNaN(Number(app.mahrAmount))) {
-    const amount = `${Number(app.mahrAmount).toLocaleString()} ${app.mahrCurrency || 'RWF'}`;
-    return app.mahrDescription ? `${amount} — ${app.mahrDescription}` : amount;
+  // If a bride price amount was provided, show only the amount. Otherwise fall
+  // back to the description (description-only is allowed).
+  if (app.mahrAmount != null && !Number.isNaN(Number(app.mahrAmount)) && Number(app.mahrAmount) > 0) {
+    return `${Number(app.mahrAmount).toLocaleString()} ${app.mahrCurrency || 'RWF'}`;
   }
   return app.mahrDescription ?? '';
 }

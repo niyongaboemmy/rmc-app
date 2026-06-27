@@ -11,10 +11,12 @@ export class CreateMarriageApplicationDto {
 
   @ApiProperty() @IsString() @IsNotEmpty() @Length(3, 150) groomName!: string;
   @ApiProperty() @nid groomNid!: string;
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsDateString() groomBirthDate?: string;
   @ApiProperty() @IsString() @IsNotEmpty() groomPhone!: string;
 
   @ApiProperty() @IsString() @IsNotEmpty() @Length(3, 150) brideName!: string;
   @ApiProperty() @nid brideNid!: string;
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsDateString() brideBirthDate?: string;
   @ApiProperty() @IsString() @IsNotEmpty() bridePhone!: string;
 
   @ApiProperty() @nid witness1Nid!: string;
