@@ -380,6 +380,11 @@ export function Navbar() {
                   <Link href={`/${locale}/member/dashboard`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-white/85 hover:bg-white/10 hover:text-white transition-colors">
                     <LayoutDashboard className="w-4 h-4 text-white/50" /> {t('dashboard')}
                   </Link>
+                  <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
+                    <Link href={`/${locale}/admin/members`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-white/85 hover:bg-white/10 hover:text-white transition-colors">
+                      <Shield className="w-4 h-4 text-white/50" /> {t('admin')}
+                    </Link>
+                  </PermissionGate>
                   <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm text-red-300 hover:bg-red-500/15 transition-colors">
                     <LogOut className="w-4 h-4" /> {t('logout')}
                   </button>

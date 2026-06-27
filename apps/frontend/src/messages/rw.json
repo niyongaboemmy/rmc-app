@@ -375,27 +375,35 @@
           }
         },
         "processTitle": "Uko bikorwa",
-        "processSubtitle": "Intambwe eshanu zoroshye kuva ku gusaba kugeza ku cyemezo.",
+        "processSubtitle": "Intambwe zirindwi zoroshye kuva ku gusaba kugeza ku cyemezo.",
         "steps": {
           "s1": {
-            "title": "Iyandikishe nk'umunyamuryango",
-            "text": "Abashyingiranwa bombi bakora cyangwa bemeza konti zabo z'ubunyamuryango muri RMC."
+            "title": "Amakuru y'abashyingiranwa",
+            "text": "Andika amakuru y'umukwe n'umugeni nk'uko agaragara ku ndangamuntu zabo."
           },
           "s2": {
-            "title": "Tanga ubusabe bwawe",
-            "text": "Tanga amakuru bwite, amakuru ya wali (umurinzi), kandi uhitemo itariki wifuza."
+            "title": "Amakuru y'ibirori",
+            "text": "Hitamo aho n'igihe wifuza gukorera ibirori bya Nikah."
           },
           "s3": {
-            "title": "Kugenzura inyandiko",
-            "text": "RMC isuzuma inyandiko z'irangamuntu kandi yemeza ko wujuje ibisabwa bya Nikah."
+            "title": "Abahamya na wali",
+            "text": "Tanga abahamya babiri b'abayisilamu na wali (umurinzi) w'umugeni."
           },
           "s4": {
-            "title": "Inama mbere y'ubukwe",
-            "text": "Witabire isomo rigufi ry'inama n'umuhanga wa RMC mbere y'ibirori."
+            "title": "Mahr n'uyobora ubukwe",
+            "text": "Andika mahr (inkwano) mwumvikanyeho hamwe na imamu wifuza."
           },
           "s5": {
+            "title": "Ohereza inyandiko",
+            "text": "Shyiraho inyandiko z'irangamuntu n'amafoto bisabwa."
+          },
+          "s6": {
+            "title": "Ishyura kandi wohereze",
+            "text": "Hitamo igiciro n'uburyo bwo kwishyura, hanyuma wohereze ubusabe bwawe."
+          },
+          "s7": {
             "title": "Nikah n'icyemezo",
-            "text": "Ibirori birakorwa kandi icyemezo cyawe cy'ubukwe cyemewe gitangwa."
+            "text": "Nyuma y'uko RMC isuzumye kandi yemeje ubusabe bwawe, ibirori birakorwa kandi icyemezo cyawe cy'ubukwe cyemewe gitangwa."
           }
         },
         "requirementsTitle": "Ibyo Ukeneye",
@@ -1094,7 +1102,8 @@
     "quickGive": {
       "title": "Tanga aho bikenewe cyane",
       "subtitle": "Uzi umubare? Wongereho mu kanya gato — RMC ikohereza aho bikenewe cyane.",
-      "addToGift": "ku mpano"
+      "addToGift": "ku mpano",
+      "currency": "Ifaranga"
     },
     "card": {
       "addToGift": "Tanga",
@@ -1390,6 +1399,9 @@
       "checking": "Turimo kureba aho kwishyura kugeze…",
       "completed": "Kwishyura byakiriwe — murakoze!",
       "failed": "Kwishyura ntibyemejwe. Ongera ugerageze cyangwa ukoreshe ubundi buryo."
+    },
+    "summary": {
+      "continue": "Komeza ku kwishyura"
     }
   },
   "schools": {

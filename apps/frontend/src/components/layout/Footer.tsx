@@ -1,21 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Radio, ChevronDown, Send, Loader2, Check } from 'lucide-react';
+import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, ExternalLink, Radio, ChevronDown, Send, Loader2, Check } from 'lucide-react';
 import { IJWI_RADIO_URL } from '@/lib/constants';
 import { useTranslations } from 'next-intl';
 import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 import { publicApi } from '@/lib/public-api';
+import {
+  ContentKeys,
+  SOCIAL_DEFAULT,
+  getSiteContent,
+  mergeContent,
+  type SocialChannel,
+} from '@/lib/content-api';
 
-const socialLinks = [
-  { Icon: Facebook, href: '#', label: 'Facebook' },
-  { Icon: Twitter, href: '#', label: 'Twitter' },
-  { Icon: Instagram, href: '#', label: 'Instagram' },
-  { Icon: Youtube, href: '#', label: 'YouTube' },
-];
+// Channel key → icon, mirroring the contact page so the footer shows the same
+// platforms and links (sourced from the shared social content store).
+const CHANNEL_ICON: Record<SocialChannel['key'], typeof Facebook> = {
+  facebook: Facebook,
+  twitter: Twitter,
+  instagram: Instagram,
+  youtube: Youtube,
+};
 
 /**
  * Collapsible footer column — on mobile the details are hidden and the heading
@@ -109,6 +118,20 @@ export function Footer() {
   const { locale } = useParams<{ locale: string }>();
   const t = useTranslations('footer');
 
+  // Same social channels (and links) the contact page and home Social Media
+  // section show — admin managed in Content → Social Media, so all surfaces
+  // stay in sync. Falls back to seeded defaults until loaded.
+  const [channels, setChannels] = useState<SocialChannel[]>(SOCIAL_DEFAULT.channels);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, unknown>>(ContentKeys.social)
+      .then((data) => {
+        if (active && data) setChannels(mergeContent(SOCIAL_DEFAULT, data).channels);
+      })
+      .catch(() => {/* keep defaults */});
+    return () => { active = false; };
+  }, []);
+
   const quickLinks = [
     { href: `/${locale}/blog`, labelKey: 'links.blog' },
     { href: `/${locale}/member/register`, labelKey: 'links.join' },
@@ -169,16 +192,21 @@ export function Footer() {
             </p>
 
             <div className="flex items-center gap-2.5 mb-5">
-              {socialLinks.map(({ Icon, href, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="w-9 h-9 rounded-full bg-white/[0.07] border border-white/10 text-white/70 hover:text-white hover:bg-rmc-green hover:border-rmc-green flex items-center justify-center transition-all duration-200 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold/50"
-                >
-                  <Icon className="w-4 h-4" />
-                </a>
-              ))}
+              {channels.map((channel) => {
+                const Icon = CHANNEL_ICON[channel.key] ?? ExternalLink;
+                return (
+                  <a
+                    key={channel.key}
+                    href={channel.href || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={channel.label}
+                    className="w-9 h-9 rounded-full bg-white/[0.07] border border-white/10 text-white/70 hover:text-white hover:bg-rmc-green hover:border-rmc-green flex items-center justify-center transition-all duration-200 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold/50"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                );
+              })}
             </div>
 
             <NewsletterSignup />

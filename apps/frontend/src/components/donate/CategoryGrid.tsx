@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { Check, Plus, CheckCircle2, X, Sparkles } from 'lucide-react';
+import { Check, Plus, CheckCircle2, X, Sparkles, HandHeart } from 'lucide-react';
 import { fundedPercent, formatMoney, type PublicCampaignLike } from './eventsBridge';
 import { toneChip, money, type CartItem } from './donateData';
 import { resolveIcon } from './categoryIcons';
@@ -274,16 +274,29 @@ function CauseCard({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 transition-all duration-300 ${
+      className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 transition-all duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-lg hover:shadow-rmc-green/5 ${
         active ? 'border-rmc-green ring-rmc-green/30' : 'border-gray-100 ring-black/5 hover:border-rmc-green/40'
       }`}
     >
-      {/* Image */}
-      <div className="relative h-40 w-full bg-rmc-green-light">
-        {cause.image && <Image src={cause.image} alt="" fill className="object-cover object-center" sizes="(min-width: 1024px) 320px, 100vw" />}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      {/* Image (or patterned fallback for programs with no hero image) */}
+      <div className="relative h-40 w-full overflow-hidden bg-rmc-green-light">
+        {cause.image ? (
+          <Image
+            src={cause.image}
+            alt=""
+            fill
+            className="object-cover object-center transition-transform duration-500 motion-safe:group-hover:scale-105"
+            sizes="(min-width: 1024px) 320px, 100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-rmc-green to-rmc-green-deep">
+            <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-20" />
+            <HandHeart className="relative h-10 w-10 text-white/40 transition-transform duration-500 motion-safe:group-hover:scale-110" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
         {wasAdded && (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-rmc-green px-2.5 py-1 text-[10px] font-bold text-white shadow-sm rtl:right-auto rtl:left-3">
+          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-rmc-green/90 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm backdrop-blur-sm rtl:right-auto rtl:left-3">
             <Check className="h-3 w-3" /> {t('card.added')}
           </span>
         )}
@@ -291,14 +304,14 @@ function CauseCard({
 
       {/* Body */}
       <div className="flex flex-1 flex-col p-4">
-        <h4 className="text-[15px] font-bold leading-snug text-gray-900">{cause.label}</h4>
+        <h4 className="text-[15px] font-bold leading-snug text-gray-900 transition-colors duration-300 group-hover:text-rmc-green">{cause.label}</h4>
         <p className="mt-1 text-[12px] leading-relaxed text-gray-500">{cause.long}</p>
 
         {/* Example uses */}
         {cause.examples.length > 0 && (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {cause.examples.map((ex) => (
-              <span key={ex} className="rounded-full bg-rmc-green-light/70 px-2 py-0.5 text-[10.5px] font-semibold text-rmc-green-dark">
+              <span key={ex} className="rounded-full bg-rmc-green-light/70 px-2 py-0.5 text-[10.5px] font-semibold text-rmc-green-dark ring-1 ring-rmc-green/10">
                 {ex}
               </span>
             ))}
@@ -318,8 +331,13 @@ function CauseCard({
                 {f.pct}%
               </span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-              <div className={`h-full rounded-full ${f.funded ? 'bg-rmc-gold-light' : 'bg-rmc-green'}`} style={{ width: `${f.pct}%` }} />
+            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  f.funded ? 'bg-gradient-to-r from-rmc-gold to-rmc-gold-light' : 'bg-gradient-to-r from-rmc-green to-rmc-green-dark'
+                }`}
+                style={{ width: `${f.pct}%` }}
+              />
             </div>
           </div>
         ) : (

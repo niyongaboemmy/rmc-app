@@ -16,7 +16,7 @@ import {
   Youtube,
   ExternalLink,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
@@ -26,9 +26,12 @@ import { submitContactMessage } from '@/lib/contactApi';
 import {
   ContentKeys,
   SOCIAL_DEFAULT,
+  CONTACT_DEFAULT,
   getSiteContent,
   mergeContent,
+  pick,
   type SocialChannel,
+  type ContactContent,
 } from '@/lib/content-api';
 
 // Channel key → icon/background, mirroring the home Social Media section so both
@@ -52,8 +55,22 @@ type ContactFormData = z.infer<ReturnType<typeof buildContactSchema>>;
 
 export default function ContactPage() {
   const t = useTranslations('contact');
+  const locale = useLocale();
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
+
+  // Admin-managed Contact page content (Content → Contact Page). Falls back to
+  // the seeded defaults until loaded, and English when a translation is blank.
+  const [content, setContent] = useState<ContactContent>(CONTACT_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, unknown>>(ContentKeys.contact)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(CONTACT_DEFAULT, data));
+      })
+      .catch(() => {/* keep defaults */});
+    return () => { active = false; };
+  }, []);
 
   // Same social channels (and links) the home Social Media section shows — admin
   // managed in Content → Social Media, so the two surfaces stay in sync.
@@ -85,12 +102,12 @@ export default function ContactPage() {
   };
 
   const contactInfo = [
-    { label: t('address'), value: 'Kigali, Rwanda — RMC Head Office', icon: MapPin },
-    { label: t('phone'), value: '(+250) 788 308 436', icon: Phone, href: 'tel:+250788308436' },
-    { label: t('email'), value: 'rwandamuslimc@gmail.com', icon: Mail, href: 'mailto:rwandamuslimc@gmail.com' },
-    { label: t('email2'), value: 'islamrwanda18@gmail.com', icon: Mail, href: 'mailto:islamrwanda18@gmail.com' },
-    { label: t('hours'), value: t('hoursValue'), icon: Clock },
-  ];
+    { id: 'address', label: t('address'), value: pick(content.address, locale), icon: MapPin },
+    { id: 'phone', label: t('phone'), value: content.phone, icon: Phone, href: content.phoneHref || undefined },
+    { id: 'email', label: t('email'), value: content.email, icon: Mail, href: content.email ? `mailto:${content.email}` : undefined },
+    { id: 'email2', label: t('email2'), value: content.email2, icon: Mail, href: content.email2 ? `mailto:${content.email2}` : undefined },
+    { id: 'hours', label: t('hours'), value: pick(content.hours, locale), icon: Clock },
+  ].filter((item) => item.value);
 
   return (
     <div className="min-h-screen">
@@ -99,8 +116,8 @@ export default function ContactPage() {
         {/* Header */}
         <PageHero
           eyebrow="RMC"
-          title={t('title')}
-          subtitle={t('subtitle')}
+          title={pick(content.title, locale)}
+          subtitle={pick(content.subtitle, locale)}
           ornament
           minHeightClassName="min-h-[25vh]"
           paddingClassName="pt-36 pb-8"
@@ -116,9 +133,9 @@ export default function ContactPage() {
                 {/* Contact info */}
                 <div className="p-7 sm:p-10 bg-rmc-green/[0.05]">
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    {t('communicationTitle')}
+                    {pick(content.communicationTitle, locale)}
                   </h2>
-                  <p className="mt-2 text-gray-500">{t('communicationSubtitle')}</p>
+                  <p className="mt-2 text-gray-500">{pick(content.communicationSubtitle, locale)}</p>
 
                   <div className="mt-8 space-y-5">
                     {contactInfo.map((item) => {
@@ -138,21 +155,21 @@ export default function ContactPage() {
                       );
                       return item.href ? (
                         <a
-                          key={item.label}
+                          key={item.id}
                           href={item.href}
                           className="block -m-2 rounded-xl p-2 transition-colors hover:bg-gray-50"
                         >
                           {inner}
                         </a>
                       ) : (
-                        <div key={item.label}>{inner}</div>
+                        <div key={item.id}>{inner}</div>
                       );
                     })}
                   </div>
 
                   {/* Social links */}
                   <div className="mt-8 pt-6 border-t border-rmc-green/10">
-                    <p className="text-sm font-semibold text-gray-900">{t('socialTitle')}</p>
+                    <p className="text-sm font-semibold text-gray-900">{pick(content.socialTitle, locale)}</p>
                     <div className="mt-3 flex flex-wrap gap-2.5">
                       {channels.map((channel) => {
                         const cfg = CHANNEL_CONFIG[channel.key];
@@ -254,8 +271,8 @@ export default function ContactPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Reveal>
               <div className="max-w-2xl mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{t('findMosque')}</h2>
-                <p className="mt-2 text-gray-500">{t('findMosqueSubtitle')}</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{pick(content.findMosqueTitle, locale)}</h2>
+                <p className="mt-2 text-gray-500">{pick(content.findMosqueSubtitle, locale)}</p>
               </div>
             </Reveal>
             <Reveal delay={120}>
