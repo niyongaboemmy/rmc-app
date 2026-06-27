@@ -33,7 +33,7 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
     witness2Name: z.string().trim().min(3, 'Min. 3 characters'),
     waliName: z.string().trim().min(3, 'Min. 3 characters').optional().or(z.literal('')),
     waliNid: nid.optional().or(z.literal('')),
-    waliPhone: z.string().regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX').optional().or(z.literal('')),
+    waliPhone: z.string().regex(/^7[2389]\d{7}$/, 'Enter a valid Rwanda number: 7XXXXXXXX').optional().or(z.literal('')),
   }).superRefine((d, ctx) => {
     if (d.witness1Nid === d.witness2Nid) {
       ctx.addIssue({ code: 'custom', path: ['witness2Nid'], message: 'Witnesses cannot have the same NID' });
