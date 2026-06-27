@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Logger, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
+import { SkipTransform } from '../common/decorators/skip-transform.decorator';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
 import { PaymentEventsService } from '../payment-settings/payment-events.service';
 import { MarriageWebhookService } from './marriage-webhook.service';
@@ -29,6 +30,7 @@ export class WebhooksController {
    * Response must be 200 OK with JSON: { message:'success', success:true, request_id:'...' }
    */
   @Public()
+  @SkipTransform()
   @Post('intouch-pay')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'IntouchPay payment callback (public webhook)' })
