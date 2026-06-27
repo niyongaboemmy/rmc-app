@@ -62,6 +62,14 @@ export class MembersController {
     return this.members.getStatistics();
   }
 
+  @Get('weekly-stats')
+  @ApiBearerAuth()
+  @Permissions(Permission.MEMBERS_VIEW)
+  @ApiOperation({ summary: 'Get daily registration counts for the last 7 days' })
+  getWeeklyStats() {
+    return this.members.getWeeklyStats();
+  }
+
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user member profile' })
