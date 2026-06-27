@@ -770,6 +770,11 @@ function AdminMarriageDetailContent() {
                   icon={<Fingerprint className="w-4 h-4" />}
                 />
                 <InfoRow
+                  label="Date of birth"
+                  value={app.groomBirthDate ? new Date(app.groomBirthDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : undefined}
+                  icon={<Calendar className="w-4 h-4" />}
+                />
+                <InfoRow
                   label="Phone"
                   value={app.groomPhone}
                   icon={<Phone className="w-4 h-4" />}
@@ -788,6 +793,11 @@ function AdminMarriageDetailContent() {
                   label="National ID"
                   value={app.brideNid}
                   icon={<Fingerprint className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="Date of birth"
+                  value={app.brideBirthDate ? new Date(app.brideBirthDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : undefined}
+                  icon={<Calendar className="w-4 h-4" />}
                 />
                 <InfoRow
                   label="Phone"
