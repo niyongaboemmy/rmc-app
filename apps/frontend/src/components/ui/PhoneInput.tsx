@@ -69,12 +69,9 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
         if (digits.startsWith('0')) digits = digits.slice(1);
         const clean = digits.slice(0, 9);
 
-        // Mutate the synthetic event value so react-hook-form gets the cleaned value
-        Object.defineProperty(e, 'target', {
-          writable: false,
-          value: { ...e.target, value: clean },
-        });
-
+        // Write the cleaned value back to the actual input so the displayed
+        // value and the value react-hook-form validates stay in sync.
+        e.target.value = clean;
         onChange?.(e);
       },
       [onChange],
@@ -106,7 +103,6 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             ref={ref}
             type="tel"
             inputMode="numeric"
-            maxLength={9}
             placeholder="7XXXXXXXX"
             autoComplete="tel"
             onChange={handleChange}

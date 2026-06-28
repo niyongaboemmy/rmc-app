@@ -12,11 +12,16 @@ import { WizardFormData } from '../MarriageWizard';
 const nid = z.string().regex(/^\d{16}$/, 'Must be exactly 16 digits');
 const fullName = z.string().trim().min(3, 'At least 3 characters required');
 const phone = z.string().regex(/^7[2389]\d{7}$/, 'Enter a valid Rwanda number: 7XXXXXXXX');
+const MIN_AGE = 21;
 const birthDate = z
   .string()
   .min(1, 'Date of birth is required')
   .refine((v) => !Number.isNaN(Date.parse(v)), 'Enter a valid date')
-  .refine((v) => new Date(v) <= new Date(), 'Date of birth cannot be in the future');
+  .refine((v) => {
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - MIN_AGE);
+    return new Date(v) <= cutoff;
+  }, `Must be at least ${MIN_AGE} years old`);
 
 const schema = z.object({
   groomName: fullName,
@@ -65,7 +70,12 @@ export function Step1Couple({ initialData, onNext }: Props) {
   });
 
   const nidProps = { inputMode: 'numeric' as const, maxLength: 16, placeholder: '16-digit National ID' };
-  const today = new Date().toISOString().split('T')[0];
+  // Latest allowed date of birth: today minus the minimum age (21 years).
+  const maxDob = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - MIN_AGE);
+    return d.toISOString().split('T')[0];
+  })();
 
   const handleNext = (data: FormData) =>
     onNext({
@@ -99,7 +109,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
             label="Date of birth"
             type="date"
             required
-            max={today}
+            max={maxDob}
             error={errors.groomBirthDate?.message}
             {...register('groomBirthDate')}
           />
@@ -136,7 +146,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
             label="Date of birth"
             type="date"
             required
-            max={today}
+            max={maxDob}
             error={errors.brideBirthDate?.message}
             {...register('brideBirthDate')}
           />
