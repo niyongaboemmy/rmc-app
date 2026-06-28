@@ -576,7 +576,7 @@
         "title": "Reba aho ubusabe bugeze",
         "subtitle": "Andika nimero y'ubusabe bwawe kugira ngo urebe aho ubusabe bw'ubukwe bwawe bugeze.",
         "idLabel": "Nimero y'ubusabe",
-        "idPlaceholder": "RMC-MR-XXXXXX",
+        "idPlaceholder": "RMC-XX-XXXXXX-XXXXX",
         "checkButton": "Reba aho bigeze",
         "notFoundTitle": "Nta busabe bubonetse",
         "notFoundText": "Ntitwabashije kubona ubusabe bufite iyo nimero. Reba neza nimero hanyuma wongere ugerageze.",

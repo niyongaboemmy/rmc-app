@@ -576,7 +576,7 @@
         "title": "تحقق من حالة الطلب",
         "subtitle": "أدخل رقم طلبك لمعرفة آخر حالة لطلب زواجك.",
         "idLabel": "رقم الطلب",
-        "idPlaceholder": "RMC-MR-XXXXXX",
+        "idPlaceholder": "RMC-XX-XXXXXX-XXXXX",
         "checkButton": "تحقق من الحالة",
         "notFoundTitle": "لم يُعثر على طلب",
         "notFoundText": "لم نتمكن من العثور على طلب بهذا الرقم. يرجى التحقق من الرقم والمحاولة مرة أخرى.",

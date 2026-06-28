@@ -17,6 +17,7 @@ import {
   VenueType,
 } from './entities/marriage-application.entity';
 import { MarriageDocument, DocumentType } from './entities/marriage-document.entity';
+import { districtCode } from './district-codes';
 import { MarriageStatusHistory } from './entities/marriage-status-history.entity';
 import { MarriageTransaction } from './entities/marriage-transaction.entity';
 import {
@@ -107,13 +108,16 @@ export class MarriageService {
 
   // ── Application Number ──────────────────────────────────────────────────────
 
-  private async generateApplicationNumber(): Promise<string> {
+  private async generateApplicationNumber(district?: string): Promise<string> {
     const result = await this.dataSource.query(`SELECT nextval('marriage_application_seq') AS seq`);
     const seq = String(result[0].seq).padStart(5, '0');
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `RMC-MR-${year}${month}-${seq}`;
+    // Use the district code (01–30) in place of the "MR" segment; fall back to
+    // "MR" when the district is missing/unrecognised.
+    const code = districtCode(district) ?? 'MR';
+    return `RMC-${code}-${year}${month}-${seq}`;
   }
 
   // ── Create / Draft ──────────────────────────────────────────────────────────
@@ -166,7 +170,7 @@ export class MarriageService {
     }
 
     const amountDue = await this.resolveMarriageFee(dto.venueType);
-    const applicationNumber = await this.generateApplicationNumber();
+    const applicationNumber = await this.generateApplicationNumber(dto.district);
 
     const app = this.applicationRepo.create({
       applicationNumber,
