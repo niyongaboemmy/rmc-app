@@ -409,6 +409,36 @@ function PaymentConfirmedPopup({ applicationNumber, onContinue }: { applicationN
 
 // ── File helpers ────────────────────────────────────────────────────────────
 
+/**
+ * Downscale + re-encode large images before upload so submitting is fast. The
+ * certificate and ID scans don't need full-resolution camera photos, so a 5 MB
+ * image becomes a few hundred KB. PDFs / non-images and already-small images are
+ * returned unchanged.
+ */
+async function compressImage(file: File, maxDim = 1600, quality = 0.82): Promise<File> {
+  if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') return file;
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size <= 600 * 1024) { bmp.close?.(); return file; }
+    const w = Math.max(1, Math.round(bmp.width * scale));
+    const h = Math.max(1, Math.round(bmp.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { bmp.close?.(); return file; }
+    ctx.drawImage(bmp, 0, 0, w, h);
+    bmp.close?.();
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', quality));
+    if (!blob || blob.size >= file.size) return file; // keep original if no gain
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
+}
+
 async function uploadFileToServer(file: File, folder: string): Promise<string> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('rmc_access_token') : null;
   const form  = new FormData();
@@ -426,8 +456,9 @@ async function uploadDocuments(draftId: string, slots: DocSlot[]): Promise<void>
   const failed: string[] = [];
   await Promise.all(slots.map(async ({ file, docType }) => {
     try {
-      const fileKey = await uploadFileToServer(file, 'marriage-docs');
-      await marriageApi.saveDocument(draftId, { documentType: docType, fileKey, fileName: file.name, fileSize: file.size, mimeType: file.type });
+      const up = await compressImage(file);
+      const fileKey = await uploadFileToServer(up, 'marriage-docs');
+      await marriageApi.saveDocument(draftId, { documentType: docType, fileKey, fileName: up.name, fileSize: up.size, mimeType: up.type });
     } catch { failed.push(DOC_LABELS[docType] ?? docType); }
   }));
   if (failed.length > 0) throw new Error(`Could not upload: ${failed.join(', ')}. Please check your connection and try again — your details are saved.`);
