@@ -85,6 +85,8 @@ interface Leader {
   image: string;
   nameEn: string; nameRw: string; nameAr: string;
   roleEn: string; roleRw: string; roleAr: string;
+  email?: string;
+  phone?: string;
 }
 
 // Seeded from the current About page leaders (photos + EN names/roles). Names are
@@ -196,6 +198,7 @@ function AboutRMCManager() {
     setLeaders((prev) => [...prev, {
       id: crypto.randomUUID(), image: '',
       nameEn: '', nameRw: '', nameAr: '', roleEn: '', roleRw: '', roleAr: '',
+      email: '', phone: '',
     }]);
   }, []);
   const removeLeader = useCallback((id: string) => {
@@ -393,6 +396,23 @@ function AboutRMCManager() {
                         <input dir={lang === 'ar' ? 'rtl' : 'ltr'} type="text" value={l[roleKey]}
                           onChange={(e) => setLeaderField(l.id, roleKey, e.target.value)}
                           className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
+                      </div>
+                      {/* Email + phone — shared across languages */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email</label>
+                          <input type="email" value={l.email ?? ''}
+                            onChange={(e) => setLeaderField(l.id, 'email', e.target.value)}
+                            placeholder="name@rmc.org.rw"
+                            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Phone</label>
+                          <input type="tel" value={l.phone ?? ''}
+                            onChange={(e) => setLeaderField(l.id, 'phone', e.target.value)}
+                            placeholder="+250 7XX XXX XXX"
+                            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+                        </div>
                       </div>
                     </div>
                   </div>
