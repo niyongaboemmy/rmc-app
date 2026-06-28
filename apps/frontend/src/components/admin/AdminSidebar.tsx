@@ -12,7 +12,7 @@ import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
   LayoutDashboard, Users, Shield, UserCheck, Landmark,
   Clock, BarChart2, Settings, ChevronLeft, ChevronRight,
-  LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap,
+  LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive,
 } from 'lucide-react';
 
 interface NavItem {
@@ -33,7 +33,9 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'prayer',    href: '/admin/prayer-times', icon: Clock,           labelKey: 'sidebar.prayer',    group: 'main',   permission: Permission.PRAYER_TIMES_VIEW },
   { key: 'finance',   href: '/admin/donations',    icon: Wallet,          labelKey: 'sidebar.finance',   group: 'main',   permission: Permission.DONATIONS_VIEW    },
   { key: 'inbox',     href: '/admin/inbox',        icon: Inbox,           labelKey: 'sidebar.inbox',     group: 'content', permission: Permission.CONTACT_MESSAGES_VIEW },
+  { key: 'drive',     href: '/admin/drive',        icon: HardDrive,       labelKey: 'sidebar.drive',     group: 'content', permission: Permission.DRIVE_ADMIN       },
   { key: 'content',   href: '/admin/content',      icon: BookOpen,        labelKey: 'sidebar.content',   group: 'content', permission: Permission.CONTENT_VIEW      },
+  { key: 'subscribers', href: '/admin/subscribers', icon: Mail,           labelKey: 'sidebar.subscribers', group: 'content', permission: Permission.SUBSCRIBERS_VIEW },
   { key: 'users',     href: '/admin/users',        icon: Users,           labelKey: 'sidebar.users',     group: 'system', permission: Permission.USERS_VIEW        },
   { key: 'roles',     href: '/admin/roles',        icon: Shield,          labelKey: 'sidebar.roles',     group: 'system', permission: Permission.ROLES_VIEW        },
   { key: 'reports',   href: '/admin/reports',      icon: BarChart2,       labelKey: 'sidebar.reports',   group: 'system', permission: Permission.REPORTS_VIEW      },

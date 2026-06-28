@@ -155,14 +155,11 @@ export function SuccessState({
               {t('success.thankYou')}
             </h1>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-white/70 md:text-base">
-              {t.rich('success.summary', {
-                amount: money(currency, total),
-                recurring: recurring ? t('success.monthly') : '',
-                count: items.length,
-                fundWord: items.length === 1 ? t('success.fundWordOne') : t('success.fundWordOther'),
-                method: methodName,
-                b: (c) => <span className="font-bold text-white">{c}</span>,
-              })}
+              Your gift of{' '}
+              <span className="font-bold text-white">{money(currency, total)}</span>
+              {recurring && <span className="font-bold text-white">/month</span>}
+              {' '}has been received.{' '}
+              May Allah accept it and multiply it for you.
             </p>
           </div>
         </div>
@@ -219,33 +216,37 @@ export function SuccessState({
               )}
             </div>
 
-            {/* Action buttons — single row, professional */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Action buttons */}
+            <div className="flex flex-col gap-3">
+              {/* Primary — full width */}
               <button
                 type="button"
                 onClick={printReceipt}
-                className="col-span-1 flex min-w-0 items-center justify-center gap-1.5 truncate rounded-full bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-rmc-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-rmc-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
               >
                 <Printer className="h-4 w-4 shrink-0" />
-                <span className="truncate">{t('success.downloadReceipt')}</span>
+                {t('success.downloadReceipt')}
               </button>
 
-              <Link
-                href={`/${locale}`}
-                className="col-span-1 flex min-w-0 items-center justify-center gap-1.5 truncate rounded-full border border-rmc-green/30 px-4 py-2.5 text-sm font-semibold text-rmc-green transition-all duration-200 hover:bg-rmc-green hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
-              >
-                <Home className="h-4 w-4 shrink-0" />
-                <span className="truncate">{t('success.backHome')}</span>
-              </Link>
+              {/* Secondary — side by side */}
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href={`/${locale}`}
+                  className="flex items-center justify-center gap-2 rounded-full border border-rmc-green/30 px-4 py-2.5 text-sm font-semibold text-rmc-green transition-all duration-200 hover:bg-rmc-green hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+                >
+                  <Home className="h-4 w-4 shrink-0" />
+                  {t('success.backHome')}
+                </Link>
 
-              <button
-                type="button"
-                onClick={onReset}
-                className="col-span-1 flex min-w-0 items-center justify-center gap-1.5 truncate rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-all duration-200 hover:border-rmc-green/30 hover:bg-rmc-green-light/40 hover:text-rmc-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
-              >
-                <RotateCcw className="h-4 w-4 shrink-0" />
-                <span className="truncate">{t('success.giveAgain')}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={onReset}
+                  className="flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-all duration-200 hover:border-rmc-green/30 hover:bg-rmc-green-light/40 hover:text-rmc-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+                >
+                  <RotateCcw className="h-4 w-4 shrink-0" />
+                  {t('success.giveAgain')}
+                </button>
+              </div>
             </div>
           </div>
         </div>

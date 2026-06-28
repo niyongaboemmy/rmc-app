@@ -47,7 +47,7 @@ export class RolesService {
 
   async update(id: string, dto: UpdateRoleDto): Promise<Role> {
     const role = await this.findByIdOrFail(id);
-    if (role.isSystem && dto.name) {
+    if (role.isSystem && dto.name && dto.name !== role.name) {
       throw new BadRequestException('System role names cannot be changed');
     }
     Object.assign(role, dto);

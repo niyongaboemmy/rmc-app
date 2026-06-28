@@ -23,12 +23,15 @@ import { PublicModule } from './public/public.module';
 import { MarriageModule } from './marriage/marriage.module';
 import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
+import { SubscribersModule } from './subscribers/subscribers.module';
 import { SchoolsModule } from './schools/schools.module';
 import { SocialModule } from './social/social.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { PaymentSettingsModule } from './payment-settings/payment-settings.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { DriveModule } from './drive/drive.module';
+import { UploadSettingsModule } from './upload-settings/upload-settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -62,12 +65,15 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     MarriageModule,
     ContentModule,
     DonationsModule,
+    SubscribersModule,
     SchoolsModule,
     SocialModule,
     ContactMessagesModule,
     IntegrationsModule,
     PaymentSettingsModule,
     WebhooksModule,
+    DriveModule,
+    UploadSettingsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  Plus, Pencil, Trash2, ChevronDown, Layers, GripVertical,
+  Plus, Pencil, Trash2, ChevronDown, Layers, GripVertical, RotateCcw,
 } from 'lucide-react';
 import {
   Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, ConfirmModal,
@@ -51,6 +51,42 @@ export function CategoriesTab({
       onChanged();
     } finally {
       setConfirmBusy(false);
+    }
+  };
+
+  // "Recently deleted" disclosure — archived categories, lazily loaded on expand.
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [deleted, setDeleted] = useState<AdminCategory[]>([]);
+  const [loadingDeleted, setLoadingDeleted] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const loadDeleted = async () => {
+    setLoadingDeleted(true);
+    try {
+      setDeleted(await api.admin.listDeleted());
+    } catch (err) {
+      console.error('Failed to load deleted categories', err);
+    } finally {
+      setLoadingDeleted(false);
+    }
+  };
+
+  const toggleDeleted = () => {
+    const next = !showDeleted;
+    setShowDeleted(next);
+    if (next) loadDeleted();
+  };
+
+  const restore = async (id: string) => {
+    setRestoringId(id);
+    try {
+      await api.admin.restoreCategory(id);
+      await loadDeleted();
+      onChanged();
+    } catch (err) {
+      console.error('Failed to restore category', err);
+    } finally {
+      setRestoringId(null);
     }
   };
 
@@ -159,9 +195,58 @@ export function CategoriesTab({
         </div>
       )}
 
+      {canManage && (
+        <div className="pt-1">
+          <button
+            onClick={toggleDeleted}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-rmc-green"
+          >
+            <ChevronDown className={cn('h-4 w-4 transition-transform', showDeleted && 'rotate-180 text-rmc-green')} />
+            Recently deleted
+            {deleted.length > 0 && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">{deleted.length}</span>}
+          </button>
+
+          {showDeleted && (
+            <div className="mt-3 space-y-2">
+              {loadingDeleted ? (
+                <p className="text-xs text-gray-400">…</p>
+              ) : deleted.length === 0 ? (
+                <p className="text-xs text-gray-400">No deleted categories.</p>
+              ) : (
+                deleted.map((cat) => {
+                  const Icon = resolveIcon(cat.icon);
+                  return (
+                    <div key={cat.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-gray-400 ring-1 ring-gray-100">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-gray-700">{cat.titleEn || cat.key}</span>
+                        <span className="block text-[11px] text-gray-400">
+                          <code className="font-mono">{cat.key}</code> · {cat.subfunds.length} sub-fund{cat.subfunds.length === 1 ? '' : 's'}
+                        </span>
+                      </span>
+                      <button
+                        onClick={() => restore(cat.id)}
+                        disabled={restoringId === cat.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/30 px-3 py-1.5 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green/5 disabled:opacity-50"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {restoringId === cat.id ? 'Restoring…' : 'Restore'}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {catModal.open && (
         <CategoryModal
           category={catModal.category}
+          defaultSortOrder={categories.reduce((m, c) => Math.max(m, c.sortOrder), -1) + 1}
           onClose={() => setCatModal({ open: false, category: null })}
           onSaved={() => { setCatModal({ open: false, category: null }); onChanged(); }}
         />
@@ -210,8 +295,8 @@ type Tri = { en: string; rw: string; ar: string };
 const emptyTri = (): Tri => ({ en: '', rw: '', ar: '' });
 
 /* ── Category create/edit ── */
-function CategoryModal({ category, onClose, onSaved }: {
-  category: AdminCategory | null; onClose: () => void; onSaved: () => void;
+function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
+  category: AdminCategory | null; defaultSortOrder?: number; onClose: () => void; onSaved: () => void;
 }) {
   const isEdit = !!category;
   const [lang, setLang] = useState<LangKey>('en');
@@ -219,7 +304,7 @@ function CategoryModal({ category, onClose, onSaved }: {
   const [icon, setIcon] = useState(category?.icon ?? 'HandHeart');
   const [tone, setTone] = useState(category?.tone ?? 'green');
   const [image, setImage] = useState(category?.image ?? '');
-  const [sortOrder, setSortOrder] = useState(String(category?.sortOrder ?? 0));
+  const [sortOrder, setSortOrder] = useState(String(category?.sortOrder ?? defaultSortOrder));
   const [status, setStatus] = useState(category?.status ?? 'active');
   const [title, setTitle] = useState<Tri>(category ? { en: category.titleEn, rw: category.titleRw, ar: category.titleAr } : emptyTri());
   const [desc, setDesc] = useState<Tri>(category ? { en: category.descEn, rw: category.descRw, ar: category.descAr } : emptyTri());

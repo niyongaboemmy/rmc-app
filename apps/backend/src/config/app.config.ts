@@ -5,6 +5,7 @@ export default registerAs('app', () => ({
   port: parseInt(process.env.APP_PORT || '3000', 10),
   url: process.env.APP_URL || 'http://localhost:3000',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
+  fileServerUrl: process.env.FILE_SERVER_URL || 'http://localhost:3002',
   bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '12', 10),
   otpExpiryMinutes: parseInt(process.env.OTP_EXPIRY_MINUTES || '5', 10),
   passwordResetExpiryMinutes: parseInt(process.env.PASSWORD_RESET_EXPIRY_MINUTES || '15', 10),

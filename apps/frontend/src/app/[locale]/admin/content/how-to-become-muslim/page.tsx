@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -13,12 +13,11 @@ import {
   saveSiteContent,
   mergeContent,
   type HowToBecomeMuslimContent,
-  type HowStep,
+  type HowLink,
   type Tri,
 } from '@/lib/content-api';
-import { uploadMedia, resolveMediaUrl } from '@/lib/mediaUpload';
 import {
-  ArrowLeft, Save, HeartHandshake, Upload, Trash2, Plus, Video, Info,
+  ArrowLeft, Save, HeartHandshake, Trash2, Plus,
 } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -29,15 +28,10 @@ const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl' }[] = [
   { key: 'ar', label: 'Arabic', dir: 'rtl' },
 ];
 
-const STEP_ICON_OPTIONS = [
-  'Heart', 'MessageSquareQuote', 'Droplets', 'Sparkles', 'MapPin', 'HeartHandshake', 'CheckCircle2',
+const ICON_OPTIONS = [
+  'BookOpen', 'GraduationCap', 'Heart', 'MessageSquareQuote', 'Droplets',
+  'Sparkles', 'MapPin', 'HeartHandshake', 'CheckCircle2',
 ];
-
-const VIDEO_FIELD: Record<Lang, 'videoEn' | 'videoRw' | 'videoAr'> = {
-  en: 'videoEn',
-  rw: 'videoRw',
-  ar: 'videoAr',
-};
 
 export default function HowToBecomeMuslimAdminPage() {
   return (
@@ -81,15 +75,15 @@ function Manager() {
     setForm((p) => ({ ...p, [field]: { ...(p[field] as Tri), [l]: value } }));
   }, []);
 
-  const setStep = useCallback((idx: number, mutate: (s: HowStep) => HowStep) => {
-    setForm((p) => ({ ...p, steps: p.steps.map((s, i) => (i === idx ? mutate(s) : s)) }));
+  const setLink = useCallback((idx: number, mutate: (l: HowLink) => HowLink) => {
+    setForm((p) => ({ ...p, links: p.links.map((l, i) => (i === idx ? mutate(l) : l)) }));
   }, []);
 
-  const addStep = () => setForm((p) => ({
+  const addLink = () => setForm((p) => ({
     ...p,
-    steps: [...p.steps, { icon: 'Sparkles', title: { en: '', rw: '', ar: '' }, description: { en: '', rw: '', ar: '' } }],
+    links: [...p.links, { icon: 'Sparkles', title: { en: '', rw: '', ar: '' }, description: { en: '', rw: '', ar: '' }, href: '' }],
   }));
-  const removeStep = (idx: number) => setForm((p) => ({ ...p, steps: p.steps.filter((_, i) => i !== idx) }));
+  const removeLink = (idx: number) => setForm((p) => ({ ...p, links: p.links.filter((_, i) => i !== idx) }));
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -120,7 +114,7 @@ function Manager() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">How to Become a Muslim</h1>
-            <p className="text-xs text-gray-400">Intro video (per language), the Shahada & steps</p>
+            <p className="text-xs text-gray-400">Header, the Shahada & steps</p>
           </div>
         </div>
         <button onClick={handleSave} disabled={saving || loading}
@@ -128,35 +122,6 @@ function Manager() {
           {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           {loading ? 'Loading…' : 'Save Changes'}
         </button>
-      </div>
-
-      {/* Per-language video */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="text-sm font-bold text-gray-700 mb-1 flex items-center gap-2">
-          <Video className="w-4 h-4 text-emerald-600" /> Intro Video — by language
-        </h2>
-        <p className="text-xs text-gray-400 mb-4 flex items-center gap-1.5">
-          <Info className="w-3.5 h-3.5" /> Plays muted &amp; auto-loops. Each language can have its own clip; empty languages fall back to English.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {LANGS.map((l) => (
-            <VideoField
-              key={l.key}
-              label={l.label}
-              value={form[VIDEO_FIELD[l.key]]}
-              onChange={(v) => setTop(VIDEO_FIELD[l.key], v)}
-            />
-          ))}
-        </div>
-        <div className="mt-4">
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Poster image (shown before play) — URL or key</label>
-          <input
-            value={form.videoPoster}
-            onChange={(e) => setTop('videoPoster', e.target.value)}
-            placeholder="/logo.webp or https://…"
-            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-        </div>
       </div>
 
       {/* Language tabs */}
@@ -195,15 +160,15 @@ function Manager() {
         <TriInput label={`Translation — ${lang.toUpperCase()}`} field="shahadaTranslation" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} textarea />
       </Card>
 
-      {/* Steps */}
-      <Card title={`Steps — ${LANGS.find((l) => l.key === lang)?.label}`}>
-        <TriInput label="Steps heading" field="stepsHeading" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} />
+      {/* Links */}
+      <Card title={`Links — ${LANGS.find((l) => l.key === lang)?.label}`}>
+        <TriInput label="Section heading" field="linksHeading" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} />
         <div className="space-y-4">
-          {form.steps.map((step, idx) => (
+          {form.links.map((link, idx) => (
             <div key={idx} className="rounded-xl border border-gray-200 p-4 bg-gray-50/60">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-gray-500">Step {idx + 1}</span>
-                <button onClick={() => removeStep(idx)} className="text-gray-400 hover:text-red-500" aria-label="Remove step">
+                <span className="text-xs font-bold text-gray-500">Link {idx + 1}</span>
+                <button onClick={() => removeLink(idx)} className="text-gray-400 hover:text-red-500" aria-label="Remove link">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -211,57 +176,44 @@ function Manager() {
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 mb-1">Icon</label>
                   <select
-                    value={step.icon}
-                    onChange={(e) => setStep(idx, (s) => ({ ...s, icon: e.target.value }))}
+                    value={link.icon}
+                    onChange={(e) => setLink(idx, (l) => ({ ...l, icon: e.target.value }))}
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    {STEP_ICON_OPTIONS.map((ic) => <option key={ic} value={ic}>{ic}</option>)}
+                    {ICON_OPTIONS.map((ic) => <option key={ic} value={ic}>{ic}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <input
                     dir={dir}
-                    value={step.title[lang]}
-                    onChange={(e) => setStep(idx, (s) => ({ ...s, title: { ...s.title, [lang]: e.target.value } }))}
-                    placeholder="Step title"
+                    value={link.title[lang]}
+                    onChange={(e) => setLink(idx, (l) => ({ ...l, title: { ...l.title, [lang]: e.target.value } }))}
+                    placeholder="Link title"
                     className={`w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 ${fontClass}`}
                   />
                   <textarea
                     dir={dir}
                     rows={2}
-                    value={step.description[lang]}
-                    onChange={(e) => setStep(idx, (s) => ({ ...s, description: { ...s.description, [lang]: e.target.value } }))}
-                    placeholder="Step description"
+                    value={link.description[lang]}
+                    onChange={(e) => setLink(idx, (l) => ({ ...l, description: { ...l.description, [lang]: e.target.value } }))}
+                    placeholder="Link description"
                     className={`w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 ${fontClass}`}
+                  />
+                  <input
+                    dir="ltr"
+                    value={link.href}
+                    onChange={(e) => setLink(idx, (l) => ({ ...l, href: e.target.value }))}
+                    placeholder="Destination — https://… (new tab) or /schools (in-app)"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               </div>
             </div>
           ))}
         </div>
-        <button onClick={addStep} className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
-          <Plus className="w-4 h-4" /> Add step
+        <button onClick={addLink} className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+          <Plus className="w-4 h-4" /> Add link
         </button>
-      </Card>
-
-      {/* Completion + What's Next */}
-      <Card title={`After the steps — completion & "What's Next" — ${LANGS.find((l) => l.key === lang)?.label}`}>
-        <TriInput label="Completion prompt (e.g. 'Have you taken your Shahada?')" field="completionPrompt" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} />
-        <TriInput label="Welcome subtext (after they confirm)" field="completionSubtext" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} textarea />
-        <div className="grid grid-cols-2 gap-3">
-          <TriInput label="What's Next button label" field="whatNextCta" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} />
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">What&apos;s Next link (path, shared)</label>
-            <input value={form.whatNextHref} onChange={(e) => setTop('whatNextHref', e.target.value)} placeholder="/new-muslim"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-          </div>
-        </div>
-      </Card>
-
-      {/* Nearest school block */}
-      <Card title={`Find the nearest school (map block) — ${LANGS.find((l) => l.key === lang)?.label}`}>
-        <TriInput label="Heading" field="schoolHeading" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} />
-        <TriInput label="Description" field="schoolDescription" lang={lang} form={form} setTri={setTri} dir={dir} fontClass={fontClass} textarea />
       </Card>
     </div>
   );
@@ -300,75 +252,6 @@ function TriInput({
       ) : (
         <input dir={dir} value={value} onChange={(e) => setTri(field, lang, e.target.value)} className={cls} />
       )}
-    </div>
-  );
-}
-
-function VideoField({
-  label, value, onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [pct, setPct] = useState(0);
-  const [err, setErr] = useState<string | null>(null);
-  const src = resolveMediaUrl(value);
-
-  const onFile = async (file: File) => {
-    setErr(null);
-    setUploading(true);
-    setPct(0);
-    try {
-      const key = await uploadMedia(file, 'content', setPct);
-      onChange(key);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-bold text-gray-600">{label}</span>
-        {value && (
-          <button onClick={() => onChange('')} className="text-gray-400 hover:text-red-500" aria-label="Clear video">
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      <div className="aspect-video rounded-lg bg-gray-100 overflow-hidden mb-2 flex items-center justify-center">
-        {src ? (
-          <video src={src} className="w-full h-full object-cover" muted loop playsInline controls />
-        ) : (
-          <Video className="w-7 h-7 text-gray-300" />
-        )}
-      </div>
-
-      <input ref={inputRef} type="file" accept="video/mp4,video/webm" hidden
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
-
-      <button
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:border-emerald-400 hover:text-emerald-600 disabled:opacity-60 transition-colors"
-      >
-        <Upload className="w-3.5 h-3.5" />
-        {uploading ? `Uploading… ${pct}%` : value ? 'Replace video' : 'Upload video'}
-      </button>
-
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="…or paste a video URL"
-        className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      />
-      {err && <p className="mt-1 text-[11px] text-red-500">{err}</p>}
     </div>
   );
 }

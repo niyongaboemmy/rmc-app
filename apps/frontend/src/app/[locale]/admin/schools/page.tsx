@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import {
-  GraduationCap, Plus, Pencil, Trash2, X, RefreshCw, Search, MapPin,
+  GraduationCap, Plus, Pencil, Trash2, X, RefreshCw, Search, MapPin, LocateFixed,
 } from 'lucide-react';
+
+// Leaflet can't render on the server — load the map picker client-side only.
+const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), { ssr: false });
 import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -282,6 +286,41 @@ function SchoolModal({ school, onClose, onSaved }: {
   const [error, setError] = useState('');
   const [nameErr, setNameErr] = useState('');
 
+  // Map picker: bridge the string inputs to the numeric LocationPicker.
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoErr, setGeoErr] = useState('');
+
+  const latNum = gpsLat.trim() !== '' && Number.isFinite(Number(gpsLat)) ? Number(gpsLat) : null;
+  const lngNum = gpsLng.trim() !== '' && Number.isFinite(Number(gpsLng)) ? Number(gpsLng) : null;
+
+  const setCoords = (lat: number, lng: number) => {
+    setGpsLat(lat.toFixed(6));
+    setGpsLng(lng.toFixed(6));
+  };
+
+  const findMyLocation = () => {
+    setGeoErr('');
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoErr('Location is not available in this browser.');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCoords(latitude, longitude);
+        setMapCenter([latitude, longitude]);
+        setLocating(false);
+      },
+      () => {
+        setGeoErr('Could not get your location. Allow location access or pick on the map.');
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
   const save = async () => {
     if (!name.trim()) { setNameErr(t('required')); return; }
     setSaving(true);
@@ -370,6 +409,30 @@ function SchoolModal({ school, onClose, onSaved }: {
             <label className={labelClass}>{t('field.district')}</label>
             <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Nyarugenge, Kigali" className={inputClass} />
           </div>
+        </div>
+        {/* Location: pick on the map, use current location, or type coordinates */}
+        <div>
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <label className={labelClass + ' mb-0'}>{t('field.location')}</label>
+            <button
+              type="button"
+              onClick={findMyLocation}
+              disabled={locating}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-50"
+            >
+              <LocateFixed className={cn('h-3.5 w-3.5', locating && 'animate-spin')} />
+              {locating ? t('locating') : t('findMyLocation')}
+            </button>
+          </div>
+          <div className="h-64 w-full">
+            <LocationPicker
+              lat={latNum}
+              lng={lngNum}
+              onPick={(lat, lng) => setCoords(lat, lng)}
+              flyToCenter={mapCenter}
+            />
+          </div>
+          {geoErr && <p className="mt-1.5 text-[11px] text-red-600">{geoErr}</p>}
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>

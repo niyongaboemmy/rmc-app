@@ -56,17 +56,24 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
 
-      # ── Patch APP_URL in server .env ─────────────
-      - name: Set APP_URL on server
+      # ── Patch env vars in server .env ────────────
+      - name: Set env vars on server
         run: |
           ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.PRODUCTION_HOST }} "
             mkdir -p /opt/rmc-platform/apps/backend
             touch /opt/rmc-platform/apps/backend/.env
-            if grep -q '^APP_URL=' /opt/rmc-platform/apps/backend/.env; then
-              sed -i 's|^APP_URL=.*|APP_URL=https://api.isengesho.com|' /opt/rmc-platform/apps/backend/.env
-            else
-              echo 'APP_URL=https://api.isengesho.com' >> /opt/rmc-platform/apps/backend/.env
-            fi
+
+            patch_env() {
+              local key=\$1 val=\$2 file=/opt/rmc-platform/apps/backend/.env
+              if grep -q \"^\${key}=\" \"\$file\"; then
+                sed -i \"s|^\${key}=.*|\${key}=\${val}|\" \"\$file\"
+              else
+                echo \"\${key}=\${val}\" >> \"\$file\"
+              fi
+            }
+
+            patch_env APP_URL https://api.isengesho.com
+            patch_env YOUTUBE_CHANNEL_ID UC8Wm3_vrV1v44QJv78YatPQ
           "
 
       # ── Rsync artifacts directly to EC2 ─────────

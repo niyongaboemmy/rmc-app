@@ -43,6 +43,11 @@ export class DonationCampaign {
   @Column({ name: 'fund_type', type: 'varchar', length: 20, default: 'general' })
   fundType: string;
 
+  /** Sub-fund this program belongs to (when its category has sub-funds). */
+  @Index('IDX_campaigns_sub_fund_id')
+  @Column({ name: 'sub_fund_id', type: 'uuid', nullable: true })
+  subFundId: string | null;
+
   @Column({ name: 'start_date', type: 'date' })
   startDate: string;
 

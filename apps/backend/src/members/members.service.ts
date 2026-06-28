@@ -206,9 +206,22 @@ export class MembersService {
 
   getStatistics() {
     return Promise.all([
-      this.profiles.count({ where: { approvalStatus: 'approved' } }),
-      this.profiles.count({ where: { approvalStatus: 'pending' } }),
       this.profiles.count(),
-    ]).then(([approved, pending, total]) => ({ total, approved, pending }));
+      this.profiles.count({ where: { approvalStatus: ApprovalStatus.APPROVED } }),
+      this.profiles.count({ where: { approvalStatus: ApprovalStatus.PENDING } }),
+      this.profiles.count({ where: { approvalStatus: ApprovalStatus.REJECTED } }),
+    ]).then(([total, approved, pending, rejected]) => ({ total, approved, pending, rejected }));
+  }
+
+  async getWeeklyStats(): Promise<{ day: string; count: number }[]> {
+    const rows = await this.profiles
+      .createQueryBuilder('mp')
+      .select("TO_CHAR(mp.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')", 'day')
+      .addSelect('COUNT(*)', 'count')
+      .where("mp.created_at >= NOW() - INTERVAL '7 days'")
+      .groupBy("TO_CHAR(mp.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')")
+      .orderBy("day", 'ASC')
+      .getRawMany<{ day: string; count: string }>();
+    return rows.map((r) => ({ day: r.day, count: parseInt(r.count, 10) }));
   }
 }

@@ -70,6 +70,21 @@ export enum Permission {
   // ── Payment Settings ──────────────────────────────────────────
   PAYMENT_SETTINGS_VIEW = 'payment_settings:view',
   PAYMENT_SETTINGS_MANAGE = 'payment_settings:manage',
+
+  SUBSCRIBERS_VIEW = 'subscribers:view',
+  SUBSCRIBERS_MANAGE = 'subscribers:manage',
+
+  DRIVE_VIEW = 'drive:view',
+  DRIVE_CREATE = 'drive:create',
+  DRIVE_EDIT = 'drive:edit',
+  DRIVE_DELETE = 'drive:delete',
+  DRIVE_SHARE = 'drive:share',
+  DRIVE_ADMIN = 'drive:admin',
+
+  UPLOAD_SETTINGS_VIEW = 'upload_settings:view',
+  UPLOAD_SETTINGS_MANAGE = 'upload_settings:manage',
+
+  USERS_VIEW_DRIVE = 'users:view_drive',
 }
 
 export function hasPermission(userPermissions: string[], permission: Permission): boolean {

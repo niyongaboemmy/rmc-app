@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   HandCoins, Search, RefreshCw, TrendingUp, Wallet, Clock, Receipt,
-  Plus, Pencil, X, Download, Trophy, Layers, CheckCircle2, CalendarRange, Sparkles, ChevronDown, Upload,
+  Plus, Pencil, Trash2, RotateCcw, X, Download, Trophy, Layers, CheckCircle2, CalendarRange, Sparkles, ChevronDown, Upload,
   LayoutDashboard, Heart, History, ChevronRight, Building2, MapPin, ArrowUpRight,
   ArrowUp, ArrowDown, ArrowUpDown, Activity,
 } from 'lucide-react';
@@ -23,8 +23,10 @@ import { marriageApi, MarriageApplication, AdminStats as MarriageStats } from '@
 import { fileUrl } from '@/lib/api';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
 import { parseDonationMeta, metaLabels, type DonateTranslator } from '@/lib/donationMeta';
-import { CATEGORIES, NIYYAH, METHODS } from '@/components/donate/donateData';
+import { NIYYAH, METHODS } from '@/components/donate/donateData';
 import { CategoriesTab } from '@/components/admin/donations/CategoriesTab';
+import { ConfirmModal } from '@/components/ui/Modal';
+import { NotifySubscribersButton } from '@/components/admin/NotifySubscribersButton';
 import { donationCategoriesApi, type AdminCategory } from '@/lib/donationCategoriesApi';
 import { formatMoney, fundedPercent } from '@/components/activities/data';
 import { cn } from '@/lib/utils';
@@ -58,7 +60,9 @@ const EMPTY_META: MetaFilters = { category: '', niyyah: '', method: '' };
 
 const PRESET_KEYS = ['all', 'today', '7d', '30d', 'month', 'year'] as const;
 const STATUS_KEYS = ['', 'completed', 'pending', 'failed', 'refunded'] as const;
-const CATEGORY_KEYS = [...CATEGORIES.map((c) => c.key), 'general'];
+/** Localized title for an admin-managed category, falling back to EN then the key. */
+const categoryTitle = (c: AdminCategory, locale: string) =>
+  (locale === 'rw' ? c.titleRw : locale === 'ar' ? c.titleAr : c.titleEn) || c.titleEn || c.key;
 
 /* Payment-status pill colours shared by the Marriage and Payment-History views. */
 const PAY_BADGE: Record<string, string> = {
@@ -207,6 +211,8 @@ function FinanceAdmin() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [campaignModal, setCampaignModal] = useState<{ open: boolean; campaign: CampaignWithStats | null }>({ open: false, campaign: null });
   const [editDonation, setEditDonation] = useState<Donation | null>(null);
+  const [deleteCampaignTarget, setDeleteCampaignTarget] = useState<CampaignWithStats | null>(null);
+  const [deletingCampaign, setDeletingCampaign] = useState(false);
 
   const fetchDonations = useCallback(async () => {
     setLoading(true);
@@ -269,7 +275,11 @@ function FinanceAdmin() {
   const fetchCategories = useCallback(async () => {
     try {
       setCategories(await donationCategoriesApi.admin.list());
-    } catch { /* ignore */ }
+    } catch (err) {
+      // Surface refetch failures instead of silently swallowing them — a silent
+      // failure here looks like "saved but the new category never appeared".
+      console.error('Failed to load donation categories', err);
+    }
   }, []);
 
   const fetchMarriageStats = useCallback(async () => {
@@ -346,6 +356,20 @@ function FinanceAdmin() {
     if (section === 'history') fetchHistory();
   };
 
+  const confirmDeleteCampaign = async () => {
+    if (!deleteCampaignTarget) return;
+    setDeletingCampaign(true);
+    try {
+      await donationsApi.admin.deleteCampaign(deleteCampaignTarget.id);
+      setDeleteCampaignTarget(null);
+      refreshAll();
+    } catch (err) {
+      console.error('Failed to delete program', err);
+    } finally {
+      setDeletingCampaign(false);
+    }
+  };
+
   const patch = (p: Partial<Filters>) => { setFilters((f) => ({ ...f, ...p })); setPage(1); };
   const applyPreset = (key: string) => { setFilters((f) => ({ ...f, ...presetRange(key) })); setPage(1); };
   const activePreset = useMemo(
@@ -372,6 +396,15 @@ function FinanceAdmin() {
       return true;
     });
   }, [donations, metaFilters, metaActive]);
+
+  // Category filter options — dynamic from the admin-managed categories. Includes
+  // inactive ones so historical donations to them stay filterable, plus the general fund.
+  const categoryFilterOptions = useMemo(() => [
+    { key: 'general', label: td('general.categoryTitle') },
+    ...[...categories]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((c) => ({ key: c.key, label: categoryTitle(c, locale) })),
+  ], [categories, locale, td]);
 
   const clearAll = () => { setFilters(EMPTY_FILTERS); setMetaFilters(EMPTY_META); setPage(1); };
 
@@ -695,7 +728,7 @@ function FinanceAdmin() {
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <select value={metaFilters.category} onChange={(e) => setMetaFilters((m) => ({ ...m, category: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
                     <option value="">{t('allCategories')}</option>
-                    {CATEGORY_KEYS.map((k) => <option key={k} value={k}>{k === 'general' ? td('general.categoryTitle') : td(`categories.${k}.title`)}</option>)}
+                    {categoryFilterOptions.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
                   </select>
                   <select value={metaFilters.niyyah} onChange={(e) => setMetaFilters((m) => ({ ...m, niyyah: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
                     <option value="">{t('allIntentions')}</option>
@@ -823,6 +856,7 @@ function FinanceAdmin() {
                                           {new Date(d.donatedAt).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' })}
                                         </DetailField>
                                       </div>
+                                {/* Editing a donation is disabled for now — restore this block to re-enable.
                                       {canManage && (
                                         <div className="mt-4 flex justify-end">
                                           <button
@@ -832,7 +866,7 @@ function FinanceAdmin() {
                                             <Pencil className="w-4 h-4" /> {t('edit')}
                                           </button>
                                         </div>
-                                      )}
+                                      )} */}
                                     </td>
                                   </tr>
                                 )}
@@ -859,7 +893,7 @@ function FinanceAdmin() {
               </div>
             </>
           ) : donTab === 'programs' ? (
-            <ProgramsTab campaigns={campaigns} canManage={canManage} onNew={() => setCampaignModal({ open: true, campaign: null })} onEdit={(c) => setCampaignModal({ open: true, campaign: c })} />
+            <ProgramsTab campaigns={campaigns} canManage={canManage} onNew={() => setCampaignModal({ open: true, campaign: null })} onEdit={(c) => setCampaignModal({ open: true, campaign: c })} onDelete={(c) => setDeleteCampaignTarget(c)} onRestored={refreshAll} />
           ) : (
             <CategoriesTab categories={categories} canManage={canManage} onChanged={fetchCategories} />
           )}
@@ -1134,7 +1168,7 @@ function FinanceAdmin() {
 
       {/* Modals */}
       {campaignModal.open && (
-        <CampaignModal campaign={campaignModal.campaign} onClose={() => setCampaignModal({ open: false, campaign: null })} onSaved={() => { setCampaignModal({ open: false, campaign: null }); refreshAll(); }} />
+        <CampaignModal campaign={campaignModal.campaign} categories={categories} locale={locale} onClose={() => setCampaignModal({ open: false, campaign: null })} onSaved={() => { setCampaignModal({ open: false, campaign: null }); refreshAll(); }} />
       )}
       {editDonation && (
         <EditDonationModal
@@ -1144,6 +1178,16 @@ function FinanceAdmin() {
           onSaved={() => { setEditDonation(null); refreshAll(); }}
         />
       )}
+      <ConfirmModal
+        open={!!deleteCampaignTarget}
+        onClose={() => setDeleteCampaignTarget(null)}
+        onConfirm={confirmDeleteCampaign}
+        title={t('programs.deleteConfirmTitle')}
+        message={deleteCampaignTarget ? t('programs.deleteConfirmMessage', { title: deleteCampaignTarget.title }) : ''}
+        confirmLabel={t('programs.delete')}
+        variant="danger"
+        isLoading={deletingCampaign}
+      />
     </div>
   );
 }
@@ -1320,13 +1364,52 @@ function TabButton({ active, onClick, icon, label, count }: { active: boolean; o
   );
 }
 
-function ProgramsTab({ campaigns, canManage, onNew, onEdit }: {
+function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored }: {
   campaigns: CampaignWithStats[];
   canManage: boolean;
   onNew: () => void;
   onEdit: (c: CampaignWithStats) => void;
+  onDelete: (c: CampaignWithStats) => void;
+  onRestored: () => void;
 }) {
   const t = useTranslations('admin.donations');
+
+  // "Recently deleted" disclosure — soft-deleted programs, lazily loaded on expand.
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [deleted, setDeleted] = useState<CampaignWithStats[]>([]);
+  const [loadingDeleted, setLoadingDeleted] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const loadDeleted = async () => {
+    setLoadingDeleted(true);
+    try {
+      setDeleted(await donationsApi.admin.listDeletedCampaigns());
+    } catch (err) {
+      console.error('Failed to load deleted programs', err);
+    } finally {
+      setLoadingDeleted(false);
+    }
+  };
+
+  const toggleDeleted = () => {
+    const next = !showDeleted;
+    setShowDeleted(next);
+    if (next) loadDeleted();
+  };
+
+  const restore = async (id: string) => {
+    setRestoringId(id);
+    try {
+      await donationsApi.admin.restoreCampaign(id);
+      await loadDeleted();
+      onRestored();
+    } catch (err) {
+      console.error('Failed to restore program', err);
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {canManage && (
@@ -1357,9 +1440,19 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit }: {
                   <div className="flex items-center gap-2 shrink-0">
                     <CampaignStatusBadge status={c.status} />
                     {canManage && (
-                      <button onClick={() => onEdit(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5 transition-colors">
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                      <>
+                        <button onClick={() => onEdit(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5 transition-colors" aria-label={t('campaignModal.editTitle')}>
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => onDelete(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" aria-label={t('programs.delete')}>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <NotifySubscribersButton
+                          compact
+                          subject={`New program: ${c.title}`}
+                          html={`<p>${c.description || ''}</p><p>Support <strong>${c.title}</strong> on the RMC donate page.</p>`}
+                        />
+                      </>
                     )}
                   </div>
                 </div>
@@ -1382,6 +1475,46 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit }: {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {canManage && (
+        <div className="pt-2">
+          <button
+            onClick={toggleDeleted}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-rmc-green"
+          >
+            <ChevronDown className={cn('h-4 w-4 transition-transform', showDeleted && 'rotate-180 text-rmc-green')} />
+            {t('programs.deletedSectionTitle')}
+            {deleted.length > 0 && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">{deleted.length}</span>}
+          </button>
+
+          {showDeleted && (
+            <div className="mt-3 space-y-2">
+              {loadingDeleted ? (
+                <p className="text-xs text-gray-400">…</p>
+              ) : deleted.length === 0 ? (
+                <p className="text-xs text-gray-400">{t('programs.deletedEmpty')}</p>
+              ) : (
+                deleted.map((c) => (
+                  <div key={c.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-2.5">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-gray-700">{c.title}</span>
+                      <span className="block text-[11px] capitalize text-gray-400">{c.fundType} · {c.currency} {formatMoney(Number(c.targetAmount))}</span>
+                    </span>
+                    <button
+                      onClick={() => restore(c.id)}
+                      disabled={restoringId === c.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/30 px-3 py-1.5 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green/5 disabled:opacity-50"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {restoringId === c.id ? t('programs.restoring') : t('programs.restore')}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1495,8 +1628,10 @@ function Stepper({ steps, current }: { steps: string[]; current: number }) {
   );
 }
 
-function CampaignModal({ campaign, onClose, onSaved }: {
+function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
   campaign: CampaignWithStats | null;
+  categories: AdminCategory[];
+  locale: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -1512,12 +1647,13 @@ function CampaignModal({ campaign, onClose, onSaved }: {
   const [targetAmount, setTargetAmount] = useState(String(campaign?.targetAmount ?? ''));
   const [currency, setCurrency] = useState(campaign?.currency ?? 'RWF');
   const [fundType, setFundType] = useState(campaign?.fundType ?? 'general');
+  const [subFundId, setSubFundId] = useState<string | null>(campaign?.subFundId ?? null);
   const [startDate, setStartDate] = useState(campaign?.startDate ?? '');
   const [endDate, setEndDate] = useState(campaign?.endDate ?? '');
   const [status, setStatus] = useState<CampaignStatus>(campaign?.status ?? 'active');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErr, setFieldErr] = useState<{ title?: string; targetAmount?: string; heroImage?: string }>({});
+  const [fieldErr, setFieldErr] = useState<{ title?: string; targetAmount?: string; heroImage?: string; subFund?: string }>({});
 
   const statusLabels: Record<CampaignStatus, string> = {
     active: t('programs.statusActive'),
@@ -1525,10 +1661,30 @@ function CampaignModal({ campaign, onClose, onSaved }: {
     closed: t('programs.statusClosed'),
   };
 
-  // Category options — donate-page categories, keeping any legacy fundType value.
-  const catKeys = CATEGORY_KEYS.includes(fundType) ? CATEGORY_KEYS : [fundType, ...CATEGORY_KEYS];
-  const catLabel = (k: string) =>
-    k === 'general' ? td('general.categoryTitle') : td.has(`categories.${k}.title`) ? td(`categories.${k}.title`) : k;
+  // Category options — admin-managed categories (dynamic from the API), plus the
+  // special "general" fund and any legacy value an existing campaign already holds.
+  const catOptions: { key: string; label: string }[] = [
+    { key: 'general', label: td('general.categoryTitle') },
+    ...categories
+      .filter((c) => c.status === 'active')
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((c) => ({ key: c.key, label: categoryTitle(c, locale) })),
+  ];
+  if (fundType && !catOptions.some((o) => o.key === fundType)) {
+    catOptions.unshift({ key: fundType, label: fundType });
+  }
+
+  // Sub-fund options for the selected category. A program is created under a
+  // sub-fund when the chosen category has any (required); otherwise category-level.
+  const selectedCat = categories.find((c) => c.key === fundType && c.status === 'active');
+  const subFundOptions = (selectedCat?.subfunds ?? [])
+    .filter((s) => s.status === 'active')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((s) => ({
+      id: s.id,
+      label: (locale === 'rw' ? s.labelRw : locale === 'ar' ? s.labelAr : s.labelEn) || s.labelEn || s.key,
+    }));
+  const hasSubFunds = subFundOptions.length > 0;
 
   const onTitle = (v: string) => {
     setTitle(v);
@@ -1569,6 +1725,7 @@ function CampaignModal({ campaign, onClose, onSaved }: {
     const fe: typeof fieldErr = {};
     if (s === 0 && !title.trim()) fe.title = t('campaignModal.required');
     if (s === 1 && (!targetAmount || Number(targetAmount) <= 0)) fe.targetAmount = t('campaignModal.invalidAmount');
+    if (s === 1 && hasSubFunds && !subFundId) fe.subFund = t('campaignModal.required');
     return fe;
   };
 
@@ -1582,7 +1739,7 @@ function CampaignModal({ campaign, onClose, onSaved }: {
     const fe = { ...validateStep(0), ...validateStep(1) };
     setFieldErr(fe);
     if (fe.title || fe.heroImage) { setStep(0); return; }
-    if (fe.targetAmount) { setStep(1); return; }
+    if (fe.targetAmount || fe.subFund) { setStep(1); return; }
 
     setSaving(true);
     setError('');
@@ -1594,6 +1751,8 @@ function CampaignModal({ campaign, onClose, onSaved }: {
       targetAmount: Number(targetAmount),
       currency,
       fundType,
+      // Tie to the chosen sub-fund when the category has any; else category-level.
+      subFundId: hasSubFunds ? subFundId : null,
       startDate: startDate || undefined,
       endDate: endDate || null,
       status,
@@ -1705,10 +1864,18 @@ function CampaignModal({ campaign, onClose, onSaved }: {
             </select>
           </Field>
           <Field label={t('campaignModal.category')} hint={t('campaignModal.categoryHint')}>
-            <select value={fundType} onChange={(e) => setFundType(e.target.value)} className={inputClass}>
-              {catKeys.map((k) => <option key={k} value={k}>{catLabel(k)}</option>)}
+            <select value={fundType} onChange={(e) => { setFundType(e.target.value); setSubFundId(null); }} className={inputClass}>
+              {catOptions.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
             </select>
           </Field>
+          {hasSubFunds && (
+            <Field label={t('campaignModal.subFund')} hint={t('campaignModal.subFundHint')} required error={fieldErr.subFund}>
+              <select value={subFundId ?? ''} onChange={(e) => setSubFundId(e.target.value || null)} className={inputClass}>
+                <option value="">{t('campaignModal.subFundPlaceholder')}</option>
+                {subFundOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+              </select>
+            </Field>
+          )}
         </div>
       </FormSection>
       )}

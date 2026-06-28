@@ -9,6 +9,12 @@ export class UpdateRoleDto {
   @MaxLength(100)
   name?: string;
 
+  @ApiPropertyOptional({ example: 'content_manager' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  slug?: string;
+
   @ApiPropertyOptional({ example: 'Manages blog posts and announcements' })
   @IsOptional()
   @IsString()

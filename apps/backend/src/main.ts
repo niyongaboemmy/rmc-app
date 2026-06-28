@@ -48,10 +48,7 @@ async function bootstrap(): Promise<void> {
   // Global filters & interceptors
   const reflector = app.get(Reflector);
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
-
-  // Suppress unused variable warning
-  void reflector;
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor(reflector));
 
   // Swagger — only in non-production
   if (process.env.NODE_ENV !== 'production') {

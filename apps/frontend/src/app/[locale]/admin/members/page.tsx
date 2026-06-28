@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { ModalPortal } from '@/components/ui/Modal';
 import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -259,8 +260,9 @@ function AdminMembersContent() {
         </div>
 
         {/* Rejection modal */}
+        <ModalPortal>
         {approvalModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99990] p-4">
             <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
               <h3 className="font-bold text-gray-900 mb-2">Reject Application</h3>
               <p className="text-gray-500 text-sm mb-4">
@@ -292,6 +294,7 @@ function AdminMembersContent() {
             </div>
           </div>
         )}
+        </ModalPortal>
     </div>
   );
 }

@@ -31,10 +31,16 @@ async function main() {
   let latest = 'v0.0.0';
   try { latest = out('git describe --tags --abbrev=0'); } catch {}
 
+  const existingTags = new Set(out('git tag').split('\n').filter(Boolean));
+
   const [major, minor, patch] = latest.replace('v', '').split('.').map(Number);
 
+  // Auto-skip any already-existing tags
+  let patchVer = patch + 1;
+  while (existingTags.has(`v${major}.${minor}.${patchVer}`)) patchVer++;
+
   const versions = {
-    patch: `v${major}.${minor}.${patch + 1}`,
+    patch: `v${major}.${minor}.${patchVer}`,
     minor: `v${major}.${minor + 1}.0`,
     major: `v${major + 1}.0.0`,
   };
@@ -55,6 +61,10 @@ async function main() {
   const next = versions[type];
   console.log(`\nDeploying ${latest} → ${next} ...\n`);
 
+  if (existingTags.has(next)) {
+    console.error(`\nTag ${next} already exists locally. Delete it first with: git tag -d ${next}\n`);
+    process.exit(1);
+  }
   run(`git tag ${next}`);
   run(`git push origin ${next}`);
 

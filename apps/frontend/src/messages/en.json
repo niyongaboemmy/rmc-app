@@ -80,7 +80,8 @@
     "profile": "My Profile",
     "changePassword": "Change Password",
     "admin": "Admin",
-    "schools": "Schools"
+    "schools": "Schools",
+    "projects": "Projects"
   },
   "home": {
     "hero": {
@@ -750,6 +751,7 @@
       "finance": "Finance",
       "inbox": "Inbox",
       "content": "Manage Content",
+      "subscribers": "Subscribers",
       "users": "Users",
       "roles": "Roles & Permissions",
       "reports": "Reports",
@@ -760,7 +762,8 @@
         "content": "Content",
         "system": "System"
       },
-      "marriage": "Marriage"
+      "marriage": "Marriage",
+      "drive": "Drive"
     },
     "topbar": {
       "viewSite": "View site",
@@ -894,7 +897,14 @@
         "raisedNote": "{amount} raised from completed donations",
         "statusActive": "Active",
         "statusPaused": "Paused",
-        "statusClosed": "Closed"
+        "statusClosed": "Closed",
+        "delete": "Delete",
+        "deleteConfirmTitle": "Delete program",
+        "deleteConfirmMessage": "Delete “{title}”? This cannot be undone.",
+        "restore": "Restore",
+        "restoring": "Restoring…",
+        "deletedSectionTitle": "Recently deleted",
+        "deletedEmpty": "No deleted programs"
       },
       "editModal": {
         "title": "Edit donation",
@@ -920,6 +930,9 @@
         "fundType": "Fund type",
         "category": "Category",
         "categoryHint": "Maps this program to a donate-page category.",
+        "subFund": "Sub-fund",
+        "subFundHint": "Which sub-fund of this category the program belongs to.",
+        "subFundPlaceholder": "Select a sub-fund…",
         "slug": "Slug",
         "slugHint": "Links to a public event for live funding (e.g. e1).",
         "heroImage": "Hero image",
@@ -1001,9 +1014,12 @@
         "province": "Province",
         "district": "District / location",
         "lat": "Latitude",
-        "lng": "Longitude"
+        "lng": "Longitude",
+        "location": "Location"
       },
-      "gpsHint": "Coordinates place the school pin on the map. Tip: right-click a spot in Google Maps to copy its lat/long.",
+      "findMyLocation": "Find my location",
+      "locating": "Locating…",
+      "gpsHint": "Pick a spot on the map, use “Find my location”, or type coordinates below.",
       "required": "Required",
       "cancel": "Cancel",
       "save": "Save changes",
@@ -1052,6 +1068,7 @@
     "noResults": "No articles found"
   },
   "donate": {
+    "programsLabel": "Programs",
     "sectionHeading": "Choose where your gift goes",
     "sectionSub": "Explore each category below and add any cause to your gift.",
     "header": {
@@ -1080,7 +1097,7 @@
       "addToGift": "to gift"
     },
     "card": {
-      "addToGift": "Add to gift",
+      "addToGift": "Donate",
       "addAgain": "Add again",
       "added": "Added",
       "add": "Add",
@@ -1520,8 +1537,28 @@
       }
     }
   },
+  "projects": {
+    "title": "Our Projects",
+    "desc": "A look at the community projects and initiatives of the Rwanda Muslim Community is on its way.",
+    "badge": "Coming Soon",
+    "inProgress": "In Progress",
+    "etaLabel": "Estimated Launch",
+    "eta": "Q4 2026",
+    "etaDesc": "Our team is actively building this page. Check back soon for updates.",
+    "whatToExpect": "What to expect",
+    "expectP1": "When this page launches, you'll be able to explore RMC's ongoing and completed projects — mosque construction, schools, and community development — with photos, progress updates, and impact stories.",
+    "expectP2": "In the meantime, please reach out and our team will be glad to tell you more about our current projects.",
+    "contactUs": "Contact Us",
+    "backToHome": "Back to Home"
+  },
   "footer": {
     "tagline": "Spreading the light of Islam through education, community, and service across Rwanda.",
+    "newsletterTitle": "Stay updated",
+    "newsletterText": "Get the latest announcements and news by email.",
+    "newsletterPlaceholder": "Your email address",
+    "newsletterButton": "Subscribe",
+    "newsletterSuccess": "You’re subscribed",
+    "newsletterError": "Could not subscribe. Please try again.",
     "quickLinks": "Quick Links",
     "services": "Services",
     "contact": "Contact",
@@ -1530,14 +1567,17 @@
       "about": "About RMC",
       "services": "Our Services",
       "schools": "Find Schools",
+      "projects": "Projects",
       "announcements": "Announcements",
-      "blog": "Blog & News",
+      "blog": "Blogs",
       "gallery": "Gallery",
       "tenders": "Tenders",
       "donate": "Donate",
       "contact": "Contact Us",
-      "join": "Join RMC"
+      "join": "Join RMC",
+      "trends": "RMC Trends"
     },
+    "learnIslam": "Learn Islam",
     "serviceLinks": {
       "marriage": "Marriage Documents",
       "scholarship": "Scholarships",

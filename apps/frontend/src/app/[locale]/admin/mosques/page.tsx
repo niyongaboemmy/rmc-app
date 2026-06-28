@@ -29,6 +29,7 @@ import {
   Users,
   Phone,
   RotateCcw,
+  LocateFixed,
 } from 'lucide-react';
 import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -116,6 +117,8 @@ function MosquesManager() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Mosque | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoErr, setGeoErr] = useState('');
 
   const fetchMosques = useCallback(async () => {
     setLoading(true);
@@ -194,6 +197,30 @@ function MosquesManager() {
 
   const set = <K extends keyof MosqueInput>(field: K, value: MosqueInput[K]) =>
     setForm((p) => ({ ...p, [field]: value }));
+
+  // Fill coordinates from the browser's geolocation and recenter the map there.
+  const findMyLocation = () => {
+    setGeoErr('');
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoErr('Location is not available in this browser.');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        set('gpsLat', latitude);
+        set('gpsLng', longitude);
+        setMapCenter([latitude, longitude]);
+        setLocating(false);
+      },
+      () => {
+        setGeoErr('Could not get your location. Allow location access or pick on the map.');
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -581,6 +608,17 @@ function MosquesManager() {
               </div>
               {/* Map picker */}
               <Field label="GPS Coordinates">
+                <div className="mb-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={findMyLocation}
+                    disabled={locating}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-50"
+                  >
+                    <LocateFixed className={`h-3.5 w-3.5${locating ? ' animate-spin' : ''}`} />
+                    {locating ? 'Locating…' : 'Find my location'}
+                  </button>
+                </div>
                 <div className="h-64 w-full mb-2">
                   <LocationPicker
                     lat={form.gpsLat ?? null}
@@ -592,6 +630,7 @@ function MosquesManager() {
                     flyToCenter={mapCenter}
                   />
                 </div>
+                {geoErr && <p className="mb-2 text-[11px] text-red-600">{geoErr}</p>}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">
@@ -683,10 +722,15 @@ function MosquesManager() {
                 />
               </Field>
               <Field label="Imam Photo">
-                <ImageUploadField
-                  value={form.imamPhoto ?? ''}
-                  onChange={(url) => set('imamPhoto', url)}
-                />
+                <div className="w-[130px]">
+                  <ImageUploadField
+                    value={form.imamPhoto ?? ''}
+                    onChange={(url) => set('imamPhoto', url)}
+                    heightClass="h-[130px]"
+                    rounded="rounded-none"
+                    compact
+                  />
+                </div>
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Phone">

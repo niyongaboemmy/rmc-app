@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, MessageSquare, Send, History, Bell, Sparkles, CreditCard, Zap } from 'lucide-react';
+import { Settings, MessageSquare, Send, History, Bell, Sparkles, CreditCard, Zap, Upload } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +17,7 @@ import { PaymentTypesTab } from './_components/payment/PaymentTypesTab';
 import { PaymentMethodSettingsTab } from './_components/payment/PaymentMethodSettingsTab';
 import PaymentTestingTab from './_components/payment/PaymentTestingTab';
 import { paymentSettingsApi, PaymentMethod, PaymentType } from '@/lib/paymentSettingsApi';
+import { UploadSettingsTab } from './_components/UploadSettingsTab';
 
 // ─── Top-level tab definition ──────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ const TOP_TABS: TopTab[] = [
   { key: 'sms',           label: 'SMS Gateway',      icon: MessageSquare, permission: Permission.SMS_CONFIG_VIEW              },
   { key: 'payments',      label: 'Payment Settings', icon: CreditCard,    permission: Permission.PAYMENT_SETTINGS_VIEW       },
   { key: 'notifications', label: 'Notifications',    icon: Bell,          permission: Permission.NOTIFICATION_SETTINGS_VIEW  },
+  { key: 'uploads',       label: 'Upload Settings',  icon: Upload,        permission: Permission.UPLOAD_SETTINGS_VIEW        },
 ];
 
 // ─── SMS subtab definition ─────────────────────────────────────────────────────
@@ -68,6 +70,7 @@ export default function SettingsPage() {
       Permission.SMS_CONFIG_VIEW,
       Permission.NOTIFICATION_SETTINGS_VIEW,
       Permission.PAYMENT_SETTINGS_VIEW,
+      Permission.UPLOAD_SETTINGS_VIEW,
     ]}>
       <div className="space-y-6">
         {/* Page header */}
@@ -110,6 +113,7 @@ export default function SettingsPage() {
         {activeTab === 'sms'           && <SmsGatewaySection />}
         {activeTab === 'payments'      && <PaymentSettingsSection />}
         {activeTab === 'notifications' && <NotificationsTab />}
+        {activeTab === 'uploads'       && <UploadSettingsTab />}
       </div>
     </ProtectedRoute>
   );

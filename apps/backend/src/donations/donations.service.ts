@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder, Not, IsNull } from 'typeorm';
 import { Donation, DonationStatus, DonationFrequency } from './entities/donation.entity';
 import { DonationCampaign, CampaignStatus } from './entities/donation-campaign.entity';
 import { CreateDonationDto } from './dto/create-donation.dto';
@@ -69,6 +69,7 @@ export class DonationsService {
       receivedAmount: received.get(`${c.id}|${c.currency}`) ?? 0,
       currency: c.currency,
       fundType: c.fundType,
+      subFundId: c.subFundId,
       heroImageUrl: c.heroImageUrl,
       startDate: c.startDate,
       endDate: c.endDate,
@@ -438,6 +439,32 @@ export class DonationsService {
     }));
   }
 
+  /** Soft-deleted (archived) programs, most-recently-deleted first, for the restore view. */
+  async adminListDeletedCampaigns() {
+    const campaigns = await this.campaigns.find({
+      withDeleted: true,
+      where: { deletedAt: Not(IsNull()) },
+      order: { deletedAt: 'DESC' },
+    });
+    const { counts, received } = await this.getReceivedMap();
+
+    return campaigns.map((c) => ({
+      ...c,
+      targetAmount: Number(c.targetAmount),
+      raisedAmount: Number(c.raisedAmount),
+      receivedAmount: received.get(`${c.id}|${c.currency}`) ?? 0,
+      donationCount: counts.get(c.id) ?? 0,
+    }));
+  }
+
+  /** Restore a soft-deleted program. No-op if it isn't deleted. */
+  async restoreCampaign(id: string): Promise<{ id: string }> {
+    const campaign = await this.campaigns.findOne({ where: { id }, withDeleted: true });
+    if (!campaign) throw new NotFoundException('Campaign not found');
+    if (campaign.deletedAt) await this.campaigns.recover(campaign);
+    return { id };
+  }
+
   private slugify(title: string): string {
     return title
       .toLowerCase()
@@ -447,12 +474,27 @@ export class DonationsService {
       .slice(0, 180);
   }
 
-  async createCampaign(dto: CreateCampaignDto, userId: string): Promise<DonationCampaign> {
-    let slug = this.slugify(dto.title) || 'campaign';
-    // Ensure slug uniqueness
-    if (await this.campaigns.findOne({ where: { slug } })) {
-      slug = `${slug}-${Date.now().toString(36)}`;
+  /**
+   * Return `base`, or `base-2`, `base-3`, … until it's free (ignoring `excludeId`).
+   * Checks soft-deleted rows too (`withDeleted`), since the slug unique index spans
+   * them — otherwise recreating a deleted program's slug hits a DB unique violation.
+   */
+  private async uniqueSlug(base: string, excludeId?: string): Promise<string> {
+    let slug = base;
+    let n = 1;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const existing = await this.campaigns.findOne({ where: { slug }, withDeleted: true });
+      if (!existing || existing.id === excludeId) return slug;
+      n += 1;
+      slug = `${base}-${n}`;
     }
+  }
+
+  async createCampaign(dto: CreateCampaignDto, userId: string): Promise<DonationCampaign> {
+    // Admin may supply a slug; otherwise derive it from the title.
+    const base = this.slugify(dto.slug || dto.title) || 'campaign';
+    const slug = await this.uniqueSlug(base);
 
     const campaign = this.campaigns.create({
       title: dto.title,
@@ -461,6 +503,7 @@ export class DonationsService {
       targetAmount: dto.targetAmount,
       currency: dto.currency ?? 'RWF',
       fundType: dto.fundType ?? 'general',
+      subFundId: dto.subFundId ?? null,
       startDate: dto.startDate ?? new Date().toISOString().slice(0, 10),
       endDate: dto.endDate ?? null,
       heroImageUrl: dto.heroImageUrl ?? null,
@@ -474,6 +517,12 @@ export class DonationsService {
     const campaign = await this.campaigns.findOne({ where: { id } });
     if (!campaign) throw new NotFoundException('Campaign not found');
 
+    // Honor an admin-supplied slug change, keeping it unique.
+    if (dto.slug !== undefined) {
+      const base = this.slugify(dto.slug) || campaign.slug;
+      if (base !== campaign.slug) campaign.slug = await this.uniqueSlug(base, campaign.id);
+    }
+
     Object.assign(campaign, {
       title: dto.title ?? campaign.title,
       description: dto.description ?? campaign.description,
@@ -481,6 +530,7 @@ export class DonationsService {
       raisedAmount: dto.raisedAmount ?? campaign.raisedAmount,
       currency: dto.currency ?? campaign.currency,
       fundType: dto.fundType ?? campaign.fundType,
+      subFundId: dto.subFundId !== undefined ? dto.subFundId : campaign.subFundId,
       startDate: dto.startDate ?? campaign.startDate,
       endDate: dto.endDate !== undefined ? dto.endDate : campaign.endDate,
       heroImageUrl: dto.heroImageUrl !== undefined ? dto.heroImageUrl : campaign.heroImageUrl,

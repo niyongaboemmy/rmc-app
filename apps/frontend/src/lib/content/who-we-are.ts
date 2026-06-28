@@ -13,6 +13,11 @@ export interface WhoWeAreContent {
   mosquesCount: string;
   provincesCount: string;
   yearsOfService: string;
+  // Section heading & Arabic verse.
+  headingEn: string; headingRw: string; headingAr: string;
+  headingHighlightEn: string; headingHighlightRw: string; headingHighlightAr: string;
+  verseEn: string; verseRw: string; verseAr: string;
+  verseRefEn: string; verseRefRw: string; verseRefAr: string;
   // All fields are strings; the index signature lets this type satisfy the
   // generic Record<string, unknown> content APIs (getSiteContent / pickLang).
   [key: string]: string;
@@ -41,4 +46,10 @@ export const WHO_WE_ARE_DEFAULT: WhoWeAreContent = {
   mosquesCount: '320',
   provincesCount: '5',
   yearsOfService: '25',
+  headingEn: 'Rwanda Muslim Community —', headingRw: "Umuryango w'Abasilamu bo mu Rwanda —", headingAr: 'المجتمع الإسلامي الرواندي —',
+  headingHighlightEn: 'Serving the Ummah', headingHighlightRw: 'Dukorera Umat', headingHighlightAr: 'في خدمة الأمة',
+  verseEn: 'وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا', verseRw: 'وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا', verseAr: 'وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا',
+  verseRefEn: '"Hold firmly to the rope of Allah, all together" — Aal-Imran 3:103',
+  verseRefRw: '"Mufatane mwese ku mugozi w\'Imana" — Aal-Imran 3:103',
+  verseRefAr: 'سورة آل عمران — الآية ١٠٣',
 };

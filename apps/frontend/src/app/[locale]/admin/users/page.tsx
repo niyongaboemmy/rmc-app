@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import { Search, SlidersHorizontal, X, Eye, HardDrive, FileText, Calendar, Phone, Mail as MailIcon, Shield } from 'lucide-react';
+import { adminListUserFiles, DriveItem, getFileUrl, formatBytes, getFileIcon } from '@/lib/driveApi';
+import { FilePreview } from '@/components/drive/FilePreview';
+import { DriveItemIcon } from '@/components/drive/DriveItemIcon';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
@@ -48,6 +52,118 @@ const STATUS_OPTIONS = [
   { value: 'suspended', label: 'Suspended' },
   { value: 'inactive', label: 'Inactive' },
 ];
+
+function UserDetailModal({
+  user,
+  onClose,
+}: {
+  user: UserRow;
+  onClose: () => void;
+}) {
+  const [files, setFiles] = useState<DriveItem[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(true);
+  const [preview, setPreview] = useState<DriveItem | null>(null);
+
+  useEffect(() => {
+    adminListUserFiles(user.id)
+      .then(setFiles)
+      .catch(() => setFiles([]))
+      .finally(() => setLoadingFiles(false));
+  }, [user.id]);
+
+  const totalBytes = files.filter((f) => f.type === 'file').reduce((acc, f) => acc + (f.size ?? 0), 0);
+
+  return (
+    <>
+      <Modal isOpen onClose={onClose} size="lg">
+        <ModalHeader>
+          <ModalTitle>User Details</ModalTitle>
+          <ModalDescription>{user.firstName} {user.lastName}</ModalDescription>
+        </ModalHeader>
+        <ModalBody>
+          {/* User Info Card */}
+          <div className="bg-gray-50 rounded-xl p-4 mb-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-rmc-green/20 text-rmc-green text-lg font-bold flex items-center justify-center shrink-0">
+                {user.firstName?.[0]}{user.lastName?.[0]}
+              </div>
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <p className="font-semibold text-gray-900 text-base">{user.firstName} {user.lastName}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                    <MailIcon className="w-3.5 h-3.5 text-gray-400" /> {user.email}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                    <Phone className="w-3.5 h-3.5 text-gray-400" /> {user.phone}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                    <Shield className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="capitalize">{user.role}</span>
+                    {user.roleEntity && <span className="text-gray-400">· {user.roleEntity.name}</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    Joined {new Date(user.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Files section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-rmc-green" />
+                <p className="font-semibold text-gray-900 text-sm">Drive Files</p>
+              </div>
+              <p className="text-xs text-gray-400">
+                {files.length} items · {formatBytes(totalBytes)}
+              </p>
+            </div>
+            {loadingFiles ? (
+              <div className="flex justify-center py-6">
+                <div className="w-6 h-6 border-2 border-rmc-green border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : files.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                <FileText className="w-10 h-10 mb-2 opacity-40" />
+                <p className="text-sm">No files uploaded yet</p>
+              </div>
+            ) : (
+              <div className="max-h-64 overflow-y-auto space-y-1 border border-gray-100 rounded-xl overflow-hidden">
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => file.type === 'file' ? setPreview(file) : undefined}
+                  >
+                    <DriveItemIcon item={file} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-800 truncate">{file.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(file.createdAt).toLocaleDateString()}
+                        {file.size ? ` · ${formatBytes(file.size)}` : ''}
+                      </p>
+                    </div>
+                    {file.type === 'file' && (
+                      <Eye className="w-4 h-4 text-gray-400 hover:text-rmc-green shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </ModalFooter>
+      </Modal>
+
+      {preview && <FilePreview item={preview} onClose={() => setPreview(null)} />}
+    </>
+  );
+}
 
 function AssignRoleModal({
   user,
@@ -194,6 +310,8 @@ function CreateUserModal({
 }
 
 function UsersPageContent() {
+  const router = useRouter();
+  const params = useParams<{ locale: string }>();
   const { success, error: toastError } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -206,6 +324,7 @@ function UsersPageContent() {
   const [assignModal, setAssignModal] = useState<UserRow | null>(null);
   const [createModal, setCreateModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+  const [detailUser, setDetailUser] = useState<UserRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const limit = 20;
 
@@ -351,6 +470,12 @@ function UsersPageContent() {
                     </td>
                     <td className="px-4 py-3 text-right space-x-3 whitespace-nowrap">
                       <button
+                        onClick={() => router.push(`/${params.locale}/admin/users/${u.id}`)}
+                        className="text-blue-500 hover:underline text-xs font-medium"
+                      >
+                        View
+                      </button>
+                      <button
                         onClick={() => setAssignModal(u)}
                         className="text-rmc-green hover:underline text-xs font-medium"
                       >
@@ -381,6 +506,13 @@ function UsersPageContent() {
             </div>
           )}
         </>
+      )}
+
+      {detailUser && (
+        <UserDetailModal
+          user={detailUser}
+          onClose={() => setDetailUser(null)}
+        />
       )}
 
       {assignModal && (
