@@ -49,6 +49,12 @@ const BRIDE_X = 852;
 const BRIDE_GUARDIAN_X = 884; // the "Guardian :" label runs further right
 const BRIDE_END = 1078;
 
+// Witness names — centred over the Witness (1)/(2) signature lines (≈y704),
+// printed just above the line so the line itself stays free for signing.
+const WITNESS1_X = 185;
+const WITNESS2_X = 343;
+const WITNESS_NAME_Y = 696;
+
 // Photo placeholder boxes (px, top-left origin) — measured from the template's
 // grey "Photo" rectangles. Both are ~square (~103×92) and symmetric.
 const GROOM_PHOTO_BOX = { x: 163, top: 194, w: 103, h: 92 };
@@ -117,13 +123,20 @@ function drawCentered(
 
 type Box = { x: number; top: number; w: number; h: number };
 
-/** Draw a photo to exactly fill a placeholder box (used when pre-cropped). */
-function drawPhotoFill(page: PDFPage, image: PDFImage, box: Box) {
+/**
+ * Draw a (width-cropped) photo at full box height, centred horizontally. The
+ * image keeps its full height; if narrower than the box it shows centred with
+ * side margins, never wider (it was cropped to ≤ the box aspect).
+ */
+function drawPhotoFitHeight(page: PDFPage, image: PDFImage, box: Box) {
+  const boxX = X(box.x);
+  const boxW = box.w * SX;
   const boxH = box.h * SY;
+  const drawW = Math.min(boxW, boxH * (image.width / image.height));
   page.drawImage(image, {
-    x: X(box.x),
+    x: boxX + (boxW - drawW) / 2,
     y: Y(box.top) - boxH,
-    width: box.w * SX,
+    width: drawW,
     height: boxH,
   });
 }
@@ -146,13 +159,14 @@ function drawPhotoContained(page: PDFPage, image: PDFImage, box: Box) {
 }
 
 /**
- * Crop+scale an image to a box's aspect ratio ("cover"), returning JPEG bytes,
- * so it fills the placeholder with no distortion or overflow. Sides are
- * centre-cropped; portraits are cropped slightly above centre (biasY) so the
- * face/head is preserved. Runs in the browser via canvas; throws if canvas is
- * unavailable (caller falls back to a plain contained embed).
+ * Crop an image to "full height, width only" for a box aspect ratio, returning
+ * JPEG bytes. The full image height is always kept (the face is never cut top or
+ * bottom); only the width is centre-cropped, and only when the image is wider
+ * than the box. The returned image's aspect is ≤ the box aspect. Runs in the
+ * browser via canvas; throws if canvas is unavailable (caller falls back to a
+ * plain contained embed).
  */
-async function rasterizeCover(bytes: Uint8Array, box: Box, biasY = 0.42): Promise<Uint8Array> {
+async function rasterizeFitHeight(bytes: Uint8Array, boxAspect: number): Promise<Uint8Array> {
   if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
     throw new Error('canvas unavailable');
   }
@@ -160,31 +174,18 @@ async function rasterizeCover(bytes: Uint8Array, box: Box, biasY = 0.42): Promis
   buf.set(bytes);
   const blob = new Blob([buf]);
   const bmp = await createImageBitmap(blob);
-  const boxAspect = box.w / box.h;
-  const imgAspect = bmp.width / bmp.height;
 
-  let sx: number, sy: number, sw: number, sh: number;
-  if (imgAspect > boxAspect) {
-    // wider than the box → crop the sides (centred)
-    sh = bmp.height;
-    sw = sh * boxAspect;
-    sy = 0;
-    sx = (bmp.width - sw) / 2;
-  } else {
-    // taller than the box → crop top/bottom, keeping more of the top (head)
-    sw = bmp.width;
-    sh = sw / boxAspect;
-    sx = 0;
-    sy = (bmp.height - sh) * biasY;
-  }
+  const sh = bmp.height;                                       // keep full height
+  const sw = Math.min(bmp.width, Math.round(bmp.height * boxAspect)); // crop width only
+  const sx = Math.round((bmp.width - sw) / 2);
 
   const scale = 3; // supersample for crispness on the PDF
   const canvas = document.createElement('canvas');
-  canvas.width = Math.max(1, Math.round(box.w * scale));
-  canvas.height = Math.max(1, Math.round(box.h * scale));
+  canvas.width = Math.max(1, Math.round(sw * scale));
+  canvas.height = Math.max(1, Math.round(sh * scale));
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('no 2d context');
-  ctx.drawImage(bmp, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bmp, sx, 0, sw, sh, 0, 0, canvas.width, canvas.height);
   bmp.close?.();
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
@@ -245,7 +246,7 @@ async function embedPhoto(
   const data = await fetchImageBytes(fileUrl(doc.fileKey));
   if (!data) return null;
   try {
-    const jpeg = await rasterizeCover(data.bytes, box);
+    const jpeg = await rasterizeFitHeight(data.bytes, box.w / box.h);
     const image = await pdf.embedJpg(jpeg);
     return { image, covered: true };
   } catch {
@@ -368,11 +369,19 @@ export async function buildCertificatePdf(
   ]);
   const place = (photo: typeof groomImg, box: Box) => {
     if (!photo) return;
-    if (photo.covered) drawPhotoFill(page, photo.image, box);
+    if (photo.covered) drawPhotoFitHeight(page, photo.image, box);
     else drawPhotoContained(page, photo.image, box);
   };
   place(groomImg, GROOM_PHOTO_BOX);
   place(brideImg, BRIDE_PHOTO_BOX);
+
+  // ── Witnesses (names above their signature lines) ─────────────────────────
+  if (app.witness1Name) {
+    drawCentered(page, app.witness1Name, font, { centerXPx: WITNESS1_X, yPx: WITNESS_NAME_Y, maxWidthPx: 105, size: 9 });
+  }
+  if (app.witness2Name) {
+    drawCentered(page, app.witness2Name, font, { centerXPx: WITNESS2_X, yPx: WITNESS_NAME_Y, maxWidthPx: 110, size: 9 });
+  }
 
   return pdf.save();
 }
