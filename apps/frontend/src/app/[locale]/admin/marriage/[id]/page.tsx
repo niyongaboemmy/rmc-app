@@ -770,6 +770,11 @@ function AdminMarriageDetailContent() {
                   icon={<User className="w-4 h-4" />}
                 />
                 <InfoRow
+                  label="Father's name"
+                  value={app.groomFatherName}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoRow
                   label="National ID"
                   value={app.groomNid}
                   icon={<Fingerprint className="w-4 h-4" />}
@@ -792,6 +797,11 @@ function AdminMarriageDetailContent() {
                 <InfoRow
                   label="Full name"
                   value={app.brideName}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="Father's name"
+                  value={app.brideFatherName}
                   icon={<User className="w-4 h-4" />}
                 />
                 <InfoRow
@@ -1169,7 +1179,7 @@ function AdminMarriageDetailContent() {
                     />
                   </div>
                   <p className="text-[10px] text-gray-400">
-                    Default: groom's phone. Another person can pay — enter their number above.
+                    Default: groom&apos;s phone. Another person can pay — enter their number above.
                   </p>
                   {momoError && <p className="text-[10px] text-red-600">{momoError}</p>}
                   {momoStatusMsg && (

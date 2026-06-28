@@ -622,8 +622,8 @@ export function MarriageWizard() {
     try {
       const payload: CreateMarriageApplicationPayload = {
         notificationPhone: merged.notificationPhone!,
-        groomName: merged.groomName!, groomNid: merged.groomNid!, groomBirthDate: merged.groomBirthDate!, groomPhone: merged.groomPhone!,
-        brideName: merged.brideName!, brideNid: merged.brideNid!, brideBirthDate: merged.brideBirthDate!, bridePhone: merged.bridePhone!,
+        groomName: merged.groomName!, groomNid: merged.groomNid!, groomFatherName: merged.groomFatherName!, groomBirthDate: merged.groomBirthDate!, groomPhone: merged.groomPhone!,
+        brideName: merged.brideName!, brideNid: merged.brideNid!, brideFatherName: merged.brideFatherName!, brideBirthDate: merged.brideBirthDate!, bridePhone: merged.bridePhone!,
         witness1Nid: merged.witness1Nid!, witness1Name: merged.witness1Name!,
         witness2Nid: merged.witness2Nid!, witness2Name: merged.witness2Name!,
         waliName: merged.waliName, waliNid: merged.waliNid, waliPhone: merged.waliPhone,
