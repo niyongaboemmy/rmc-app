@@ -1174,7 +1174,7 @@ function AdminMarriageDetailContent() {
                     />
                   </div>
                   <p className="text-[10px] text-gray-400">
-                    Default: groom's phone. Another person can pay — enter their number above.
+                    Default: groom&apos;s phone. Another person can pay — enter their number above.
                   </p>
                   {momoError && <p className="text-[10px] text-red-600">{momoError}</p>}
                   {momoStatusMsg && (
