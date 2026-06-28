@@ -575,7 +575,7 @@
         "title": "Check application status",
         "subtitle": "Enter your application ID to see the latest status of your marriage application.",
         "idLabel": "Application ID",
-        "idPlaceholder": "RMC-MR-XXXXXX",
+        "idPlaceholder": "RMC-XX-XXXXXX-XXXXX",
         "checkButton": "Check status",
         "notFoundTitle": "No application found",
         "notFoundText": "We couldn't find an application with that ID. Please check the ID and try again.",
