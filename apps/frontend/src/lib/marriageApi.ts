@@ -52,10 +52,12 @@ export interface MarriageApplication {
   notificationPhone: string | null;
   groomName: string;
   groomNid: string;
+  groomFatherName: string | null;
   groomBirthDate: string | null;
   groomPhone: string | null;
   brideName: string;
   brideNid: string;
+  brideFatherName: string | null;
   brideBirthDate: string | null;
   bridePhone: string | null;
   waliName: string | null;
@@ -102,10 +104,12 @@ export interface CreateMarriageApplicationPayload {
   notificationPhone: string;
   groomName: string;
   groomNid: string;
+  groomFatherName: string;
   groomBirthDate: string;
   groomPhone: string;
   brideName: string;
   brideNid: string;
+  brideFatherName: string;
   brideBirthDate: string;
   bridePhone: string;
   witness1Nid: string;

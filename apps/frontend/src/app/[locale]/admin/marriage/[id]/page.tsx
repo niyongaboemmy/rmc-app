@@ -765,6 +765,11 @@ function AdminMarriageDetailContent() {
                   icon={<User className="w-4 h-4" />}
                 />
                 <InfoRow
+                  label="Father's name"
+                  value={app.groomFatherName}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoRow
                   label="National ID"
                   value={app.groomNid}
                   icon={<Fingerprint className="w-4 h-4" />}
@@ -787,6 +792,11 @@ function AdminMarriageDetailContent() {
                 <InfoRow
                   label="Full name"
                   value={app.brideName}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoRow
+                  label="Father's name"
+                  value={app.brideFatherName}
                   icon={<User className="w-4 h-4" />}
                 />
                 <InfoRow

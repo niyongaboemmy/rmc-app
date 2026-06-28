@@ -53,7 +53,13 @@ const BRIDE_END = 1078;
 // printed just above the line so the line itself stays free for signing.
 const WITNESS1_X = 185;
 const WITNESS2_X = 343;
+const OFFICIANT_X = 518; // Officiant (Imam) column centre
 const WITNESS_NAME_Y = 696;
+
+// Relabel the groom row "Inkwano / Bride price" → "Inkwano / Dowry": cover the
+// "Bride price :" text and redraw "Dowry :" in a serif close to the template.
+const CREAM = rgb(0.99, 0.96, 0.86);
+const LABEL_GREEN = rgb(0.11, 0.17, 0.06);
 
 // Photo placeholder boxes (px, top-left origin) — measured from the template's
 // grey "Photo" rectangles. Both are ~square (~103×92) and symmetric.
@@ -319,26 +325,37 @@ export async function buildCertificatePdf(
 
   const pdf = await PDFDocument.load(templateBytes);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const serif = await pdf.embedFont(StandardFonts.TimesRoman);
   const page = pdf.getPages()[0];
 
   const groomMaxW = GROOM_END - GROOM_X;
   const brideMaxW = BRIDE_END - BRIDE_X;
 
+  // Relabel "Bride price" → "Dowry" (cover the baked label, redraw in serif).
+  page.drawRectangle({
+    x: X(178),
+    y: Y(418),
+    width: X(268) - X(178),
+    height: (418 - 403) * SY,
+    color: CREAM,
+  });
+  page.drawText('Dowry :', { x: X(180), y: Y(415), size: 9, font: serif, color: LABEL_GREEN });
+
   // ── Groom column (left) ───────────────────────────────────────────────────
   drawFitted(page, app.groomName, font, { xPx: GROOM_X, yPx: ROW.fullName, maxWidthPx: groomMaxW });
+  drawFitted(page, app.groomFatherName ?? '', font, { xPx: GROOM_X, yPx: ROW.fatherName, maxWidthPx: groomMaxW });
   drawFitted(page, app.groomNid, font, { xPx: GROOM_X, yPx: ROW.idNumber, maxWidthPx: groomMaxW });
   drawFitted(page, formatMahr(app), font, { xPx: GROOM_X, yPx: GROOM_LAST_Y, maxWidthPx: groomMaxW });
-  // Father's name (ROW.fatherName) — not collected, left blank.
 
   // ── Bride column (right) ──────────────────────────────────────────────────
   drawFitted(page, app.brideName, font, { xPx: BRIDE_X, yPx: ROW.fullName, maxWidthPx: brideMaxW });
+  drawFitted(page, app.brideFatherName ?? '', font, { xPx: BRIDE_X, yPx: ROW.fatherName, maxWidthPx: brideMaxW });
   drawFitted(page, app.brideNid, font, { xPx: BRIDE_X, yPx: ROW.idNumber, maxWidthPx: brideMaxW });
   drawFitted(page, app.waliName ?? '', font, {
     xPx: BRIDE_GUARDIAN_X,
     yPx: BRIDE_LAST_Y,
     maxWidthPx: BRIDE_END - BRIDE_GUARDIAN_X,
   });
-  // Father's name (ROW.fatherName) — not collected, left blank.
 
   // ── Place of marriage ─────────────────────────────────────────────────────
   drawFitted(page, formatPlaceOfMarriage(app), font, { xPx: 800, yPx: 600, maxWidthPx: 1085 - 800 });
@@ -375,12 +392,15 @@ export async function buildCertificatePdf(
   place(groomImg, GROOM_PHOTO_BOX);
   place(brideImg, BRIDE_PHOTO_BOX);
 
-  // ── Witnesses (names above their signature lines) ─────────────────────────
+  // ── Witnesses + officiant (names above their signature lines) ─────────────
   if (app.witness1Name) {
     drawCentered(page, app.witness1Name, font, { centerXPx: WITNESS1_X, yPx: WITNESS_NAME_Y, maxWidthPx: 105, size: 9 });
   }
   if (app.witness2Name) {
     drawCentered(page, app.witness2Name, font, { centerXPx: WITNESS2_X, yPx: WITNESS_NAME_Y, maxWidthPx: 110, size: 9 });
+  }
+  if (app.requestedOfficiant) {
+    drawCentered(page, app.requestedOfficiant, font, { centerXPx: OFFICIANT_X, yPx: WITNESS_NAME_Y, maxWidthPx: 110, size: 9 });
   }
 
   return pdf.save();

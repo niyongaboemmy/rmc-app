@@ -25,10 +25,12 @@ const birthDate = z
 
 const schema = z.object({
   groomName: fullName,
+  groomFatherName: fullName,
   groomNid: nid,
   groomBirthDate: birthDate,
   groomPhone: phone,
   brideName: fullName,
+  brideFatherName: fullName,
   brideNid: nid,
   brideBirthDate: birthDate,
   bridePhone: phone,
@@ -58,10 +60,12 @@ export function Step1Couple({ initialData, onNext }: Props) {
     resolver: zodResolver(schema),
     defaultValues: {
       groomName: initialData.groomName ?? '',
+      groomFatherName: initialData.groomFatherName ?? '',
       groomNid: initialData.groomNid ?? '',
       groomBirthDate: initialData.groomBirthDate ?? '',
       groomPhone: toLocalPhone(initialData.groomPhone),
       brideName: initialData.brideName ?? '',
+      brideFatherName: initialData.brideFatherName ?? '',
       brideNid: initialData.brideNid ?? '',
       brideBirthDate: initialData.brideBirthDate ?? '',
       bridePhone: toLocalPhone(initialData.bridePhone),
@@ -90,13 +94,20 @@ export function Step1Couple({ initialData, onNext }: Props) {
       {/* Groom */}
       <div>
         <SectionLabel color="blue">Groom</SectionLabel>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input
             label="Full name"
             required
             placeholder="As on National ID"
             error={errors.groomName?.message}
             {...register('groomName')}
+          />
+          <Input
+            label="Father's name"
+            required
+            placeholder="Groom's father's name"
+            error={errors.groomFatherName?.message}
+            {...register('groomFatherName')}
           />
           <Input
             label="National ID"
@@ -127,13 +138,20 @@ export function Step1Couple({ initialData, onNext }: Props) {
       {/* Bride */}
       <div>
         <SectionLabel color="rose">Bride</SectionLabel>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input
             label="Full name"
             required
             placeholder="As on National ID"
             error={errors.brideName?.message}
             {...register('brideName')}
+          />
+          <Input
+            label="Father's name"
+            required
+            placeholder="Bride's father's name"
+            error={errors.brideFatherName?.message}
+            {...register('brideFatherName')}
           />
           <Input
             label="National ID"

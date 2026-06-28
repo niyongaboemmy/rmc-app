@@ -56,6 +56,9 @@ export class MarriageApplication {
   @Column({ name: 'groom_name', type: 'varchar', length: 150 })
   groomName: string;
 
+  @Column({ name: 'groom_father_name', type: 'varchar', length: 150, nullable: true })
+  groomFatherName: string | null;
+
   @Index('IDX_marriage_app_groom_nid')
   @Column({ name: 'groom_nid', type: 'varchar', length: 16 })
   groomNid: string;
@@ -72,6 +75,9 @@ export class MarriageApplication {
 
   @Column({ name: 'bride_name', type: 'varchar', length: 150 })
   brideName: string;
+
+  @Column({ name: 'bride_father_name', type: 'varchar', length: 150, nullable: true })
+  brideFatherName: string | null;
 
   @Index('IDX_marriage_app_bride_nid')
   @Column({ name: 'bride_nid', type: 'varchar', length: 16 })
