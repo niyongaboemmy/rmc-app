@@ -6,7 +6,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
 import { HistoryTimeline } from '@/components/about/HistoryTimeline';
 import { getTranslations, getLocale } from 'next-intl/server';
-import { ArrowRight, Images } from 'lucide-react';
+import { ArrowRight, Images, Mail, Phone } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
 
 const FILE_SERVER = process.env.NEXT_PUBLIC_FILE_SERVER_URL || 'http://localhost:3002';
@@ -19,15 +19,13 @@ export default async function AboutPage() {
   const t = await getTranslations('about');
   const locale = await getLocale();
 
-  // Leadership — placeholder portraits, swap for real photos
-  const leaders = [
-    { id: 'm1', img: 'https://i.postimg.cc/8CKkfkMS/Mufti.jpg' },
-    { id: 'm2', img: 'https://i.postimg.cc/mkTL1ckm/V1A8567.jpg' },
-    { id: 'm3', img: 'https://i.postimg.cc/9f1JHK96/Qadh.jpg' },
-    { id: 'm4', img: 'https://i.postimg.cc/Cx0M5wJm/P1180223.jpg' },
-    { id: 'm5', img: 'https://i.postimg.cc/Fsym22m4/P1180220.jpg' },
-    { id: 'm6', img: 'https://i.postimg.cc/YSxyqhck/ES-Salim.jpg' },
-  ] as const;
+  // Executive Committee — admin-editable (name, role, email, phone, photo).
+  const committee = await publicApi.getCommitteeMembers().catch(() => []);
+  const pick = (m: { nameEn: string; nameRw: string; nameAr: string }, base: 'name' | 'role') => {
+    const r = m as unknown as Record<string, string>;
+    const suffix = locale === 'rw' ? 'Rw' : locale === 'ar' ? 'Ar' : 'En';
+    return r[`${base}${suffix}`] || r[`${base}En`] || '';
+  };
 
   // Gallery preview 3D carousel — pulled from the public gallery API.
   const galleryImages = await publicApi
@@ -160,31 +158,34 @@ export default async function AboutPage() {
               <p className="text-gray-400 max-w-xl mx-auto text-sm md:text-base">{t('leadership.subtitle')}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {leaders.map(({ id, img }) => (
+              {committee.map((m) => {
+                const name = pick(m, 'name');
+                return (
                 <div
-                  key={id}
+                  key={m.id}
                   className="group relative flex h-full flex-col items-center text-center rounded-3xl border border-gray-100 bg-rmc-green-light/40 px-6 py-9 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.16)] transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_60px_-24px_rgba(26,122,74,0.28)]"
                 >
                   {/* Soft glow that blooms on hover */}
                   <div aria-hidden className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-44 h-44 rounded-full bg-rmc-green/[0.06] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                   {/* Portrait — gradient green→gold ring frame */}
-                  <div className="relative rounded-full bg-gradient-to-br from-rmc-green via-rmc-gold to-rmc-green p-[3px] shadow-md shadow-rmc-green/20">
-                    <div className="relative w-28 h-28 rounded-full overflow-hidden ring-2 ring-white">
-                      <Image
-                        src={img}
-                        alt={t(`leadership.${id}.name`)}
-                        fill
-                        quality={95}
-                        sizes="(max-width: 640px) 112px, 128px"
-                        className="object-cover object-top transition-transform duration-500 motion-reduce:transform-none group-hover:scale-105"
-                      />
+                  {m.imageUrl && (
+                    <div className="relative rounded-full bg-gradient-to-br from-rmc-green via-rmc-gold to-rmc-green p-[3px] shadow-md shadow-rmc-green/20">
+                      <div className="relative w-28 h-28 rounded-full overflow-hidden ring-2 ring-white">
+                        {/* admin-provided URL — use a plain img so any host works */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={m.imageUrl}
+                          alt={name}
+                          className="w-full h-full object-cover object-top transition-transform duration-500 motion-reduce:transform-none group-hover:scale-105"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Name */}
                   <h3 className="mt-5 font-bold text-gray-900 transition-colors duration-200 group-hover:text-rmc-green">
-                    {t(`leadership.${id}.name`)}
+                    {name}
                   </h3>
 
                   {/* Gradient hairline divider — matches the Mission/Vision underline */}
@@ -192,10 +193,27 @@ export default async function AboutPage() {
 
                   {/* Title / role */}
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
-                    {t(`leadership.${id}.role`)}
+                    {pick(m, 'role')}
                   </p>
+
+                  {/* Contact — email & phone */}
+                  {(m.email || m.phone) && (
+                    <div className="mt-4 flex flex-col items-center gap-1.5 text-xs text-gray-500">
+                      {m.email && (
+                        <a href={`mailto:${m.email}`} className="inline-flex items-center gap-1.5 hover:text-rmc-green transition-colors">
+                          <Mail className="w-3.5 h-3.5 text-rmc-green/70" /> {m.email}
+                        </a>
+                      )}
+                      {m.phone && (
+                        <a href={`tel:${m.phone}`} className="inline-flex items-center gap-1.5 hover:text-rmc-green transition-colors" dir="ltr">
+                          <Phone className="w-3.5 h-3.5 text-rmc-green/70" /> {m.phone}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

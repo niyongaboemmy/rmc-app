@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SiteContent } from './entities/site-content.entity';
 import { HistoryEntry } from './entities/history-entry.entity';
+import { CommitteeMember } from './entities/committee-member.entity';
 
 @Injectable()
 export class ContentService {
@@ -11,6 +12,8 @@ export class ContentService {
     private readonly repo: Repository<SiteContent>,
     @InjectRepository(HistoryEntry)
     private readonly historyRepo: Repository<HistoryEntry>,
+    @InjectRepository(CommitteeMember)
+    private readonly committeeRepo: Repository<CommitteeMember>,
   ) {}
 
   /** Public read — returns the stored value for a section, or null if unset. */
@@ -68,5 +71,29 @@ export class ContentService {
     const entry = await this.historyRepo.findOne({ where: { id } });
     if (!entry) throw new NotFoundException('History entry not found');
     await this.historyRepo.remove(entry);
+  }
+
+  // ── Committee Members (Executive Committee) ────────────────────────────────────
+
+  getCommitteeMembers(): Promise<CommitteeMember[]> {
+    return this.committeeRepo.find({ order: { sortOrder: 'ASC', createdAt: 'ASC' } });
+  }
+
+  createCommitteeMember(dto: Partial<CommitteeMember>): Promise<CommitteeMember> {
+    const member = this.committeeRepo.create(dto);
+    return this.committeeRepo.save(member);
+  }
+
+  async updateCommitteeMember(id: string, dto: Partial<CommitteeMember>): Promise<CommitteeMember> {
+    const member = await this.committeeRepo.findOne({ where: { id } });
+    if (!member) throw new NotFoundException('Committee member not found');
+    Object.assign(member, dto);
+    return this.committeeRepo.save(member);
+  }
+
+  async deleteCommitteeMember(id: string): Promise<void> {
+    const member = await this.committeeRepo.findOne({ where: { id } });
+    if (!member) throw new NotFoundException('Committee member not found');
+    await this.committeeRepo.remove(member);
   }
 }
