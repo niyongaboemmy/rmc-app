@@ -79,37 +79,4 @@ export class ContentController {
   deleteHistory(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.deleteHistoryEntry(id);
   }
-
-  // ── Committee Members (Executive Committee) ────────────────────────────────────
-
-  @Get('committee/members')
-  @Public()
-  @ApiOperation({ summary: 'Get all RMC executive committee members' })
-  getCommittee() {
-    return this.service.getCommitteeMembers();
-  }
-
-  @Post('committee/members')
-  @ApiBearerAuth()
-  @Permissions(Permission.CONTENT_CREATE)
-  @ApiOperation({ summary: 'Create a committee member (admin)' })
-  createCommittee(@Body() dto: any) {
-    return this.service.createCommitteeMember(dto);
-  }
-
-  @Put('committee/members/:id')
-  @ApiBearerAuth()
-  @Permissions(Permission.CONTENT_EDIT)
-  @ApiOperation({ summary: 'Update a committee member (admin)' })
-  updateCommittee(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
-    return this.service.updateCommitteeMember(id, dto);
-  }
-
-  @Delete('committee/members/:id')
-  @ApiBearerAuth()
-  @Permissions(Permission.CONTENT_DELETE)
-  @ApiOperation({ summary: 'Delete a committee member (admin)' })
-  deleteCommittee(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.deleteCommitteeMember(id);
-  }
 }

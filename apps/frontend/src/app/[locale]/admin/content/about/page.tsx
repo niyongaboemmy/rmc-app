@@ -13,7 +13,7 @@ import {
 import { apiClient } from '@/lib/api';
 import {
   Building2, ArrowLeft, Save, Target, Eye, BookOpen, CheckCircle,
-  Clock, Plus, Edit2, Trash2, RefreshCw, Image, Users,
+  Clock, Plus, Edit2, Trash2, RefreshCw, Image,
 } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -45,24 +45,6 @@ interface HistoryEntry {
 }
 
 type HistoryEntryForm = Omit<HistoryEntry, 'id'>;
-
-interface CommitteeMember {
-  id: string;
-  nameEn: string; nameRw: string; nameAr: string;
-  roleEn: string; roleRw: string; roleAr: string;
-  email: string | null;
-  phone: string | null;
-  imageUrl: string | null;
-  sortOrder: number;
-}
-
-type CommitteeForm = Omit<CommitteeMember, 'id'>;
-
-const EMPTY_MEMBER: CommitteeForm = {
-  nameEn: '', nameRw: '', nameAr: '',
-  roleEn: '', roleRw: '', roleAr: '',
-  email: '', phone: '', imageUrl: '', sortOrder: 0,
-};
 
 const INITIAL: AboutContent = {
   titleEn: 'About RMC', titleRw: 'Ibyerekeye RMC', titleAr: 'حول RMC',
@@ -140,92 +122,6 @@ function AboutRMCManager() {
   }, []);
 
   useEffect(() => { loadEntries(); }, [loadEntries]);
-
-  // Committee members state
-  const [members, setMembers] = useState<CommitteeMember[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(true);
-  const [memberModal, setMemberModal] = useState(false);
-  const [editingMember, setEditingMember] = useState<CommitteeMember | null>(null);
-  const [memberForm, setMemberForm] = useState<CommitteeForm>(EMPTY_MEMBER);
-  const [memberLang, setMemberLang] = useState<Lang>('en');
-  const [savingMember, setSavingMember] = useState(false);
-  const [deleteMember, setDeleteMember] = useState<CommitteeMember | null>(null);
-  const [deletingMember, setDeletingMember] = useState(false);
-
-  const loadMembers = useCallback(async () => {
-    setLoadingMembers(true);
-    try {
-      const res = await fetch(`${API_BASE}/content/committee/members`);
-      const json = await res.json();
-      setMembers(json.data ?? []);
-    } catch {
-      /* keep empty */
-    } finally {
-      setLoadingMembers(false);
-    }
-  }, []);
-
-  useEffect(() => { loadMembers(); }, [loadMembers]);
-
-  const openCreateMember = () => {
-    setEditingMember(null);
-    setMemberForm({ ...EMPTY_MEMBER, sortOrder: members.length });
-    setMemberLang('en');
-    setMemberModal(true);
-  };
-
-  const openEditMember = (m: CommitteeMember) => {
-    setEditingMember(m);
-    setMemberForm({
-      nameEn: m.nameEn, nameRw: m.nameRw, nameAr: m.nameAr,
-      roleEn: m.roleEn, roleRw: m.roleRw, roleAr: m.roleAr,
-      email: m.email ?? '', phone: m.phone ?? '', imageUrl: m.imageUrl ?? '',
-      sortOrder: m.sortOrder,
-    });
-    setMemberLang('en');
-    setMemberModal(true);
-  };
-
-  const handleSaveMember = useCallback(async () => {
-    if (!memberForm.nameEn.trim() || !memberForm.roleEn.trim()) {
-      error('English name and role are required.'); return;
-    }
-    setSavingMember(true);
-    try {
-      if (editingMember) {
-        const res = await apiClient.put(`/content/committee/members/${editingMember.id}`, memberForm);
-        setMembers((prev) => prev.map((m) => m.id === editingMember.id ? res.data.data : m));
-        success('Member updated.');
-      } else {
-        const res = await apiClient.post('/content/committee/members', memberForm);
-        setMembers((prev) => [...prev, res.data.data]);
-        success('Member added.');
-      }
-      setMemberModal(false);
-    } catch {
-      error('Could not save member. Please try again.');
-    } finally {
-      setSavingMember(false);
-    }
-  }, [memberForm, editingMember, error, success]);
-
-  const handleDeleteMember = useCallback(async () => {
-    if (!deleteMember) return;
-    setDeletingMember(true);
-    try {
-      await apiClient.delete(`/content/committee/members/${deleteMember.id}`);
-      setMembers((prev) => prev.filter((m) => m.id !== deleteMember.id));
-      success('Member deleted.');
-      setDeleteMember(null);
-    } catch {
-      error('Could not delete member.');
-    } finally {
-      setDeletingMember(false);
-    }
-  }, [deleteMember, error, success]);
-
-  const setMF = <K extends keyof CommitteeForm>(k: K, v: CommitteeForm[K]) =>
-    setMemberForm((p) => ({ ...p, [k]: v }));
 
   const getField = useCallback((key: string, l: Lang): string => {
     const f = form as unknown as Record<string, string>;
@@ -412,162 +308,6 @@ function AboutRMCManager() {
           </div>
         )}
       </div>
-
-      {/* ── Executive Committee CRUD ──────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-slate-500" />
-            <h2 className="text-sm font-bold text-gray-700">Executive Committee</h2>
-            <span className="text-xs text-gray-400 font-normal">({members.length} members)</span>
-          </div>
-          <button onClick={openCreateMember} disabled={loadingMembers}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors">
-            <Plus className="w-3.5 h-3.5" /> Add Member
-          </button>
-        </div>
-
-        {loadingMembers ? (
-          <div className="flex items-center gap-2 py-6 justify-center text-gray-400">
-            <RefreshCw className="w-4 h-4 animate-spin" /> Loading members…
-          </div>
-        ) : members.length === 0 ? (
-          <div className="text-center py-10 text-gray-300">
-            <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">No committee members yet. Add the first one.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {members.map((m) => (
-              <div key={m.id} className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-slate-200 transition-colors bg-gray-50/50">
-                <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
-                  {m.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.imageUrl} alt={m.nameEn} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="w-full h-full flex items-center justify-center text-gray-300"><Users className="w-5 h-5" /></span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 line-clamp-1">{m.nameEn || '—'}</p>
-                  <p className="text-xs text-rmc-gold font-medium line-clamp-1">{m.roleEn}</p>
-                  <p className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
-                    {m.email && <span>{m.email}</span>}
-                    {m.phone && <span>{m.phone}</span>}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => openEditMember(m)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => setDeleteMember(m)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Member modal */}
-      <Modal isOpen={memberModal} onClose={() => setMemberModal(false)} size="xl">
-        <ModalHeader>
-          <ModalTitle>{editingMember ? 'Edit Committee Member' : 'Add Committee Member'}</ModalTitle>
-          <ModalDescription>Name &amp; role per language; email, phone and photo are shared.</ModalDescription>
-        </ModalHeader>
-        <ModalBody className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email</label>
-              <input type="email" value={memberForm.email ?? ''} onChange={(e) => setMF('email', e.target.value)}
-                placeholder="name@rmc.org.rw"
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Phone</label>
-              <input type="tel" value={memberForm.phone ?? ''} onChange={(e) => setMF('phone', e.target.value)}
-                placeholder="+250 7XX XXX XXX"
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Photo URL</label>
-              <input type="text" value={memberForm.imageUrl ?? ''} onChange={(e) => setMF('imageUrl', e.target.value)}
-                placeholder="https://…/photo.jpg"
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent font-mono" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Sort Order <span className="ml-1 font-normal text-gray-400">(lower = first)</span>
-              </label>
-              <input type="number" min={0} value={memberForm.sortOrder} onChange={(e) => setMF('sortOrder', parseInt(e.target.value) || 0)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
-            </div>
-          </div>
-
-          {/* Language tabs for name + role */}
-          <div className="border rounded-2xl border-gray-100 overflow-hidden">
-            <div className="flex border-b border-gray-100 bg-gray-50/50">
-              {LANGS.map((l) => (
-                <button key={l.key} onClick={() => setMemberLang(l.key)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-colors ${memberLang === l.key ? 'bg-white text-slate-700 border-b-2 border-slate-700' : 'text-gray-500 hover:text-gray-700'}`}>
-                  <span>{l.flag}</span> {l.label}
-                </button>
-              ))}
-            </div>
-            <div className="p-4 space-y-4">
-              {LANGS.map(({ key: l, dir: d }) => {
-                if (l !== memberLang) return null;
-                const fc = l === 'ar' ? 'font-arabic' : '';
-                const nameKey = `name${l === 'en' ? 'En' : l === 'rw' ? 'Rw' : 'Ar'}` as keyof CommitteeForm;
-                const roleKey = `role${l === 'en' ? 'En' : l === 'rw' ? 'Rw' : 'Ar'}` as keyof CommitteeForm;
-                return (
-                  <div key={l} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        Name {l === 'en' && <span className="text-red-500">*</span>}
-                      </label>
-                      <input dir={d} type="text" value={memberForm[nameKey] as string}
-                        onChange={(e) => setMF(nameKey, e.target.value)}
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fc}`} />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        Role {l === 'en' && <span className="text-red-500">*</span>}
-                      </label>
-                      <input dir={d} type="text" value={memberForm[roleKey] as string}
-                        onChange={(e) => setMF(roleKey, e.target.value)}
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fc}`} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <button type="button" onClick={() => setMemberModal(false)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
-          <button type="button" onClick={handleSaveMember} disabled={savingMember}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
-            {savingMember && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-            {editingMember ? 'Save Changes' : 'Add Member'}
-          </button>
-        </ModalFooter>
-      </Modal>
-
-      <ConfirmModal
-        isOpen={deleteMember !== null}
-        onClose={() => setDeleteMember(null)}
-        onConfirm={handleDeleteMember}
-        title={`Delete ${deleteMember?.nameEn}?`}
-        description="This will permanently remove the committee member from the About page."
-        confirmLabel="Delete"
-        cancelLabel="Keep"
-        variant="danger"
-        isLoading={deletingMember}
-      />
 
       {/* Entry modal */}
       <Modal isOpen={entryModal} onClose={() => setEntryModal(false)} size="xl">

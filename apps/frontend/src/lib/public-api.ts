@@ -79,15 +79,6 @@ export const publicApi = {
       api.get('/public/blog/posts', { params: { category, page } }),
     ),
 
-  getCommitteeMembers: () =>
-    unwrap<Array<{
-      id: string;
-      nameEn: string; nameRw: string; nameAr: string;
-      roleEn: string; roleRw: string; roleAr: string;
-      email: string | null; phone: string | null;
-      imageUrl: string | null; sortOrder: number;
-    }>>(api.get('/content/committee/members')),
-
   getGallery: (category?: string, page = 1) =>
     unwrap<{
       data: Array<{
