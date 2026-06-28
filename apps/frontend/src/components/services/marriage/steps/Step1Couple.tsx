@@ -5,25 +5,32 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
-import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
+import { PhoneInput, toE164, toLocalPhone } from '@/components/ui/PhoneInput';
 import { Button } from '@/components/ui/Button';
 import { WizardFormData } from '../MarriageWizard';
 
 const nid = z.string().regex(/^\d{16}$/, 'Must be exactly 16 digits');
 const fullName = z.string().trim().min(3, 'At least 3 characters required');
-const phone = z.string().regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX');
+const phone = z.string().regex(/^7[2389]\d{7}$/, 'Enter a valid Rwanda number: 7XXXXXXXX');
+const MIN_AGE = 21;
 const birthDate = z
   .string()
   .min(1, 'Date of birth is required')
   .refine((v) => !Number.isNaN(Date.parse(v)), 'Enter a valid date')
-  .refine((v) => new Date(v) <= new Date(), 'Date of birth cannot be in the future');
+  .refine((v) => {
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - MIN_AGE);
+    return new Date(v) <= cutoff;
+  }, `Must be at least ${MIN_AGE} years old`);
 
 const schema = z.object({
   groomName: fullName,
+  groomFatherName: fullName,
   groomNid: nid,
   groomBirthDate: birthDate,
   groomPhone: phone,
   brideName: fullName,
+  brideFatherName: fullName,
   brideNid: nid,
   brideBirthDate: birthDate,
   bridePhone: phone,
@@ -53,19 +60,26 @@ export function Step1Couple({ initialData, onNext }: Props) {
     resolver: zodResolver(schema),
     defaultValues: {
       groomName: initialData.groomName ?? '',
+      groomFatherName: initialData.groomFatherName ?? '',
       groomNid: initialData.groomNid ?? '',
       groomBirthDate: initialData.groomBirthDate ?? '',
-      groomPhone: initialData.groomPhone ?? '',
+      groomPhone: toLocalPhone(initialData.groomPhone),
       brideName: initialData.brideName ?? '',
+      brideFatherName: initialData.brideFatherName ?? '',
       brideNid: initialData.brideNid ?? '',
       brideBirthDate: initialData.brideBirthDate ?? '',
-      bridePhone: initialData.bridePhone ?? '',
-      notificationPhone: initialData.notificationPhone ?? '',
+      bridePhone: toLocalPhone(initialData.bridePhone),
+      notificationPhone: toLocalPhone(initialData.notificationPhone),
     },
   });
 
   const nidProps = { inputMode: 'numeric' as const, maxLength: 16, placeholder: '16-digit National ID' };
-  const today = new Date().toISOString().split('T')[0];
+  // Latest allowed date of birth: today minus the minimum age (21 years).
+  const maxDob = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - MIN_AGE);
+    return d.toISOString().split('T')[0];
+  })();
 
   const handleNext = (data: FormData) =>
     onNext({
@@ -80,13 +94,20 @@ export function Step1Couple({ initialData, onNext }: Props) {
       {/* Groom */}
       <div>
         <SectionLabel color="blue">Groom</SectionLabel>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input
             label="Full name"
             required
             placeholder="As on National ID"
             error={errors.groomName?.message}
             {...register('groomName')}
+          />
+          <Input
+            label="Father's name"
+            required
+            placeholder="Groom's father's name"
+            error={errors.groomFatherName?.message}
+            {...register('groomFatherName')}
           />
           <Input
             label="National ID"
@@ -99,7 +120,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
             label="Date of birth"
             type="date"
             required
-            max={today}
+            max={maxDob}
             error={errors.groomBirthDate?.message}
             {...register('groomBirthDate')}
           />
@@ -117,13 +138,20 @@ export function Step1Couple({ initialData, onNext }: Props) {
       {/* Bride */}
       <div>
         <SectionLabel color="rose">Bride</SectionLabel>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input
             label="Full name"
             required
             placeholder="As on National ID"
             error={errors.brideName?.message}
             {...register('brideName')}
+          />
+          <Input
+            label="Father's name"
+            required
+            placeholder="Bride's father's name"
+            error={errors.brideFatherName?.message}
+            {...register('brideFatherName')}
           />
           <Input
             label="National ID"
@@ -136,7 +164,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
             label="Date of birth"
             type="date"
             required
-            max={today}
+            max={maxDob}
             error={errors.brideBirthDate?.message}
             {...register('brideBirthDate')}
           />

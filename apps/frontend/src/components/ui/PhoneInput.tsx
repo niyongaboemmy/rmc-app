@@ -5,21 +5,29 @@ import { cn } from '@/lib/utils';
 
 // ── Helpers (exported for forms that need E.164 before submitting) ─────────────
 
-/** 07XXXXXXXX  →  +250XXXXXXXX  (no-op if already E.164 or empty) */
+/**
+ * National number (7XXXXXXXX) → +250XXXXXXXX. Tolerant of any input form
+ * (with/without +250, with/without a leading 0, spaces): the country code is
+ * always added for storage. No-op when empty.
+ */
 export function toE164(local: string): string {
   if (!local) return local;
-  const digits = local.replace(/\D/g, '');
-  if (digits.startsWith('250')) return `+${digits}`;
-  if (digits.startsWith('0'))   return `+250${digits.slice(1)}`;
-  return `+250${digits}`;
+  let digits = local.replace(/\D/g, '');
+  if (digits.startsWith('250')) digits = digits.slice(3);
+  if (digits.startsWith('0'))   digits = digits.slice(1);
+  return digits ? `+250${digits}` : '';
 }
 
-/** +250XXXXXXXX  →  07XXXXXXXX  (no-op if already local or empty) */
+/**
+ * Anything (+250XXXXXXXX, 250…, 0…, with spaces) → the 9-digit national number
+ * (7XXXXXXXX) used inside the input, beside the +250 badge. No leading 0.
+ */
 export function toLocalPhone(e164?: string | null): string {
   if (!e164) return '';
-  if (e164.startsWith('+250')) return '0' + e164.slice(4);
-  if (e164.startsWith('250'))  return '0' + e164.slice(3);
-  return e164;
+  let digits = e164.replace(/\D/g, '');
+  if (digits.startsWith('250')) digits = digits.slice(3);
+  if (digits.startsWith('0'))   digits = digits.slice(1);
+  return digits.slice(0, 9);
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -36,15 +44,16 @@ export interface PhoneInputProps
  * Rwanda phone number input.
  *
  * - Displays a 🇷🇼 +250 prefix badge (non-editable)
- * - User types the local format: 07XXXXXXXX (10 digits)
- * - Auto-strips non-digit characters
- * - Auto-converts pasted E.164 (+250...) to local 07... format
- * - Max 10 characters
+ * - User types the national number beside it: 7XXXXXXXX (9 digits)
+ * - Auto-strips non-digit characters, a pasted +250/250 country code, AND a
+ *   redundant leading 0 (so "+250 0780313448" and "0780313448" both become
+ *   "780313448")
+ * - Max 9 digits
  * - Compatible with react-hook-form `{...register('phone')}` and
  *   controlled `value / onChange` patterns
  *
- * The stored value is always in local format (07XXXXXXXX).
- * Use `toE164(value)` before sending to the backend.
+ * The field value is the 9-digit national number (7XXXXXXXX).
+ * Use `toE164(value)` before sending to the backend to store with +250.
  */
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
   ({ className, label, error, hint, id, required, onChange, onBlur, ...props }, ref) => {
@@ -52,22 +61,17 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
-        let raw = e.target.value;
+        // Normalise to the 9-digit national number: drop non-digits, a pasted
+        // +250/250 country code, and a redundant leading 0 (the +250 badge
+        // already supplies the country code).
+        let digits = e.target.value.replace(/\D/g, '');
+        if (digits.startsWith('250')) digits = digits.slice(3);
+        if (digits.startsWith('0')) digits = digits.slice(1);
+        const clean = digits.slice(0, 9);
 
-        // If user pasted an E.164 number, convert to local first
-        if (raw.startsWith('+250') || raw.startsWith('250')) {
-          raw = toLocalPhone(raw);
-        }
-
-        // Keep only digits, max 10
-        const clean = raw.replace(/\D/g, '').slice(0, 10);
-
-        // Mutate the synthetic event value so react-hook-form gets the cleaned value
-        Object.defineProperty(e, 'target', {
-          writable: false,
-          value: { ...e.target, value: clean },
-        });
-
+        // Write the cleaned value back to the actual input so the displayed
+        // value and the value react-hook-form validates stay in sync.
+        e.target.value = clean;
         onChange?.(e);
       },
       [onChange],
@@ -99,8 +103,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             ref={ref}
             type="tel"
             inputMode="numeric"
-            maxLength={10}
-            placeholder="07XXXXXXXX"
+            placeholder="7XXXXXXXX"
             autoComplete="tel"
             onChange={handleChange}
             onBlur={onBlur}

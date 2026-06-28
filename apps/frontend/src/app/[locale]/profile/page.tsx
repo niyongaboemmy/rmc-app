@@ -48,7 +48,7 @@ const schema = z.object({
   email:       z.string().email('Enter a valid email address').min(1, 'Email is required'),
   phone:       z.string()
     .min(1, 'Phone is required')
-    .regex(/^07[2389]\d{7}$/, 'Enter a valid Rwanda number: 07XXXXXXXX'),
+    .regex(/^7[2389]\d{7}$/, 'Enter a valid Rwanda number: 7XXXXXXXX'),
   dateOfBirth: z.string().optional(),
   gender:      z.enum(['male', 'female', '']).optional(),
 });
