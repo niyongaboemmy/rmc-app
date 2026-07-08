@@ -12,7 +12,7 @@ import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
   LayoutDashboard, Users, Shield, UserCheck, Landmark,
   Clock, BarChart2, Settings, ChevronLeft, ChevronRight,
-  LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive,
+  LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -34,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'schools',   href: '/admin/schools',      icon: GraduationCap,   labelKey: 'sidebar.schools',   group: 'main',   permission: Permission.SCHOOLS_VIEW      },
   { key: 'prayer',    href: '/admin/prayer-times', icon: Clock,           labelKey: 'sidebar.prayer',    group: 'main',   permission: Permission.PRAYER_TIMES_VIEW },
   { key: 'finance',   href: '/admin/donations',    icon: Wallet,          labelKey: 'sidebar.finance',   group: 'main',   permission: Permission.DONATIONS_VIEW    },
+  { key: 'funeral',   href: '/admin/funeral',      icon: Moon,            labelKey: 'sidebar.funeral',   group: 'main',   permission: Permission.FUNERAL_VIEW      },
   { key: 'inbox',     href: '/admin/inbox',        icon: Inbox,           labelKey: 'sidebar.inbox',     group: 'content', permission: Permission.CONTACT_MESSAGES_VIEW },
   { key: 'drive',     href: '/admin/drive',        icon: HardDrive,       labelKey: 'sidebar.drive',     group: 'content', permission: Permission.DRIVE_ADMIN       },
   { key: 'content',   href: '/admin/content',      icon: BookOpen,        labelKey: 'sidebar.content',   group: 'content', permission: Permission.CONTENT_VIEW      },

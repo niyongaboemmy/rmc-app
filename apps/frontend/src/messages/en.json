@@ -628,7 +628,309 @@
     },
     "funeral": {
       "title": "Funeral Services",
-      "desc": "Coordination of Islamic burial rites, imam assignment, and logistics support for families."
+      "desc": "Coordination of Islamic burial rites, imam assignment, and logistics support for families.",
+      "landing": {
+        "ayahRef": "Qur’an 2:156",
+        "back": "Back to services",
+        "quickTitle": "How can we help?",
+        "quickSub": "From reporting a death to burial, RMC walks with you at every step — with dignity and care.",
+        "actions": {
+          "report": {
+            "title": "Report a Death",
+            "desc": "Notify RMC and begin the arrangements."
+          },
+          "request": {
+            "title": "Request Janāzah Services",
+            "desc": "Ghusl, kafan, prayer, transport and burial."
+          },
+          "progress": {
+            "title": "Burial Progress",
+            "desc": "Track the status of a funeral request."
+          },
+          "announcements": {
+            "title": "Funeral Announcements",
+            "desc": "Janāzah times and burial notices."
+          },
+          "volunteers": {
+            "title": "Volunteer",
+            "desc": "Offer your help to grieving families."
+          },
+          "cemetery": {
+            "title": "Cemetery Information",
+            "desc": "Locations, capacity and contacts."
+          },
+          "support": {
+            "title": "Family Support",
+            "desc": "Counselling, food and financial aid."
+          }
+        },
+        "announcementsTitle": "Recent announcements",
+        "announcementsSub": "May Allah have mercy upon them and grant their families patience.",
+        "annLabels": {
+          "age": "Age",
+          "janazah": "Janāzah",
+          "prayer": "Prayer",
+          "burial": "Burial"
+        },
+        "ctaTitle": "We are here for you",
+        "ctaSub": "When a loved one passes, contact us at any hour. The community is ready to help.",
+        "ctaReport": "Report a Death",
+        "ctaContact": "Call the committee",
+        "viewAll": "View all"
+      },
+      "request": {
+        "title": "Funeral Service Request",
+        "subtitle": "Please share what you can. A committee member will contact you shortly, in shā’ Allāh.",
+        "back": "Back to Funeral Services",
+        "steps": {
+          "deceased": "Deceased",
+          "family": "Family",
+          "arrangements": "Arrangements",
+          "review": "Review"
+        },
+        "next": "Continue",
+        "prev": "Back",
+        "submit": "Submit request",
+        "submitting": "Submitting…",
+        "optional": "optional",
+        "deceased": {
+          "heading": "Information about the deceased",
+          "fullName": "Full name",
+          "gender": "Gender",
+          "male": "Male",
+          "female": "Female",
+          "dob": "Date of birth",
+          "dod": "Date of death",
+          "nationalId": "National ID",
+          "placeOfDeath": "Place of death",
+          "cause": "Cause of death",
+          "causeHint": "Optional — leave blank if unknown or private.",
+          "certificate": "Death certificate",
+          "certificateHint": "PDF or image, if available."
+        },
+        "family": {
+          "heading": "Family contact",
+          "nextOfKin": "Next of kin",
+          "phone": "Phone number",
+          "email": "Email",
+          "address": "Address",
+          "emergency": "Emergency contact"
+        },
+        "arrangements": {
+          "heading": "Funeral arrangements",
+          "mosque": "Preferred mosque",
+          "cemetery": "Preferred cemetery",
+          "selectMosque": "Select a mosque",
+          "selectCemetery": "Select a cemetery",
+          "burialDate": "Preferred burial date",
+          "burialTime": "Preferred burial time",
+          "servicesLabel": "Services needed",
+          "ghusl": "Ghusl (ritual washing)",
+          "kafan": "Kafan (shrouding)",
+          "janazah": "Janāzah prayer",
+          "transport": "Transportation",
+          "grave": "Grave preparation",
+          "notes": "Additional notes",
+          "notesHint": "Anything else the committee should know."
+        },
+        "review": {
+          "heading": "Review your request",
+          "sub": "Please confirm the details below before submitting.",
+          "notProvided": "Not provided",
+          "yes": "Yes",
+          "no": "No"
+        },
+        "success": {
+          "title": "Request received",
+          "message": "May Allah ease your affairs. A committee member will contact you shortly.",
+          "referenceLabel": "Your reference",
+          "again": "Submit another request",
+          "home": "Back to Funeral Services",
+          "track": "Track this request"
+        },
+        "validation": {
+          "required": "This field is required",
+          "email": "Enter a valid email",
+          "phone": "Enter a valid phone number",
+          "selectGender": "Please select"
+        }
+      },
+      "stages": {
+        "reported": "Death reported",
+        "verification": "Verification",
+        "family_contacted": "Family contacted",
+        "ghusl": "Ghusl scheduled",
+        "kafan": "Kafan prepared",
+        "janazah": "Janāzah prayer scheduled",
+        "transportation": "Transportation",
+        "burial": "Burial",
+        "completed": "Completed"
+      },
+      "stageStatus": {
+        "done": "Done",
+        "active": "In progress",
+        "pending": "Pending"
+      },
+      "status": {
+        "title": "Track a Funeral Request",
+        "subtitle": "Enter your reference number to see the latest status.",
+        "back": "Back to Funeral Services",
+        "lookupLabel": "Reference number",
+        "lookupPlaceholder": "e.g. FNL-AB12",
+        "lookupButton": "Check status",
+        "lookupHint": "Tip: try FNL-DEMO to preview a request.",
+        "searching": "Searching…",
+        "notFoundTitle": "No request found",
+        "notFoundText": "Please check the reference number and try again, or contact the committee.",
+        "progressLabel": "{done} of {total} steps completed",
+        "currentStage": "Current step",
+        "summaryDeceased": "Deceased",
+        "summarySubmitted": "Submitted",
+        "timelineTitle": "Progress timeline",
+        "assigned": "Assigned"
+      },
+      "announcementsPage": {
+        "title": "Funeral Announcements",
+        "subtitle": "Janāzah times and burial notices for the community.",
+        "back": "Back to Funeral Services",
+        "searchPlaceholder": "Search by name…",
+        "time": "When",
+        "all": "All",
+        "today": "Today",
+        "thisWeek": "This week",
+        "mosque": "Mosque",
+        "cemetery": "Cemetery",
+        "allMosques": "All mosques",
+        "allCemeteries": "All cemeteries",
+        "clear": "Clear filters",
+        "resultsCount": "{count, plural, =1 {# announcement} other {# announcements}}",
+        "emptyTitle": "No announcements found",
+        "emptyText": "Try adjusting your search or filters.",
+        "share": "Share",
+        "print": "Print",
+        "shareCopied": "Copied"
+      },
+      "cemeteryPage": {
+        "title": "Cemetery Directory",
+        "subtitle": "Muslim burial grounds across Rwanda — locations, capacity and contacts.",
+        "back": "Back to Funeral Services",
+        "searchPlaceholder": "Search by name or place…",
+        "resultsCount": "{count, plural, =1 {# cemetery} other {# cemeteries}}",
+        "emptyTitle": "No cemeteries found",
+        "emptyText": "Try a different search.",
+        "capacity": "Capacity",
+        "occupancy": "Occupancy",
+        "contact": "Contact",
+        "directions": "Maps",
+        "locate": "Locate"
+      },
+      "detail": {
+        "back": "Back to Funeral Services",
+        "profile": "Profile",
+        "checklist": "Service checklist",
+        "prayer": "Prayer & burial",
+        "documents": "Documents & attachments",
+        "volunteers": "Assigned volunteers",
+        "notes": "Notes",
+        "download": "Download",
+        "none": "—",
+        "noNotes": "No notes recorded.",
+        "noVolunteers": "No volunteers assigned yet.",
+        "noDocuments": "No documents uploaded.",
+        "notFoundTitle": "Request not found",
+        "notFoundText": "Please check the reference number, or contact the committee.",
+        "viewDetails": "View full details"
+      },
+      "volunteers": {
+        "title": "Volunteer Management",
+        "subtitle": "Assign committee volunteers to funeral tasks.",
+        "back": "Back to Funeral Services",
+        "searchPlaceholder": "Search volunteers…",
+        "filterAll": "All",
+        "filterAvailable": "Available",
+        "filterBusy": "Assigned",
+        "allMosques": "All mosques",
+        "resultsCount": "{count, plural, =1 {# volunteer} other {# volunteers}}",
+        "emptyTitle": "No volunteers found",
+        "emptyText": "Try a different search or filter.",
+        "skills": "Skills",
+        "available": "Available",
+        "busy": "Assigned",
+        "assignedTask": "Task",
+        "assign": "Assign",
+        "reassign": "Reassign",
+        "unassign": "Unassign",
+        "add": "Add attendant",
+        "edit": "Edit",
+        "delete": "Remove",
+        "forFuneral": "Funeral",
+        "confirmTitle": "Remove attendant",
+        "deleteConfirm": "Remove {name} from the roster? This cannot be undone.",
+        "tasks": {
+          "ghusl": "Ghusl",
+          "transportation": "Transportation",
+          "grave_digging": "Grave digging",
+          "crowd_management": "Crowd management",
+          "family_assistance": "Family assistance",
+          "documentation": "Documentation"
+        },
+        "form": {
+          "createTitle": "Add attendant",
+          "editTitle": "Edit attendant",
+          "name": "Full name",
+          "phone": "Phone",
+          "mosque": "Mosque",
+          "selectMosque": "Select a mosque",
+          "skills": "Skills",
+          "required": "Required",
+          "save": "Save",
+          "cancel": "Cancel"
+        },
+        "dialog": {
+          "title": "Assign a task",
+          "subtitle": "Choose the funeral and task for {name}.",
+          "funeralLabel": "Funeral",
+          "taskLabel": "Task",
+          "noFunerals": "No active funerals to assign right now.",
+          "confirm": "Confirm",
+          "cancel": "Cancel"
+        },
+        "toast": {
+          "assigned": "{name} assigned to {task} · {funeral}",
+          "unassigned": "{name} is now available",
+          "created": "{name} added to the roster",
+          "updated": "{name} updated",
+          "deleted": "{name} removed from the roster"
+        }
+      },
+      "donations": {
+        "title": "Funeral Donations",
+        "subtitle": "Support burial costs and grieving families — every gift is a Sadaqah Jariyah.",
+        "back": "Back to Funeral Services",
+        "raised": "Raised",
+        "target": "Goal",
+        "donate": "Donate",
+        "totalRaised": "Total raised",
+        "note": "All gifts are processed securely on the RMC donation page.",
+        "categories": {
+          "burial": {
+            "title": "Burial Expenses",
+            "desc": "Ghusl, kafan, grave preparation and transport for those in need."
+          },
+          "family": {
+            "title": "Family Support",
+            "desc": "Immediate help for grieving families facing hardship."
+          },
+          "cemetery": {
+            "title": "Cemetery Maintenance",
+            "desc": "Upkeep of Muslim burial grounds across Rwanda."
+          },
+          "mosque_fund": {
+            "title": "Mosque Funeral Fund",
+            "desc": "Sustains janāzah services at community mosques."
+          }
+        }
+      }
     },
     "conduct": {
       "title": "Good Conduct Certificate",
@@ -933,7 +1235,8 @@
       },
       "marriage": "Marriage",
       "drive": "Drive",
-      "goodConduct": "Good Conduct"
+      "goodConduct": "Good Conduct",
+      "funeral": "Funeral"
     },
     "topbar": {
       "viewSite": "View site",
@@ -1201,6 +1504,148 @@
       "confirmDelete": "Delete",
       "deleting": "Deleting…",
       "deleteError": "Could not delete. Please try again."
+    },
+    "funeral": {
+      "title": "Funeral Services",
+      "subtitle": "Requests, announcements, volunteers & cemeteries",
+      "export": "Export",
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "volunteersError": "Couldn't update the volunteer. Please try again.",
+      "viewerNote": "You have view-only access. Contact an administrator to make changes.",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "confirmTitle": "Confirm deletion"
+      },
+      "stats": {
+        "pending": "Pending requests",
+        "volunteers": "Volunteers",
+        "upcoming": "Upcoming Janāzah",
+        "completed": "Completed"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "requests": "Requests",
+        "announcements": "Announcements",
+        "volunteers": "Volunteers",
+        "cemeteries": "Cemeteries",
+        "reports": "Reports"
+      },
+      "overview": {
+        "recentRequests": "Recent requests",
+        "viewAll": "View all"
+      },
+      "requests": {
+        "searchPlaceholder": "Search by name or reference…",
+        "allStages": "All stages",
+        "emptyTitle": "No requests found",
+        "emptyText": "Try a different search or filter.",
+        "view": "View",
+        "manage": "Manage",
+        "attendantsCount": "{count, plural, =1 {# attendant} other {# attendants}}",
+        "toastUpdated": "{name} moved to {stage}",
+        "toastError": "Couldn't update the request. Please try again.",
+        "dialog": {
+          "title": "Manage funeral",
+          "stageLabel": "Stage",
+          "current": "Current",
+          "save": "Save changes",
+          "cancel": "Cancel",
+          "attendants": "{count, plural, =0 {Attendants} other {Attendants (#)}}",
+          "noAttendants": "No attendants assigned yet.",
+          "addAttendant": "Add attendant",
+          "add": "Assign",
+          "removeAttendant": "Remove from funeral"
+        },
+        "col": {
+          "reference": "Reference",
+          "deceased": "Deceased",
+          "stage": "Stage",
+          "progress": "Progress",
+          "contact": "Contact",
+          "date": "Date"
+        }
+      },
+      "announcements": {
+        "add": "New announcement",
+        "emptyTitle": "No announcements",
+        "emptyText": "Add a janāzah notice to publish it on the public page.",
+        "deleteConfirm": "Delete the announcement for {name}? This cannot be undone.",
+        "toastCreated": "Announcement for {name} published",
+        "toastUpdated": "Announcement for {name} updated",
+        "toastDeleted": "Announcement for {name} removed",
+        "toastError": "Couldn't save the announcement. Please try again.",
+        "form": {
+          "createTitle": "New announcement",
+          "editTitle": "Edit announcement",
+          "name": "Full name",
+          "age": "Age",
+          "dateOfDeath": "Date of death",
+          "janazahLocation": "Janāzah location",
+          "prayerTime": "Prayer time",
+          "burialLocation": "Burial location",
+          "verse": "Verse (optional)",
+          "required": "Required",
+          "save": "Save",
+          "cancel": "Cancel"
+        },
+        "col": {
+          "name": "Name",
+          "age": "Age",
+          "prayer": "Prayer",
+          "janazah": "Janāzah",
+          "burial": "Burial"
+        }
+      },
+      "cemeteries": {
+        "add": "New cemetery",
+        "emptyTitle": "No cemeteries",
+        "emptyText": "Add a cemetery to track its capacity and contacts.",
+        "deleteConfirm": "Delete {name}? This cannot be undone.",
+        "toastCreated": "{name} added",
+        "toastUpdated": "{name} updated",
+        "toastDeleted": "{name} removed",
+        "toastError": "Couldn't save the cemetery. Please try again.",
+        "form": {
+          "createTitle": "New cemetery",
+          "editTitle": "Edit cemetery",
+          "name": "Name",
+          "address": "Location / address",
+          "capacity": "Capacity",
+          "used": "Used",
+          "contactPerson": "Contact person",
+          "phone": "Phone",
+          "lat": "Latitude (optional)",
+          "lng": "Longitude (optional)",
+          "mapLabel": "Location on map",
+          "pickHint": "Tap the map or drag the pin to set the location.",
+          "findMyLocation": "Find my location",
+          "locating": "Locating…",
+          "geoError": "Couldn't get your location. Enter it manually.",
+          "geoUnsupported": "Location isn't available on this device.",
+          "required": "Required",
+          "save": "Save",
+          "cancel": "Cancel"
+        },
+        "col": {
+          "name": "Name",
+          "location": "Location",
+          "occupancy": "Occupancy",
+          "contact": "Contact",
+          "phone": "Phone"
+        }
+      },
+      "reports": {
+        "totalRequests": "Total requests",
+        "completed": "Completed",
+        "volunteersAvailable": "Volunteers available",
+        "volunteersAssigned": "Volunteers assigned",
+        "byStage": "Requests by stage",
+        "exportRequests": "Export requests (CSV)"
+      }
     }
   },
   "galleryPage": {

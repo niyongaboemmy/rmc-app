@@ -628,7 +628,309 @@
     },
     "funeral": {
       "title": "خدمات الجنازة",
-      "desc": "تنسيق مراسم الدفن الإسلامية وتعيين الإمام ودعم اللوجستيات للعائلات."
+      "desc": "تنسيق مراسم الدفن الإسلامية وتعيين الإمام ودعم اللوجستيات للعائلات.",
+      "landing": {
+        "ayahRef": "القرآن ٢:١٥٦",
+        "back": "العودة إلى الخدمات",
+        "quickTitle": "كيف يمكننا مساعدتك؟",
+        "quickSub": "من الإبلاغ عن الوفاة إلى الدفن، يرافقكم مركز المجتمع المسلم في كل خطوة بكرامة ورعاية.",
+        "actions": {
+          "report": {
+            "title": "الإبلاغ عن وفاة",
+            "desc": "أبلغ المركز وابدأ الترتيبات."
+          },
+          "request": {
+            "title": "طلب خدمات الجنازة",
+            "desc": "الغُسل والتكفين والصلاة والنقل والدفن."
+          },
+          "progress": {
+            "title": "حالة الدفن",
+            "desc": "تابع حالة طلب الجنازة."
+          },
+          "announcements": {
+            "title": "إعلانات الجنازة",
+            "desc": "مواعيد الصلاة وإشعارات الدفن."
+          },
+          "volunteers": {
+            "title": "تطوّع",
+            "desc": "قدّم مساعدتك للأسر المكلومة."
+          },
+          "cemetery": {
+            "title": "معلومات المقابر",
+            "desc": "المواقع والسعة وجهات الاتصال."
+          },
+          "support": {
+            "title": "دعم الأسرة",
+            "desc": "الإرشاد والطعام والمساعدة المالية."
+          }
+        },
+        "announcementsTitle": "أحدث الإعلانات",
+        "announcementsSub": "رحمهم الله ورزق أهلهم الصبر.",
+        "annLabels": {
+          "age": "العمر",
+          "janazah": "الجنازة",
+          "prayer": "الصلاة",
+          "burial": "الدفن"
+        },
+        "ctaTitle": "نحن معكم",
+        "ctaSub": "عند وفاة عزيز، تواصلوا معنا في أي وقت. المجتمع مستعد للمساعدة.",
+        "ctaReport": "الإبلاغ عن وفاة",
+        "ctaContact": "اتصل باللجنة",
+        "viewAll": "عرض الكل"
+      },
+      "request": {
+        "title": "طلب خدمة جنازة",
+        "subtitle": "يرجى تقديم ما تستطيع. سيتواصل معكم أحد أعضاء اللجنة قريباً إن شاء الله.",
+        "back": "العودة إلى خدمات الجنازة",
+        "steps": {
+          "deceased": "المتوفى",
+          "family": "الأسرة",
+          "arrangements": "الترتيبات",
+          "review": "المراجعة"
+        },
+        "next": "متابعة",
+        "prev": "رجوع",
+        "submit": "إرسال الطلب",
+        "submitting": "جارٍ الإرسال…",
+        "optional": "اختياري",
+        "deceased": {
+          "heading": "معلومات عن المتوفى",
+          "fullName": "الاسم الكامل",
+          "gender": "الجنس",
+          "male": "ذكر",
+          "female": "أنثى",
+          "dob": "تاريخ الميلاد",
+          "dod": "تاريخ الوفاة",
+          "nationalId": "رقم الهوية",
+          "placeOfDeath": "مكان الوفاة",
+          "cause": "سبب الوفاة",
+          "causeHint": "اختياري — اتركه فارغاً إن كان غير معروف أو خاصاً.",
+          "certificate": "شهادة الوفاة",
+          "certificateHint": "ملف PDF أو صورة، إن وُجدت."
+        },
+        "family": {
+          "heading": "جهة اتصال الأسرة",
+          "nextOfKin": "أقرب الأقارب",
+          "phone": "رقم الهاتف",
+          "email": "البريد الإلكتروني",
+          "address": "العنوان",
+          "emergency": "جهة اتصال للطوارئ"
+        },
+        "arrangements": {
+          "heading": "ترتيبات الجنازة",
+          "mosque": "المسجد المفضل",
+          "cemetery": "المقبرة المفضلة",
+          "selectMosque": "اختر مسجداً",
+          "selectCemetery": "اختر مقبرة",
+          "burialDate": "تاريخ الدفن المفضل",
+          "burialTime": "وقت الدفن المفضل",
+          "servicesLabel": "الخدمات المطلوبة",
+          "ghusl": "الغُسل",
+          "kafan": "التكفين",
+          "janazah": "صلاة الجنازة",
+          "transport": "النقل",
+          "grave": "تجهيز القبر",
+          "notes": "ملاحظات إضافية",
+          "notesHint": "أي شيء آخر ينبغي أن تعرفه اللجنة."
+        },
+        "review": {
+          "heading": "راجع طلبك",
+          "sub": "يرجى تأكيد التفاصيل أدناه قبل الإرسال.",
+          "notProvided": "غير مُقدَّم",
+          "yes": "نعم",
+          "no": "لا"
+        },
+        "success": {
+          "title": "تم استلام الطلب",
+          "message": "يسّر الله أموركم. سيتواصل معكم أحد أعضاء اللجنة قريباً.",
+          "referenceLabel": "رقمكم المرجعي",
+          "again": "إرسال طلب آخر",
+          "home": "العودة إلى خدمات الجنازة",
+          "track": "تتبّع هذا الطلب"
+        },
+        "validation": {
+          "required": "هذا الحقل مطلوب",
+          "email": "أدخل بريداً إلكترونياً صحيحاً",
+          "phone": "أدخل رقم هاتف صحيح",
+          "selectGender": "يرجى الاختيار"
+        }
+      },
+      "stages": {
+        "reported": "تم الإبلاغ عن الوفاة",
+        "verification": "التحقق",
+        "family_contacted": "تم الاتصال بالأسرة",
+        "ghusl": "تحديد موعد الغُسل",
+        "kafan": "تجهيز الكفن",
+        "janazah": "تحديد موعد صلاة الجنازة",
+        "transportation": "النقل",
+        "burial": "الدفن",
+        "completed": "اكتمل"
+      },
+      "stageStatus": {
+        "done": "مكتمل",
+        "active": "قيد التنفيذ",
+        "pending": "قيد الانتظار"
+      },
+      "status": {
+        "title": "تتبّع طلب جنازة",
+        "subtitle": "أدخل رقمك المرجعي لعرض آخر حالة.",
+        "back": "العودة إلى خدمات الجنازة",
+        "lookupLabel": "الرقم المرجعي",
+        "lookupPlaceholder": "مثال: FNL-AB12",
+        "lookupButton": "التحقق من الحالة",
+        "lookupHint": "تلميح: جرّب FNL-DEMO لمعاينة طلب.",
+        "searching": "جارٍ البحث…",
+        "notFoundTitle": "لم يُعثر على طلب",
+        "notFoundText": "يرجى التحقق من الرقم المرجعي والمحاولة مجدداً، أو التواصل مع اللجنة.",
+        "progressLabel": "اكتملت {done} من {total} خطوات",
+        "currentStage": "الخطوة الحالية",
+        "summaryDeceased": "المتوفى",
+        "summarySubmitted": "أُرسل",
+        "timelineTitle": "الجدول الزمني للتقدّم",
+        "assigned": "مُكلَّف"
+      },
+      "announcementsPage": {
+        "title": "إعلانات الجنازة",
+        "subtitle": "مواعيد صلاة الجنازة وإشعارات الدفن للمجتمع.",
+        "back": "العودة إلى خدمات الجنازة",
+        "searchPlaceholder": "ابحث بالاسم…",
+        "time": "الوقت",
+        "all": "الكل",
+        "today": "اليوم",
+        "thisWeek": "هذا الأسبوع",
+        "mosque": "المسجد",
+        "cemetery": "المقبرة",
+        "allMosques": "كل المساجد",
+        "allCemeteries": "كل المقابر",
+        "clear": "مسح عوامل التصفية",
+        "resultsCount": "{count, plural, zero {لا إعلانات} one {إعلان واحد} two {إعلانان} few {# إعلانات} many {# إعلاناً} other {# إعلان}}",
+        "emptyTitle": "لم يُعثر على إعلانات",
+        "emptyText": "حاول تعديل البحث أو عوامل التصفية.",
+        "share": "مشاركة",
+        "print": "طباعة",
+        "shareCopied": "تم النسخ"
+      },
+      "cemeteryPage": {
+        "title": "دليل المقابر",
+        "subtitle": "مقابر المسلمين في رواندا — المواقع والسعة وجهات الاتصال.",
+        "back": "العودة إلى خدمات الجنازة",
+        "searchPlaceholder": "ابحث بالاسم أو المكان…",
+        "resultsCount": "{count, plural, zero {لا مقابر} one {مقبرة واحدة} two {مقبرتان} few {# مقابر} many {# مقبرة} other {# مقبرة}}",
+        "emptyTitle": "لم يُعثر على مقابر",
+        "emptyText": "جرّب بحثاً آخر.",
+        "capacity": "السعة",
+        "occupancy": "الإشغال",
+        "contact": "جهة الاتصال",
+        "directions": "الخريطة",
+        "locate": "تحديد"
+      },
+      "detail": {
+        "back": "العودة إلى خدمات الجنازة",
+        "profile": "الملف",
+        "checklist": "قائمة الخدمات",
+        "prayer": "الصلاة والدفن",
+        "documents": "المستندات والمرفقات",
+        "volunteers": "المتطوعون المكلّفون",
+        "notes": "ملاحظات",
+        "download": "تنزيل",
+        "none": "—",
+        "noNotes": "لا ملاحظات مسجّلة.",
+        "noVolunteers": "لم يُكلَّف متطوعون بعد.",
+        "noDocuments": "لا مستندات مرفوعة.",
+        "notFoundTitle": "لم يُعثر على الطلب",
+        "notFoundText": "يرجى التحقق من الرقم المرجعي، أو التواصل مع اللجنة.",
+        "viewDetails": "عرض كل التفاصيل"
+      },
+      "volunteers": {
+        "title": "إدارة المتطوعين",
+        "subtitle": "إسناد متطوعي اللجنة إلى مهام الجنازة.",
+        "back": "العودة إلى خدمات الجنازة",
+        "searchPlaceholder": "ابحث عن المتطوعين…",
+        "filterAll": "الكل",
+        "filterAvailable": "متاح",
+        "filterBusy": "مُكلَّف",
+        "allMosques": "كل المساجد",
+        "resultsCount": "{count, plural, zero {لا متطوعين} one {متطوع واحد} two {متطوعان} few {# متطوعين} many {# متطوعاً} other {# متطوع}}",
+        "emptyTitle": "لم يُعثر على متطوعين",
+        "emptyText": "جرّب بحثاً أو تصفية مختلفة.",
+        "skills": "المهارات",
+        "available": "متاح",
+        "busy": "مُكلَّف",
+        "assignedTask": "المهمة",
+        "assign": "إسناد",
+        "reassign": "إعادة إسناد",
+        "unassign": "إلغاء الإسناد",
+        "add": "إضافة مشارك",
+        "edit": "تعديل",
+        "delete": "إزالة",
+        "forFuneral": "الجنازة",
+        "confirmTitle": "إزالة مشارك",
+        "deleteConfirm": "إزالة {name} من القائمة؟ لا يمكن التراجع عن ذلك.",
+        "tasks": {
+          "ghusl": "الغُسل",
+          "transportation": "النقل",
+          "grave_digging": "حفر القبر",
+          "crowd_management": "تنظيم الحشود",
+          "family_assistance": "مساعدة الأسرة",
+          "documentation": "التوثيق"
+        },
+        "form": {
+          "createTitle": "إضافة مشارك",
+          "editTitle": "تعديل مشارك",
+          "name": "الاسم الكامل",
+          "phone": "الهاتف",
+          "mosque": "المسجد",
+          "selectMosque": "اختر مسجداً",
+          "skills": "المهارات",
+          "required": "مطلوب",
+          "save": "حفظ",
+          "cancel": "إلغاء"
+        },
+        "dialog": {
+          "title": "إسناد مهمة",
+          "subtitle": "اختر الجنازة والمهمة لـ {name}.",
+          "funeralLabel": "الجنازة",
+          "taskLabel": "المهمة",
+          "noFunerals": "لا توجد جنازات نشطة للإسناد حالياً.",
+          "confirm": "تأكيد",
+          "cancel": "إلغاء"
+        },
+        "toast": {
+          "assigned": "تم إسناد {task} إلى {name} · {funeral}",
+          "unassigned": "{name} متاح الآن",
+          "created": "تمت إضافة {name} إلى القائمة",
+          "updated": "تم تحديث {name}",
+          "deleted": "تمت إزالة {name} من القائمة"
+        }
+      },
+      "donations": {
+        "title": "تبرّعات الجنازة",
+        "subtitle": "ادعم تكاليف الدفن والأسر المكلومة — كل تبرّع صدقة جارية.",
+        "back": "العودة إلى خدمات الجنازة",
+        "raised": "جُمِع",
+        "target": "الهدف",
+        "donate": "تبرّع",
+        "totalRaised": "إجمالي ما جُمِع",
+        "note": "تُعالَج جميع التبرعات بأمان على صفحة التبرعات في المركز.",
+        "categories": {
+          "burial": {
+            "title": "مصاريف الدفن",
+            "desc": "الغُسل والتكفين وتجهيز القبر والنقل للمحتاجين."
+          },
+          "family": {
+            "title": "دعم الأسرة",
+            "desc": "مساعدة فورية للأسر المكلومة التي تواجه ضائقة."
+          },
+          "cemetery": {
+            "title": "صيانة المقابر",
+            "desc": "صيانة مقابر المسلمين في رواندا."
+          },
+          "mosque_fund": {
+            "title": "صندوق جنازات المسجد",
+            "desc": "يدعم خدمات الجنازة في مساجد المجتمع."
+          }
+        }
+      }
     },
     "conduct": {
       "title": "شهادة حسن السيرة",
@@ -933,7 +1235,8 @@
       },
       "marriage": "الزواج",
       "drive": "مساحة التخزين",
-      "goodConduct": "حسن السلوك"
+      "goodConduct": "حسن السلوك",
+      "funeral": "الجنازة"
     },
     "topbar": {
       "viewSite": "عرض الموقع",
@@ -1201,6 +1504,148 @@
       "confirmDelete": "حذف",
       "deleting": "جارٍ الحذف…",
       "deleteError": "تعذّر الحذف. حاول مرة أخرى."
+    },
+    "funeral": {
+      "title": "خدمات الجنازة",
+      "subtitle": "الطلبات والإعلانات والمتطوعون والمقابر",
+      "export": "تصدير",
+      "refresh": "تحديث",
+      "loading": "جارٍ التحميل…",
+      "volunteersError": "تعذّر تحديث المتطوع. حاول مرة أخرى.",
+      "viewerNote": "لديك صلاحية العرض فقط. تواصل مع المسؤول لإجراء تغييرات.",
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "confirmTitle": "تأكيد الحذف"
+      },
+      "stats": {
+        "pending": "طلبات قيد الانتظار",
+        "volunteers": "المتطوعون",
+        "upcoming": "جنازات قادمة",
+        "completed": "المكتملة"
+      },
+      "tabs": {
+        "overview": "نظرة عامة",
+        "requests": "الطلبات",
+        "announcements": "الإعلانات",
+        "volunteers": "المتطوعون",
+        "cemeteries": "المقابر",
+        "reports": "التقارير"
+      },
+      "overview": {
+        "recentRequests": "أحدث الطلبات",
+        "viewAll": "عرض الكل"
+      },
+      "requests": {
+        "searchPlaceholder": "ابحث بالاسم أو المرجع…",
+        "allStages": "كل المراحل",
+        "emptyTitle": "لم يُعثر على طلبات",
+        "emptyText": "جرّب بحثاً أو تصفية مختلفة.",
+        "view": "عرض",
+        "manage": "إدارة",
+        "attendantsCount": "{count, plural, zero {لا مشاركين} one {مشارك واحد} two {مشاركان} few {# مشاركين} many {# مشاركاً} other {# مشارك}}",
+        "toastUpdated": "تم نقل {name} إلى {stage}",
+        "toastError": "تعذّر تحديث الطلب. حاول مرة أخرى.",
+        "dialog": {
+          "title": "إدارة الجنازة",
+          "stageLabel": "المرحلة",
+          "current": "الحالية",
+          "save": "حفظ التغييرات",
+          "cancel": "إلغاء",
+          "attendants": "{count, plural, zero {المشاركون} other {المشاركون (#)}}",
+          "noAttendants": "لم يتم إسناد أي مشاركين بعد.",
+          "addAttendant": "إضافة مشارك",
+          "add": "إسناد",
+          "removeAttendant": "إزالة من الجنازة"
+        },
+        "col": {
+          "reference": "المرجع",
+          "deceased": "المتوفى",
+          "stage": "المرحلة",
+          "progress": "التقدّم",
+          "contact": "التواصل",
+          "date": "التاريخ"
+        }
+      },
+      "announcements": {
+        "add": "إعلان جديد",
+        "emptyTitle": "لا توجد إعلانات",
+        "emptyText": "أضف إشعار جنازة لنشره في الصفحة العامة.",
+        "deleteConfirm": "حذف إعلان {name}؟ لا يمكن التراجع عن ذلك.",
+        "toastCreated": "تم نشر إعلان {name}",
+        "toastUpdated": "تم تحديث إعلان {name}",
+        "toastDeleted": "تمت إزالة إعلان {name}",
+        "toastError": "تعذّر حفظ الإعلان. حاول مرة أخرى.",
+        "form": {
+          "createTitle": "إعلان جديد",
+          "editTitle": "تعديل الإعلان",
+          "name": "الاسم الكامل",
+          "age": "العمر",
+          "dateOfDeath": "تاريخ الوفاة",
+          "janazahLocation": "مكان الجنازة",
+          "prayerTime": "وقت الصلاة",
+          "burialLocation": "مكان الدفن",
+          "verse": "آية (اختياري)",
+          "required": "مطلوب",
+          "save": "حفظ",
+          "cancel": "إلغاء"
+        },
+        "col": {
+          "name": "الاسم",
+          "age": "العمر",
+          "prayer": "الصلاة",
+          "janazah": "الجنازة",
+          "burial": "الدفن"
+        }
+      },
+      "cemeteries": {
+        "add": "مقبرة جديدة",
+        "emptyTitle": "لا توجد مقابر",
+        "emptyText": "أضف مقبرة لتتبع سعتها وجهات الاتصال بها.",
+        "deleteConfirm": "حذف {name}؟ لا يمكن التراجع عن ذلك.",
+        "toastCreated": "تمت إضافة {name}",
+        "toastUpdated": "تم تحديث {name}",
+        "toastDeleted": "تمت إزالة {name}",
+        "toastError": "تعذّر حفظ المقبرة. حاول مرة أخرى.",
+        "form": {
+          "createTitle": "مقبرة جديدة",
+          "editTitle": "تعديل المقبرة",
+          "name": "الاسم",
+          "address": "الموقع / العنوان",
+          "capacity": "السعة",
+          "used": "المستخدَم",
+          "contactPerson": "الشخص المسؤول",
+          "phone": "الهاتف",
+          "lat": "خط العرض (اختياري)",
+          "lng": "خط الطول (اختياري)",
+          "mapLabel": "الموقع على الخريطة",
+          "pickHint": "انقر على الخريطة أو اسحب الدبوس لتحديد الموقع.",
+          "findMyLocation": "تحديد موقعي",
+          "locating": "جارٍ تحديد الموقع…",
+          "geoError": "تعذّر تحديد موقعك. أدخله يدوياً.",
+          "geoUnsupported": "تحديد الموقع غير متاح على هذا الجهاز.",
+          "required": "مطلوب",
+          "save": "حفظ",
+          "cancel": "إلغاء"
+        },
+        "col": {
+          "name": "الاسم",
+          "location": "الموقع",
+          "occupancy": "الإشغال",
+          "contact": "جهة الاتصال",
+          "phone": "الهاتف"
+        }
+      },
+      "reports": {
+        "totalRequests": "إجمالي الطلبات",
+        "completed": "المكتملة",
+        "volunteersAvailable": "متطوعون متاحون",
+        "volunteersAssigned": "متطوعون مُكلَّفون",
+        "byStage": "الطلبات حسب المرحلة",
+        "exportRequests": "تصدير الطلبات (CSV)"
+      }
     }
   },
   "galleryPage": {

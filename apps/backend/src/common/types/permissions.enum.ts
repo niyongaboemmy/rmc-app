@@ -72,6 +72,10 @@ export enum Permission {
   GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
   GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
 
+  // ── Funeral Service ───────────────────────────────────────────────
+  FUNERAL_VIEW = 'funeral:view',
+  FUNERAL_MANAGE = 'funeral:manage',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

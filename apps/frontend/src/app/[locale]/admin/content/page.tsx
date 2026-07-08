@@ -10,13 +10,13 @@ import {
   BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
-  ListFilter, Images, Sparkles, Share2, Newspaper, Mail,
+  ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon, HandHelping,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
 type SectionType = 'crud' | 'edit';
-type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page';
+type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page' | 'Funeral Service';
 
 interface SectionConfig {
   id: string;
@@ -245,6 +245,32 @@ const SECTIONS: SectionConfig[] = [
     badge: 'bg-teal-100 text-teal-700',
     accentBar: 'bg-teal-400',
   },
+  {
+    id: 'funeral-request-steps',
+    icon: Moon,
+    title: 'Funeral Request Steps',
+    description: 'Add, edit, reorder and customise (colour + icon) the funeral request lifecycle steps shown on the public status/detail timeline.',
+    type: 'crud', itemLabel: 'steps',
+    page: 'Funeral Service', positionOrder: 0,
+    locationLabel: 'Funeral Service · Status timeline',
+    keywords: ['funeral', 'janazah', 'burial', 'ghusl', 'kafan', 'steps', 'stages', 'timeline', 'status', 'lifecycle', 'request', 'deceased', 'reorder', 'color', 'icon'],
+    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
+    badge: 'bg-emerald-100 text-emerald-700',
+    accentBar: 'bg-emerald-400',
+  },
+  {
+    id: 'funeral-skills',
+    icon: HandHelping,
+    title: 'Attendant Skills',
+    description: 'Add, edit, reorder and activate the skills a funeral attendant (volunteer) can have and be assigned to.',
+    type: 'crud', itemLabel: 'skills',
+    page: 'Funeral Service', positionOrder: 1,
+    locationLabel: 'Funeral Service · Volunteers',
+    keywords: ['funeral', 'volunteer', 'attendant', 'skills', 'tasks', 'ghusl', 'transportation', 'grave', 'documentation', 'assign', 'reorder'],
+    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
+    badge: 'bg-emerald-100 text-emerald-700',
+    accentBar: 'bg-emerald-400',
+  },
 ];
 
 const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string; description: string }[] = [
@@ -252,6 +278,7 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'About Page', icon: FileText, color: 'text-slate-600', description: 'Content on the /about page' },
   { page: 'Blog Page', icon: Newspaper, color: 'text-cyan-600', description: 'Articles on the public /blog page' },
   { page: 'Contact Page', icon: Mail, color: 'text-teal-600', description: 'Content on the /contact page' },
+  { page: 'Funeral Service', icon: Moon, color: 'text-emerald-600', description: 'Content on the funeral service pages' },
 ];
 
 type Tab = 'sections' | 'gallery';
@@ -379,6 +406,7 @@ export default function ManageContentPage() {
                     { value: 'About Page' as const, label: 'About', icon: FileText, count: SECTIONS.filter((s) => s.page === 'About Page').length },
                     { value: 'Blog Page' as const, label: 'Blog', icon: Newspaper, count: SECTIONS.filter((s) => s.page === 'Blog Page').length },
                     { value: 'Contact Page' as const, label: 'Contact', icon: Mail, count: SECTIONS.filter((s) => s.page === 'Contact Page').length },
+                    { value: 'Funeral Service' as const, label: 'Funeral', icon: Moon, count: SECTIONS.filter((s) => s.page === 'Funeral Service').length },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     return (

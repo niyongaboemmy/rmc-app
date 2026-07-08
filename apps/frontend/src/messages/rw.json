@@ -628,7 +628,309 @@
     },
     "funeral": {
       "title": "Serivisi y'Umuryango w'Abapfuye",
-      "desc": "Gutegura gushyingura mu Islamimu, guha Imam, no gufasha imiryango."
+      "desc": "Gutegura gushyingura mu Islamimu, guha Imam, no gufasha imiryango.",
+      "landing": {
+        "ayahRef": "Qur’an 2:156",
+        "back": "Subira kuri serivisi",
+        "quickTitle": "Twabafasha dute?",
+        "quickSub": "Kuva ku kumenyekanisha urupfu kugeza ku ishyingura, RMC iri kumwe namwe muri buri ntambwe, mu cyubahiro no mu rukundo.",
+        "actions": {
+          "report": {
+            "title": "Menyekanisha urupfu",
+            "desc": "Menyesha RMC utangire gutunganya ibikenewe."
+          },
+          "request": {
+            "title": "Saba serivisi za Janaza",
+            "desc": "Ghusl, kafan, isengesho, gutwara no gushyingura."
+          },
+          "progress": {
+            "title": "Aho ishyingura rigeze",
+            "desc": "Kurikirana aho isaba ry’ishyingura rigeze."
+          },
+          "announcements": {
+            "title": "Amatangazo y’ishyingura",
+            "desc": "Amasaha ya Janaza n’amatangazo yo gushyingura."
+          },
+          "volunteers": {
+            "title": "Kwitanga",
+            "desc": "Tanga ubufasha ku miryango iri mu cyunamo."
+          },
+          "cemetery": {
+            "title": "Amakuru y’amarimbi",
+            "desc": "Aho ari, ubushobozi n’abo kuvugana."
+          },
+          "support": {
+            "title": "Ubufasha bw’umuryango",
+            "desc": "Ubujyanama, ibiribwa n’ubufasha bw’amafaranga."
+          }
+        },
+        "announcementsTitle": "Amatangazo aheruka",
+        "announcementsSub": "Imana ibababarire, iheshe imiryango yabo kwihangana.",
+        "annLabels": {
+          "age": "Imyaka",
+          "janazah": "Janaza",
+          "prayer": "Isengesho",
+          "burial": "Ishyingura"
+        },
+        "ctaTitle": "Turi kumwe namwe",
+        "ctaSub": "Iyo uwo mukunda yitabye Imana, twandikire igihe icyo ari cyo cyose. Umuryango witeguye kubafasha.",
+        "ctaReport": "Menyekanisha urupfu",
+        "ctaContact": "Hamagara komite",
+        "viewAll": "Reba byose"
+      },
+      "request": {
+        "title": "Gusaba serivisi z’ishyingura",
+        "subtitle": "Nyamuneka tanga amakuru ushoboye. Umunyamuryango wa komite azabahamagara vuba, in shā’ Allāh.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "steps": {
+          "deceased": "Uwitabye Imana",
+          "family": "Umuryango",
+          "arrangements": "Gutunganya",
+          "review": "Kugenzura"
+        },
+        "next": "Komeza",
+        "prev": "Subira",
+        "submit": "Ohereza isaba",
+        "submitting": "Kohereza…",
+        "optional": "bitari ngombwa",
+        "deceased": {
+          "heading": "Amakuru y’uwitabye Imana",
+          "fullName": "Amazina yombi",
+          "gender": "Igitsina",
+          "male": "Gabo",
+          "female": "Gore",
+          "dob": "Itariki y’amavuko",
+          "dod": "Itariki y’urupfu",
+          "nationalId": "Indangamuntu",
+          "placeOfDeath": "Aho yapfiriye",
+          "cause": "Impamvu y’urupfu",
+          "causeHint": "Bitari ngombwa — siga ubusa niba butazwi cyangwa ari ibanga.",
+          "certificate": "Icyemezo cy’urupfu",
+          "certificateHint": "PDF cyangwa ifoto, niba ihari."
+        },
+        "family": {
+          "heading": "Uwo kuvugana mu muryango",
+          "nextOfKin": "Umuvandimwe wa hafi",
+          "phone": "Nimero ya telefone",
+          "email": "Imeyili",
+          "address": "Aderesi",
+          "emergency": "Uwo kwitabaza"
+        },
+        "arrangements": {
+          "heading": "Gutunganya ishyingura",
+          "mosque": "Umusigiti wahisemo",
+          "cemetery": "Irimbi wahisemo",
+          "selectMosque": "Hitamo umusigiti",
+          "selectCemetery": "Hitamo irimbi",
+          "burialDate": "Itariki yo gushyingura",
+          "burialTime": "Isaha yo gushyingura",
+          "servicesLabel": "Serivisi zikenewe",
+          "ghusl": "Koga umurambo (Ghusl)",
+          "kafan": "Gupfuka umurambo (Kafan)",
+          "janazah": "Isengesho rya Janaza",
+          "transport": "Gutwara umurambo",
+          "grave": "Gutegura imva",
+          "notes": "Ibindi wongeraho",
+          "notesHint": "Ikindi cyose komite yakwiye kumenya."
+        },
+        "review": {
+          "heading": "Genzura isaba ryawe",
+          "sub": "Nyamuneka emeza amakuru akurikira mbere yo kohereza.",
+          "notProvided": "Ntibyatanzwe",
+          "yes": "Yego",
+          "no": "Oya"
+        },
+        "success": {
+          "title": "Isaba ryakiriwe",
+          "message": "Imana iboroherye. Umunyamuryango wa komite azabahamagara vuba.",
+          "referenceLabel": "Nomero yawe",
+          "again": "Ohereza irindi saba",
+          "home": "Subira kuri serivisi z’ishyingura",
+          "track": "Kurikirana iri saba"
+        },
+        "validation": {
+          "required": "Iki gice kirakenewe",
+          "email": "Andika imeyili nyayo",
+          "phone": "Andika nimero ya telefone nyayo",
+          "selectGender": "Nyamuneka hitamo"
+        }
+      },
+      "stages": {
+        "reported": "Urupfu rwamenyekanishijwe",
+        "verification": "Kugenzura",
+        "family_contacted": "Umuryango wamenyeshejwe",
+        "ghusl": "Ghusl yateganyijwe",
+        "kafan": "Kafan yateguwe",
+        "janazah": "Isengesho rya Janaza ryateganyijwe",
+        "transportation": "Gutwara umurambo",
+        "burial": "Ishyingura",
+        "completed": "Byarangiye"
+      },
+      "stageStatus": {
+        "done": "Byarangiye",
+        "active": "Biragenda",
+        "pending": "Bitegereje"
+      },
+      "status": {
+        "title": "Kurikirana isaba ry’ishyingura",
+        "subtitle": "Andika nomero yawe kugira ngo urebe aho bigeze.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "lookupLabel": "Nomero",
+        "lookupPlaceholder": "urugero FNL-AB12",
+        "lookupButton": "Reba aho bigeze",
+        "lookupHint": "Inama: gerageza FNL-DEMO kugira ngo urebe urugero.",
+        "searching": "Birashakisha…",
+        "notFoundTitle": "Nta saba ryabonetse",
+        "notFoundText": "Nyamuneka reba nomero maze wongere ugerageze, cyangwa uvugane na komite.",
+        "progressLabel": "Intambwe {done} kuri {total} zarangiye",
+        "currentStage": "Intambwe iriho",
+        "summaryDeceased": "Uwitabye Imana",
+        "summarySubmitted": "Byoherejwe",
+        "timelineTitle": "Aho bigeze",
+        "assigned": "Ushinzwe"
+      },
+      "announcementsPage": {
+        "title": "Amatangazo y’ishyingura",
+        "subtitle": "Amasaha ya Janaza n’amatangazo yo gushyingura y’umuryango.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "searchPlaceholder": "Shakisha ukoresheje izina…",
+        "time": "Igihe",
+        "all": "Byose",
+        "today": "Uyu munsi",
+        "thisWeek": "Iki cyumweru",
+        "mosque": "Umusigiti",
+        "cemetery": "Irimbi",
+        "allMosques": "Imisigiti yose",
+        "allCemeteries": "Amarimbi yose",
+        "clear": "Siba amashyanga",
+        "resultsCount": "{count, plural, =1 {itangazo #} other {amatangazo #}}",
+        "emptyTitle": "Nta matangazo yabonetse",
+        "emptyText": "Gerageza uhindure ishakisha cyangwa amashyanga.",
+        "share": "Sangiza",
+        "print": "Sohora",
+        "shareCopied": "Byakoporowe"
+      },
+      "cemeteryPage": {
+        "title": "Urutonde rw’amarimbi",
+        "subtitle": "Amarimbi y’abayisilamu mu Rwanda — aho ari, ubushobozi n’abo kuvugana.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "searchPlaceholder": "Shakisha izina cyangwa ahantu…",
+        "resultsCount": "{count, plural, =1 {irimbi #} other {amarimbi #}}",
+        "emptyTitle": "Nta marimbi yabonetse",
+        "emptyText": "Gerageza indi shakisha.",
+        "capacity": "Ubushobozi",
+        "occupancy": "Uko byuzuye",
+        "contact": "Uwo kuvugana",
+        "directions": "Ikarita",
+        "locate": "Erekana"
+      },
+      "detail": {
+        "back": "Subira kuri serivisi z’ishyingura",
+        "profile": "Umwirondoro",
+        "checklist": "Urutonde rwa serivisi",
+        "prayer": "Isengesho n’ishyingura",
+        "documents": "Inyandiko n’ibindi byometse",
+        "volunteers": "Abakorerabushake bashinzwe",
+        "notes": "Inyandiko",
+        "download": "Kuramo",
+        "none": "—",
+        "noNotes": "Nta nyandiko zabitswe.",
+        "noVolunteers": "Nta bakorerabushake barashingwa.",
+        "noDocuments": "Nta nyandiko zoherejwe.",
+        "notFoundTitle": "Isaba ntiryabonetse",
+        "notFoundText": "Nyamuneka reba nomero, cyangwa uvugane na komite.",
+        "viewDetails": "Reba amakuru yose"
+      },
+      "volunteers": {
+        "title": "Gucunga abakorerabushake",
+        "subtitle": "Shyira abakorerabushake ba komite ku mirimo y’ishyingura.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "searchPlaceholder": "Shakisha abakorerabushake…",
+        "filterAll": "Bose",
+        "filterAvailable": "Barahari",
+        "filterBusy": "Bafite akazi",
+        "allMosques": "Imisigiti yose",
+        "resultsCount": "{count, plural, =1 {umukorerabushake #} other {abakorerabushake #}}",
+        "emptyTitle": "Nta bakorerabushake babonetse",
+        "emptyText": "Gerageza irindi shakisha cyangwa akayunguruzo.",
+        "skills": "Ubumenyi",
+        "available": "Ahari",
+        "busy": "Afite akazi",
+        "assignedTask": "Umurimo",
+        "assign": "Shyiraho",
+        "reassign": "Hindura",
+        "unassign": "Kuraho",
+        "add": "Ongeraho umukorerabushake",
+        "edit": "Hindura",
+        "delete": "Kuraho",
+        "forFuneral": "Umuhango",
+        "confirmTitle": "Kuraho umukorerabushake",
+        "deleteConfirm": "Kuraho {name} ku rutonde? Ntibishobora gusubizwaho.",
+        "tasks": {
+          "ghusl": "Koga umurambo",
+          "transportation": "Gutwara",
+          "grave_digging": "Gucukura imva",
+          "crowd_management": "Gucunga imbaga",
+          "family_assistance": "Gufasha umuryango",
+          "documentation": "Kwandika inyandiko"
+        },
+        "form": {
+          "createTitle": "Ongeraho umukorerabushake",
+          "editTitle": "Hindura umukorerabushake",
+          "name": "Amazina yose",
+          "phone": "Telefone",
+          "mosque": "Umusigiti",
+          "selectMosque": "Hitamo umusigiti",
+          "skills": "Ubumenyi",
+          "required": "Birakenewe",
+          "save": "Bika",
+          "cancel": "Reka"
+        },
+        "dialog": {
+          "title": "Shyiraho umurimo",
+          "subtitle": "Hitamo umuhango n’umurimo bya {name}.",
+          "funeralLabel": "Umuhango",
+          "taskLabel": "Umurimo",
+          "noFunerals": "Nta muhango ukora ubu wo gushyiraho.",
+          "confirm": "Emeza",
+          "cancel": "Reka"
+        },
+        "toast": {
+          "assigned": "{name} yashinzwe {task} · {funeral}",
+          "unassigned": "{name} ubu arahari",
+          "created": "{name} yongewe ku rutonde",
+          "updated": "{name} yahinduwe",
+          "deleted": "{name} yavanwe ku rutonde"
+        }
+      },
+      "donations": {
+        "title": "Inkunga y’ishyingura",
+        "subtitle": "Fasha mu biciro by’ishyingura n’imiryango iri mu gahinda — buri mpano ni Sadaqah Jariyah.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "raised": "Byakusanyijwe",
+        "target": "Intego",
+        "donate": "Tanga",
+        "totalRaised": "Byose byakusanyijwe",
+        "note": "Inkunga zose zinyuzwa ku rubuga rwizewe rwo gutanga rwa RMC.",
+        "categories": {
+          "burial": {
+            "title": "Ibiciro by’ishyingura",
+            "desc": "Koga, gupfuka, gutegura imva no gutwara ku bakeneye."
+          },
+          "family": {
+            "title": "Ubufasha bw’umuryango",
+            "desc": "Ubufasha bwihuse ku miryango iri mu gahinda ifite ingorane."
+          },
+          "cemetery": {
+            "title": "Kubungabunga amarimbi",
+            "desc": "Kubungabunga amarimbi y’abayisilamu mu Rwanda."
+          },
+          "mosque_fund": {
+            "title": "Ikigega cy’ishyingura cy’umusigiti",
+            "desc": "Gishyigikira serivisi za Janaza mu misigiti."
+          }
+        }
+      }
     },
     "conduct": {
       "title": "Icyemezo cy'Imyitwarire Myiza",
@@ -933,7 +1235,8 @@
       },
       "marriage": "Ubukwe",
       "drive": "Dosiye",
-      "goodConduct": "Imyitwarire Myiza"
+      "goodConduct": "Imyitwarire Myiza",
+      "funeral": "Ishyingura"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
@@ -1201,6 +1504,148 @@
       "confirmDelete": "Siba",
       "deleting": "Gusiba…",
       "deleteError": "Ntibyakunze gusiba. Ongera ugerageze."
+    },
+    "funeral": {
+      "title": "Serivisi z’ishyingura",
+      "subtitle": "Ibisabwa, amatangazo, abakorerabushake n’amarimbi",
+      "export": "Kohereza",
+      "refresh": "Vugurura",
+      "loading": "Birimo gupakirwa…",
+      "volunteersError": "Ntibyakunze kuvugurura umukorerabushake. Ongera ugerageze.",
+      "viewerNote": "Ufite uburenganzira bwo kureba gusa. Vugana n’umuyobozi kugira ngo uhindure.",
+      "actions": {
+        "edit": "Hindura",
+        "delete": "Siba",
+        "cancel": "Reka",
+        "save": "Bika",
+        "confirmTitle": "Emeza gusiba"
+      },
+      "stats": {
+        "pending": "Ibisabwa bitegereje",
+        "volunteers": "Abakorerabushake",
+        "upcoming": "Janaza igiye kuba",
+        "completed": "Byarangiye"
+      },
+      "tabs": {
+        "overview": "Incamake",
+        "requests": "Ibisabwa",
+        "announcements": "Amatangazo",
+        "volunteers": "Abakorerabushake",
+        "cemeteries": "Amarimbi",
+        "reports": "Raporo"
+      },
+      "overview": {
+        "recentRequests": "Ibisabwa biheruka",
+        "viewAll": "Reba byose"
+      },
+      "requests": {
+        "searchPlaceholder": "Shakisha izina cyangwa nomero…",
+        "allStages": "Intambwe zose",
+        "emptyTitle": "Nta bisabwa byabonetse",
+        "emptyText": "Gerageza irindi shakisha.",
+        "view": "Reba",
+        "manage": "Genzura",
+        "attendantsCount": "{count, plural, =1 {umukorerabushake #} other {abakorerabushake #}}",
+        "toastUpdated": "{name} yimuriwe kuri {stage}",
+        "toastError": "Ntibyakunze kuvugurura icyifuzo. Ongera ugerageze.",
+        "dialog": {
+          "title": "Genzura umuhango",
+          "stageLabel": "Intambwe",
+          "current": "Iriho",
+          "save": "Bika impinduka",
+          "cancel": "Reka",
+          "attendants": "{count, plural, =0 {Abakorerabushake} other {Abakorerabushake (#)}}",
+          "noAttendants": "Nta bakorerabushake barashyirwaho.",
+          "addAttendant": "Ongeraho umukorerabushake",
+          "add": "Shyiraho",
+          "removeAttendant": "Kuraho ku muhango"
+        },
+        "col": {
+          "reference": "Nomero",
+          "deceased": "Uwitabye Imana",
+          "stage": "Intambwe",
+          "progress": "Aho bigeze",
+          "contact": "Uwo kuvugana",
+          "date": "Itariki"
+        }
+      },
+      "announcements": {
+        "add": "Itangazo rishya",
+        "emptyTitle": "Nta matangazo",
+        "emptyText": "Ongeraho itangazo rya janaza kugira ngo rigaragare ku rupapuro rusange.",
+        "deleteConfirm": "Gusiba itangazo rya {name}? Ntibishobora gusubizwaho.",
+        "toastCreated": "Itangazo rya {name} ryatangajwe",
+        "toastUpdated": "Itangazo rya {name} ryahinduwe",
+        "toastDeleted": "Itangazo rya {name} ryakuweho",
+        "toastError": "Ntibyakunze kubika itangazo. Ongera ugerageze.",
+        "form": {
+          "createTitle": "Itangazo rishya",
+          "editTitle": "Hindura itangazo",
+          "name": "Amazina yose",
+          "age": "Imyaka",
+          "dateOfDeath": "Itariki y’urupfu",
+          "janazahLocation": "Aho janaza izabera",
+          "prayerTime": "Igihe cy’isengesho",
+          "burialLocation": "Aho azashyingurwa",
+          "verse": "Umurongo (si ngombwa)",
+          "required": "Birakenewe",
+          "save": "Bika",
+          "cancel": "Reka"
+        },
+        "col": {
+          "name": "Izina",
+          "age": "Imyaka",
+          "prayer": "Isengesho",
+          "janazah": "Janaza",
+          "burial": "Ishyingura"
+        }
+      },
+      "cemeteries": {
+        "add": "Irimbi rishya",
+        "emptyTitle": "Nta marimbi",
+        "emptyText": "Ongeraho irimbi kugira ngo ukurikirane ubushobozi bwaryo n’abo kuvugana.",
+        "deleteConfirm": "Gusiba {name}? Ntibishobora gusubizwaho.",
+        "toastCreated": "{name} ryongewemo",
+        "toastUpdated": "{name} ryahinduwe",
+        "toastDeleted": "{name} ryakuweho",
+        "toastError": "Ntibyakunze kubika irimbi. Ongera ugerageze.",
+        "form": {
+          "createTitle": "Irimbi rishya",
+          "editTitle": "Hindura irimbi",
+          "name": "Izina",
+          "address": "Aho riherereye / aderesi",
+          "capacity": "Ubushobozi",
+          "used": "Byakoreshejwe",
+          "contactPerson": "Umuntu wo kuvugana",
+          "phone": "Telefone",
+          "lat": "Latitude (si ngombwa)",
+          "lng": "Longitude (si ngombwa)",
+          "mapLabel": "Aho biherereye ku ikarita",
+          "pickHint": "Kanda ku ikarita cyangwa ukururire ikamba kugira ngo ushyireho aho biherereye.",
+          "findMyLocation": "Shaka aho ndi",
+          "locating": "Kurashaka aho uri…",
+          "geoError": "Ntibyakunze kubona aho uri. Byandike wenyine.",
+          "geoUnsupported": "Aho uri ntibiboneka kuri iki gikoresho.",
+          "required": "Birakenewe",
+          "save": "Bika",
+          "cancel": "Reka"
+        },
+        "col": {
+          "name": "Izina",
+          "location": "Aho biherereye",
+          "occupancy": "Uko byuzuye",
+          "contact": "Uwo kuvugana",
+          "phone": "Telefone"
+        }
+      },
+      "reports": {
+        "totalRequests": "Ibisabwa byose",
+        "completed": "Byarangiye",
+        "volunteersAvailable": "Abakorerabushake bahari",
+        "volunteersAssigned": "Abashinzwe imirimo",
+        "byStage": "Ibisabwa ku ntambwe",
+        "exportRequests": "Kohereza ibisabwa (CSV)"
+      }
     }
   },
   "galleryPage": {

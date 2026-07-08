@@ -22,6 +22,7 @@ import { MembersModule } from './members/members.module';
 import { PublicModule } from './public/public.module';
 import { MarriageModule } from './marriage/marriage.module';
 import { GoodConductModule } from './good-conduct/good-conduct.module';
+import { FuneralModule } from './funeral/funeral.module';
 import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
 import { SubscribersModule } from './subscribers/subscribers.module';
@@ -65,6 +66,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     PublicModule,
     MarriageModule,
     GoodConductModule,
+    FuneralModule,
     ContentModule,
     DonationsModule,
     SubscribersModule,
