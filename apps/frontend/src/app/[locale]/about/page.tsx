@@ -6,7 +6,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
 import { HistoryTimeline } from '@/components/about/HistoryTimeline';
 import { getTranslations, getLocale } from 'next-intl/server';
-import { ArrowRight, Images } from 'lucide-react';
+import { ArrowRight, Images, Mail, Phone } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
 import { ContentKeys, getSiteContent, pickLang } from '@/lib/content-api';
 import DOMPurify from 'isomorphic-dompurify';
@@ -50,8 +50,8 @@ export default async function AboutPage() {
   const cmsLeaders = Array.isArray(about?.leaders) ? (about!.leaders as Array<Record<string, string>>) : [];
   const resolveLeaderImg = (v: string) => (/^https?:\/\//.test(v) || v.startsWith('/') ? v : fileUrl(v));
   const leaderList = cmsLeaders.length > 0
-    ? cmsLeaders.map((l) => ({ id: l.id, img: resolveLeaderImg(l.image || ''), name: pickLang(l, 'name', locale), role: pickLang(l, 'role', locale) }))
-    : leaders.map((l) => ({ id: l.id, img: l.img as string, name: t(`leadership.${l.id}.name`), role: t(`leadership.${l.id}.role`) }));
+    ? cmsLeaders.map((l) => ({ id: l.id, img: resolveLeaderImg(l.image || ''), name: pickLang(l, 'name', locale), role: pickLang(l, 'role', locale), email: l.email || '', phone: l.phone || '' }))
+    : leaders.map((l) => ({ id: l.id, img: l.img as string, name: t(`leadership.${l.id}.name`), role: t(`leadership.${l.id}.role`), email: '', phone: '' }));
 
   // Gallery preview 3D carousel — pulled from the public gallery API.
   const galleryImages = await publicApi
@@ -196,7 +196,7 @@ export default async function AboutPage() {
               <p className="text-gray-400 max-w-xl mx-auto text-sm md:text-base">{txt('leadershipSubtitle', t('leadership.subtitle'))}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {leaderList.map(({ id, img, name, role }) => (
+              {leaderList.map(({ id, img, name, role, email, phone }) => (
                 <div
                   key={id}
                   className="group relative flex h-full flex-col items-center text-center rounded-3xl border border-gray-100 bg-rmc-green-light/40 px-6 py-9 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.16)] transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_60px_-24px_rgba(26,122,74,0.28)]"
@@ -230,6 +230,22 @@ export default async function AboutPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
                     {role}
                   </p>
+
+                  {/* Contact — email & phone */}
+                  {(email || phone) && (
+                    <div className="mt-4 flex flex-col items-center gap-1.5 text-xs text-gray-500">
+                      {email && (
+                        <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 hover:text-rmc-green transition-colors">
+                          <Mail className="w-3.5 h-3.5 text-rmc-green/70" /> {email}
+                        </a>
+                      )}
+                      {phone && (
+                        <a href={`tel:${phone}`} className="inline-flex items-center gap-1.5 hover:text-rmc-green transition-colors" dir="ltr">
+                          <Phone className="w-3.5 h-3.5 text-rmc-green/70" /> {phone}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
