@@ -24,8 +24,19 @@ import {
   type BankTransferDetails,
 } from '@/lib/goodConductApi';
 
-const PHONE_RE = /^\+250[0-9]{9}$/;
+// Local Rwandan mobile format the user types: 0 + network prefix (72/73/78/79) + 7 digits = 10 chars.
+const PHONE_RE = /^07[2389][0-9]{7}$/;
 const MOTIF_DETAIL_MAX = 500;
+
+/** +250781234567 (backend/API format) → 0781234567 (what the user sees/types). */
+function toLocalPhone(e164: string): string {
+  return e164?.startsWith('+250') ? `0${e164.slice(4)}` : e164;
+}
+
+/** 0781234567 (what the user types) → +250781234567 (backend/API format). */
+function toE164Phone(local: string): string {
+  return local?.startsWith('0') ? `+250${local.slice(1)}` : local;
+}
 
 const step1Schema = z.object({
   fullNames: z.string().min(3, 'tooShort').max(150, 'tooLong'),
@@ -109,27 +120,32 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
 export function GoodConductWizard({ editRequest }: Props) {
   const t = useTranslations('services.conduct.apply');
 
+  // Lazily seeded from `editRequest` (never a post-mount effect): the parent
+  // page already gates rendering of this component behind its own "loading
+  // the request to edit" state, so `editRequest` is fully available on first
+  // render here. Populating these via a `useEffect` instead left a one-render
+  // gap where `Step1Identity`'s `useForm({ defaultValues })` locked in empty
+  // values before the effect ever ran — react-hook-form only reads
+  // `defaultValues` once, at mount, so the edit form silently stayed blank.
   const [phase, setPhase] = useState<WizardPhase>(1);
-  const [step1Data, setStep1Data] = useState<Partial<Step1Data>>({});
-  const [request, setRequest] = useState<GoodConductRequest | null>(null);
+  const [step1Data, setStep1Data] = useState<Partial<Step1Data>>(() =>
+    editRequest
+      ? {
+          fullNames: editRequest.fullNames,
+          fatherName: editRequest.fatherName ?? '',
+          motherName: editRequest.motherName ?? '',
+          districtId: editRequest.districtId ?? '',
+          sectorId: editRequest.sectorId ?? '',
+          cell: editRequest.cell ?? '',
+          village: editRequest.village ?? '',
+          email: editRequest.email ?? '',
+          phone: toLocalPhone(editRequest.phone),
+        }
+      : {},
+  );
+  const [request, setRequest] = useState<GoodConductRequest | null>(editRequest ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!editRequest) return;
-    setRequest(editRequest);
-    setStep1Data({
-      fullNames: editRequest.fullNames,
-      fatherName: editRequest.fatherName ?? '',
-      motherName: editRequest.motherName ?? '',
-      districtId: editRequest.districtId ?? '',
-      sectorId: editRequest.sectorId ?? '',
-      cell: editRequest.cell ?? '',
-      village: editRequest.village ?? '',
-      email: editRequest.email ?? '',
-      phone: editRequest.phone,
-    });
-  }, [editRequest]);
 
   const handleStep1Next = (data: Step1Data) => {
     setStep1Data(data);
@@ -149,7 +165,7 @@ export function GoodConductWizard({ editRequest }: Props) {
         cell: step1Data.cell || undefined,
         village: step1Data.village || undefined,
         email: step1Data.email || undefined,
-        phone: step1Data.phone!,
+        phone: toE164Phone(step1Data.phone!),
         mosqueId: data.mosqueId || undefined,
         requestedImamName: data.requestedImamName || undefined,
         motif: data.motif,
@@ -321,7 +337,8 @@ function Step1Identity({
         <Input
           label={t('phone')}
           required
-          placeholder="+250781234567"
+          placeholder="0781234567"
+          maxLength={10}
           {...register('phone')}
           error={errors.phone && t('phoneFormatError')}
           hint={!errors.phone ? t('phoneHint') : undefined}
@@ -462,7 +479,7 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
   const router = useRouter();
 
   const [request, setRequest] = useState(initialRequest);
-  const [phone, setPhone] = useState(initialRequest.phone || '');
+  const [phone, setPhone] = useState(toLocalPhone(initialRequest.phone) || '');
   const [phase, setPhase] = useState<'idle' | 'waiting' | 'confirmed' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [showBank, setShowBank] = useState(false);
@@ -513,7 +530,7 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
     setError(null);
     setPhase('waiting');
     try {
-      const result = await goodConductApi.initiateMomoPayment(request.id, phone);
+      const result = await goodConductApi.initiateMomoPayment(request.id, toE164Phone(phone));
       setRequest(result.request);
       if (result.request.paymentStatus === 'paid') {
         setPhase('confirmed');
@@ -610,7 +627,8 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
           <div className="space-y-3">
             <Input
               label={t('momoPhone')}
-              placeholder="+250781234567"
+              placeholder="0781234567"
+              maxLength={10}
               value={phone}
               onChange={(e) => { setPhone(e.target.value); setVerified(false); }}
               leftIcon={<Smartphone className="w-4 h-4" />}
