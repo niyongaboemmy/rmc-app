@@ -20,41 +20,75 @@ export class RefreshRolePermissions1781957702482 implements MigrationInterface {
 
   private readonly ALL_PERMISSIONS = [
     // Users
-    'users:view', 'users:create', 'users:edit', 'users:delete', 'users:assign_role',
+    'users:view',
+    'users:create',
+    'users:edit',
+    'users:delete',
+    'users:assign_role',
     // Roles
-    'roles:view', 'roles:create', 'roles:edit', 'roles:delete',
+    'roles:view',
+    'roles:create',
+    'roles:edit',
+    'roles:delete',
     // Members
-    'members:view', 'members:create', 'members:edit', 'members:delete',
-    'members:approve', 'members:id_card',
+    'members:view',
+    'members:create',
+    'members:edit',
+    'members:delete',
+    'members:approve',
+    'members:id_card',
     // Mosques
-    'mosques:view', 'mosques:create', 'mosques:edit', 'mosques:delete',
+    'mosques:view',
+    'mosques:create',
+    'mosques:edit',
+    'mosques:delete',
     'mosques:manage_imams',
     // Prayer times
-    'prayer_times:view', 'prayer_times:manage',
+    'prayer_times:view',
+    'prayer_times:manage',
     // Content
-    'content:view', 'content:create', 'content:edit', 'content:delete',
+    'content:view',
+    'content:create',
+    'content:edit',
+    'content:delete',
     // Finance
-    'finance:view', 'finance:manage',
+    'finance:view',
+    'finance:manage',
     // Donations
-    'donations:view', 'donations:manage',
+    'donations:view',
+    'donations:manage',
     // Schools
-    'schools:view', 'schools:manage',
+    'schools:view',
+    'schools:manage',
     // Contact messages (inbox)
-    'contact_messages:view', 'contact_messages:manage',
+    'contact_messages:view',
+    'contact_messages:manage',
     // Reports
-    'reports:view', 'reports:export',
+    'reports:view',
+    'reports:export',
     // Marriage
-    'marriage:view', 'marriage:manage', 'marriage:approve',
-    'marriage:assign_imam', 'marriage:certificate', 'marriage:reports',
+    'marriage:view',
+    'marriage:manage',
+    'marriage:approve',
+    'marriage:assign_imam',
+    'marriage:certificate',
+    'marriage:reports',
     // System
-    'system:settings', 'audit_log:view',
+    'system:settings',
+    'audit_log:view',
   ];
 
   private readonly OPERATOR_PERMISSIONS = [
-    'members:view', 'members:create', 'members:edit', 'members:approve', 'members:id_card',
+    'members:view',
+    'members:create',
+    'members:edit',
+    'members:approve',
+    'members:id_card',
     'mosques:view',
     'prayer_times:view',
-    'content:view', 'content:create', 'content:edit',
+    'content:view',
+    'content:create',
+    'content:edit',
     'reports:view',
   ];
 
@@ -63,31 +97,40 @@ export class RefreshRolePermissions1781957702482 implements MigrationInterface {
     ...this.OPERATOR_PERMISSIONS,
     // Additional admin permissions
     'members:delete',
-    'mosques:create', 'mosques:edit', 'mosques:manage_imams',
+    'mosques:create',
+    'mosques:edit',
+    'mosques:manage_imams',
     'prayer_times:manage',
     'content:delete',
     'finance:view',
-    'donations:view', 'donations:manage',
-    'schools:view', 'schools:manage',
-    'contact_messages:view', 'contact_messages:manage',
+    'donations:view',
+    'donations:manage',
+    'schools:view',
+    'schools:manage',
+    'contact_messages:view',
+    'contact_messages:manage',
     'reports:export',
-    'users:view', 'users:create', 'users:edit', 'users:assign_role',
+    'users:view',
+    'users:create',
+    'users:edit',
+    'users:assign_role',
     'roles:view',
     'audit_log:view',
   ];
 
   private readonly MARRIAGE_OFFICER_PERMISSIONS = [
-    'marriage:view', 'marriage:manage', 'marriage:approve',
-    'marriage:assign_imam', 'marriage:certificate', 'marriage:reports',
+    'marriage:view',
+    'marriage:manage',
+    'marriage:approve',
+    'marriage:assign_imam',
+    'marriage:certificate',
+    'marriage:reports',
     'members:view',
     'mosques:view',
     'content:view',
   ];
 
-  private readonly MEMBER_PERMISSIONS = [
-    'prayer_times:view',
-    'content:view',
-  ];
+  private readonly MEMBER_PERMISSIONS = ['prayer_times:view', 'content:view'];
 
   // ── Roles to upsert ───────────────────────────────────────────────────────
 
@@ -131,12 +174,18 @@ export class RefreshRolePermissions1781957702482 implements MigrationInterface {
 
   private resolvePermissions(key: string): string[] {
     switch (key) {
-      case 'ALL':            return this.ALL_PERMISSIONS;
-      case 'ADMIN':          return this.ADMIN_PERMISSIONS;
-      case 'OPERATOR':       return this.OPERATOR_PERMISSIONS;
-      case 'MARRIAGE_OFFICER': return this.MARRIAGE_OFFICER_PERMISSIONS;
-      case 'MEMBER':         return this.MEMBER_PERMISSIONS;
-      default:               return [];
+      case 'ALL':
+        return this.ALL_PERMISSIONS;
+      case 'ADMIN':
+        return this.ADMIN_PERMISSIONS;
+      case 'OPERATOR':
+        return this.OPERATOR_PERMISSIONS;
+      case 'MARRIAGE_OFFICER':
+        return this.MARRIAGE_OFFICER_PERMISSIONS;
+      case 'MEMBER':
+        return this.MEMBER_PERMISSIONS;
+      default:
+        return [];
     }
   }
 
@@ -145,7 +194,8 @@ export class RefreshRolePermissions1781957702482 implements MigrationInterface {
       const perms = this.resolvePermissions(role.permissions);
       const permsJson = JSON.stringify(perms);
 
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         INSERT INTO "roles" ("id", "name", "slug", "description", "permissions", "is_system")
         VALUES (
           gen_random_uuid(),
@@ -160,11 +210,13 @@ export class RefreshRolePermissions1781957702482 implements MigrationInterface {
             "permissions" = EXCLUDED."permissions",
             "is_system"   = EXCLUDED."is_system",
             "updated_at"  = now()
-      `, [role.name, role.slug, role.description, permsJson, role.is_system]);
+      `,
+        [role.name, role.slug, role.description, permsJson, role.is_system],
+      );
     }
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
+  public async down(_queryRunner: QueryRunner): Promise<void> {
     // Permissions are data, not schema — there is no safe automatic rollback.
     // To revert, re-run the previous seed or apply a corrective migration.
   }

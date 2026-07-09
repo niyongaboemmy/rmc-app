@@ -14,6 +14,8 @@ import { MemberProfile } from '../members/entities/member-profile.entity';
 import { AuditLog } from '../finance/entities/audit-log.entity';
 import { Role } from '../roles/entities/role.entity';
 import { REDIS_CLIENT } from '../common/decorators/inject-redis.decorator';
+import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
+import { SmsService } from '../integrations/sms/sms.service';
 import { RegisterDto } from './dto/register.dto';
 
 const mockRepo = () => ({
@@ -104,6 +106,14 @@ describe('AuthService', () => {
         { provide: getRepositoryToken(AuditLog), useFactory: mockRepo },
         { provide: getRepositoryToken(Role), useFactory: mockRepo },
         { provide: REDIS_CLIENT, useValue: mockRedis },
+        {
+          provide: NotificationSettingsService,
+          useValue: {
+            isEmailEnabled: jest.fn().mockReturnValue(true),
+            isSmsEnabled: jest.fn().mockReturnValue(true),
+          },
+        },
+        { provide: SmsService, useValue: { sendSms: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 
@@ -204,7 +214,10 @@ describe('AuthService', () => {
       auditLogRepo.save.mockResolvedValue({});
       usersService.update.mockResolvedValue(undefined);
 
-      const result = await service.login({ identifier: 'ahmed@example.com', password: 'Password1!' });
+      const result = await service.login({
+        identifier: 'ahmed@example.com',
+        password: 'Password1!',
+      });
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
     });
@@ -236,7 +249,10 @@ describe('AuthService', () => {
         mfaEnabled: true,
       } as never);
 
-      const result = await service.login({ identifier: 'ahmed@example.com', password: 'Password1!' });
+      const result = await service.login({
+        identifier: 'ahmed@example.com',
+        password: 'Password1!',
+      });
       expect(result).toEqual({ requiresMfa: true });
     });
 

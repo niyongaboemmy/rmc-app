@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as Adhan from 'adhan';
@@ -32,7 +32,12 @@ export class PrayerTimesService {
     private adjustments: Repository<PrayerTimeAdjustment>,
   ) {}
 
-  async calculate(lat: number, lng: number, date?: Date, mosqueId?: string): Promise<PrayerTimesResult> {
+  async calculate(
+    lat: number,
+    lng: number,
+    date?: Date,
+    mosqueId?: string,
+  ): Promise<PrayerTimesResult> {
     const target = date ?? new Date();
     const coordinates = new Adhan.Coordinates(lat, lng);
     const params = Adhan.CalculationMethod.MuslimWorldLeague();

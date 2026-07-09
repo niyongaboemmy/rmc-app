@@ -1,6 +1,4 @@
-import {
-  Injectable, NotFoundException, BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Mosque } from './entities/mosque.entity';

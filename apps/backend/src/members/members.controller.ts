@@ -1,6 +1,14 @@
 import {
-  Controller, Get, Post, Put, Body, Param, Query,
-  ParseUUIDPipe, Res, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  Query,
+  ParseUUIDPipe,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -48,7 +56,12 @@ export class MembersController {
     @Query('limit') limit?: string,
   ) {
     return this.members.findAll({
-      search, mosqueId, districtId, category, approvalStatus, memberStatus,
+      search,
+      mosqueId,
+      districtId,
+      category,
+      approvalStatus,
+      memberStatus,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 50,
     });
@@ -113,10 +126,7 @@ export class MembersController {
   @ApiBearerAuth()
   @Permissions(Permission.MEMBERS_ID_CARD)
   @ApiOperation({ summary: 'Download digital member ID card as PDF' })
-  async downloadIdCard(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Res() res: Response,
-  ) {
+  async downloadIdCard(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
     const pdfBuffer = await this.members.generateDigitalIdCard(id);
     res.set({
       'Content-Type': 'application/pdf',

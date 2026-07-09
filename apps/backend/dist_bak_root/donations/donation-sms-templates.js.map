@@ -1,0 +1,1 @@
+{"version":3,"file":"donation-sms-templates.js","sourceRoot":"","sources":["../../src/donations/donation-sms-templates.ts"],"names":[],"mappings":";;;AAAa,QAAA,oBAAoB,GAAG;IAClC,gBAAgB,CAAC,MAAc,EAAE,QAAgB,EAAE,SAAyB;QAC1E,MAAM,GAAG,GAAG,SAAS,CAAC,CAAC,CAAC,IAAI,SAAS,GAAG,CAAC,CAAC,CAAC,EAAE,CAAC;QAC9C,OAAO,kBAAkB,GAAG,qCAAqC,MAAM,IAAI,QAAQ,qDAAqD,CAAC;IAC3I,CAAC;CACO,CAAC"}

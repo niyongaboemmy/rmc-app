@@ -3,7 +3,7 @@ import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { RolesGuard } from './roles.guard';
 import { Role } from '../decorators/roles.decorator';
 
-const createMockContext = (userRole: Role | null, requiredRoles: Role[] | null): ExecutionContext => {
+const createMockContext = (userRole: Role | null): ExecutionContext => {
   return {
     getHandler: jest.fn(),
     getClass: jest.fn(),
@@ -28,49 +28,49 @@ describe('RolesGuard', () => {
 
   it('should allow user with exact required role', () => {
     mockReflector([Role.USER]);
-    const ctx = createMockContext(Role.USER, [Role.USER]);
+    const ctx = createMockContext(Role.USER);
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('should allow superadmin on admin-only route (hierarchy)', () => {
     mockReflector([Role.ADMIN]);
-    const ctx = createMockContext(Role.SUPERADMIN, [Role.ADMIN]);
+    const ctx = createMockContext(Role.SUPERADMIN);
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('should allow admin on operator-only route (hierarchy)', () => {
     mockReflector([Role.OPERATOR]);
-    const ctx = createMockContext(Role.ADMIN, [Role.OPERATOR]);
+    const ctx = createMockContext(Role.ADMIN);
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('should deny operator on admin-only route → 403', () => {
     mockReflector([Role.ADMIN]);
-    const ctx = createMockContext(Role.OPERATOR, [Role.ADMIN]);
+    const ctx = createMockContext(Role.OPERATOR);
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
 
   it('should deny user on operator-only route → 403', () => {
     mockReflector([Role.OPERATOR]);
-    const ctx = createMockContext(Role.USER, [Role.OPERATOR]);
+    const ctx = createMockContext(Role.USER);
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
 
   it('should deny user on superadmin-only route → 403', () => {
     mockReflector([Role.SUPERADMIN]);
-    const ctx = createMockContext(Role.USER, [Role.SUPERADMIN]);
+    const ctx = createMockContext(Role.USER);
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
 
   it('should allow access to routes with no @Roles() decorator', () => {
     mockReflector(null);
-    const ctx = createMockContext(Role.USER, null);
+    const ctx = createMockContext(Role.USER);
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('should return 403 with AUTH_INSUFFICIENT_ROLE error code', () => {
     mockReflector([Role.ADMIN]);
-    const ctx = createMockContext(Role.USER, [Role.ADMIN]);
+    const ctx = createMockContext(Role.USER);
     try {
       guard.canActivate(ctx);
     } catch (e) {

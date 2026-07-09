@@ -1,5 +1,12 @@
 import {
-  Controller, Get, Post, Put, Delete, Body, Param, Query,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -35,7 +42,12 @@ export class PublicController {
   @ApiOperation({ summary: 'Get active announcements' })
   @ApiQuery({ name: 'type', required: false, description: 'Filter by type: announcement | tender' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'includeExpired', required: false, type: Boolean, description: 'Include expired/closed items (default: false)' })
+  @ApiQuery({
+    name: 'includeExpired',
+    required: false,
+    type: Boolean,
+    description: 'Include expired/closed items (default: false)',
+  })
   getAnnouncements(
     @Query('type') type?: string,
     @Query('limit') limit?: string,

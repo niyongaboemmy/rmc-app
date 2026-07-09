@@ -32,24 +32,18 @@ export class DonationWebhookService {
     const rc = payload['responsecode'] ?? '';
     const statusText = (payload['status'] ?? '').toLowerCase();
 
-    const isSuccess =
-      statusText === 'successfull' || statusText === 'successful' || rc === '01';
+    const isSuccess = statusText === 'successfull' || statusText === 'successful' || rc === '01';
     const isFailed = !isSuccess && rc !== '1000';
 
     if (!isSuccess && !isFailed) return; // still pending — nothing to update
 
     // Match "DON-xxx" (exact) or "DON-xxx|gatewayTxnId" (normal case)
     const donation = await this.repo.findOne({
-      where: [
-        { paymentReference: requestTxnId },
-        { paymentReference: Like(`${requestTxnId}|%`) },
-      ],
+      where: [{ paymentReference: requestTxnId }, { paymentReference: Like(`${requestTxnId}|%`) }],
     });
 
     if (!donation) {
-      this.logger.warn(
-        `[DonationWebhook] No donation found for requestTxnId=${requestTxnId}`,
-      );
+      this.logger.warn(`[DonationWebhook] No donation found for requestTxnId=${requestTxnId}`);
       return;
     }
 

@@ -48,9 +48,7 @@ export class SubscribersAdminController {
   @Permissions(Permission.SUBSCRIBERS_MANAGE)
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Bulk-mail a message to emails uploaded in an Excel/CSV file' })
-  @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }),
-  )
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
   broadcastFile(
     @UploadedFile() file: UploadedExcel | undefined,
     @Body() body: { subject?: string; html?: string },

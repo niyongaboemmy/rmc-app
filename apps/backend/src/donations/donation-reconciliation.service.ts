@@ -24,9 +24,9 @@ export class DonationReconciliationService implements OnModuleInit, OnModuleDest
   private readonly logger = new Logger(DonationReconciliationService.name);
   private timer: ReturnType<typeof setInterval> | null = null;
 
-  private readonly RUN_INTERVAL_MS = 3 * 60 * 1000;   // every 3 minutes
-  private readonly MIN_AGE_MINUTES = 3;                 // skip donations < 3 min old
-  private readonly MAX_AGE_HOURS = 24;                  // ignore very old stuck records
+  private readonly RUN_INTERVAL_MS = 3 * 60 * 1000; // every 3 minutes
+  private readonly MIN_AGE_MINUTES = 3; // skip donations < 3 min old
+  private readonly MAX_AGE_HOURS = 24; // ignore very old stuck records
 
   constructor(
     @InjectRepository(Donation)
@@ -58,9 +58,7 @@ export class DonationReconciliationService implements OnModuleInit, OnModuleDest
     });
 
     // Filter: must have a payment reference and not be too old
-    const toCheck = stuckDonations.filter(
-      (d) => d.paymentReference && d.donatedAt > maxAge,
-    );
+    const toCheck = stuckDonations.filter((d) => d.paymentReference && d.donatedAt > maxAge);
 
     if (!toCheck.length) return;
 
@@ -74,9 +72,7 @@ export class DonationReconciliationService implements OnModuleInit, OnModuleDest
     results.forEach((r, i) => {
       if (r.status === 'fulfilled' && r.value.status !== DonationStatus.PENDING) {
         resolved++;
-        this.logger.log(
-          `[Reconciliation] Donation ${toCheck[i].id} → ${r.value.status}`,
-        );
+        this.logger.log(`[Reconciliation] Donation ${toCheck[i].id} → ${r.value.status}`);
       }
     });
 

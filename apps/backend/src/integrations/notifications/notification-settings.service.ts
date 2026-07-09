@@ -34,9 +34,7 @@ export class NotificationSettingsService implements OnModuleInit {
   }
 
   isChannelEnabled(eventKey: string, channel: NotificationChannel): boolean {
-    return channel === 'email'
-      ? this.isEmailEnabled(eventKey)
-      : this.isSmsEnabled(eventKey);
+    return channel === 'email' ? this.isEmailEnabled(eventKey) : this.isSmsEnabled(eventKey);
   }
 
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
@@ -61,7 +59,9 @@ export class NotificationSettingsService implements OnModuleInit {
 
     const saved = await this.repo.save(row);
     this.cache.set(eventKey, saved);
-    this.logger.log(`Notification setting updated — ${eventKey}: email=${saved.emailEnabled}, sms=${saved.smsEnabled}`);
+    this.logger.log(
+      `Notification setting updated — ${eventKey}: email=${saved.emailEnabled}, sms=${saved.smsEnabled}`,
+    );
     return saved;
   }
 

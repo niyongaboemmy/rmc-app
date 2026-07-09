@@ -1,4 +1,14 @@
-import { IsString, IsOptional, IsNumber, IsEmail, IsUUID, IsIn, MaxLength, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEmail,
+  IsUUID,
+  IsIn,
+  MaxLength,
+  Min,
+  Max,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMosqueDto {
@@ -20,13 +30,15 @@ export class CreateMosqueDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
-  @Min(-90) @Max(90)
+  @Min(-90)
+  @Max(90)
   gpsLat?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
-  @Min(-180) @Max(180)
+  @Min(-180)
+  @Max(180)
   gpsLng?: number;
 
   @ApiPropertyOptional()

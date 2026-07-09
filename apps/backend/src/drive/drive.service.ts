@@ -3,10 +3,9 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, ILike, In } from 'typeorm';
+import { Repository, IsNull, ILike } from 'typeorm';
 import { DriveItem, DriveShare } from './entities/drive-item.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateFolderDto } from './dto/create-folder.dto';
@@ -65,9 +64,7 @@ export class DriveService {
 
   async search(userId: string, query: string) {
     return this.itemRepo.find({
-      where: [
-        { ownerId: userId, name: ILike(`%${query}%`), isTrashed: false },
-      ],
+      where: [{ ownerId: userId, name: ILike(`%${query}%`), isTrashed: false }],
       order: { name: 'ASC' },
       take: 50,
     });
@@ -369,7 +366,11 @@ export class DriveService {
 
   // ── Get storage key for streaming (zip download) ──────────────────────────
 
-  async getDescendantFiles(folderId: string, userId: string, isAdmin = false): Promise<DriveItem[]> {
+  async getDescendantFiles(
+    folderId: string,
+    userId: string,
+    isAdmin = false,
+  ): Promise<DriveItem[]> {
     const folder = await this.itemRepo.findOne({ where: { id: folderId } });
     if (!folder) throw new NotFoundException('Folder not found');
     if (!isAdmin && folder.ownerId !== userId) throw new ForbiddenException('Access denied');

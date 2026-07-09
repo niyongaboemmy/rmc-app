@@ -31,9 +31,15 @@ export class PaymentTransactions1781957702486 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_ptx_request_txn_id" ON "payment_transactions" ("request_transaction_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_ptx_status"         ON "payment_transactions" ("status")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_ptx_reference_id"   ON "payment_transactions" ("reference_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_ptx_request_txn_id" ON "payment_transactions" ("request_transaction_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_ptx_status"         ON "payment_transactions" ("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_ptx_reference_id"   ON "payment_transactions" ("reference_id")`,
+    );
 
     // updated_at trigger (reuse existing function)
     await queryRunner.query(`

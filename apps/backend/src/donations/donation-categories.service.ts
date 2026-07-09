@@ -4,8 +4,12 @@ import { Repository, Not, IsNull } from 'typeorm';
 import { DonationCategory } from './entities/donation-category.entity';
 import { DonationSubFund } from './entities/donation-subfund.entity';
 import {
-  CreateCategoryDto, UpdateCategoryDto, CreateSubFundDto, UpdateSubFundDto,
-  TriText, TriList,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  CreateSubFundDto,
+  UpdateSubFundDto,
+  TriText,
+  TriList,
 } from './dto/category-content.dto';
 
 type Locale = 'en' | 'rw' | 'ar';

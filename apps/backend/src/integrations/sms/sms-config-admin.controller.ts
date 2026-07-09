@@ -61,10 +61,7 @@ export class SmsConfigAdminController {
   @Get('history')
   @Permissions(Permission.SMS_CONFIG_VIEW)
   @ApiOperation({ summary: 'Paginated list of sent SMS messages' })
-  getHistory(
-    @Query('page') page = '1',
-    @Query('limit') limit = '20',
-  ) {
+  getHistory(@Query('page') page = '1', @Query('limit') limit = '20') {
     return this.smsConfig.getHistory(Number(page), Number(limit));
   }
 

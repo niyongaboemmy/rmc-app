@@ -16,10 +16,15 @@ export class PermissionsGuard implements CanActivate {
 
     if (!required || required.length === 0) return true;
 
-    const { user } = context.switchToHttp().getRequest<{ user?: { permissions?: string[]; role?: string } }>();
+    const { user } = context
+      .switchToHttp()
+      .getRequest<{ user?: { permissions?: string[]; role?: string } }>();
 
     if (!user) {
-      throw new ForbiddenException({ code: ErrorCode.AUTH_INSUFFICIENT_ROLE, message: 'Access denied' });
+      throw new ForbiddenException({
+        code: ErrorCode.AUTH_INSUFFICIENT_ROLE,
+        message: 'Access denied',
+      });
     }
 
     // Superadmin or wildcard permission bypasses all checks

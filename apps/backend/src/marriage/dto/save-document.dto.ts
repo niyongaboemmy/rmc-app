@@ -8,11 +8,13 @@ export class SaveDocumentDto {
   documentType: DocumentType;
 
   @ApiProperty()
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   fileKey: string;
 
   @ApiProperty()
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   fileName: string;
 
   @ApiProperty()
@@ -20,6 +22,7 @@ export class SaveDocumentDto {
   fileSize: number;
 
   @ApiProperty()
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   mimeType: string;
 }

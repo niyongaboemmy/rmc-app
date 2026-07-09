@@ -68,12 +68,18 @@ export class AuthService {
   async register(dto: RegisterDto): Promise<{ userId: string; message: string }> {
     const existingEmail = await this.usersService.findByEmail(dto.email);
     if (existingEmail) {
-      throw new ConflictException({ code: ErrorCode.AUTH_EMAIL_EXISTS, message: 'Email already registered' });
+      throw new ConflictException({
+        code: ErrorCode.AUTH_EMAIL_EXISTS,
+        message: 'Email already registered',
+      });
     }
 
     const existingPhone = await this.usersService.findByPhone(dto.phone);
     if (existingPhone) {
-      throw new ConflictException({ code: ErrorCode.AUTH_PHONE_EXISTS, message: 'Phone already registered' });
+      throw new ConflictException({
+        code: ErrorCode.AUTH_PHONE_EXISTS,
+        message: 'Phone already registered',
+      });
     }
 
     const rounds = this.configService.get<number>('app.bcryptRounds', 12);
@@ -101,7 +107,10 @@ export class AuthService {
     await this.writeAuditLog('user', user.id, 'create', user.id, user.role);
     await this.sendWelcomeEmail(user);
 
-    return { userId: user.id, message: 'Registration successful. Please verify your phone number.' };
+    return {
+      userId: user.id,
+      message: 'Registration successful. Please verify your phone number.',
+    };
   }
 
   // ── Login ─────────────────────────────────────────────────────────────────────
@@ -122,15 +131,24 @@ export class AuthService {
     const user = await this.usersService.findByEmailOrPhone(dto.identifier);
 
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'Invalid credentials' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+        message: 'Invalid credentials',
+      });
     }
 
     if (user.status === 'suspended') {
-      throw new ForbiddenException({ code: ErrorCode.AUTH_ACCOUNT_SUSPENDED, message: 'Account is suspended' });
+      throw new ForbiddenException({
+        code: ErrorCode.AUTH_ACCOUNT_SUSPENDED,
+        message: 'Account is suspended',
+      });
     }
 
     if (user.status === 'inactive') {
-      throw new ForbiddenException({ code: ErrorCode.AUTH_ACCOUNT_INACTIVE, message: 'Account is inactive' });
+      throw new ForbiddenException({
+        code: ErrorCode.AUTH_ACCOUNT_INACTIVE,
+        message: 'Account is inactive',
+      });
     }
 
     // Step 1: TOTP (authenticator app) check
@@ -162,7 +180,13 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
     };
   }
 
@@ -180,9 +204,18 @@ export class AuthService {
       if (revoked) {
         this.logger.warn(`Refresh token reuse detected for user ${revoked.userId}`);
         await this.revokeAllUserTokens(revoked.userId);
-        await this.writeAuditLog('user', revoked.userId, 'token_theft_suspected', revoked.userId, 'system');
+        await this.writeAuditLog(
+          'user',
+          revoked.userId,
+          'token_theft_suspected',
+          revoked.userId,
+          'system',
+        );
       }
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_REFRESH_TOKEN, message: 'Invalid or expired refresh token' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_REFRESH_TOKEN,
+        message: 'Invalid or expired refresh token',
+      });
     }
 
     // Revoke old token
@@ -190,7 +223,10 @@ export class AuthService {
 
     const user = await this.usersService.findById(record.userId);
     if (!user) {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_REFRESH_TOKEN, message: 'User not found' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_REFRESH_TOKEN,
+        message: 'User not found',
+      });
     }
 
     return this.issueTokens(user, record.ipAddress || undefined, record.userAgent || undefined);
@@ -201,7 +237,10 @@ export class AuthService {
   async logout(userId: string, rawRefreshToken?: string): Promise<{ message: string }> {
     if (rawRefreshToken) {
       const tokenHash = this.hashToken(rawRefreshToken);
-      await this.refreshTokenRepo.update({ tokenHash, revokedAt: IsNull() }, { revokedAt: new Date() });
+      await this.refreshTokenRepo.update(
+        { tokenHash, revokedAt: IsNull() },
+        { revokedAt: new Date() },
+      );
     } else {
       await this.revokeAllUserTokens(userId);
     }
@@ -219,7 +258,10 @@ export class AuthService {
     }
 
     if (user.isPhoneVerified) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_PHONE_ALREADY_VERIFIED, message: 'Phone already verified' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_PHONE_ALREADY_VERIFIED,
+        message: 'Phone already verified',
+      });
     }
 
     const rateLimitKey = `otp_rate:${phone}`;
@@ -228,12 +270,17 @@ export class AuthService {
       await this.redis.expire(rateLimitKey, 600); // 10 minutes
     }
     if (count > 3) {
-      throw new BadRequestException({ code: 'AUTH_OTP_RATE_LIMITED', message: 'Too many OTP requests. Try again later.' });
+      throw new BadRequestException({
+        code: 'AUTH_OTP_RATE_LIMITED',
+        message: 'Too many OTP requests. Try again later.',
+      });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-    const expiresAt = new Date(Date.now() + (this.configService.get<number>('app.otpExpiryMinutes', 5)) * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + this.configService.get<number>('app.otpExpiryMinutes', 5) * 60 * 1000,
+    );
 
     await this.otpRepo.save({ userId: user.id, phone, otpHash, expiresAt });
 
@@ -251,21 +298,33 @@ export class AuthService {
     });
 
     if (!record) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_OTP_NOT_FOUND, message: 'OTP not found. Request a new one.' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_OTP_NOT_FOUND,
+        message: 'OTP not found. Request a new one.',
+      });
     }
 
     if (record.expiresAt < new Date()) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_OTP_EXPIRED, message: 'OTP has expired' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_OTP_EXPIRED,
+        message: 'OTP has expired',
+      });
     }
 
     if (record.attempts >= 5) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_OTP_MAX_ATTEMPTS, message: 'Maximum OTP attempts exceeded' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_OTP_MAX_ATTEMPTS,
+        message: 'Maximum OTP attempts exceeded',
+      });
     }
 
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
     if (otpHash !== record.otpHash) {
       await this.otpRepo.update(record.id, { attempts: record.attempts + 1 });
-      throw new BadRequestException({ code: ErrorCode.AUTH_OTP_INVALID, message: 'Invalid OTP code' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_OTP_INVALID,
+        message: 'Invalid OTP code',
+      });
     }
 
     await this.otpRepo.update(record.id, { verifiedAt: new Date() });
@@ -288,10 +347,15 @@ export class AuthService {
 
       await this.passwordResetRepo.save({ userId: user.id, tokenHash, expiresAt });
 
-      const frontendUrl = this.configService.get<string>('app.frontendUrl', 'http://localhost:3001');
+      const frontendUrl = this.configService.get<string>(
+        'app.frontendUrl',
+        'http://localhost:3001',
+      );
       const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
 
-      this.logger.log(`[PASSWORD RESET] Email sent to: ${email} | Token hash: ${tokenHash.substring(0, 8)}... | Expires: ${expiresAt.toTimeString().split(' ')[0]}`);
+      this.logger.log(
+        `[PASSWORD RESET] Email sent to: ${email} | Token hash: ${tokenHash.substring(0, 8)}... | Expires: ${expiresAt.toTimeString().split(' ')[0]}`,
+      );
       await this.sendPasswordResetEmail(user, resetUrl);
     }
 
@@ -307,9 +371,15 @@ export class AuthService {
     if (!record) {
       const expired = await this.passwordResetRepo.findOne({ where: { tokenHash } });
       if (expired && expired.expiresAt < new Date()) {
-        throw new BadRequestException({ code: ErrorCode.AUTH_RESET_TOKEN_EXPIRED, message: 'Reset token has expired' });
+        throw new BadRequestException({
+          code: ErrorCode.AUTH_RESET_TOKEN_EXPIRED,
+          message: 'Reset token has expired',
+        });
       }
-      throw new BadRequestException({ code: ErrorCode.AUTH_RESET_TOKEN_INVALID, message: 'Invalid reset token' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_RESET_TOKEN_INVALID,
+        message: 'Invalid reset token',
+      });
     }
 
     const rounds = this.configService.get<number>('app.bcryptRounds', 12);
@@ -335,7 +405,10 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     if (user.mfaEnabled) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_MFA_ALREADY_ENABLED, message: 'MFA is already enabled' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_MFA_ALREADY_ENABLED,
+        message: 'MFA is already enabled',
+      });
     }
 
     const appName = this.configService.get<string>('app.mfa.appName', 'RMC Platform');
@@ -363,14 +436,20 @@ export class AuthService {
   async mfaVerifySetup(userId: string, totp: string): Promise<{ message: string }> {
     const encryptedSecret = await this.redis.get(`mfa_setup:${userId}`);
     if (!encryptedSecret) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_MFA_SETUP_NOT_INITIATED, message: 'MFA setup not initiated. Call /mfa/setup first.' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_MFA_SETUP_NOT_INITIATED,
+        message: 'MFA setup not initiated. Call /mfa/setup first.',
+      });
     }
 
     const secret = this.decryptMfaSecret(encryptedSecret);
     const valid = speakeasy.totp.verify({ secret, encoding: 'base32', token: totp, window: 1 });
 
     if (!valid) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_MFA_INVALID_CODE, message: 'Invalid TOTP code' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_MFA_INVALID_CODE,
+        message: 'Invalid TOTP code',
+      });
     }
 
     await this.usersService.update(userId, { mfaSecret: encryptedSecret, mfaEnabled: true });
@@ -385,7 +464,10 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     if (!(await bcrypt.compare(password, user.passwordHash))) {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'Invalid password' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+        message: 'Invalid password',
+      });
     }
 
     this.verifyTotp(user, totp);
@@ -407,16 +489,25 @@ export class AuthService {
     };
   }
 
-  async twoFactorSetup(userId: string): Promise<{ message: string; maskedPhone: string; expiresAt: Date }> {
+  async twoFactorSetup(
+    userId: string,
+  ): Promise<{ message: string; maskedPhone: string; expiresAt: Date }> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
 
     if (user.twoFactorEnabled) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_ALREADY_ENABLED, message: '2FA is already enabled' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_2FA_ALREADY_ENABLED,
+        message: '2FA is already enabled',
+      });
     }
 
     const expiresAt = await this.send2faOtp(userId, user.phone, '2fa_setup_otp');
-    return { message: 'OTP sent to your phone', maskedPhone: this.maskPhone(user.phone), expiresAt };
+    return {
+      message: 'OTP sent to your phone',
+      maskedPhone: this.maskPhone(user.phone),
+      expiresAt,
+    };
   }
 
   async twoFactorVerifySetup(userId: string, otp: string): Promise<{ message: string }> {
@@ -424,7 +515,10 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     if (user.twoFactorEnabled) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_ALREADY_ENABLED, message: '2FA is already enabled' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_2FA_ALREADY_ENABLED,
+        message: '2FA is already enabled',
+      });
     }
 
     await this.verify2faOtp(userId, otp, '2fa_setup_otp');
@@ -439,11 +533,17 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     if (!user.twoFactorEnabled) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_NOT_ENABLED, message: '2FA is not enabled' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_2FA_NOT_ENABLED,
+        message: '2FA is not enabled',
+      });
     }
 
     if (!(await bcrypt.compare(password, user.passwordHash))) {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'Invalid password' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+        message: 'Invalid password',
+      });
     }
 
     await this.usersService.update(userId, { twoFactorEnabled: false });
@@ -463,14 +563,20 @@ export class AuthService {
     await this.verify2faOtp(userId, otp, '2fa_login_otp');
 
     const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'User not found' });
+    if (!user)
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+        message: 'User not found',
+      });
 
     const result = await this.completLogin(user, ipAddress, userAgent);
     return result as { accessToken: string; refreshToken: string; user: Partial<User> };
   }
 
   /** Resend OTP during a pending 2FA login (validates tempToken first). */
-  async twoFactorResend(tempToken: string): Promise<{ message: string; maskedPhone: string; expiresAt: Date }> {
+  async twoFactorResend(
+    tempToken: string,
+  ): Promise<{ message: string; maskedPhone: string; expiresAt: Date }> {
     const userId = this.verify2faTempToken(tempToken);
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
@@ -481,11 +587,16 @@ export class AuthService {
 
   // ── Profile ───────────────────────────────────────────────────────────────────
 
-  async getProfile(userId: string): Promise<Partial<User> & { membershipNumber?: string; joinedDate?: Date }> {
+  async getProfile(
+    userId: string,
+  ): Promise<Partial<User> & { membershipNumber?: string; joinedDate?: Date }> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, mfaSecret, ...safe } = user as User & { passwordHash: string; mfaSecret: string };
+    const { passwordHash, mfaSecret, ...safe } = user as User & {
+      passwordHash: string;
+      mfaSecret: string;
+    };
 
     const member = await this.memberProfileRepo.findOne({ where: { userId } });
     return {
@@ -500,7 +611,10 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
     const updated = await this.usersService.updateProfile(userId, dto);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, mfaSecret, ...safe } = updated as User & { passwordHash: string; mfaSecret: string };
+    const { passwordHash, mfaSecret, ...safe } = updated as User & {
+      passwordHash: string;
+      mfaSecret: string;
+    };
     return safe;
   }
 
@@ -511,7 +625,10 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     if (!(await bcrypt.compare(dto.currentPassword, user.passwordHash))) {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'Current password is incorrect' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+        message: 'Current password is incorrect',
+      });
     }
 
     const rounds = this.configService.get<number>('app.bcryptRounds', 12);
@@ -530,7 +647,10 @@ export class AuthService {
   async validateJwtPayload(payload: JwtPayload): Promise<User & { permissions: string[] }> {
     const user = await this.usersService.findById(payload.sub);
     if (!user || user.status === 'inactive' || user.status === 'suspended') {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_INVALID_CREDENTIALS, message: 'User not found or inactive' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+        message: 'User not found or inactive',
+      });
     }
     // Attach permissions from payload (already resolved at token issuance)
     return Object.assign(user, { permissions: payload.permissions ?? [] });
@@ -564,7 +684,13 @@ export class AuthService {
     const tokenHash = this.hashToken(rawRefreshToken);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await this.refreshTokenRepo.save({ userId: user.id, tokenHash, expiresAt, ipAddress, userAgent });
+    await this.refreshTokenRepo.save({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      ipAddress,
+      userAgent,
+    });
 
     return { accessToken, refreshToken: rawRefreshToken };
   }
@@ -612,12 +738,18 @@ export class AuthService {
 
   private verifyTotp(user: User, code: string): void {
     if (!user.mfaSecret) {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_MFA_INVALID_CODE, message: 'MFA not configured' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_MFA_INVALID_CODE,
+        message: 'MFA not configured',
+      });
     }
     const secret = this.decryptMfaSecret(user.mfaSecret);
     const valid = speakeasy.totp.verify({ secret, encoding: 'base32', token: code, window: 1 });
     if (!valid) {
-      throw new UnauthorizedException({ code: ErrorCode.AUTH_MFA_INVALID_CODE, message: 'Invalid MFA code' });
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_MFA_INVALID_CODE,
+        message: 'Invalid MFA code',
+      });
     }
   }
 
@@ -709,10 +841,7 @@ export class AuthService {
 
   /** Issue a short-lived temp token used to complete a 2FA login. */
   private async issue2faTempToken(userId: string): Promise<string> {
-    return this.jwtService.sign(
-      { sub: userId, stage: 'pending_2fa' },
-      { expiresIn: '5m' },
-    );
+    return this.jwtService.sign({ sub: userId, stage: 'pending_2fa' }, { expiresIn: '5m' });
   }
 
   /** Validate a 2FA temp token; throws if invalid/expired. Returns userId. */
@@ -738,7 +867,10 @@ export class AuthService {
     const count = await this.redis.incr(rateKey);
     if (count === 1) await this.redis.expire(rateKey, 600);
     if (count > 3) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_OTP_RATE_LIMITED, message: 'Too many OTP requests. Try again in 10 minutes.' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_2FA_OTP_RATE_LIMITED,
+        message: 'Too many OTP requests. Try again in 10 minutes.',
+      });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -746,12 +878,21 @@ export class AuthService {
     const ttlSeconds = this.configService.get<number>('app.otpExpiryMinutes', 5) * 60;
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
 
-    await this.redis.setex(`${purpose}:${userId}`, ttlSeconds, JSON.stringify({ hash: otpHash, attempts: 0 }));
+    await this.redis.setex(
+      `${purpose}:${userId}`,
+      ttlSeconds,
+      JSON.stringify({ hash: otpHash, attempts: 0 }),
+    );
 
-    this.logger.log(`[2FA OTP] userId=${userId} | phone=${phone} | code=${otp} | expires=${expiresAt.toTimeString().split(' ')[0]}`);
+    this.logger.log(
+      `[2FA OTP] userId=${userId} | phone=${phone} | code=${otp} | expires=${expiresAt.toTimeString().split(' ')[0]}`,
+    );
 
     if (this.notifSettings.isSmsEnabled('auth.otp_sms')) {
-      void this.smsService.sendSms(phone, `RMC Platform: Your verification code is ${otp}. Valid for 5 minutes. Do not share it.`);
+      void this.smsService.sendSms(
+        phone,
+        `RMC Platform: Your verification code is ${otp}. Valid for 5 minutes. Do not share it.`,
+      );
     }
 
     return expiresAt;
@@ -761,14 +902,20 @@ export class AuthService {
   private async verify2faOtp(userId: string, otp: string, purpose: string): Promise<void> {
     const raw = await this.redis.get(`${purpose}:${userId}`);
     if (!raw) {
-      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_SETUP_NOT_INITIATED, message: 'OTP not found or expired. Request a new one.' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_2FA_SETUP_NOT_INITIATED,
+        message: 'OTP not found or expired. Request a new one.',
+      });
     }
 
     const stored = JSON.parse(raw) as { hash: string; attempts: number };
 
     if (stored.attempts >= 5) {
       await this.redis.del(`${purpose}:${userId}`);
-      throw new BadRequestException({ code: ErrorCode.AUTH_OTP_MAX_ATTEMPTS, message: 'Maximum attempts exceeded. Request a new code.' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_OTP_MAX_ATTEMPTS,
+        message: 'Maximum attempts exceeded. Request a new code.',
+      });
     }
 
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
@@ -778,7 +925,10 @@ export class AuthService {
       if (ttl > 0) {
         await this.redis.setex(`${purpose}:${userId}`, ttl, JSON.stringify(stored));
       }
-      throw new BadRequestException({ code: ErrorCode.AUTH_2FA_INVALID_CODE, message: 'Invalid verification code' });
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_2FA_INVALID_CODE,
+        message: 'Invalid verification code',
+      });
     }
 
     await this.redis.del(`${purpose}:${userId}`);
@@ -792,10 +942,10 @@ export class AuthService {
   private createMailTransporter(): nodemailer.Transporter {
     const user = this.configService.get<string>('app.smtp.user');
     return nodemailer.createTransport({
-      host:   this.configService.get<string>('app.smtp.host', 'localhost'),
-      port:   this.configService.get<number>('app.smtp.port', 1025),
+      host: this.configService.get<string>('app.smtp.host', 'localhost'),
+      port: this.configService.get<number>('app.smtp.port', 1025),
       secure: this.configService.get<boolean>('app.smtp.secure', false),
-      auth:   user ? { user, pass: this.configService.get<string>('app.smtp.pass') } : undefined,
+      auth: user ? { user, pass: this.configService.get<string>('app.smtp.pass') } : undefined,
     });
   }
 }

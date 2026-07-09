@@ -33,10 +33,7 @@ export class PublicService {
       .where('a.is_published = :pub', { pub: true })
       .andWhere('a.publish_at <= :now', { now })
       // Semantic priority ordering: urgent=3, high=2, normal=1
-      .orderBy(
-        `CASE a.priority WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 ELSE 1 END`,
-        'DESC',
-      )
+      .orderBy(`CASE a.priority WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 ELSE 1 END`, 'DESC')
       .addOrderBy('a.publish_at', 'DESC')
       .take(limit);
 
@@ -82,7 +79,8 @@ export class PublicService {
 
   // Blog
   getPublishedPosts(categorySlug?: string, page = 1, limit = 10) {
-    const qb = this.posts.createQueryBuilder('p')
+    const qb = this.posts
+      .createQueryBuilder('p')
       .leftJoinAndSelect('p.category', 'c')
       .where('p.status = :status', { status: 'published' })
       .orderBy('p.published_at', 'DESC')
@@ -90,7 +88,10 @@ export class PublicService {
       .take(limit);
     if (categorySlug) qb.andWhere('c.slug = :slug', { slug: categorySlug });
     return qb.getManyAndCount().then(([data, total]) => ({
-      data, total, page, pages: Math.ceil(total / limit),
+      data,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
     }));
   }
 
@@ -118,25 +119,33 @@ export class PublicService {
 
   // Gallery
   getGallery(category?: string, page = 1, limit = 20) {
-    const qb = this.gallery.createQueryBuilder('g')
+    const qb = this.gallery
+      .createQueryBuilder('g')
       .where('g.is_public = true')
       .orderBy('g.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
     if (category) qb.andWhere('g.category = :category', { category });
     return qb.getManyAndCount().then(([data, total]) => ({
-      data, total, page, pages: Math.ceil(total / limit),
+      data,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
     }));
   }
 
   adminGetGallery(category?: string, page = 1, limit = 50) {
-    const qb = this.gallery.createQueryBuilder('g')
+    const qb = this.gallery
+      .createQueryBuilder('g')
       .orderBy('g.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
     if (category) qb.andWhere('g.category = :category', { category });
     return qb.getManyAndCount().then(([data, total]) => ({
-      data, total, page, pages: Math.ceil(total / limit),
+      data,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
     }));
   }
 

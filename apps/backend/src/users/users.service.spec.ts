@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SelectQueryBuilder } from 'typeorm';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 
@@ -136,7 +135,9 @@ describe('UsersService', () => {
 
   it('updateProfile throws NotFoundException when user not found', async () => {
     repo.findOne.mockResolvedValue(null);
-    await expect(service.updateProfile('bad-id', { firstName: 'X' })).rejects.toThrow(NotFoundException);
+    await expect(service.updateProfile('bad-id', { firstName: 'X' })).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('updateProfile updates firstName and lastName', async () => {
@@ -157,7 +158,9 @@ describe('UsersService', () => {
 
   it('assignRole throws NotFoundException for unknown user', async () => {
     repo.findOne.mockResolvedValue(null);
-    await expect(service.assignRole('bad-id', { role: 'admin' })).rejects.toThrow(NotFoundException);
+    await expect(service.assignRole('bad-id', { role: 'admin' })).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('assignRole sets role and roleId', async () => {

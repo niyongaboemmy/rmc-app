@@ -1,11 +1,9 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PermissionsGuard } from './permissions.guard';
-import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { Permission } from '../types/permissions.enum';
 
-function makeCtx(user: object | null, permissions: Permission[] | null = null): ExecutionContext {
-  const metadata = permissions ?? [];
+function makeCtx(user: object | null): ExecutionContext {
   return {
     getHandler: () => ({}),
     getClass: () => ({}),
@@ -37,10 +35,9 @@ describe('PermissionsGuard', () => {
   });
 
   it('returns true for superadmin regardless of required permissions', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([
-      Permission.SYSTEM_SETTINGS,
-      Permission.ROLES_DELETE,
-    ]);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue([Permission.SYSTEM_SETTINGS, Permission.ROLES_DELETE]);
     const ctx = makeCtx({ role: 'superadmin', permissions: [] });
     expect(guard.canActivate(ctx)).toBe(true);
   });
@@ -73,10 +70,9 @@ describe('PermissionsGuard', () => {
   });
 
   it('handles multiple required permissions — all must be present', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([
-      Permission.USERS_VIEW,
-      Permission.USERS_EDIT,
-    ]);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue([Permission.USERS_VIEW, Permission.USERS_EDIT]);
     // only has USERS_VIEW, missing USERS_EDIT
     const ctx = makeCtx({ role: 'operator', permissions: [Permission.USERS_VIEW] });
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);

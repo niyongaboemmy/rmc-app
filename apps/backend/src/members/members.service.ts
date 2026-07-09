@@ -1,8 +1,11 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ConflictException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as QRCode from 'qrcode';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { MemberProfile, ApprovalStatus, MemberStatus } from './entities/member-profile.entity';
@@ -29,7 +32,9 @@ export class MembersService {
     if (existing) throw new ConflictException('Member profile already exists for this user');
 
     if (dto.nationalId) {
-      const nationalIdConflict = await this.profiles.findOne({ where: { nationalId: dto.nationalId } });
+      const nationalIdConflict = await this.profiles.findOne({
+        where: { nationalId: dto.nationalId },
+      });
       if (nationalIdConflict) throw new ConflictException('National ID already registered');
     }
 
@@ -65,7 +70,8 @@ export class MembersService {
     const limit = Math.min(filters.limit ?? 50, 100);
     const skip = (page - 1) * limit;
 
-    const qb = this.profiles.createQueryBuilder('mp')
+    const qb = this.profiles
+      .createQueryBuilder('mp')
       .leftJoinAndSelect('mp.user', 'u')
       .skip(skip)
       .take(limit)
@@ -78,10 +84,15 @@ export class MembersService {
       );
     }
     if (filters.mosqueId) qb.andWhere('mp.mosque_id = :mosqueId', { mosqueId: filters.mosqueId });
-    if (filters.districtId) qb.andWhere('mp.district_id = :districtId', { districtId: filters.districtId });
+    if (filters.districtId)
+      qb.andWhere('mp.district_id = :districtId', { districtId: filters.districtId });
     if (filters.category) qb.andWhere('mp.category = :category', { category: filters.category });
-    if (filters.approvalStatus) qb.andWhere('mp.approval_status = :approvalStatus', { approvalStatus: filters.approvalStatus });
-    if (filters.memberStatus) qb.andWhere('mp.member_status = :memberStatus', { memberStatus: filters.memberStatus });
+    if (filters.approvalStatus)
+      qb.andWhere('mp.approval_status = :approvalStatus', {
+        approvalStatus: filters.approvalStatus,
+      });
+    if (filters.memberStatus)
+      qb.andWhere('mp.member_status = :memberStatus', { memberStatus: filters.memberStatus });
 
     const [data, total] = await qb.getManyAndCount();
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
@@ -119,7 +130,11 @@ export class MembersService {
     return this.profiles.save(profile);
   }
 
-  async updateStatus(id: string, adminId: string, dto: UpdateMemberStatusDto): Promise<MemberProfile> {
+  async updateStatus(
+    id: string,
+    adminId: string,
+    dto: UpdateMemberStatusDto,
+  ): Promise<MemberProfile> {
     const profile = await this.findById(id);
     profile.memberStatus = dto.status;
     profile.statusReason = dto.reason ?? null;
@@ -167,15 +182,27 @@ export class MembersService {
 
     // Title
     page.drawText('RWANDA MUSLIM COMMUNITY', {
-      x: 12, y: height - 25, size: 11, font, color: rgb(1, 1, 1),
+      x: 12,
+      y: height - 25,
+      size: 11,
+      font,
+      color: rgb(1, 1, 1),
     });
     page.drawText('Digital Membership Card', {
-      x: 12, y: height - 42, size: 8, font: fontRegular, color: rgb(0.85, 0.85, 0.85),
+      x: 12,
+      y: height - 42,
+      size: 8,
+      font: fontRegular,
+      color: rgb(0.85, 0.85, 0.85),
     });
 
     // Member name
     page.drawText(`${user.firstName} ${user.lastName}`, {
-      x: 12, y: height - 80, size: 14, font, color: rgb(0.1, 0.1, 0.1),
+      x: 12,
+      y: height - 80,
+      size: 14,
+      font,
+      color: rgb(0.1, 0.1, 0.1),
     });
 
     // Details
@@ -183,11 +210,26 @@ export class MembersService {
       ['Membership No:', profile.membershipNumber],
       ['Category:', profile.category.charAt(0).toUpperCase() + profile.category.slice(1)],
       ['Joined:', profile.joinedDate?.toString().split('T')[0] ?? ''],
-      ['Status:', profile.approvalStatus === 'approved' ? 'ACTIVE' : profile.approvalStatus.toUpperCase()],
+      [
+        'Status:',
+        profile.approvalStatus === 'approved' ? 'ACTIVE' : profile.approvalStatus.toUpperCase(),
+      ],
     ];
     details.forEach(([label, value], i) => {
-      page.drawText(label, { x: 12, y: height - 105 - i * 20, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
-      page.drawText(value, { x: 110, y: height - 105 - i * 20, size: 8, font: fontRegular, color: rgb(0.1, 0.1, 0.1) });
+      page.drawText(label, {
+        x: 12,
+        y: height - 105 - i * 20,
+        size: 8,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+      page.drawText(value, {
+        x: 110,
+        y: height - 105 - i * 20,
+        size: 8,
+        font: fontRegular,
+        color: rgb(0.1, 0.1, 0.1),
+      });
     });
 
     // QR code
@@ -197,7 +239,11 @@ export class MembersService {
     // Footer
     page.drawRectangle({ x: 0, y: 0, width, height: 14, color: rgb(0.1, 0.48, 0.29) });
     page.drawText('rmc.org.rw  |  Valid only with QR verification', {
-      x: 10, y: 3, size: 6, font: fontRegular, color: rgb(1, 1, 1),
+      x: 10,
+      y: 3,
+      size: 6,
+      font: fontRegular,
+      color: rgb(1, 1, 1),
     });
 
     const pdfBytes = await pdfDoc.save();
@@ -220,7 +266,7 @@ export class MembersService {
       .addSelect('COUNT(*)', 'count')
       .where("mp.created_at >= NOW() - INTERVAL '7 days'")
       .groupBy("TO_CHAR(mp.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')")
-      .orderBy("day", 'ASC')
+      .orderBy('day', 'ASC')
       .getRawMany<{ day: string; count: string }>();
     return rows.map((r) => ({ day: r.day, count: parseInt(r.count, 10) }));
   }

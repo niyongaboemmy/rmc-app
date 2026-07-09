@@ -1,0 +1,31 @@
+{
+  "name": "rmc-platform",
+  "version": "1.0.0",
+  "description": "Rwanda Muslim Community Digital Platform — monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend",
+    "apps/file-server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend,file-server -c green,cyan,yellow \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\" \"npm run dev --workspace=apps/file-server\"",
+    "build": "npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend && npm run build --workspace=apps/file-server",
+    "start": "concurrently -n backend,frontend,file-server -c green,cyan,yellow \"npm run start --workspace=apps/backend\" \"npm run start --workspace=apps/frontend\" \"npm run start --workspace=apps/file-server\"",
+    "test": "npm run test --workspace=apps/backend && npm run test --workspace=apps/frontend && npm run test --workspace=apps/file-server",
+    "test:e2e": "npm run test:e2e --workspace=apps/backend",
+    "lint": "npm run lint --workspace=apps/backend && npm run lint --workspace=apps/frontend && npm run lint --workspace=apps/file-server",
+    "install:all": "npm install --workspace=apps/backend && npm install --workspace=apps/frontend && npm install --workspace=apps/file-server",
+    "migrate": "npm run migration:run --workspace=apps/backend",
+    "migrate:live": "gh workflow run migrate-production.yml --field confirm=MIGRATE",
+    "deploy": "node scripts/deploy.js",
+    "seed:live": "gh workflow run seed-production.yml --field confirm=SEED"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

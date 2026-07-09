@@ -27,15 +27,15 @@ export class NotificationSettingsBothChannels1782500000000 implements MigrationI
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const patches: Array<{ key: string; email: boolean; sms: boolean }> = [
-      { key: 'auth.welcome_email',          email: true,  sms: false },
-      { key: 'auth.password_reset',         email: true,  sms: false },
-      { key: 'auth.password_changed',       email: true,  sms: false },
-      { key: 'auth.otp_sms',               email: false, sms: true  },
-      { key: 'marriage.submission',         email: false, sms: true  },
-      { key: 'marriage.status_change',      email: false, sms: true  },
-      { key: 'marriage.ceremony_scheduled', email: false, sms: true  },
-      { key: 'marriage.payment_confirmed',  email: false, sms: true  },
-      { key: 'marriage.party_confirmation', email: false, sms: true  },
+      { key: 'auth.welcome_email', email: true, sms: false },
+      { key: 'auth.password_reset', email: true, sms: false },
+      { key: 'auth.password_changed', email: true, sms: false },
+      { key: 'auth.otp_sms', email: false, sms: true },
+      { key: 'marriage.submission', email: false, sms: true },
+      { key: 'marriage.status_change', email: false, sms: true },
+      { key: 'marriage.ceremony_scheduled', email: false, sms: true },
+      { key: 'marriage.payment_confirmed', email: false, sms: true },
+      { key: 'marriage.party_confirmation', email: false, sms: true },
     ];
 
     for (const p of patches) {

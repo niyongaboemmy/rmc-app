@@ -3,14 +3,14 @@ import { encryptCredential } from '../../integrations/sms/sms-crypto.util';
 
 const INTOUCH_USERNAME = process.env.INTOUCH_USERNAME || 'RMC';
 const INTOUCH_PASSWORD = process.env.INTOUCH_PASSWORD || 'rmc@123';
-const INTOUCH_SENDER   = process.env.INTOUCH_SENDER   || 'RMC';
-const APP_URL          = process.env.APP_URL           || 'http://localhost:3000';
-const INTOUCH_DLR_URL  = process.env.INTOUCH_DLR_URL  || `${APP_URL}/api/v1/webhooks/sms-delivery`;
+const INTOUCH_SENDER = process.env.INTOUCH_SENDER || 'RMC';
+const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+const INTOUCH_DLR_URL = process.env.INTOUCH_DLR_URL || `${APP_URL}/api/v1/webhooks/sms-delivery`;
 
 export async function seedSmsConfig(dataSource: DataSource): Promise<void> {
   const encKey =
     process.env.APP_ENCRYPTION_KEY ||
-    process.env.JWT_ACCESS_SECRET  ||
+    process.env.JWT_ACCESS_SECRET ||
     'rmc-fallback-key-change-in-prod';
 
   const passwordEnc = encryptCredential(INTOUCH_PASSWORD, encKey);
@@ -37,5 +37,7 @@ export async function seedSmsConfig(dataSource: DataSource): Promise<void> {
   }
 
   // eslint-disable-next-line no-console
-  console.log(`[Seed] SMS config — username="${INTOUCH_USERNAME}", sender="${INTOUCH_SENDER}", active=true`);
+  console.log(
+    `[Seed] SMS config — username="${INTOUCH_USERNAME}", sender="${INTOUCH_SENDER}", active=true`,
+  );
 }

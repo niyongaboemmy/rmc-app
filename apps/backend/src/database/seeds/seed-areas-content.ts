@@ -22,11 +22,13 @@ async function run(): Promise<void> {
     await repo.save(existing);
     console.log('[seed-areas] updated existing areas content with rich sample data.');
   } else {
-    await repo.save(repo.create({
-      sectionKey: ContentKeys.areas,
-      value: AREAS_DEFAULT as unknown as Record<string, unknown>,
-      updatedBy: null,
-    }));
+    await repo.save(
+      repo.create({
+        sectionKey: ContentKeys.areas,
+        value: AREAS_DEFAULT as unknown as Record<string, unknown>,
+        updatedBy: null,
+      }),
+    );
     console.log('[seed-areas] seeded areas content.');
   }
 

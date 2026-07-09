@@ -53,10 +53,9 @@ const DISTRICTS: Record<string, { name: string; code: string }[]> = {
 
 export async function seedProvincesAndDistricts(dataSource: DataSource): Promise<void> {
   for (const province of PROVINCES) {
-    const existing = await dataSource.query(
-      `SELECT id FROM provinces WHERE code = $1`,
-      [province.code],
-    );
+    const existing = await dataSource.query(`SELECT id FROM provinces WHERE code = $1`, [
+      province.code,
+    ]);
 
     let provinceId: string;
     if (existing.length === 0) {
@@ -71,10 +70,9 @@ export async function seedProvincesAndDistricts(dataSource: DataSource): Promise
 
     const districts = DISTRICTS[province.code] || [];
     for (const district of districts) {
-      const existingDistrict = await dataSource.query(
-        `SELECT id FROM districts WHERE code = $1`,
-        [district.code],
-      );
+      const existingDistrict = await dataSource.query(`SELECT id FROM districts WHERE code = $1`, [
+        district.code,
+      ]);
       if (existingDistrict.length === 0) {
         await dataSource.query(
           `INSERT INTO districts (name, code, province_id) VALUES ($1, $2, $3)`,

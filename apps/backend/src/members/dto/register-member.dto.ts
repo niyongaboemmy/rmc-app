@@ -1,6 +1,12 @@
 import {
-  IsString, IsOptional, IsEmail, IsEnum, IsUUID,
-  IsBoolean, IsDateString, MaxLength, Matches, Length,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsUUID,
+  IsBoolean,
+  MaxLength,
+  Matches,
+  Length,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MemberCategory } from '../entities/member-profile.entity';

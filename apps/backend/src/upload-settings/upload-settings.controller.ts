@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Delete,
-  Body,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { UploadSettingsService } from './upload-settings.service';
 import { UpdateUploadSettingsDto } from './dto/update-upload-settings.dto';
@@ -56,7 +48,11 @@ export class UploadSettingsController {
   @ApiBearerAuth()
   @Permissions(Permission.UPLOAD_SETTINGS_MANAGE)
   @ApiOperation({ summary: 'Remove an allowed MIME type' })
-  @ApiParam({ name: 'mimeType', description: 'URL-encoded MIME type', example: 'application%2Fzip' })
+  @ApiParam({
+    name: 'mimeType',
+    description: 'URL-encoded MIME type',
+    example: 'application%2Fzip',
+  })
   removeMimeType(@Param('mimeType') mimeType: string) {
     return this.service.removeMimeType(mimeType);
   }

@@ -6,20 +6,24 @@ export class SubscribersPermissions1783000000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     for (const perm of ['subscribers:view', 'subscribers:manage']) {
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         UPDATE roles
         SET permissions = (
           SELECT jsonb_agg(DISTINCT elem)
           FROM jsonb_array_elements(COALESCE(permissions, '[]'::jsonb) || $1::jsonb) AS elem
         )
         WHERE slug IN ('superadmin', 'admin')
-      `, [JSON.stringify([perm])]);
+      `,
+        [JSON.stringify([perm])],
+      );
     }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     for (const perm of ['subscribers:view', 'subscribers:manage']) {
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         UPDATE roles
         SET permissions = (
           SELECT jsonb_agg(elem)
@@ -27,7 +31,9 @@ export class SubscribersPermissions1783000000000 implements MigrationInterface {
           WHERE elem::text != $1
         )
         WHERE slug IN ('superadmin', 'admin')
-      `, [JSON.stringify(perm)]);
+      `,
+        [JSON.stringify(perm)],
+      );
     }
   }
 }

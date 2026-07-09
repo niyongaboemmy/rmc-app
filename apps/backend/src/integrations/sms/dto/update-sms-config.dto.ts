@@ -8,12 +8,17 @@ export class UpdateSmsConfigDto {
   @MaxLength(100)
   username: string;
 
-  @ApiProperty({ description: 'InTouch account password (stored encrypted). Send "_KEEP_" to leave unchanged.' })
+  @ApiProperty({
+    description: 'InTouch account password (stored encrypted). Send "_KEEP_" to leave unchanged.',
+  })
   @IsString()
   @MaxLength(200)
   password: string;
 
-  @ApiPropertyOptional({ description: 'Sender ID shown to recipients (max 11 chars)', example: 'RMC' })
+  @ApiPropertyOptional({
+    description: 'Sender ID shown to recipients (max 11 chars)',
+    example: 'RMC',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(11)

@@ -8,14 +8,17 @@ export class UpdateApplicationStatusDto {
   status: MarriageApplicationStatus;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   notes?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   rejectionReason?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   amendmentsRequestedText?: string;
 }

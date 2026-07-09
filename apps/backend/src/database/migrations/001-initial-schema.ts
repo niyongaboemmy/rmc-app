@@ -91,7 +91,9 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "sectors"("id") ON DELETE SET NULL
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_mosques_parent_mosque_id" ON "mosques" ("parent_mosque_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_mosques_parent_mosque_id" ON "mosques" ("parent_mosque_id")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_mosques_district_id" ON "mosques" ("district_id")`);
     await queryRunner.query(`CREATE INDEX "IDX_mosques_status" ON "mosques" ("status")`);
 
@@ -158,8 +160,12 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_mosque_imams_mosque_id" ON "mosque_imams" ("mosque_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_mosque_imams_user_id" ON "mosque_imams" ("user_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_mosque_imams_mosque_id" ON "mosque_imams" ("mosque_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_mosque_imams_user_id" ON "mosque_imams" ("user_id")`,
+    );
 
     // ── Auth tokens ───────────────────────────────────────────
     await queryRunner.query(`
@@ -177,9 +183,15 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_refresh_tokens_token_hash" ON "refresh_tokens" ("token_hash")`);
-    await queryRunner.query(`CREATE INDEX "IDX_refresh_tokens_user_id" ON "refresh_tokens" ("user_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_refresh_tokens_expires_at" ON "refresh_tokens" ("expires_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_refresh_tokens_token_hash" ON "refresh_tokens" ("token_hash")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_refresh_tokens_user_id" ON "refresh_tokens" ("user_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_refresh_tokens_expires_at" ON "refresh_tokens" ("expires_at")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "password_reset_tokens" (
@@ -194,7 +206,9 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_password_reset_tokens_token_hash" ON "password_reset_tokens" ("token_hash")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_password_reset_tokens_token_hash" ON "password_reset_tokens" ("token_hash")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "phone_otp_verifications" (
@@ -211,8 +225,12 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_phone_otp_verifications_user_id" ON "phone_otp_verifications" ("user_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_phone_otp_verifications_phone" ON "phone_otp_verifications" ("phone")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_phone_otp_verifications_user_id" ON "phone_otp_verifications" ("user_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_phone_otp_verifications_phone" ON "phone_otp_verifications" ("phone")`,
+    );
 
     // ── Member Profiles ───────────────────────────────────────
     await queryRunner.query(`
@@ -266,11 +284,21 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE SET NULL
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_service_applications_service_type" ON "service_applications" ("service_type")`);
-    await queryRunner.query(`CREATE INDEX "IDX_service_applications_applicant_id" ON "service_applications" ("applicant_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_service_applications_status" ON "service_applications" ("status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_service_applications_payment_status" ON "service_applications" ("payment_status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_service_applications_certificate_qr_code" ON "service_applications" ("certificate_qr_code")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_service_applications_service_type" ON "service_applications" ("service_type")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_service_applications_applicant_id" ON "service_applications" ("applicant_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_service_applications_status" ON "service_applications" ("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_service_applications_payment_status" ON "service_applications" ("payment_status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_service_applications_certificate_qr_code" ON "service_applications" ("certificate_qr_code")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "service_documents" (
@@ -312,9 +340,15 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE RESTRICT
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_donation_campaigns_slug" ON "donation_campaigns" ("slug")`);
-    await queryRunner.query(`CREATE INDEX "IDX_donation_campaigns_status" ON "donation_campaigns" ("status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_donation_campaigns_fund_type" ON "donation_campaigns" ("fund_type")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_donation_campaigns_slug" ON "donation_campaigns" ("slug")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_donation_campaigns_status" ON "donation_campaigns" ("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_donation_campaigns_fund_type" ON "donation_campaigns" ("fund_type")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "donations" (
@@ -337,7 +371,9 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE SET NULL
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_donations_campaign_id" ON "donations" ("campaign_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_donations_campaign_id" ON "donations" ("campaign_id")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_donations_donor_id" ON "donations" ("donor_id")`);
     await queryRunner.query(`CREATE INDEX "IDX_donations_frequency" ON "donations" ("frequency")`);
     await queryRunner.query(`CREATE INDEX "IDX_donations_is_active" ON "donations" ("is_active")`);
@@ -392,10 +428,16 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE RESTRICT
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_transactions_reference" ON "transactions" ("reference")`);
-    await queryRunner.query(`CREATE INDEX "IDX_transactions_user_id" ON "transactions" ("user_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_transactions_reference" ON "transactions" ("reference")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_transactions_user_id" ON "transactions" ("user_id")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_transactions_status" ON "transactions" ("status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_transactions_provider" ON "transactions" ("provider")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_transactions_provider" ON "transactions" ("provider")`,
+    );
 
     // ── Events ────────────────────────────────────────────────
     await queryRunner.query(`
@@ -424,7 +466,9 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE RESTRICT
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_events_start_datetime" ON "events" ("start_datetime")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_events_start_datetime" ON "events" ("start_datetime")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_events_status" ON "events" ("status")`);
     await queryRunner.query(`CREATE INDEX "IDX_events_mosque_id" ON "events" ("mosque_id")`);
 
@@ -488,8 +532,12 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_notifications_user_id" ON "notifications" ("user_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_notifications_is_read" ON "notifications" ("is_read")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_notifications_user_id" ON "notifications" ("user_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_notifications_is_read" ON "notifications" ("is_read")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_notifications_type" ON "notifications" ("type")`);
 
     // ── Finance ───────────────────────────────────────────────
@@ -558,10 +606,14 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE RESTRICT
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_audit_log_entity_type" ON "audit_log" ("entity_type")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_audit_log_entity_type" ON "audit_log" ("entity_type")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_audit_log_entity_id" ON "audit_log" ("entity_id")`);
     await queryRunner.query(`CREATE INDEX "IDX_audit_log_actor_id" ON "audit_log" ("actor_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_audit_log_performed_at" ON "audit_log" ("performed_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_audit_log_performed_at" ON "audit_log" ("performed_at")`,
+    );
 
     // ── Schools ───────────────────────────────────────────────
     await queryRunner.query(`
@@ -645,9 +697,15 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE RESTRICT
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_knowledge_base_entries_category" ON "knowledge_base_entries" ("category")`);
-    await queryRunner.query(`CREATE INDEX "IDX_knowledge_base_entries_language" ON "knowledge_base_entries" ("language")`);
-    await queryRunner.query(`CREATE INDEX "IDX_knowledge_base_entries_is_active" ON "knowledge_base_entries" ("is_active")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_knowledge_base_entries_category" ON "knowledge_base_entries" ("category")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_knowledge_base_entries_language" ON "knowledge_base_entries" ("language")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_knowledge_base_entries_is_active" ON "knowledge_base_entries" ("is_active")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "ai_chat_sessions" (
@@ -663,8 +721,12 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "users"("id") ON DELETE SET NULL
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_ai_chat_sessions_session_token" ON "ai_chat_sessions" ("session_token")`);
-    await queryRunner.query(`CREATE INDEX "IDX_ai_chat_sessions_user_id" ON "ai_chat_sessions" ("user_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ai_chat_sessions_session_token" ON "ai_chat_sessions" ("session_token")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ai_chat_sessions_user_id" ON "ai_chat_sessions" ("user_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "ai_messages" (
@@ -680,7 +742,9 @@ export class InitialSchema1700000000001 implements MigrationInterface {
           REFERENCES "ai_chat_sessions"("id") ON DELETE CASCADE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_ai_messages_session_id" ON "ai_messages" ("session_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ai_messages_session_id" ON "ai_messages" ("session_id")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

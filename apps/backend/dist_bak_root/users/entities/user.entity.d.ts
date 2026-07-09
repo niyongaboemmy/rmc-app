@@ -1,0 +1,30 @@
+import { Role } from '../../roles/entities/role.entity';
+export declare class User {
+    id: string;
+    nationalId: string | null;
+    email: string;
+    phone: string;
+    passwordHash: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: Date | null;
+    gender: string | null;
+    profilePhotoUrl: string | null;
+    role: string;
+    status: string;
+    memberCategory: string;
+    isEmailVerified: boolean;
+    isPhoneVerified: boolean;
+    mfaEnabled: boolean;
+    mfaSecret: string | null;
+    twoFactorEnabled: boolean;
+    lastLoginAt: Date | null;
+    roleId: string | null;
+    roleEntity: Role | null;
+    mosqueId: string | null;
+    areaId: string | null;
+    digitalIdNumber: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+}

@@ -16,8 +16,6 @@ export class DonationCategorySoftDelete1782700000000 implements MigrationInterfa
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "donation_categories" DROP COLUMN IF EXISTS "deleted_at"`,
-    );
+    await queryRunner.query(`ALTER TABLE "donation_categories" DROP COLUMN IF EXISTS "deleted_at"`);
   }
 }

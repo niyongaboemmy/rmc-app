@@ -153,10 +153,7 @@ export class TwitterProvider implements SocialProvider {
    * rate-limits our single server — not every visitor's browser (which is why
    * the client-side widget renders blank). No engagement API needed.
    */
-  private async fetchViaSyndication(
-    username: string,
-    maxPosts: number,
-  ): Promise<ProviderResult> {
+  private async fetchViaSyndication(username: string, maxPosts: number): Promise<ProviderResult> {
     const url =
       `https://syndication.twitter.com/srv/timeline-profile/screen-name/` +
       `${encodeURIComponent(username)}?dnt=false&lang=en`;
@@ -196,16 +193,13 @@ export class TwitterProvider implements SocialProvider {
       const t = entry.content?.tweet;
       if (!t?.id_str) continue;
       channelUser ??= t.user;
-      const media =
-        t.extended_entities?.media?.[0] ?? t.entities?.media?.[0];
+      const media = t.extended_entities?.media?.[0] ?? t.entities?.media?.[0];
       const screen = t.user?.screen_name || username;
       posts.push({
         platform: 'twitter',
         handle: t.user?.name || `@${screen}`,
         // Drop the trailing t.co short-link X appends for media/quote tweets.
-        text: (t.full_text || t.text || '')
-          .replace(/(\s*https:\/\/t\.co\/\S+)+\s*$/, '')
-          .trim(),
+        text: (t.full_text || t.text || '').replace(/(\s*https:\/\/t\.co\/\S+)+\s*$/, '').trim(),
         image: media?.media_url_https,
         url: t.permalink
           ? `https://twitter.com${t.permalink}`
@@ -216,9 +210,7 @@ export class TwitterProvider implements SocialProvider {
       });
     }
 
-    posts.sort(
-      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-    );
+    posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     this.logger.log(`X syndication: ${posts.length} tweets for @${username}.`);
     return {

@@ -7,7 +7,6 @@ import { notFound, redirect } from 'next/navigation';
 import {
   ArrowLeft,
   Moon,
-  ShieldCheck,
   GraduationCap,
   Home,
   FileText,
@@ -19,7 +18,7 @@ import {
 
 // ─── Per-service visual config ───────────────────────────────────────────────
 
-type ServiceSlug = 'funeral' | 'conduct' | 'scholarship' | 'hijra' | 'tender' | 'jobs';
+type ServiceSlug = 'funeral' | 'scholarship' | 'hijra' | 'tender' | 'jobs';
 
 const SERVICE_META: Record<
   ServiceSlug,
@@ -49,20 +48,6 @@ const SERVICE_META: Record<
     accentText: 'text-slate-600',
     accentBorder: 'border-slate-200',
     accentBg: 'bg-slate-50',
-    eta: 'Q3 2026',
-  },
-  conduct: {
-    Icon: ShieldCheck,
-    // Legal / official documents on desk
-    image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1600&q=80',
-    gradientFrom: 'from-indigo-600',
-    gradientTo: 'to-indigo-900',
-    overlay: 'from-black/85 via-indigo-950/65 to-black/45',
-    eyebrowColor: 'text-indigo-300',
-    iconBg: 'from-indigo-600 to-indigo-800',
-    accentText: 'text-indigo-600',
-    accentBorder: 'border-indigo-200',
-    accentBg: 'bg-indigo-50',
     eta: 'Q3 2026',
   },
   scholarship: {
@@ -132,6 +117,10 @@ export default async function ServiceComingSoonPage({
 }: {
   params: { locale: string; slug: string };
 }) {
+  // Good Conduct is now a live service — bounce old /services/conduct links
+  // (bookmarks, external links) straight to the real route.
+  if (slug === 'conduct') redirect(`/${locale}/services/good-conduct`);
+
   if (!VALID_SLUGS.includes(slug as ServiceSlug)) notFound();
   if (slug === 'tender') redirect(`/${locale}/tenders`);
 

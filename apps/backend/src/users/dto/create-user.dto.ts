@@ -19,7 +19,9 @@ export class CreateUserDto {
 
   @ApiProperty({ example: '+250788000001' })
   @IsString()
-  @Matches(/^\+2507[2389]\d{7}$/, { message: 'Phone must be a valid Rwanda number (+250XXXXXXXXX)' })
+  @Matches(/^\+2507[2389]\d{7}$/, {
+    message: 'Phone must be a valid Rwanda number (+250XXXXXXXXX)',
+  })
   phone: string;
 
   @ApiProperty({ example: 'SecurePass@123', minLength: 8 })

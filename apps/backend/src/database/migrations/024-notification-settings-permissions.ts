@@ -7,7 +7,8 @@ export class NotificationSettingsPermissions1782400000000 implements MigrationIn
     const newPerms = ['notification_settings:view', 'notification_settings:manage'];
 
     for (const perm of newPerms) {
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         UPDATE roles
         SET permissions = (
           SELECT jsonb_agg(DISTINCT elem)
@@ -16,7 +17,9 @@ export class NotificationSettingsPermissions1782400000000 implements MigrationIn
           ) AS elem
         )
         WHERE name IN ('superadmin', 'admin')
-      `, [JSON.stringify([perm])]);
+      `,
+        [JSON.stringify([perm])],
+      );
     }
   }
 
@@ -24,7 +27,8 @@ export class NotificationSettingsPermissions1782400000000 implements MigrationIn
     const permsToRemove = ['notification_settings:view', 'notification_settings:manage'];
 
     for (const perm of permsToRemove) {
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         UPDATE roles
         SET permissions = (
           SELECT jsonb_agg(elem)
@@ -32,7 +36,9 @@ export class NotificationSettingsPermissions1782400000000 implements MigrationIn
           WHERE elem::text != $1
         )
         WHERE name IN ('superadmin', 'admin')
-      `, [JSON.stringify(perm)]);
+      `,
+        [JSON.stringify(perm)],
+      );
     }
   }
 }

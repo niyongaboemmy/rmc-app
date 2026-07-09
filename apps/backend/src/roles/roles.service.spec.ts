@@ -115,7 +115,9 @@ describe('RolesService', () => {
   it('update throws BadRequestException when changing name of a system role', async () => {
     const systemRole = makeRole({ isSystem: true });
     repo.findOne.mockResolvedValue(systemRole);
-    await expect(service.update('role-uuid-1', { name: 'New Name' })).rejects.toThrow(BadRequestException);
+    await expect(service.update('role-uuid-1', { name: 'New Name' })).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   // ── remove ────────────────────────────────────────────────────────────────

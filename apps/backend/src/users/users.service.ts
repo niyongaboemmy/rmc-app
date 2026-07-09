@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindManyOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { User } from './entities/user.entity';
@@ -114,9 +114,7 @@ export class UsersService {
     // Phone normalization + uniqueness check
     let normalizedPhone: string | undefined;
     if (dto.phone) {
-      normalizedPhone = dto.phone.startsWith('07')
-        ? `+250${dto.phone.slice(1)}`
-        : dto.phone;
+      normalizedPhone = dto.phone.startsWith('07') ? `+250${dto.phone.slice(1)}` : dto.phone;
       if (normalizedPhone !== user.phone) {
         const existing = await this.userRepo.findOne({ where: { phone: normalizedPhone } });
         if (existing) throw new ConflictException('Phone number already in use by another account');

@@ -17,7 +17,7 @@ import {
   VenueType,
 } from './entities/marriage-application.entity';
 import { MarriageDocument, DocumentType } from './entities/marriage-document.entity';
-import { districtCode } from './district-codes';
+import { districtCode } from '../common/district-codes';
 import { MarriageStatusHistory } from './entities/marriage-status-history.entity';
 import { MarriageTransaction } from './entities/marriage-transaction.entity';
 import {
@@ -416,8 +416,7 @@ export class MarriageService {
     // application paid for free). Raw process.env is read deliberately —
     // ConfigService's 'app.nodeEnv' defaults to 'development' when unset.
     const bypassEnabled =
-      process.env.NODE_ENV !== 'production' &&
-      process.env.ENABLE_DEV_PAYMENT_BYPASS === 'true';
+      process.env.NODE_ENV !== 'production' && process.env.ENABLE_DEV_PAYMENT_BYPASS === 'true';
     if (!bypassEnabled) {
       throw new ForbiddenException(
         'Development payment bypass is disabled. To enable it locally, set NODE_ENV=development and ENABLE_DEV_PAYMENT_BYPASS=true.',
@@ -549,8 +548,16 @@ export class MarriageService {
     limit?: number;
   }) {
     const {
-      status, paymentStatus, venueType, search, dateFrom, dateTo, sort, order,
-      page = 1, limit = 20,
+      status,
+      paymentStatus,
+      venueType,
+      search,
+      dateFrom,
+      dateTo,
+      sort,
+      order,
+      page = 1,
+      limit = 20,
     } = filters;
 
     const SORT_COLUMNS: Record<string, string> = {
@@ -868,15 +875,30 @@ export class MarriageService {
   async checkUserMomoPaymentStatus(
     id: string,
     applicantId: string,
-  ): Promise<{ paymentStatus: string; gatewayStatus: string; responseCode: string; message: string }> {
+  ): Promise<{
+    paymentStatus: string;
+    gatewayStatus: string;
+    responseCode: string;
+    message: string;
+  }> {
     const app = await this.findOwnApplication(id, applicantId);
 
     // Already resolved — no need to hit the gateway
     if (app.paymentStatus === PaymentStatus.PAID) {
-      return { paymentStatus: 'paid', gatewayStatus: 'SUCCESSFUL', responseCode: '01', message: 'Payment already confirmed' };
+      return {
+        paymentStatus: 'paid',
+        gatewayStatus: 'SUCCESSFUL',
+        responseCode: '01',
+        message: 'Payment already confirmed',
+      };
     }
     if (app.paymentStatus === PaymentStatus.FAILED) {
-      return { paymentStatus: 'failed', gatewayStatus: 'FAILED', responseCode: '', message: 'Payment failed' };
+      return {
+        paymentStatus: 'failed',
+        gatewayStatus: 'FAILED',
+        responseCode: '',
+        message: 'Payment failed',
+      };
     }
 
     // Find the most recent pending MoMo transaction for this application
@@ -885,12 +907,22 @@ export class MarriageService {
       order: { initiatedAt: 'DESC' },
     });
     if (!tx) {
-      return { paymentStatus: app.paymentStatus, gatewayStatus: 'PENDING', responseCode: '1000', message: 'No active MoMo transaction found' };
+      return {
+        paymentStatus: app.paymentStatus,
+        gatewayStatus: 'PENDING',
+        responseCode: '1000',
+        message: 'No active MoMo transaction found',
+      };
     }
 
     const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
     if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      return { paymentStatus: app.paymentStatus, gatewayStatus: 'PENDING', responseCode: '', message: 'Credentials not configured' };
+      return {
+        paymentStatus: app.paymentStatus,
+        gatewayStatus: 'PENDING',
+        responseCode: '',
+        message: 'Credentials not configured',
+      };
     }
 
     const statusResult = await this.intouchPay.getTransactionStatus({

@@ -44,7 +44,9 @@ async function run(): Promise<void> {
       console.log(`  skip (already exists): ${sectionKey}`);
       continue;
     }
-    await repo.save(repo.create({ sectionKey, value: value as Record<string, unknown>, updatedBy: null }));
+    await repo.save(
+      repo.create({ sectionKey, value: value as Record<string, unknown>, updatedBy: null }),
+    );
     console.log(`  seeded: ${sectionKey}`);
   }
 

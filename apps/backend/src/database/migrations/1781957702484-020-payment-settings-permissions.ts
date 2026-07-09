@@ -7,21 +7,21 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class PaymentSettingsPermissions1781957702484 implements MigrationInterface {
   name = 'PaymentSettingsPermissions1781957702484';
 
-  private readonly NEW_PERMISSIONS = [
-    'payment_settings:view',
-    'payment_settings:manage',
-  ];
+  private readonly NEW_PERMISSIONS = ['payment_settings:view', 'payment_settings:manage'];
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     for (const perm of this.NEW_PERMISSIONS) {
       // Append to SuperAdmin (all permissions)
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         UPDATE "roles"
         SET "permissions" = "permissions" || $1::jsonb,
             "updated_at"  = now()
         WHERE "slug" IN ('superadmin', 'admin')
           AND NOT ("permissions" @> $1::jsonb)
-      `, [JSON.stringify([perm])]);
+      `,
+        [JSON.stringify([perm])],
+      );
     }
 
     // SuperAdmin gets both; Admin already included via loop above.
@@ -30,7 +30,8 @@ export class PaymentSettingsPermissions1781957702484 implements MigrationInterfa
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     for (const perm of this.NEW_PERMISSIONS) {
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         UPDATE "roles"
         SET "permissions" = (
           SELECT jsonb_agg(elem)
@@ -39,7 +40,9 @@ export class PaymentSettingsPermissions1781957702484 implements MigrationInterfa
         ),
         "updated_at" = now()
         WHERE "slug" IN ('superadmin', 'admin')
-      `, [JSON.stringify(perm)]);
+      `,
+        [JSON.stringify(perm)],
+      );
     }
   }
 }

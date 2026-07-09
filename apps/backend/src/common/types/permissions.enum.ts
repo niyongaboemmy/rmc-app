@@ -65,6 +65,13 @@ export enum Permission {
   MARRIAGE_CERTIFICATE = 'marriage:certificate',
   MARRIAGE_REPORTS = 'marriage:reports',
 
+  // ── Good Conduct Service ──────────────────────────────────────────
+  GOOD_CONDUCT_VIEW = 'good_conduct:view',
+  GOOD_CONDUCT_MANAGE = 'good_conduct:manage',
+  GOOD_CONDUCT_APPROVE = 'good_conduct:approve',
+  GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
+  GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

@@ -1,6 +1,13 @@
 import {
-  Controller, Get, Post, Put, Delete, Body, Param, Query,
-  UseGuards, ParseUUIDPipe,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MosquesService } from './mosques.service';

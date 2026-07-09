@@ -7,10 +7,12 @@ export class ScheduleCeremonyDto {
   ceremonyDate: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsUUID()
+  @IsOptional()
+  @IsUUID()
   assignedImamId?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   notes?: string;
 }

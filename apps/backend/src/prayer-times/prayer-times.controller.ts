@@ -1,7 +1,6 @@
 import { Controller, Get, Put, Body, Query, Param, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { IsOptional, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
 import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
@@ -66,10 +65,7 @@ export class PrayerTimesController {
   @ApiBearerAuth()
   @Permissions(Permission.PRAYER_TIMES_MANAGE)
   @ApiOperation({ summary: 'Set prayer time minute adjustments for a mosque' })
-  setAdjustments(
-    @Param('mosqueId', ParseUUIDPipe) mosqueId: string,
-    @Body() dto: AdjustmentsDto,
-  ) {
+  setAdjustments(@Param('mosqueId', ParseUUIDPipe) mosqueId: string, @Body() dto: AdjustmentsDto) {
     return this.service.setAdjustments(mosqueId, dto);
   }
 }

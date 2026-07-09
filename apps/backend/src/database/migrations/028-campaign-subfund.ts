@@ -29,8 +29,6 @@ export class CampaignSubFund1782800000000 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "donation_campaigns" DROP CONSTRAINT IF EXISTS "FK_campaigns_sub_fund_id"`,
     );
-    await queryRunner.query(
-      `ALTER TABLE "donation_campaigns" DROP COLUMN IF EXISTS "sub_fund_id"`,
-    );
+    await queryRunner.query(`ALTER TABLE "donation_campaigns" DROP COLUMN IF EXISTS "sub_fund_id"`);
   }
 }

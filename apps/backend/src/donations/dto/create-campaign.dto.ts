@@ -45,7 +45,9 @@ export class CreateCampaignDto {
   @MaxLength(20)
   fundType?: string;
 
-  @ApiPropertyOptional({ description: 'Sub-fund this program belongs to (UUID); null for category-level programs' })
+  @ApiPropertyOptional({
+    description: 'Sub-fund this program belongs to (UUID); null for category-level programs',
+  })
   @IsOptional()
   @IsUUID()
   subFundId?: string | null;

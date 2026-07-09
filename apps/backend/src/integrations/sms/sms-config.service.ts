@@ -44,7 +44,9 @@ export class SmsConfigService implements OnModuleInit {
   }
 
   /** Fetch config for admin display — includes decrypted password for form pre-fill. */
-  async getForAdmin(): Promise<Omit<SmsConfig, 'passwordEnc'> & { passwordSet: boolean; password: string }> {
+  async getForAdmin(): Promise<
+    Omit<SmsConfig, 'passwordEnc'> & { passwordSet: boolean; password: string }
+  > {
     const row = await this.findRow();
     const { passwordEnc, ...rest } = row;
 
@@ -70,13 +72,13 @@ export class SmsConfigService implements OnModuleInit {
     const row = await this.findRow();
     const encKey = this.encryptionKey();
 
-    row.username   = dto.username.trim();
+    row.username = dto.username.trim();
     // '_KEEP_' is the sentinel sent by the frontend when the user leaves the password blank
     if (dto.password && dto.password !== '_KEEP_') {
       row.passwordEnc = encryptCredential(dto.password, encKey);
     }
     row.senderName = this.sanitizeSender(dto.senderName ?? row.senderName);
-    row.dlrUrl     = dto.dlrUrl?.trim() || null;
+    row.dlrUrl = dto.dlrUrl?.trim() || null;
 
     if (dto.isActive !== undefined) row.isActive = dto.isActive;
 
@@ -143,7 +145,7 @@ export class SmsConfigService implements OnModuleInit {
   }
 
   async getHistory(page: number, limit: number) {
-    const safePage  = Math.max(1, page);
+    const safePage = Math.max(1, page);
     const safeLimit = Math.min(100, Math.max(1, limit));
     const skip = (safePage - 1) * safeLimit;
 
@@ -177,21 +179,27 @@ export class SmsConfigService implements OnModuleInit {
       'rmc-fallback-key-change-in-prod';
 
     if (key === 'rmc-fallback-key-change-in-prod') {
-      this.logger.warn(
-        'APP_ENCRYPTION_KEY is not set. Using fallback key — set it in production!',
-      );
+      this.logger.warn('APP_ENCRYPTION_KEY is not set. Using fallback key — set it in production!');
     }
 
     return key;
   }
 
   private sanitizeSender(sender: string): string {
-    return sender.replace(/[^a-zA-Z0-9 ]/g, '').slice(0, 11).trim() || 'RMC';
+    return (
+      sender
+        .replace(/[^a-zA-Z0-9 ]/g, '')
+        .slice(0, 11)
+        .trim() || 'RMC'
+    );
   }
 
   /** Build the DLR callback URL from APP_URL env — used when dlr_url is not set in DB. */
   private defaultDlrUrl(): string {
-    const appUrl = (this.appConfig.get<string>('APP_URL') || 'http://localhost:3000').replace(/\/$/, '');
+    const appUrl = (this.appConfig.get<string>('APP_URL') || 'http://localhost:3000').replace(
+      /\/$/,
+      '',
+    );
     return `${appUrl}${DLR_PATH}`;
   }
 }

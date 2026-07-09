@@ -94,12 +94,24 @@ export class MarriageTables1700000000004 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_marriage_app_status" ON "marriage_applications" ("status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_marriage_app_payment_status" ON "marriage_applications" ("payment_status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_marriage_app_applicant" ON "marriage_applications" ("applicant_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_marriage_app_groom_nid" ON "marriage_applications" ("groom_nid")`);
-    await queryRunner.query(`CREATE INDEX "IDX_marriage_app_bride_nid" ON "marriage_applications" ("bride_nid")`);
-    await queryRunner.query(`CREATE INDEX "IDX_marriage_app_ceremony_date" ON "marriage_applications" ("ceremony_date")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_marriage_app_status" ON "marriage_applications" ("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_marriage_app_payment_status" ON "marriage_applications" ("payment_status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_marriage_app_applicant" ON "marriage_applications" ("applicant_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_marriage_app_groom_nid" ON "marriage_applications" ("groom_nid")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_marriage_app_bride_nid" ON "marriage_applications" ("bride_nid")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_marriage_app_ceremony_date" ON "marriage_applications" ("ceremony_date")`,
+    );
 
     // ── Marriage Documents ────────────────────────────────────────────
     await queryRunner.query(`

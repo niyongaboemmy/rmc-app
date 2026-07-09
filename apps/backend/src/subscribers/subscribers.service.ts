@@ -109,7 +109,9 @@ export class SubscribersService {
       }),
     );
 
-    this.logger.log(`Broadcast "${dto.subject}" → ${sent} sent, ${failed} failed (of ${active.length}).`);
+    this.logger.log(
+      `Broadcast "${dto.subject}" → ${sent} sent, ${failed} failed (of ${active.length}).`,
+    );
     return { sent, failed, total: active.length };
   }
 

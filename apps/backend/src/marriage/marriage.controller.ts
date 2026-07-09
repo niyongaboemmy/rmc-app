@@ -1,5 +1,13 @@
 import {
-  Controller, Get, Post, Put, Patch, Param, Body, ParseUUIDPipe, HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  Body,
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MarriageService } from './marriage.service';
@@ -42,10 +50,7 @@ export class MarriageController {
   @Get('applications/:id/payment/check')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Poll IntouchPay gateway for payment status and sync DB' })
-  checkPaymentStatus(
-    @CurrentUser() user: User,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  checkPaymentStatus(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.checkUserMomoPaymentStatus(id, user.id);
   }
 
@@ -62,7 +67,9 @@ export class MarriageController {
 
   @Post('applications/:id/payment/dev-complete')
   @ApiBearerAuth()
-  @ApiOperation({ summary: '[DEV ONLY] Mark payment as completed without the gateway (blocked in production)' })
+  @ApiOperation({
+    summary: '[DEV ONLY] Mark payment as completed without the gateway (blocked in production)',
+  })
   devCompletePayment(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.devCompletePayment(id, user.id);
   }
@@ -143,7 +150,9 @@ export class MarriageController {
 
   @Get('applications/by-number/:number/parties')
   @Public()
-  @ApiOperation({ summary: 'Get party confirmation status by application number (public — no PII)' })
+  @ApiOperation({
+    summary: 'Get party confirmation status by application number (public — no PII)',
+  })
   async getPartiesByNumber(@Param('number') number: string) {
     const app = await this.service.findByApplicationNumber(number);
     if (!app) return [];

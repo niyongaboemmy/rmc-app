@@ -1,10 +1,11 @@
-import {
-  Controller, Get, Post, Patch, Delete, Param, Body, ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DonationCategoriesService } from './donation-categories.service';
 import {
-  CreateCategoryDto, UpdateCategoryDto, CreateSubFundDto, UpdateSubFundDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  CreateSubFundDto,
+  UpdateSubFundDto,
 } from './dto/category-content.dto';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
@@ -64,7 +65,10 @@ export class DonationCategoriesAdminController {
   @Post(':categoryId/subfunds')
   @Permissions(Permission.DONATIONS_MANAGE)
   @ApiOperation({ summary: 'Create a sub-fund under a category' })
-  createSubFund(@Param('categoryId', ParseUUIDPipe) categoryId: string, @Body() dto: CreateSubFundDto) {
+  createSubFund(
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+    @Body() dto: CreateSubFundDto,
+  ) {
     return this.service.createSubFund(categoryId, dto);
   }
 

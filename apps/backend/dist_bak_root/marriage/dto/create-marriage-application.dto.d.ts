@@ -1,0 +1,32 @@
+import { VenueType } from '../entities/marriage-application.entity';
+export declare class CreateMarriageApplicationDto {
+    notificationPhone: string;
+    groomName: string;
+    groomFatherName?: string;
+    groomNid: string;
+    groomBirthDate?: string;
+    groomPhone: string;
+    brideName: string;
+    brideFatherName?: string;
+    brideNid: string;
+    brideBirthDate?: string;
+    bridePhone: string;
+    witness1Nid: string;
+    witness1Name: string;
+    witness2Nid: string;
+    witness2Name: string;
+    waliName?: string;
+    waliNid?: string;
+    waliPhone?: string;
+    mahrAmount?: number;
+    mahrDescription?: string;
+    requestedOfficiant?: string;
+    venueType: VenueType;
+    province: string;
+    district: string;
+    mosqueId?: string;
+    venueAddress?: string;
+    preferredDateFrom: string;
+    preferredDateTo?: string;
+    paymentMethod: string;
+}

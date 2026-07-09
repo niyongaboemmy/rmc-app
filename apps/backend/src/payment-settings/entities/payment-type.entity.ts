@@ -16,6 +16,7 @@ export enum PaymentTypeKey {
   SCHOOL_FEE = 'SCHOOL_FEE',
   EVENT_FEE = 'EVENT_FEE',
   ZAKAT = 'ZAKAT',
+  GOOD_CONDUCT_FEE = 'GOOD_CONDUCT_FEE',
 }
 
 @Entity('payment_types')

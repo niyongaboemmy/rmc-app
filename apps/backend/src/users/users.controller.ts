@@ -68,7 +68,7 @@ export class UsersController {
 
   @Put(':id/role')
   @RequirePermissions(Permission.USERS_ASSIGN_ROLE)
-  @ApiOperation({ summary: 'Assign or change a user\'s role' })
+  @ApiOperation({ summary: "Assign or change a user's role" })
   assignRole(@Param('id', ParseUUIDPipe) id: string, @Body() dto: AssignRoleDto) {
     return this.usersService.assignRole(id, dto);
   }

@@ -52,6 +52,21 @@ const MARRIAGE_OFFICER_PERMISSIONS: Permission[] = [
   Permission.CONTENT_VIEW,
 ];
 
+const GOOD_CONDUCT_REVIEWER_PERMISSIONS: Permission[] = [
+  Permission.GOOD_CONDUCT_VIEW,
+  Permission.GOOD_CONDUCT_APPROVE,
+  Permission.GOOD_CONDUCT_CERTIFICATE,
+  Permission.MEMBERS_VIEW,
+  Permission.MOSQUES_VIEW,
+];
+
+const GOOD_CONDUCT_OFFICER_PERMISSIONS: Permission[] = [
+  Permission.GOOD_CONDUCT_VIEW,
+  Permission.GOOD_CONDUCT_MANAGE,
+  Permission.MEMBERS_VIEW,
+  Permission.MOSQUES_VIEW,
+];
+
 const DEFAULT_ROLES = [
   {
     name: 'Super Admin',
@@ -79,6 +94,20 @@ const DEFAULT_ROLES = [
     slug: 'marriage_officer',
     description: 'Manages marriage applications, scheduling, and certificates',
     permissions: MARRIAGE_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  {
+    name: 'Good Conduct Reviewer',
+    slug: 'good_conduct_reviewer',
+    description: 'Reviews and approves Good Conduct certificate requests',
+    permissions: GOOD_CONDUCT_REVIEWER_PERMISSIONS,
+    isSystem: false,
+  },
+  {
+    name: 'Good Conduct Officer',
+    slug: 'good_conduct_officer',
+    description: 'Processes Good Conduct requests: payment confirmation, imam assignment',
+    permissions: GOOD_CONDUCT_OFFICER_PERMISSIONS,
     isSystem: false,
   },
   {

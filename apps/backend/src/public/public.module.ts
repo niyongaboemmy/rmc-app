@@ -8,7 +8,9 @@ import { PublicService } from './public.service';
 import { PublicController } from './public.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([VerseOfDay, Announcement, BlogPost, BlogCategory, GalleryItem])],
+  imports: [
+    TypeOrmModule.forFeature([VerseOfDay, Announcement, BlogPost, BlogCategory, GalleryItem]),
+  ],
   providers: [PublicService],
   controllers: [PublicController],
   exports: [PublicService],

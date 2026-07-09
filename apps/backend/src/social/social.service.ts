@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-  OnModuleDestroy,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { InjectRedis } from '../common/decorators/inject-redis.decorator';
@@ -12,12 +7,7 @@ import { YoutubeProvider } from './providers/youtube.provider';
 import { FacebookProvider } from './providers/facebook.provider';
 import { InstagramProvider } from './providers/instagram.provider';
 import { TwitterProvider } from './providers/twitter.provider';
-import {
-  NormalizedChannel,
-  NormalizedPost,
-  SocialFeed,
-  SocialProvider,
-} from './social.types';
+import { NormalizedChannel, NormalizedPost, SocialFeed, SocialProvider } from './social.types';
 
 const CACHE_KEY = 'social:feed';
 // Cache TTL is generous so a transient Redis/API blip never empties the feed;
@@ -88,8 +78,7 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
 
     // Kick off an initial refresh without blocking startup, then poll.
     void this.refresh();
-    const intervalMs =
-      this.config.get<number>('social.pollMinutes', 15) * 60 * 1000;
+    const intervalMs = this.config.get<number>('social.pollMinutes', 15) * 60 * 1000;
     this.timer = setInterval(() => void this.refresh(), intervalMs);
     // Don't keep the event loop alive solely for the poller.
     this.timer.unref?.();
@@ -119,7 +108,9 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
   private withTimeout<T>(op: Promise<T>, ms: number): Promise<T> {
     return Promise.race([
       op,
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`redis timeout (${ms}ms)`)), ms)),
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`redis timeout (${ms}ms)`)), ms),
+      ),
     ]);
   }
 
@@ -136,9 +127,7 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
       const active = this.providers.filter((p) => p.isConfigured());
       const maxPosts = this.config.get<number>('social.maxPosts', 12);
 
-      const results = await Promise.allSettled(
-        active.map((p) => p.fetch(maxPosts)),
-      );
+      const results = await Promise.allSettled(active.map((p) => p.fetch(maxPosts)));
 
       const posts: NormalizedPost[] = [];
       const channels: NormalizedChannel[] = [];
@@ -152,9 +141,7 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
         }
       });
 
-      posts.sort(
-        (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-      );
+      posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
       const feed: SocialFeed = {
         posts: posts.slice(0, maxPosts),

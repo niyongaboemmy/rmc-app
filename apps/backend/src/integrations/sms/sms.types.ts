@@ -53,15 +53,15 @@ export interface IntouchApiResponse {
     status: string;
     message: string;
     cost: number;
-    receipient: string;   // API typo — "receipient" not "recipient"
+    receipient: string; // API typo — "receipient" not "recipient"
     messageid: number;
   }>;
   summary: {
     message: string;
     balance: number | string; // InTouch returns "3,697" (string with comma) or a number
-    cost?: number;            // Not always present — derive from details if missing
+    cost?: number; // Not always present — derive from details if missing
     totalmessages: number;
-    time: string;             // Format: "20260624232933" (YYYYMMDDHHmmss)
+    time: string; // Format: "20260624232933" (YYYYMMDDHHmmss)
   };
 }
 

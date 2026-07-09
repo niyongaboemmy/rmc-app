@@ -111,7 +111,7 @@ const services = [
     cardHover: 'hover:shadow-slate-100',
   },
   {
-    key: 'conduct', slug: 'conduct',
+    key: 'conduct', slug: 'conduct', href: '/services/good-conduct',
     Icon: ConductIcon,
     bar: 'bg-indigo-500',
     iconIdle: 'text-gray-300',

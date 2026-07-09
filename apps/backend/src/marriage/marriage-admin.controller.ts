@@ -53,7 +53,11 @@ export class MarriageAdminController {
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'dateFrom', required: false })
   @ApiQuery({ name: 'dateTo', required: false })
-  @ApiQuery({ name: 'sort', required: false, enum: ['date', 'amount', 'couple', 'payment', 'status'] })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    enum: ['date', 'amount', 'couple', 'payment', 'status'],
+  })
   @ApiQuery({ name: 'order', required: false, enum: ['ASC', 'DESC'] })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })

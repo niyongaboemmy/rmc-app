@@ -13,17 +13,11 @@ import {
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const archiver = require('archiver') as (format: string, opts?: object) => any;
 import * as https from 'https';
 import * as http from 'http';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiQuery,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { DriveService } from './drive.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateFolderDto } from './dto/create-folder.dto';
@@ -138,10 +132,7 @@ export class DriveController {
   @RequirePermissions(Permission.DRIVE_VIEW)
   @ApiOperation({ summary: 'Proxy file content from file-server with JWT auth' })
   @ApiQuery({ name: 'key', required: true })
-  proxyFile(
-    @Query('key') key: string,
-    @Res() res: Response,
-  ) {
+  proxyFile(@Query('key') key: string, @Res() res: Response) {
     if (!key) return res.status(400).json({ message: 'key is required' });
     const fileUrl = `${this.fileServerUrl}/api/v1/files/${key}`;
     const proto = fileUrl.startsWith('https') ? https : http;
@@ -225,11 +216,7 @@ export class DriveController {
   @Post(':id/copy')
   @RequirePermissions(Permission.DRIVE_CREATE)
   @ApiOperation({ summary: 'Copy item to another folder (or root)' })
-  copyItem(
-    @Req() req: any,
-    @Param('id') id: string,
-    @Body() dto: MoveItemDto,
-  ) {
+  copyItem(@Req() req: any, @Param('id') id: string, @Body() dto: MoveItemDto) {
     return this.driveService.copyItem(id, req.user.id, dto.targetFolderId ?? undefined);
   }
 
@@ -272,11 +259,7 @@ export class DriveController {
   @RequirePermissions(Permission.DRIVE_SHARE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove a share from an item' })
-  removeShare(
-    @Req() req: any,
-    @Param('id') id: string,
-    @Param('shareId') shareId: string,
-  ) {
+  removeShare(@Req() req: any, @Param('id') id: string, @Param('shareId') shareId: string) {
     return this.driveService.removeShare(id, shareId, req.user.id);
   }
 
@@ -285,12 +268,9 @@ export class DriveController {
   @Get(':id/download-zip')
   @RequirePermissions(Permission.DRIVE_VIEW)
   @ApiOperation({ summary: 'Download a folder as a zip archive' })
-  async downloadZip(
-    @Req() req: any,
-    @Param('id') id: string,
-    @Res() res: Response,
-  ) {
-    const isAdmin = (req.user?.permissions ?? []).includes('drive:admin') ||
+  async downloadZip(@Req() req: any, @Param('id') id: string, @Res() res: Response) {
+    const isAdmin =
+      (req.user?.permissions ?? []).includes('drive:admin') ||
       (req.user?.permissions ?? []).includes('*');
     const files = await this.driveService.getDescendantFiles(id, req.user.id, isAdmin);
     const item = await this.driveService.getItem(id, req.user.id, isAdmin);
@@ -306,11 +286,13 @@ export class DriveController {
       const fileUrl = `${this.fileServerUrl}/api/v1/files/${file.storageKey}`;
       await new Promise<void>((resolve, reject) => {
         const proto = fileUrl.startsWith('https') ? https : http;
-        proto.get(fileUrl, (stream) => {
-          archive.append(stream as any, { name: file.name });
-          stream.on('end', resolve);
-          stream.on('error', reject);
-        }).on('error', reject);
+        proto
+          .get(fileUrl, (stream) => {
+            archive.append(stream as any, { name: file.name });
+            stream.on('end', resolve);
+            stream.on('error', reject);
+          })
+          .on('error', reject);
       });
     }
 

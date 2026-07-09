@@ -31,7 +31,9 @@ export class EmailService implements OnModuleInit {
         ...(user && pass ? { auth: { user, pass } } : {}),
       });
     } else {
-      this.logger.warn('SMTP not configured (no SMTP_HOST) — emails will be logged to console only');
+      this.logger.warn(
+        'SMTP not configured (no SMTP_HOST) — emails will be logged to console only',
+      );
     }
   }
 
@@ -40,7 +42,9 @@ export class EmailService implements OnModuleInit {
     if (!this.transporter) return;
     try {
       await this.transporter.verify();
-      this.logger.log(`SMTP ready: ${this.config.get('SMTP_HOST')}:${this.config.get('SMTP_PORT', 587)}`);
+      this.logger.log(
+        `SMTP ready: ${this.config.get('SMTP_HOST')}:${this.config.get('SMTP_PORT', 587)}`,
+      );
     } catch (err) {
       this.logger.error(`SMTP connection failed — emails will not send: ${err}`);
     }

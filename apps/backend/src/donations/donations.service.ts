@@ -94,9 +94,10 @@ export class DonationsService {
       campaignId = campaign?.id ?? null;
     }
 
-    const creds = dto.paymentMethod === 'momo' && dto.donorPhone
-      ? await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH)
-      : null;
+    const creds =
+      dto.paymentMethod === 'momo' && dto.donorPhone
+        ? await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH)
+        : null;
     const useGateway = !!(creds?.username && creds?.partnerPassword && creds?.accountNo);
 
     const donation = this.donations.create({
@@ -185,7 +186,11 @@ export class DonationsService {
           await this.donations.save(donation);
           if (donation.status === DonationStatus.COMPLETED && donation.donorPhone) {
             const amountStr = Number(donation.amount).toLocaleString('en-US');
-            const msg = DonationSmsTemplates.paymentConfirmed(amountStr, donation.currency, donation.donorName);
+            const msg = DonationSmsTemplates.paymentConfirmed(
+              amountStr,
+              donation.currency,
+              donation.donorName,
+            );
             void this.smsService.sendSms(donation.donorPhone, msg);
           }
         }
@@ -285,7 +290,11 @@ export class DonationsService {
       d.setDate(start.getDate() + i);
       const key = d.toISOString().slice(0, 10);
       const r = byDate.get(key);
-      series.push({ date: key, received: r ? Number(r.received) : 0, count: r ? Number(r.count) : 0 });
+      series.push({
+        date: key,
+        received: r ? Number(r.received) : 0,
+        count: r ? Number(r.count) : 0,
+      });
     }
     return { currency, days: span, series };
   }

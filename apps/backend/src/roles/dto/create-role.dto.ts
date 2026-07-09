@@ -20,7 +20,11 @@ export class CreateRoleDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({ enum: Permission, isArray: true, example: [Permission.CONTENT_CREATE, Permission.CONTENT_EDIT] })
+  @ApiProperty({
+    enum: Permission,
+    isArray: true,
+    example: [Permission.CONTENT_CREATE, Permission.CONTENT_EDIT],
+  })
   @IsArray()
   @IsEnum(Permission, { each: true })
   permissions: Permission[];

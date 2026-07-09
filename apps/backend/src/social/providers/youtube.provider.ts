@@ -151,8 +151,7 @@ export class YoutubeProvider implements SocialProvider {
     if (this.resolvedCache.has(input)) return this.resolvedCache.get(input)!;
 
     const direct =
-      input.match(/channel\/(UC[\w-]{20,})/)?.[1] ||
-      (/^UC[\w-]{20,}$/.test(input) ? input : '');
+      input.match(/channel\/(UC[\w-]{20,})/)?.[1] || (/^UC[\w-]{20,}$/.test(input) ? input : '');
     if (direct) {
       this.resolvedCache.set(input, direct);
       return direct;
@@ -200,19 +199,23 @@ export class YoutubeProvider implements SocialProvider {
     const channelTitle = decodeXml(head.match(/<title>([\s\S]*?)<\/title>/)?.[1]) || 'YouTube';
 
     const entries = xml.split('<entry>').slice(1);
-    const posts: NormalizedPost[] = entries.slice(0, maxPosts).map((e) => {
-      const videoId = e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1] ?? '';
-      return {
-        platform: 'youtube' as const,
-        handle: decodeXml(e.match(/<author>[\s\S]*?<name>([\s\S]*?)<\/name>/)?.[1]) || channelTitle,
-        text: decodeXml(e.match(/<title>([\s\S]*?)<\/title>/)?.[1]),
-        image: e.match(/<media:thumbnail\s+url="([^"]+)"/)?.[1],
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-        likes: 0,
-        comments: 0,
-        publishedAt: e.match(/<published>([^<]+)<\/published>/)?.[1] ?? new Date(0).toISOString(),
-      };
-    }).filter((p) => p.url.endsWith('=') === false);
+    const posts: NormalizedPost[] = entries
+      .slice(0, maxPosts)
+      .map((e) => {
+        const videoId = e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1] ?? '';
+        return {
+          platform: 'youtube' as const,
+          handle:
+            decodeXml(e.match(/<author>[\s\S]*?<name>([\s\S]*?)<\/name>/)?.[1]) || channelTitle,
+          text: decodeXml(e.match(/<title>([\s\S]*?)<\/title>/)?.[1]),
+          image: e.match(/<media:thumbnail\s+url="([^"]+)"/)?.[1],
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          likes: 0,
+          comments: 0,
+          publishedAt: e.match(/<published>([^<]+)<\/published>/)?.[1] ?? new Date(0).toISOString(),
+        };
+      })
+      .filter((p) => p.url.endsWith('=') === false);
 
     return {
       posts,

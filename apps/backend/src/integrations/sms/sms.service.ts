@@ -12,7 +12,7 @@ import {
 
 const INTOUCH_API_URL = 'https://www.intouchsms.co.rw/api/sendsms/.json';
 
-const SMS_SINGLE_LIMIT    = 160;
+const SMS_SINGLE_LIMIT = 160;
 const SMS_MULTIPART_LIMIT = 153;
 
 @Injectable()
@@ -37,7 +37,7 @@ export class SmsService {
    */
   async send(options: SmsSendOptions): Promise<SmsSendResult> {
     const recipients = this.resolveRecipients(options.to);
-    const message    = this.validateMessage(options.message);
+    const message = this.validateMessage(options.message);
 
     if (recipients.length === 0) {
       return this.failResult([], 'No valid recipients provided.');
@@ -54,7 +54,14 @@ export class SmsService {
     const sender = this.sanitizeSender(options.sender ?? cfg.senderName);
     const dlrUrl = options.dlrUrl ?? cfg.dlrUrl ?? '';
 
-    const result = await this.callIntouchApi(cfg.username, cfg.password, recipients, message, sender, dlrUrl);
+    const result = await this.callIntouchApi(
+      cfg.username,
+      cfg.password,
+      recipients,
+      message,
+      sender,
+      dlrUrl,
+    );
     void this.saveHistory(result, message, sender);
     return result;
   }
@@ -206,8 +213,12 @@ export class SmsService {
   /** Convert InTouch "YYYYMMDDHHmmss" timestamp to ISO 8601. */
   private parseSentAt(raw: string): string {
     if (!raw || raw.length < 14) return raw;
-    const y = raw.slice(0, 4), mo = raw.slice(4, 6), d = raw.slice(6, 8);
-    const h = raw.slice(8, 10), mi = raw.slice(10, 12), s = raw.slice(12, 14);
+    const y = raw.slice(0, 4),
+      mo = raw.slice(4, 6),
+      d = raw.slice(6, 8);
+    const h = raw.slice(8, 10),
+      mi = raw.slice(10, 12),
+      s = raw.slice(12, 14);
     const iso = `${y}-${mo}-${d}T${h}:${mi}:${s}`;
     return isNaN(Date.parse(iso)) ? raw : new Date(iso).toISOString();
   }
@@ -244,7 +255,10 @@ export class SmsService {
   private resolveRecipients(input: string | string[]): string[] {
     const raw = Array.isArray(input)
       ? input
-      : input.split(',').map((s) => s.trim()).filter(Boolean);
+      : input
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
 
     const normalised = raw
       .map((p) => this.normalizePhone(p))
@@ -287,10 +301,19 @@ export class SmsService {
   }
 
   private sanitizeSender(sender: string): string {
-    return sender.replace(/[^a-zA-Z0-9 ]/g, '').slice(0, 11).trim() || 'RMC';
+    return (
+      sender
+        .replace(/[^a-zA-Z0-9 ]/g, '')
+        .slice(0, 11)
+        .trim() || 'RMC'
+    );
   }
 
-  private async saveHistory(result: SmsSendResult, message: string, sender?: string): Promise<void> {
+  private async saveHistory(
+    result: SmsSendResult,
+    message: string,
+    sender?: string,
+  ): Promise<void> {
     try {
       await this.historyRepo.save(
         this.historyRepo.create({

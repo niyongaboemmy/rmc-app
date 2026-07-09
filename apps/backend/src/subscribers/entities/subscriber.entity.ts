@@ -1,6 +1,10 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, Index,
-  CreateDateColumn, UpdateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 /** A newsletter subscriber (email-only, single opt-in). */

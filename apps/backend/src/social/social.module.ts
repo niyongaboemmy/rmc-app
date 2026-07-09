@@ -10,13 +10,7 @@ import { TwitterProvider } from './providers/twitter.provider';
 
 @Module({
   imports: [ConfigModule, ContentModule],
-  providers: [
-    SocialService,
-    YoutubeProvider,
-    FacebookProvider,
-    InstagramProvider,
-    TwitterProvider,
-  ],
+  providers: [SocialService, YoutubeProvider, FacebookProvider, InstagramProvider, TwitterProvider],
   controllers: [SocialController],
   exports: [SocialService],
 })
