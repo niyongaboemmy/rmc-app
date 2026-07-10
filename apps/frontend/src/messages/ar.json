@@ -665,7 +665,7 @@
         "mosque": "المسجد",
         "mosquePlaceholder": "اختر مسجدك",
         "requestedImamName": "اسم الإمام",
-        "requestedImamHint": "الإمام الذي تتوقع أن يشهد لك",
+        "requestedImamHint": "يُملأ تلقائيًا من إمام المسجد المسجَّل — يمكنك تعديله إذا كنت تتوقع شخصًا آخر.",
         "motif": "سبب الطلب",
         "motifOptions": {
           "employment": "التوظيف",

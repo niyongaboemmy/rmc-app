@@ -665,7 +665,7 @@
         "mosque": "Mosque",
         "mosquePlaceholder": "Select your mosque",
         "requestedImamName": "Imam's Name",
-        "requestedImamHint": "The Imam you expect to attest to your standing",
+        "requestedImamHint": "Auto-filled from the selected mosque's registered Imam — edit if you expect someone else.",
         "motif": "Reason for Request",
         "motifOptions": {
           "employment": "Employment",
