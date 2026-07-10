@@ -66,7 +66,7 @@ type Step2Data = z.infer<typeof step2Schema>;
 
 type District = { id: string; name: string };
 type Sector = { id: string; name: string };
-type Mosque = { id: string; name: string };
+type Mosque = { id: string; name: string; imamName: string | null };
 type WizardPhase = 1 | 2 | 'payment';
 
 interface Props {
@@ -383,6 +383,7 @@ function Step2Masjid({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
@@ -414,7 +415,14 @@ function Step2Masjid({
       <Select
         label={`${t('mosque')} (${t('optional')})`}
         placeholder={t('mosquePlaceholder')}
-        {...register('mosqueId')}
+        {...register('mosqueId', {
+          onChange: (e) => {
+            // Default the Imam field to the selected mosque's registered Imam —
+            // applicants can still overwrite it if they expect someone else to attest.
+            const mosque = mosques.find((m) => m.id === e.target.value);
+            if (mosque?.imamName) setValue('requestedImamName', mosque.imamName);
+          },
+        })}
         options={mosques.map((m) => ({ value: m.id, label: m.name }))}
       />
 
