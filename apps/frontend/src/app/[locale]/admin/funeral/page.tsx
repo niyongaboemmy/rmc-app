@@ -6,27 +6,26 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   Moon, RefreshCw, Download, Search, ArrowUpRight, ChevronRight,
-  ClipboardList, Bell, Users, Landmark, BarChart3, LayoutDashboard,
-  UserRound, Phone, Clock, CheckCircle2, Plus, Pencil, Trash2, SlidersHorizontal, Loader2,
+  ClipboardList, Landmark, BarChart3, LayoutDashboard, Truck,
+  Phone, Clock, CheckCircle2, Plus, Pencil, Trash2, SlidersHorizontal, Loader2,
 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import { FuneralStatCard } from '@/components/funeral/FuneralStatCard';
-import { VolunteerManagement } from '@/components/funeral/VolunteerManagement';
 import { EmptyState } from '@/components/funeral/EmptyState';
 import { ConfirmDialog } from '@/components/funeral/ConfirmDialog';
 import { FuneralToast } from '@/components/funeral/FuneralToast';
 import { RequestStageDialog } from '@/components/funeral/RequestStageDialog';
-import { AnnouncementFormDialog } from '@/components/funeral/AnnouncementFormDialog';
 import { CemeteryFormDialog } from '@/components/funeral/CemeteryFormDialog';
-import { funeralApi } from '@/lib/funeralApi';
+import { TransportFormDialog } from '@/components/funeral/TransportFormDialog';
+import { funeralApi, type TransportPayload } from '@/lib/funeralApi';
 import { occupancyPercent, requestProgress } from '@/components/funeral/data';
 import { pickStep } from '@/components/funeral/stepLabels';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import {
-  type FuneralRequest, type FuneralAnnouncement, type Cemetery,
-  type Volunteer, type VolunteerTask, type FuneralStepConfig, type FuneralSkillConfig,
+  type FuneralRequest, type Cemetery, type Transport, type FuneralStepConfig,
 } from '@/components/funeral/types';
 
 export default function AdminFuneralPage() {
@@ -37,14 +36,13 @@ export default function AdminFuneralPage() {
   );
 }
 
-type Tab = 'overview' | 'requests' | 'announcements' | 'volunteers' | 'cemeteries' | 'reports';
+type Tab = 'overview' | 'requests' | 'cemeteries' | 'transports' | 'reports';
 
 const TABS: { key: Tab; icon: React.ElementType }[] = [
   { key: 'overview', icon: LayoutDashboard },
   { key: 'requests', icon: ClipboardList },
-  { key: 'announcements', icon: Bell },
-  { key: 'volunteers', icon: Users },
   { key: 'cemeteries', icon: Landmark },
+  { key: 'transports', icon: Truck },
   { key: 'reports', icon: BarChart3 },
 ];
 
@@ -52,7 +50,6 @@ const TABS: { key: Tab; icon: React.ElementType }[] = [
 function FuneralAdmin() {
   const { locale } = useParams<{ locale: string }>();
   const t = useTranslations('admin.funeral');
-  const ts = useTranslations('services.funeral');
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.FUNERAL_MANAGE);
 
@@ -60,25 +57,21 @@ function FuneralAdmin() {
   const [query, setQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('');
   const [steps, setSteps] = useState<FuneralStepConfig[]>([]);
-  const [skills, setSkills] = useState<FuneralSkillConfig[]>([]);
 
-  // Funeral requests come from the backend; the rest are still mock/in-memory
-  // until their modules land.
   const [requests, setRequests] = useState<FuneralRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
-  const [announcements, setAnnouncements] = useState<FuneralAnnouncement[]>([]);
-  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [cemeteries, setCemeteries] = useState<Cemetery[]>([]);
   const [loadingCemeteries, setLoadingCemeteries] = useState(true);
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
-  const [loadingVolunteers, setLoadingVolunteers] = useState(true);
+  const [transports, setTransports] = useState<Transport[]>([]);
+  const [loadingTransports, setLoadingTransports] = useState(true);
 
   // Dialog + feedback state.
   const [managingRequest, setManagingRequest] = useState<FuneralRequest | null>(null);
-  const [announcementForm, setAnnouncementForm] = useState<{ open: boolean; initial?: FuneralAnnouncement }>({ open: false });
   const [cemeteryForm, setCemeteryForm] = useState<{ open: boolean; initial?: Cemetery }>({ open: false });
+  const [transportForm, setTransportForm] = useState<{ open: boolean; initial?: Transport }>({ open: false });
   const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [toast, setToast] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (!toast) return;
@@ -96,20 +89,13 @@ function FuneralAdmin() {
       .then((res) => { if (active) setCemeteries(res); })
       .catch(() => { if (active) setCemeteries([]); })
       .finally(() => { if (active) setLoadingCemeteries(false); });
-    funeralApi.listAnnouncements()
-      .then((res) => { if (active) setAnnouncements(res); })
-      .catch(() => { if (active) setAnnouncements([]); })
-      .finally(() => { if (active) setLoadingAnnouncements(false); });
-    funeralApi.listVolunteers()
-      .then((res) => { if (active) setVolunteers(res); })
-      .catch(() => { if (active) setVolunteers([]); })
-      .finally(() => { if (active) setLoadingVolunteers(false); });
+    funeralApi.adminListTransports()
+      .then((res) => { if (active) setTransports(res); })
+      .catch(() => { if (active) setTransports([]); })
+      .finally(() => { if (active) setLoadingTransports(false); });
     funeralApi.listSteps()
       .then((res) => { if (active) setSteps(res); })
       .catch(() => { if (active) setSteps([]); });
-    funeralApi.listSkills()
-      .then((res) => { if (active) setSkills(res); })
-      .catch(() => { if (active) setSkills([]); });
     return () => { active = false; };
   }, []);
 
@@ -117,31 +103,20 @@ function FuneralAdmin() {
   const terminalKey = steps.length ? steps[steps.length - 1].key : undefined;
   const stageLabel = (s: string) => { const st = stepByKey.get(s); return st ? pickStep(st.title, locale) : s; };
   const stagePillStyle = (s: string) => { const c = stepByKey.get(s)?.color ?? '#6b7280'; return { backgroundColor: `${c}1a`, color: c }; };
-  const skillByKey = new Map(skills.map((s) => [s.key, s]));
-  const taskLabel = (task: VolunteerTask) => { const s = skillByKey.get(task); return s ? pickStep(s.label, locale) : task; };
   const fmtDate = (v: string) => new Date(v).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 
   // Derived figures — "completed" = the terminal (last active) step.
   const completed = terminalKey ? requests.filter((r) => r.stage === terminalKey).length : 0;
   const pending = requests.length - completed;
-  const upcoming = announcements.filter((a) => new Date(a.prayerTime).getTime() >= Date.now()).length;
-  const assignedVolunteers = volunteers.filter((v) => v.assignedTask).length;
-  const availableVolunteers = volunteers.length - assignedVolunteers;
 
   const filteredRequests = useMemo(() => {
     const q = query.trim().toLowerCase();
     return requests.filter((r) => {
-      if (q && !r.deceased.fullName.toLowerCase().includes(q) && !r.reference.toLowerCase().includes(q)) return false;
+      if (q && !r.deceased.fullName.toLowerCase().includes(q)) return false;
       if (stageFilter && r.stage !== stageFilter) return false;
       return true;
     });
   }, [requests, query, stageFilter]);
-
-  // Funerals a volunteer can be assigned to (active, i.e. not yet completed).
-  const assignableFunerals = useMemo(
-    () => requests.filter((r) => r.stage !== terminalKey).map((r) => ({ id: r.id, reference: r.reference, deceasedName: r.deceased.fullName })),
-    [requests, terminalKey],
-  );
 
   // ── Mutations ──
   const saveRequestStage = async (stage: string) => {
@@ -155,42 +130,6 @@ function FuneralAdmin() {
     } catch {
       setToast(t('requests.toastError'));
     }
-  };
-
-  const saveAnnouncement = async (a: FuneralAnnouncement) => {
-    const target = announcementForm.initial;
-    const editing = target != null;
-    const { id: _id, ...payload } = a;
-    void _id;
-    setAnnouncementForm({ open: false });
-    try {
-      if (editing) {
-        const updated = await funeralApi.updateAnnouncement(target.id, payload);
-        setAnnouncements((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-      } else {
-        const created = await funeralApi.createAnnouncement(payload);
-        setAnnouncements((prev) => [created, ...prev]);
-      }
-      setToast(t(editing ? 'announcements.toastUpdated' : 'announcements.toastCreated', { name: a.name }));
-    } catch {
-      setToast(t('announcements.toastError'));
-    }
-  };
-
-  const deleteAnnouncement = (a: FuneralAnnouncement) => {
-    setConfirm({
-      message: t('announcements.deleteConfirm', { name: a.name }),
-      onConfirm: async () => {
-        setConfirm(null);
-        try {
-          await funeralApi.deleteAnnouncement(a.id);
-          setAnnouncements((prev) => prev.filter((x) => x.id !== a.id));
-          setToast(t('announcements.toastDeleted', { name: a.name }));
-        } catch {
-          setToast(t('announcements.toastError'));
-        }
-      },
-    });
   };
 
   const saveCemetery = async (c: Cemetery) => {
@@ -230,45 +169,54 @@ function FuneralAdmin() {
     });
   };
 
-  const upsertVolunteer = (v: Volunteer) =>
-    setVolunteers((prev) => (prev.some((x) => x.id === v.id) ? prev.map((x) => (x.id === v.id ? v : x)) : [...prev, v]));
-
-  const assignVolunteer = async (id: string, task: VolunteerTask, requestId: string) => {
-    try { upsertVolunteer(await funeralApi.assignVolunteer(id, task, requestId)); } catch { setToast(t('volunteersError')); }
-  };
-  const unassignVolunteer = async (id: string) => {
-    try { upsertVolunteer(await funeralApi.unassignVolunteer(id)); } catch { setToast(t('volunteersError')); }
-  };
-  const saveVolunteer = async (v: Volunteer) => {
-    const exists = volunteers.some((x) => x.id === v.id);
-    const payload = { name: v.name, phone: v.phone, mosqueId: v.mosqueId, skills: v.skills };
+  const saveTransport = async (payload: TransportPayload) => {
+    const target = transportForm.initial;
+    const editing = target != null;
+    setTransportForm({ open: false });
     try {
-      upsertVolunteer(exists ? await funeralApi.updateVolunteer(v.id, payload) : await funeralApi.createVolunteer(payload));
+      if (editing) {
+        const updated = await funeralApi.updateTransport(target.id, payload);
+        setTransports((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      } else {
+        const created = await funeralApi.createTransport(payload);
+        setTransports((prev) => [...prev, created]);
+      }
+      setToast(t(editing ? 'transports.toastUpdated' : 'transports.toastCreated', { name: payload.name }));
     } catch {
-      setToast(t('volunteersError'));
-    }
-  };
-  const deleteVolunteer = async (id: string) => {
-    try {
-      await funeralApi.deleteVolunteer(id);
-      setVolunteers((prev) => prev.filter((v) => v.id !== id));
-    } catch {
-      setToast(t('volunteersError'));
+      setToast(t('transports.toastError'));
     }
   };
 
-  const exportRequests = () => {
-    const header = [t('requests.col.reference'), t('requests.col.deceased'), t('requests.col.stage'), t('requests.col.progress'), t('requests.col.contact'), t('requests.col.date')];
-    const rows = requests.map((r) => [
-      r.reference, r.deceased.fullName, stageLabel(r.stage), `${requestProgress(r)}%`, r.family.phone, new Date(r.createdAt).toISOString().slice(0, 10),
-    ]);
-    const csv = [header, ...rows].map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `funeral-requests-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const deleteTransport = (tr: Transport) => {
+    setConfirm({
+      message: t('transports.deleteConfirm', { name: tr.name }),
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          await funeralApi.deleteTransport(tr.id);
+          setTransports((prev) => prev.filter((x) => x.id !== tr.id));
+          setToast(t('transports.toastDeleted', { name: tr.name }));
+        } catch {
+          setToast(t('transports.toastError'));
+        }
+      },
+    });
+  };
+
+  /**
+   * Full .xlsx report of every request matching the current filters — built by the
+   * backend, which can reach the fields (family, arrangements) the table never loads
+   * into view.
+   */
+  const exportRequests = async () => {
+    setExporting(true);
+    try {
+      await funeralApi.exportRequestsXlsx({ stage: stageFilter, search: query });
+    } catch {
+      setToast(t('requests.toastExportError'));
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -286,8 +234,13 @@ function FuneralAdmin() {
         </div>
         <div className="flex items-center gap-2">
           {(tab === 'requests' || tab === 'reports') && (
-            <button onClick={exportRequests} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green">
-              <Download className="h-4 w-4" /> {t('export')}
+            <button
+              onClick={() => void exportRequests()}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {t('export')}
             </button>
           )}
           <button onClick={() => window.location.reload()} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green">
@@ -297,10 +250,8 @@ function FuneralAdmin() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4">
         <FuneralStatCard icon={Clock} tone="amber" value={pending} label={t('stats.pending')} loading={loadingRequests} />
-        <FuneralStatCard icon={Users} tone="green" value={volunteers.length} label={t('stats.volunteers')} loading={loadingVolunteers} />
-        <FuneralStatCard icon={Bell} tone="slate" value={upcoming} label={t('stats.upcoming')} loading={loadingAnnouncements} />
         <FuneralStatCard icon={CheckCircle2} tone="green" value={completed} label={t('stats.completed')} loading={loadingRequests} />
       </div>
 
@@ -338,13 +289,13 @@ function FuneralAdmin() {
             <ul className="divide-y divide-gray-50">
               {requests.slice(0, 5).map((r) => (
                 <li key={r.id}>
-                  <Link href={`/${locale}/services/funeral/detail/${r.reference}`} className="flex items-center gap-3 py-2.5 transition-colors hover:bg-gray-50 -mx-2 rounded-lg px-2">
+                  <Link href={`/${locale}/admin/funeral/requests/${r.id}`} className="flex items-center gap-3 py-2.5 transition-colors hover:bg-gray-50 -mx-2 rounded-lg px-2">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rmc-green/10 text-[11px] font-bold text-rmc-green">
                       {r.deceased.fullName.split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-medium text-gray-900">{r.deceased.fullName}</p>
-                      <p className="font-mono text-[11px] text-gray-400">{r.reference}</p>
+                      <p className="text-[11px] text-gray-400">{new Date(r.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
                     <span className="rounded-full px-2 py-0.5 text-[10.5px] font-bold" style={stagePillStyle(r.stage)}>{stageLabel(r.stage)}</span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 rtl:rotate-180" />
@@ -370,14 +321,16 @@ function FuneralAdmin() {
                 className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 rtl:pl-3 rtl:pr-9"
               />
             </div>
-            <select
+            <SearchableSelect
               value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
-            >
-              <option value="">{t('requests.allStages')}</option>
-              {steps.map((s) => <option key={s.key} value={s.key}>{stageLabel(s.key)}</option>)}
-            </select>
+              onChange={setStageFilter}
+              options={[
+                { value: '', label: t('requests.allStages') },
+                ...steps.map((s) => ({ value: s.key, label: stageLabel(s.key) })),
+              ]}
+              className="w-full sm:w-56"
+              triggerClassName="rounded-xl px-3 py-2.5 text-sm"
+            />
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-black/5">
@@ -390,7 +343,6 @@ function FuneralAdmin() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/60 text-left rtl:text-right">
-                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('requests.col.reference')}</th>
                       <th className="px-4 py-3.5 font-medium text-gray-600">{t('requests.col.deceased')}</th>
                       <th className="px-4 py-3.5 font-medium text-gray-600">{t('requests.col.stage')}</th>
                       <th className="px-4 py-3.5 font-medium text-gray-600 hidden md:table-cell">{t('requests.col.progress')}</th>
@@ -402,7 +354,6 @@ function FuneralAdmin() {
                   <tbody className="divide-y divide-gray-50">
                     {filteredRequests.map((r) => (
                       <tr key={r.id} className="align-top transition-colors hover:bg-rmc-green/[0.03]">
-                        <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700">{r.reference}</td>
                         <td className="px-4 py-4">
                           <p className="font-medium text-gray-900">{r.deceased.fullName}</p>
                           <p className="text-[11px] text-gray-400 sm:hidden">{fmtDate(r.createdAt)}</p>
@@ -424,14 +375,6 @@ function FuneralAdmin() {
                         <td className="px-4 py-4 hidden whitespace-nowrap text-xs text-gray-500 sm:table-cell">{fmtDate(r.createdAt)}</td>
                         <td className="px-4 py-4">
                           <div className="flex items-center justify-end gap-3">
-                            {(() => {
-                              const count = volunteers.filter((v) => v.assignedRequestId === r.id).length;
-                              return count > 0 ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-rmc-green/10 px-2 py-0.5 text-[11px] font-bold text-rmc-green" title={t('requests.attendantsCount', { count })}>
-                                  <Users className="h-3 w-3" /> {count}
-                                </span>
-                              ) : null;
-                            })()}
                             {canManage && (
                               <button
                                 onClick={() => setManagingRequest(r)}
@@ -440,7 +383,7 @@ function FuneralAdmin() {
                                 <SlidersHorizontal className="h-3.5 w-3.5" /> {t('requests.manage')}
                               </button>
                             )}
-                            <Link href={`/${locale}/services/funeral/detail/${r.reference}`} className="inline-flex items-center gap-1 text-xs font-semibold text-rmc-green hover:text-rmc-green-dark">
+                            <Link href={`/${locale}/admin/funeral/requests/${r.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-rmc-green hover:text-rmc-green-dark">
                               {t('requests.view')} <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
                             </Link>
                           </div>
@@ -453,81 +396,6 @@ function FuneralAdmin() {
             )}
           </div>
         </div>
-      )}
-
-      {/* ── Announcements ── */}
-      {tab === 'announcements' && (
-        <div className="space-y-4">
-          {canManage && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => setAnnouncementForm({ open: true })}
-                className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
-              >
-                <Plus className="h-4 w-4" /> {t('announcements.add')}
-              </button>
-            </div>
-          )}
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-black/5">
-            {loadingAnnouncements ? (
-              <div className="flex items-center justify-center p-12 text-gray-400"><Loader2 className="h-6 w-6 animate-spin" aria-label={t('loading')} /></div>
-            ) : announcements.length === 0 ? (
-              <div className="p-6"><EmptyState icon={Bell} title={t('announcements.emptyTitle')} message={t('announcements.emptyText')} /></div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50/60 text-left rtl:text-right">
-                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('announcements.col.name')}</th>
-                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden sm:table-cell">{t('announcements.col.age')}</th>
-                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('announcements.col.prayer')}</th>
-                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden md:table-cell">{t('announcements.col.janazah')}</th>
-                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden lg:table-cell">{t('announcements.col.burial')}</th>
-                      {canManage && <th className="px-4 py-3.5" />}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {announcements.map((a) => (
-                      <tr key={a.id} className="transition-colors hover:bg-rmc-green/[0.03]">
-                        <td className="px-4 py-4 font-medium text-gray-900">{a.name}</td>
-                        <td className="px-4 py-4 hidden text-gray-500 sm:table-cell">{a.age}</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-gray-600">{new Date(a.prayerTime).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
-                        <td className="px-4 py-4 hidden text-gray-500 md:table-cell">{a.janazahLocation}</td>
-                        <td className="px-4 py-4 hidden text-gray-500 lg:table-cell">{a.burialLocation}</td>
-                        {canManage && (
-                          <td className="px-4 py-4">
-                            <div className="flex items-center justify-end gap-1">
-                              <button onClick={() => setAnnouncementForm({ open: true, initial: a })} aria-label={t('actions.edit')} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-rmc-green">
-                                <Pencil className="h-4 w-4" />
-                              </button>
-                              <button onClick={() => deleteAnnouncement(a)} aria-label={t('actions.delete')} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Volunteers ── */}
-      {tab === 'volunteers' && (
-        <VolunteerManagement
-          volunteers={volunteers}
-          funerals={assignableFunerals}
-          skills={skills}
-          onAssign={assignVolunteer}
-          onUnassign={unassignVolunteer}
-          onSaveVolunteer={saveVolunteer}
-          onDeleteVolunteer={deleteVolunteer}
-          canManage={canManage}
-        />
       )}
 
       {/* ── Cemeteries ── */}
@@ -603,14 +471,82 @@ function FuneralAdmin() {
         </div>
       )}
 
+      {/* ── Transports ── */}
+      {tab === 'transports' && (
+        <div className="space-y-4">
+          {canManage && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => setTransportForm({ open: true })}
+                className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+              >
+                <Plus className="h-4 w-4" /> {t('transports.add')}
+              </button>
+            </div>
+          )}
+          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-black/5">
+            {loadingTransports ? (
+              <div className="flex items-center justify-center p-12 text-gray-400"><Loader2 className="h-6 w-6 animate-spin" aria-label={t('loading')} /></div>
+            ) : transports.length === 0 ? (
+              <div className="p-6"><EmptyState icon={Truck} title={t('transports.emptyTitle')} message={t('transports.emptyText')} /></div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/60 text-left rtl:text-right">
+                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('transports.col.name')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('transports.col.mosque')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden sm:table-cell">{t('transports.col.location')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600 hidden lg:table-cell">{t('transports.col.phone')}</th>
+                      <th className="px-4 py-3.5 font-medium text-gray-600">{t('transports.col.status')}</th>
+                      {canManage && <th className="px-4 py-3.5" />}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {transports.map((tr) => (
+                      <tr key={tr.id} className="transition-colors hover:bg-rmc-green/[0.03]">
+                        <td className="px-4 py-4 font-medium text-gray-900">{tr.name}</td>
+                        <td className="px-4 py-4 text-gray-500">{tr.mosque}</td>
+                        <td className="px-4 py-4 hidden text-gray-500 sm:table-cell">{tr.location}</td>
+                        <td className="px-4 py-4 hidden text-gray-500 lg:table-cell">
+                          <a href={`tel:${tr.phone.replace(/\s+/g, '')}`} className="hover:text-rmc-green">{tr.phone}</a>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={cn(
+                            'inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold',
+                            tr.isActive ? 'bg-rmc-green/10 text-rmc-green' : 'bg-gray-100 text-gray-500',
+                          )}>
+                            {t(tr.isActive ? 'transports.status.active' : 'transports.status.inactive')}
+                          </span>
+                        </td>
+                        {canManage && (
+                          <td className="px-4 py-4">
+                            <div className="flex items-center justify-end gap-1">
+                              <button onClick={() => setTransportForm({ open: true, initial: tr })} aria-label={t('actions.edit')} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-rmc-green">
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button onClick={() => deleteTransport(tr)} aria-label={t('actions.delete')} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Reports ── */}
       {tab === 'reports' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4">
             <ReportTile label={t('reports.totalRequests')} value={requests.length} icon={ClipboardList} />
             <ReportTile label={t('reports.completed')} value={completed} icon={CheckCircle2} />
-            <ReportTile label={t('reports.volunteersAvailable')} value={availableVolunteers} icon={Users} />
-            <ReportTile label={t('reports.volunteersAssigned')} value={assignedVolunteers} icon={UserRound} />
           </div>
 
           {/* By stage */}
@@ -635,9 +571,6 @@ function FuneralAdmin() {
             </div>
           </div>
 
-          <button onClick={exportRequests} className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark">
-            <Download className="h-4 w-4" /> {t('reports.exportRequests')}
-          </button>
           {!canManage && <p className="text-[12px] text-gray-400">{t('viewerNote')}</p>}
         </div>
       )}
@@ -647,22 +580,9 @@ function FuneralAdmin() {
         <RequestStageDialog
           request={managingRequest}
           steps={steps}
-          attendants={volunteers.filter((v) => v.assignedRequestId === managingRequest.id)}
-          availableVolunteers={volunteers.filter((v) => !v.assignedTask)}
           stageLabel={stageLabel}
-          taskLabel={taskLabel}
-          canManage={canManage}
           onSave={saveRequestStage}
-          onAssignAttendant={(volunteerId, task) => assignVolunteer(volunteerId, task, managingRequest.id)}
-          onUnassignAttendant={unassignVolunteer}
           onClose={() => setManagingRequest(null)}
-        />
-      )}
-      {announcementForm.open && (
-        <AnnouncementFormDialog
-          initial={announcementForm.initial}
-          onSave={saveAnnouncement}
-          onClose={() => setAnnouncementForm({ open: false })}
         />
       )}
       {cemeteryForm.open && (
@@ -670,6 +590,13 @@ function FuneralAdmin() {
           initial={cemeteryForm.initial}
           onSave={saveCemetery}
           onClose={() => setCemeteryForm({ open: false })}
+        />
+      )}
+      {transportForm.open && (
+        <TransportFormDialog
+          initial={transportForm.initial}
+          onSave={saveTransport}
+          onClose={() => setTransportForm({ open: false })}
         />
       )}
       {confirm && (

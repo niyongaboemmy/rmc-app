@@ -10,10 +10,6 @@ export class FuneralRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Index('IDX_funeral_req_reference')
-  @Column({ type: 'varchar', length: 20, unique: true })
-  reference: string;
-
   // ── Deceased ───────────────────────────────────────────────────────
   @Column({ name: 'deceased_full_name', type: 'varchar', length: 150 })
   deceasedFullName: string;
@@ -36,8 +32,22 @@ export class FuneralRequest {
   @Column({ name: 'deceased_cause_of_death', type: 'text', nullable: true })
   deceasedCauseOfDeath: string | null;
 
+  /**
+   * File-server key of the uploaded death certificate. Legacy rows may still hold a
+   * bare filename with no file behind it — those have no mime type (see below).
+   */
   @Column({ name: 'death_certificate', type: 'varchar', length: 500, nullable: true })
   deathCertificate: string | null;
+
+  @Column({ name: 'death_certificate_name', type: 'varchar', length: 255, nullable: true })
+  deathCertificateName: string | null;
+
+  /** Present only when a real file was uploaded — the admin UI keys off this. */
+  @Column({ name: 'death_certificate_mime', type: 'varchar', length: 100, nullable: true })
+  deathCertificateMime: string | null;
+
+  @Column({ name: 'death_certificate_size', type: 'integer', nullable: true })
+  deathCertificateSize: number | null;
 
   // ── Family ─────────────────────────────────────────────────────────
   @Column({ name: 'family_next_of_kin', type: 'varchar', length: 150 })
@@ -68,20 +78,8 @@ export class FuneralRequest {
   @Column({ name: 'arr_preferred_burial_time', type: 'varchar', length: 10, nullable: true })
   arrPreferredBurialTime: string | null;
 
-  @Column({ name: 'arr_ghusl_required', type: 'boolean', default: true })
-  arrGhuslRequired: boolean;
-
-  @Column({ name: 'arr_kafan_required', type: 'boolean', default: true })
-  arrKafanRequired: boolean;
-
-  @Column({ name: 'arr_janazah_prayer_required', type: 'boolean', default: true })
-  arrJanazahPrayerRequired: boolean;
-
   @Column({ name: 'arr_transportation_required', type: 'boolean', default: false })
   arrTransportationRequired: boolean;
-
-  @Column({ name: 'arr_grave_preparation_required', type: 'boolean', default: false })
-  arrGravePreparationRequired: boolean;
 
   @Column({ name: 'arr_notes', type: 'text', nullable: true })
   arrNotes: string | null;

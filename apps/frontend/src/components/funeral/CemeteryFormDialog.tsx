@@ -113,19 +113,19 @@ export function CemeteryFormDialog({
       }
     >
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t('name')} value={name} onChange={(e) => setName(e.target.value)} className="col-span-2" hint={req(name)} />
-        <Field label={t('address')} value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-2" hint={req(address)} />
+        <Field label={t('name')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} className="col-span-2" hint={req(name) ?? t('nameHint')} />
+        <Field label={t('address')} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t('addressPlaceholder')} className="col-span-2" hint={req(address) ?? t('addressHint')} />
         <Field
           label={t('capacity')}
           type="number"
           min={0}
           value={capacity}
           onChange={(e) => setCapacity(e.target.value)}
-          hint={touched && !(Number(capacity) > 0) ? <span className="text-red-500">{t('required')}</span> : undefined}
+          hint={touched && !(Number(capacity) > 0) ? <span className="text-red-500">{t('required')}</span> : t('capacityHint')}
         />
-        <Field label={t('used')} type="number" min={0} value={used} onChange={(e) => setUsed(e.target.value)} />
-        <Field label={t('contactPerson')} value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} />
-        <Field label={t('phone')} value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Field label={t('used')} type="number" min={0} value={used} onChange={(e) => setUsed(e.target.value)} hint={t('usedHint')} />
+        <Field label={t('contactPerson')} value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} hint={t('contactPersonHint')} />
+        <Field label={t('phone')} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX" hint={t('phoneHint')} />
 
         {/* Location: map picker + geolocation */}
         <div className="col-span-2">

@@ -1,27 +1,22 @@
 /**
- * Funeral Services API client.
- *
- * The requests lifecycle is backed by the real NestJS funeral module. Reference
- * data that doesn't have a backend yet (announcements) still resolves from the
- * mock data — swap those for `apiClient` calls as their modules land.
+ * Funeral Services API client — backed by the NestJS funeral module
+ * (requests, cemeteries, and lifecycle steps).
  */
 
-import { apiClient } from './api';
+import axios from 'axios';
+import { apiClient, API_BASE_URL } from './api';
+import { downloadXlsx } from './downloadXlsx';
 import type {
   FuneralRequestPayload,
-  FuneralAnnouncement,
   FuneralRequest,
   FuneralStage,
   FuneralStepConfig,
-  FuneralSkillConfig,
   Cemetery,
-  Volunteer,
-  VolunteerTask,
+  Transport,
 } from '@/components/funeral/types';
 
 export type CemeteryPayload = Omit<Cemetery, 'id'>;
-export type AnnouncementPayload = Omit<FuneralAnnouncement, 'id'>;
-export type VolunteerPayload = Pick<Volunteer, 'name' | 'phone' | 'mosqueId' | 'skills'>;
+export type TransportPayload = Omit<Transport, 'id' | 'mosque'>;
 
 export interface StepInput {
   key?: string;
@@ -37,18 +32,8 @@ export interface StepInput {
   icon?: string;
 }
 
-export interface SkillInput {
-  key?: string;
-  labelEn?: string;
-  labelRw?: string;
-  labelAr?: string;
-  sortOrder?: number;
-  isActive?: boolean;
-}
-
 export interface FuneralRequestResult {
   id: string;
-  reference: string;
   status: 'received';
 }
 
@@ -59,24 +44,60 @@ export interface FuneralStatsResult {
   byStage: Record<FuneralStage, number>;
 }
 
+/** Accepted certificate formats — kept in step with the backend's allow-list. */
+export const FUNERAL_DOC_ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,application/pdf';
+export const FUNERAL_DOC_MAX_BYTES = 10 * 1024 * 1024;
+
+/** What POST /funeral/documents returns once the certificate is stored. */
+export interface UploadedFuneralDocument {
+  fileKey: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+}
+
 export const funeralApi = {
   // ── Public ──────────────────────────────────────────────────────────────
+  /**
+   * Upload the death certificate. Goes to the backend (not the file server), which
+   * validates it and forwards it under a service token — no auth needed here.
+   *
+   * Raw axios, not apiClient: the shared instance forces
+   * `Content-Type: application/json`, which strips the multipart boundary and the
+   * server then sees no file at all.
+   */
+  async uploadDocument(
+    file: File,
+    onProgress?: (pct: number) => void,
+  ): Promise<UploadedFuneralDocument> {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await axios.post(`${API_BASE_URL}/funeral/documents`, form, {
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+      },
+    });
+    return data.data ?? data;
+  },
+
   /** Submit a new funeral service request. */
   async submitRequest(payload: FuneralRequestPayload): Promise<FuneralRequestResult> {
     const { data } = await apiClient.post('/funeral/requests', payload);
     return data.data ?? data;
   },
 
-  /** Look up a request by its reference for the public status page. */
-  async getRequestByReference(reference: string): Promise<FuneralRequest | null> {
-    try {
-      const { data } = await apiClient.get(`/funeral/requests/by-reference/${encodeURIComponent(reference.trim())}`);
-      // The envelope is { data: <request|null> }; a null payload means "not found".
-      // (Do NOT fall back to the envelope itself, or a not-found reads as found.)
-      return data?.data ?? null;
-    } catch {
-      return null;
-    }
+  /**
+   * Admin — fetch the death certificate's bytes as an object URL.
+   *
+   * The certificate is NOT publicly readable; it comes through the authenticated
+   * admin route. Revoke the URL with URL.revokeObjectURL() when done.
+   */
+  async deathCertificateObjectUrl(requestId: string): Promise<string> {
+    const { data } = await apiClient.get(
+      `/admin/funeral/requests/${requestId}/death-certificate`,
+      { responseType: 'blob' },
+    );
+    return URL.createObjectURL(data as Blob);
   },
 
   // ── Admin ───────────────────────────────────────────────────────────────
@@ -84,6 +105,11 @@ export const funeralApi = {
   async listRequests(params?: { stage?: string; search?: string }): Promise<FuneralRequest[]> {
     const { data } = await apiClient.get('/admin/funeral/requests', { params });
     return data.data ?? data;
+  },
+
+  /** Admin — download the requests matching the filters as an .xlsx report. */
+  exportRequestsXlsx(params?: { stage?: string; search?: string }): Promise<void> {
+    return downloadXlsx('/admin/funeral/requests/export', { ...params }, 'funeral-requests');
   },
 
   /** Fetch a single request by id (admin). */
@@ -128,64 +154,31 @@ export const funeralApi = {
     await apiClient.delete(`/admin/funeral/cemeteries/${id}`);
   },
 
-  // ── Announcements ─────────────────────────────────────────────────────────
-  /** Public funeral announcements (janāzah notices). */
-  async listAnnouncements(): Promise<FuneralAnnouncement[]> {
-    const { data } = await apiClient.get('/funeral/announcements');
+  // ── Transports ────────────────────────────────────────────────────────────
+  /** Active transport means grouped-ready (public directory). */
+  async listTransports(): Promise<Transport[]> {
+    const { data } = await apiClient.get('/funeral/transports');
     return data.data ?? data;
   },
 
-  /** Create an announcement (admin). */
-  async createAnnouncement(payload: AnnouncementPayload): Promise<FuneralAnnouncement> {
-    const { data } = await apiClient.post('/admin/funeral/announcements', payload);
+  /** All transports incl. inactive (admin). */
+  async adminListTransports(): Promise<Transport[]> {
+    const { data } = await apiClient.get('/admin/funeral/transports');
     return data.data ?? data;
   },
 
-  /** Update an announcement (admin). */
-  async updateAnnouncement(id: string, payload: AnnouncementPayload): Promise<FuneralAnnouncement> {
-    const { data } = await apiClient.patch(`/admin/funeral/announcements/${id}`, payload);
+  async createTransport(payload: TransportPayload): Promise<Transport> {
+    const { data } = await apiClient.post('/admin/funeral/transports', payload);
     return data.data ?? data;
   },
 
-  /** Delete an announcement (admin). */
-  async deleteAnnouncement(id: string): Promise<void> {
-    await apiClient.delete(`/admin/funeral/announcements/${id}`);
-  },
-
-  // ── Volunteers ────────────────────────────────────────────────────────────
-  /** List funeral volunteers (public roster + admin). */
-  async listVolunteers(): Promise<Volunteer[]> {
-    const { data } = await apiClient.get('/funeral/volunteers');
+  async updateTransport(id: string, payload: TransportPayload): Promise<Transport> {
+    const { data } = await apiClient.patch(`/admin/funeral/transports/${id}`, payload);
     return data.data ?? data;
   },
 
-  /** Add a volunteer (admin). */
-  async createVolunteer(payload: VolunteerPayload): Promise<Volunteer> {
-    const { data } = await apiClient.post('/admin/funeral/volunteers', payload);
-    return data.data ?? data;
-  },
-
-  /** Update a volunteer (admin). */
-  async updateVolunteer(id: string, payload: VolunteerPayload): Promise<Volunteer> {
-    const { data } = await apiClient.patch(`/admin/funeral/volunteers/${id}`, payload);
-    return data.data ?? data;
-  },
-
-  /** Remove a volunteer (admin). */
-  async deleteVolunteer(id: string): Promise<void> {
-    await apiClient.delete(`/admin/funeral/volunteers/${id}`);
-  },
-
-  /** Assign a volunteer to a funeral + task (admin). */
-  async assignVolunteer(id: string, task: VolunteerTask, requestId: string): Promise<Volunteer> {
-    const { data } = await apiClient.patch(`/admin/funeral/volunteers/${id}/assign`, { task, requestId });
-    return data.data ?? data;
-  },
-
-  /** Unassign a volunteer (admin). */
-  async unassignVolunteer(id: string): Promise<Volunteer> {
-    const { data } = await apiClient.patch(`/admin/funeral/volunteers/${id}/unassign`);
-    return data.data ?? data;
+  async deleteTransport(id: string): Promise<void> {
+    await apiClient.delete(`/admin/funeral/transports/${id}`);
   },
 
   // ── Lifecycle steps (CMS) ─────────────────────────────────────────────────
@@ -218,38 +211,6 @@ export const funeralApi = {
   /** Persist a new step order (ids in display order). */
   async reorderSteps(ids: string[]): Promise<FuneralStepConfig[]> {
     const { data } = await apiClient.patch('/admin/funeral/steps/reorder', { ids });
-    return data.data ?? data;
-  },
-
-  // ── Attendant skills (CMS) ────────────────────────────────────────────────
-  /** Active skills (public — drives volunteer forms/cards). */
-  async listSkills(): Promise<FuneralSkillConfig[]> {
-    const { data } = await apiClient.get('/funeral/skills');
-    return data.data ?? data;
-  },
-
-  /** All skills incl. inactive (admin). */
-  async adminListSkills(): Promise<FuneralSkillConfig[]> {
-    const { data } = await apiClient.get('/admin/funeral/skills');
-    return data.data ?? data;
-  },
-
-  async createSkill(payload: SkillInput): Promise<FuneralSkillConfig> {
-    const { data } = await apiClient.post('/admin/funeral/skills', payload);
-    return data.data ?? data;
-  },
-
-  async updateSkill(id: string, payload: SkillInput): Promise<FuneralSkillConfig> {
-    const { data } = await apiClient.patch(`/admin/funeral/skills/${id}`, payload);
-    return data.data ?? data;
-  },
-
-  async deleteSkill(id: string): Promise<void> {
-    await apiClient.delete(`/admin/funeral/skills/${id}`);
-  },
-
-  async reorderSkills(ids: string[]): Promise<FuneralSkillConfig[]> {
-    const { data } = await apiClient.patch('/admin/funeral/skills/reorder', { ids });
     return data.data ?? data;
   },
 };

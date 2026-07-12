@@ -43,6 +43,10 @@ export enum Permission {
   FUNERAL_VIEW = 'funeral:view',
   FUNERAL_MANAGE = 'funeral:manage',
 
+  HAJJ_VIEW = 'hajj:view',
+  HAJJ_MANAGE = 'hajj:manage',
+  HAJJ_APPROVE = 'hajj:approve',
+
   CONTACT_MESSAGES_VIEW = 'contact_messages:view',
   CONTACT_MESSAGES_MANAGE = 'contact_messages:manage',
 

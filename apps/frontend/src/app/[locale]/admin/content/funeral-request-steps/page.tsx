@@ -13,6 +13,7 @@ import { STEP_ICON_NAMES, stepIcon } from '@/components/funeral/stepIcons';
 import { FuneralModal } from '@/components/funeral/FuneralModal';
 import { ConfirmDialog } from '@/components/funeral/ConfirmDialog';
 import { Field } from '@/components/funeral/Field';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import type { FuneralStepConfig } from '@/components/funeral/types';
 import {
   ArrowLeft, Moon, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Check, Loader2, EyeOff,
@@ -277,10 +278,17 @@ function StepFormModal({
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundColor: color }}>
               {IconPreview ? <IconPreview className="h-4 w-4" /> : <span className="text-[11px] font-bold">1</span>}
             </span>
-            <select value={icon} onChange={(e) => setIcon(e.target.value)} className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30">
-              <option value="">No icon (number)</option>
-              {STEP_ICON_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
+            <SearchableSelect
+              value={icon}
+              onChange={setIcon}
+              options={[
+                { value: '', label: 'No icon (number)' },
+                ...STEP_ICON_NAMES.map((n) => ({ value: n, label: n })),
+              ]}
+              searchPlaceholder="Search icons…"
+              className="flex-1"
+              triggerClassName="rounded-xl px-3 py-2.5 text-sm"
+            />
           </div>
         </div>
 

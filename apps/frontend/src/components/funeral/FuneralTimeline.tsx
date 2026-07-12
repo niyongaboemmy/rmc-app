@@ -1,4 +1,4 @@
-import { Check, UserRound } from 'lucide-react';
+import { Check } from 'lucide-react';
 import type { TimelineStep, FuneralStage } from './types';
 import { FuneralStatusBadge } from './FuneralStatusBadge';
 import { stepIcon } from './stepIcons';
@@ -9,7 +9,6 @@ interface Labels {
   colors?: Partial<Record<FuneralStage, string>>;
   icons?: Partial<Record<FuneralStage, string>>;
   status: { done: string; active: string; pending: string };
-  assigned: string;
 }
 
 /** Vertical funeral progress timeline. Presentational — server-safe. */
@@ -76,14 +75,6 @@ export function FuneralTimeline({
                   {new Date(step.timestamp).toLocaleString(locale, {
                     weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                   })}
-                </p>
-              )}
-
-              {step.assignedVolunteer && (
-                <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-gray-600">
-                  <UserRound className="h-3.5 w-3.5 shrink-0 text-rmc-green" aria-hidden="true" />
-                  <span className="text-gray-400">{labels.assigned}:</span>
-                  <span className="font-medium text-gray-800">{step.assignedVolunteer}</span>
                 </p>
               )}
 

@@ -7,11 +7,28 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowLeft, ArrowRight, Check, CheckCircle2, ListChecks, Loader2, Upload, X,
+  ArrowLeft, ArrowRight, Check, CheckCircle2, FileCheck2, Loader2, Upload, X,
 } from 'lucide-react';
-import { funeralApi } from '@/lib/funeralApi';
+import {
+  funeralApi,
+  FUNERAL_DOC_ACCEPT,
+  FUNERAL_DOC_MAX_BYTES,
+  type UploadedFuneralDocument,
+} from '@/lib/funeralApi';
 import { mosqueApi } from '@/lib/mosqueApi';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import type { Cemetery } from './types';
+
+// Rwandan phone: 10 digits starting 07 (e.g. 0788123456). National ID: 16 digits.
+const RW_PHONE = /^07\d{8}$/;
+const NATIONAL_ID = /^\d{16}$/;
+export const digitsOnly = (v: string) => (v ?? '').replace(/\D/g, '');
+// Accept local (0788…) or international (+250788… / 250788…) and store as local.
+export const normalizeRwPhone = (v: string) => {
+  const d = digitsOnly(v);
+  return d.startsWith('250') ? `0${d.slice(3)}` : d;
+};
+const todayISO = () => new Date().toISOString().slice(0, 10);
 
 // Schema factory — takes a translator so messages are localized. Called at
 // module scope with an identity fn purely to derive the TS type.
@@ -21,31 +38,52 @@ function buildSchema(tr: (k: string) => string) {
       fullName: z.string().trim().min(2, tr('validation.required')),
       gender: z.enum(['male', 'female'], { errorMap: () => ({ message: tr('validation.selectGender') }) }),
       dateOfBirth: z.string().min(1, tr('validation.required')),
-      dateOfDeath: z.string().min(1, tr('validation.required')),
-      nationalId: z.string().trim().min(1, tr('validation.required')),
+      dateOfDeath: z.string().min(1, tr('validation.required'))
+        .refine((d) => !d || d <= todayISO(), tr('validation.dateOfDeathFuture')),
+      nationalId: z.string().trim().min(1, tr('validation.required'))
+        .refine((v) => NATIONAL_ID.test(digitsOnly(v)), tr('validation.nationalId')),
       placeOfDeath: z.string().trim().min(1, tr('validation.required')),
       causeOfDeath: z.string().trim().optional(),
       deathCertificate: z.string().optional(),
     }),
     family: z.object({
       nextOfKin: z.string().trim().min(2, tr('validation.required')),
-      phone: z.string().trim().min(6, tr('validation.phone')),
+      phone: z.string().trim().min(1, tr('validation.required'))
+        .refine((v) => RW_PHONE.test(normalizeRwPhone(v)), tr('validation.phone')),
       email: z.string().trim().email(tr('validation.email')).optional().or(z.literal('')),
       address: z.string().trim().min(2, tr('validation.required')),
-      emergencyContact: z.string().trim().optional(),
+      emergencyContact: z.string().trim()
+        .refine((v) => !v || RW_PHONE.test(normalizeRwPhone(v)), tr('validation.phone'))
+        .optional(),
     }),
     arrangements: z.object({
       preferredMosque: z.string().optional(),
       preferredCemetery: z.string().optional(),
       preferredBurialDate: z.string().optional(),
       preferredBurialTime: z.string().optional(),
-      ghuslRequired: z.boolean(),
-      kafanRequired: z.boolean(),
-      janazahPrayerRequired: z.boolean(),
       transportationRequired: z.boolean(),
-      gravePreparationRequired: z.boolean(),
       notes: z.string().optional(),
     }),
+  }).superRefine((val, ctx) => {
+    const death = val.deceased?.dateOfDeath;
+    // Date of birth must be before the date of death.
+    const birth = val.deceased?.dateOfBirth;
+    if (death && birth && birth > death) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['deceased', 'dateOfBirth'],
+        message: tr('validation.dobBeforeDeath'),
+      });
+    }
+    // Burial cannot be scheduled before the date of death.
+    const burial = val.arrangements?.preferredBurialDate;
+    if (death && burial && burial < death) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['arrangements', 'preferredBurialDate'],
+        message: tr('validation.burialBeforeDeath'),
+      });
+    }
   });
 }
 
@@ -60,20 +98,10 @@ const STEP_KEYS = ['deceased', 'family', 'arrangements', 'review'] as const;
 // Fields validated before leaving each step (optional fields omitted).
 const STEP_FIELDS: Record<number, (keyof FormValues | `${string}.${string}`)[]> = {
   0: ['deceased.fullName', 'deceased.gender', 'deceased.dateOfBirth', 'deceased.dateOfDeath', 'deceased.nationalId', 'deceased.placeOfDeath'],
-  1: ['family.nextOfKin', 'family.phone', 'family.email', 'family.address'],
-  2: [],
+  1: ['family.nextOfKin', 'family.phone', 'family.email', 'family.address', 'family.emergencyContact'],
+  2: ['arrangements.preferredBurialDate'],
 };
 
-const SERVICE_TOGGLES = [
-  'ghuslRequired', 'kafanRequired', 'janazahPrayerRequired', 'transportationRequired', 'gravePreparationRequired',
-] as const;
-const SERVICE_LABEL_KEY: Record<(typeof SERVICE_TOGGLES)[number], string> = {
-  ghuslRequired: 'ghusl',
-  kafanRequired: 'kafan',
-  janazahPrayerRequired: 'janazah',
-  transportationRequired: 'transport',
-  gravePreparationRequired: 'grave',
-};
 
 export function FuneralRequestForm({ locale }: { locale: string }) {
   const t = useTranslations('services.funeral.request');
@@ -81,8 +109,13 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
 
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState('');
-  const [reference, setReference] = useState<string | null>(null);
-  const [fileName, setFileName] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  // Holds the STORED certificate (key + metadata) so the admin can open the real
+  // file — previously only the filename was kept and the file was thrown away.
+  const [certificate, setCertificate] = useState<UploadedFuneralDocument | null>(null);
+  const [certUploading, setCertUploading] = useState(false);
+  const [certPct, setCertPct] = useState(0);
+  const [certError, setCertError] = useState('');
   const [mosques, setMosques] = useState<{ id: string; name: string }[]>([]);
   const [cemeteries, setCemeteries] = useState<Cemetery[]>([]);
 
@@ -117,8 +150,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
       family: { nextOfKin: '', phone: '', email: '', address: '', emergencyContact: '' },
       arrangements: {
         preferredMosque: '', preferredCemetery: '', preferredBurialDate: '', preferredBurialTime: '',
-        ghuslRequired: true, kafanRequired: true, janazahPrayerRequired: true,
-        transportationRequired: false, gravePreparationRequired: false, notes: '',
+        transportationRequired: false, notes: '',
       },
     },
   });
@@ -134,21 +166,67 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
   const onSubmit = async (data: FormValues) => {
     setSubmitError('');
     try {
-      const res = await funeralApi.submitRequest(data);
-      setReference(res.reference);
+      // Normalize phone/ID to bare digits so the stored value is canonical.
+      const payload: FormValues = {
+        ...data,
+        deceased: { ...data.deceased, nationalId: digitsOnly(data.deceased.nationalId) },
+        family: {
+          ...data.family,
+          phone: normalizeRwPhone(data.family.phone),
+          emergencyContact: data.family.emergencyContact ? normalizeRwPhone(data.family.emergencyContact) : data.family.emergencyContact,
+        },
+      };
+      await funeralApi.submitRequest({
+        ...payload,
+        deceased: {
+          ...payload.deceased,
+          // The key is already in deathCertificate; ship the metadata the admin
+          // UI needs to render the document.
+          deathCertificateName: certificate?.fileName,
+          deathCertificateMime: certificate?.mimeType,
+          deathCertificateSize: certificate?.fileSize,
+        },
+      });
+      setSubmitted(true);
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       setSubmitError(t('validation.required'));
     }
   };
 
-  const onPickFile = (file?: File | null) => {
-    setFileName(file?.name ?? '');
-    setValue('deceased.deathCertificate', file?.name ?? '');
+  const onPickFile = async (file?: File | null) => {
+    setCertError('');
+    if (!file) {
+      setCertificate(null);
+      setValue('deceased.deathCertificate', '');
+      return;
+    }
+    if (file.size > FUNERAL_DOC_MAX_BYTES) {
+      setCertError(t('deceased.certificateTooLarge'));
+      return;
+    }
+    if (!FUNERAL_DOC_ACCEPT.split(',').includes(file.type)) {
+      setCertError(t('deceased.certificateType'));
+      return;
+    }
+
+    setCertUploading(true);
+    setCertPct(0);
+    try {
+      const doc = await funeralApi.uploadDocument(file, setCertPct);
+      setCertificate(doc);
+      setValue('deceased.deathCertificate', doc.fileKey);
+    } catch {
+      setCertError(t('deceased.certificateUploadFailed'));
+      setCertificate(null);
+      setValue('deceased.deathCertificate', '');
+    } finally {
+      setCertUploading(false);
+    }
   };
 
   // ── Success ──
-  if (reference) {
+  if (submitted) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center sm:px-6">
         <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-rmc-green-light ring-4 ring-rmc-green/10">
@@ -156,21 +234,11 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
         </span>
         <h2 className="text-xl font-bold text-gray-900">{t('success.title')}</h2>
         <p className="mt-2 text-sm leading-relaxed text-gray-500">{t('success.message')}</p>
-        <div className="mx-auto mt-5 inline-flex flex-col items-center rounded-2xl border border-gray-100 bg-gray-50 px-6 py-4">
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">{t('success.referenceLabel')}</span>
-          <span className="mt-1 font-mono text-lg font-bold text-rmc-green">{reference}</span>
-        </div>
         <div className="mt-7 flex flex-col items-center gap-3">
-          <Link
-            href={`/${locale}/services/funeral/status?ref=${encodeURIComponent(reference)}`}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark sm:w-auto"
-          >
-            <ListChecks className="h-4 w-4" aria-hidden="true" /> {t('success.track')}
-          </Link>
           <div className="flex flex-col gap-2.5 sm:flex-row">
             <button
               type="button"
-              onClick={() => { reset(); setReference(null); setFileName(''); setStep(0); }}
+              onClick={() => { reset(); setSubmitted(false); setCertificate(null); setStep(0); }}
               className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               {t('success.again')}
@@ -226,7 +294,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
         {step === 0 && (
           <Section heading={t('deceased.heading')}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label={t('deceased.fullName')} required error={errors.deceased?.fullName?.message} className="sm:col-span-2">
+              <Field label={t('deceased.fullName')} required hint={t('deceased.fullNameHint')} error={errors.deceased?.fullName?.message} className="sm:col-span-2">
                 <input className={cx(inputClass, errors.deceased?.fullName && inputError)} {...register('deceased.fullName')} />
               </Field>
 
@@ -241,18 +309,18 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
                 </div>
               </Field>
 
-              <Field label={t('deceased.nationalId')} required error={errors.deceased?.nationalId?.message}>
+              <Field label={t('deceased.nationalId')} required hint={t('deceased.nationalIdHint')} error={errors.deceased?.nationalId?.message}>
                 <input inputMode="numeric" className={cx(inputClass, errors.deceased?.nationalId && inputError)} {...register('deceased.nationalId')} />
               </Field>
 
-              <Field label={t('deceased.dob')} required error={errors.deceased?.dateOfBirth?.message}>
+              <Field label={t('deceased.dob')} required hint={t('deceased.dobHint')} error={errors.deceased?.dateOfBirth?.message}>
                 <input type="date" className={cx(inputClass, errors.deceased?.dateOfBirth && inputError)} {...register('deceased.dateOfBirth')} />
               </Field>
-              <Field label={t('deceased.dod')} required error={errors.deceased?.dateOfDeath?.message}>
+              <Field label={t('deceased.dod')} required hint={t('deceased.dodHint')} error={errors.deceased?.dateOfDeath?.message}>
                 <input type="date" className={cx(inputClass, errors.deceased?.dateOfDeath && inputError)} {...register('deceased.dateOfDeath')} />
               </Field>
 
-              <Field label={t('deceased.placeOfDeath')} required error={errors.deceased?.placeOfDeath?.message} className="sm:col-span-2">
+              <Field label={t('deceased.placeOfDeath')} required hint={t('deceased.placeOfDeathHint')} error={errors.deceased?.placeOfDeath?.message} className="sm:col-span-2">
                 <input className={cx(inputClass, errors.deceased?.placeOfDeath && inputError)} {...register('deceased.placeOfDeath')} />
               </Field>
 
@@ -261,11 +329,52 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               </Field>
 
               <Field label={t('deceased.certificate')} hint={t('deceased.certificateHint')} className="sm:col-span-2">
-                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-3.5 py-3 text-sm text-gray-500 transition-colors hover:border-rmc-green/40 hover:text-rmc-green">
-                  <Upload className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span className="truncate">{fileName || t('deceased.certificate')}</span>
-                  <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => onPickFile(e.target.files?.[0])} />
-                </label>
+                {certificate ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-rmc-green/30 bg-rmc-green-light/40 px-3.5 py-3 text-sm">
+                    <FileCheck2 className="h-4 w-4 shrink-0 text-rmc-green" aria-hidden="true" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-gray-900">{certificate.fileName}</span>
+                      <span className="block text-[11.5px] text-gray-500">
+                        {Math.max(1, Math.round(certificate.fileSize / 1024))} KB · {t('deceased.certificateUploaded')}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void onPickFile(null)}
+                      aria-label={t('deceased.certificateRemove')}
+                      className="shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-white hover:text-red-600"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={cx(
+                    'flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3.5 py-3 text-sm transition-colors',
+                    certError
+                      ? 'border-red-300 text-red-500'
+                      : 'border-gray-300 bg-gray-50 text-gray-500 hover:border-rmc-green/40 hover:text-rmc-green',
+                    certUploading && 'cursor-wait',
+                  )}>
+                    {certUploading
+                      ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+                      : <Upload className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                    <span className="truncate">
+                      {certUploading ? `${t('deceased.certificateUploading')} ${certPct}%` : t('deceased.certificate')}
+                    </span>
+                    <input
+                      type="file"
+                      accept={FUNERAL_DOC_ACCEPT}
+                      disabled={certUploading}
+                      className="hidden"
+                      onChange={(e) => { void onPickFile(e.target.files?.[0]); e.target.value = ''; }}
+                    />
+                  </label>
+                )}
+                {certError && (
+                  <p className="mt-1 flex items-center gap-1 text-[11.5px] font-medium text-red-600">
+                    <X className="h-3 w-3 shrink-0" aria-hidden="true" /> {certError}
+                  </p>
+                )}
               </Field>
             </div>
           </Section>
@@ -275,19 +384,19 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
         {step === 1 && (
           <Section heading={t('family.heading')}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label={t('family.nextOfKin')} required error={errors.family?.nextOfKin?.message}>
+              <Field label={t('family.nextOfKin')} required hint={t('family.nextOfKinHint')} error={errors.family?.nextOfKin?.message}>
                 <input className={cx(inputClass, errors.family?.nextOfKin && inputError)} {...register('family.nextOfKin')} />
               </Field>
-              <Field label={t('family.phone')} required error={errors.family?.phone?.message}>
-                <input type="tel" inputMode="tel" className={cx(inputClass, errors.family?.phone && inputError)} {...register('family.phone')} />
+              <Field label={t('family.phone')} required hint={t('family.phoneHint')} error={errors.family?.phone?.message}>
+                <input type="tel" inputMode="tel" placeholder="07XXXXXXXX" className={cx(inputClass, errors.family?.phone && inputError)} {...register('family.phone')} />
               </Field>
-              <Field label={t('family.email')} error={errors.family?.email?.message}>
+              <Field label={t('family.email')} hint={t('family.emailHint')} error={errors.family?.email?.message}>
                 <input type="email" className={cx(inputClass, errors.family?.email && inputError)} {...register('family.email')} />
               </Field>
-              <Field label={t('family.emergency')}>
-                <input type="tel" inputMode="tel" className={inputClass} {...register('family.emergencyContact')} />
+              <Field label={t('family.emergency')} hint={t('family.emergencyHint')}>
+                <input type="tel" inputMode="tel" placeholder="07XXXXXXXX" className={inputClass} {...register('family.emergencyContact')} />
               </Field>
-              <Field label={t('family.address')} required error={errors.family?.address?.message} className="sm:col-span-2">
+              <Field label={t('family.address')} required hint={t('family.addressHint')} error={errors.family?.address?.message} className="sm:col-span-2">
                 <input className={cx(inputClass, errors.family?.address && inputError)} {...register('family.address')} />
               </Field>
             </div>
@@ -298,26 +407,34 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
         {step === 2 && (
           <Section heading={t('arrangements.heading')}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label={t('arrangements.mosque')}>
-                <select className={inputClass} defaultValue="" {...register('arrangements.preferredMosque')}>
-                  <option value="">{t('arrangements.selectMosque')}</option>
-                  {mosques.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
+              <Field label={t('arrangements.mosque')} hint={t('arrangements.mosqueHint')}>
+                <SearchableSelect
+                  value={watch('arrangements.preferredMosque') ?? ''}
+                  onChange={(v) => setValue('arrangements.preferredMosque', v)}
+                  options={mosques.map((m) => ({ value: m.id, label: m.name }))}
+                  noneLabel={t('arrangements.selectMosque')}
+                  placeholder={t('arrangements.selectMosque')}
+                  searchPlaceholder={t('arrangements.selectMosque')}
+                  size="md"
+                  zIndex={45}
+                />
               </Field>
-              <Field label={t('arrangements.cemetery')}>
-                <select className={inputClass} defaultValue="" {...register('arrangements.preferredCemetery')}>
-                  <option value="">{t('arrangements.selectCemetery')}</option>
-                  {cemeteries.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+              <Field label={t('arrangements.cemetery')} hint={t('arrangements.cemeteryHint')}>
+                <SearchableSelect
+                  value={watch('arrangements.preferredCemetery') ?? ''}
+                  onChange={(v) => setValue('arrangements.preferredCemetery', v)}
+                  options={cemeteries.map((c) => ({ value: c.id, label: c.name }))}
+                  noneLabel={t('arrangements.selectCemetery')}
+                  placeholder={t('arrangements.selectCemetery')}
+                  searchPlaceholder={t('arrangements.selectCemetery')}
+                  size="md"
+                  zIndex={45}
+                />
               </Field>
-              <Field label={t('arrangements.burialDate')}>
+              <Field label={t('arrangements.burialDate')} hint={t('arrangements.burialDateHint')}>
                 <input type="date" className={inputClass} {...register('arrangements.preferredBurialDate')} />
               </Field>
-              <Field label={t('arrangements.burialTime')}>
+              <Field label={t('arrangements.burialTime')} hint={t('arrangements.burialTimeHint')}>
                 <input type="time" className={inputClass} {...register('arrangements.preferredBurialTime')} />
               </Field>
             </div>
@@ -326,14 +443,10 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               <legend className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">
                 {t('arrangements.servicesLabel')}
               </legend>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {SERVICE_TOGGLES.map((name) => (
-                  <label key={name} className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300 accent-rmc-green" {...register(`arrangements.${name}` as const)} />
-                    {t(`arrangements.${SERVICE_LABEL_KEY[name]}`)}
-                  </label>
-                ))}
-              </div>
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40">
+                <input type="checkbox" className="h-4 w-4 rounded border-gray-300 accent-rmc-green" {...register('arrangements.transportationRequired')} />
+                {t('arrangements.transport')}
+              </label>
             </fieldset>
 
             <Field label={t('arrangements.notes')} hint={t('arrangements.notesHint')} className="mt-4">
@@ -354,7 +467,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
                 [t('deceased.nationalId'), values.deceased?.nationalId],
                 [t('deceased.placeOfDeath'), values.deceased?.placeOfDeath],
                 [t('deceased.cause'), values.deceased?.causeOfDeath],
-                [t('deceased.certificate'), fileName],
+                [t('deceased.certificate'), certificate?.fileName ?? ''],
               ]} fallback={t('review.notProvided')} />
 
               <ReviewGroup title={t('steps.family')} rows={[
@@ -370,10 +483,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
                 [t('arrangements.cemetery'), cemeteries.find((c) => c.id === values.arrangements?.preferredCemetery)?.name],
                 [t('arrangements.burialDate'), values.arrangements?.preferredBurialDate],
                 [t('arrangements.burialTime'), values.arrangements?.preferredBurialTime],
-                ...SERVICE_TOGGLES.map((name): [string, string] => [
-                  t(`arrangements.${SERVICE_LABEL_KEY[name]}`),
-                  values.arrangements?.[name] ? t('review.yes') : t('review.no'),
-                ]),
+                [t('arrangements.transport'), values.arrangements?.transportationRequired ? t('review.yes') : t('review.no')],
                 [t('arrangements.notes'), values.arrangements?.notes],
               ]} fallback={t('review.notProvided')} />
             </div>

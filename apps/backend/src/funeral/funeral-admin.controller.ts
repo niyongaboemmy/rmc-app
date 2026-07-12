@@ -1,28 +1,33 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  ParseUUIDPipe,
+  Res,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { FuneralService } from './funeral.service';
 import { CemeteryService } from './cemetery.service';
-import { AnnouncementService } from './announcement.service';
-import { VolunteerService } from './volunteer.service';
 import { FuneralStepService } from './funeral-step.service';
-import { FuneralSkillService } from './funeral-skill.service';
+import { FuneralTransportService } from './funeral-transport.service';
 import { UpdateFuneralStageDto } from './dto/update-funeral-stage.dto';
 import { CreateCemeteryDto } from './dto/create-cemetery.dto';
 import { UpdateCemeteryDto } from './dto/update-cemetery.dto';
-import { CreateAnnouncementDto } from './dto/create-announcement.dto';
-import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
-import { CreateVolunteerDto } from './dto/create-volunteer.dto';
-import { UpdateVolunteerDto } from './dto/update-volunteer.dto';
-import { AssignVolunteerDto } from './dto/assign-volunteer.dto';
 import { CreateFuneralStepDto } from './dto/create-funeral-step.dto';
 import { UpdateFuneralStepDto } from './dto/update-funeral-step.dto';
 import { ReorderStepsDto } from './dto/reorder-steps.dto';
-import { CreateFuneralSkillDto } from './dto/create-funeral-skill.dto';
-import { UpdateFuneralSkillDto } from './dto/update-funeral-skill.dto';
-import { ReorderSkillsDto } from './dto/reorder-skills.dto';
+import { CreateFuneralTransportDto } from './dto/create-funeral-transport.dto';
+import { UpdateFuneralTransportDto } from './dto/update-funeral-transport.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
+import { sendXlsx } from '../common/utils/xlsx';
 import { User } from '../users/entities/user.entity';
 
 @ApiTags('Funeral — Admin')
@@ -32,47 +37,9 @@ export class FuneralAdminController {
   constructor(
     private readonly service: FuneralService,
     private readonly cemeteries: CemeteryService,
-    private readonly announcements: AnnouncementService,
-    private readonly volunteers: VolunteerService,
     private readonly steps: FuneralStepService,
-    private readonly skills: FuneralSkillService,
+    private readonly transports: FuneralTransportService,
   ) {}
-
-  // ── Attendant skills (CMS) ────────────────────────────────────────────────
-  @Get('skills')
-  @Permissions(Permission.FUNERAL_VIEW)
-  @ApiOperation({ summary: 'List all attendant skills (incl. inactive)' })
-  listSkills() {
-    return this.skills.findAllDto(false);
-  }
-
-  @Post('skills')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Add an attendant skill' })
-  createSkill(@Body() dto: CreateFuneralSkillDto) {
-    return this.skills.create(dto);
-  }
-
-  @Patch('skills/reorder')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Reorder attendant skills' })
-  reorderSkills(@Body() dto: ReorderSkillsDto) {
-    return this.skills.reorder(dto.ids);
-  }
-
-  @Patch('skills/:id')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Update an attendant skill' })
-  updateSkill(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateFuneralSkillDto) {
-    return this.skills.update(id, dto);
-  }
-
-  @Delete('skills/:id')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Delete an attendant skill (blocked if in use)' })
-  removeSkill(@Param('id', ParseUUIDPipe) id: string) {
-    return this.skills.remove(id);
-  }
 
   // ── Lifecycle steps (CMS) ─────────────────────────────────────────────────
   @Get('steps')
@@ -110,78 +77,6 @@ export class FuneralAdminController {
     return this.steps.remove(id);
   }
 
-  // ── Volunteers ──────────────────────────────────────────────────────────
-  @Get('volunteers')
-  @Permissions(Permission.FUNERAL_VIEW)
-  @ApiOperation({ summary: 'List funeral volunteers' })
-  listVolunteers() {
-    return this.volunteers.findAll();
-  }
-
-  @Post('volunteers')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Add a volunteer (attendant)' })
-  createVolunteer(@Body() dto: CreateVolunteerDto) {
-    return this.volunteers.create(dto);
-  }
-
-  @Patch('volunteers/:id')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Update a volunteer' })
-  updateVolunteer(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateVolunteerDto) {
-    return this.volunteers.update(id, dto);
-  }
-
-  @Delete('volunteers/:id')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Remove a volunteer' })
-  removeVolunteer(@Param('id', ParseUUIDPipe) id: string) {
-    return this.volunteers.remove(id);
-  }
-
-  @Patch('volunteers/:id/assign')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Assign a volunteer to a funeral + task' })
-  assignVolunteer(@Param('id', ParseUUIDPipe) id: string, @Body() dto: AssignVolunteerDto) {
-    return this.volunteers.assign(id, dto);
-  }
-
-  @Patch('volunteers/:id/unassign')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Unassign a volunteer' })
-  unassignVolunteer(@Param('id', ParseUUIDPipe) id: string) {
-    return this.volunteers.unassign(id);
-  }
-
-  // ── Announcements ─────────────────────────────────────────────────────────
-  @Get('announcements')
-  @Permissions(Permission.FUNERAL_VIEW)
-  @ApiOperation({ summary: 'List funeral announcements' })
-  listAnnouncements() {
-    return this.announcements.findAll();
-  }
-
-  @Post('announcements')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Create an announcement' })
-  createAnnouncement(@Body() dto: CreateAnnouncementDto) {
-    return this.announcements.create(dto);
-  }
-
-  @Patch('announcements/:id')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Update an announcement' })
-  updateAnnouncement(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAnnouncementDto) {
-    return this.announcements.update(id, dto);
-  }
-
-  @Delete('announcements/:id')
-  @Permissions(Permission.FUNERAL_MANAGE)
-  @ApiOperation({ summary: 'Delete an announcement' })
-  removeAnnouncement(@Param('id', ParseUUIDPipe) id: string) {
-    return this.announcements.remove(id);
-  }
-
   // ── Cemeteries ──────────────────────────────────────────────────────────
   @Get('cemeteries')
   @Permissions(Permission.FUNERAL_VIEW)
@@ -211,6 +106,35 @@ export class FuneralAdminController {
     return this.cemeteries.remove(id);
   }
 
+  // ── Transports ────────────────────────────────────────────────────────────
+  @Get('transports')
+  @Permissions(Permission.FUNERAL_VIEW)
+  @ApiOperation({ summary: 'List transport means (incl. inactive)' })
+  listTransports() {
+    return this.transports.findAll();
+  }
+
+  @Post('transports')
+  @Permissions(Permission.FUNERAL_MANAGE)
+  @ApiOperation({ summary: 'Create a transport means' })
+  createTransport(@Body() dto: CreateFuneralTransportDto) {
+    return this.transports.create(dto);
+  }
+
+  @Patch('transports/:id')
+  @Permissions(Permission.FUNERAL_MANAGE)
+  @ApiOperation({ summary: 'Update a transport means' })
+  updateTransport(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateFuneralTransportDto) {
+    return this.transports.update(id, dto);
+  }
+
+  @Delete('transports/:id')
+  @Permissions(Permission.FUNERAL_MANAGE)
+  @ApiOperation({ summary: 'Delete a transport means' })
+  removeTransport(@Param('id', ParseUUIDPipe) id: string) {
+    return this.transports.remove(id);
+  }
+
   @Get('requests')
   @Permissions(Permission.FUNERAL_VIEW)
   @ApiOperation({ summary: 'List funeral requests' })
@@ -227,11 +151,49 @@ export class FuneralAdminController {
     return this.service.getStats();
   }
 
+  /**
+   * Declared before `requests/:id` on purpose: Nest matches in declaration order, so
+   * the other way round "export" would be parsed as an id and rejected by the UUID pipe.
+   */
+  @Get('requests/export')
+  @Permissions(Permission.FUNERAL_VIEW)
+  @ApiOperation({ summary: 'Export the filtered funeral requests as an .xlsx report' })
+  @ApiQuery({ name: 'stage', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  async exportRequests(
+    @Res() res: Response,
+    @Query('stage') stage?: string,
+    @Query('search') search?: string,
+  ): Promise<void> {
+    const buffer = await this.service.exportXlsx({ stage, search });
+    sendXlsx(res, buffer, 'funeral-requests');
+  }
+
   @Get('requests/:id')
   @Permissions(Permission.FUNERAL_VIEW)
   @ApiOperation({ summary: 'Get a funeral request by id' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.findOne(id);
+  }
+
+  /**
+   * Stream the uploaded death certificate. The file server will not serve these keys
+   * to an anonymous browser, so this authenticated route is the only way to see it.
+   */
+  @Get('requests/:id/death-certificate')
+  @Permissions(Permission.FUNERAL_VIEW)
+  @ApiOperation({ summary: 'Download/inspect the death certificate' })
+  async deathCertificate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { fileName, buffer, mimeType } = await this.service.adminGetDeathCertificate(id);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', buffer.length);
+    // inline so images render in <img> and PDFs in an <iframe>
+    res.setHeader('Content-Disposition', `inline; filename="${fileName.replace(/"/g, '')}"`);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.end(buffer);
   }
 
   @Patch('requests/:id/stage')

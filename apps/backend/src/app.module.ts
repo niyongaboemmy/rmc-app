@@ -23,8 +23,10 @@ import { PublicModule } from './public/public.module';
 import { MarriageModule } from './marriage/marriage.module';
 import { GoodConductModule } from './good-conduct/good-conduct.module';
 import { FuneralModule } from './funeral/funeral.module';
+import { HajjModule } from './hajj/hajj.module';
 import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
+import { FinanceModule } from './finance/finance.module';
 import { SubscribersModule } from './subscribers/subscribers.module';
 import { SchoolsModule } from './schools/schools.module';
 import { SocialModule } from './social/social.module';
@@ -67,8 +69,10 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     MarriageModule,
     GoodConductModule,
     FuneralModule,
+    HajjModule,
     ContentModule,
     DonationsModule,
+    FinanceModule,
     SubscribersModule,
     SchoolsModule,
     SocialModule,

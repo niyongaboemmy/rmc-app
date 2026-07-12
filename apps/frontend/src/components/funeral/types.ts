@@ -41,18 +41,6 @@ export type FuneralRole =
   | 'volunteer'
   | 'family';
 
-/** A skill/task key (funeral_skills.key) — the set is admin-managed, so a string. */
-export type VolunteerTask = string;
-
-/** A configurable attendant skill (from the funeral skills API / CMS). */
-export interface FuneralSkillConfig {
-  id: string;
-  key: string;
-  label: StepText;
-  sortOrder: number;
-  isActive: boolean;
-}
-
 export interface DeceasedInfo {
   fullName: string;
   gender: Gender;
@@ -61,8 +49,16 @@ export interface DeceasedInfo {
   nationalId: string;
   placeOfDeath: string;
   causeOfDeath?: string;
-  /** File name / storage key of the uploaded death certificate. */
+  /** File-server key of the uploaded death certificate. */
   deathCertificate?: string;
+  deathCertificateName?: string;
+  /**
+   * Present only when a real file was uploaded. Legacy reports (before uploads
+   * existed) carry a bare filename in `deathCertificate` and no mime type — the
+   * admin UI uses this to tell the two apart.
+   */
+  deathCertificateMime?: string;
+  deathCertificateSize?: number;
 }
 
 export interface FamilyInfo {
@@ -81,11 +77,7 @@ export interface FuneralArrangements {
   preferredCemetery?: string;
   preferredBurialDate?: string;
   preferredBurialTime?: string;
-  ghuslRequired: boolean;
-  kafanRequired: boolean;
-  janazahPrayerRequired: boolean;
   transportationRequired: boolean;
-  gravePreparationRequired: boolean;
   notes?: string;
 }
 
@@ -106,32 +98,20 @@ export interface TimelineStep {
 
 export interface FuneralRequest extends FuneralRequestPayload {
   id: string;
-  reference: string;
   stage: FuneralStage;
   createdAt: string;
   timeline: TimelineStep[];
 }
 
-export interface Volunteer {
+export interface Transport {
   id: string;
   name: string;
-  skills: VolunteerTask[];
-  available: boolean;
-  phone: string;
-  /** Mosque this volunteer is registered under. */
   mosqueId: string;
-  /** Mosque name for display (resolved from the id by the backend). */
-  mosqueName?: string;
-  assignedTask?: VolunteerTask;
-  /** Id of the funeral request this volunteer is assigned to, when busy. */
-  assignedRequestId?: string;
-}
-
-/** Minimal funeral descriptor used when picking who a volunteer serves. */
-export interface FuneralOption {
-  id: string;
-  reference: string;
-  deceasedName: string;
+  /** Resolved mosque name (from the backend). */
+  mosque: string;
+  location: string;
+  phone: string;
+  isActive: boolean;
 }
 
 export interface Cemetery {
@@ -146,14 +126,3 @@ export interface Cemetery {
   lng?: number;
 }
 
-export interface FuneralAnnouncement {
-  id: string;
-  name: string;
-  age: number;
-  dateOfDeath: string; // ISO date
-  janazahLocation: string;
-  prayerTime: string; // ISO datetime
-  burialLocation: string;
-  verse?: string;
-  photoUrl?: string;
-}

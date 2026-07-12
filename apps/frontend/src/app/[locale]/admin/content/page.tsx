@@ -10,13 +10,14 @@ import {
   BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
-  ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon, HandHelping,
+  ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
+  Compass, ListChecks,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
 type SectionType = 'crud' | 'edit';
-type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page' | 'Funeral Service';
+type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page' | 'Funeral Service' | 'Hajj Service';
 
 interface SectionConfig {
   id: string;
@@ -259,17 +260,43 @@ const SECTIONS: SectionConfig[] = [
     accentBar: 'bg-emerald-400',
   },
   {
-    id: 'funeral-skills',
-    icon: HandHelping,
-    title: 'Attendant Skills',
-    description: 'Add, edit, reorder and activate the skills a funeral attendant (volunteer) can have and be assigned to.',
-    type: 'crud', itemLabel: 'skills',
-    page: 'Funeral Service', positionOrder: 1,
-    locationLabel: 'Funeral Service · Volunteers',
-    keywords: ['funeral', 'volunteer', 'attendant', 'skills', 'tasks', 'ghusl', 'transportation', 'grave', 'documentation', 'assign', 'reorder'],
-    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
-    badge: 'bg-emerald-100 text-emerald-700',
-    accentBar: 'bg-emerald-400',
+    id: 'hajj',
+    icon: Compass,
+    title: 'Hajj Service',
+    description: 'Hero, the pilgrimage intro, the photo and the requirements heading on the public Hajj page.',
+    type: 'edit', itemLabel: null,
+    page: 'Hajj Service', positionOrder: 0,
+    locationLabel: 'Hajj Service · Landing page',
+    keywords: ['hajj', 'pilgrimage', 'makkah', 'talbiyah', 'hero', 'about', 'photo', 'umrah', 'register'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
+  },
+  {
+    id: 'hajj-requirements',
+    icon: ListChecks,
+    title: 'Hajj Requirements',
+    description: 'Add, edit, reorder and price the Hajj checklist. The registration and initial payment amounts set here are what the registration form charges.',
+    type: 'crud', itemLabel: 'requirements',
+    page: 'Hajj Service', positionOrder: 1,
+    locationLabel: 'Hajj Service · Requirements checklist',
+    keywords: ['hajj', 'requirements', 'checklist', 'passport', 'fee', 'payment', 'amount', 'rwf', 'usd', 'currency', 'registration', 'reorder', 'icon'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
+  },
+  {
+    id: 'hajj-bank-accounts',
+    icon: Building2,
+    title: 'Hajj Bank Accounts',
+    description: 'The accounts applicants pay the Hajj fees into, shown on the Hajj page. Add one per currency you charge in.',
+    type: 'crud', itemLabel: 'accounts',
+    page: 'Hajj Service', positionOrder: 2,
+    locationLabel: 'Hajj Service · Bank accounts',
+    keywords: ['hajj', 'bank', 'account', 'payment', 'transfer', 'iban', 'swift', 'bic', 'branch', 'rwf', 'usd', 'currency'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
   },
 ];
 
@@ -279,6 +306,7 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'Blog Page', icon: Newspaper, color: 'text-cyan-600', description: 'Articles on the public /blog page' },
   { page: 'Contact Page', icon: Mail, color: 'text-teal-600', description: 'Content on the /contact page' },
   { page: 'Funeral Service', icon: Moon, color: 'text-emerald-600', description: 'Content on the funeral service pages' },
+  { page: 'Hajj Service', icon: Compass, color: 'text-amber-600', description: 'Content on the Hajj service pages' },
 ];
 
 type Tab = 'sections' | 'gallery';

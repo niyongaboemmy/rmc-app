@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { PublicUploadService } from '../integrations/storage/public-upload.service';
 import { FuneralRequest } from './entities/funeral-request.entity';
 import { FuneralStatusHistory } from './entities/funeral-status-history.entity';
 import { FuneralStep } from './entities/funeral-step.entity';
@@ -8,6 +9,7 @@ import { Cemetery } from './entities/cemetery.entity';
 import { Mosque } from '../mosques/entities/mosque.entity';
 import { CreateFuneralRequestDto } from './dto/create-funeral-request.dto';
 import { UpdateFuneralStageDto } from './dto/update-funeral-stage.dto';
+import { toXlsxBuffer, formatDate, formatDateTime } from '../common/utils/xlsx';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -15,6 +17,32 @@ export interface ListFilters {
   stage?: string;
   search?: string;
 }
+
+/** Keys of the exported rows, in column order. */
+const FUNERAL_EXPORT_COLUMNS = [
+  'Deceased Name',
+  'Gender',
+  'Date of Birth',
+  'Date of Death',
+  'National ID',
+  'Place of Death',
+  'Cause of Death',
+  'Death Certificate',
+  'Next of Kin',
+  'Phone',
+  'Email',
+  'Address',
+  'Emergency Contact',
+  'Preferred Mosque',
+  'Preferred Cemetery',
+  'Preferred Burial Date',
+  'Preferred Burial Time',
+  'Transport Required',
+  'Arrangement Notes',
+  'Stage',
+  'Progress',
+  'Reported At',
+];
 
 @Injectable()
 export class FuneralService {
@@ -29,8 +57,36 @@ export class FuneralService {
     private readonly cemeteries: Repository<Cemetery>,
     @InjectRepository(FuneralStep)
     private readonly steps: Repository<FuneralStep>,
-    private readonly dataSource: DataSource,
+    private readonly storage: PublicUploadService,
   ) {}
+
+  /**
+   * Load the uploaded death certificate so an admin can inspect the real document.
+   *
+   * Legacy requests hold only a filename the browser typed, with no file behind it —
+   * they have no mime type, and are rejected here rather than 404ing confusingly.
+   */
+  async adminGetDeathCertificate(
+    requestId: string,
+  ): Promise<{ fileName: string; buffer: Buffer; mimeType: string }> {
+    const request = await this.requests.findOne({ where: { id: requestId } });
+    if (!request) throw new NotFoundException('Funeral request not found');
+    if (!request.deathCertificate) {
+      throw new NotFoundException('No death certificate was attached to this report');
+    }
+    if (!request.deathCertificateMime) {
+      throw new NotFoundException(
+        'This report predates file uploads — only a filename was recorded, there is no document to open.',
+      );
+    }
+
+    const { buffer, mimeType } = await this.storage.fetch(request.deathCertificate);
+    return {
+      fileName: request.deathCertificateName ?? 'death-certificate',
+      buffer,
+      mimeType,
+    };
+  }
 
   /** All non-deleted steps, ordered — the base for timelines. */
   private orderedSteps(): Promise<FuneralStep[]> {
@@ -58,25 +114,37 @@ export class FuneralService {
     return new Map(rows.map((c) => [c.id, c.name]));
   }
 
-  /** Human-friendly, unique reference: FNL-00001. */
-  private async generateReference(): Promise<string> {
-    const rows = await this.dataSource.query(`SELECT nextval('funeral_request_seq') AS seq`);
-    return `FNL-${String(rows[0].seq).padStart(5, '0')}`;
-  }
-
   /** Submit a new funeral request. Starts at the "reported" stage. */
-  async submit(dto: CreateFuneralRequestDto): Promise<{ id: string; reference: string; status: 'received' }> {
+  async submit(dto: CreateFuneralRequestDto): Promise<{ id: string; status: 'received' }> {
     const { deceased, family, arrangements } = dto;
-    const reference = await this.generateReference();
+
+    // Date sanity: death cannot be in the future; burial cannot precede death.
+    const today = new Date().toISOString().slice(0, 10);
+    if (deceased.dateOfDeath && deceased.dateOfDeath.slice(0, 10) > today) {
+      throw new BadRequestException('Date of death cannot be in the future');
+    }
+    if (deceased.dateOfBirth && deceased.dateOfDeath
+      && deceased.dateOfBirth.slice(0, 10) > deceased.dateOfDeath.slice(0, 10)) {
+      throw new BadRequestException('Date of birth must be before the date of death');
+    }
+    if (arrangements.preferredBurialDate && deceased.dateOfDeath
+      && arrangements.preferredBurialDate.slice(0, 10) < deceased.dateOfDeath.slice(0, 10)) {
+      throw new BadRequestException('Burial date cannot be before the date of death');
+    }
+
     // Empty strings (the form's default for untouched optional fields) must
     // become null — notably for the date columns, which reject ''.
     const orNull = (v?: string | null) => (v && String(v).trim() ? v : null);
+    // Store phones canonically as local 07XXXXXXXX (accepts +250/250 input).
+    const normPhone = (v?: string | null) => {
+      const d = (v ?? '').replace(/\D/g, '');
+      return d.startsWith('250') ? `0${d.slice(3)}` : d;
+    };
     // New requests start at the first active lifecycle step.
     const first = await this.steps.findOne({ where: { isActive: true }, order: { sortOrder: 'ASC' } });
     const initialStage = first?.key ?? 'reported';
 
     const entity = this.requests.create({
-      reference,
       deceasedFullName: deceased.fullName,
       deceasedGender: deceased.gender,
       deceasedDateOfBirth: orNull(deceased.dateOfBirth),
@@ -85,41 +153,26 @@ export class FuneralService {
       deceasedPlaceOfDeath: orNull(deceased.placeOfDeath),
       deceasedCauseOfDeath: orNull(deceased.causeOfDeath),
       deathCertificate: orNull(deceased.deathCertificate),
+      deathCertificateName: orNull(deceased.deathCertificateName),
+      deathCertificateMime: orNull(deceased.deathCertificateMime),
+      deathCertificateSize: deceased.deathCertificateSize ?? null,
       familyNextOfKin: family.nextOfKin,
-      familyPhone: family.phone,
+      familyPhone: normPhone(family.phone),
       familyEmail: orNull(family.email),
       familyAddress: orNull(family.address),
-      familyEmergencyContact: orNull(family.emergencyContact),
+      familyEmergencyContact: family.emergencyContact ? normPhone(family.emergencyContact) : null,
       arrPreferredMosque: orNull(arrangements.preferredMosque),
       arrPreferredCemetery: orNull(arrangements.preferredCemetery),
       arrPreferredBurialDate: orNull(arrangements.preferredBurialDate),
       arrPreferredBurialTime: orNull(arrangements.preferredBurialTime),
-      arrGhuslRequired: arrangements.ghuslRequired ?? true,
-      arrKafanRequired: arrangements.kafanRequired ?? true,
-      arrJanazahPrayerRequired: arrangements.janazahPrayerRequired ?? true,
       arrTransportationRequired: arrangements.transportationRequired ?? false,
-      arrGravePreparationRequired: arrangements.gravePreparationRequired ?? false,
       arrNotes: orNull(arrangements.notes),
       stage: initialStage,
     });
     const saved = await this.requests.save(entity);
     await this.history.save(this.history.create({ requestId: saved.id, stage: initialStage, notes: 'Request received.' }));
 
-    return { id: saved.id, reference: saved.reference, status: 'received' };
-  }
-
-  /** Public status lookup by reference. Returns null when nothing matches. */
-  async getByReference(reference: string): Promise<ReturnType<FuneralService['toDto']> | null> {
-    const ref = reference.trim().toUpperCase();
-    if (!ref) return null;
-    const entity = await this.requests.findOne({ where: { reference: ref }, relations: ['statusHistory'] });
-    if (!entity) return null;
-    const [mosques, cemeteries, steps] = await Promise.all([
-      this.mosqueNames([entity.arrPreferredMosque]),
-      this.cemeteryNames([entity.arrPreferredCemetery]),
-      this.orderedSteps(),
-    ]);
-    return this.toDto(entity, steps, mosques, cemeteries);
+    return { id: saved.id, status: 'received' };
   }
 
   /** Admin list (newest first) with optional stage/search filters. */
@@ -130,7 +183,7 @@ export class FuneralService {
 
     if (filters.stage) qb.andWhere('r.stage = :stage', { stage: filters.stage });
     if (filters.search) {
-      qb.andWhere('(LOWER(r.deceased_full_name) LIKE :q OR LOWER(r.reference) LIKE :q)', {
+      qb.andWhere('LOWER(r.deceased_full_name) LIKE :q', {
         q: `%${filters.search.toLowerCase()}%`,
       });
     }
@@ -142,6 +195,54 @@ export class FuneralService {
       this.orderedSteps(),
     ]);
     return items.map((r) => this.toDto(r, steps, mosques, cemeteries));
+  }
+
+  /**
+   * The admin list as an .xlsx report, honouring the same stage/search filters — so
+   * a filtered export matches what the admin is actually looking at.
+   *
+   * Deliberately far wider than the on-screen table: the table is a triage view, but
+   * a report is what gets handed to someone who cannot open the app, so it carries
+   * the whole request (deceased, family, arrangements) rather than five columns.
+   */
+  async exportXlsx(filters: ListFilters = {}): Promise<Buffer> {
+    const [requests, steps] = await Promise.all([this.findAll(filters), this.orderedSteps()]);
+    const titleByKey = new Map(steps.map((s) => [s.key, s.titleEn]));
+
+    const rows = requests.map((r) => {
+      // Same definition the admin UI shows, so the report can't contradict the screen.
+      const done = r.timeline.filter((s) => s.status === 'done').length;
+      const progress = r.timeline.length ? Math.round((done / r.timeline.length) * 100) : 0;
+
+      return {
+        'Deceased Name': r.deceased.fullName,
+        Gender: r.deceased.gender,
+        'Date of Birth': formatDate(r.deceased.dateOfBirth),
+        'Date of Death': formatDate(r.deceased.dateOfDeath),
+        'National ID': r.deceased.nationalId,
+        'Place of Death': r.deceased.placeOfDeath,
+        'Cause of Death': r.deceased.causeOfDeath ?? '',
+        // Legacy rows hold a bare filename with no file behind it — saying "Attached"
+        // would send someone looking for a document that does not exist.
+        'Death Certificate': r.deceased.deathCertificateMime ? 'Attached' : 'Not attached',
+        'Next of Kin': r.family.nextOfKin,
+        Phone: r.family.phone,
+        Email: r.family.email ?? '',
+        Address: r.family.address,
+        'Emergency Contact': r.family.emergencyContact ?? '',
+        'Preferred Mosque': r.arrangements.preferredMosque ?? '',
+        'Preferred Cemetery': r.arrangements.preferredCemetery ?? '',
+        'Preferred Burial Date': formatDate(r.arrangements.preferredBurialDate),
+        'Preferred Burial Time': r.arrangements.preferredBurialTime ?? '',
+        'Transport Required': r.arrangements.transportationRequired ? 'Yes' : 'No',
+        'Arrangement Notes': r.arrangements.notes ?? '',
+        Stage: titleByKey.get(r.stage) ?? r.stage,
+        Progress: `${progress}%`,
+        'Reported At': formatDateTime(r.createdAt),
+      };
+    });
+
+    return toXlsxBuffer('Funeral Requests', FUNERAL_EXPORT_COLUMNS, rows);
   }
 
   async findOne(id: string) {
@@ -228,7 +329,6 @@ export class FuneralService {
 
     return {
       id: r.id,
-      reference: r.reference,
       stage: r.stage,
       createdAt: new Date(r.createdAt).toISOString(),
       deceased: {
@@ -240,6 +340,10 @@ export class FuneralService {
         placeOfDeath: r.deceasedPlaceOfDeath ?? '',
         causeOfDeath: r.deceasedCauseOfDeath ?? undefined,
         deathCertificate: r.deathCertificate ?? undefined,
+        deathCertificateName: r.deathCertificateName ?? undefined,
+        // Only a real upload has a mime type — legacy rows hold a bare filename.
+        deathCertificateMime: r.deathCertificateMime ?? undefined,
+        deathCertificateSize: r.deathCertificateSize ?? undefined,
       },
       family: {
         nextOfKin: r.familyNextOfKin,
@@ -257,11 +361,7 @@ export class FuneralService {
         preferredCemeteryId: r.arrPreferredCemetery ?? undefined,
         preferredBurialDate: r.arrPreferredBurialDate ?? undefined,
         preferredBurialTime: r.arrPreferredBurialTime ?? undefined,
-        ghuslRequired: r.arrGhuslRequired,
-        kafanRequired: r.arrKafanRequired,
-        janazahPrayerRequired: r.arrJanazahPrayerRequired,
         transportationRequired: r.arrTransportationRequired,
-        gravePreparationRequired: r.arrGravePreparationRequired,
         notes: r.arrNotes ?? undefined,
       },
       timeline,

@@ -76,6 +76,11 @@ export enum Permission {
   FUNERAL_VIEW = 'funeral:view',
   FUNERAL_MANAGE = 'funeral:manage',
 
+  // ── Hajj Service ──────────────────────────────────────────────────
+  HAJJ_VIEW = 'hajj:view',
+  HAJJ_MANAGE = 'hajj:manage',
+  HAJJ_APPROVE = 'hajj:approve',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',
