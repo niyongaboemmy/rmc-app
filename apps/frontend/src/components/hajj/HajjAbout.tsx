@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useLocale } from 'next-intl';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import {
   ContentKeys, getSiteContent, mergeContent, pick, hajjPhotoSrc,
   HAJJ_DEFAULT, type HajjContent,
@@ -36,7 +35,7 @@ export function HajjAbout() {
 
   return (
     <section className="relative bg-white py-16 lg:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           {/* Photo */}
           <div className="relative">
@@ -74,13 +73,6 @@ export function HajjAbout() {
               <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-rmc-gold" aria-hidden="true" />
               <p className="text-[13.5px] leading-relaxed text-gray-700">{pick(about.incentive, locale)}</p>
             </div>
-
-            <Link
-              href={`/${locale}/services/hajj/register`}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
-            >
-              {pick(about.cta, locale)} <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-            </Link>
           </div>
         </div>
       </div>

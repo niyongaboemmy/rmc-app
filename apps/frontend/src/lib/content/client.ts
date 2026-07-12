@@ -45,6 +45,7 @@ export const ContentKeys = {
   howToBecomeMuslim: 'how-to-become-muslim',
   about: 'about',
   contact: 'contact',
+  funeral: 'funeral',
   hajj: 'hajj',
 } as const;
 

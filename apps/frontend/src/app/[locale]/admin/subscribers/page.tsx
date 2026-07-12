@@ -92,6 +92,7 @@ function SubscribersManager() {
       success(
         `Sent to ${res.sent} of ${res.total} email${res.total === 1 ? '' : 's'}` +
           `${res.failed ? ` · ${res.failed} failed` : ''}` +
+          `${res.suppressed ? ` · ${res.suppressed} unsubscribed, not mailed` : ''}` +
           `${res.invalidRows ? ` · ${res.invalidRows} row(s) skipped` : ''}.`,
       );
       setFile(null);

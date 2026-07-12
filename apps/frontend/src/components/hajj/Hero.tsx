@@ -59,7 +59,7 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-25" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/50 to-transparent" aria-hidden="true" />
 
-      <div className="relative flex flex-1 items-center justify-center px-4 pt-32 pb-4 text-center sm:px-6 lg:px-8">
+      <div className="relative flex flex-1 items-center justify-center px-6 pt-32 pb-4 text-center sm:px-8 lg:px-12">
         <div className="mx-auto max-w-3xl">
         {/* Crest */}
         <div className="mb-4 flex justify-center">
