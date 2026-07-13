@@ -819,7 +819,46 @@
         "applyCta": "Apply now",
         "statusTitle": "Check Application Status",
         "statusText": "Track where your submitted application stands.",
-        "statusCta": "Check status"
+        "statusCta": "Check status",
+        "whoTitle": "Who it's for",
+        "whoSubtitle": "Open to community members ready to bring their skills to RMC and affiliated organizations.",
+        "who": {
+          "seekers": { "title": "Job seekers", "text": "Anyone looking for employment at RMC or an affiliated organization." },
+          "graduates": { "title": "Recent graduates", "text": "New graduates with their academic papers ready to start a career." },
+          "professionals": { "title": "Experienced professionals", "text": "Skilled workers seeking a new role within the community network." },
+          "community": { "title": "Community members", "text": "Members who want to serve and grow within the RMC community." }
+        },
+        "stepsTitle": "How to apply",
+        "stepsSubtitle": "Five simple steps from start to a tracked application.",
+        "steps": {
+          "s1": { "title": "Sign in", "text": "Sign in to your RMC account, or register in a minute if you're new." },
+          "s2": { "title": "Fill your details", "text": "Enter your personal details and the position you're applying for." },
+          "s3": { "title": "Upload your documents", "text": "Attach your application letter, CV, National ID, criminal record and academic papers." },
+          "s4": { "title": "Add good conduct", "text": "Verify your good-conduct certificate number, or upload the certificate." },
+          "s5": { "title": "Submit & track", "text": "Submit and keep your tracking number to follow your application status." }
+        },
+        "needTitle": "What you'll need",
+        "needSubtitle": "Have these ready before you start — you can upload PDFs, Word files or images.",
+        "need": {
+          "r1": "Application letter",
+          "r2": "Curriculum Vitae (CV)",
+          "r3": "National ID",
+          "r4": "Criminal record certificate",
+          "r5": "Academic papers (diplomas / certificates)",
+          "r6": "Good conduct certificate — a number to verify, or a file to upload",
+          "r7": "Employer recommendation (optional)"
+        },
+        "faqTitle": "Frequently asked questions",
+        "faqs": {
+          "f1": { "q": "Do I need an account to apply?", "a": "Yes. Signing in lets us contact you and lets you track your application from start to decision." },
+          "f2": { "q": "What file types and sizes can I upload?", "a": "PDF, Word documents and images (JPG or PNG). Each field shows its maximum size, and files are checked before they upload." },
+          "f3": { "q": "What if I don't have a good-conduct certificate number?", "a": "No problem — you can upload a scan or photo of the certificate instead of entering a number." },
+          "f4": { "q": "How do I check my application status?", "a": "Open the \"Check status\" page and sign in. You'll see each stage: submitted, under review, shortlisted and the final decision." }
+        },
+        "ctaTitle": "Ready to apply?",
+        "ctaSubtitle": "Start your application now, or reach out if you have questions first.",
+        "ctaStart": "Start application",
+        "ctaContact": "Contact us"
       },
       "apply": {
         "heroTitle": "Job Application",

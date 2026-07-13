@@ -819,7 +819,46 @@
         "applyCta": "Saba nonaha",
         "statusTitle": "Reba Aho Isaba Rigeze",
         "statusText": "Kurikirana aho isaba ryawe wohereje rigeze.",
-        "statusCta": "Reba aho rigeze"
+        "statusCta": "Reba aho rigeze",
+        "whoTitle": "Iyi serivisi igenewe bande",
+        "whoSubtitle": "Ifunguriwe abanyamuryango biteguye gukoresha ubumenyi bwabo muri RMC n'imiryango ishamikiyeho.",
+        "who": {
+          "seekers": { "title": "Abashaka akazi", "text": "Umuntu wese ushaka akazi muri RMC cyangwa umuryango ushamikiyeho." },
+          "graduates": { "title": "Abarangije vuba", "text": "Abarangije bafite impamyabumenyi ziteguye gutangira umwuga." },
+          "professionals": { "title": "Abanyamwuga bafite uburambe", "text": "Abakozi b'inzobere bashaka umwanya mushya mu muryango." },
+          "community": { "title": "Abanyamuryango", "text": "Abanyamuryango bifuza gukorera no gukurira mu muryango wa RMC." }
+        },
+        "stepsTitle": "Uko usaba",
+        "stepsSubtitle": "Intambwe eshanu zoroshye uhereye ku ntangiriro ukageza ku isaba rikurikiranwa.",
+        "steps": {
+          "s1": { "title": "Injira", "text": "Injira kuri konti yawe ya RMC, cyangwa wiyandikishe mu munota umwe niba uri mushya." },
+          "s2": { "title": "Uzuza amakuru yawe", "text": "Andika amakuru yawe bwite n'umwanya usaba." },
+          "s3": { "title": "Ohereza inyandiko zawe", "text": "Ohereza ibaruwa isaba, CV, Indangamuntu, icyemezo cy'imyifatire n'impamyabumenyi." },
+          "s4": { "title": "Ongeraho icyemezo cy'imyifatire", "text": "Genzura nimero y'icyemezo cy'imyifatire, cyangwa uohereze icyemezo." },
+          "s5": { "title": "Ohereza & ukurikirane", "text": "Ohereza ubike nimero yo gukurikirana kugira ngo urebe aho isaba rigeze." }
+        },
+        "needTitle": "Ibyo ukeneye",
+        "needSubtitle": "Bitegure mbere yo gutangira — ushobora kohereza PDF, dosiye za Word cyangwa amafoto.",
+        "need": {
+          "r1": "Ibaruwa isaba",
+          "r2": "CV",
+          "r3": "Indangamuntu",
+          "r4": "Icyemezo cy'imyifatire",
+          "r5": "Impamyabumenyi (dipolome / impamyabumenyi)",
+          "r6": "Icyemezo cy'imyifatire myiza — nimero yo kugenzura, cyangwa dosiye yo kohereza",
+          "r7": "Icyemezo cy'umukoresha (bitegetswe)"
+        },
+        "faqTitle": "Ibibazo bikunze kubazwa",
+        "faqs": {
+          "f1": { "q": "Ese nkeneye konti kugira ngo nsabe?", "a": "Yego. Kwinjira bidufasha kukugeraho kandi bigufasha gukurikirana isaba ryawe kuva ku ntangiriro kugeza ku cyemezo." },
+          "f2": { "q": "Ni ubuhe bwoko n'ingano ya dosiye nshobora kohereza?", "a": "PDF, dosiye za Word n'amafoto (JPG cyangwa PNG). Buri mwanya werekana ingano ntarengwa, kandi dosiye zigenzurwa mbere yo koherezwa." },
+          "f3": { "q": "Byagenda gute ntabonye nimero y'icyemezo cy'imyifatire?", "a": "Nta kibazo — ushobora kohereza kopi cyangwa ifoto y'icyemezo aho kwandika nimero." },
+          "f4": { "q": "Nkurikirana nte aho isaba ryanjye rigeze?", "a": "Fungura urupapuro rwa \"Reba aho rigeze\" winjire. Uzabona buri ntambwe: ryoherejwe, rirasuzumwa, ryatoranyijwe n'icyemezo cya nyuma." }
+        },
+        "ctaTitle": "Witeguye gusaba?",
+        "ctaSubtitle": "Tangira isaba ryawe nonaha, cyangwa utubaze niba ufite ibibazo mbere.",
+        "ctaStart": "Tangira isaba",
+        "ctaContact": "Twandikire"
       },
       "apply": {
         "heroTitle": "Isaba ry'Akazi",
