@@ -89,6 +89,12 @@ export interface TestPaymentPayload {
   currency?: string;
 }
 
+export interface TestDepositPayload {
+  mobilePhone: string;
+  amount: number;
+  reason?: string;
+}
+
 export interface PaymentTransaction {
   id: string;
   requestTransactionId: string;
@@ -100,6 +106,7 @@ export interface PaymentTransaction {
   currency: string;
   mobilePhone: string;
   status: 'pending' | 'successful' | 'failed' | 'cancelled';
+  direction: 'collect' | 'deposit';
   responseCode: string | null;
   message: string | null;
   isTest: boolean;
@@ -109,6 +116,12 @@ export interface PaymentTransaction {
 }
 
 export interface TestPaymentResult {
+  transaction: PaymentTransaction;
+  responseCode: string;
+  message: string;
+}
+
+export interface TestDepositResult {
   transaction: PaymentTransaction;
   responseCode: string;
   message: string;
@@ -265,6 +278,11 @@ export const paymentSettingsApi = {
   // Payment Testing
   testPayment: async (payload: TestPaymentPayload): Promise<TestPaymentResult> => {
     const { data } = await apiClient.post('/admin/payment-settings/test/payment', payload);
+    return data.data ?? data;
+  },
+
+  testDeposit: async (payload: TestDepositPayload): Promise<TestDepositResult> => {
+    const { data } = await apiClient.post('/admin/payment-settings/test/deposit', payload);
     return data.data ?? data;
   },
 

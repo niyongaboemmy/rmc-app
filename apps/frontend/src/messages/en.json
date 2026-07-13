@@ -770,7 +770,10 @@
         "continueToPayment": "Continue to Payment",
         "downloadCertificate": "Download Certificate",
         "certificateNumber": "Certificate Number",
-        "motifLabel": "Reason for Request"
+        "motifLabel": "Reason for Request",
+        "cancelApplication": "Cancel Application",
+        "cancelConfirm": "Are you sure you want to cancel this application? This cannot be undone.",
+        "cancelFailed": "Failed to cancel the application. Please try again."
       },
       "landing": {
         "backToServices": "Back to Services",

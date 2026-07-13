@@ -770,7 +770,10 @@
         "continueToPayment": "Komeza Kwishyura",
         "downloadCertificate": "Kuramo Icyemezo",
         "certificateNumber": "Nomero y'Icyemezo",
-        "motifLabel": "Impamvu y'Ubusabe"
+        "motifLabel": "Impamvu y'Ubusabe",
+        "cancelApplication": "Kureka Ubusabe",
+        "cancelConfirm": "Uzi neza ko ushaka kureka ubu busabe? Ibi ntibishobora gusubizwa inyuma.",
+        "cancelFailed": "Kureka ubusabe byanze. Ongera ugerageze."
       },
       "landing": {
         "backToServices": "Subira ku Serivisi",

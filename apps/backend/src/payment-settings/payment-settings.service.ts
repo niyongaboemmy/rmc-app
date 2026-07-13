@@ -9,12 +9,14 @@ import { PaymentMethodSettings } from './entities/payment-method-settings.entity
 import {
   PaymentTransaction,
   PaymentTransactionStatus,
+  PaymentTransactionDirection,
 } from './entities/payment-transaction.entity';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
 import { UpsertPaymentMethodSettingsDto } from './dto/upsert-payment-method-settings.dto';
 import { UpsertPaymentTypeRateDto } from './dto/upsert-payment-type-rate.dto';
 import { TestPaymentDto } from './dto/test-payment.dto';
+import { TestDepositDto } from './dto/test-deposit.dto';
 import {
   IntouchPayService,
   INTOUCH_RESPONSE_CODES,
@@ -298,6 +300,64 @@ export class PaymentSettingsService {
       isTest: settingsRecord?.isTestMode ?? true,
       initiatedBy: userId,
       completedAt: result.status !== 'PENDING' ? new Date() : null,
+    });
+
+    const saved = await this.txRepo.save(tx);
+
+    return {
+      transaction: saved,
+      responseCode: result.responseCode,
+      message: result.message,
+    };
+  }
+
+  // ── Test Deposit (§3 — send money to a subscriber) ─────────────────────────
+
+  async testDeposit(
+    dto: TestDepositDto,
+    userId: string,
+  ): Promise<{
+    transaction: PaymentTransaction;
+    responseCode: string;
+    message: string;
+  }> {
+    const creds = await this.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+      throw new BadRequestException(
+        'MoMo (IntouchPay) credentials are not configured. Go to Credentials tab to set them up.',
+      );
+    }
+
+    const requestTxnId = `TESTDEP-${crypto.randomUUID().replace(/-/g, '').slice(0, 17).toUpperCase()}`;
+    const settingsRecord = await this.getMethodSettingsRecord(PaymentMethodCode.MOMO_INTOUCH);
+
+    const result = await this.intouchPay.requestDeposit({
+      username: creds.username,
+      partnerPassword: creds.partnerPassword,
+      accountNo: creds.accountNo,
+      amount: dto.amount,
+      mobilePhone: dto.mobilePhone,
+      transactionId: requestTxnId,
+      reason: dto.reason,
+    });
+
+    const tx = this.txRepo.create({
+      requestTransactionId: requestTxnId,
+      gatewayTransactionId: result.referenceId || null,
+      paymentMethodCode: PaymentMethodCode.MOMO_INTOUCH,
+      direction: PaymentTransactionDirection.DEPOSIT,
+      amount: dto.amount,
+      currency: 'RWF',
+      mobilePhone: dto.mobilePhone,
+      status:
+        result.status === 'SUCCESSFUL'
+          ? PaymentTransactionStatus.SUCCESSFUL
+          : PaymentTransactionStatus.FAILED,
+      responseCode: result.responseCode,
+      message: result.message,
+      isTest: settingsRecord?.isTestMode ?? true,
+      initiatedBy: userId,
+      completedAt: new Date(),
     });
 
     const saved = await this.txRepo.save(tx);

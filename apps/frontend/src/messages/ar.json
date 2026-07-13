@@ -770,7 +770,10 @@
         "continueToPayment": "المتابعة إلى الدفع",
         "downloadCertificate": "تنزيل الشهادة",
         "certificateNumber": "رقم الشهادة",
-        "motifLabel": "سبب الطلب"
+        "motifLabel": "سبب الطلب",
+        "cancelApplication": "إلغاء الطلب",
+        "cancelConfirm": "هل أنت متأكد أنك تريد إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.",
+        "cancelFailed": "فشل إلغاء الطلب. يرجى المحاولة مرة أخرى."
       },
       "landing": {
         "backToServices": "العودة إلى الخدمات",
