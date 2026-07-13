@@ -16,6 +16,7 @@ import { UPDATES_DEFAULT } from '../src/lib/content/updates';
 import { ACTIVITIES_DEFAULT } from '../src/lib/content/activities';
 import { ANNOUNCEMENTS_DEFAULT } from '../src/lib/content/announcements';
 import { SOCIAL_DEFAULT } from '../src/lib/content/social';
+import { HAJJ_DEFAULT } from '../src/lib/content/hajj';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 // Credentials are read from the environment — never hardcode them:
@@ -38,6 +39,7 @@ const SECTIONS: Array<[string, unknown]> = [
   [ContentKeys.activities, ACTIVITIES_DEFAULT],
   [ContentKeys.announcements, ANNOUNCEMENTS_DEFAULT],
   [ContentKeys.social, SOCIAL_DEFAULT],
+  [ContentKeys.hajj, HAJJ_DEFAULT],
 ];
 
 function roleFromJwt(token: string): string {

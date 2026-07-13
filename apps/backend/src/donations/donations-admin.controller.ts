@@ -8,9 +8,12 @@ import {
   Body,
   Query,
   ParseUUIDPipe,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DonationsService } from './donations.service';
+import { sendXlsx } from '../common/utils/xlsx';
 // import { UpdateDonationDto } from './dto/update-donation.dto'; // donation editing disabled
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
@@ -60,6 +63,42 @@ export class DonationsAdminController {
       sort,
       order,
     });
+  }
+
+  /** Ignores page/limit — a report covers the whole filtered set, not one page. */
+  @Get('export')
+  @Permissions(Permission.DONATIONS_VIEW)
+  @ApiOperation({ summary: 'Export the filtered donations as an .xlsx report' })
+  @ApiQuery({ name: 'dateFrom', required: false })
+  @ApiQuery({ name: 'dateTo', required: false })
+  @ApiQuery({ name: 'campaignId', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'category', required: false })
+  @ApiQuery({ name: 'niyyah', required: false })
+  @ApiQuery({ name: 'method', required: false })
+  async exportDonations(
+    @Res() res: Response,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('campaignId') campaignId?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('niyyah') niyyah?: string,
+    @Query('method') method?: string,
+  ): Promise<void> {
+    const buffer = await this.service.adminExportXlsx({
+      dateFrom,
+      dateTo,
+      campaignId,
+      status,
+      search,
+      category,
+      niyyah,
+      method,
+    });
+    sendXlsx(res, buffer, 'donations');
   }
 
   @Get('daily')

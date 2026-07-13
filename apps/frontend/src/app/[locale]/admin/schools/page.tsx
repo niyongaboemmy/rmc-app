@@ -17,6 +17,7 @@ import { Permission } from '@/lib/permissions';
 import { schoolsApi, type School, type SchoolPayload, type SchoolStatus } from '@/lib/schoolsApi';
 import { SCHOOL_LEVELS, LEVEL_COLORS, type SchoolLevel } from '@/components/schools/data';
 import { cn } from '@/lib/utils';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 const PROVINCES = [
   { code: 'KIG', name: 'Kigali City' },
@@ -115,14 +116,16 @@ function SchoolsAdmin() {
             className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30"
           />
         </div>
-        <select
+        <SearchableSelect
           value={levelFilter}
-          onChange={(e) => setLevelFilter(e.target.value as SchoolLevel | '')}
-          className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rmc-green/30"
-        >
-          <option value="">{t('allLevels')}</option>
-          {SCHOOL_LEVELS.map((l) => <option key={l} value={l}>{levelLabel(l)}</option>)}
-        </select>
+          onChange={(v) => setLevelFilter(v as SchoolLevel | '')}
+          options={[
+            { value: '', label: t('allLevels') },
+            ...SCHOOL_LEVELS.map((l) => ({ value: l, label: levelLabel(l) })),
+          ]}
+          className="w-full sm:w-52"
+          triggerClassName="rounded-xl px-3 py-2.5 text-sm"
+        />
       </div>
 
       {/* Table */}
@@ -372,16 +375,24 @@ function SchoolModal({ school, onClose, onSaved }: {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>{t('field.level')}</label>
-            <select value={level} onChange={(e) => setLevel(e.target.value as SchoolLevel)} className={inputClass}>
-              {SCHOOL_LEVELS.map((l) => <option key={l} value={l}>{tl(`level.${l}`)}</option>)}
-            </select>
+            <SearchableSelect
+              value={level}
+              onChange={(v) => setLevel(v as SchoolLevel)}
+              options={SCHOOL_LEVELS.map((l) => ({ value: l, label: tl(`level.${l}`) }))}
+              triggerClassName={inputClass}
+            />
           </div>
           <div>
             <label className={labelClass}>{t('field.status')}</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value as SchoolStatus)} className={inputClass}>
-              <option value="active">{t('status.active')}</option>
-              <option value="inactive">{t('status.inactive')}</option>
-            </select>
+            <SearchableSelect
+              value={status}
+              onChange={(v) => setStatus(v as SchoolStatus)}
+              options={[
+                { value: 'active', label: t('status.active') },
+                { value: 'inactive', label: t('status.inactive') },
+              ]}
+              triggerClassName={inputClass}
+            />
           </div>
         </div>
         <div>
@@ -401,9 +412,13 @@ function SchoolModal({ school, onClose, onSaved }: {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>{t('field.province')}</label>
-            <select value={provinceCode} onChange={(e) => setProvinceCode(e.target.value)} className={inputClass}>
-              {PROVINCES.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
-            </select>
+            <SearchableSelect
+              value={provinceCode}
+              onChange={setProvinceCode}
+              options={PROVINCES.map((p) => ({ value: p.code, label: p.name }))}
+              searchPlaceholder="Search provinces…"
+              triggerClassName={inputClass}
+            />
           </div>
           <div>
             <label className={labelClass}>{t('field.district')}</label>

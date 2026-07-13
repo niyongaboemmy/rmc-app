@@ -32,6 +32,7 @@ import {
 } from '@/lib/content-api';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { NotifySubscribersButton } from '@/components/admin/NotifySubscribersButton';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -342,20 +343,22 @@ function BlogManager() {
             <div className="space-y-4">
               {/* Shared category — picked from the canonical list, applies to all languages */}
               <Field label="Category" hint="one value, applied to all languages">
-                <select
+                <SearchableSelect
                   value={form.category.en}
-                  onChange={(e) => selectCategory(e.target.value)}
-                  dir={modalLang === 'ar' ? 'rtl' : 'ltr'}
-                  className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent ${modalLang === 'ar' ? 'font-arabic' : ''}`}
-                >
-                  <option value="">Select a category…</option>
-                  {BLOG_CATEGORIES.map((c) => (
-                    <option key={c.en} value={c.en}>{c[modalLang] || c.en}</option>
-                  ))}
-                  {form.category.en && !findBlogCategory(form.category.en) && (
-                    <option value={form.category.en}>{(form.category[modalLang] || form.category.en)} (custom)</option>
-                  )}
-                </select>
+                  onChange={selectCategory}
+                  options={[
+                    ...BLOG_CATEGORIES.map((c) => ({ value: c.en, label: c[modalLang] || c.en })),
+                    ...(form.category.en && !findBlogCategory(form.category.en)
+                      ? [{
+                          value: form.category.en,
+                          label: `${form.category[modalLang] || form.category.en} (custom)`,
+                        }]
+                      : []),
+                  ]}
+                  noneLabel="Select a category…"
+                  searchPlaceholder="Search categories…"
+                  triggerClassName={`rounded-xl px-4 py-2.5 text-sm focus:ring-cyan-500 ${modalLang === 'ar' ? 'font-arabic' : ''}`}
+                />
               </Field>
 
               <div className="border rounded-2xl border-gray-100 overflow-hidden">

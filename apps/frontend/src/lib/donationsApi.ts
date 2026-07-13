@@ -1,4 +1,5 @@
 import { apiClient } from './api';
+import { downloadXlsx } from './downloadXlsx';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -107,6 +108,28 @@ export interface DonationFilters {
   order?: SortOrder;
 }
 
+/**
+ * What a donations report can be narrowed by: the server-side list filters, plus
+ * the three refinements the table applies to the loaded page (`category` and
+ * `niyyah` come from the donation's message metadata, `method` is a real column).
+ */
+export interface DonationExportFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  campaignId?: string;
+  status?: string;
+  search?: string;
+  category?: string;
+  niyyah?: string;
+  method?: string;
+}
+
+/** Filters on the combined donations + marriage payment ledger. */
+export interface PaymentLedgerFilters {
+  source?: 'donation' | 'marriage' | '';
+  search?: string;
+}
+
 /** One day in the dashboard daily-received series. */
 export interface DailyPoint {
   date: string;
@@ -198,6 +221,23 @@ export const donationsApi = {
       const { data } = await apiClient.get('/admin/donations/stats', { params: filters });
       return data.data ?? data;
     },
+
+    /**
+     * Download every donation matching the filters as an .xlsx report — the whole
+     * filtered set, not the page currently loaded. `category`, `niyyah` and `method`
+     * are the meta refinements the table applies client-side; the backend honours
+     * them too, so the file matches what is on screen.
+     */
+    exportXlsx: (filters: DonationExportFilters = {}): Promise<void> =>
+      downloadXlsx('/admin/donations/export', { ...filters }, 'donations'),
+
+    /**
+     * Download the Payment History ledger (donations + marriage payments) as an
+     * .xlsx report. Marriage rows are included by the backend only if the caller
+     * may see them.
+     */
+    exportPaymentsXlsx: (filters: PaymentLedgerFilters = {}): Promise<void> =>
+      downloadXlsx('/admin/finance/payments/export', { ...filters }, 'payment-history'),
 
     getDaily: async (days = 30, currency = 'RWF'): Promise<DailyReceived> => {
       const { data } = await apiClient.get('/admin/donations/daily', { params: { days, currency } });

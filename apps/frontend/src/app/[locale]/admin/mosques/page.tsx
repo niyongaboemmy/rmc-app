@@ -375,18 +375,17 @@ function MosquesManager() {
             </button>
           ))}
         </div>
-        <select
+        <SearchableSelect
           value={provinceFilter}
-          onChange={(e) => setProvinceFilter(e.target.value)}
-          className="py-2.5 px-3 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green/50"
-        >
-          <option value="all">All provinces</option>
-          {provinces.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+          onChange={setProvinceFilter}
+          options={[
+            { value: 'all', label: 'All provinces' },
+            ...provinces.map((p) => ({ value: p.id, label: p.name })),
+          ]}
+          searchPlaceholder="Search provinces…"
+          className="w-full sm:w-56"
+          triggerClassName="rounded-xl px-3 py-2.5 text-sm"
+        />
       </div>
 
       {/* List */}
