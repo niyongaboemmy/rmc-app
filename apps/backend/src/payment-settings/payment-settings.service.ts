@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -32,6 +32,8 @@ const MASK = '••••••••';
 
 @Injectable()
 export class PaymentSettingsService {
+  private readonly logger = new Logger(PaymentSettingsService.name);
+
   constructor(
     @InjectRepository(PaymentMethod)
     private readonly methodRepo: Repository<PaymentMethod>,
@@ -486,6 +488,20 @@ export class PaymentSettingsService {
 
     await this.txRepo.save(tx);
 
+    // Test-flow automation: once a test collection is confirmed successful,
+    // automatically fire the matching RequestDeposit (§3) so the collect →
+    // callback → deposit cycle can be verified end-to-end without a manual
+    // second step. Scoped to isTest to avoid ever auto-sending real money.
+    if (
+      tx.isTest &&
+      tx.direction === PaymentTransactionDirection.COLLECT &&
+      resolvedStatus === 'SUCCESSFUL'
+    ) {
+      this.autoTriggerTestDeposit(tx).catch((err) =>
+        this.logger.error(`[AutoDeposit] Failed to trigger for tx ${tx.id}: ${err}`),
+      );
+    }
+
     return {
       requestTransactionId: requestTxnId,
       transactionId: txnId,
@@ -493,6 +509,52 @@ export class PaymentSettingsService {
       responseCode: rc,
       message: tx.message ?? '',
     };
+  }
+
+  /** Fires a RequestDeposit back to the same subscriber after a successful test collection. */
+  private async autoTriggerTestDeposit(sourceTx: PaymentTransaction): Promise<void> {
+    const creds = await this.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
+    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+      this.logger.warn('[AutoDeposit] Skipped — IntouchPay credentials not configured');
+      return;
+    }
+
+    const requestTxnId = `TESTDEP-${crypto.randomUUID().replace(/-/g, '').slice(0, 17).toUpperCase()}`;
+
+    this.logger.log(
+      `[AutoDeposit] Collection ${sourceTx.requestTransactionId} confirmed — sending deposit back to ${sourceTx.mobilePhone}`,
+    );
+
+    const result = await this.intouchPay.requestDeposit({
+      username: creds.username,
+      partnerPassword: creds.partnerPassword,
+      accountNo: creds.accountNo,
+      amount: sourceTx.amount,
+      mobilePhone: sourceTx.mobilePhone,
+      transactionId: requestTxnId,
+      reason: `Auto deposit for ${sourceTx.requestTransactionId}`,
+    });
+
+    const tx = this.txRepo.create({
+      requestTransactionId: requestTxnId,
+      gatewayTransactionId: result.referenceId || null,
+      paymentMethodCode: PaymentMethodCode.MOMO_INTOUCH,
+      direction: PaymentTransactionDirection.DEPOSIT,
+      referenceId: sourceTx.id,
+      amount: sourceTx.amount,
+      currency: sourceTx.currency,
+      mobilePhone: sourceTx.mobilePhone,
+      status:
+        result.status === 'SUCCESSFUL'
+          ? PaymentTransactionStatus.SUCCESSFUL
+          : PaymentTransactionStatus.FAILED,
+      responseCode: result.responseCode,
+      message: result.message,
+      isTest: true,
+      completedAt: new Date(),
+    });
+
+    await this.txRepo.save(tx);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
