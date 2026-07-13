@@ -297,7 +297,7 @@ export const paymentSettingsApi = {
     status?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: PaymentTransaction[]; total: number; page: number; limit: number }> => {
+  }): Promise<{ items: PaymentTransaction[]; total: number; page: number; limit: number }> => {
     const { data } = await apiClient.get('/admin/payment-settings/transactions', { params: filters });
     return data.data ?? data;
   },

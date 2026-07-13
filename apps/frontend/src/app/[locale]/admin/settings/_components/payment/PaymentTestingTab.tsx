@@ -415,7 +415,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
     setLoadingTxns(true);
     try {
       const res = await paymentSettingsApi.listTransactions({ isTest: true, limit: 20 });
-      setTransactions(Array.isArray(res) ? res : (res.data ?? []));
+      setTransactions(Array.isArray(res) ? res : (res.items ?? []));
     } catch { /* silent */ }
     finally { setLoadingTxns(false); }
   }, []);
