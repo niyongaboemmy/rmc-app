@@ -89,6 +89,17 @@ export const JOB_STATUS_COLORS: Record<JobApplicationStatus, string> = {
   cancelled: 'bg-gray-100 text-gray-500',
 };
 
+/** Minimal, public-safe status view returned by the tracking-number lookup. */
+export interface JobApplicationPublicStatus {
+  trackingNumber: string;
+  fullNames: string;
+  positionAppliedFor: string;
+  status: JobApplicationStatus;
+  submittedAt: string | null;
+  createdAt: string;
+  statusHistory: { fromStatus: string | null; toStatus: string; changedAt: string }[];
+}
+
 // ── Member API ──────────────────────────────────────────────────────────────────
 
 export const jobsApi = {
@@ -105,6 +116,18 @@ export const jobsApi = {
   getById: async (id: string): Promise<JobApplication> => {
     const { data } = await apiClient.get(`/job-applications/${id}`);
     return data.data ?? data;
+  },
+
+  /** Public status lookup by tracking number — returns null when not found. */
+  track: async (trackingNumber: string): Promise<JobApplicationPublicStatus | null> => {
+    try {
+      const { data } = await apiClient.get(
+        `/job-applications/track/${encodeURIComponent(trackingNumber.trim())}`,
+      );
+      return data.data ?? data;
+    } catch {
+      return null;
+    }
   },
 
   cancel: async (id: string): Promise<JobApplication> => {

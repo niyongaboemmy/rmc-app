@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { JobsStatusChecker } from '@/components/services/jobs/JobsStatusChecker';
+import { JobsTrackByNumber } from '@/components/services/jobs/JobsTrackByNumber';
 
 export default function JobsStatusPage() {
   const { locale } = useParams<{ locale: string }>();
@@ -52,7 +53,8 @@ export default function JobsStatusPage() {
         </div>
       </section>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-6">
+        <JobsTrackByNumber />
         <JobsStatusChecker />
       </main>
 

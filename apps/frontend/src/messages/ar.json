@@ -948,6 +948,11 @@
         "positionLabel": "الوظيفة",
         "trackingNumber": "رقم التتبع",
         "currentStatus": "الحالة الحالية",
+        "trackTitle": "التتبع برقم التتبع",
+        "trackSubtitle": "أدخل رقمك RMC-JOB-… للتحقق من حالة طلبك — دون تسجيل الدخول.",
+        "trackPlaceholder": "مثال RMC-JOB-202607-00001",
+        "trackButton": "تتبع",
+        "trackNotFound": "لا يوجد طلب بهذا الرقم. تحقق منه وحاول مرة أخرى.",
         "statusLabel": {
           "submitted": "تم الإرسال",
           "under_review": "قيد المراجعة",
@@ -1101,7 +1106,8 @@
       },
       "marriage": "الزواج",
       "drive": "مساحة التخزين",
-      "goodConduct": "حسن السلوك"
+      "goodConduct": "حسن السلوك",
+      "jobs": "طلبات التوظيف"
     },
     "topbar": {
       "viewSite": "عرض الموقع",

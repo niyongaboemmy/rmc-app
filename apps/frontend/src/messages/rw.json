@@ -948,6 +948,11 @@
         "positionLabel": "Umwanya",
         "trackingNumber": "Nimero yo gukurikirana",
         "currentStatus": "Aho rigeze",
+        "trackTitle": "Kurikirana ukoresheje nimero yo gukurikirana",
+        "trackSubtitle": "Andika nimero yawe ya RMC-JOB-… kugira ngo urebe aho isaba rigeze — nta kwinjira bisabwa.",
+        "trackPlaceholder": "urugero RMC-JOB-202607-00001",
+        "trackButton": "Kurikirana",
+        "trackNotFound": "Nta saba ryabonetse rifite iyo nimero. Reba neza wongere ugerageze.",
         "statusLabel": {
           "submitted": "Ryoherejwe",
           "under_review": "Rirasuzumwa",
@@ -1101,7 +1106,8 @@
       },
       "marriage": "Ubukwe",
       "drive": "Dosiye",
-      "goodConduct": "Imyitwarire Myiza"
+      "goodConduct": "Imyitwarire Myiza",
+      "jobs": "Amasaba y'Akazi"
     },
     "topbar": {
       "viewSite": "Reba urubuga",

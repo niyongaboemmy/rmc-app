@@ -72,6 +72,10 @@ export enum Permission {
   GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
   GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
 
+  // ── Job Applications Service ──────────────────────────────────────
+  JOB_APPLICATIONS_VIEW = 'job_applications:view',
+  JOB_APPLICATIONS_MANAGE = 'job_applications:manage',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

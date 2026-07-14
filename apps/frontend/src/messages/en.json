@@ -948,6 +948,11 @@
         "positionLabel": "Position",
         "trackingNumber": "Tracking number",
         "currentStatus": "Current status",
+        "trackTitle": "Track with a tracking number",
+        "trackSubtitle": "Enter your RMC-JOB-… number to check your application status — no sign-in needed.",
+        "trackPlaceholder": "e.g. RMC-JOB-202607-00001",
+        "trackButton": "Track",
+        "trackNotFound": "No application found with that tracking number. Check it and try again.",
         "statusLabel": {
           "submitted": "Submitted",
           "under_review": "Under review",
@@ -1101,7 +1106,8 @@
       },
       "marriage": "Marriage",
       "drive": "Drive",
-      "goodConduct": "Good Conduct"
+      "goodConduct": "Good Conduct",
+      "jobs": "Job Applications"
     },
     "topbar": {
       "viewSite": "View site",
