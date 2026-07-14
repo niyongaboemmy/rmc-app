@@ -13,7 +13,7 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import type { Feature, FeatureCollection } from 'geojson';
-import { Navigation, X, Users, Clock, Phone } from 'lucide-react';
+import { Navigation, X, Users, Clock, Phone, Car, Footprints } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import 'leaflet/dist/leaflet.css';
 
@@ -39,6 +39,10 @@ export interface DirectionsTarget {
 }
 
 type DirStatus = 'idle' | 'locating' | 'routing' | 'error';
+
+interface RouteInfo { km: number; min: number | null }
+/** Driving and walking routes for the same destination, shown side by side. */
+interface DualRoute { car: RouteInfo; foot: RouteInfo }
 
 /** Map a GeoJSON province `shapeName` to the backend province `code`. */
 export function provinceCodeFromName(name: string): string | null {
@@ -168,11 +172,12 @@ function DirectionsLayer({
 }: {
   target: DirectionsTarget | null;
   onStatus: (s: DirStatus) => void;
-  onInfo: (info: { km: number; min: number | null } | null) => void;
+  onInfo: (info: DualRoute | null) => void;
 }) {
   const map = useMap();
   const [user, setUser] = useState<[number, number] | null>(null);
-  const [line, setLine] = useState<[number, number][] | null>(null);
+  const [carLine, setCarLine] = useState<[number, number][] | null>(null);
+  const [footLine, setFootLine] = useState<[number, number][] | null>(null);
 
   const onStatusRef = useRef(onStatus);
   onStatusRef.current = onStatus;
@@ -182,7 +187,8 @@ function DirectionsLayer({
   useEffect(() => {
     if (!target || target.mosque.gpsLat == null || target.mosque.gpsLng == null) {
       setUser(null);
-      setLine(null);
+      setCarLine(null);
+      setFootLine(null);
       onInfoRef.current(null);
       onStatusRef.current('idle');
       return;
@@ -196,6 +202,25 @@ function DirectionsLayer({
       return;
     }
 
+    // Fetch one ORS route for the given travel profile (driving-car / foot-walking).
+    const fetchRoute = async (origin: [number, number], profile: string) => {
+      const url =
+        `https://api.openrouteservice.org/v2/directions/${profile}?api_key=${ORS_KEY}` +
+        `&start=${origin[1]},${origin[0]}&end=${dest[1]},${dest[0]}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('ors-failed');
+      const data = await res.json();
+      const feature = data.features?.[0];
+      const coords: [number, number][] = feature.geometry.coordinates.map(
+        (c: number[]) => [c[1], c[0]] as [number, number],
+      );
+      return {
+        coords,
+        km: feature.properties.summary.distance / 1000,
+        min: Math.round(feature.properties.summary.duration / 60),
+      };
+    };
+
     onStatusRef.current('locating');
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -206,30 +231,28 @@ function DirectionsLayer({
 
         try {
           if (!ORS_KEY) throw new Error('no-key');
-          const url =
-            `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_KEY}` +
-            `&start=${origin[1]},${origin[0]}&end=${dest[1]},${dest[0]}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error('ors-failed');
-          const data = await res.json();
-          const feature = data.features?.[0];
-          const coords: [number, number][] = feature.geometry.coordinates.map(
-            (c: number[]) => [c[1], c[0]] as [number, number],
-          );
+          const [car, foot] = await Promise.all([
+            fetchRoute(origin, 'driving-car'),
+            fetchRoute(origin, 'foot-walking'),
+          ]);
           if (cancelled) return;
-          setLine(coords);
-          onInfoRef.current({
-            km: feature.properties.summary.distance / 1000,
-            min: Math.round(feature.properties.summary.duration / 60),
-          });
-          map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
+          setCarLine(car.coords);
+          setFootLine(foot.coords);
+          onInfoRef.current({ car: { km: car.km, min: car.min }, foot: { km: foot.km, min: foot.min } });
+          map.fitBounds(L.latLngBounds([...car.coords, ...foot.coords]), { padding: [40, 40] });
           onStatusRef.current('idle');
         } catch {
           if (cancelled) return;
-          // Straight-line fallback (no key / API error).
+          // Straight-line fallback (no key / API error): one line, estimated times
+          // from typical driving (~40 km/h) and walking (~5 km/h) speeds.
+          const km = haversineKm(origin, dest);
           const coords: [number, number][] = [origin, dest];
-          setLine(coords);
-          onInfoRef.current({ km: haversineKm(origin, dest), min: null });
+          setCarLine(coords);
+          setFootLine(null);
+          onInfoRef.current({
+            car: { km, min: Math.round((km / 40) * 60) },
+            foot: { km, min: Math.round((km / 5) * 60) },
+          });
           map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
           onStatusRef.current('idle');
         }
@@ -248,8 +271,11 @@ function DirectionsLayer({
   return (
     <>
       {user && <Marker position={user} icon={userIcon} />}
-      {line && (
-        <Polyline positions={line} pathOptions={{ color: '#2563eb', weight: 4, opacity: 0.85 }} />
+      {carLine && (
+        <Polyline positions={carLine} pathOptions={{ color: '#2563eb', weight: 4, opacity: 0.85 }} />
+      )}
+      {footLine && (
+        <Polyline positions={footLine} pathOptions={{ color: '#1F8A4C', weight: 3, opacity: 0.9, dashArray: '6 8' }} />
       )}
     </>
   );
@@ -291,7 +317,7 @@ export default function MosqueMap({
   jumuahLabel,
 }: Props) {
   const [status, setStatus] = useState<DirStatus>('idle');
-  const [info, setInfo] = useState<{ km: number; min: number | null } | null>(null);
+  const [info, setInfo] = useState<DualRoute | null>(null);
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
 
   // Ask for the user's location once on mount so we can highlight the nearest
@@ -445,8 +471,15 @@ export default function MosqueMap({
           ) : status === 'error' ? (
             <span className="text-red-600">{routeErrorLabel}</span>
           ) : info ? (
-            <span className="font-medium text-gray-800">
-              {info.km.toFixed(1)} km{info.min != null ? ` · ${info.min} min` : ''}
+            <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-medium text-gray-800">
+              <span className="flex items-center gap-1">
+                <Car className="h-3.5 w-3.5 text-rmc-green" />
+                {info.car.km.toFixed(1)} km{info.car.min != null ? ` · ${info.car.min} min` : ''}
+              </span>
+              <span className="flex items-center gap-1 border-l border-gray-200 pl-2.5">
+                <Footprints className="h-3.5 w-3.5 text-rmc-green" />
+                {info.foot.km.toFixed(1)} km{info.foot.min != null ? ` · ${info.foot.min} min` : ''}
+              </span>
             </span>
           ) : null}
           <button

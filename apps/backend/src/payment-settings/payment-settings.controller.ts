@@ -24,6 +24,7 @@ import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
 import { UpsertPaymentMethodSettingsDto } from './dto/upsert-payment-method-settings.dto';
 import { UpsertPaymentTypeRateDto } from './dto/upsert-payment-type-rate.dto';
 import { TestPaymentDto } from './dto/test-payment.dto';
+import { TestDepositDto } from './dto/test-deposit.dto';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permission } from '../common/types/permissions.enum';
@@ -166,6 +167,13 @@ export class PaymentSettingsController {
   @ApiOperation({ summary: 'Check payment status for a transaction' })
   checkPaymentStatus(@Param('txId', ParseUUIDPipe) txId: string) {
     return this.service.checkTransactionStatus(txId);
+  }
+
+  @Post('test/deposit')
+  @Permissions(Permission.PAYMENT_SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Send a test deposit (send money) via IntouchPay RequestDeposit' })
+  testDeposit(@CurrentUser() user: User, @Body() dto: TestDepositDto) {
+    return this.service.testDeposit(dto, user.id);
   }
 
   // ── Transaction History ────────────────────────────────────────────────────

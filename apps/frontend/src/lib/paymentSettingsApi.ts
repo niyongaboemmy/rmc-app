@@ -89,6 +89,12 @@ export interface TestPaymentPayload {
   currency?: string;
 }
 
+export interface TestDepositPayload {
+  mobilePhone: string;
+  amount: number;
+  reason?: string;
+}
+
 export interface PaymentTransaction {
   id: string;
   requestTransactionId: string;
@@ -100,6 +106,7 @@ export interface PaymentTransaction {
   currency: string;
   mobilePhone: string;
   status: 'pending' | 'successful' | 'failed' | 'cancelled';
+  direction: 'collect' | 'deposit';
   responseCode: string | null;
   message: string | null;
   isTest: boolean;
@@ -109,6 +116,12 @@ export interface PaymentTransaction {
 }
 
 export interface TestPaymentResult {
+  transaction: PaymentTransaction;
+  responseCode: string;
+  message: string;
+}
+
+export interface TestDepositResult {
   transaction: PaymentTransaction;
   responseCode: string;
   message: string;
@@ -268,6 +281,11 @@ export const paymentSettingsApi = {
     return data.data ?? data;
   },
 
+  testDeposit: async (payload: TestDepositPayload): Promise<TestDepositResult> => {
+    const { data } = await apiClient.post('/admin/payment-settings/test/deposit', payload);
+    return data.data ?? data;
+  },
+
   checkTransactionStatus: async (txId: string): Promise<{ transaction: PaymentTransaction; gatewayStatus: string; message: string }> => {
     const { data } = await apiClient.get(`/admin/payment-settings/test/payment/${txId}/status`);
     return data.data ?? data;
@@ -279,7 +297,7 @@ export const paymentSettingsApi = {
     status?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: PaymentTransaction[]; total: number; page: number; limit: number }> => {
+  }): Promise<{ items: PaymentTransaction[]; total: number; page: number; limit: number }> => {
     const { data } = await apiClient.get('/admin/payment-settings/transactions', { params: filters });
     return data.data ?? data;
   },

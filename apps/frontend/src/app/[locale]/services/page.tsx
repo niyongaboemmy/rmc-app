@@ -49,12 +49,14 @@ function ScholarshipIcon({ className }: { className?: string }) {
   );
 }
 
-function HijraIcon({ className }: { className?: string }) {
+function HajjIcon({ className }: { className?: string }) {
+  // Kaaba: a cube with the kiswah band near the top.
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
-      <path d="M9 21V13h6v8" />
-      <path d="M1 12h3M2.5 9.5L5 12l-2.5 2.5" />
+      <path d="M12 2.5l8 4v11l-8 4-8-4v-11z" />
+      <path d="M4 8.5l8 4 8-4" />
+      <path d="M4 8.2h16" />
+      <path d="M12 12.5V21" />
     </svg>
   );
 }
@@ -131,8 +133,8 @@ const services = [
     cardHover: 'hover:shadow-violet-100',
   },
   {
-    key: 'hijra', slug: 'hijra',
-    Icon: HijraIcon,
+    key: 'hajj', slug: 'hajj',
+    Icon: HajjIcon,
     bar: 'bg-amber-500',
     iconIdle: 'text-gray-300',
     iconHover: 'group-hover:text-amber-500',

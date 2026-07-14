@@ -5,20 +5,19 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import {
-  ArrowLeft,
   Moon,
   GraduationCap,
-  Home,
   FileText,
   Briefcase,
   Bell,
   Phone,
   Clock,
 } from 'lucide-react';
+import { BackToServices } from '@/components/services/BackToServices';
 
 // ─── Per-service visual config ───────────────────────────────────────────────
 
-type ServiceSlug = 'funeral' | 'scholarship' | 'hijra' | 'tender' | 'jobs';
+type ServiceSlug = 'funeral' | 'scholarship' | 'tender' | 'jobs';
 
 const SERVICE_META: Record<
   ServiceSlug,
@@ -62,20 +61,6 @@ const SERVICE_META: Record<
     accentText: 'text-violet-600',
     accentBorder: 'border-violet-200',
     accentBg: 'bg-violet-50',
-    eta: 'Q4 2026',
-  },
-  hijra: {
-    Icon: Home,
-    // Kaaba / Masjid Al-Haram aerial view
-    image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=1600&q=80',
-    gradientFrom: 'from-amber-600',
-    gradientTo: 'to-amber-900',
-    overlay: 'from-black/85 via-amber-950/65 to-black/45',
-    eyebrowColor: 'text-amber-300',
-    iconBg: 'from-amber-500 to-amber-700',
-    accentText: 'text-amber-600',
-    accentBorder: 'border-amber-200',
-    accentBg: 'bg-amber-50',
     eta: 'Q4 2026',
   },
   tender: {
@@ -172,14 +157,7 @@ export default async function ServiceComingSoonPage({
         </div>
 
         {/* Back button — bottom of hero */}
-        <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
-          <Link
-            href={`/${locale}/services`}
-            className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/25 hover:border-white/50 shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> {tc('backToAll')}
-          </Link>
-        </div>
+        <BackToServices locale={locale} />
       </section>
 
       {/* ── Coming Soon Body ── */}

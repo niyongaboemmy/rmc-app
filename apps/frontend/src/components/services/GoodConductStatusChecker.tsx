@@ -162,9 +162,25 @@ function RequestDetail({
 }) {
   const t = useTranslations('services.conduct.status');
   const router = useRouter();
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const currentIndex = stepIndexFor(request.status);
   const isClosed = request.status === 'closed';
   const isTerminal = request.status === 'rejected' || request.status === 'cancelled';
+
+  const handleCancel = async () => {
+    if (!confirm(t('cancelConfirm'))) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await goodConductApi.cancel(request.id);
+      onChanged();
+      onBack();
+    } catch {
+      setCancelError(t('cancelFailed'));
+      setCancelling(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -276,10 +292,18 @@ function RequestDetail({
       )}
 
       {request.status === 'draft' && (
-        <div className="text-center">
-          <Button onClick={() => router.push(`/${locale}/services/good-conduct/apply?edit=${request.id}`)}>
-            {t('continueToPayment')}
-          </Button>
+        <div className="text-center space-y-3">
+          {cancelError && (
+            <p role="alert" className="text-sm text-red-600">{cancelError}</p>
+          )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button onClick={() => router.push(`/${locale}/services/good-conduct/apply?edit=${request.id}`)}>
+              {t('continueToPayment')}
+            </Button>
+            <Button variant="danger" isLoading={cancelling} onClick={handleCancel}>
+              {t('cancelApplication')}
+            </Button>
+          </div>
         </div>
       )}
     </div>

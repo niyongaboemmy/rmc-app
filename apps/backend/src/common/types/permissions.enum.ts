@@ -76,6 +76,15 @@ export enum Permission {
   JOB_APPLICATIONS_VIEW = 'job_applications:view',
   JOB_APPLICATIONS_MANAGE = 'job_applications:manage',
 
+  // ── Funeral Service ───────────────────────────────────────────────
+  FUNERAL_VIEW = 'funeral:view',
+  FUNERAL_MANAGE = 'funeral:manage',
+
+  // ── Hajj Service ──────────────────────────────────────────────────
+  HAJJ_VIEW = 'hajj:view',
+  HAJJ_MANAGE = 'hajj:manage',
+  HAJJ_APPROVE = 'hajj:approve',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

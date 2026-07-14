@@ -14,6 +14,13 @@ export enum PaymentTransactionStatus {
   CANCELLED = 'cancelled',
 }
 
+export enum PaymentTransactionDirection {
+  /** RequestPayment (§2) — collecting money from a subscriber. */
+  COLLECT = 'collect',
+  /** RequestDeposit (§3) — sending money to a subscriber. */
+  DEPOSIT = 'deposit',
+}
+
 /** Records every payment attempt made through the IntouchPay gateway. */
 @Entity('payment_transactions')
 export class PaymentTransaction {
@@ -53,6 +60,14 @@ export class PaymentTransaction {
   @Index('IDX_ptx_status')
   @Column({ type: 'varchar', length: 20, default: PaymentTransactionStatus.PENDING })
   status: PaymentTransactionStatus;
+
+  /** Whether this transaction collects money from, or sends money to, the subscriber. */
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: PaymentTransactionDirection.COLLECT,
+  })
+  direction: PaymentTransactionDirection;
 
   @Column({ name: 'response_code', type: 'varchar', length: 20, nullable: true })
   responseCode: string | null;
