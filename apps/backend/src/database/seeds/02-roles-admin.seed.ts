@@ -38,6 +38,10 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.USERS_ASSIGN_ROLE,
   Permission.ROLES_VIEW,
   Permission.AUDIT_LOG_VIEW,
+  Permission.SCHOLARSHIP_VIEW,
+  Permission.SCHOLARSHIP_MANAGE,
+  Permission.SCHOLARSHIP_APPROVE,
+  Permission.SCHOLARSHIP_REPORTS,
 ];
 
 const MARRIAGE_OFFICER_PERMISSIONS: Permission[] = [
@@ -65,6 +69,13 @@ const GOOD_CONDUCT_OFFICER_PERMISSIONS: Permission[] = [
   Permission.GOOD_CONDUCT_MANAGE,
   Permission.MEMBERS_VIEW,
   Permission.MOSQUES_VIEW,
+];
+
+const SCHOLARSHIP_OFFICER_PERMISSIONS: Permission[] = [
+  Permission.SCHOLARSHIP_VIEW,
+  Permission.SCHOLARSHIP_MANAGE,
+  Permission.SCHOLARSHIP_REPORTS,
+  Permission.MEMBERS_VIEW,
 ];
 
 const DEFAULT_ROLES = [
@@ -108,6 +119,13 @@ const DEFAULT_ROLES = [
     slug: 'good_conduct_officer',
     description: 'Processes Good Conduct requests: payment confirmation, imam assignment',
     permissions: GOOD_CONDUCT_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  {
+    name: 'Scholarship Officer',
+    slug: 'scholarship_officer',
+    description: 'Manages scholarship programs and reviews applications',
+    permissions: SCHOLARSHIP_OFFICER_PERMISSIONS,
     isSystem: false,
   },
   {

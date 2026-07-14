@@ -59,6 +59,11 @@ export enum Permission {
   GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
   GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
 
+  SCHOLARSHIP_VIEW = 'scholarship:view',
+  SCHOLARSHIP_MANAGE = 'scholarship:manage',
+  SCHOLARSHIP_APPROVE = 'scholarship:approve',
+  SCHOLARSHIP_REPORTS = 'scholarship:reports',
+
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',
 

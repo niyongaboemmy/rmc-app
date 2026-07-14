@@ -797,7 +797,184 @@
     },
     "scholarship": {
       "title": "Buruse",
-      "desc": "Inkunga y'amafaranga kuri abanyeshuri b'Abasilamu bavoma uburezi mu mashuri yose."
+      "desc": "Inkunga y'amafaranga kuri abanyeshuri b'Abasilamu bavoma uburezi mu mashuri yose.",
+      "levels": {
+        "secondary": "Amashuri Yisumbuye",
+        "tvet": "Amashuri y'Umwuga (TVET)",
+        "university": "Kaminuza"
+      },
+      "relationships": {
+        "parent": "Umubyeyi",
+        "guardian": "Umurezi",
+        "sibling": "Umuvandimwe",
+        "other": "Ikindi"
+      },
+      "detail": {
+        "backToServices": "Serivisi Zose",
+        "needTitle": "Ibyo Ukeneye",
+        "needSubtitle": "Byiteguze mbere yo gutangira ubusabe bwawe.",
+        "need": {
+          "i1": { "title": "Amakuru yawe bwite", "text": "Amazina yombi, itariki y'amavuko, nimero ya telefoni, n'indangamuntu (bidahatirwa)." },
+          "i2": { "title": "Aho utuye", "text": "Akarere n'umurenge ubamo." },
+          "i3": { "title": "Amakuru y'uburezi bwawe", "text": "Ishuri urimo kwiga, urwego rw'uburezi, n'umwaka cyangwa icyiciro urimo." },
+          "i4": { "title": "Amakuru y'umurera wawe", "text": "Amazina, nimero ya telefoni, n'isano y'umubyeyi cyangwa umurera wawe nawe." },
+          "i5": { "title": "Ubusobanuro bugufi", "text": "Sobanura mu magambo make impamvu ukeneye iyi buruse." }
+        },
+        "processTitle": "Uko Bikorwa",
+        "processSubtitle": "Kuva ku busabe kugeza ku gukurikirana, mu ntambwe nkeya.",
+        "steps": {
+          "s1": { "title": "Injira", "text": "Injira kuri konti yawe ya RMC, cyangwa ufungure imwe niba udafite." },
+          "s2": { "title": "Uzuza ifishi", "text": "Uzuza amakuru yawe bwite, ay'uburezi, n'ay'umurera mu ntambwe eshatu ngufi." },
+          "s3": { "title": "Ohereza ubusabe bwawe", "text": "Ohereza kandi wakire nomero yo gukurikirana ubusabe bwawe." },
+          "s4": { "title": "Kurikirana aho bugeze", "text": "Koresha nomero yo gukurikirana igihe cyose kugira ngo urebe aho ubusabe bwawe bugeze." }
+        },
+        "faqTitle": "Ibibazo Bikunze Kubazwa",
+        "faqs": {
+          "f1": {
+            "q": "Ese ngomba kuba mfite konti kugira nsabe?",
+            "a": "Yego — ugomba kwinjira kuri konti yawe ya RMC kugira ngo wohereze ubusabe."
+          },
+          "f2": {
+            "q": "Hari amafaranga yo gusaba?",
+            "a": "Oya, gusaba buruse ntibisaba kwishyura."
+          },
+          "f3": {
+            "q": "Nakurikirana nte aho ubusabe bwanjye bugeze?",
+            "a": "Koresha nomero yo gukurikirana wahawe nyuma yo kohereza, ku rupapuro rwa \"Reba Aho Bigeze\" — nta konti ikenewe."
+          },
+          "f4": {
+            "q": "Nashobora gusaba nanone niba ntemewe?",
+            "a": "Yego, urakaza neza kohereza ubundi busabe bushya."
+          }
+        },
+        "ctaTitle": "Witeguye gusaba buruse?",
+        "ctaSubtitle": "Injira hanyuma wohereze ubusabe bwawe mu minota mike gusa.",
+        "ctaStart": "Tangira ubusabe",
+        "ctaContact": "Twandikire"
+      },
+      "apply": {
+        "heroTitle": "Saba Buruse",
+        "requirementsHeroTitle": "Buruse",
+        "requirementsHeroSubtitle": "Injira kuri konti yawe ya RMC kugira usabe buruse.",
+        "backToService": "Subira kuri Buruse",
+        "signInToApply": "Injira Kugira Usabe",
+        "signInPrompt": "Ugomba kwinjira kugira usabe buruse.",
+        "noAccount": "Ntufite konti?",
+        "requestAccess": "Saba uburenganzira",
+        "step1Title": "Amakuru y'Umwirondoro",
+        "step1Subtitle": "Tubwire uwo uri we n'uko twagusanga",
+        "step2Title": "Aho Utuye n'Uburezi",
+        "step2Subtitle": "Tubwire aho utuye n'icyo wiga",
+        "step3Title": "Umurera n'Impamvu",
+        "step3Subtitle": "Tubwire umurera wawe n'impamvu ukeneye iyi buruse",
+        "fullNames": "Amazina Yombi",
+        "fullNamesError": "Andika amazina yawe yombi (byibuze inyuguti 3)",
+        "fullNamesTooLongError": "Amazina arerekana ubwo ni maremare (ntarengwa inyuguti 150)",
+        "dateOfBirth": "Itariki y'Amavuko",
+        "gender": "Igitsina",
+        "male": "Gabo",
+        "female": "Gore",
+        "nationalId": "Indangamuntu",
+        "district": "Akarere",
+        "districtPlaceholder": "Hitamo akarere",
+        "sector": "Umurenge",
+        "sectorPlaceholder": "Hitamo umurenge",
+        "selectDistrictFirst": "Hitamo akarere mbere",
+        "cell": "Akagari",
+        "village": "Umudugudu",
+        "email": "Imeyili",
+        "emailError": "Andika imeyili nyayo",
+        "phone": "Nimero ya Telefoni",
+        "phoneFormatError": "Andika nomero ya telefoni y'u Rwanda yemewe: 07XXXXXXXX",
+        "phoneHint": "Imiterere: 07XXXXXXXX (imibare 10)",
+        "schoolName": "Ishuri / Ikigo Urimo Kwiga",
+        "educationLevel": "Urwego rw'Uburezi",
+        "educationLevelPlaceholder": "Hitamo urwego",
+        "currentYear": "Umwaka / Icyiciro Urimo",
+        "averageGrade": "Amanota Rusange",
+        "guardianName": "Amazina y'Umurera",
+        "guardianPhone": "Telefoni y'Umurera",
+        "relationship": "Isano n'Usaba",
+        "relationshipPlaceholder": "Hitamo isano",
+        "program": "Porogaramu ya Buruse",
+        "programPlaceholder": "Hitamo porogaramu (bidahatirwa)",
+        "noProgramOption": "Ubusabe rusange — ntibufitanye isano na porogaramu runaka",
+        "motivation": "Kubera iki ukeneye iyi buruse?",
+        "motivationRequiredError": "Nyamuneka sobanura imimerere yawe n'icyo ukeneye",
+        "next": "Komeza",
+        "back": "Subira Inyuma",
+        "submit": "Ohereza Ubusabe",
+        "optional": "bidahatirwa",
+        "optionalNameLengthError": "Bigomba kuba hagati y'inyuguti 3 na 150 niba wabyuzuje",
+        "genericError": "Habaye ikibazo. Ongera ugerageze.",
+        "successTitle": "Ubusabe Bwoherejwe!",
+        "successText": "Itsinda ryacu rizasuzuma ubusabe bwawe mu minsi 5-10 y'akazi. Uzamenyeshwa binyuze kuri SMS igihe cyose imimerere ihindutse.",
+        "applicationIdLabel": "Nomero y'Ubusabe Bwawe",
+        "saveIdHint": "Bika iyi nomero — ukeneye kuyikoresha mu gukurikirana ubusabe bwawe.",
+        "trackApplication": "Kurikirana Ubusabe",
+        "newApplication": "Ubusabe Bushya",
+        "copyId": "Koporora Nomero"
+      },
+      "status": {
+        "title": "Kurikirana Ubusabe Bwawe",
+        "subtitle": "Reba aho ubusabe bwawe bwa buruse bugeze ukoresheje nomero y'ubusabe.",
+        "backToService": "Subira kuri Buruse",
+        "idLabel": "Nomero y'Ubusabe",
+        "idPlaceholder": "urugero: RMC-SCH-KIC-202607-00001",
+        "checkButton": "Reba Aho Bigeze",
+        "checking": "Turimo kureba…",
+        "notFoundTitle": "Ubusabe Ntabwo Bwabonetse",
+        "notFoundText": "Ntitwabashije kubona ubusabe bufite iyo nomero. Nyamuneka isuzume hanyuma wongere ugerageze.",
+        "detailsTitle": "Ubusabe",
+        "submittedOn": "Bwoherejwe",
+        "applicant": "Usaba",
+        "school": "Ishuri",
+        "currentStatus": "Aho Bigeze",
+        "stages": {
+          "submitted": "Bwoherejwe",
+          "review": "Kirimo Kugenzurwa",
+          "approved": "Bwemejwe",
+          "confirmed": "Byemejwe Burundu"
+        },
+        "stageDesc": {
+          "submitted": "Ubusabe bwawe bwakiriwe.",
+          "review": "Umugenzuzi ararebera amakuru yawe.",
+          "approved": "Ubusabe bwawe bwemejwe.",
+          "confirmed": "Buruse yawe yemejwe burundu."
+        },
+        "statusLabel": {
+          "draft": "Umushinga",
+          "submitted": "Bwoherejwe",
+          "under_review": "Kirimo Kugenzurwa",
+          "approved": "Bwemejwe",
+          "rejected": "Ntabwo Bwemejwe",
+          "cancelled": "Bwahagaritswe",
+          "confirmed": "Byemejwe Burundu"
+        },
+        "banner": {
+          "rejectedTitle": "Ubusabe Ntabwo Bwemejwe",
+          "rejectedText": "Vugana na info@rmc.rw kubindi bisobanuro.",
+          "cancelledTitle": "Ubusabe Bwahagaritswe",
+          "cancelledText": "Ubu busabe bwahagaritswe."
+        }
+      },
+      "landing": {
+        "backToServices": "Subira ku Serivisi",
+        "applyTitle": "Saba Buruse",
+        "applyText": "Ohereza amakuru yawe, ay'uburezi, n'impamvu y'ubusabe bwawe.",
+        "applyCta": "Saba Nonaha",
+        "statusTitle": "Kurikirana Ubusabe Bwanjye",
+        "statusText": "Reba aho ubusabe wamaze kohereza bugeze.",
+        "statusCta": "Reba Aho Bigeze",
+        "programsTitle": "Buruse Ziboneka",
+        "programsSubtitle": "Porogaramu za buruse zifunguye ushobora gusaba nonaha.",
+        "programsEmptyTitle": "Nta buruse ifunguye ubu",
+        "programsEmptyText": "Garuka vuba — porogaramu nshya za buruse zitangazwa buri gihe.",
+        "programsLoadError": "Ntibyashobotse gushakisha buruse. Ongera ugerageze nyuma.",
+        "deadlineLabel": "Igihe Kigera",
+        "amountLabel": "Amafaranga",
+        "viewAndApply": "Reba & Usabe"
+      }
     },
     "hijra": {
       "title": "Serivisi za Hija",
@@ -933,7 +1110,8 @@
       },
       "marriage": "Ubukwe",
       "drive": "Dosiye",
-      "goodConduct": "Imyitwarire Myiza"
+      "goodConduct": "Imyitwarire Myiza",
+      "scholarship": "Buruse"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
