@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
   LogIn,
   FileText,
   User,
@@ -16,6 +15,7 @@ import {
   Camera,
   Landmark,
 } from 'lucide-react';
+import { HeroBackLink } from '@/components/services/HeroBackLink';
 import { MarriageWizard } from '@/components/services/marriage/MarriageWizard';
 import { useAuth } from '@/hooks/useAuth';
 import { Navbar } from '@/components/layout/Navbar';
@@ -227,14 +227,7 @@ export default function MarriageApplyPage() {
         </div>
 
         {/* Back button — bottom of hero, always visible */}
-        <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
-          <Link
-            href={`/${locale}/services/marriage`}
-            className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/25 hover:border-white/50 shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> {t('backToMarriage')}
-          </Link>
-        </div>
+        <HeroBackLink href={`/${locale}/services/marriage`} label={t('backToMarriage')} />
       </section>
 
       {/* Loading skeleton */}

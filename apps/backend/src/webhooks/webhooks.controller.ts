@@ -81,10 +81,14 @@ export class WebhooksController {
       this.logger.error(`[IntouchPay Callback] Processing error: ${err}`);
     }
 
-    return {
+    const ack = {
       message: 'success',
       success: true,
       request_id: payload['requesttransactionid'] ?? '',
     };
+
+    this.logger.log(`[IntouchPay Callback] Acknowledged txn=${ack.request_id} → ${JSON.stringify(ack)}`);
+
+    return ack;
   }
 }

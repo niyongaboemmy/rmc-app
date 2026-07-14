@@ -326,11 +326,11 @@
     }
   },
   "services": {
+    "backToServices": "Back to services",
     "title": "Community Services",
     "subtitle": "RMC offers 7 core services to support our community",
     "eyebrow": "Our Services",
     "comingSoon": {
-      "backToAll": "Back to All Services",
       "badge": "Coming Soon",
       "inProgress": "In Progress",
       "etaLabel": "Estimated Launch",
@@ -345,7 +345,6 @@
       "title": "Marriage Services",
       "desc": "Official Islamic marriage ceremonies, certificates, and documentation for couples in the community.",
       "detail": {
-        "backToServices": "All Services",
         "heroBadge": "Marriage Services",
         "overviewHeading": "A blessed beginning,",
         "overviewHeadingHighlight": "done right",
@@ -628,7 +627,225 @@
     },
     "funeral": {
       "title": "Funeral Services",
-      "desc": "Coordination of Islamic burial rites, imam assignment, and logistics support for families."
+      "desc": "Coordination of Islamic burial rites, imam assignment, and logistics support for families.",
+      "landing": {
+        "ayahRef": "Qur’an 2:156",
+        "quickTitle": "How can we help?",
+        "quickSub": "From reporting a death to burial, RMC walks with you at every step — with dignity and care.",
+        "actions": {
+          "report": {
+            "title": "Report a Death",
+            "desc": "Notify RMC and begin the arrangements."
+          },
+          "request": {
+            "title": "Request Janāzah Services",
+            "desc": "Ghusl, kafan, prayer, transport and burial."
+          },
+          "progress": {
+            "title": "Burial Progress",
+            "desc": "Track the status of a funeral request."
+          },
+          "cemetery": {
+            "title": "Cemetery Information",
+            "desc": "Locations, capacity and contacts."
+          },
+          "support": {
+            "title": "Family Support",
+            "desc": "Counselling, food and financial aid."
+          }
+        },
+        "ctaTitle": "We are here for you",
+        "ctaSub": "When a loved one passes, contact us at any hour. The community is ready to help.",
+        "ctaReport": "Report a Death",
+        "ctaContact": "Call the committee",
+        "viewAll": "View all",
+        "transports": {
+          "title": "Available transport means",
+          "sub": "Funeral transport offered by our mosques. Contact the one nearest you.",
+          "searchPlaceholder": "Search by name, location, or phone",
+          "allMosques": "All mosques",
+          "noResults": "No transport means match your search."
+        }
+      },
+      "request": {
+        "title": "Funeral Service Request",
+        "subtitle": "Please share what you can. A committee member will contact you shortly, in shā’ Allāh.",
+        "back": "Back to Funeral Services",
+        "steps": {
+          "deceased": "Deceased",
+          "family": "Family",
+          "arrangements": "Arrangements",
+          "review": "Review"
+        },
+        "next": "Continue",
+        "prev": "Back",
+        "submit": "Submit request",
+        "submitting": "Submitting…",
+        "optional": "optional",
+        "deceased": {
+          "heading": "Information about the deceased",
+          "fullName": "Full name",
+          "gender": "Gender",
+          "male": "Male",
+          "female": "Female",
+          "dob": "Date of birth",
+          "dod": "Date of death",
+          "nationalId": "National ID",
+          "placeOfDeath": "Place of death",
+          "cause": "Cause of death",
+          "causeHint": "Optional — leave blank if unknown or private.",
+          "certificate": "Death certificate",
+          "certificateHint": "PDF or image, if available.",
+          "fullNameHint": "Full legal name of the deceased",
+          "nationalIdHint": "16 digits",
+          "dobHint": "Must be before the date of death",
+          "dodHint": "Cannot be in the future",
+          "placeOfDeathHint": "City or facility where the death occurred",
+          "certificateUploaded": "Uploaded",
+          "certificateUploading": "Uploading…",
+          "certificateRemove": "Remove this certificate",
+          "certificateTooLarge": "That file is larger than 10 MB. Please upload a smaller photo or PDF.",
+          "certificateType": "Please upload an image (JPG, PNG, WEBP) or a PDF.",
+          "certificateUploadFailed": "The upload failed. Please check your connection and try again."
+        },
+        "family": {
+          "heading": "Family contact",
+          "nextOfKin": "Next of kin",
+          "phone": "Phone number",
+          "email": "Email",
+          "address": "Address",
+          "emergency": "Emergency contact",
+          "nextOfKinHint": "Primary family contact",
+          "phoneHint": "Rwandan number — 0788123456 or +250788123456",
+          "emailHint": "Optional",
+          "emergencyHint": "Optional — an alternate contact",
+          "addressHint": "Where the family can be reached"
+        },
+        "arrangements": {
+          "heading": "Funeral arrangements",
+          "mosque": "Preferred mosque",
+          "cemetery": "Preferred cemetery",
+          "selectMosque": "Select a mosque",
+          "selectCemetery": "Select a cemetery",
+          "burialDate": "Preferred burial date",
+          "burialTime": "Preferred burial time",
+          "servicesLabel": "Services needed",
+          "transport": "Transportation",
+          "notes": "Additional notes",
+          "notesHint": "Anything else the committee should know.",
+          "mosqueHint": "Optional — preferred mosque for the prayer",
+          "cemeteryHint": "Optional — preferred burial cemetery",
+          "burialDateHint": "On or after the date of death",
+          "burialTimeHint": "Optional"
+        },
+        "review": {
+          "heading": "Review your request",
+          "sub": "Please confirm the details below before submitting.",
+          "notProvided": "Not provided",
+          "yes": "Yes",
+          "no": "No"
+        },
+        "success": {
+          "title": "Request received",
+          "message": "May Allah ease your affairs. A committee member will contact you shortly.",
+          "again": "Submit another request",
+          "home": "Back to Funeral Services",
+          "track": "Track this request"
+        },
+        "validation": {
+          "required": "This field is required",
+          "email": "Enter a valid email",
+          "phone": "Enter a valid Rwandan phone — 0788123456 or +250788123456",
+          "selectGender": "Please select",
+          "nationalId": "Enter a valid 16-digit National ID",
+          "dateOfDeathFuture": "Date of death cannot be in the future",
+          "burialBeforeDeath": "Burial date cannot be before the date of death",
+          "dobBeforeDeath": "Date of birth must be before the date of death"
+        }
+      },
+      "stages": {
+        "reported": "Death reported",
+        "verification": "Verification",
+        "family_contacted": "Family contacted",
+        "ghusl": "Ghusl scheduled",
+        "kafan": "Kafan prepared",
+        "janazah": "Janāzah prayer scheduled",
+        "transportation": "Transportation",
+        "burial": "Burial",
+        "completed": "Completed"
+      },
+      "stageStatus": {
+        "done": "Done",
+        "active": "In progress",
+        "pending": "Pending"
+      },
+      "status": {
+        "progressLabel": "{done} of {total} steps completed",
+        "timelineTitle": "Progress timeline"
+      },
+      "cemeteryPage": {
+        "title": "Cemetery Directory",
+        "subtitle": "Muslim burial grounds across Rwanda — locations, capacity and contacts.",
+        "back": "Back to Funeral Services",
+        "searchPlaceholder": "Search by name or place…",
+        "resultsCount": "{count, plural, =1 {# cemetery} other {# cemeteries}}",
+        "emptyTitle": "No cemeteries found",
+        "emptyText": "Try a different search.",
+        "capacity": "Capacity",
+        "occupancy": "Occupancy",
+        "contact": "Contact",
+        "directions": "Maps",
+        "locate": "Locate"
+      },
+      "detail": {
+        "back": "Back to Funeral Services",
+        "profile": "Profile",
+        "checklist": "Service checklist",
+        "prayer": "Prayer & burial",
+        "documents": "Documents & attachments",
+        "notes": "Notes",
+        "download": "Download",
+        "none": "—",
+        "noNotes": "No notes recorded.",
+        "noDocuments": "No documents uploaded.",
+        "notFoundTitle": "Request not found",
+        "notFoundText": "Please check the reference number, or contact the committee.",
+        "ageAtDeath": "Age at death",
+        "daysSinceDeath": "Days since death",
+        "submitted": "Submitted",
+        "manage": "Manage stage",
+        "transport": "Transportation support",
+        "yes": "Needed",
+        "no": "Not needed"
+      },
+      "donations": {
+        "title": "Funeral Donations",
+        "subtitle": "Support burial costs and grieving families — every gift is a Sadaqah Jariyah.",
+        "back": "Back to Funeral Services",
+        "raised": "Raised",
+        "target": "Goal",
+        "donate": "Donate",
+        "totalRaised": "Total raised",
+        "note": "All gifts are processed securely on the RMC donation page.",
+        "categories": {
+          "burial": {
+            "title": "Burial Expenses",
+            "desc": "Ghusl, kafan, grave preparation and transport for those in need."
+          },
+          "family": {
+            "title": "Family Support",
+            "desc": "Immediate help for grieving families facing hardship."
+          },
+          "cemetery": {
+            "title": "Cemetery Maintenance",
+            "desc": "Upkeep of Muslim burial grounds across Rwanda."
+          },
+          "mosque_fund": {
+            "title": "Mosque Funeral Fund",
+            "desc": "Sustains janāzah services at community mosques."
+          }
+        }
+      }
     },
     "conduct": {
       "title": "Good Conduct Certificate",
@@ -770,10 +987,12 @@
         "continueToPayment": "Continue to Payment",
         "downloadCertificate": "Download Certificate",
         "certificateNumber": "Certificate Number",
-        "motifLabel": "Reason for Request"
+        "motifLabel": "Reason for Request",
+        "cancelApplication": "Cancel Application",
+        "cancelConfirm": "Are you sure you want to cancel this application? This cannot be undone.",
+        "cancelFailed": "Failed to cancel the application. Please try again."
       },
       "landing": {
-        "backToServices": "Back to Services",
         "applyTitle": "Request a Certificate",
         "applyText": "Submit your details, masjid, and reason for the request.",
         "applyCta": "Apply Now",
@@ -976,10 +1195,6 @@
         "viewAndApply": "View & Apply"
       }
     },
-    "hijra": {
-      "title": "Hija Services",
-      "desc": "Documentation and support services for community Hajj and Umra needs."
-    },
     "tender": {
       "title": "Tenders",
       "desc": "Business opportunities published by RMC for qualified organizations and contractors."
@@ -987,6 +1202,109 @@
     "jobs": {
       "title": "Job Opportunities",
       "desc": "Employment vacancies at RMC and affiliated organizations across Rwanda."
+    },
+    "hajj": {
+      "title": "Hajj Services",
+      "desc": "Guidance, registration, and support for pilgrims — from preparation to departure.",
+      "requirements": {
+        "required": "Required",
+        "recommended": "Recommended",
+        "loading": "Loading requirements"
+      },
+      "register": {
+        "title": "Register for Hajj",
+        "subtitle": "Complete the form below to begin your Hajj registration. Fields marked * are required.",
+        "back": "Back to Hajj Services",
+        "submit": "Submit registration",
+        "submitting": "Submitting…",
+        "sections": {
+          "personal": "Applicant",
+          "contact": "Contact",
+          "residence": "Residence",
+          "passport": "Passport",
+          "payments": "Payments"
+        },
+        "fields": {
+          "fullName": "Full names",
+          "fullNameHint": "As written on your passport",
+          "phone": "Telephone",
+          "phoneHint": "Rwandan number — 0788123456 or +250788123456",
+          "email": "Email",
+          "emailHint": "Optional",
+          "district": "District",
+          "sector": "Sector",
+          "passportNumber": "Passport number",
+          "passportHint": "5–15 letters or digits",
+          "registrationFee": "Registration fee",
+          "advancePayment": "Advance payment",
+          "uploadProof": "Upload proof of payment",
+          "selectDistrict": "Select district",
+          "selectSector": "Select sector",
+          "selectDistrictFirst": "Select a district first",
+          "searchPlaceholder": "Search…",
+          "proofHint": "JPG, PNG or PDF · max 10 MB",
+          "proofUploading": "Uploading…",
+          "proofUploaded": "Uploaded",
+          "proofRemove": "Remove this receipt"
+        },
+        "validation": {
+          "required": "This field is required",
+          "phone": "Enter a valid Rwandan phone — 0788123456 or +250788123456",
+          "email": "Enter a valid email",
+          "passport": "Enter a valid passport number (5–15 letters/digits)",
+          "proof": "Please upload proof of payment",
+          "submitError": "Something went wrong. Please try again.",
+          "proofTooLarge": "That file is larger than 10 MB. Please upload a smaller photo or PDF.",
+          "proofType": "Please upload an image (JPG, PNG, WEBP) or a PDF.",
+          "proofUploadFailed": "The upload failed. Please check your connection and try again."
+        },
+        "success": {
+          "title": "Registration submitted",
+          "message": "Thank you. Our team will review your registration and contact you with the next steps.",
+          "again": "Submit another",
+          "home": "Back to Hajj Services",
+          "numberLabel": "Your application number",
+          "numberHint": "Keep this number safe. We will text you at every step, and you can use it to check your status at any time.",
+          "track": "Track my application"
+        }
+      },
+      "status": {
+        "back": "Back to Hajj Services",
+        "title": "Track your Hajj application",
+        "sub": "Enter the application number you received when you registered.",
+        "placeholder": "RMC-HAJ-202607-00001",
+        "check": "Check status",
+        "notFound": "No application found with that number. Check it and try again.",
+        "error": "Could not check the status right now. Please try again.",
+        "submittedOn": "Submitted on",
+        "lastUpdate": "Last update",
+        "applicant": "Applicant",
+        "reason": "Reason",
+        "steps": {
+          "submitted": "Application received",
+          "under_review": "Under review by our team",
+          "approved": "Approved",
+          "rejected": "Not approved"
+        },
+        "stepHint": {
+          "submitted": "We have your application and will begin verification shortly.",
+          "under_review": "Our team is verifying your passport details and payment proofs.",
+          "approved": "Congratulations. Our team will contact you with the next steps.",
+          "rejected": "Your application was not approved. See the reason below."
+        }
+      },
+      "bankAccounts": {
+        "eyebrow": "Where to pay",
+        "title": "Bank Accounts",
+        "subtitle": "Pay the Hajj fees into one of the accounts below, then upload your payment receipt with your registration.",
+        "accountName": "Account name",
+        "accountNumber": "Account number",
+        "swift": "SWIFT / BIC",
+        "copy": "Copy account number",
+        "copied": "Account number copied",
+        "loading": "Loading bank accounts",
+        "proofNote": "Keep your bank slip — you will be asked to upload it as proof of payment when you register."
+      }
     }
   },
   "contact": {
@@ -1111,7 +1429,9 @@
       "marriage": "Marriage",
       "drive": "Drive",
       "goodConduct": "Good Conduct",
-      "scholarship": "Scholarships"
+      "scholarship": "Scholarships",
+      "funeral": "Funeral",
+      "hajj": "Hajj"
     },
     "topbar": {
       "viewSite": "View site",
@@ -1180,7 +1500,8 @@
     "donations": {
       "title": "Donations",
       "subtitle": "Track donations received across all programs",
-      "export": "Export",
+      "export": "Export Excel",
+      "exportError": "Couldn't export the report. Please try again.",
       "refresh": "Refresh",
       "stat": {
         "totalReceived": "Total received (RWF)",
@@ -1379,6 +1700,162 @@
       "confirmDelete": "Delete",
       "deleting": "Deleting…",
       "deleteError": "Could not delete. Please try again."
+    },
+    "funeral": {
+      "title": "Funeral Services",
+      "subtitle": "Requests, announcements, volunteers & cemeteries",
+      "export": "Export Excel",
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "viewerNote": "You have view-only access. Contact an administrator to make changes.",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "confirmTitle": "Confirm deletion"
+      },
+      "stats": {
+        "pending": "Pending requests",
+        "completed": "Completed"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "requests": "Requests",
+        "volunteers": "Volunteers",
+        "cemeteries": "Cemeteries",
+        "reports": "Reports",
+        "transports": "Transports"
+      },
+      "overview": {
+        "recentRequests": "Recent requests",
+        "viewAll": "View all"
+      },
+      "requests": {
+        "searchPlaceholder": "Search by name or reference…",
+        "allStages": "All stages",
+        "emptyTitle": "No requests found",
+        "emptyText": "Try a different search or filter.",
+        "view": "View",
+        "manage": "Manage",
+        "toastUpdated": "{name} moved to {stage}",
+        "toastError": "Couldn't update the request. Please try again.",
+        "toastExportError": "Couldn't export the report. Please try again.",
+        "dialog": {
+          "title": "Manage funeral",
+          "stageLabel": "Stage",
+          "current": "Current",
+          "save": "Save changes",
+          "cancel": "Cancel"
+        },
+        "col": {
+          "deceased": "Deceased",
+          "stage": "Stage",
+          "progress": "Progress",
+          "contact": "Contact",
+          "date": "Date"
+        }
+      },
+      "cemeteries": {
+        "add": "New cemetery",
+        "emptyTitle": "No cemeteries",
+        "emptyText": "Add a cemetery to track its capacity and contacts.",
+        "deleteConfirm": "Delete {name}? This cannot be undone.",
+        "toastCreated": "{name} added",
+        "toastUpdated": "{name} updated",
+        "toastDeleted": "{name} removed",
+        "toastError": "Couldn't save the cemetery. Please try again.",
+        "form": {
+          "createTitle": "New cemetery",
+          "editTitle": "Edit cemetery",
+          "name": "Name",
+          "address": "Location / address",
+          "capacity": "Capacity",
+          "used": "Used",
+          "contactPerson": "Contact person",
+          "phone": "Phone",
+          "lat": "Latitude (optional)",
+          "lng": "Longitude (optional)",
+          "mapLabel": "Location on map",
+          "pickHint": "Tap the map or drag the pin to set the location.",
+          "findMyLocation": "Find my location",
+          "locating": "Locating…",
+          "geoError": "Couldn't get your location. Enter it manually.",
+          "geoUnsupported": "Location isn't available on this device.",
+          "required": "Required",
+          "save": "Save",
+          "cancel": "Cancel",
+          "namePlaceholder": "Nyanza Public Cemetery",
+          "nameHint": "Name of the cemetery",
+          "addressPlaceholder": "Nyanza, Southern Province",
+          "addressHint": "Where the cemetery is located",
+          "capacityHint": "Total number of graves",
+          "usedHint": "Graves already occupied",
+          "contactPersonHint": "Person in charge (optional)",
+          "phoneHint": "Rwandan number (optional)"
+        },
+        "col": {
+          "name": "Name",
+          "location": "Location",
+          "occupancy": "Occupancy",
+          "contact": "Contact",
+          "phone": "Phone"
+        }
+      },
+      "reports": {
+        "totalRequests": "Total requests",
+        "completed": "Completed",
+        "byStage": "Requests by stage"
+      },
+      "transports": {
+        "add": "Add transport",
+        "emptyTitle": "No transport means",
+        "emptyText": "Add the transport options offered by your mosques.",
+        "col": {
+          "name": "Name",
+          "mosque": "Mosque",
+          "location": "Location",
+          "phone": "Phone",
+          "status": "Status"
+        },
+        "status": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "toastCreated": "Transport \"{name}\" added",
+        "toastUpdated": "Transport \"{name}\" updated",
+        "toastDeleted": "Transport \"{name}\" removed",
+        "toastError": "Something went wrong. Please try again.",
+        "deleteConfirm": "Remove transport \"{name}\"?",
+        "form": {
+          "createTitle": "Add transport",
+          "editTitle": "Edit transport",
+          "name": "Name / label",
+          "mosque": "Mosque",
+          "selectMosque": "Select a mosque",
+          "location": "Location",
+          "phone": "Phone number",
+          "active": "Active (visible to the public)",
+          "required": "Required",
+          "save": "Save",
+          "cancel": "Cancel",
+          "phoneInvalid": "Enter a valid Rwandan phone — 0788123456 or +250788123456",
+          "namePlaceholder": "Hearse — Toyota Hiace",
+          "nameHint": "A short label for the transport",
+          "mosqueHint": "The mosque that owns this transport",
+          "locationPlaceholder": "Nyamirambo, Nyarugenge",
+          "locationHint": "Where the transport is based",
+          "phoneHint": "Rwandan number — 0788123456 or +250788123456"
+        }
+      },
+      "detail": {
+        "inspect": "Inspect",
+        "certificate": "Death certificate",
+        "certificateLegacy": "This report predates file uploads — only a filename was recorded, so there is no document to open.",
+        "certificateFailed": "This certificate could not be loaded from storage.",
+        "noDocuments": "No documents uploaded.",
+        "download": "Download"
+      }
     }
   },
   "galleryPage": {

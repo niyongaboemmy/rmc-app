@@ -2,9 +2,9 @@ import { Suspense } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import { HeroBackLink } from '@/components/services/HeroBackLink';
 import { GoodConductStatusChecker } from '@/components/services/GoodConductStatusChecker';
 
 export default async function GoodConductStatusPage({
@@ -37,16 +37,12 @@ export default async function GoodConductStatusPage({
             <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{t('title')}</h1>
             <p className="text-white/75 text-base max-w-2xl mx-auto">{t('subtitle')}</p>
           </div>
+
+          <HeroBackLink href={`/${locale}/services/conduct`} label={t('backToService')} />
         </section>
 
         <section className="bg-gray-50/60 pattern-light">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-            <Link
-              href={`/${locale}/services/conduct`}
-              className="inline-flex items-center gap-1.5 bg-indigo-950 text-white px-3.5 py-1.5 rounded-full text-sm font-medium hover:bg-indigo-900 transition-colors mb-8"
-            >
-              <ArrowLeft className="w-4 h-4" /> {t('backToService')}
-            </Link>
             <Suspense>
               <GoodConductStatusChecker />
             </Suspense>

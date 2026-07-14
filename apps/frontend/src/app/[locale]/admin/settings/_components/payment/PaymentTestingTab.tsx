@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import {
   Phone, Zap, RefreshCw, CheckCircle2, XCircle, Clock,
   ChevronDown, AlertCircle, Activity, Wallet, X,
+  ArrowDownToLine, ArrowUpFromLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
@@ -15,6 +16,7 @@ import {
   PaymentTransaction,
   TestPaymentPayload,
   TestPaymentResult,
+  TestDepositPayload,
 } from '@/lib/paymentSettingsApi';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -394,6 +396,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
   const [mobilePhone,       setMobilePhone]        = useState('');
   const [amount,            setAmount]             = useState('100');
   const [currency]                                  = useState('RWF');
+  const [direction,         setDirection]          = useState<'collect' | 'deposit'>('collect');
 
   // ── Runtime state ────────────────────────────────────────────────────────
   const [sending,        setSending]        = useState(false);
@@ -412,7 +415,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
     setLoadingTxns(true);
     try {
       const res = await paymentSettingsApi.listTransactions({ isTest: true, limit: 20 });
-      setTransactions(Array.isArray(res) ? res : (res.data ?? []));
+      setTransactions(Array.isArray(res) ? res : (res.items ?? []));
     } catch { /* silent */ }
     finally { setLoadingTxns(false); }
   }, []);
@@ -511,24 +514,42 @@ export default function PaymentTestingTab({ methods, types }: Props) {
     setCallbackEvent(null);
     stopAutoPoll();
     try {
-      const payload: TestPaymentPayload = {
-        mobilePhone: mobilePhone.replace(/\s/g, ''),
-        amount:      numAmount,
-        currency,
-        ...(selectedTypeKey ? { paymentTypeKey: selectedTypeKey as never } : {}),
-      };
-      const result = await paymentSettingsApi.testPayment(payload);
-      setLastResult(result);
-      if (result.transaction.status === 'pending') {
-        toast.success('Request sent — subscriber will receive a USSD prompt to confirm.');
-        // Start polling every 5 s until confirmed or failed
-        startAutoPoll(result.transaction.id);
+      if (direction === 'deposit') {
+        const payload: TestDepositPayload = {
+          mobilePhone: mobilePhone.replace(/\s/g, ''),
+          amount:      numAmount,
+        };
+        const result = await paymentSettingsApi.testDeposit(payload);
+        setLastResult(result);
+        toast.success(`Deposit ${result.transaction.status}.`);
+        setCallbackEvent({
+          type: result.transaction.status === 'successful' ? 'payment.confirmed' : 'payment.failed',
+          requestTransactionId: result.transaction.requestTransactionId,
+          transactionId: result.transaction.gatewayTransactionId ?? '',
+          status: result.transaction.status,
+          responseCode: result.responseCode,
+          message: result.message,
+        });
       } else {
-        toast.success(`Payment ${result.transaction.status}.`);
+        const payload: TestPaymentPayload = {
+          mobilePhone: mobilePhone.replace(/\s/g, ''),
+          amount:      numAmount,
+          currency,
+          ...(selectedTypeKey ? { paymentTypeKey: selectedTypeKey as never } : {}),
+        };
+        const result = await paymentSettingsApi.testPayment(payload);
+        setLastResult(result);
+        if (result.transaction.status === 'pending') {
+          toast.success('Request sent — subscriber will receive a USSD prompt to confirm.');
+          // Start polling every 5 s until confirmed or failed
+          startAutoPoll(result.transaction.id);
+        } else {
+          toast.success(`Payment ${result.transaction.status}.`);
+        }
       }
       await loadTransactions();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Payment request failed';
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Request failed';
       toast.error(msg);
     } finally {
       setSending(false);
@@ -605,12 +626,43 @@ export default function PaymentTestingTab({ methods, types }: Props) {
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/60">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-violet-600" />
-                <h3 className="font-semibold text-slate-800 text-sm">Send Test Payment</h3>
+                <h3 className="font-semibold text-slate-800 text-sm">Send Test {direction === 'deposit' ? 'Deposit' : 'Payment'}</h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">All test transactions are flagged with isTest=true in the database.</p>
             </div>
 
             <div className="p-5 space-y-4">
+              {/* Direction */}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Direction</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDirection('collect')}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
+                      direction === 'collect'
+                        ? 'bg-violet-600 border-violet-600 text-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                    )}
+                  >
+                    <ArrowDownToLine className="w-3.5 h-3.5" /> Collect (RequestPayment)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDirection('deposit')}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
+                      direction === 'deposit'
+                        ? 'bg-violet-600 border-violet-600 text-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                    )}
+                  >
+                    <ArrowUpFromLine className="w-3.5 h-3.5" /> Send (RequestDeposit)
+                  </button>
+                </div>
+              </div>
+
               {/* Payment Method */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">Payment Method</label>
@@ -629,25 +681,27 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                 </div>
               </div>
 
-              {/* Payment Type */}
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  Payment Type <span className="text-slate-400">(optional)</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedTypeKey}
-                    onChange={(e) => setSelectedTypeKey(e.target.value)}
-                    className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-violet-400"
-                  >
-                    <option value="">— None —</option>
-                    {activeTypes.map((t) => (
-                      <option key={t.id} value={t.key}>{t.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              {/* Payment Type — not applicable to deposits */}
+              {direction === 'collect' && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Payment Type <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedTypeKey}
+                      onChange={(e) => setSelectedTypeKey(e.target.value)}
+                      className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    >
+                      <option value="">— None —</option>
+                      {activeTypes.map((t) => (
+                        <option key={t.id} value={t.key}>{t.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Mobile Phone */}
               <div>
@@ -696,7 +750,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                 {sending ? (
                   <><RefreshCw className="w-4 h-4 animate-spin" /> Sending…</>
                 ) : (
-                  <><Zap className="w-4 h-4" /> Send Payment Request</>
+                  <><Zap className="w-4 h-4" /> {direction === 'deposit' ? 'Send Deposit Request' : 'Send Payment Request'}</>
                 )}
               </button>
 

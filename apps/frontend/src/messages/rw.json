@@ -326,11 +326,11 @@
     }
   },
   "services": {
+    "backToServices": "Subira kuri serivisi",
     "title": "Serivisi z'Umuryango",
     "subtitle": "RMC itanga serivisi 7 z'ingenzi kuri abanyamuryango",
     "eyebrow": "Serivisi Zacu",
     "comingSoon": {
-      "backToAll": "Subira ku Serivisi Zose",
       "badge": "Eza Vuba",
       "inProgress": "Biratunganywa",
       "etaLabel": "Itariki Iteganyijwe yo Gutangira",
@@ -345,7 +345,6 @@
       "title": "Serivisi y'Ubukwe",
       "desc": "Ibirori by'ubukwe bw'Islamimu, impapuro, n'inyandiko kuri abakobwa n'abasore mu muryango.",
       "detail": {
-        "backToServices": "Serivisi Zose",
         "heroBadge": "Serivisi y'Ubukwe",
         "overviewHeading": "Intangiriro yuje umugisha,",
         "overviewHeadingHighlight": "ikorwa neza",
@@ -628,7 +627,225 @@
     },
     "funeral": {
       "title": "Serivisi y'Umuryango w'Abapfuye",
-      "desc": "Gutegura gushyingura mu Islamimu, guha Imam, no gufasha imiryango."
+      "desc": "Gutegura gushyingura mu Islamimu, guha Imam, no gufasha imiryango.",
+      "landing": {
+        "ayahRef": "Qur’an 2:156",
+        "quickTitle": "Twabafasha dute?",
+        "quickSub": "Kuva ku kumenyekanisha urupfu kugeza ku ishyingura, RMC iri kumwe namwe muri buri ntambwe, mu cyubahiro no mu rukundo.",
+        "actions": {
+          "report": {
+            "title": "Menyekanisha urupfu",
+            "desc": "Menyesha RMC utangire gutunganya ibikenewe."
+          },
+          "request": {
+            "title": "Saba serivisi za Janaza",
+            "desc": "Ghusl, kafan, isengesho, gutwara no gushyingura."
+          },
+          "progress": {
+            "title": "Aho ishyingura rigeze",
+            "desc": "Kurikirana aho isaba ry’ishyingura rigeze."
+          },
+          "cemetery": {
+            "title": "Amakuru y’amarimbi",
+            "desc": "Aho ari, ubushobozi n’abo kuvugana."
+          },
+          "support": {
+            "title": "Ubufasha bw’umuryango",
+            "desc": "Ubujyanama, ibiribwa n’ubufasha bw’amafaranga."
+          }
+        },
+        "ctaTitle": "Turi kumwe namwe",
+        "ctaSub": "Iyo uwo mukunda yitabye Imana, twandikire igihe icyo ari cyo cyose. Umuryango witeguye kubafasha.",
+        "ctaReport": "Menyekanisha urupfu",
+        "ctaContact": "Hamagara komite",
+        "viewAll": "Reba byose",
+        "transports": {
+          "title": "Uburyo bwo gutwara umurambo buhari",
+          "sub": "Ubwikorezi bw’imihango y’umuziro butangwa n’imisigiti yacu. Hamagara uwo hafi yawe.",
+          "searchPlaceholder": "Shakisha ukoresheje izina, aho biherereye, cyangwa telefone",
+          "allMosques": "Imisigiti yose",
+          "noResults": "Nta buryo bwo gutwara buhuye n’ubushakashatsi bwawe."
+        }
+      },
+      "request": {
+        "title": "Gusaba serivisi z’ishyingura",
+        "subtitle": "Nyamuneka tanga amakuru ushoboye. Umunyamuryango wa komite azabahamagara vuba, in shā’ Allāh.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "steps": {
+          "deceased": "Uwitabye Imana",
+          "family": "Umuryango",
+          "arrangements": "Gutunganya",
+          "review": "Kugenzura"
+        },
+        "next": "Komeza",
+        "prev": "Subira",
+        "submit": "Ohereza isaba",
+        "submitting": "Kohereza…",
+        "optional": "bitari ngombwa",
+        "deceased": {
+          "heading": "Amakuru y’uwitabye Imana",
+          "fullName": "Amazina yombi",
+          "gender": "Igitsina",
+          "male": "Gabo",
+          "female": "Gore",
+          "dob": "Itariki y’amavuko",
+          "dod": "Itariki y’urupfu",
+          "nationalId": "Indangamuntu",
+          "placeOfDeath": "Aho yapfiriye",
+          "cause": "Impamvu y’urupfu",
+          "causeHint": "Bitari ngombwa — siga ubusa niba butazwi cyangwa ari ibanga.",
+          "certificate": "Icyemezo cy’urupfu",
+          "certificateHint": "PDF cyangwa ifoto, niba ihari.",
+          "fullNameHint": "Amazina yombi y’uwitabye Imana",
+          "nationalIdHint": "Imibare 16",
+          "dobHint": "Igomba kuba mbere y’itariki y’urupfu",
+          "dodHint": "Ntishobora kuba mu gihe kizaza",
+          "placeOfDeathHint": "Umujyi cyangwa ikigo aho urupfu rwabereye",
+          "certificateUploaded": "Byoherejwe",
+          "certificateUploading": "Kohereza…",
+          "certificateRemove": "Kuraho iyi cyemezo",
+          "certificateTooLarge": "Iyi dosiye irenze 10 MB. Ohereza ifoto cyangwa PDF nto.",
+          "certificateType": "Ohereza ifoto (JPG, PNG, WEBP) cyangwa PDF.",
+          "certificateUploadFailed": "Kohereza byanze. Genzura interineti wongere ugerageze."
+        },
+        "family": {
+          "heading": "Uwo kuvugana mu muryango",
+          "nextOfKin": "Umuvandimwe wa hafi",
+          "phone": "Nimero ya telefone",
+          "email": "Imeyili",
+          "address": "Aderesi",
+          "emergency": "Uwo kwitabaza",
+          "nextOfKinHint": "Uhagarariye umuryango",
+          "phoneHint": "Nimero y’u Rwanda — 0788123456 cyangwa +250788123456",
+          "emailHint": "Si itegeko",
+          "emergencyHint": "Si itegeko — undi muntu wo kuvugana",
+          "addressHint": "Aho umuryango ushobora kugerwaho"
+        },
+        "arrangements": {
+          "heading": "Gutunganya ishyingura",
+          "mosque": "Umusigiti wahisemo",
+          "cemetery": "Irimbi wahisemo",
+          "selectMosque": "Hitamo umusigiti",
+          "selectCemetery": "Hitamo irimbi",
+          "burialDate": "Itariki yo gushyingura",
+          "burialTime": "Isaha yo gushyingura",
+          "servicesLabel": "Serivisi zikenewe",
+          "transport": "Gutwara umurambo",
+          "notes": "Ibindi wongeraho",
+          "notesHint": "Ikindi cyose komite yakwiye kumenya.",
+          "mosqueHint": "Si itegeko — umusigiti wifuzwa w’isengesho",
+          "cemeteryHint": "Si itegeko — irimbi ryifuzwa",
+          "burialDateHint": "Ku munsi w’urupfu cyangwa nyuma yawo",
+          "burialTimeHint": "Si itegeko"
+        },
+        "review": {
+          "heading": "Genzura isaba ryawe",
+          "sub": "Nyamuneka emeza amakuru akurikira mbere yo kohereza.",
+          "notProvided": "Ntibyatanzwe",
+          "yes": "Yego",
+          "no": "Oya"
+        },
+        "success": {
+          "title": "Isaba ryakiriwe",
+          "message": "Imana iboroherye. Umunyamuryango wa komite azabahamagara vuba.",
+          "again": "Ohereza irindi saba",
+          "home": "Subira kuri serivisi z’ishyingura",
+          "track": "Kurikirana iri saba"
+        },
+        "validation": {
+          "required": "Iki gice kirakenewe",
+          "email": "Andika imeyili nyayo",
+          "phone": "Andika nimero ya telefone y’u Rwanda — 0788123456 cyangwa +250788123456",
+          "selectGender": "Nyamuneka hitamo",
+          "nationalId": "Andika indangamuntu y’imibare 16",
+          "dateOfDeathFuture": "Itariki y’urupfu ntishobora kuba mu gihe kizaza",
+          "burialBeforeDeath": "Itariki yo gushyingura ntishobora kuba mbere y’itariki y’urupfu",
+          "dobBeforeDeath": "Itariki y’amavuko igomba kuba mbere y’itariki y’urupfu"
+        }
+      },
+      "stages": {
+        "reported": "Urupfu rwamenyekanishijwe",
+        "verification": "Kugenzura",
+        "family_contacted": "Umuryango wamenyeshejwe",
+        "ghusl": "Ghusl yateganyijwe",
+        "kafan": "Kafan yateguwe",
+        "janazah": "Isengesho rya Janaza ryateganyijwe",
+        "transportation": "Gutwara umurambo",
+        "burial": "Ishyingura",
+        "completed": "Byarangiye"
+      },
+      "stageStatus": {
+        "done": "Byarangiye",
+        "active": "Biragenda",
+        "pending": "Bitegereje"
+      },
+      "status": {
+        "progressLabel": "Intambwe {done} kuri {total} zarangiye",
+        "timelineTitle": "Aho bigeze"
+      },
+      "cemeteryPage": {
+        "title": "Urutonde rw’amarimbi",
+        "subtitle": "Amarimbi y’abayisilamu mu Rwanda — aho ari, ubushobozi n’abo kuvugana.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "searchPlaceholder": "Shakisha izina cyangwa ahantu…",
+        "resultsCount": "{count, plural, =1 {irimbi #} other {amarimbi #}}",
+        "emptyTitle": "Nta marimbi yabonetse",
+        "emptyText": "Gerageza indi shakisha.",
+        "capacity": "Ubushobozi",
+        "occupancy": "Uko byuzuye",
+        "contact": "Uwo kuvugana",
+        "directions": "Ikarita",
+        "locate": "Erekana"
+      },
+      "detail": {
+        "back": "Subira kuri serivisi z’ishyingura",
+        "profile": "Umwirondoro",
+        "checklist": "Urutonde rwa serivisi",
+        "prayer": "Isengesho n’ishyingura",
+        "documents": "Inyandiko n’ibindi byometse",
+        "notes": "Inyandiko",
+        "download": "Kuramo",
+        "none": "—",
+        "noNotes": "Nta nyandiko zabitswe.",
+        "noDocuments": "Nta nyandiko zoherejwe.",
+        "notFoundTitle": "Isaba ntiryabonetse",
+        "notFoundText": "Nyamuneka reba nomero, cyangwa uvugane na komite.",
+        "ageAtDeath": "Imyaka apfuye",
+        "daysSinceDeath": "Iminsi kuva apfuye",
+        "submitted": "Byatanzwe",
+        "manage": "Hindura intambwe",
+        "transport": "Ubwikorezi",
+        "yes": "Burakenewe",
+        "no": "Ntibukenewe"
+      },
+      "donations": {
+        "title": "Inkunga y’ishyingura",
+        "subtitle": "Fasha mu biciro by’ishyingura n’imiryango iri mu gahinda — buri mpano ni Sadaqah Jariyah.",
+        "back": "Subira kuri serivisi z’ishyingura",
+        "raised": "Byakusanyijwe",
+        "target": "Intego",
+        "donate": "Tanga",
+        "totalRaised": "Byose byakusanyijwe",
+        "note": "Inkunga zose zinyuzwa ku rubuga rwizewe rwo gutanga rwa RMC.",
+        "categories": {
+          "burial": {
+            "title": "Ibiciro by’ishyingura",
+            "desc": "Koga, gupfuka, gutegura imva no gutwara ku bakeneye."
+          },
+          "family": {
+            "title": "Ubufasha bw’umuryango",
+            "desc": "Ubufasha bwihuse ku miryango iri mu gahinda ifite ingorane."
+          },
+          "cemetery": {
+            "title": "Kubungabunga amarimbi",
+            "desc": "Kubungabunga amarimbi y’abayisilamu mu Rwanda."
+          },
+          "mosque_fund": {
+            "title": "Ikigega cy’ishyingura cy’umusigiti",
+            "desc": "Gishyigikira serivisi za Janaza mu misigiti."
+          }
+        }
+      }
     },
     "conduct": {
       "title": "Icyemezo cy'Imyitwarire Myiza",
@@ -770,10 +987,12 @@
         "continueToPayment": "Komeza Kwishyura",
         "downloadCertificate": "Kuramo Icyemezo",
         "certificateNumber": "Nomero y'Icyemezo",
-        "motifLabel": "Impamvu y'Ubusabe"
+        "motifLabel": "Impamvu y'Ubusabe",
+        "cancelApplication": "Kureka Ubusabe",
+        "cancelConfirm": "Uzi neza ko ushaka kureka ubu busabe? Ibi ntibishobora gusubizwa inyuma.",
+        "cancelFailed": "Kureka ubusabe byanze. Ongera ugerageze."
       },
       "landing": {
-        "backToServices": "Subira ku Serivisi",
         "applyTitle": "Saba Icyemezo",
         "applyText": "Ohereza amakuru yawe, umusigiti, n'impamvu y'icyifuzo cyawe.",
         "applyCta": "Saba Nonaha",
@@ -976,10 +1195,6 @@
         "viewAndApply": "Reba & Usabe"
       }
     },
-    "hijra": {
-      "title": "Serivisi za Hija",
-      "desc": "Serivisi z'inyandiko n'ubufasha ku bibazo bya Hajj na Umra."
-    },
     "tender": {
       "title": "Itumba",
       "desc": "Amahirwe y'ubucuruzi ashyirwa ahagaragara na RMC ku mashirika n'abakozi bafite ubushobozi."
@@ -987,6 +1202,109 @@
     "jobs": {
       "title": "Amahirwe y'Akazi",
       "desc": "Imirimo ihagaze muri RMC n'imiryango ishamikiyeho muri Rwanda."
+    },
+    "hajj": {
+      "title": "Serivisi za Hija",
+      "desc": "Ubuyobozi, kwiyandikisha, no gufasha abagenzi — kuva mu myiteguro kugeza ku kugenda.",
+      "requirements": {
+        "required": "Birasabwa",
+        "recommended": "Birasabwa cyane",
+        "loading": "Gutegura ibisabwa"
+      },
+      "register": {
+        "title": "Iyandikishe kuri Hija",
+        "subtitle": "Uzuza ifishi ikurikira kugira ngo utangire kwiyandikisha kuri Hija. Ibisabwa bifite * birakenewe.",
+        "back": "Subira kuri Serivisi za Hija",
+        "submit": "Ohereza iyandikwa",
+        "submitting": "Kohereza…",
+        "sections": {
+          "personal": "Usaba",
+          "contact": "Aho kuvugana",
+          "residence": "Aho utuye",
+          "passport": "Pasiporo",
+          "payments": "Ubwishyu"
+        },
+        "fields": {
+          "fullName": "Amazina yombi",
+          "fullNameHint": "Nk’uko yanditse kuri pasiporo yawe",
+          "phone": "Telefone",
+          "phoneHint": "Nimero y’u Rwanda — 0788123456 cyangwa +250788123456",
+          "email": "Imeyili",
+          "emailHint": "Si itegeko",
+          "district": "Akarere",
+          "sector": "Umurenge",
+          "passportNumber": "Nimero ya pasiporo",
+          "passportHint": "Inyuguti cyangwa imibare 5–15",
+          "registrationFee": "Amafaranga yo kwiyandikisha",
+          "advancePayment": "Ubwishyu bw’ubanza",
+          "uploadProof": "Ohereza icyemezo cy’ubwishyu",
+          "selectDistrict": "Hitamo akarere",
+          "selectSector": "Hitamo umurenge",
+          "selectDistrictFirst": "Banza uhitemo akarere",
+          "searchPlaceholder": "Shakisha…",
+          "proofHint": "JPG, PNG cyangwa PDF · ntirenge 10 MB",
+          "proofUploading": "Kohereza…",
+          "proofUploaded": "Byoherejwe",
+          "proofRemove": "Kuraho iyi nyemezabwishyu"
+        },
+        "validation": {
+          "required": "Iki gice kirakenewe",
+          "phone": "Andika nimero ya telefone y’u Rwanda — 0788123456 cyangwa +250788123456",
+          "email": "Andika imeyili yemewe",
+          "passport": "Andika nimero ya pasiporo yemewe (inyuguti/imibare 5–15)",
+          "proof": "Ohereza icyemezo cy’ubwishyu",
+          "submitError": "Hari ikitagenze neza. Ongera ugerageze.",
+          "proofTooLarge": "Iyi dosiye irenze 10 MB. Ohereza ifoto cyangwa PDF nto.",
+          "proofType": "Ohereza ifoto (JPG, PNG, WEBP) cyangwa PDF.",
+          "proofUploadFailed": "Kohereza byanze. Genzura interineti wongere ugerageze."
+        },
+        "success": {
+          "title": "Iyandikwa ryoherejwe",
+          "message": "Murakoze. Ikipe yacu izasuzuma iyandikwa ryawe maze ikubwire intambwe zikurikira.",
+          "again": "Ohereza irindi",
+          "home": "Subira kuri Serivisi za Hija",
+          "numberLabel": "Nimero y’ubusabe bwawe",
+          "numberHint": "Bika iyi nimero neza. Tuzajya tukwoherereza ubutumwa kuri buri ntambwe, kandi ushobora kuyikoresha kureba aho ubusabe bwawe bugeze.",
+          "track": "Reba aho ubusabe bwanjye bugeze"
+        }
+      },
+      "status": {
+        "back": "Subira kuri Serivisi za Hija",
+        "title": "Reba aho ubusabe bwa Hajj bugeze",
+        "sub": "Andika nimero y’ubusabe wahawe wiyandikisha.",
+        "placeholder": "RMC-HAJ-202607-00001",
+        "check": "Reba aho bigeze",
+        "notFound": "Nta busabe bufite iyo nimero. Ongera ugenzure unyuze.",
+        "error": "Ntibishobotse kureba aho bigeze ubu. Ongera ugerageze.",
+        "submittedOn": "Byoherejwe ku wa",
+        "lastUpdate": "Ivugururwa riheruka",
+        "applicant": "Usaba",
+        "reason": "Impamvu",
+        "steps": {
+          "submitted": "Ubusabe bwakiriwe",
+          "under_review": "Burimo gusuzumwa n’itsinda ryacu",
+          "approved": "Bwemewe",
+          "rejected": "Ntibwemewe"
+        },
+        "stepHint": {
+          "submitted": "Twakiriye ubusabe bwawe, tugiye gutangira kubugenzura.",
+          "under_review": "Itsinda ryacu ririmo kugenzura pasiporo n’ibimenyetso by’ubwishyu.",
+          "approved": "Twishimiye kukumenyesha ko bwemewe. Itsinda ryacu rizakuvugisha.",
+          "rejected": "Ubusabe bwawe ntibwemewe. Reba impamvu hepfo."
+        }
+      },
+      "bankAccounts": {
+        "eyebrow": "Aho wishyura",
+        "title": "Konti za Banki",
+        "subtitle": "Ishyura amafaranga ya Hija kuri imwe muri konti zikurikira, hanyuma wohereze inyemezabwishyu mu kwiyandikisha kwawe.",
+        "accountName": "Izina rya konti",
+        "accountNumber": "Nimero ya konti",
+        "swift": "SWIFT / BIC",
+        "copy": "Koporora nimero ya konti",
+        "copied": "Nimero ya konti yakoporowe",
+        "loading": "Birategerezwa konti za banki",
+        "proofNote": "Bika inyemezabwishyu ya banki — uzasabwa kuyohereza nk’ikimenyetso cy’ubwishyu mu kwiyandikisha."
+      }
     }
   },
   "contact": {
@@ -1111,7 +1429,9 @@
       "marriage": "Ubukwe",
       "drive": "Dosiye",
       "goodConduct": "Imyitwarire Myiza",
-      "scholarship": "Buruse"
+      "scholarship": "Buruse",
+      "funeral": "Ishyingura",
+      "hajj": "Hajj"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
@@ -1180,7 +1500,8 @@
     "donations": {
       "title": "Impano",
       "subtitle": "Gukurikirana impano zakiriwe muri gahunda zose",
-      "export": "Kohereza",
+      "export": "Kohereza Excel",
+      "exportError": "Ntibyakunze gukura raporo. Ongera ugerageze.",
       "refresh": "Vugurura",
       "stat": {
         "totalReceived": "Igiteranyo cyakiriwe (RWF)",
@@ -1379,6 +1700,162 @@
       "confirmDelete": "Siba",
       "deleting": "Gusiba…",
       "deleteError": "Ntibyakunze gusiba. Ongera ugerageze."
+    },
+    "funeral": {
+      "title": "Serivisi z’ishyingura",
+      "subtitle": "Ibisabwa, amatangazo, abakorerabushake n’amarimbi",
+      "export": "Kohereza Excel",
+      "refresh": "Vugurura",
+      "loading": "Birimo gupakirwa…",
+      "viewerNote": "Ufite uburenganzira bwo kureba gusa. Vugana n’umuyobozi kugira ngo uhindure.",
+      "actions": {
+        "edit": "Hindura",
+        "delete": "Siba",
+        "cancel": "Reka",
+        "save": "Bika",
+        "confirmTitle": "Emeza gusiba"
+      },
+      "stats": {
+        "pending": "Ibisabwa bitegereje",
+        "completed": "Byarangiye"
+      },
+      "tabs": {
+        "overview": "Incamake",
+        "requests": "Ibisabwa",
+        "volunteers": "Abakorerabushake",
+        "cemeteries": "Amarimbi",
+        "reports": "Raporo",
+        "transports": "Ubwikorezi"
+      },
+      "overview": {
+        "recentRequests": "Ibisabwa biheruka",
+        "viewAll": "Reba byose"
+      },
+      "requests": {
+        "searchPlaceholder": "Shakisha izina cyangwa nomero…",
+        "allStages": "Intambwe zose",
+        "emptyTitle": "Nta bisabwa byabonetse",
+        "emptyText": "Gerageza irindi shakisha.",
+        "view": "Reba",
+        "manage": "Genzura",
+        "toastUpdated": "{name} yimuriwe kuri {stage}",
+        "toastError": "Ntibyakunze kuvugurura icyifuzo. Ongera ugerageze.",
+        "toastExportError": "Ntibyakunze gukura raporo. Ongera ugerageze.",
+        "dialog": {
+          "title": "Genzura umuhango",
+          "stageLabel": "Intambwe",
+          "current": "Iriho",
+          "save": "Bika impinduka",
+          "cancel": "Reka"
+        },
+        "col": {
+          "deceased": "Uwitabye Imana",
+          "stage": "Intambwe",
+          "progress": "Aho bigeze",
+          "contact": "Uwo kuvugana",
+          "date": "Itariki"
+        }
+      },
+      "cemeteries": {
+        "add": "Irimbi rishya",
+        "emptyTitle": "Nta marimbi",
+        "emptyText": "Ongeraho irimbi kugira ngo ukurikirane ubushobozi bwaryo n’abo kuvugana.",
+        "deleteConfirm": "Gusiba {name}? Ntibishobora gusubizwaho.",
+        "toastCreated": "{name} ryongewemo",
+        "toastUpdated": "{name} ryahinduwe",
+        "toastDeleted": "{name} ryakuweho",
+        "toastError": "Ntibyakunze kubika irimbi. Ongera ugerageze.",
+        "form": {
+          "createTitle": "Irimbi rishya",
+          "editTitle": "Hindura irimbi",
+          "name": "Izina",
+          "address": "Aho riherereye / aderesi",
+          "capacity": "Ubushobozi",
+          "used": "Byakoreshejwe",
+          "contactPerson": "Umuntu wo kuvugana",
+          "phone": "Telefone",
+          "lat": "Latitude (si ngombwa)",
+          "lng": "Longitude (si ngombwa)",
+          "mapLabel": "Aho biherereye ku ikarita",
+          "pickHint": "Kanda ku ikarita cyangwa ukururire ikamba kugira ngo ushyireho aho biherereye.",
+          "findMyLocation": "Shaka aho ndi",
+          "locating": "Kurashaka aho uri…",
+          "geoError": "Ntibyakunze kubona aho uri. Byandike wenyine.",
+          "geoUnsupported": "Aho uri ntibiboneka kuri iki gikoresho.",
+          "required": "Birakenewe",
+          "save": "Bika",
+          "cancel": "Reka",
+          "namePlaceholder": "Irimbi rya Nyanza",
+          "nameHint": "Izina ry’irimbi",
+          "addressPlaceholder": "Nyanza, Amajyepfo",
+          "addressHint": "Aho irimbi riherereye",
+          "capacityHint": "Umubare wose w’imva",
+          "usedHint": "Imva zimaze gukoreshwa",
+          "contactPersonHint": "Umuntu ushinzwe (si itegeko)",
+          "phoneHint": "Nimero y’u Rwanda (si itegeko)"
+        },
+        "col": {
+          "name": "Izina",
+          "location": "Aho biherereye",
+          "occupancy": "Uko byuzuye",
+          "contact": "Uwo kuvugana",
+          "phone": "Telefone"
+        }
+      },
+      "reports": {
+        "totalRequests": "Ibisabwa byose",
+        "completed": "Byarangiye",
+        "byStage": "Ibisabwa ku ntambwe"
+      },
+      "transports": {
+        "add": "Ongeraho ubwikorezi",
+        "emptyTitle": "Nta buryo bwo gutwara buhari",
+        "emptyText": "Ongeraho uburyo bwo gutwara umurambo butangwa n’imisigiti yawe.",
+        "col": {
+          "name": "Izina",
+          "mosque": "Umusigiti",
+          "location": "Aho biherereye",
+          "phone": "Telefone",
+          "status": "Imiterere"
+        },
+        "status": {
+          "active": "Birakora",
+          "inactive": "Ntibikora"
+        },
+        "toastCreated": "Ubwikorezi \"{name}\" bwongeweho",
+        "toastUpdated": "Ubwikorezi \"{name}\" bwahinduwe",
+        "toastDeleted": "Ubwikorezi \"{name}\" bwakuweho",
+        "toastError": "Hari ikitagenze neza. Ongera ugerageze.",
+        "deleteConfirm": "Gukuraho ubwikorezi \"{name}\"?",
+        "form": {
+          "createTitle": "Ongeraho ubwikorezi",
+          "editTitle": "Hindura ubwikorezi",
+          "name": "Izina",
+          "mosque": "Umusigiti",
+          "selectMosque": "Hitamo umusigiti",
+          "location": "Aho biherereye",
+          "phone": "Nimero ya telefone",
+          "active": "Birakora (bigaragara ku baturage)",
+          "required": "Birakenewe",
+          "save": "Bika",
+          "cancel": "Reka",
+          "phoneInvalid": "Andika nimero ya telefone y’u Rwanda — 0788123456 cyangwa +250788123456",
+          "namePlaceholder": "Imodoka itwara umurambo — Toyota Hiace",
+          "nameHint": "Izina rigufi ry’ubwikorezi",
+          "mosqueHint": "Umusigiti utunze ubu bwikorezi",
+          "locationPlaceholder": "Nyamirambo, Nyarugenge",
+          "locationHint": "Aho ubwikorezi buherereye",
+          "phoneHint": "Nimero y’u Rwanda — 0788123456 cyangwa +250788123456"
+        }
+      },
+      "detail": {
+        "inspect": "Reba",
+        "certificate": "Icyemezo cy’urupfu",
+        "certificateLegacy": "Ubu busabe bwakozwe mbere y’uko kohereza dosiye bishoboka — handitse izina ry’idosiye gusa, nta dosiye ihari.",
+        "certificateFailed": "Iki cyemezo ntikishoboye gufungurwa.",
+        "noDocuments": "Nta nyandiko zoherejwe.",
+        "download": "Kuramo"
+      }
     }
   },
   "galleryPage": {

@@ -10,13 +10,14 @@ import {
   BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
-  ListFilter, Images, Sparkles, Share2, Newspaper, Mail,
+  ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
+  Compass, ListChecks,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
 type SectionType = 'crud' | 'edit';
-type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page';
+type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page' | 'Funeral Service' | 'Hajj Service';
 
 interface SectionConfig {
   id: string;
@@ -245,6 +246,58 @@ const SECTIONS: SectionConfig[] = [
     badge: 'bg-teal-100 text-teal-700',
     accentBar: 'bg-teal-400',
   },
+  {
+    id: 'funeral-request-steps',
+    icon: Moon,
+    title: 'Funeral Request Steps',
+    description: 'Add, edit, reorder and customise (colour + icon) the funeral request lifecycle steps shown on the public status/detail timeline.',
+    type: 'crud', itemLabel: 'steps',
+    page: 'Funeral Service', positionOrder: 0,
+    locationLabel: 'Funeral Service · Status timeline',
+    keywords: ['funeral', 'janazah', 'burial', 'ghusl', 'kafan', 'steps', 'stages', 'timeline', 'status', 'lifecycle', 'request', 'deceased', 'reorder', 'color', 'icon'],
+    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
+    badge: 'bg-emerald-100 text-emerald-700',
+    accentBar: 'bg-emerald-400',
+  },
+  {
+    id: 'hajj',
+    icon: Compass,
+    title: 'Hajj Service',
+    description: 'Hero, the pilgrimage intro, the photo and the requirements heading on the public Hajj page.',
+    type: 'edit', itemLabel: null,
+    page: 'Hajj Service', positionOrder: 0,
+    locationLabel: 'Hajj Service · Landing page',
+    keywords: ['hajj', 'pilgrimage', 'makkah', 'talbiyah', 'hero', 'about', 'photo', 'umrah', 'register'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
+  },
+  {
+    id: 'hajj-requirements',
+    icon: ListChecks,
+    title: 'Hajj Requirements',
+    description: 'Add, edit, reorder and price the Hajj checklist. The registration and initial payment amounts set here are what the registration form charges.',
+    type: 'crud', itemLabel: 'requirements',
+    page: 'Hajj Service', positionOrder: 1,
+    locationLabel: 'Hajj Service · Requirements checklist',
+    keywords: ['hajj', 'requirements', 'checklist', 'passport', 'fee', 'payment', 'amount', 'rwf', 'usd', 'currency', 'registration', 'reorder', 'icon'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
+  },
+  {
+    id: 'hajj-bank-accounts',
+    icon: Building2,
+    title: 'Hajj Bank Accounts',
+    description: 'The accounts applicants pay the Hajj fees into, shown on the Hajj page. Add one per currency you charge in.',
+    type: 'crud', itemLabel: 'accounts',
+    page: 'Hajj Service', positionOrder: 2,
+    locationLabel: 'Hajj Service · Bank accounts',
+    keywords: ['hajj', 'bank', 'account', 'payment', 'transfer', 'iban', 'swift', 'bic', 'branch', 'rwf', 'usd', 'currency'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
+  },
 ];
 
 const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string; description: string }[] = [
@@ -252,6 +305,8 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'About Page', icon: FileText, color: 'text-slate-600', description: 'Content on the /about page' },
   { page: 'Blog Page', icon: Newspaper, color: 'text-cyan-600', description: 'Articles on the public /blog page' },
   { page: 'Contact Page', icon: Mail, color: 'text-teal-600', description: 'Content on the /contact page' },
+  { page: 'Funeral Service', icon: Moon, color: 'text-emerald-600', description: 'Content on the funeral service pages' },
+  { page: 'Hajj Service', icon: Compass, color: 'text-amber-600', description: 'Content on the Hajj service pages' },
 ];
 
 type Tab = 'sections' | 'gallery';
@@ -379,6 +434,7 @@ export default function ManageContentPage() {
                     { value: 'About Page' as const, label: 'About', icon: FileText, count: SECTIONS.filter((s) => s.page === 'About Page').length },
                     { value: 'Blog Page' as const, label: 'Blog', icon: Newspaper, count: SECTIONS.filter((s) => s.page === 'Blog Page').length },
                     { value: 'Contact Page' as const, label: 'Contact', icon: Mail, count: SECTIONS.filter((s) => s.page === 'Contact Page').length },
+                    { value: 'Funeral Service' as const, label: 'Funeral', icon: Moon, count: SECTIONS.filter((s) => s.page === 'Funeral Service').length },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     return (
