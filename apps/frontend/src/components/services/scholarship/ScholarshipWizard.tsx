@@ -9,22 +9,18 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight, ArrowLeft, User, GraduationCap, Users, Check,
-  CheckCircle2, Copy, Search, Paperclip, Upload, FileText, Trash2, Loader2,
+  CheckCircle2, Copy, Search, Upload, FileText, X, MessageSquareText, ShieldCheck,
 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
-import { publicApi } from '@/lib/public-api';
+import { Checkbox } from '@/components/ui/Checkbox';
+import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/lib/mediaUpload';
 import {
   scholarshipApi,
-  scholarshipPublicApi,
   type CreateScholarshipApplicationPayload,
   type ScholarshipApplication,
-  type ScholarshipProgram,
-  type EducationLevel,
-  type GuardianRelationship,
   type ScholarshipDocumentType,
 } from '@/lib/scholarshipApi';
 
@@ -32,14 +28,18 @@ import {
 const DOC_ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp';
 const DOC_MAX_BYTES = 10 * 1024 * 1024;
 
-interface PendingDoc {
-  file: File;
-  docType: ScholarshipDocumentType;
-}
-
-// Local Rwandan mobile format the user types: 0 + network prefix (72/73/78/79) + 7 digits = 10 chars.
+// Local Rwandan mobile format the user types: 0 + network prefix (72/73/78/79) + 7 digits.
 const PHONE_RE = /^07[2389][0-9]{7}$/;
-const MOTIVATION_MAX = 1000;
+
+// Per-question limits. The three questions + program/course + income are combined
+// into the backend's single `motivation` field, which still validates at ≤1000
+// chars (unchanged). The two required questions always fit; the optional tail is
+// clamped defensively in buildMotivation so submission can never fail validation.
+const WHY_MAX = 500;
+const HOW_MAX = 300;
+const ELSE_MAX = 200;
+const PROGRAM_MAX = 60;
+const INCOME_MAX = 30;
 
 /** +250781234567 (backend/API format) → 0781234567 (what the user sees/types). */
 function toLocalPhone(e164: string): string {
@@ -51,49 +51,101 @@ function toE164Phone(local: string): string {
   return local?.startsWith('0') ? `+250${local.slice(1)}` : local;
 }
 
+/**
+ * Fold the three scholarship questions plus program/course and household income
+ * into the single `motivation` text column (the backend is unchanged). Required
+ * answers come first so the defensive 1000-char clamp only ever trims the optional
+ * tail. Labels are kept in English for consistent reviewing in the admin panel.
+ */
+function buildMotivation(
+  whyDeserve: string,
+  howHelp: string,
+  anythingElse: string,
+  programCourse: string,
+  householdIncome: string,
+): string {
+  let out =
+    `Why I deserve this scholarship:\n${whyDeserve.trim()}` +
+    `\n\nHow this scholarship will help me:\n${howHelp.trim()}`;
+  if (anythingElse.trim()) out += `\n\nAdditional information:\n${anythingElse.trim()}`;
+  if (programCourse.trim()) out += `\n\nProgram / Course: ${programCourse.trim()}`;
+  if (householdIncome.trim()) out += `\nMonthly household income: ${householdIncome.trim()}`;
+  return out.slice(0, 1000);
+}
+
+// ─── Document slots ──────────────────────────────────────────────────────────────
+// Six named slots. The backend's ScholarshipDocumentType enum only allows four
+// values (unchanged), so slots reuse them; the real file names preserve specifics.
+
+type DocSlotKey =
+  | 'transcript'
+  | 'reportCard'
+  | 'studentId'
+  | 'recommendation'
+  | 'certificates'
+  | 'financial';
+
+const SLOT_DOCTYPE: Record<DocSlotKey, ScholarshipDocumentType> = {
+  transcript: 'transcript',
+  reportCard: 'academic_record',
+  studentId: 'additional',
+  recommendation: 'additional',
+  certificates: 'additional',
+  financial: 'proof',
+};
+
+type DocFiles = Record<DocSlotKey, File | null>;
+const EMPTY_FILES: DocFiles = {
+  transcript: null,
+  reportCard: null,
+  studentId: null,
+  recommendation: null,
+  certificates: null,
+  financial: null,
+};
+
+// ─── Schemas ─────────────────────────────────────────────────────────────────────
+
 const step1Schema = z.object({
   fullNames: z.string().min(3, 'tooShort').max(150, 'tooLong'),
-  dateOfBirth: z.string().optional().or(z.literal('')),
-  gender: z.enum(['male', 'female']).optional(),
-  nationalId: z.string().max(30).optional().or(z.literal('')),
+  studentId: z.string().max(50).optional().or(z.literal('')),
   email: z.string().email('invalidEmail').optional().or(z.literal('')),
   phone: z.string().regex(PHONE_RE, 'phoneFormat'),
 });
 type Step1Data = z.infer<typeof step1Schema>;
 
 const step2Schema = z.object({
-  districtId: z.string().optional().or(z.literal('')),
-  sectorId: z.string().optional().or(z.literal('')),
-  cell: z.string().max(100).optional().or(z.literal('')),
-  village: z.string().max(100).optional().or(z.literal('')),
   schoolName: z.string().min(2, 'tooShort').max(200, 'tooLong'),
-  educationLevel: z.enum(['secondary', 'tvet', 'university']),
   currentYear: z.string().min(1, 'required').max(50, 'tooLong'),
+  programCourse: z.string().min(1, 'required').max(PROGRAM_MAX, 'tooLong'),
   averageGrade: z.string().max(20).optional().or(z.literal('')),
 });
 type Step2Data = z.infer<typeof step2Schema>;
 
 const step3Schema = z.object({
-  guardianName: z.string().min(3, 'tooShort').max(150, 'tooLong'),
-  guardianPhone: z.string().regex(PHONE_RE, 'phoneFormat'),
-  relationship: z.enum(['parent', 'guardian', 'sibling', 'other']),
-  programId: z.string().optional().or(z.literal('')),
-  motivation: z.string().min(10, 'tooShort').max(MOTIVATION_MAX, 'tooLong'),
+  whyDeserve: z.string().min(10, 'tooShort').max(WHY_MAX, 'tooLong'),
+  howHelp: z.string().min(10, 'tooShort').max(HOW_MAX, 'tooLong'),
+  anythingElse: z.string().max(ELSE_MAX, 'tooLong').optional().or(z.literal('')),
 });
 type Step3Data = z.infer<typeof step3Schema>;
 
-type District = { id: string; name: string };
-type Sector = { id: string; name: string };
+const step4Schema = z.object({
+  guardianName: z.string().min(3, 'tooShort').max(150, 'tooLong'),
+  guardianPhone: z.string().regex(PHONE_RE, 'phoneFormat'),
+  householdIncome: z.string().max(INCOME_MAX).optional().or(z.literal('')),
+});
+type Step4Data = z.infer<typeof step4Schema>;
+
 type WizardPhase = 1 | 2 | 3 | 4 | 'success';
 
 interface Props {
   /** When editing a draft application, pre-fills the form and calls updateDraft instead of createDraft. */
   editRequest?: ScholarshipApplication;
-  /** Pre-selects a program when arriving from the "Available Scholarships" listing (?program=). */
+  /** Retained for route compatibility; the program picker was removed from the form. */
   initialProgramId?: string;
 }
 
-// ─── Shared 3-step progress header ─────────────────────────────────────────────
+// ─── Shared 4-step progress header ─────────────────────────────────────────────
 
 function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof useTranslations> }) {
   const steps: { key: 1 | 2 | 3 | 4; label: string }[] = [
@@ -137,21 +189,21 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
   );
 }
 
-export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
+export function ScholarshipWizard({ editRequest }: Props) {
   const t = useTranslations('services.scholarship.apply');
   const { locale } = useParams<{ locale: string }>();
 
   // Lazily seeded from `editRequest` (never a post-mount effect) — react-hook-form
-  // only reads `defaultValues` once, at mount, so populating these later would
-  // leave a blank form even when editing an existing draft.
+  // only reads `defaultValues` once, at mount. For edited drafts the combined
+  // `motivation` blob is placed back into the primary question; the secondary
+  // answers can't be losslessly split out, which is acceptable for the rare
+  // draft-edit path.
   const [phase, setPhase] = useState<WizardPhase>(1);
   const [step1Data, setStep1Data] = useState<Partial<Step1Data>>(() =>
     editRequest
       ? {
           fullNames: editRequest.fullNames,
-          dateOfBirth: editRequest.dateOfBirth ?? '',
-          gender: editRequest.gender ?? undefined,
-          nationalId: editRequest.nationalId ?? '',
+          studentId: editRequest.nationalId ?? '',
           email: editRequest.email ?? '',
           phone: toLocalPhone(editRequest.phone),
         }
@@ -160,75 +212,67 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
   const [step2Data, setStep2Data] = useState<Partial<Step2Data>>(() =>
     editRequest
       ? {
-          districtId: editRequest.districtId ?? '',
-          sectorId: editRequest.sectorId ?? '',
-          cell: editRequest.cell ?? '',
-          village: editRequest.village ?? '',
           schoolName: editRequest.schoolName,
-          educationLevel: editRequest.educationLevel,
           currentYear: editRequest.currentYear,
+          programCourse: '',
           averageGrade: editRequest.averageGrade ?? '',
         }
       : {},
   );
   const [step3Data, setStep3Data] = useState<Partial<Step3Data>>(() =>
+    editRequest ? { whyDeserve: editRequest.motivation, howHelp: '', anythingElse: '' } : {},
+  );
+  const [step4Data, setStep4Data] = useState<Partial<Step4Data>>(() =>
     editRequest
       ? {
           guardianName: editRequest.guardianName,
           guardianPhone: toLocalPhone(editRequest.guardianPhone),
-          relationship: editRequest.relationship,
-          programId: editRequest.programId ?? initialProgramId ?? '',
-          motivation: editRequest.motivation,
+          householdIncome: '',
         }
       : {},
   );
+  const [files, setFiles] = useState<DocFiles>(EMPTY_FILES);
+  const [declaration, setDeclaration] = useState(false);
+
   const [request, setRequest] = useState<ScholarshipApplication | null>(editRequest ?? null);
   // Once a draft is created we keep its id so a retry (e.g. after a failed
-  // document upload) updates the existing draft instead of creating a second
-  // one — which createDraft's duplicate-active guard would reject anyway.
+  // document upload) updates the existing draft instead of creating a second one.
   const [draftId, setDraftId] = useState<string | null>(editRequest?.id ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleStep1Next = (data: Step1Data) => {
-    setStep1Data(data);
-    setPhase(2);
-  };
+  const setFile = (key: DocSlotKey, f: File | null) =>
+    setFiles((prev) => ({ ...prev, [key]: f }));
 
-  const handleStep2Next = (data: Step2Data) => {
-    setStep2Data(data);
-    setPhase(3);
-  };
-
-  const handleStep3Next = (data: Step3Data) => {
-    setStep3Data(data);
-    setPhase(4);
-  };
-
-  const handleFinalSubmit = async (docs: PendingDoc[]) => {
+  const handleFinalSubmit = async () => {
     setSubmitting(true);
     setSubmitError(null);
     try {
       const payload: CreateScholarshipApplicationPayload = {
+        // Personal
         fullNames: step1Data.fullNames!,
-        dateOfBirth: step1Data.dateOfBirth || undefined,
-        gender: step1Data.gender || undefined,
-        nationalId: step1Data.nationalId || undefined,
+        nationalId: step1Data.studentId || undefined, // Student ID reuses the nationalId column
         email: step1Data.email || undefined,
         phone: toE164Phone(step1Data.phone!),
-        districtId: step2Data.districtId || undefined,
-        sectorId: step2Data.sectorId || undefined,
-        cell: step2Data.cell || undefined,
-        village: step2Data.village || undefined,
+        // Academic
         schoolName: step2Data.schoolName!,
-        educationLevel: step2Data.educationLevel!,
         currentYear: step2Data.currentYear!,
         averageGrade: step2Data.averageGrade || undefined,
-        guardianName: step3Data.guardianName!,
-        guardianPhone: toE164Phone(step3Data.guardianPhone!),
-        relationship: step3Data.relationship!,
-        programId: step3Data.programId || undefined,
-        motivation: step3Data.motivation!,
+        // Guardian
+        guardianName: step4Data.guardianName!,
+        guardianPhone: toE164Phone(step4Data.guardianPhone!),
+        // Questions + program/course + income folded into the single motivation column
+        motivation: buildMotivation(
+          step3Data.whyDeserve ?? '',
+          step3Data.howHelp ?? '',
+          step3Data.anythingElse ?? '',
+          step2Data.programCourse ?? '',
+          step4Data.householdIncome ?? '',
+        ),
+        // Fixed defaults for the two enums the new form no longer surfaces, so the
+        // unchanged backend validation still passes.
+        educationLevel: 'university',
+        relationship: 'guardian',
       };
 
       // Reuse an already-created draft on retry; otherwise create one.
@@ -237,14 +281,17 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
         : await scholarshipApi.createDraft(payload);
       setDraftId(saved.id);
 
-      // Upload each attachment to the file server, then record it against the
-      // draft. Failures are collected so the user knows exactly which to retry.
+      // Upload each attached document, then record it against the draft.
+      const uploads = (Object.keys(files) as DocSlotKey[])
+        .map((key) => ({ key, file: files[key] }))
+        .filter((s): s is { key: DocSlotKey; file: File } => s.file !== null);
+
       const failed: string[] = [];
-      for (const { file, docType } of docs) {
+      for (const { key, file } of uploads) {
         try {
           const fileKey = await uploadMedia(file, 'scholarship-docs');
           await scholarshipApi.saveDocument(saved.id, {
-            documentType: docType,
+            documentType: SLOT_DOCTYPE[key],
             fileKey,
             fileName: file.name,
             fileSize: file.size,
@@ -275,6 +322,9 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
     setStep1Data({});
     setStep2Data({});
     setStep3Data({});
+    setStep4Data({});
+    setFiles(EMPTY_FILES);
+    setDeclaration(false);
     setRequest(null);
     setDraftId(null);
     setSubmitError(null);
@@ -291,25 +341,51 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
         </div>
       )}
 
-      {phase === 1 && <Step1Identity initialData={step1Data} onNext={handleStep1Next} />}
+      {phase === 1 && (
+        <Step1Personal
+          initialData={step1Data}
+          onNext={(d) => {
+            setStep1Data(d);
+            setPhase(2);
+          }}
+        />
+      )}
       {phase === 2 && (
-        <Step2Education initialData={step2Data} onBack={() => setPhase(1)} onNext={handleStep2Next} />
+        <Step2Academic
+          initialData={step2Data}
+          files={files}
+          setFile={setFile}
+          onBack={() => setPhase(1)}
+          onNext={(d) => {
+            setStep2Data(d);
+            setPhase(3);
+          }}
+        />
       )}
       {phase === 3 && (
-        <Step3Guardian
-          initialData={{
-            guardianName: step3Data.guardianName ?? '',
-            guardianPhone: step3Data.guardianPhone ?? '',
-            relationship: step3Data.relationship,
-            programId: step3Data.programId ?? initialProgramId ?? '',
-            motivation: step3Data.motivation ?? '',
-          }}
+        <Step3Questions
+          initialData={step3Data}
           onBack={() => setPhase(2)}
-          onNext={handleStep3Next}
+          onNext={(d) => {
+            setStep3Data(d);
+            setPhase(4);
+          }}
         />
       )}
       {phase === 4 && (
-        <Step4Documents submitting={submitting} onBack={() => setPhase(3)} onSubmit={handleFinalSubmit} />
+        <Step4Guardian
+          initialData={step4Data}
+          files={files}
+          setFile={setFile}
+          declaration={declaration}
+          setDeclaration={setDeclaration}
+          submitting={submitting}
+          onBack={() => setPhase(3)}
+          onSubmit={(d) => {
+            setStep4Data(d);
+            handleFinalSubmit();
+          }}
+        />
       )}
       {phase === 'success' && request && (
         <SuccessScreen app={request} locale={locale} onReset={handleReset} />
@@ -318,9 +394,151 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
   );
 }
 
-// ─── Step 1: Identity & Contact ─────────────────────────────────────────────────
+// ─── Upload slot ────────────────────────────────────────────────────────────────
 
-function Step1Identity({
+/** Create/revoke an object URL for an image file, cleaned up on change/unmount. */
+function useObjectUrl(file: File | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file || !file.type.startsWith('image/')) {
+      setUrl(null);
+      return;
+    }
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  return url;
+}
+
+function fmtSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
+function UploadSlot({
+  label,
+  required,
+  file,
+  onChange,
+}: {
+  label: string;
+  required: boolean;
+  file: File | null;
+  onChange: (f: File | null) => void;
+}) {
+  const t = useTranslations('services.scholarship.apply');
+  const [error, setError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const preview = useObjectUrl(file);
+
+  const handleFile = (f: File) => {
+    if (!DOC_ACCEPT.split(',').includes(f.type)) {
+      setError(t('docTypeError'));
+      return;
+    }
+    if (f.size > DOC_MAX_BYTES) {
+      setError(t('docSizeError'));
+      return;
+    }
+    setError(null);
+    onChange(f);
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-semibold text-gray-700 leading-none">{label}</span>
+        {required
+          ? <span className="text-red-500 text-xs leading-none">*</span>
+          : <span className="text-[10px] text-gray-400 leading-none">({t('optional')})</span>}
+        {file && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto" />}
+      </div>
+      <div
+        className={cn(
+          'rounded-xl border-2 border-dashed transition-all duration-150',
+          dragOver ? 'border-violet-400 bg-violet-50'
+            : file ? 'border-green-300 bg-green-50/40'
+            : 'border-gray-200 bg-gray-50 hover:border-violet-300 hover:bg-violet-50/20',
+        )}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+      >
+        {file ? (
+          <div className="flex items-center gap-2.5 px-3 py-3">
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="preview" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100" />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-900 truncate leading-snug">{file.name}</p>
+              <p className="text-[10px] text-gray-400">{fmtSize(file.size)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              aria-label={t('docRemove')}
+              className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-red-300 hover:text-red-500 transition-colors shrink-0"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
+          <label className="flex flex-col items-center justify-center gap-1.5 py-5 cursor-pointer text-center px-3">
+            <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
+              <Upload className="w-3.5 h-3.5 text-violet-500" />
+            </div>
+            <p className="text-xs text-gray-500 leading-snug">
+              <span className="text-violet-600 font-medium">{t('docUpload')}</span> {t('docOrDrop')}
+            </p>
+            <p className="text-[10px] text-gray-400">{t('docHint')}</p>
+            <input
+              type="file"
+              accept={DOC_ACCEPT}
+              className="sr-only"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }}
+            />
+          </label>
+        )}
+      </div>
+      {error && <p className="text-[10px] text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function StepShell({
+  icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
+      <div>
+        <h2 className="font-bold text-gray-900 flex items-center gap-2">
+          <span className="text-violet-500">{icon}</span> {title}
+        </h2>
+        <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─── Step 1: Personal Information ────────────────────────────────────────────────
+
+function Step1Personal({
   initialData,
   onNext,
 }: {
@@ -341,7 +559,6 @@ function Step1Identity({
   });
 
   const fullNamesValue = watch('fullNames') ?? '';
-
   const fullNamesError = errors.fullNames
     ? errors.fullNames.message === 'tooLong'
       ? t('fullNamesTooLongError')
@@ -349,90 +566,68 @@ function Step1Identity({
     : undefined;
 
   return (
-    <form onSubmit={handleSubmit(onNext)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
-      <div>
-        <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <User className="w-4 h-4 text-violet-500" /> {t('step1Title')}
-        </h2>
-        <p className="text-xs text-gray-400 mt-1">{t('step1Subtitle')}</p>
-      </div>
-
-      <Input
-        label={t('fullNames')}
-        required
-        maxLength={150}
-        {...register('fullNames')}
-        error={fullNamesError}
-        hint={!fullNamesError ? `${fullNamesValue.length}/150` : undefined}
-      />
-
-      <div className="grid sm:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit(onNext)} noValidate>
+      <StepShell icon={<User className="w-4 h-4" />} title={t('step1Title')} subtitle={t('step1Subtitle')}>
         <Input
-          label={`${t('dateOfBirth')} (${t('optional')})`}
-          type="date"
-          {...register('dateOfBirth')}
-        />
-        <Select
-          label={`${t('gender')} (${t('optional')})`}
-          placeholder={t('gender')}
-          {...register('gender')}
-          options={[
-            { value: 'male', label: t('male') },
-            { value: 'female', label: t('female') },
-          ]}
-        />
-      </div>
-
-      <Input label={`${t('nationalId')} (${t('optional')})`} {...register('nationalId')} />
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Input
-          label={`${t('email')} (${t('optional')})`}
-          type="email"
-          {...register('email')}
-          error={errors.email && t('emailError')}
-        />
-        <Input
-          label={t('phone')}
+          label={t('fullNames')}
           required
-          placeholder="0781234567"
-          maxLength={10}
-          {...register('phone')}
-          error={errors.phone && t('phoneFormatError')}
-          hint={!errors.phone ? t('phoneHint') : undefined}
+          maxLength={150}
+          {...register('fullNames')}
+          error={fullNamesError}
+          hint={!fullNamesError ? `${fullNamesValue.length}/150` : undefined}
         />
-      </div>
 
-      <div className="flex justify-end pt-2">
-        <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
-          {t('next')}
-        </Button>
-      </div>
+        <Input label={`${t('studentId')} (${t('optional')})`} maxLength={50} {...register('studentId')} />
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input
+            label={`${t('email')} (${t('optional')})`}
+            type="email"
+            {...register('email')}
+            error={errors.email && t('emailError')}
+          />
+          <Input
+            label={t('phone')}
+            required
+            placeholder="0781234567"
+            maxLength={10}
+            {...register('phone')}
+            error={errors.phone && t('phoneFormatError')}
+            hint={!errors.phone ? t('phoneHint') : undefined}
+          />
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
+            {t('next')}
+          </Button>
+        </div>
+      </StepShell>
     </form>
   );
 }
 
-// ─── Step 2: Residence & Education ──────────────────────────────────────────────
+// ─── Step 2: Academic Information ────────────────────────────────────────────────
 
-function Step2Education({
+function Step2Academic({
   initialData,
+  files,
+  setFile,
   onBack,
   onNext,
 }: {
   initialData: Partial<Step2Data>;
+  files: DocFiles;
+  setFile: (key: DocSlotKey, f: File | null) => void;
   onBack: () => void;
   onNext: (data: Step2Data) => void;
 }) {
   const t = useTranslations('services.scholarship.apply');
-  const tLevels = useTranslations('services.scholarship.levels');
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [sectors, setSectors] = useState<Sector[]>([]);
+  const [docError, setDocError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     formState: { errors },
   } = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
@@ -441,98 +636,93 @@ function Step2Education({
     defaultValues: initialData,
   });
 
-  const districtId = watch('districtId');
-
-  useEffect(() => {
-    publicApi.getDistricts().then(setDistricts).catch(() => setDistricts([]));
-  }, []);
-
-  useEffect(() => {
-    if (!districtId) {
-      setSectors([]);
+  const submit = (data: Step2Data) => {
+    if (!files.transcript || !files.reportCard) {
+      setDocError(t('docRequiredError'));
       return;
     }
-    publicApi.getSectors(districtId).then(setSectors).catch(() => setSectors([]));
-  }, [districtId]);
-
-  const levelOptions: { value: EducationLevel; label: string }[] = [
-    { value: 'secondary', label: tLevels('secondary') },
-    { value: 'tvet', label: tLevels('tvet') },
-    { value: 'university', label: tLevels('university') },
-  ];
+    setDocError(null);
+    onNext(data);
+  };
 
   return (
-    <form onSubmit={handleSubmit(onNext)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
-      <div>
-        <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <GraduationCap className="w-4 h-4 text-violet-500" /> {t('step2Title')}
-        </h2>
-        <p className="text-xs text-gray-400 mt-1">{t('step2Subtitle')}</p>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Select
-          label={`${t('district')} (${t('optional')})`}
-          placeholder={t('districtPlaceholder')}
-          {...register('districtId', {
-            onChange: () => setValue('sectorId', ''),
-          })}
-          options={districts.map((d) => ({ value: d.id, label: d.name }))}
-        />
-        <Select
-          label={`${t('sector')} (${t('optional')})`}
-          placeholder={districtId ? t('sectorPlaceholder') : t('selectDistrictFirst')}
-          disabled={!districtId}
-          {...register('sectorId')}
-          options={sectors.map((s) => ({ value: s.id, label: s.name }))}
-        />
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Input label={`${t('cell')} (${t('optional')})`} {...register('cell')} />
-        <Input label={`${t('village')} (${t('optional')})`} {...register('village')} />
-      </div>
-
-      <Input
-        label={t('schoolName')}
-        required
-        maxLength={200}
-        {...register('schoolName')}
-        error={errors.schoolName && t('fullNamesError')}
-      />
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Select
-          label={t('educationLevel')}
-          placeholder={t('educationLevelPlaceholder')}
-          {...register('educationLevel')}
-          options={levelOptions}
-        />
+    <form onSubmit={handleSubmit(submit)} noValidate>
+      <StepShell icon={<GraduationCap className="w-4 h-4" />} title={t('step2Title')} subtitle={t('step2Subtitle')}>
         <Input
-          label={t('currentYear')}
+          label={t('schoolName')}
           required
-          {...register('currentYear')}
-          error={errors.currentYear && t('fullNamesError')}
+          maxLength={200}
+          {...register('schoolName')}
+          error={errors.schoolName && t('requiredError')}
         />
-      </div>
 
-      <Input label={`${t('averageGrade')} (${t('optional')})`} {...register('averageGrade')} />
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input
+            label={t('currentYear')}
+            required
+            placeholder={t('currentYearPlaceholder')}
+            {...register('currentYear')}
+            error={errors.currentYear && t('requiredError')}
+          />
+          <Input
+            label={t('program')}
+            required
+            maxLength={PROGRAM_MAX}
+            placeholder={t('programPlaceholder')}
+            {...register('programCourse')}
+            error={errors.programCourse && t('requiredError')}
+          />
+        </div>
 
-      <div className="flex justify-between pt-2">
-        <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack}>
-          {t('back')}
-        </Button>
-        <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
-          {t('next')}
-        </Button>
-      </div>
+        <Input
+          label={`${t('averageGrade')} (${t('optional')})`}
+          maxLength={20}
+          placeholder={t('averageGradePlaceholder')}
+          {...register('averageGrade')}
+        />
+
+        <div className="pt-1 space-y-3">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
+            {t('requiredDocuments')}
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <UploadSlot
+              label={t('docTranscript')}
+              required
+              file={files.transcript}
+              onChange={(f) => setFile('transcript', f)}
+            />
+            <UploadSlot
+              label={t('docReportCard')}
+              required
+              file={files.reportCard}
+              onChange={(f) => setFile('reportCard', f)}
+            />
+          </div>
+        </div>
+
+        {docError && (
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-600">
+            {docError}
+          </div>
+        )}
+
+        <div className="flex justify-between pt-2">
+          <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack}>
+            {t('back')}
+          </Button>
+          <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
+            {t('next')}
+          </Button>
+        </div>
+      </StepShell>
     </form>
   );
 }
 
-// ─── Step 3: Guardian & Program ─────────────────────────────────────────────────
+// ─── Step 3: Scholarship Questions ───────────────────────────────────────────────
 
-function Step3Guardian({
+function Step3Questions({
   initialData,
   onBack,
   onNext,
@@ -542,9 +732,6 @@ function Step3Guardian({
   onNext: (data: Step3Data) => void;
 }) {
   const t = useTranslations('services.scholarship.apply');
-  const tRel = useTranslations('services.scholarship.relationships');
-  const [programs, setPrograms] = useState<ScholarshipProgram[]>([]);
-
   const {
     register,
     handleSubmit,
@@ -554,222 +741,198 @@ function Step3Guardian({
     resolver: zodResolver(step3Schema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
-    defaultValues: { ...initialData, relationship: initialData.relationship ?? 'parent' },
+    defaultValues: initialData,
   });
 
-  const motivationValue = watch('motivation') ?? '';
-
-  useEffect(() => {
-    scholarshipPublicApi.listPrograms().then(setPrograms).catch(() => setPrograms([]));
-  }, []);
-
-  const relationshipOptions: { value: GuardianRelationship; label: string }[] = [
-    { value: 'parent', label: tRel('parent') },
-    { value: 'guardian', label: tRel('guardian') },
-    { value: 'sibling', label: tRel('sibling') },
-    { value: 'other', label: tRel('other') },
-  ];
+  const why = watch('whyDeserve') ?? '';
+  const how = watch('howHelp') ?? '';
+  const elseVal = watch('anythingElse') ?? '';
 
   return (
-    <form onSubmit={handleSubmit(onNext)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
-      <div>
-        <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <Users className="w-4 h-4 text-violet-500" /> {t('step3Title')}
-        </h2>
-        <p className="text-xs text-gray-400 mt-1">{t('step3Subtitle')}</p>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Input
-          label={t('guardianName')}
+    <form onSubmit={handleSubmit(onNext)} noValidate>
+      <StepShell icon={<MessageSquareText className="w-4 h-4" />} title={t('step3Title')} subtitle={t('step3Subtitle')}>
+        <Textarea
+          label={t('q1Label')}
           required
-          maxLength={150}
-          {...register('guardianName')}
-          error={errors.guardianName && t('fullNamesError')}
+          rows={5}
+          maxLength={WHY_MAX}
+          placeholder={t('q1Placeholder')}
+          {...register('whyDeserve')}
+          error={errors.whyDeserve ? t('questionRequiredError') : undefined}
+          hint={!errors.whyDeserve ? `${why.length}/${WHY_MAX}` : undefined}
         />
-        <Input
-          label={t('guardianPhone')}
+
+        <Textarea
+          label={t('q2Label')}
           required
-          placeholder="0781234567"
-          maxLength={10}
-          {...register('guardianPhone')}
-          error={errors.guardianPhone && t('phoneFormatError')}
-          hint={!errors.guardianPhone ? t('phoneHint') : undefined}
+          rows={4}
+          maxLength={HOW_MAX}
+          placeholder={t('q2Placeholder')}
+          {...register('howHelp')}
+          error={errors.howHelp ? t('questionRequiredError') : undefined}
+          hint={!errors.howHelp ? `${how.length}/${HOW_MAX}` : undefined}
         />
-      </div>
 
-      <Select
-        label={t('relationship')}
-        placeholder={t('relationshipPlaceholder')}
-        {...register('relationship')}
-        options={relationshipOptions}
-      />
+        <Textarea
+          label={`${t('q3Label')} (${t('optional')})`}
+          rows={3}
+          maxLength={ELSE_MAX}
+          placeholder={t('q3Placeholder')}
+          {...register('anythingElse')}
+          hint={`${elseVal.length}/${ELSE_MAX}`}
+        />
 
-      <Select
-        label={`${t('program')} (${t('optional')})`}
-        placeholder={t('programPlaceholder')}
-        {...register('programId')}
-        options={programs.map((p) => ({ value: p.id, label: p.title }))}
-      />
-
-      <Textarea
-        label={t('motivation')}
-        required
-        rows={4}
-        maxLength={MOTIVATION_MAX}
-        {...register('motivation')}
-        error={errors.motivation ? t('motivationRequiredError') : undefined}
-        hint={!errors.motivation ? `${motivationValue.length}/${MOTIVATION_MAX}` : undefined}
-      />
-
-      <div className="flex justify-between pt-2">
-        <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack}>
-          {t('back')}
-        </Button>
-        <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
-          {t('next')}
-        </Button>
-      </div>
+        <div className="flex justify-between pt-2">
+          <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack}>
+            {t('back')}
+          </Button>
+          <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
+            {t('next')}
+          </Button>
+        </div>
+      </StepShell>
     </form>
   );
 }
 
-// ─── Step 4: Documents (optional attachments) ───────────────────────────────────
+// ─── Step 4: Guardian, Supporting Documents & Declaration ────────────────────────
 
-function Step4Documents({
+function Step4Guardian({
+  initialData,
+  files,
+  setFile,
+  declaration,
+  setDeclaration,
   submitting,
   onBack,
   onSubmit,
 }: {
+  initialData: Partial<Step4Data>;
+  files: DocFiles;
+  setFile: (key: DocSlotKey, f: File | null) => void;
+  declaration: boolean;
+  setDeclaration: (v: boolean) => void;
   submitting: boolean;
   onBack: () => void;
-  onSubmit: (docs: PendingDoc[]) => void;
+  onSubmit: (data: Step4Data) => void;
 }) {
   const t = useTranslations('services.scholarship.apply');
-  const tTypes = useTranslations('services.scholarship.docTypes');
-  const [docs, setDocs] = useState<PendingDoc[]>([]);
-  const [fileError, setFileError] = useState<string | null>(null);
+  const [docError, setDocError] = useState<string | null>(null);
 
-  const typeOptions: { value: ScholarshipDocumentType; label: string }[] = [
-    { value: 'transcript', label: tTypes('transcript') },
-    { value: 'academic_record', label: tTypes('academic_record') },
-    { value: 'proof', label: tTypes('proof') },
-    { value: 'additional', label: tTypes('additional') },
-  ];
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Step4Data>({
+    resolver: zodResolver(step4Schema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+    defaultValues: initialData,
+  });
 
-  const addFiles = (fileList: FileList | null) => {
-    if (!fileList) return;
-    setFileError(null);
-    const accepted: PendingDoc[] = [];
-    for (const file of Array.from(fileList)) {
-      if (!DOC_ACCEPT.split(',').includes(file.type)) {
-        setFileError(t('docTypeError'));
-        continue;
-      }
-      if (file.size > DOC_MAX_BYTES) {
-        setFileError(t('docSizeError'));
-        continue;
-      }
-      accepted.push({ file, docType: 'transcript' });
+  const submit = (data: Step4Data) => {
+    if (!files.studentId) {
+      setDocError(t('docRequiredError'));
+      return;
     }
-    if (accepted.length) setDocs((prev) => [...prev, ...accepted]);
+    setDocError(null);
+    onSubmit(data);
   };
 
-  const setType = (index: number, docType: ScholarshipDocumentType) => {
-    setDocs((prev) => prev.map((d, i) => (i === index ? { ...d, docType } : d)));
-  };
-
-  const removeDoc = (index: number) => {
-    setDocs((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const formatSize = (bytes: number) =>
-    bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const canSubmit = declaration && !!files.studentId && !submitting;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
-      <div>
-        <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <Paperclip className="w-4 h-4 text-violet-500" /> {t('step4Title')}
-        </h2>
-        <p className="text-xs text-gray-400 mt-1">{t('step4Subtitle')}</p>
-      </div>
-
-      {/* Dropzone / picker */}
-      <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 hover:border-violet-300 bg-gray-50/60 hover:bg-violet-50/40 cursor-pointer px-6 py-8 text-center transition-colors">
-        <div className="w-11 h-11 rounded-xl bg-violet-100 flex items-center justify-center">
-          <Upload className="w-5 h-5 text-violet-700" />
+    <form onSubmit={handleSubmit(submit)} noValidate>
+      <StepShell icon={<Users className="w-4 h-4" />} title={t('step4Title')} subtitle={t('step4Subtitle')}>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input
+            label={t('guardianName')}
+            required
+            maxLength={150}
+            {...register('guardianName')}
+            error={errors.guardianName && t('requiredError')}
+          />
+          <Input
+            label={t('guardianPhone')}
+            required
+            placeholder="0781234567"
+            maxLength={10}
+            {...register('guardianPhone')}
+            error={errors.guardianPhone && t('phoneFormatError')}
+            hint={!errors.guardianPhone ? t('phoneHint') : undefined}
+          />
         </div>
-        <p className="text-sm font-medium text-gray-700">{t('docAdd')}</p>
-        <p className="text-xs text-gray-400">{t('docHint')}</p>
-        <input
-          type="file"
-          multiple
-          accept={DOC_ACCEPT}
-          className="hidden"
-          onChange={(e) => {
-            addFiles(e.target.files);
-            e.target.value = '';
-          }}
+
+        <Input
+          label={`${t('householdIncome')} (${t('optional')})`}
+          maxLength={INCOME_MAX}
+          placeholder={t('householdIncomePlaceholder')}
+          {...register('householdIncome')}
         />
-      </label>
 
-      {fileError && <p className="text-xs text-red-600">{fileError}</p>}
+        <div className="pt-1 space-y-3">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
+            {t('supportingDocuments')}
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <UploadSlot
+              label={t('docStudentId')}
+              required
+              file={files.studentId}
+              onChange={(f) => setFile('studentId', f)}
+            />
+            <UploadSlot
+              label={t('docRecommendation')}
+              required={false}
+              file={files.recommendation}
+              onChange={(f) => setFile('recommendation', f)}
+            />
+            <UploadSlot
+              label={t('docCertificates')}
+              required={false}
+              file={files.certificates}
+              onChange={(f) => setFile('certificates', f)}
+            />
+            <UploadSlot
+              label={t('docFinancial')}
+              required={false}
+              file={files.financial}
+              onChange={(f) => setFile('financial', f)}
+            />
+          </div>
+        </div>
 
-      {/* Selected files */}
-      {docs.length > 0 && (
-        <ul className="space-y-2.5">
-          {docs.map((d, i) => (
-            <li
-              key={`${d.file.name}-${i}`}
-              className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2.5"
-            >
-              <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-violet-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{d.file.name}</p>
-                <p className="text-xs text-gray-400">{formatSize(d.file.size)}</p>
-              </div>
-              <select
-                value={d.docType}
-                onChange={(e) => setType(i, e.target.value as ScholarshipDocumentType)}
-                className="text-xs rounded-lg border border-gray-200 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-500/30 shrink-0"
-              >
-                {typeOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => removeDoc(i)}
-                aria-label={t('docRemove')}
-                className="text-gray-400 hover:text-red-600 transition-colors shrink-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+        {docError && (
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-600">
+            {docError}
+          </div>
+        )}
 
-      <div className="flex justify-between pt-2">
-        <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack} disabled={submitting}>
-          {t('back')}
-        </Button>
-        <Button
-          type="button"
-          isLoading={submitting}
-          leftIcon={submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
-          rightIcon={!submitting ? <ArrowRight className="w-4 h-4" /> : undefined}
-          onClick={() => onSubmit(docs)}
-        >
-          {submitting ? t('submitting') : t('submit')}
-        </Button>
-      </div>
-    </div>
+        {/* Declaration */}
+        <div className="rounded-xl bg-violet-50/60 border border-violet-100 px-4 py-3.5 flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" />
+          <Checkbox
+            checked={declaration}
+            onChange={(e) => setDeclaration(e.target.checked)}
+            label={t('declaration')}
+          />
+        </div>
+
+        <div className="flex justify-between pt-2">
+          <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack} disabled={submitting}>
+            {t('back')}
+          </Button>
+          <Button
+            type="submit"
+            isLoading={submitting}
+            rightIcon={!submitting ? <ArrowRight className="w-4 h-4" /> : undefined}
+            disabled={!canSubmit}
+          >
+            {submitting ? t('submitting') : t('submit')}
+          </Button>
+        </div>
+      </StepShell>
+    </form>
   );
 }
 
