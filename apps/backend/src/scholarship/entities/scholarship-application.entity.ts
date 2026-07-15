@@ -9,6 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { ScholarshipStatusHistory } from './scholarship-status-history.entity';
+import { ScholarshipDocument } from './scholarship-document.entity';
 import { ScholarshipLevel } from './scholarship-program.entity';
 
 export enum ScholarshipApplicationStatus {
@@ -143,4 +144,7 @@ export class ScholarshipApplication {
   // already-correct history row's FK.
   @OneToMany(() => ScholarshipStatusHistory, (h) => h.application)
   statusHistory: ScholarshipStatusHistory[];
+
+  @OneToMany(() => ScholarshipDocument, (d) => d.application)
+  documents: ScholarshipDocument[];
 }

@@ -46,6 +46,28 @@ export interface StatusHistoryEntry {
   changedAt: string;
 }
 
+export type ScholarshipDocumentType = 'transcript' | 'academic_record' | 'proof' | 'additional';
+
+export interface ScholarshipDocument {
+  id: string;
+  documentType: ScholarshipDocumentType;
+  fileKey: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  verified: boolean;
+  verifiedAt: string | null;
+  uploadedAt: string;
+}
+
+export interface SaveScholarshipDocumentPayload {
+  documentType: ScholarshipDocumentType;
+  fileKey: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+}
+
 export interface ScholarshipApplication {
   id: string;
   applicationNumber: string;
@@ -76,6 +98,7 @@ export interface ScholarshipApplication {
   createdAt: string;
   updatedAt: string;
   statusHistory: StatusHistoryEntry[];
+  documents?: ScholarshipDocument[];
 }
 
 export interface CreateScholarshipApplicationPayload {
@@ -146,6 +169,18 @@ export const scholarshipApi = {
   listMine: async (): Promise<ScholarshipApplication[]> => {
     const { data } = await apiClient.get('/scholarship/applications');
     return data.data ?? data;
+  },
+
+  saveDocument: async (
+    id: string,
+    payload: SaveScholarshipDocumentPayload,
+  ): Promise<ScholarshipDocument> => {
+    const { data } = await apiClient.post(`/scholarship/applications/${id}/documents`, payload);
+    return data.data ?? data;
+  },
+
+  deleteDocument: async (id: string, docId: string): Promise<void> => {
+    await apiClient.delete(`/scholarship/applications/${id}/documents/${docId}`);
   },
 };
 

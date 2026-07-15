@@ -7,11 +7,12 @@ import Link from 'next/link';
 import {
   ArrowLeft, GraduationCap, User, Phone, Mail, MapPin, School,
   FileText, Users, CheckCircle2, XCircle, AlertTriangle,
-  Clock, RefreshCw, Search, Award, X,
+  Clock, RefreshCw, Search, Award, X, Paperclip, Download, ShieldCheck, Loader2,
 } from 'lucide-react';
-import { type ScholarshipApplication, STATUS_COLORS } from '@/lib/scholarshipApi';
+import { type ScholarshipApplication, type ScholarshipDocument, STATUS_COLORS } from '@/lib/scholarshipApi';
 import { scholarshipAdminApi } from '@/lib/scholarshipAdminApi';
 import { publicApi } from '@/lib/public-api';
+import { fileUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,6 +40,93 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   sibling: 'Sibling',
   other: 'Other',
 };
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  transcript: 'Transcript / Report Card',
+  academic_record: 'Academic Record',
+  proof: 'Proof of Need',
+  additional: 'Other Document',
+};
+
+function formatFileSize(bytes: number): string {
+  return bytes < 1024 * 1024
+    ? `${Math.round(bytes / 1024)} KB`
+    : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function DocumentCard({
+  doc,
+  canManage,
+  verifying,
+  onVerify,
+}: {
+  doc: ScholarshipDocument;
+  canManage: boolean;
+  verifying: boolean;
+  onVerify: () => void;
+}) {
+  const url = fileUrl(doc.fileKey);
+  const isImage = doc.mimeType.startsWith('image/');
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/60 overflow-hidden flex flex-col">
+      <a href={url} target="_blank" rel="noopener noreferrer" className="block relative h-28 bg-white group">
+        {isImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt={doc.fileName} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gray-400">
+            <FileText className="w-8 h-8" />
+            <span className="text-[10px] font-semibold uppercase tracking-wide">
+              {doc.fileName.split('.').pop() || 'file'}
+            </span>
+          </div>
+        )}
+        {doc.verified && (
+          <span className="absolute top-1.5 right-1.5 inline-flex items-center gap-1 rounded-full bg-green-600 text-white text-[10px] font-semibold px-2 py-0.5">
+            <ShieldCheck className="w-3 h-3" /> Verified
+          </span>
+        )}
+      </a>
+      <div className="p-3 flex-1 flex flex-col gap-2">
+        <div>
+          <p className="text-sm font-medium text-gray-900 truncate" title={doc.fileName}>{doc.fileName}</p>
+          <p className="text-xs text-gray-400">
+            {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType} · {formatFileSize(doc.fileSize)}
+          </p>
+        </div>
+        <div className="mt-auto flex items-center gap-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" /> Open
+          </a>
+          {canManage && (
+            <button
+              onClick={onVerify}
+              disabled={verifying}
+              className={cn(
+                'ml-auto inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors disabled:opacity-50',
+                doc.verified
+                  ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                  : 'border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700',
+              )}
+            >
+              {verifying ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <ShieldCheck className="w-3.5 h-3.5" />
+              )}
+              {doc.verified ? 'Verified' : 'Mark verified'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatusBadge({ status }: { status: string }) {
   return (
@@ -152,6 +240,7 @@ function AdminScholarshipDetailContent() {
   const { id, locale } = useParams<{ id: string; locale: string }>();
   const { hasPermission } = useAuth();
   const permApprove = hasPermission(Permission.SCHOLARSHIP_APPROVE);
+  const permManage = hasPermission(Permission.SCHOLARSHIP_MANAGE);
 
   const [application, setApplication] = useState<ScholarshipApplication | null>(null);
   const [loading, setLoading] = useState(true);
@@ -198,6 +287,19 @@ function AdminScholarshipDetailContent() {
         (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
         ?? 'Action failed',
       );
+    } finally {
+      setActiveAction(null);
+    }
+  };
+
+  const handleVerifyDoc = async (docId: string, verified: boolean) => {
+    setActiveAction(`verify-${docId}`);
+    setActionError(null);
+    try {
+      const updated = await scholarshipAdminApi.verifyDocument(id, docId, verified);
+      setApplication(updated);
+    } catch {
+      setActionError('Failed to update document verification');
     } finally {
       setActiveAction(null);
     }
@@ -288,6 +390,24 @@ function AdminScholarshipDetailContent() {
 
           <Section title="Motivation" icon={<FileText className="w-4 h-4" />}>
             <p className="text-sm text-gray-700 leading-relaxed">{application.motivation}</p>
+          </Section>
+
+          <Section title="Documents" icon={<Paperclip className="w-4 h-4" />}>
+            {!application.documents || application.documents.length === 0 ? (
+              <p className="text-sm text-gray-400">No documents were attached to this application.</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-3">
+                {application.documents.map((doc) => (
+                  <DocumentCard
+                    key={doc.id}
+                    doc={doc}
+                    canManage={permManage}
+                    verifying={activeAction === `verify-${doc.id}`}
+                    onVerify={() => handleVerifyDoc(doc.id, !doc.verified)}
+                  />
+                ))}
+              </div>
+            )}
           </Section>
 
           {permApprove && (needsReview || needsDecision || canConfirm) && (

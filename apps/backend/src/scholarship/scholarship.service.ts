@@ -13,9 +13,11 @@ import {
 } from './entities/scholarship-application.entity';
 import { ScholarshipStatusHistory } from './entities/scholarship-status-history.entity';
 import { ScholarshipProgram } from './entities/scholarship-program.entity';
+import { ScholarshipDocument } from './entities/scholarship-document.entity';
 import { CreateScholarshipApplicationDto } from './dto/create-scholarship-application.dto';
 import { CreateScholarshipProgramDto } from './dto/create-scholarship-program.dto';
 import { UpdateScholarshipProgramDto } from './dto/update-scholarship-program.dto';
+import { SaveScholarshipDocumentDto } from './dto/save-scholarship-document.dto';
 import {
   UpdateScholarshipStatusDto,
   ScholarshipStatusAction,
@@ -42,6 +44,8 @@ export class ScholarshipService {
     private readonly statusHistoryRepo: Repository<ScholarshipStatusHistory>,
     @InjectRepository(ScholarshipProgram)
     private readonly programRepo: Repository<ScholarshipProgram>,
+    @InjectRepository(ScholarshipDocument)
+    private readonly documentRepo: Repository<ScholarshipDocument>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     @InjectRepository(District)
@@ -205,7 +209,7 @@ export class ScholarshipService {
   async findOwn(id: string, applicantId: string): Promise<ScholarshipApplication> {
     const application = await this.applicationRepo.findOne({
       where: { id },
-      relations: ['statusHistory'],
+      relations: ['statusHistory', 'documents'],
     });
     if (!application) throw new NotFoundException('Application not found');
     if (application.applicantId !== applicantId) throw new ForbiddenException('Access denied');
@@ -220,12 +224,46 @@ export class ScholarshipService {
     });
   }
 
+  // ── Documents (member) ────────────────────────────────────────────────────────
+
+  /**
+   * Records an already-uploaded supporting document for an application the
+   * caller owns. Documents are appended (multiple allowed per type), never
+   * upserted — an applicant may attach several transcripts/records.
+   */
+  async saveDocument(
+    id: string,
+    applicantId: string,
+    dto: SaveScholarshipDocumentDto,
+  ): Promise<ScholarshipDocument> {
+    await this.findOwn(id, applicantId);
+    const doc = this.documentRepo.create({
+      applicationId: id,
+      documentType: dto.documentType,
+      fileKey: dto.fileKey,
+      fileName: dto.fileName,
+      fileSize: dto.fileSize,
+      mimeType: dto.mimeType,
+      uploadedBy: applicantId,
+    });
+    return this.documentRepo.save(doc);
+  }
+
+  async deleteDocument(id: string, documentId: string, applicantId: string): Promise<void> {
+    await this.findOwn(id, applicantId);
+    const doc = await this.documentRepo.findOne({
+      where: { id: documentId, applicationId: id },
+    });
+    if (!doc) throw new NotFoundException('Document not found');
+    await this.documentRepo.remove(doc);
+  }
+
   // ── Public status tracking ───────────────────────────────────────────────────
 
   async getByNumber(applicationNumber: string): Promise<ScholarshipApplication> {
     const application = await this.applicationRepo.findOne({
       where: { applicationNumber: applicationNumber.toUpperCase() },
-      relations: ['statusHistory'],
+      relations: ['statusHistory', 'documents'],
     });
     if (!application) throw new NotFoundException('Application not found');
     return application;
@@ -269,7 +307,7 @@ export class ScholarshipService {
   async adminGetById(id: string): Promise<ScholarshipApplication> {
     const application = await this.applicationRepo.findOne({
       where: { id },
-      relations: ['statusHistory'],
+      relations: ['statusHistory', 'documents'],
     });
     if (!application) throw new NotFoundException('Application not found');
 
@@ -341,6 +379,26 @@ export class ScholarshipService {
     );
 
     return application;
+  }
+
+  /** Marks a submitted document as verified / unverified and returns the refreshed application. */
+  async adminVerifyDocument(
+    applicationId: string,
+    documentId: string,
+    adminId: string,
+    verified: boolean,
+  ): Promise<ScholarshipApplication> {
+    const doc = await this.documentRepo.findOne({
+      where: { id: documentId, applicationId },
+    });
+    if (!doc) throw new NotFoundException('Document not found');
+
+    doc.verified = verified;
+    doc.verifiedBy = verified ? adminId : null;
+    doc.verifiedAt = verified ? new Date() : null;
+    await this.documentRepo.save(doc);
+
+    return this.adminGetById(applicationId);
   }
 
   async adminGetReports(filters: { dateFrom?: string; dateTo?: string } = {}) {
@@ -474,7 +532,10 @@ export class ScholarshipService {
    */
   /* eslint-disable @typescript-eslint/no-unused-vars */
   private async saveScalarFields(application: ScholarshipApplication): Promise<void> {
-    const { statusHistory, ...rest } = application as ScholarshipApplication & {
+    // Strip every loaded relation (statusHistory, documents) and the ad-hoc
+    // `applicant` field before the targeted `.update()` — passing a relation
+    // array to `.update()` throws, and the find methods now eager-load these.
+    const { statusHistory, documents, ...rest } = application as ScholarshipApplication & {
       applicant?: unknown;
     };
     const { applicant: _applicant, id, ...columns } = rest as Record<string, unknown>;

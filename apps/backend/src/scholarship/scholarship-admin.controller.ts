@@ -11,6 +11,7 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { IsBoolean } from 'class-validator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ScholarshipService } from './scholarship.service';
 import { CreateScholarshipProgramDto } from './dto/create-scholarship-program.dto';
@@ -20,6 +21,11 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
 import { User } from '../users/entities/user.entity';
+
+class VerifyScholarshipDocumentDto {
+  @IsBoolean()
+  verified: boolean;
+}
 
 @ApiTags('Scholarship — Admin')
 @Controller('admin/scholarship')
@@ -105,6 +111,18 @@ export class ScholarshipAdminController {
     @Body() dto: UpdateScholarshipStatusDto,
   ) {
     return this.service.adminUpdateStatus(id, user.id, dto);
+  }
+
+  @Patch('applications/:id/documents/:docId/verify')
+  @Permissions(Permission.SCHOLARSHIP_MANAGE)
+  @ApiOperation({ summary: 'Mark a submitted document as verified / unverified' })
+  verifyDocument(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('docId', ParseUUIDPipe) docId: string,
+    @Body() body: VerifyScholarshipDocumentDto,
+  ) {
+    return this.service.adminVerifyDocument(id, docId, user.id, body.verified);
   }
 
   @Get('reports')

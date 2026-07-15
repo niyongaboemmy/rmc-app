@@ -1028,6 +1028,12 @@
         "sibling": "Sibling",
         "other": "Other"
       },
+      "docTypes": {
+        "transcript": "Transcript / Report Card",
+        "academic_record": "Academic Record",
+        "proof": "Proof of Need",
+        "additional": "Other Document"
+      },
       "detail": {
         "backToServices": "All Services",
         "needTitle": "What you'll need",
@@ -1086,6 +1092,15 @@
         "step2Subtitle": "Tell us where you live and what you're studying",
         "step3Title": "Guardian & Motivation",
         "step3Subtitle": "Tell us about your guardian and why you need this scholarship",
+        "step4Title": "Supporting Documents",
+        "step4Subtitle": "Attach transcripts, academic records, or proof of need (optional)",
+        "docAdd": "Click to upload or drag files here",
+        "docHint": "PDF, JPG, PNG or WebP — up to 10 MB each",
+        "docRemove": "Remove document",
+        "docTypeError": "Only PDF and image files are allowed",
+        "docSizeError": "Each file must be 10 MB or smaller",
+        "submitting": "Submitting…",
+        "uploadFailed": "Some documents could not be uploaded",
         "fullNames": "Full Names",
         "fullNamesError": "Enter your full name (at least 3 characters)",
         "fullNamesTooLongError": "Full name is too long (max 150 characters)",

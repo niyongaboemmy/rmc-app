@@ -9,13 +9,14 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight, ArrowLeft, User, GraduationCap, Users, Check,
-  CheckCircle2, Copy, Search,
+  CheckCircle2, Copy, Search, Paperclip, Upload, FileText, Trash2, Loader2,
 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { publicApi } from '@/lib/public-api';
+import { uploadMedia } from '@/lib/mediaUpload';
 import {
   scholarshipApi,
   scholarshipPublicApi,
@@ -24,7 +25,17 @@ import {
   type ScholarshipProgram,
   type EducationLevel,
   type GuardianRelationship,
+  type ScholarshipDocumentType,
 } from '@/lib/scholarshipApi';
+
+// Attachments: PDFs and images, up to 10 MB each (matches the file-server limit).
+const DOC_ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp';
+const DOC_MAX_BYTES = 10 * 1024 * 1024;
+
+interface PendingDoc {
+  file: File;
+  docType: ScholarshipDocumentType;
+}
 
 // Local Rwandan mobile format the user types: 0 + network prefix (72/73/78/79) + 7 digits = 10 chars.
 const PHONE_RE = /^07[2389][0-9]{7}$/;
@@ -73,7 +84,7 @@ type Step3Data = z.infer<typeof step3Schema>;
 
 type District = { id: string; name: string };
 type Sector = { id: string; name: string };
-type WizardPhase = 1 | 2 | 3 | 'success';
+type WizardPhase = 1 | 2 | 3 | 4 | 'success';
 
 interface Props {
   /** When editing a draft application, pre-fills the form and calls updateDraft instead of createDraft. */
@@ -85,13 +96,14 @@ interface Props {
 // ─── Shared 3-step progress header ─────────────────────────────────────────────
 
 function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof useTranslations> }) {
-  const steps: { key: 1 | 2 | 3; label: string }[] = [
+  const steps: { key: 1 | 2 | 3 | 4; label: string }[] = [
     { key: 1, label: t('step1Title') },
     { key: 2, label: t('step2Title') },
     { key: 3, label: t('step3Title') },
+    { key: 4, label: t('step4Title') },
   ];
-  const order: (1 | 2 | 3)[] = [1, 2, 3];
-  const currentIndex = phase === 'success' ? order.length : order.indexOf(phase as 1 | 2 | 3);
+  const order: (1 | 2 | 3 | 4)[] = [1, 2, 3, 4];
+  const currentIndex = phase === 'success' ? order.length : order.indexOf(phase as 1 | 2 | 3 | 4);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3" role="list" aria-label={t('step1Title')}>
@@ -159,7 +171,22 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
         }
       : {},
   );
+  const [step3Data, setStep3Data] = useState<Partial<Step3Data>>(() =>
+    editRequest
+      ? {
+          guardianName: editRequest.guardianName,
+          guardianPhone: toLocalPhone(editRequest.guardianPhone),
+          relationship: editRequest.relationship,
+          programId: editRequest.programId ?? initialProgramId ?? '',
+          motivation: editRequest.motivation,
+        }
+      : {},
+  );
   const [request, setRequest] = useState<ScholarshipApplication | null>(editRequest ?? null);
+  // Once a draft is created we keep its id so a retry (e.g. after a failed
+  // document upload) updates the existing draft instead of creating a second
+  // one — which createDraft's duplicate-active guard would reject anyway.
+  const [draftId, setDraftId] = useState<string | null>(editRequest?.id ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -173,7 +200,12 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
     setPhase(3);
   };
 
-  const handleStep3Submit = async (data: Step3Data) => {
+  const handleStep3Next = (data: Step3Data) => {
+    setStep3Data(data);
+    setPhase(4);
+  };
+
+  const handleFinalSubmit = async (docs: PendingDoc[]) => {
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -192,24 +224,47 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
         educationLevel: step2Data.educationLevel!,
         currentYear: step2Data.currentYear!,
         averageGrade: step2Data.averageGrade || undefined,
-        guardianName: data.guardianName,
-        guardianPhone: toE164Phone(data.guardianPhone),
-        relationship: data.relationship,
-        programId: data.programId || undefined,
-        motivation: data.motivation,
+        guardianName: step3Data.guardianName!,
+        guardianPhone: toE164Phone(step3Data.guardianPhone!),
+        relationship: step3Data.relationship!,
+        programId: step3Data.programId || undefined,
+        motivation: step3Data.motivation!,
       };
 
-      const saved = editRequest
-        ? await scholarshipApi.updateDraft(editRequest.id, payload)
+      // Reuse an already-created draft on retry; otherwise create one.
+      const saved = draftId
+        ? await scholarshipApi.updateDraft(draftId, payload)
         : await scholarshipApi.createDraft(payload);
-      const submitted = await scholarshipApi.submit(saved.id);
+      setDraftId(saved.id);
 
+      // Upload each attachment to the file server, then record it against the
+      // draft. Failures are collected so the user knows exactly which to retry.
+      const failed: string[] = [];
+      for (const { file, docType } of docs) {
+        try {
+          const fileKey = await uploadMedia(file, 'scholarship-docs');
+          await scholarshipApi.saveDocument(saved.id, {
+            documentType: docType,
+            fileKey,
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type,
+          });
+        } catch {
+          failed.push(file.name);
+        }
+      }
+      if (failed.length > 0) {
+        throw new Error(`${t('uploadFailed')}: ${failed.join(', ')}`);
+      }
+
+      const submitted = await scholarshipApi.submit(saved.id);
       setRequest(submitted);
       setPhase('success');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          ?.message || t('genericError');
+      const apiMsg = (err as { response?: { data?: { error?: { message?: string } } } })?.response
+        ?.data?.error?.message;
+      const message = apiMsg || (err as Error)?.message || t('genericError');
       setSubmitError(Array.isArray(message) ? message.join(', ') : message);
     } finally {
       setSubmitting(false);
@@ -219,7 +274,9 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
   const handleReset = () => {
     setStep1Data({});
     setStep2Data({});
+    setStep3Data({});
     setRequest(null);
+    setDraftId(null);
     setSubmitError(null);
     setPhase(1);
   };
@@ -241,16 +298,18 @@ export function ScholarshipWizard({ editRequest, initialProgramId }: Props) {
       {phase === 3 && (
         <Step3Guardian
           initialData={{
-            guardianName: request?.guardianName ?? '',
-            guardianPhone: request?.guardianPhone ? toLocalPhone(request.guardianPhone) : '',
-            relationship: request?.relationship,
-            programId: request?.programId ?? initialProgramId ?? '',
-            motivation: request?.motivation ?? '',
+            guardianName: step3Data.guardianName ?? '',
+            guardianPhone: step3Data.guardianPhone ?? '',
+            relationship: step3Data.relationship,
+            programId: step3Data.programId ?? initialProgramId ?? '',
+            motivation: step3Data.motivation ?? '',
           }}
-          submitting={submitting}
           onBack={() => setPhase(2)}
-          onSubmit={handleStep3Submit}
+          onNext={handleStep3Next}
         />
+      )}
+      {phase === 4 && (
+        <Step4Documents submitting={submitting} onBack={() => setPhase(3)} onSubmit={handleFinalSubmit} />
       )}
       {phase === 'success' && request && (
         <SuccessScreen app={request} locale={locale} onReset={handleReset} />
@@ -475,14 +534,12 @@ function Step2Education({
 
 function Step3Guardian({
   initialData,
-  submitting,
   onBack,
-  onSubmit,
+  onNext,
 }: {
   initialData: Partial<Step3Data>;
-  submitting: boolean;
   onBack: () => void;
-  onSubmit: (data: Step3Data) => void;
+  onNext: (data: Step3Data) => void;
 }) {
   const t = useTranslations('services.scholarship.apply');
   const tRel = useTranslations('services.scholarship.relationships');
@@ -514,7 +571,7 @@ function Step3Guardian({
   ];
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
+    <form onSubmit={handleSubmit(onNext)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
           <Users className="w-4 h-4 text-violet-500" /> {t('step3Title')}
@@ -569,11 +626,150 @@ function Step3Guardian({
         <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack}>
           {t('back')}
         </Button>
-        <Button type="submit" isLoading={submitting} rightIcon={<ArrowRight className="w-4 h-4" />}>
-          {t('submit')}
+        <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
+          {t('next')}
         </Button>
       </div>
     </form>
+  );
+}
+
+// ─── Step 4: Documents (optional attachments) ───────────────────────────────────
+
+function Step4Documents({
+  submitting,
+  onBack,
+  onSubmit,
+}: {
+  submitting: boolean;
+  onBack: () => void;
+  onSubmit: (docs: PendingDoc[]) => void;
+}) {
+  const t = useTranslations('services.scholarship.apply');
+  const tTypes = useTranslations('services.scholarship.docTypes');
+  const [docs, setDocs] = useState<PendingDoc[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const typeOptions: { value: ScholarshipDocumentType; label: string }[] = [
+    { value: 'transcript', label: tTypes('transcript') },
+    { value: 'academic_record', label: tTypes('academic_record') },
+    { value: 'proof', label: tTypes('proof') },
+    { value: 'additional', label: tTypes('additional') },
+  ];
+
+  const addFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
+    setFileError(null);
+    const accepted: PendingDoc[] = [];
+    for (const file of Array.from(fileList)) {
+      if (!DOC_ACCEPT.split(',').includes(file.type)) {
+        setFileError(t('docTypeError'));
+        continue;
+      }
+      if (file.size > DOC_MAX_BYTES) {
+        setFileError(t('docSizeError'));
+        continue;
+      }
+      accepted.push({ file, docType: 'transcript' });
+    }
+    if (accepted.length) setDocs((prev) => [...prev, ...accepted]);
+  };
+
+  const setType = (index: number, docType: ScholarshipDocumentType) => {
+    setDocs((prev) => prev.map((d, i) => (i === index ? { ...d, docType } : d)));
+  };
+
+  const removeDoc = (index: number) => {
+    setDocs((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const formatSize = (bytes: number) =>
+    bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
+      <div>
+        <h2 className="font-bold text-gray-900 flex items-center gap-2">
+          <Paperclip className="w-4 h-4 text-violet-500" /> {t('step4Title')}
+        </h2>
+        <p className="text-xs text-gray-400 mt-1">{t('step4Subtitle')}</p>
+      </div>
+
+      {/* Dropzone / picker */}
+      <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 hover:border-violet-300 bg-gray-50/60 hover:bg-violet-50/40 cursor-pointer px-6 py-8 text-center transition-colors">
+        <div className="w-11 h-11 rounded-xl bg-violet-100 flex items-center justify-center">
+          <Upload className="w-5 h-5 text-violet-700" />
+        </div>
+        <p className="text-sm font-medium text-gray-700">{t('docAdd')}</p>
+        <p className="text-xs text-gray-400">{t('docHint')}</p>
+        <input
+          type="file"
+          multiple
+          accept={DOC_ACCEPT}
+          className="hidden"
+          onChange={(e) => {
+            addFiles(e.target.files);
+            e.target.value = '';
+          }}
+        />
+      </label>
+
+      {fileError && <p className="text-xs text-red-600">{fileError}</p>}
+
+      {/* Selected files */}
+      {docs.length > 0 && (
+        <ul className="space-y-2.5">
+          {docs.map((d, i) => (
+            <li
+              key={`${d.file.name}-${i}`}
+              className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2.5"
+            >
+              <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-violet-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{d.file.name}</p>
+                <p className="text-xs text-gray-400">{formatSize(d.file.size)}</p>
+              </div>
+              <select
+                value={d.docType}
+                onChange={(e) => setType(i, e.target.value as ScholarshipDocumentType)}
+                className="text-xs rounded-lg border border-gray-200 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-500/30 shrink-0"
+              >
+                {typeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => removeDoc(i)}
+                aria-label={t('docRemove')}
+                className="text-gray-400 hover:text-red-600 transition-colors shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="flex justify-between pt-2">
+        <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack} disabled={submitting}>
+          {t('back')}
+        </Button>
+        <Button
+          type="button"
+          isLoading={submitting}
+          leftIcon={submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
+          rightIcon={!submitting ? <ArrowRight className="w-4 h-4" /> : undefined}
+          onClick={() => onSubmit(docs)}
+        >
+          {submitting ? t('submitting') : t('submit')}
+        </Button>
+      </div>
+    </div>
   );
 }
 

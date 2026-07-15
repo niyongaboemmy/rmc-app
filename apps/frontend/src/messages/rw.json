@@ -1028,6 +1028,12 @@
         "sibling": "Umuvandimwe",
         "other": "Ikindi"
       },
+      "docTypes": {
+        "transcript": "Amanota / Raporo",
+        "academic_record": "Inyandiko z'Amashuri",
+        "proof": "Icyemezo cy'Ubukene",
+        "additional": "Iyindi Nyandiko"
+      },
       "detail": {
         "backToServices": "Serivisi Zose",
         "needTitle": "Ibyo Ukeneye",
@@ -1086,6 +1092,15 @@
         "step2Subtitle": "Tubwire aho utuye n'icyo wiga",
         "step3Title": "Umurera n'Impamvu",
         "step3Subtitle": "Tubwire umurera wawe n'impamvu ukeneye iyi buruse",
+        "step4Title": "Inyandiko Zishyigikira",
+        "step4Subtitle": "Ongeraho amanota, inyandiko z'amashuri, cyangwa icyemezo cy'ubukene (bidahatirwa)",
+        "docAdd": "Kanda wongeremo cyangwa ukururire dosiye hano",
+        "docHint": "PDF, JPG, PNG cyangwa WebP — ntarengwa 10 MB kuri buri dosiye",
+        "docRemove": "Kuraho inyandiko",
+        "docTypeError": "Dosiye za PDF n'amafoto gusa zemewe",
+        "docSizeError": "Buri dosiye igomba kuba 10 MB cyangwa munsi",
+        "submitting": "Kurimo kohereza…",
+        "uploadFailed": "Zimwe mu nyandiko ntizashoboye koherezwa",
         "fullNames": "Amazina Yombi",
         "fullNamesError": "Andika amazina yawe yombi (byibuze inyuguti 3)",
         "fullNamesTooLongError": "Amazina arerekana ubwo ni maremare (ntarengwa inyuguti 150)",

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Put, Param, Body, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ScholarshipService } from './scholarship.service';
 import { CreateScholarshipApplicationDto } from './dto/create-scholarship-application.dto';
+import { SaveScholarshipDocumentDto } from './dto/save-scholarship-document.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { User } from '../users/entities/user.entity';
@@ -76,5 +77,27 @@ export class ScholarshipController {
   @ApiOperation({ summary: 'Get own application details' })
   findOwn(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.findOwn(id, user.id);
+  }
+
+  @Post('applications/:id/documents')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Attach an uploaded supporting document to an application' })
+  saveDocument(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SaveScholarshipDocumentDto,
+  ) {
+    return this.service.saveDocument(id, user.id, dto);
+  }
+
+  @Delete('applications/:id/documents/:docId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove a supporting document from an application' })
+  deleteDocument(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('docId', ParseUUIDPipe) docId: string,
+  ) {
+    return this.service.deleteDocument(id, docId, user.id);
   }
 }

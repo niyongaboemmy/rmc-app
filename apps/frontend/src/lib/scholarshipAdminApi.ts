@@ -62,6 +62,18 @@ export const scholarshipAdminApi = {
     return data.data ?? data;
   },
 
+  verifyDocument: async (
+    id: string,
+    docId: string,
+    verified: boolean,
+  ): Promise<ScholarshipApplication> => {
+    const { data } = await apiClient.patch(
+      `/admin/scholarship/applications/${id}/documents/${docId}/verify`,
+      { verified },
+    );
+    return data.data ?? data;
+  },
+
   getReports: async (params?: { dateFrom?: string; dateTo?: string }): Promise<AdminScholarshipStats> => {
     const { data } = await apiClient.get('/admin/scholarship/reports', { params });
     return data.data ?? data;
