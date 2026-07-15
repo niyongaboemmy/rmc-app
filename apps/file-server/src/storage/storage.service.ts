@@ -51,6 +51,14 @@ const EXT_MIME: Record<string, string> = {
   '.pdf': 'application/pdf',
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
+  // Audio — required so disk-served Dawah lesson audio gets a real media type
+  // (else it falls through to application/octet-stream and won't play or seek).
+  '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
+  '.aac': 'audio/aac',
+  '.ogg': 'audio/ogg',
+  '.oga': 'audio/ogg',
+  '.wav': 'audio/wav',
   '.txt': 'text/plain',
   '.json': 'application/json',
 };

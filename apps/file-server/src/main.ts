@@ -5,6 +5,47 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import { AppModule } from './app.module';
+import { resolveProtectedPrefixes } from './common/guards/jwt-auth.guard';
+
+/**
+ * Every prefix that MUST be JWT-protected. Checked at boot against the list the
+ * guard actually resolved.
+ *
+ * This assertion exists because the failure it catches is silent. If a prefix
+ * falls out of the active list — someone sets PROTECTED_KEY_PREFIXES to add one
+ * and unknowingly replaces the rest, someone edits the defaults, someone
+ * mistypes a trailing slash — then every file under it becomes publicly
+ * downloadable by raw URL. No request fails. No error is logged. Nothing looks
+ * broken. The only symptom is that private data is served to anyone who asks.
+ *
+ * All three are listed, not just the newest, so this catches the mistake
+ * whatever introduces it — including a future change that has nothing to do
+ * with Dawah.
+ */
+const EXPECTED_PROTECTED_PREFIXES = ['hajj-proofs/', 'funeral-docs/', 'dawah-library/'];
+
+function assertProtectedPrefixes(config: ConfigService, logger: Logger): void {
+  const active = resolveProtectedPrefixes(config);
+  const missing = EXPECTED_PROTECTED_PREFIXES.filter((p) => !active.includes(p));
+
+  if (missing.length === 0) {
+    logger.log(`Protected key prefixes: ${active.join(', ')}`);
+    return;
+  }
+
+  const banner = '='.repeat(72);
+  logger.error(banner);
+  logger.error('SECURITY: EXPECTED PROTECTED PREFIXES ARE NOT ACTIVE');
+  logger.error(`  missing: ${missing.join(', ')}`);
+  logger.error(`  active : ${active.join(', ') || '(none)'}`);
+  logger.error('  Files under the missing prefixes are PUBLICLY DOWNLOADABLE by raw URL.');
+  logger.error('  Nothing will appear broken. This is a data breach in progress.');
+  logger.error('');
+  logger.error('  Most likely cause: PROTECTED_KEY_PREFIXES is set and OVERRIDES the');
+  logger.error('  code defaults rather than appending to them. It must enumerate ALL');
+  logger.error('  prefixes, or be left unset so the defaults apply.');
+  logger.error(banner);
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +56,9 @@ async function bootstrap() {
   const nodeEnv = config.get<string>('app.nodeEnv') || 'development';
   const allowedOrigins = config.get<string[]>('app.allowedOrigins') || [];
   const maxFileSize = config.get<number>('app.maxFileSize') || 10 * 1024 * 1024;
+
+  // Before anything is served: confirm the private prefixes are actually private.
+  assertProtectedPrefixes(config, logger);
 
   // crossOriginResourcePolicy must be 'cross-origin' so browsers can read
   // responses from this file-server when the request originates on another

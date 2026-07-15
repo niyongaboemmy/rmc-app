@@ -694,3 +694,55 @@ main {
     animation: none;
   }
 }
+
+/* --------------------------------------------------------
+   Rich-text inline images — size + alignment
+   --------------------------------------------------------
+   Set from the editor toolbar and carried as data-attributes (DOMPurify keeps
+   data-*, so they survive sanitizeRichHtml on the public side). Styled here
+   once so the admin editor and the public page render identically.
+   Logical margins, so alignment mirrors correctly under RTL. */
+img[data-size] {
+  display: block;
+  height: auto;
+}
+img[data-size='sm']   { width: 33%; }
+img[data-size='md']   { width: 66%; }
+img[data-size='full'] { width: 100%; }
+
+img[data-align='left']   { margin-inline-start: 0;    margin-inline-end: auto; }
+img[data-align='center'] { margin-inline-start: auto; margin-inline-end: auto; }
+img[data-align='right']  { margin-inline-start: auto; margin-inline-end: 0; }
+
+/* A third of a phone screen is a thumbnail nobody can see — below sm every
+   inline image goes full width regardless of the chosen preset. */
+@media (max-width: 640px) {
+  img[data-size] { width: 100%; }
+}
+
+/* ── Library flipbook (BookFlipReader) ──────────────────────────────────────
+   Do NOT give .flip-book a display/layout of its own. page-flip takes ownership
+   of this element (it becomes .stf__parent) and positions every page absolutely
+   inside it; a `display:grid` here fights that and throws the book off-stage.
+   Centring belongs to the WRAPPER around it, not to the host itself.
+
+   The text layer must sit exactly over the canvas, which is why the inner
+   wrapper is the positioned box and the canvas fills it. */
+.flip-page {
+  background: #fff;
+  overflow: hidden;
+}
+.flip-page__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.flip-page__inner > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* pdf.js paints its spans transparent; this makes a drag-select visible. */
+.flip-page .textLayer ::selection {
+  background: rgba(26, 122, 74, 0.3);
+}

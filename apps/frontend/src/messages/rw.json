@@ -81,7 +81,16 @@
     "changePassword": "Hindura Ijambo ry'Ibanga",
     "admin": "Ubuyobozi",
     "schools": "Amashuri",
-    "projects": "Imishinga"
+    "projects": "Imishinga",
+    "dawah": "Dawah",
+    "dawahMenu": {
+      "overview": "Incamake",
+      "overviewDesc": "Amasomo n'isomero mu ncamake."
+    },
+    "servicesMenu": {
+      "overview": "Incamake",
+      "overviewDesc": "Serivisi zose RMC itanga, ahantu hamwe."
+    }
   },
   "home": {
     "hero": {
@@ -1253,7 +1262,8 @@
       "drive": "Dosiye",
       "goodConduct": "Imyitwarire Myiza",
       "funeral": "Ishyingura",
-      "hajj": "Hajj"
+      "hajj": "Hajj",
+      "dawah": "Dawah"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
@@ -1677,6 +1687,291 @@
         "certificateFailed": "Iki cyemezo ntikishoboye gufungurwa.",
         "noDocuments": "Nta nyandiko zoherejwe.",
         "download": "Kuramo"
+      }
+    },
+    "dawah": {
+      "title": "Dawah Learning",
+      "tabs": {
+        "courses": "Courses",
+        "library": "Library",
+        "categories": "Categories",
+        "content": "Landing page"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "actions": {
+        "create": "Create",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save",
+        "cancel": "Cancel",
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "archive": "Archive",
+        "upload": "Upload"
+      },
+      "readOnly": "You have view-only access to Dawah Learning.",
+      "courses": {
+        "title": "Courses",
+        "new": "New course",
+        "edit": "Edit course",
+        "fields": {
+          "title": "Title",
+          "summary": "Summary",
+          "description": "Description",
+          "category": "Category",
+          "level": "Level",
+          "language": "Language",
+          "format": "Format",
+          "cover": "Cover image",
+          "instructorName": "Instructor name",
+          "instructorTitle": "Instructor title",
+          "instructorPhoto": "Instructor photo",
+          "duration": "Duration (minutes)",
+          "featured": "Feature on the landing page",
+          "sortOrder": "Sort order",
+          "slug": "URL slug"
+        },
+        "slugLocked": "The URL cannot be changed once a course is published — existing links would break.",
+        "confirmDelete": "Delete this course? Its lessons will be removed with it.",
+        "empty": "No courses yet. Create the first one.",
+        "subtitle": "Manage the course catalogue shown on the public Dawah Learning pages.",
+        "searchPlaceholder": "Search by title…",
+        "allCategories": "All categories",
+        "allLevels": "All levels",
+        "allStatuses": "All statuses",
+        "refresh": "Refresh",
+        "manageLessons": "Manage lessons",
+        "saving": "Saving…",
+        "created": "Course created.",
+        "updated": "Course updated.",
+        "deleted": "Course deleted.",
+        "published": "Course published.",
+        "unpublished": "Course unpublished.",
+        "loadError": "Could not load courses. Please try again.",
+        "saveError": "Could not save the course. Please try again.",
+        "deleteError": "Could not delete the course. Please try again.",
+        "statusError": "Could not change the status. Please try again.",
+        "titleRequired": "An English title is required.",
+        "col": {
+          "cover": "Cover",
+          "title": "Course",
+          "category": "Category",
+          "level": "Level",
+          "lessons": "Lessons",
+          "status": "Status",
+          "updated": "Updated"
+        },
+        "sections": {
+          "content": "Content",
+          "meta": "Classification",
+          "instructor": "Instructor",
+          "cover": "Cover image",
+          "publishing": "Publishing"
+        },
+        "translationStatus": "Translation status",
+        "uncategorized": "Uncategorized",
+        "noCategory": "No category"
+      },
+      "lessons": {
+        "title": "Lessons",
+        "new": "Add lesson",
+        "edit": "Edit lesson",
+        "fields": {
+          "title": "Title",
+          "summary": "Summary",
+          "body": "Lesson content",
+          "duration": "Duration (minutes)",
+          "isPreview": "Free preview",
+          "mediaUrl": "Video URL (YouTube / Vimeo)",
+          "audioFile": "Audio file",
+          "pdfFile": "PDF file",
+          "linkUrl": "Link URL"
+        },
+        "reorderHint": "Drag to reorder. The whole outline is saved at once.",
+        "confirmDelete": "Delete this lesson? This cannot be undone.",
+        "empty": "This course has no lessons yet.",
+        "subtitle": "Build and order the lesson outline for this course.",
+        "backToCourses": "Back to courses",
+        "refresh": "Refresh",
+        "add": "Add lesson",
+        "saving": "Saving…",
+        "added": "Lesson added.",
+        "updated": "Lesson updated.",
+        "deleted": "Lesson deleted.",
+        "reordered": "Order saved.",
+        "loadError": "Could not load the course. Please try again.",
+        "saveError": "Could not save the lesson. Please try again.",
+        "deleteError": "Could not delete the lesson. Please try again.",
+        "reorderError": "Could not save the new order. Reverting.",
+        "titleRequired": "An English title is required.",
+        "contentType": "Content type",
+        "contentTypes": {
+          "text": "Text",
+          "video": "Video",
+          "audio": "Audio",
+          "pdf": "PDF",
+          "link": "Link"
+        },
+        "comingSoon": "coming soon",
+        "courseNotFound": "Course not found.",
+        "mediaUrlHelp": "Paste a YouTube or Vimeo link.",
+        "mediaUrlValid": "Valid {provider} link.",
+        "mediaUrlInvalid": "Enter a valid YouTube or Vimeo URL (https).",
+        "videoNeedsUrl": "A video lesson needs a valid YouTube or Vimeo link.",
+        "audioNeedsFile": "Upload an audio file for this lesson.",
+        "chooseAudio": "Choose audio file",
+        "replaceAudio": "Replace",
+        "uploadingPct": "Uploading… {pct}%",
+        "uploadFailed": "Upload failed. Please try again.",
+        "audioTypeError": "Please choose an audio file.",
+        "audioHint": "MP3, M4A, WAV or OGG. Up to 90 MB.",
+        "choosePdf": "Choose PDF",
+        "replaceMedia": "Replace",
+        "pdfHint": "PDF, up to 90 MB.",
+        "pdfTypeError": "Please choose a PDF file.",
+        "pdfNeedsFile": "Upload a PDF for this lesson.",
+        "linkHelp": "Any https link to an external resource.",
+        "linkInvalid": "Enter a valid https URL.",
+        "linkNeedsUrl": "A link lesson needs an https URL."
+      },
+      "books": {
+        "title": "Library",
+        "new": "Add book",
+        "edit": "Edit book",
+        "fields": {
+          "title": "Title",
+          "author": "Author",
+          "description": "Description",
+          "category": "Category",
+          "language": "Language",
+          "cover": "Cover image",
+          "file": "Book PDF",
+          "previewFile": "Preview excerpt (optional)",
+          "pageCount": "Pages",
+          "visibility": "Visibility",
+          "allowDownload": "Allow download",
+          "featured": "Feature on the landing page",
+          "sortOrder": "Sort order"
+        },
+        "visibility": {
+          "public": "Anyone can read",
+          "members": "Signed-in members only"
+        },
+        "uploadHint": "PDF only, up to 25 MB.",
+        "uploading": "Uploading…",
+        "uploadFailed": "Upload failed. Please try again.",
+        "downloadWarning": "Turning downloads off hides the button and blocks the download link. It is a deterrent, not copy protection — anyone who can read a PDF can save it.",
+        "previewHint": "When an excerpt is set, visitors who are not signed in preview the excerpt instead of the full book.",
+        "openFile": "Open file",
+        "confirmDelete": "Delete this book?",
+        "empty": "No books yet. Upload the first one.",
+        "subtitle": "Manage the digital library shown on the public Dawah pages.",
+        "searchPlaceholder": "Search by title or author…",
+        "allCategories": "All categories",
+        "allLanguages": "All languages",
+        "allStatuses": "All statuses",
+        "refresh": "Refresh",
+        "saving": "Saving…",
+        "created": "Book created.",
+        "updated": "Book updated.",
+        "deleted": "Book deleted.",
+        "published": "Book published.",
+        "unpublished": "Book unpublished.",
+        "loadError": "Could not load books. Please try again.",
+        "saveError": "Could not save the book. Please try again.",
+        "deleteError": "Could not delete the book. Please try again.",
+        "statusError": "Could not change the status. Please try again.",
+        "titleRequired": "An English title is required.",
+        "fileRequired": "A book PDF is required.",
+        "proof": "Read (proof before publishing)",
+        "col": {
+          "cover": "Cover",
+          "title": "Book",
+          "category": "Category",
+          "language": "Language",
+          "visibility": "Visibility",
+          "download": "Download",
+          "status": "Status",
+          "updated": "Updated",
+          "stats": "Activity"
+        },
+        "sections": {
+          "content": "Details",
+          "cover": "Cover image",
+          "file": "Book file",
+          "policy": "Access & licensing",
+          "publishing": "Publishing"
+        },
+        "chooseFile": "Choose PDF",
+        "replaceFile": "Replace PDF",
+        "currentFile": "Current file",
+        "uploadingPct": "Uploading… {pct}%",
+        "download": {
+          "on": "Allowed",
+          "off": "Read-only"
+        },
+        "visibilityHelp": {
+          "public": "Anyone can open and read this book — no account needed.",
+          "members": "Only signed-in members can read the full book. Signed-out visitors see the preview excerpt (if you add one below) or a sign-in prompt."
+        },
+        "allowDownloadHelp": "When off, the Download button is hidden and the download link is blocked — visitors read in the browser only.",
+        "downloadDeterrent": "This is a deterrent, not protection. Anyone who can read a PDF in their browser can still save the file — it stops casual sharing, but it is not DRM.",
+        "previewFileHelp": "Optional short excerpt (a separate PDF). When the book is members-only, signed-out visitors see THIS instead of the full book — a way to show a taste without giving the whole thing away.",
+        "stats": {
+          "reads": "reads",
+          "downloads": "downloads",
+          "hint": "Total opens and downloads since publishing. Counts every request, so the same person reading twice counts twice — not unique readers.",
+          "none": "No activity yet"
+        }
+      },
+      "categories": {
+        "title": "Categories",
+        "new": "New category",
+        "edit": "Edit category",
+        "fields": {
+          "name": "Name",
+          "icon": "Icon",
+          "sortOrder": "Sort order",
+          "active": "Active",
+          "slug": "Slug",
+          "nameEn": "Name (English)",
+          "nameRw": "Name (Kinyarwanda)",
+          "nameAr": "Name (Arabic)"
+        },
+        "slugLocked": "The slug cannot be changed — it is used in public filter links.",
+        "confirmDelete": "Delete this category? Courses and books in it keep working, but lose their category.",
+        "empty": "No categories yet.",
+        "subtitle": "The shared taxonomy for courses and books.",
+        "refresh": "Refresh",
+        "saving": "Saving…",
+        "created": "Category created.",
+        "updated": "Category updated.",
+        "deleted": "Category deleted.",
+        "loadError": "Could not load categories. Please try again.",
+        "saveError": "Could not save the category. Please try again.",
+        "deleteError": "Could not delete the category. Please try again.",
+        "nameRequired": "An English name is required.",
+        "active": "Active",
+        "inactive": "Inactive",
+        "iconHint": "A lucide-react icon name, e.g. BookOpen.",
+        "col": {
+          "icon": "Icon",
+          "slug": "Slug",
+          "name": "Name",
+          "order": "Order",
+          "status": "Status"
+        }
+      },
+      "translations": {
+        "complete": "All languages",
+        "englishOnly": "English only",
+        "missing": "Missing {langs}",
+        "label": "Translations",
+        "ok": "Complete"
       }
     }
   },
@@ -2268,5 +2563,126 @@
         }
       }
     }
+  },
+  "dawah": {
+    "title": "Dawah Learning",
+    "tabs": {
+      "courses": "Courses",
+      "library": "Library"
+    },
+    "courses": {
+      "title": "Amasomo",
+      "subtitle": "Amasomo ateguwe neza ushobora gukurikira ku muvuduko wawe.",
+      "searchPlaceholder": "Search courses…",
+      "allCategories": "All categories",
+      "allLevels": "All levels",
+      "allLanguages": "All languages",
+      "resultCount": "{count, plural, =0 {No courses} one {# course} other {# courses}}",
+      "lessonCount": "{count, plural, =0 {No lessons} one {# lesson} other {# lessons}}",
+      "duration": "{minutes} min",
+      "instructor": "Instructor",
+      "level": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
+      "format": {
+        "self_paced": "Self-paced",
+        "in_person": "In person",
+        "hybrid": "Hybrid"
+      },
+      "language": {
+        "en": "English",
+        "rw": "Kinyarwanda",
+        "ar": "Arabic",
+        "multi": "Multilingual"
+      },
+      "view": "View course",
+      "outline": "Course outline",
+      "freePreview": "Free preview",
+      "related": "Related courses",
+      "loading": "Loading courses…",
+      "empty": {
+        "title": "No courses found",
+        "body": "Try clearing your filters or searching for something else."
+      },
+      "error": {
+        "title": "Could not load courses",
+        "body": "Something went wrong. Please try again.",
+        "retry": "Retry"
+      },
+      "outlineEmpty": {
+        "title": "No courses to show yet",
+        "body": "Nothing is available here right now — please check back soon."
+      },
+      "backToCourses": "All courses",
+      "clearFilters": "Clear filters",
+      "filterCategory": "Filter by category",
+      "filterLevel": "Filter by level",
+      "filterLanguage": "Filter by language",
+      "aboutCourse": "About this course",
+      "playVideo": "Play video",
+      "audioLesson": "Audio lesson",
+      "openPdf": "Open PDF",
+      "openLink": "Open resource",
+      "contentType": {
+        "text": "Text",
+        "video": "Video",
+        "audio": "Audio",
+        "pdf": "PDF",
+        "link": "Link"
+      }
+    },
+    "library": {
+      "title": "Isomero",
+      "subtitle": "Soma mu bitabo by'Islamu dufite.",
+      "searchPlaceholder": "Search by title or author…",
+      "allCategories": "All categories",
+      "allLanguages": "All languages",
+      "resultCount": "{count, plural, =0 {No books} one {# book} other {# books}}",
+      "author": "Author",
+      "pageCount": "{count, plural, one {# page} other {# pages}}",
+      "language": {
+        "en": "English",
+        "rw": "Kinyarwanda",
+        "ar": "Arabic",
+        "other": "Other"
+      },
+      "read": "Read",
+      "download": "Download",
+      "downloadDisabled": "This book cannot be downloaded",
+      "membersOnly": "Members only",
+      "signInToRead": "Sign in to read this book",
+      "signIn": "Sign in",
+      "excerptNotice": "This is a preview excerpt. Sign in to read the full book.",
+      "close": "Close",
+      "loading": "Loading library…",
+      "empty": {
+        "title": "No books found",
+        "body": "Try clearing your filters or searching for something else."
+      },
+      "error": {
+        "title": "Could not load the library",
+        "body": "Something went wrong. Please try again.",
+        "retry": "Retry"
+      },
+      "loadingBook": "Loading book…",
+      "signInBody": "This book is available to members. Sign in to read it in full.",
+      "previewUnavailable": {
+        "title": "Could not load this book",
+        "body": "The file could not be loaded. Please try again, or open it in a new tab."
+      },
+      "openInNewTab": "Open in new tab",
+      "mobileHint": "For the best reading experience on a phone, open the book in a new tab.",
+      "backToLibrary": "All books",
+      "aboutBook": "About this book",
+      "related": "Related books"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {pages}"
+    },
+    "backToDawah": "Dawah"
   }
 }

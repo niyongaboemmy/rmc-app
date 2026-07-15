@@ -81,6 +81,10 @@ export enum Permission {
   HAJJ_MANAGE = 'hajj:manage',
   HAJJ_APPROVE = 'hajj:approve',
 
+  // ── Dawah Learning ────────────────────────────────────────────────
+  DAWAH_VIEW = 'dawah:view',
+  DAWAH_MANAGE = 'dawah:manage',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

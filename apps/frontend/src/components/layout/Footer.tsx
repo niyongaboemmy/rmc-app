@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, ExternalLink, Radio, ChevronDown, Send, Loader2, Check } from 'lucide-react';
-import { IJWI_RADIO_URL } from '@/lib/constants';
+import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, ExternalLink, ChevronDown, Send, Loader2, Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 import { publicApi } from '@/lib/public-api';
@@ -224,16 +223,6 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
-              <li>
-                <a
-                  href={IJWI_RADIO_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-rmc-gold/70 hover:text-rmc-gold text-sm transition-colors"
-                >
-                  <Radio className="w-3.5 h-3.5 shrink-0" /> {t('learnIslam')}
-                </a>
-              </li>
             </ul>
           </CollapsibleColumn>
 
