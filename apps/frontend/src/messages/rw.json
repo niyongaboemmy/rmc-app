@@ -1,4 +1,12 @@
 {
+  "notFoundPage": {
+    "code": "404",
+    "eyebrow": "Ikosa 404",
+    "title": "Urupapuro Ntirubonetse",
+    "subtitle": "Urupapuro urimo gushaka rushobora kuba rwarahinduwe, cyangwa rutigeze rubaho. Reka tugusubize inzira.",
+    "home": "Subira Ahabanza",
+    "services": "Reba Serivisi"
+  },
   "common": {
     "appName": "Urubuga rwa RMC",
     "loading": "Birategerezwa...",

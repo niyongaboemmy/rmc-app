@@ -1,4 +1,12 @@
 {
+  "notFoundPage": {
+    "code": "404",
+    "eyebrow": "Error 404",
+    "title": "Page Not Found",
+    "subtitle": "The page you're looking for may have moved, or never existed. Let us guide you back.",
+    "home": "Back to Home",
+    "services": "Explore Services"
+  },
   "common": {
     "appName": "RMC Platform",
     "loading": "Loading...",
