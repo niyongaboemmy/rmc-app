@@ -344,14 +344,6 @@ export class JobApplicationsService {
     return application;
   }
 
-  /** Permanently delete an application (status-history rows cascade via FK). */
-  async adminDelete(id: string): Promise<{ id: string; deleted: true }> {
-    const application = await this.applicationRepo.findOne({ where: { id } });
-    if (!application) throw new NotFoundException('Application not found');
-    await this.applicationRepo.delete(id);
-    return { id, deleted: true };
-  }
-
   // ── Internal helpers ─────────────────────────────────────────────────────────
 
   /** RMC-JOB-<YYYYMM>-<5-digit-seq> — allocated once, on submission. */

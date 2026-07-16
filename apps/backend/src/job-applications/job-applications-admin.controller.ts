@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JobApplicationsService } from './job-applications.service';
 import { UpdateJobApplicationStatusDto } from './dto/update-job-application-status.dto';
@@ -56,12 +56,5 @@ export class JobApplicationsAdminController {
     @Body() dto: UpdateJobApplicationStatusDto,
   ) {
     return this.service.adminUpdateStatus(id, user.id, dto);
-  }
-
-  @Delete(':id')
-  @Permissions(Permission.JOB_APPLICATIONS_MANAGE)
-  @ApiOperation({ summary: 'Permanently delete a job application' })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.adminDelete(id);
   }
 }

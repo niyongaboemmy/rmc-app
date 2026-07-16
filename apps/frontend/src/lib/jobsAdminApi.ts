@@ -44,8 +44,4 @@ export const jobsAdminApi = {
     const { data } = await apiClient.patch(`/admin/job-applications/${id}/status`, payload);
     return data.data ?? data;
   },
-
-  remove: async (id: string): Promise<void> => {
-    await apiClient.delete(`/admin/job-applications/${id}`);
-  },
 };
