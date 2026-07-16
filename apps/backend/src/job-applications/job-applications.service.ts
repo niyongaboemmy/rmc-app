@@ -3,23 +3,41 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In, ILike } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
+import { SmsService } from '../integrations/sms/sms.service';
+import { EmailService } from '../integrations/email/email.service';
 import {
   JobApplication,
   JobApplicationStatus,
   JobApplicationDocuments,
 } from './entities/job-application.entity';
 import { JobApplicationStatusHistory } from './entities/job-application-status-history.entity';
+import { JobPostingsService } from './job-postings.service';
 import { CreateJobApplicationDto } from './dto/create-job-application.dto';
 import {
   UpdateJobApplicationStatusDto,
   JobApplicationStatusAction,
 } from './dto/update-job-application-status.dto';
+import { RespondMoreInfoDto } from './dto/respond-more-info.dto';
+
+// Statuses that count as an application still "in progress" for duplicate detection.
+const ACTIVE_STATUSES: JobApplicationStatus[] = [
+  JobApplicationStatus.SUBMITTED,
+  JobApplicationStatus.UNDER_REVIEW,
+  JobApplicationStatus.SHORTLISTED,
+  JobApplicationStatus.MORE_INFO_REQUESTED,
+];
 
 @Injectable()
 export class JobApplicationsService {
+  private readonly logger = new Logger(JobApplicationsService.name);
+
   constructor(
     @InjectRepository(JobApplication)
     private readonly applicationRepo: Repository<JobApplication>,
@@ -27,6 +45,11 @@ export class JobApplicationsService {
     private readonly statusHistoryRepo: Repository<JobApplicationStatusHistory>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
+    private readonly notifSettings: NotificationSettingsService,
+    private readonly smsService: SmsService,
+    private readonly emailService: EmailService,
+    private readonly jobPostings: JobPostingsService,
   ) {}
 
   // ── Create ─────────────────────────────────────────────────────────────────────
@@ -42,15 +65,46 @@ export class JobApplicationsService {
       );
     }
 
+    // Resolve the position. Preferred path: apply to an admin-posted vacancy
+    // (jobPostingId) — we validate it's open/not-expired and take the title from
+    // it. Legacy path: a free-text position (kept for backward compatibility).
+    let jobPostingId: string | null = null;
+    let positionAppliedFor: string;
+    if (dto.jobPostingId) {
+      const posting = await this.jobPostings.assertOpenForApplication(dto.jobPostingId);
+      jobPostingId = posting.id;
+      positionAppliedFor = posting.title;
+    } else if (dto.positionAppliedFor?.trim()) {
+      positionAppliedFor = dto.positionAppliedFor.trim();
+    } else {
+      throw new BadRequestException('Select a job to apply for');
+    }
+
+    // Prevent accidental duplicate applications while one is still in progress —
+    // per posting when applying to a vacancy, otherwise per free-text position.
+    const duplicate = await this.applicationRepo.findOne({
+      where: {
+        applicantId,
+        status: In(ACTIVE_STATUSES),
+        ...(jobPostingId ? { jobPostingId } : { positionAppliedFor: ILike(positionAppliedFor) }),
+      },
+    });
+    if (duplicate) {
+      throw new ConflictException(
+        `You already have an application in progress for "${positionAppliedFor}" (tracking ${duplicate.trackingNumber}).`,
+      );
+    }
+
     const trackingNumber = await this.generateTrackingNumber();
 
     const application = this.applicationRepo.create({
       trackingNumber,
       applicantId,
+      jobPostingId,
       fullNames: dto.fullNames,
       email: dto.email ?? null,
       phone: dto.phone,
-      positionAppliedFor: dto.positionAppliedFor,
+      positionAppliedFor,
       districtId: dto.districtId ?? null,
       sectorId: dto.sectorId ?? null,
       cell: dto.cell ?? null,
@@ -68,6 +122,7 @@ export class JobApplicationsService {
       applicantId,
       'Application submitted',
     );
+    this.notifySubmission(saved);
     return saved;
   }
 
@@ -139,6 +194,42 @@ export class JobApplicationsService {
       JobApplicationStatus.CANCELLED,
       applicantId,
       'Cancelled by applicant',
+    );
+    return application;
+  }
+
+  /**
+   * Applicant's reply to a reviewer's "request more info". Appends any attached
+   * documents, records the message on the timeline, and returns the application
+   * to the review queue (more_info_requested → under_review).
+   */
+  async respondToMoreInfo(
+    id: string,
+    applicantId: string,
+    dto: RespondMoreInfoDto,
+  ): Promise<JobApplication> {
+    const application = await this.findOwn(id, applicantId);
+    if (application.status !== JobApplicationStatus.MORE_INFO_REQUESTED) {
+      throw new BadRequestException('This application is not awaiting more information');
+    }
+
+    if (dto.documents?.length) {
+      const existing = application.documents.additionalDocuments ?? [];
+      application.documents = {
+        ...application.documents,
+        additionalDocuments: [...existing, ...dto.documents],
+      };
+    }
+
+    const prev = application.status;
+    application.status = JobApplicationStatus.UNDER_REVIEW;
+    await this.saveScalarFields(application);
+    await this.recordStatusChange(
+      application.id,
+      prev,
+      JobApplicationStatus.UNDER_REVIEW,
+      applicantId,
+      `Applicant response: ${dto.message}`,
     );
     return application;
   }
@@ -238,7 +329,27 @@ export class JobApplicationsService {
       adminId,
       dto.notes ?? dto.reason ?? null,
     );
+
+    switch (toStatus) {
+      case JobApplicationStatus.MORE_INFO_REQUESTED:
+        this.notifyMoreInfo(application);
+        break;
+      case JobApplicationStatus.ACCEPTED:
+        this.notifyDecision(application, true);
+        break;
+      case JobApplicationStatus.REJECTED:
+        this.notifyDecision(application, false);
+        break;
+    }
     return application;
+  }
+
+  /** Permanently delete an application (status-history rows cascade via FK). */
+  async adminDelete(id: string): Promise<{ id: string; deleted: true }> {
+    const application = await this.applicationRepo.findOne({ where: { id } });
+    if (!application) throw new NotFoundException('Application not found');
+    await this.applicationRepo.delete(id);
+    return { id, deleted: true };
   }
 
   // ── Internal helpers ─────────────────────────────────────────────────────────
@@ -281,5 +392,83 @@ export class JobApplicationsService {
       notes,
     });
     return this.statusHistoryRepo.save(history);
+  }
+
+  // ── Notifications (SMS + email; fire-and-forget, never throw) ──────────────────
+
+  private esc(s: string | null | undefined): string {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  private statusUrl(): string {
+    const base = this.configService.get<string>('app.frontendUrl', 'http://localhost:3001');
+    return `${base}/en/services/jobs/status`;
+  }
+
+  private dispatchSms(to: string | null, message: string): void {
+    if (!to) return;
+    void this.smsService.sendSms(to, message);
+  }
+
+  private dispatchEmail(to: string | null, subject: string, html: string): void {
+    if (!to) return;
+    this.emailService.sendEmail({ to, subject, html }).catch((err) => {
+      this.logger.warn(`Job application email to ${to} failed: ${err}`);
+    });
+  }
+
+  private emailShell(title: string, bodyHtml: string): string {
+    return `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f2937">
+      <h2 style="color:#1A7A4A">${this.esc(title)}</h2>${bodyHtml}
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px">Rwanda Muslim Community — Job Applications</p></div>`;
+  }
+
+  private notifySubmission(app: JobApplication): void {
+    const url = this.statusUrl();
+    const msg = `RMC Jobs: Your application for "${app.positionAppliedFor}" was received. Tracking number: ${app.trackingNumber}. Track it at ${url}`;
+    if (this.notifSettings.isSmsEnabled('jobApplications.submission')) this.dispatchSms(app.phone, msg);
+    if (this.notifSettings.isEmailEnabled('jobApplications.submission')) {
+      this.dispatchEmail(
+        app.email,
+        `Job application received — ${app.trackingNumber}`,
+        this.emailShell(
+          'Application received',
+          `<p>Dear ${this.esc(app.fullNames)},</p><p>We have received your application for <strong>${this.esc(app.positionAppliedFor)}</strong>.</p><p>Your tracking number is <strong>${this.esc(app.trackingNumber)}</strong>. Keep it safe — you can use it to check your status any time at <a href="${url}">${url}</a>.</p>`,
+        ),
+      );
+    }
+  }
+
+  private notifyMoreInfo(app: JobApplication): void {
+    const url = this.statusUrl();
+    const msg = `RMC Jobs: More information is needed for your application ${app.trackingNumber}. Please sign in to respond: ${url}`;
+    if (this.notifSettings.isSmsEnabled('jobApplications.more_info')) this.dispatchSms(app.phone, msg);
+    if (this.notifSettings.isEmailEnabled('jobApplications.more_info')) {
+      this.dispatchEmail(
+        app.email,
+        `More information needed — ${app.trackingNumber}`,
+        this.emailShell(
+          'More information needed',
+          `<p>Dear ${this.esc(app.fullNames)},</p><p>Our team needs more information for your application <strong>${this.esc(app.trackingNumber)}</strong>.</p>${app.moreInfoRequested ? `<p><em>${this.esc(app.moreInfoRequested)}</em></p>` : ''}<p>Please sign in to respond: <a href="${url}">${url}</a></p>`,
+        ),
+      );
+    }
+  }
+
+  private notifyDecision(app: JobApplication, accepted: boolean): void {
+    const key = accepted ? 'jobApplications.accepted' : 'jobApplications.rejected';
+    const smsMsg = accepted
+      ? `RMC Jobs: Good news! Your application ${app.trackingNumber} for "${app.positionAppliedFor}" was accepted. We will contact you with next steps.`
+      : `RMC Jobs: Update on your application ${app.trackingNumber}: it was not selected this time. Thank you for applying.`;
+    if (this.notifSettings.isSmsEnabled(key)) this.dispatchSms(app.phone, smsMsg);
+    if (this.notifSettings.isEmailEnabled(key)) {
+      const subject = accepted
+        ? `Application accepted — ${app.trackingNumber}`
+        : `Application update — ${app.trackingNumber}`;
+      const bodyHtml = accepted
+        ? `<p>Dear ${this.esc(app.fullNames)},</p><p>Congratulations — your application for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingNumber)}) has been <strong>accepted</strong>. Our team will contact you with the next steps.</p>`
+        : `<p>Dear ${this.esc(app.fullNames)},</p><p>Thank you for applying for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingNumber)}). After review, your application was not selected this time.${app.rejectionReason ? `<br/><em>${this.esc(app.rejectionReason)}</em>` : ''}</p>`;
+      this.dispatchEmail(app.email, subject, this.emailShell(accepted ? 'Application accepted' : 'Application update', bodyHtml));
+    }
   }
 }

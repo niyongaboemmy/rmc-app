@@ -5,15 +5,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   Loader2, Briefcase, CheckCircle2, XCircle, AlertTriangle, Ban, LogIn, Inbox,
+  Send, Plus, Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { uploadMedia } from '@/lib/mediaUpload';
+import { DocumentField, type UploadTexts } from '@/components/services/shared/DocumentField';
 import {
   jobsApi,
   JOB_STATUS_COLORS,
   type JobApplication,
   type JobApplicationStatus,
+  type JobDocument,
 } from '@/lib/jobsApi';
 
 // Public-facing linear flow — collapses the backend states into four milestones.
@@ -105,7 +109,7 @@ export function JobsStatusChecker() {
   }
 
   if (selected) {
-    return <ApplicationDetail application={selected} onBack={() => setSelected(null)} locale={locale} />;
+    return <ApplicationDetail application={selected} onBack={() => setSelected(null)} locale={locale} onChanged={refresh} />;
   }
 
   if (applications.length === 0) {
@@ -151,15 +155,34 @@ function ApplicationDetail({
   application,
   onBack,
   locale,
+  onChanged,
 }: {
   application: JobApplication;
   onBack: () => void;
   locale: string;
+  onChanged: () => void;
 }) {
   const t = useTranslations('services.jobs.status');
   const currentIndex = stepIndexFor(application.status);
   const isAccepted = application.status === 'accepted';
   const isTerminal = application.status === 'rejected' || application.status === 'cancelled';
+  const canWithdraw = application.status === 'submitted' || application.status === 'under_review';
+
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+
+  const doWithdraw = async () => {
+    setWithdrawing(true);
+    setWithdrawError(null);
+    try {
+      await jobsApi.cancel(application.id);
+      onChanged();
+    } catch {
+      setWithdrawError(t('withdrawError'));
+      setWithdrawing(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -171,12 +194,15 @@ function ApplicationDetail({
       </button>
 
       {application.status === 'more_info_requested' && (
-        <StateBanner
-          tone="amber"
-          icon={<AlertTriangle className="w-6 h-6" />}
-          title={t('banner.moreInfoTitle')}
-          text={application.moreInfoRequested || t('banner.moreInfoText')}
-        />
+        <>
+          <StateBanner
+            tone="amber"
+            icon={<AlertTriangle className="w-6 h-6" />}
+            title={t('banner.moreInfoTitle')}
+            text={application.moreInfoRequested || t('banner.moreInfoText')}
+          />
+          <MoreInfoResponse applicationId={application.id} onDone={onChanged} />
+        </>
       )}
       {application.status === 'rejected' && (
         <StateBanner
@@ -242,6 +268,156 @@ function ApplicationDetail({
           </ol>
         </div>
       )}
+
+      {canWithdraw && (
+        <div className="pt-1">
+          {!confirmWithdraw ? (
+            <button
+              onClick={() => setConfirmWithdraw(true)}
+              className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+            >
+              {t('withdraw')}
+            </button>
+          ) : (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+              <p className="text-sm text-red-800">{t('withdrawConfirm')}</p>
+              {withdrawError && <p className="text-xs text-red-600">{withdrawError}</p>}
+              <div className="flex gap-3">
+                <Button variant="outline" size="sm" onClick={() => setConfirmWithdraw(false)} disabled={withdrawing}>
+                  {t('withdrawCancel')}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={doWithdraw}
+                  isLoading={withdrawing}
+                  className="!bg-red-600 hover:!bg-red-700 focus:!ring-red-500"
+                >
+                  {t('withdrawConfirmBtn')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const RESPONSE_MIME =
+  'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png';
+
+function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; onDone: () => void }) {
+  const t = useTranslations('services.jobs.status');
+  const tu = useTranslations('services.jobs.apply');
+  const [message, setMessage] = useState('');
+  const [docs, setDocs] = useState<(File | null)[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const uploadTexts: UploadTexts = {
+    uploadOrDrop: tu('uploadOrDrop'),
+    change: tu('change'),
+    remove: tu('remove'),
+    unsupportedType: tu('unsupportedType'),
+    tooLarge: (mb: number) => tu('fileTooLarge', { mb }),
+  };
+
+  const setDoc = (i: number, f: File | null) => setDocs((prev) => prev.map((d, idx) => (idx === i ? f : d)));
+  const addDoc = () => setDocs((prev) => [...prev, null]);
+  const removeDoc = (i: number) => setDocs((prev) => prev.filter((_, idx) => idx !== i));
+
+  const submit = async () => {
+    if (!message.trim()) { setError(t('respondMessageRequired')); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const files = docs.filter((f): f is File => f !== null);
+      const uploaded: JobDocument[] = await Promise.all(
+        files.map(async (f) => ({ key: await uploadMedia(f, 'job-applications'), name: f.name })),
+      );
+      await jobsApi.respondMoreInfo(applicationId, {
+        message: message.trim(),
+        documents: uploaded.length ? uploaded : undefined,
+      });
+      setDone(true);
+      onDone();
+    } catch {
+      setError(t('respondError'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <div className="rounded-2xl bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3">
+        {t('respondSuccess')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <div>
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <Send className="w-4 h-4 text-emerald-500" /> {t('respondTitle')}
+        </h3>
+        <p className="text-xs text-gray-400 mt-1">{t('respondSubtitle')}</p>
+      </div>
+
+      <textarea
+        rows={4}
+        value={message}
+        onChange={(e) => { setMessage(e.target.value); setError(null); }}
+        placeholder={t('respondPlaceholder')}
+        maxLength={2000}
+        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+      />
+
+      {docs.length > 0 && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {docs.map((d, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="flex-1">
+                <DocumentField
+                  label={`${t('respondDocument')} ${i + 1}`}
+                  accept={RESPONSE_MIME}
+                  maxMb={10}
+                  file={d}
+                  onChange={(f) => setDoc(i, f)}
+                  texts={uploadTexts}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => removeDoc(i)}
+                aria-label={tu('remove')}
+                className="mt-6 w-8 h-8 shrink-0 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-300 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button type="button" onClick={addDoc} className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+        <Plus className="w-4 h-4" /> {t('respondAddDoc')}
+      </button>
+
+      {error && <div className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-2.5">{error}</div>}
+
+      <div className="flex justify-end">
+        <Button
+          onClick={submit}
+          isLoading={submitting}
+          className="!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500"
+          leftIcon={!submitting ? <Send className="w-4 h-4" /> : undefined}
+        >
+          {submitting ? t('respondSubmitting') : t('respondSubmit')}
+        </Button>
+      </div>
     </div>
   );
 }

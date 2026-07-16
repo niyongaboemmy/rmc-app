@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   User, MapPin, Briefcase, FileText, ShieldCheck, Plus, Trash2,
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/Button';
 import { publicApi } from '@/lib/public-api';
 import { uploadMedia } from '@/lib/mediaUpload';
 import { goodConductPublicApi } from '@/lib/goodConductApi';
+import { jobPostingsApi, EMPLOYMENT_TYPE_LABELS, type JobPosting } from '@/lib/jobPostingsApi';
 import {
   jobsApi,
   type CreateJobApplicationPayload,
@@ -42,7 +44,6 @@ const schema = z.object({
   fullNames: z.string().min(3, 'fullNames').max(150),
   email: z.string().email('email').optional().or(z.literal('')),
   phone: z.string().regex(PHONE_RE, 'phone'),
-  positionAppliedFor: z.string().min(2, 'position').max(150),
   districtId: z.string().optional().or(z.literal('')),
   sectorId: z.string().optional().or(z.literal('')),
   cell: z.string().max(100).optional().or(z.literal('')),
@@ -74,6 +75,28 @@ export function JobApplicationForm() {
   const districtId = watch('districtId');
   const [districts, setDistricts] = useState<District[]>([]);
   const [sectors, setSectors] = useState<Sector[]>([]);
+
+  // ── Job selection (apply to an admin-posted vacancy) ──────────────────────────
+  const searchParams = useSearchParams();
+  const preselectedJobId = searchParams.get('job') || '';
+  const [postings, setPostings] = useState<JobPosting[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState('');
+  const [loadingPostings, setLoadingPostings] = useState(true);
+  const [jobError, setJobError] = useState<string | null>(null);
+  const selectedPosting = postings.find((p) => p.id === selectedJobId) ?? null;
+
+  useEffect(() => {
+    jobPostingsApi
+      .listOpen()
+      .then((list) => {
+        setPostings(list);
+        if (preselectedJobId && list.some((p) => p.id === preselectedJobId)) {
+          setSelectedJobId(preselectedJobId);
+        }
+      })
+      .catch(() => setPostings([]))
+      .finally(() => setLoadingPostings(false));
+  }, [preselectedJobId]);
 
   // ── Document state (validated on select by DocumentField) ─────────────────────
   const [applicationLetter, setApplicationLetter] = useState<File | null>(null);
@@ -145,6 +168,11 @@ export function JobApplicationForm() {
     gcMode === 'verify' ? !!gcVerifiedName : !!gcFile;
 
   const onSubmit = async (data: FormData) => {
+    // ── A job must be selected ──
+    if (!selectedJobId) {
+      setJobError(t('jobRequired'));
+      return;
+    }
     // ── Client-side document checks before any upload ──
     const papers = academicPapers.filter((f): f is File => f !== null);
     if (!applicationLetter || !cv || !nationalId || !criminalRecord) {
@@ -205,7 +233,7 @@ export function JobApplicationForm() {
         fullNames: data.fullNames,
         email: data.email || undefined,
         phone: toE164Phone(data.phone),
-        positionAppliedFor: data.positionAppliedFor,
+        jobPostingId: selectedJobId,
         districtId: data.districtId || undefined,
         sectorId: data.sectorId || undefined,
         cell: data.cell || undefined,
@@ -261,14 +289,12 @@ export function JobApplicationForm() {
     );
   }
 
-  const fieldError = (key: 'fullNames' | 'email' | 'phone' | 'position') =>
+  const fieldError = (key: 'fullNames' | 'email' | 'phone') =>
     key === 'fullNames'
       ? errors.fullNames && t('fullNamesError')
       : key === 'email'
         ? errors.email && t('emailError')
-        : key === 'phone'
-          ? errors.phone && t('phoneFormatError')
-          : errors.positionAppliedFor && t('positionError');
+        : errors.phone && t('phoneFormatError');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
@@ -288,14 +314,34 @@ export function JobApplicationForm() {
           <Input label={t('phone')} required placeholder="0781234567" maxLength={10} {...register('phone')} error={fieldError('phone') || undefined} hint={!errors.phone ? t('phoneHint') : undefined} />
         </div>
 
-        <Input
-          label={t('positionAppliedFor')}
-          required
-          maxLength={150}
-          leftIcon={<Briefcase className="w-4 h-4" />}
-          {...register('positionAppliedFor')}
-          error={fieldError('position') || undefined}
-        />
+        <div>
+          <Select
+            label={t('jobSelect')}
+            required
+            placeholder={loadingPostings ? t('jobLoading') : postings.length ? t('jobSelectPlaceholder') : t('jobNone')}
+            disabled={loadingPostings || postings.length === 0}
+            value={selectedJobId}
+            onChange={(e) => { setSelectedJobId(e.target.value); setJobError(null); }}
+            options={postings.map((p) => ({
+              value: p.id,
+              label: `${p.title}${p.location ? ' — ' + p.location : ''}`,
+            }))}
+            error={jobError || undefined}
+            hint={
+              selectedPosting
+                ? `${EMPLOYMENT_TYPE_LABELS[selectedPosting.employmentType]}${selectedPosting.department ? ' · ' + selectedPosting.department : ''}${selectedPosting.numberOfPositions > 1 ? ` · ${selectedPosting.numberOfPositions} ${t('jobPositions')}` : ''}`
+                : undefined
+            }
+          />
+          {!loadingPostings && postings.length === 0 && (
+            <p className="mt-2 text-xs text-gray-500">
+              {t('jobNoneHint')}{' '}
+              <Link href={`/${locale}/services/jobs`} className="text-emerald-600 hover:underline font-medium">
+                {t('jobBrowse')}
+              </Link>
+            </p>
+          )}
+        </div>
       </section>
 
       {/* ── Residence (district/sector cascade) ── */}

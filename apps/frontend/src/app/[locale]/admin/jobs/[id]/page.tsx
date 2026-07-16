@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Briefcase, User, Phone, Mail, MapPin, FileText,
@@ -237,6 +237,7 @@ function ActionModal({ title, placeholder, confirmLabel, confirmClass, onClose, 
 
 function AdminJobDetailContent() {
   const { id, locale } = useParams<{ id: string; locale: string }>();
+  const router = useRouter();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.JOB_APPLICATIONS_MANAGE);
 
@@ -244,6 +245,7 @@ function AdminJobDetailContent() {
   const [loading, setLoading] = useState(true);
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [modal, setModal] = useState<'reject' | 'more_info' | null>(null);
+  const [confirmAccept, setConfirmAccept] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [districtName, setDistrictName] = useState<string | null>(null);
@@ -275,6 +277,7 @@ function AdminJobDetailContent() {
     try {
       const updated = await jobsAdminApi.updateStatus(id, { action, ...payload });
       setApp(updated);
+      router.refresh(); // bust the router cache so the list shows the new status
       setSuccessMsg(`Status updated to ${STATUS_LABELS[updated.status]}`);
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: unknown) {
@@ -342,6 +345,9 @@ function AdminJobDetailContent() {
             )}
             <DocLink label="Good conduct certificate" name={docs.goodConductCertificate?.name} docKey={docs.goodConductCertificate?.key} />
             <DocLink label="Employer recommendation" name={docs.employerRecommendation?.name} docKey={docs.employerRecommendation?.key} />
+            {docs.additionalDocuments?.map((d, i) => (
+              <DocLink key={`add-${i}`} label={`Additional document ${i + 1} (applicant response)`} name={d.name} docKey={d.key} />
+            ))}
           </Section>
 
           {app.statusHistory && app.statusHistory.length > 0 && (
@@ -392,7 +398,7 @@ function AdminJobDetailContent() {
                 )}
                 {canDecide && (
                   <>
-                    <button onClick={() => doAction('accept')} disabled={actionLoading}
+                    <button onClick={() => setConfirmAccept(true)} disabled={actionLoading}
                       className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
                       {activeAction === 'accept' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Accept / Approve
                     </button>
@@ -438,6 +444,41 @@ function AdminJobDetailContent() {
           onClose={() => setModal(null)}
           onConfirm={(notes) => doAction('request_more_info', { notes })}
         />
+      )}
+
+      {confirmAccept && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !actionLoading && setConfirmAccept(false)}
+          className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        >
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+              </span>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900">Approve this application?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  This marks <strong>{app.fullNames}</strong>&apos;s application for <strong>{app.positionAppliedFor}</strong> as <strong>Accepted</strong> and notifies the applicant.
+                </p>
+              </div>
+              <button onClick={() => setConfirmAccept(false)} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmAccept(false)} disabled={actionLoading} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={() => { setConfirmAccept(false); doAction('accept'); }} disabled={actionLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
+                <CheckCircle2 className="w-4 h-4" /> Approve
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

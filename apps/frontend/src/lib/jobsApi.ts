@@ -40,6 +40,8 @@ export interface JobApplicationDocuments {
   goodConductCertificate?: JobDocument;
   /** Optional employer recommendation letter. */
   employerRecommendation?: JobDocument;
+  /** Extra documents the applicant uploads when responding to a more-info request. */
+  additionalDocuments?: JobDocument[];
 }
 
 export interface JobApplication {
@@ -69,7 +71,10 @@ export interface CreateJobApplicationPayload {
   fullNames: string;
   email?: string;
   phone: string;
-  positionAppliedFor: string;
+  /** The admin-posted vacancy being applied to (preferred). */
+  jobPostingId?: string;
+  /** Only used for the legacy free-text path when no jobPostingId is given. */
+  positionAppliedFor?: string;
   districtId?: string;
   sectorId?: string;
   cell?: string;
@@ -132,6 +137,14 @@ export const jobsApi = {
 
   cancel: async (id: string): Promise<JobApplication> => {
     const { data } = await apiClient.post(`/job-applications/${id}/cancel`);
+    return data.data ?? data;
+  },
+
+  respondMoreInfo: async (
+    id: string,
+    payload: { message: string; documents?: JobDocument[] },
+  ): Promise<JobApplication> => {
+    const { data } = await apiClient.post(`/job-applications/${id}/respond`, payload);
     return data.data ?? data;
   },
 };

@@ -77,7 +77,12 @@ export class CreateJobApplicationDto {
   @Matches(/^\+250[0-9]{9}$/, { message: 'Phone must be in Rwanda format: +250XXXXXXXXX' })
   phone!: string;
 
-  @ApiProperty() @IsString() @IsNotEmpty() @Length(2, 150) positionAppliedFor!: string;
+  // The admin-posted vacancy being applied to. When provided, the server sets
+  // positionAppliedFor from the posting title. positionAppliedFor is only
+  // required when no jobPostingId is given (legacy/free-text path).
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsUUID() jobPostingId?: string;
+
+  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsString() @Length(2, 150) positionAppliedFor?: string;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsUUID() districtId?: string;
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsUUID() sectorId?: string;

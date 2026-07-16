@@ -7,6 +7,7 @@ import {
   Briefcase, ArrowLeft, ArrowRight, FileText, Search,
   Users, GraduationCap, UserCheck, Building2, CheckCircle2, Phone,
 } from 'lucide-react';
+import { OpenPositions } from '@/components/services/jobs/OpenPositions';
 
 // Copy for every card/step/faq lives in translations — these just drive the loops.
 const whoIcons = { seekers: Briefcase, graduates: GraduationCap, professionals: UserCheck, community: Users } as const;
@@ -96,6 +97,9 @@ export default async function JobsServicePage({
             </Link>
           </div>
         </section>
+
+        {/* ── Current openings (admin-posted vacancies) ── */}
+        <OpenPositions />
 
         {/* ── Who it's for ── */}
         <section className="py-10 px-4 sm:px-6 lg:px-8 bg-transparent">

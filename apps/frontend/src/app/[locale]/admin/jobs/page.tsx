@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Search, Briefcase, ChevronRight, RefreshCw, Inbox } from 'lucide-react';
+import { Search, Briefcase, ChevronRight, RefreshCw, Inbox, Trash2, X, AlertTriangle } from 'lucide-react';
 import { type JobApplication, JOB_STATUS_COLORS, type JobApplicationStatus } from '@/lib/jobsApi';
 import { jobsAdminApi } from '@/lib/jobsAdminApi';
 import { cn } from '@/lib/utils';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -44,6 +46,8 @@ function StatusBadge({ status }: { status: string }) {
 
 function AdminJobsContent() {
   const { locale } = useParams<{ locale: string }>();
+  const { hasPermission } = useAuth();
+  const canManage = hasPermission(Permission.JOB_APPLICATIONS_MANAGE);
   const [items, setItems] = useState<JobApplication[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -51,6 +55,9 @@ function AdminJobsContent() {
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<JobApplication | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -72,6 +79,36 @@ function AdminJobsContent() {
   }, [status, search, page]);
 
   useEffect(() => { fetchList(); }, [fetchList]);
+
+  // Refetch when the admin returns to this tab/window so the list is never stale
+  // after reviewing an application in another tab.
+  useEffect(() => {
+    const onFocus = () => { if (document.visibilityState === 'visible') fetchList(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [fetchList]);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await jobsAdminApi.remove(deleteTarget.id);
+      setDeleteTarget(null);
+      fetchList();
+    } catch (err: unknown) {
+      setDeleteError(
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        ?? 'Failed to delete the application.',
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -150,12 +187,24 @@ function AdminJobsContent() {
                       {new Date(app.createdAt).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })}
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <Link
-                        href={`/${locale}/admin/jobs/${app.id}`}
-                        className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-sm font-medium"
-                      >
-                        Review <ChevronRight className="w-4 h-4" />
-                      </Link>
+                      <div className="inline-flex items-center gap-2 justify-end">
+                        <Link
+                          href={`/${locale}/admin/jobs/${app.id}`}
+                          className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+                        >
+                          Review <ChevronRight className="w-4 h-4" />
+                        </Link>
+                        {canManage && (
+                          <button
+                            onClick={() => { setDeleteTarget(app); setDeleteError(null); }}
+                            title="Delete application"
+                            aria-label={`Delete ${app.fullNames}'s application`}
+                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-600 hover:border-red-300 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -186,6 +235,45 @@ function AdminJobsContent() {
             </button>
           </div>
         </div>
+      )}
+
+      {deleteTarget && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !deleting && setDeleteTarget(null)}
+          className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        >
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </span>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900">Delete application?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  This permanently deletes <strong>{deleteTarget.fullNames}</strong>&apos;s application
+                  {' '}(<span className="font-mono text-xs">{deleteTarget.trackingNumber}</span>) and its history.
+                  This can&apos;t be undone.
+                </p>
+              </div>
+              <button onClick={() => !deleting && setDeleteTarget(null)} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {deleteError && <p className="text-xs text-red-600 mb-3">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={confirmDelete} disabled={deleting} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
+                {deleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

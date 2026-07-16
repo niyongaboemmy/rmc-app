@@ -37,6 +37,8 @@ export interface JobApplicationDocuments {
   /** …or an uploaded good-conduct certificate file. */
   goodConductCertificate?: JobDocument;
   employerRecommendation?: JobDocument;
+  /** Extra documents the applicant uploads when responding to a more-info request. */
+  additionalDocuments?: JobDocument[];
 }
 
 @Entity('job_applications')
@@ -50,6 +52,11 @@ export class JobApplication {
   @Index('IDX_job_applications_applicant')
   @Column({ name: 'applicant_id', type: 'uuid' })
   applicantId: string;
+
+  // The admin-posted vacancy this application targets (null for legacy/free-text).
+  @Index('IDX_job_applications_posting')
+  @Column({ name: 'job_posting_id', type: 'uuid', nullable: true })
+  jobPostingId: string | null;
 
   // Applicant
   @Column({ name: 'full_names', type: 'varchar', length: 150 })

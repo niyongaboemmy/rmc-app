@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Body, Query, ParseUUIDPipe } from '@nestj
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JobApplicationsService } from './job-applications.service';
 import { CreateJobApplicationDto } from './dto/create-job-application.dto';
+import { RespondMoreInfoDto } from './dto/respond-more-info.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { User } from '../users/entities/user.entity';
@@ -41,5 +42,15 @@ export class JobApplicationsController {
   @ApiOperation({ summary: 'Cancel a submitted or under-review application' })
   cancel(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.cancel(id, user.id);
+  }
+
+  @Post(':id/respond')
+  @ApiOperation({ summary: 'Reply to a reviewer\'s request for more information' })
+  respond(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RespondMoreInfoDto,
+  ) {
+    return this.service.respondToMoreInfo(id, user.id, dto);
   }
 }
