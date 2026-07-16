@@ -59,6 +59,11 @@ export enum Permission {
   GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
   GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
 
+  TENDER_VIEW = 'tender:view',
+  TENDER_MANAGE = 'tender:manage',
+  TENDER_EVALUATE = 'tender:evaluate',
+  TENDER_REPORTS = 'tender:reports',
+
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',
 

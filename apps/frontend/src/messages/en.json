@@ -805,7 +805,201 @@
     },
     "tender": {
       "title": "Tenders",
-      "desc": "Business opportunities published by RMC for qualified organizations and contractors."
+      "desc": "Business opportunities published by RMC for qualified organizations and contractors.",
+      "landing": {
+        "backToServices": "Back to Services",
+        "applyTitle": "Apply for a tender",
+        "applyText": "Submit a bid for an open tender. You will need your company details and three documents.",
+        "applyCta": "Start an application",
+        "statusTitle": "Check your status",
+        "statusText": "Track a bid you have already submitted, update it, or withdraw it.",
+        "statusCta": "Check status",
+        "stepsTitle": "How to apply",
+        "stepsSubtitle": "Four steps from opportunity to submitted bid.",
+        "steps": {
+          "browse": {
+            "title": "Browse open tenders",
+            "text": "Find an opportunity on the tenders board and read its terms and deadline."
+          },
+          "form": {
+            "title": "Complete the form",
+            "text": "Give your company details, contact person, address and bid amount."
+          },
+          "documents": {
+            "title": "Upload your documents",
+            "text": "Attach the three required documents. PDF, JPG or PNG, up to 10 MB each."
+          },
+          "track": {
+            "title": "Track your bid",
+            "text": "Get a reference number, then follow your bid from evaluation to award."
+          }
+        },
+        "requirementsTitle": "What you need before you start",
+        "requirementsSubtitle": "Have these ready — you cannot submit a bid without them.",
+        "requirements": {
+          "rdb": {
+            "title": "Company Registration (RDB) certificate",
+            "text": "Your certificate of incorporation from the Rwanda Development Board."
+          },
+          "tax": {
+            "title": "RRA Tax Clearance certificate",
+            "text": "A valid tax clearance certificate from the Rwanda Revenue Authority."
+          },
+          "proposal": {
+            "title": "Technical & Financial Proposal",
+            "text": "Your full proposal for the tender, including your pricing."
+          },
+          "company": {
+            "title": "Company details",
+            "text": "Your registered company name, 9-digit TIN, and a contact person we can reach."
+          },
+          "deadline": {
+            "title": "Time before the deadline",
+            "text": "Bids cannot be submitted or edited once a tender's deadline has passed."
+          }
+        },
+        "boardTitle": "See what's open right now",
+        "boardText": "Browse every tender RMC has published, with deadlines and attached documents.",
+        "boardCta": "View all tenders"
+      },
+      "apply": {
+        "heroTitle": "Apply for a Tender",
+        "signInHeroTitle": "Sign in to apply",
+        "signInHeroSubtitle": "You need an RMC account to submit a bid, so you can track it afterwards.",
+        "signInPrompt": "Sign in to your RMC account to submit a bid.",
+        "signInToApply": "Sign in to apply",
+        "noAccount": "Don't have an account?",
+        "requestAccess": "Create one",
+        "backToService": "Back to Tenders service",
+        "moreInfoNoteLabel": "The evaluator asked for",
+        "progressLabel": "Application progress",
+        "step1Title": "Company",
+        "step1Subtitle": "Which tender you're bidding on, and who is bidding.",
+        "step2Title": "Contact & bid",
+        "step2Subtitle": "How we reach you, where you're based, and what you're bidding.",
+        "step3Title": "Documents",
+        "step3Subtitle": "All three documents are required. PDF, JPG or PNG, up to 10 MB each.",
+        "tenderLabel": "Tender",
+        "tenderPlaceholder": "Select the tender you're bidding on",
+        "tenderLoading": "Loading tender…",
+        "tenderRequiredError": "Choose the tender you're bidding on",
+        "companyName": "Company name",
+        "companyNameError": "Enter your registered company name",
+        "companyTin": "Company TIN",
+        "tinHint": "Your 9-digit RRA taxpayer identification number",
+        "tinFormatError": "TIN must be exactly 9 digits",
+        "contactName": "Contact person",
+        "contactNameError": "Enter the full name of your contact person",
+        "phone": "Phone",
+        "phoneHint": "Format: 0781234567",
+        "phoneFormatError": "Enter a valid Rwandan mobile number, e.g. 0781234567",
+        "email": "Email",
+        "emailError": "Enter a valid email address",
+        "district": "District",
+        "districtPlaceholder": "Select a district",
+        "sector": "Sector",
+        "sectorPlaceholder": "Select a sector",
+        "selectDistrictFirst": "Select a district first",
+        "cell": "Cell",
+        "village": "Village",
+        "bidAmount": "Bid amount",
+        "bidAmountHint": "Your total bid in RWF. You can leave this out and state it in your proposal instead.",
+        "coverNote": "Cover note",
+        "optional": "optional",
+        "docs": {
+          "upload": "Upload",
+          "orDrop": "or drop a file",
+          "hint": "PDF, JPG or PNG · up to {max} MB",
+          "remove": "Remove document",
+          "errorType": "Only PDF, JPG or PNG files are accepted",
+          "errorSize": "File is too large (maximum {max} MB)",
+          "errorUpload": "Upload failed. Check your connection and try again.",
+          "errorMissing": "All three documents are required before you can submit.",
+          "rdb_certificate": {
+            "label": "Company Registration (RDB) certificate",
+            "hint": "Your certificate of incorporation from the Rwanda Development Board"
+          },
+          "tax_clearance": {
+            "label": "RRA Tax Clearance certificate",
+            "hint": "A currently valid tax clearance certificate"
+          },
+          "proposal": {
+            "label": "Technical & Financial Proposal",
+            "hint": "Your full proposal for this tender, including pricing"
+          }
+        },
+        "next": "Next",
+        "back": "Back",
+        "submit": "Submit bid",
+        "genericError": "Something went wrong. Please try again.",
+        "successTitle": "Bid submitted",
+        "successText": "Your bid has been received. We'll evaluate it after the deadline closes and notify you of the outcome.",
+        "successEditTitle": "Bid updated",
+        "successEditText": "Your changes have been saved and your bid is back with the evaluation committee.",
+        "yourReference": "Your reference number",
+        "copyReference": "Copy reference number",
+        "checkStatusBtn": "Track this bid",
+        "browseMoreBtn": "Browse more tenders"
+      },
+      "status": {
+        "heroTitle": "Your Tender Bids",
+        "heroSubtitle": "Track every bid you've submitted to RMC.",
+        "backToService": "Back to Tenders service",
+        "signInPrompt": "Sign in to see the bids you've submitted.",
+        "signIn": "Sign in",
+        "noApplications": "You haven't submitted any bids yet.",
+        "applyNow": "Apply for a tender",
+        "unknownTender": "Tender no longer available",
+        "checkAnother": "Back to all bids",
+        "detailsTitle": "Bid for",
+        "reference": "Reference",
+        "company": "Company",
+        "submittedOn": "Submitted on",
+        "bidAmount": "Bid amount",
+        "currentStatus": "Progress",
+        "documentsTitle": "Your documents",
+        "viewDocument": "View",
+        "verified": "Verified",
+        "editBid": "Edit bid",
+        "withdrawBid": "Withdraw bid",
+        "editAndResubmit": "Edit and resubmit",
+        "awardedTitle": "You won this tender",
+        "awardedText": "Congratulations. RMC will contact you shortly about the contract.",
+        "statusLabel": {
+          "submitted": "Submitted",
+          "under_review": "Under review",
+          "more_info_requested": "More info needed",
+          "shortlisted": "Shortlisted",
+          "awarded": "Awarded",
+          "rejected": "Not successful",
+          "withdrawn": "Withdrawn"
+        },
+        "stages": {
+          "submitted": "Bid submitted",
+          "review": "Under evaluation",
+          "shortlisted": "Shortlisted",
+          "awarded": "Awarded"
+        },
+        "stageDesc": {
+          "submitted": "We've received your bid and its documents.",
+          "review": "The committee is evaluating your bid against the tender's terms.",
+          "shortlisted": "Your bid passed evaluation and is in contention.",
+          "awarded": "The tender has been awarded to you."
+        },
+        "docType": {
+          "rdb_certificate": "Company Registration (RDB) certificate",
+          "tax_clearance": "RRA Tax Clearance certificate",
+          "proposal": "Technical & Financial Proposal"
+        },
+        "banner": {
+          "moreInfoTitle": "More information needed",
+          "moreInfoText": "The evaluation committee needs more from you before it can continue. Update your bid to resubmit it.",
+          "rejectedTitle": "Bid not successful",
+          "rejectedText": "This bid was not successful. We encourage you to apply for future tenders.",
+          "withdrawnTitle": "Bid withdrawn",
+          "withdrawnText": "You withdrew this bid. You can submit a new one while the tender is still open."
+        }
+      }
     },
     "jobs": {
       "title": "Job Opportunities",
@@ -933,7 +1127,8 @@
       },
       "marriage": "Marriage",
       "drive": "Drive",
-      "goodConduct": "Good Conduct"
+      "goodConduct": "Good Conduct",
+      "tenders": "Tenders"
     },
     "topbar": {
       "viewSite": "View site",
