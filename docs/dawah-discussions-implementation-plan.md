@@ -270,6 +270,16 @@ business in the members table.
 | **Moderator** (new) | ✓ | ✗ |
 | Member | ✗ | ✗ |
 
+> ⚠ **FINDING (17 July, during BE build) — the withholding does not actually hold.**
+> `AuthService.loadUserPermissions` returns `['*']` for any user whose legacy `role`
+> column is `'superadmin'`, and the PermissionsGuard treats `'*'` as "has every
+> permission". So a superadmin USER passes `@Permissions(DISCUSSIONS_VERIFY)` regardless
+> of the fact that the superadmin ROLE was never granted it. The intent of §3.2 is
+> defeated by the wildcard. This does not affect Phase A/B (neither uses verify), but
+> **BE-4 must not rely on the permission alone** to keep superadmins out of verification —
+> the verify path needs an explicit `role.slug === 'scholar'` check, or `loadUserPermissions`
+> needs to stop short-circuiting to `'*'`. Raised for RMC + the auth owner.
+
 **Super Admin deliberately does not get `discussions:verify`.** Being able to run the
 platform is not the same as being qualified to rule on religious practice. If RMC
 disagrees this is a one-line migration — but it should be a conscious decision, not an
