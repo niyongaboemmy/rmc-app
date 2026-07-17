@@ -284,6 +284,33 @@ dawah.courses.related,Public — Dawah,Related courses,,
 dawah.courses.resultCount,Public — Dawah,"{count, plural, =0 {No courses} one {# course} other {# courses}}",,KEEP the placeholder(s) exactly: {count}
 dawah.courses.searchPlaceholder,Public — Dawah,Search courses…,,
 dawah.courses.view,Public — Dawah,View course,,
+dawah.discussions.allCategories,Public — Discussions,All categories,,
+dawah.discussions.allLanguages,Public — Discussions,All languages,,
+dawah.discussions.anonymous,Public — Discussions,Asked anonymously,,
+dawah.discussions.anonymousAnswer,Public — Discussions,Answered anonymously,,
+dawah.discussions.answers,Public — Discussions,"{count, plural, =0 {No answers yet} =1 {1 answer} other {# answers}}",,"KEEP the placeholder(s) exactly: {1, count}"
+dawah.discussions.askCta,Public — Discussions,Ask a question,,
+dawah.discussions.backToDiscussions,Public — Discussions,Discussions,,
+dawah.discussions.clearFilters,Public — Discussions,Clear filters,,
+dawah.discussions.communityAnswers,Public — Discussions,Community answers,,
+dawah.discussions.count,Public — Discussions,"{count, plural, =1 {1 question} other {# questions}}",,KEEP the placeholder(s) exactly: {count}
+dawah.discussions.empty,Public — Discussions,No questions here yet.,,
+dawah.discussions.emptyFiltered,Public — Discussions,No questions match these filters.,,
+dawah.discussions.loadError,Public — Discussions,We couldn't load the discussions. Please try again.,,
+dawah.discussions.nav,Public — Discussions,Discussions,,
+dawah.discussions.navDesc,Public — Discussions,Questions answered by the community and verified by RMC.,,
+dawah.discussions.noAnswersYet,Public — Discussions,No one has answered this yet.,,
+dawah.discussions.otherLanguages,Public — Discussions,Also showing questions in other languages,,
+dawah.discussions.scholar,Public — Discussions,Scholar,,
+dawah.discussions.sort.active,Public — Discussions,Active,,
+dawah.discussions.sort.new,Public — Discussions,Newest,,
+dawah.discussions.sort.unanswered,Public — Discussions,Unanswered,,
+dawah.discussions.subtitle,Public — Discussions,"Ask the community, and read what RMC scholars have answered.",,
+dawah.discussions.title,Public — Discussions,Discussions,,
+dawah.discussions.verifiedBadge,Public — Discussions,Verified by RMC,,
+dawah.discussions.verifiedBy,Public — Discussions,Verified by {name},,KEEP the placeholder(s) exactly: {name}
+dawah.discussions.views,Public — Discussions,"{count, plural, =1 {1 view} other {# views}}",,KEEP the placeholder(s) exactly: {count}
+dawah.discussions.writtenIn,Public — Discussions,Written in {language},,KEEP the placeholder(s) exactly: {language}
 dawah.library.aboutBook,Public — Dawah,About this book,,
 dawah.library.allCategories,Public — Dawah,All categories,,
 dawah.library.allLanguages,Public — Dawah,All languages,,

@@ -3,9 +3,10 @@
 Audited 16 July 2026 against the running app.
 
 The Dawah feature is the **only** part of the platform substantially missing
-Kinyarwanda. Every other namespace sits between 83% and 100%; `dawah` was at 0% and is
-now at 4% — the 6 navbar-menu strings were translated on 16 July, the other 325 are
-untouched. Inside admin the contrast is sharper still — `admin.dawah.*` is 239/239
+Kinyarwanda. Every other namespace sits between 83% and 100%; `dawah` sits at **3%** —
+6 menu strings were translated on 16 July, and the Discussions feature (17 July) added
+27 more English placeholders, so the debt grew before it shrank. 352 strings are queued
+in `dawah-rw.csv`. Inside admin the contrast is sharper still — `admin.dawah.*` is 239/239
 untranslated while the rest of admin is 6/387, so **Dawah is 97% of all untranslated
 admin strings**. A Kinyarwanda speaker gets a Kinyarwanda site right up until they open
 Dawah, and then everything turns to English.
@@ -44,7 +45,7 @@ There are two separate gaps, and they are fixed in two different places.
 
 ## 1. UI strings → `dawah-rw.csv`
 
-325 interface strings (buttons, labels, headings, empty states). These live in the
+352 interface strings (buttons, labels, headings, empty states). These live in the
 message catalogues and need a translator.
 
 **For the translator**
@@ -55,14 +56,16 @@ so Excel opens it correctly with no import dance.
 | column | what to do |
 |---|---|
 | `key` | **Do not touch.** It is how the text is wired to the app. |
-| `area` | Where it appears — `Public — Dawah`, `Admin — Dawah`, or `Navbar`. |
+| `area` | Where it appears — `Public — Dawah`, `Public — Discussions`, `Admin — Dawah`, or `Navbar`. |
 | `english` | **Do not touch.** The source text. |
 | `kinyarwanda` | **Type the translation here.** Leave blank if unsure — blanks are skipped safely. |
 | `notes` | Warnings. Read them. |
 
 Two rules that matter more than they look:
 
-1. **Keep `{placeholders}` exactly as written** — 10 rows have them. `Uploading… {pct}%`
+1. **Keep `{placeholders}` exactly as written** — 15 rows have them, including ICU
+   plurals like `{count, plural, ...}` in Discussions, where the *structure* matters as
+   much as the token. `Uploading… {pct}%`
    must keep `{pct}` spelled that way. Translate the words around it, never the token
    inside the braces. A renamed placeholder throws an error in the reader's face at
    runtime, not at build time.
