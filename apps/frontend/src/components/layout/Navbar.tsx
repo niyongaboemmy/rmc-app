@@ -14,7 +14,7 @@ import { useScrollProgress } from '@/hooks/useScrollProgress';
 import {
   Menu, X, ChevronDown, User, LayoutDashboard,
   Lock, Users, Shield, LogOut, Heart,
-  Compass, GraduationCap, Library,
+  Compass, GraduationCap, Library, MessagesSquare,
   LayoutGrid, Moon, FileText, Briefcase,
   type LucideIcon,
 } from 'lucide-react';
@@ -173,6 +173,9 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
         { href: `/${locale}/dawah`, Icon: Compass, label: t('dawahMenu.overview'), desc: t('dawahMenu.overviewDesc') },
         { href: `/${locale}/dawah/courses`, Icon: GraduationCap, label: td('courses.title'), desc: td('courses.subtitle') },
         { href: `/${locale}/dawah/library`, Icon: Library, label: td('library.title'), desc: td('library.subtitle') },
+        // Fourth item. Stays ONE column — `columns: 2` kicks in at 8 (Services), where a
+        // single column would run off a short laptop screen. Four does not.
+        { href: `/${locale}/dawah/discussions`, Icon: MessagesSquare, label: td('discussions.nav'), desc: td('discussions.navDesc') },
       ],
     },
     { href: `/${locale}/projects`, label: t('projects') },

@@ -381,10 +381,100 @@ export function uploadLessonMedia(
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
+// ── Community Discussions ─────────────────────────────────────────────────
+// Shapes frozen in docs/dawah-discussions-contract.md. They mirror the backend's
+// toPublic() EXACTLY. Do not add a field here "for later": a type that promises
+// something the API does not send is worse than a missing one, because the bug
+// surfaces as `undefined` in a component instead of a compile error.
+
+/** `en` | `rw` | `ar` — the language a member WROTE in, not a translation axis. */
+export type PostLanguage = 'en' | 'rw' | 'ar';
+export type QuestionStatus = 'published' | 'auto_hidden' | 'hidden' | 'locked' | 'deleted';
+export type AnswerStatus = 'pending_review' | 'published' | 'auto_hidden' | 'hidden' | 'deleted';
+export type DiscussionSort = 'active' | 'new' | 'unanswered';
+
+/**
+ * A post's author as the public sees them.
+ *
+ * `null` — not a flag — is how anonymity reaches the client. There is deliberately no
+ * `authorId` and no `isAnonymous`: the id never crosses the wire, so no component can
+ * leak it by accident, and `author === null` is the single source of truth.
+ */
+export interface PublicAuthor {
+  name: string;
+  /** Renders the scholar badge. Resolved from the live role, so it disappears on removal. */
+  isScholar: boolean;
+}
+
+export interface DiscussionQuestion {
+  id: string;
+  slug: string;
+  title: string;
+  /** Rendered + sanitised SERVER-SIDE. The client renders no markdown, ever. */
+  bodyHtml: string;
+  /** Drives `dir` on THIS post — never the page locale. An Arabic question on the
+   *  English page is still RTL. */
+  language: PostLanguage;
+  category: DawahCategory | null;
+  author: PublicAuthor | null;
+  status: QuestionStatus;
+  /** Excludes answers still in review — "3 answers" with none visible is a bug. */
+  answerCount: number;
+  viewCount: number;
+  verifiedAnswerId: string | null;
+  lastActivityAt: string;
+  createdAt: string;
+}
+
+export interface DiscussionAnswer {
+  id: string;
+  questionId: string;
+  bodyHtml: string;
+  language: PostLanguage;
+  author: PublicAuthor | null;
+  status: AnswerStatus;
+  isVerified: boolean;
+  /** WHO verified — a person, not a boolean. "Verified by RMC" with nobody behind it
+   *  is an institution hiding behind itself. */
+  verifiedBy: PublicAuthor | null;
+  verifiedAt: string | null;
+  voteScore: number;
+  createdAt: string;
+}
+
+export interface DiscussionThread {
+  question: DiscussionQuestion;
+  answers: DiscussionAnswer[];
+}
+
+export interface DiscussionsQuery {
+  category?: string;
+  language?: PostLanguage;
+  sort?: DiscussionSort;
+  page?: number;
+  limit?: number;
+}
+
 export const dawahApi = {
   /** Active categories, in display order. Shared by courses and the library. */
   categories: (): Promise<DawahCategory[]> =>
     unwrap(publicHttp.get('/dawah/categories')),
+
+  /**
+   * Community Discussions — read-only (Phase A).
+   *
+   * Posting arrives in Phase B together with its report queue; there is deliberately no
+   * `create` here yet, so no component can be written against an endpoint that cannot
+   * yet be moderated.
+   */
+  discussions: {
+    list: (query: DiscussionsQuery = {}): Promise<Paginated<DiscussionQuestion>> =>
+      unwrap(publicHttp.get('/dawah/discussions', { params: query })),
+
+    /** One thread; answers arrive verified-first from the API. 404s anything not published. */
+    bySlug: (slug: string): Promise<DiscussionThread> =>
+      unwrap(publicHttp.get(`/dawah/discussions/${slug}`)),
+  },
 
   courses: {
     list: (query: CoursesQuery = {}): Promise<Paginated<DawahCourse>> =>
