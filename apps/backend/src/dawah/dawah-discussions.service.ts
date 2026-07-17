@@ -8,6 +8,7 @@ import { DawahQuestion } from './entities/dawah-question.entity';
 import { DawahAnswer } from './entities/dawah-answer.entity';
 import { DawahReport, type ReportTargetType } from './entities/dawah-report.entity';
 import { DawahModerationLog, type ModerationAction } from './entities/dawah-moderation-log.entity';
+import { DawahVote } from './entities/dawah-vote.entity';
 import { DawahCategory } from './entities/dawah-category.entity';
 import { User } from '../users/entities/user.entity';
 import { randomBytes } from 'node:crypto';
@@ -17,6 +18,7 @@ import { DISCUSSION_LIMITS } from './discussions.constants';
 import type { QueryDiscussionsDto } from './dto/query-discussions.dto';
 import type { CreateQuestionDto } from './dto/create-question.dto';
 import type { CreateReportDto } from './dto/create-report.dto';
+import type { CreateAnswerDto } from './dto/create-answer.dto';
 
 /** The public shape of a post's author. `null` on the wire means anonymous. */
 export interface PublicAuthor {
@@ -52,6 +54,7 @@ export class DawahDiscussionsService {
     @InjectRepository(DawahQuestion) private readonly questions: Repository<DawahQuestion>,
     @InjectRepository(DawahAnswer) private readonly answers: Repository<DawahAnswer>,
     @InjectRepository(DawahReport) private readonly reports: Repository<DawahReport>,
+    @InjectRepository(DawahVote) private readonly votes: Repository<DawahVote>,
     @InjectRepository(DawahCategory) private readonly categories: Repository<DawahCategory>,
     private readonly dataSource: DataSource,
   ) {}
@@ -182,17 +185,27 @@ export class DawahDiscussionsService {
    * notice: "your question was removed" is a message RMC should choose to send, not one
    * the HTTP layer leaks.
    */
-  async bySlug(slug: string) {
+  async bySlug(slug: string, viewerId?: string) {
     const question = await this.questions.findOne({
       where: { slug, status: 'published' },
       relations: { category: true, author: { roleEntity: true } },
     });
     if (!question) throw new NotFoundException('Question not found');
 
-    const answers = await this.answers.find({
+    // Published answers for everyone; PLUS the viewer's own pending answer, so an author
+    // whose answer is awaiting scholar review sees it (marked pending) rather than
+    // watching it vanish with no explanation. Nobody else sees a pending answer.
+    const published = await this.answers.find({
       where: { questionId: question.id, status: 'published' },
       relations: { author: { roleEntity: true }, verifiedBy: { roleEntity: true } },
     });
+    const ownPending = viewerId
+      ? await this.answers.find({
+          where: { questionId: question.id, status: 'pending_review', authorId: viewerId },
+          relations: { author: { roleEntity: true } },
+        })
+      : [];
+    const answers = [...published, ...ownPending];
 
     // Verified first, then by score, then oldest — the verified answer is the point of
     // the page and must never be below a popular wrong one.
@@ -488,5 +501,235 @@ export class DawahDiscussionsService {
     });
 
     return { id, status: nextStatus[action] };
+  }
+
+  // ══ ANSWERING + THE SCHOLAR GATE (Phase C) ═════════════════════════════════
+
+  /**
+   * THE scholar gate, and the fix for the wildcard finding (plan §3.2).
+   *
+   * `@Permissions(DISCUSSIONS_VERIFY)` on the route is NOT enough: a superadmin resolves to
+   * `['*']`, which the guard treats as holding every permission — so it would wave a
+   * superadmin through despite the Scholar role being the only one granted verify. Being
+   * able to run the platform is not being qualified to rule on religious practice.
+   *
+   * So verification checks the acting user's ACTUAL role, loaded fresh, and demands it be
+   * `scholar`. A superadmin who is not a scholar is refused here even though the decorator
+   * passed them. If RMC wants someone to verify, they assign the Scholar role — the one
+   * place that authority is meant to live.
+   */
+  private async assertScholar(userId: string): Promise<void> {
+    const rows = await this.dataSource.query(
+      `SELECT r.slug FROM users u LEFT JOIN roles r ON r.id = u.role_id WHERE u.id = $1`,
+      [userId],
+    );
+    if (rows[0]?.slug !== 'scholar') {
+      throw new ForbiddenException(
+        'Only an RMC scholar may verify or release an answer. Running the platform is not the same authority.',
+      );
+    }
+  }
+
+  /**
+   * Answer a question. Status is COMPUTED from the category's answer_policy — never from
+   * the client. A ruling-carrying category (`scholar_review`, and the cautious default for
+   * an uncategorised question) holds the answer at `pending_review`; an open category
+   * publishes it.
+   */
+  async createAnswer(user: User, slug: string, dto: CreateAnswerDto) {
+    const question = await this.questions.findOne({
+      where: { slug, status: 'published' },
+      relations: { category: true },
+    });
+    if (!question) throw new NotFoundException('Question not found');
+    if (question.status === 'locked') throw new ForbiddenException('This question is locked.');
+
+    await this.assertMayAnswer(user);
+
+    // No category ⇒ treat as scholar_review. The safe default must be the lazy one.
+    const policy = question.category?.answerPolicy ?? 'scholar_review';
+    const status: 'pending_review' | 'published' = policy === 'open' ? 'published' : 'pending_review';
+
+    const answer = await this.answers.save(
+      this.answers.create({
+        questionId: question.id,
+        body: dto.body,
+        authorId: user.id,
+        isAnonymous: dto.isAnonymous ?? false,
+        status,
+      }),
+    );
+
+    // A pending answer is invisible, so it must NOT bump answer_count or last_activity —
+    // "3 answers" with none showing is a bug, and a pending answer floating a question to
+    // the top of "active" would leak its existence.
+    if (status === 'published') {
+      await this.recountAndTouch(question.id);
+    }
+
+    const full = await this.answers.findOne({
+      where: { id: answer.id },
+      relations: { author: { roleEntity: true }, question: true },
+    });
+    return this.toPublicAnswer(full!);
+  }
+
+  private async assertMayAnswer(user: User): Promise<void> {
+    const ageHours = (Date.now() - new Date(user.createdAt).getTime()) / 3_600_000;
+    if (ageHours < DISCUSSION_LIMITS.NEW_ACCOUNT_POST_DELAY_HOURS) {
+      throw new ForbiddenException('New accounts can post after 24 hours.');
+    }
+    const anHourAgo = new Date(Date.now() - 3_600_000);
+    const recent = await this.answers.count({
+      where: { authorId: user.id, createdAt: MoreThan(anHourAgo) },
+      withDeleted: true,
+    });
+    if (recent >= DISCUSSION_LIMITS.MAX_ANSWERS_PER_HOUR) {
+      throw new HttpException("You're answering too quickly — slow down.", HttpStatus.TOO_MANY_REQUESTS);
+    }
+  }
+
+  /** Recompute answer_count from PUBLISHED answers and move last_activity_at to now. One
+   *  query, always correct — a maintained delta drifts, and a drifting count is a bug
+   *  report every time. */
+  private async recountAndTouch(questionId: string, manager = this.dataSource.manager): Promise<void> {
+    await manager.query(
+      `UPDATE dawah_questions
+          SET answer_count = (SELECT count(*) FROM dawah_answers
+                               WHERE question_id = $1 AND status = 'published' AND deleted_at IS NULL),
+              last_activity_at = now()
+        WHERE id = $1`,
+      [questionId],
+    );
+  }
+
+  /** Edit your own answer, within the edit window. After that it is frozen — a published
+   *  answer others may have acted on must not shift under them. */
+  async editAnswer(user: User, id: string, body: string) {
+    const answer = await this.answers.findOne({ where: { id } });
+    if (!answer) throw new NotFoundException('Answer not found');
+    if (answer.authorId !== user.id) throw new ForbiddenException('Not your answer.');
+    const ageMin = (Date.now() - new Date(answer.createdAt).getTime()) / 60_000;
+    if (ageMin > DISCUSSION_LIMITS.ANSWER_EDIT_WINDOW_MIN) {
+      throw new ForbiddenException('The edit window has closed.');
+    }
+    await this.answers.update(id, { body });
+    const full = await this.answers.findOne({ where: { id }, relations: { author: { roleEntity: true }, question: true } });
+    return this.toPublicAnswer(full!);
+  }
+
+  /**
+   * RELEASE an answer from review — "not harmful", publish it, NO badge. Distinct from
+   * verify on purpose (§2.2): a scholar clearing a queue is saying "this may be seen", not
+   * "RMC endorses this". One button for both would attach RMC's endorsement to every
+   * answer a scholar merely triaged.
+   */
+  async releaseAnswer(scholar: User, id: string) {
+    await this.assertScholar(scholar.id);
+    const answer = await this.answers.findOne({ where: { id } });
+    if (!answer) throw new NotFoundException('Answer not found');
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(DawahAnswer, id, { status: 'published', releasedById: scholar.id });
+      await this.recountAndTouch(answer.questionId, manager);
+    });
+    return { id, status: 'published', verified: false };
+  }
+
+  /**
+   * VERIFY an answer — "RMC says this is correct." Publishes it, pins it, badges it, names
+   * the scholar. At most one per question (UQ_dawah_answers_one_verified); a concurrent
+   * second verify hits the index and becomes a clean 409, not a 500.
+   */
+  async verifyAnswer(scholar: User, id: string) {
+    await this.assertScholar(scholar.id);
+    const answer = await this.answers.findOne({ where: { id } });
+    if (!answer) throw new NotFoundException('Answer not found');
+
+    try {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(DawahAnswer, id, {
+          status: 'published',
+          isVerified: true,
+          verifiedById: scholar.id,
+          verifiedAt: new Date(),
+        });
+        await manager.update(DawahQuestion, answer.questionId, { verifiedAnswerId: id });
+        await this.recountAndTouch(answer.questionId, manager);
+      });
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code === '23505') {
+        throw new HttpException('Another answer is already verified for this question.', HttpStatus.CONFLICT);
+      }
+      throw err;
+    }
+    return { id, status: 'published', verified: true };
+  }
+
+  /** Un-verify. Stays published (releasing the endorsement is not un-publishing). */
+  async unverifyAnswer(scholar: User, id: string) {
+    await this.assertScholar(scholar.id);
+    const answer = await this.answers.findOne({ where: { id } });
+    if (!answer) throw new NotFoundException('Answer not found');
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(DawahAnswer, id, { isVerified: false, verifiedById: null, verifiedAt: null });
+      await manager.update(DawahQuestion, answer.questionId, { verifiedAnswerId: null });
+    });
+    return { id, verified: false };
+  }
+
+  /** The scholar review queue — answers held pending, OLDEST first, with an age so the
+   *  dashboard alarm can flag a queue nobody is working. */
+  async pendingQueue() {
+    const rows = await this.answers.find({
+      where: { status: 'pending_review' },
+      relations: { author: true, question: true },
+      order: { createdAt: 'ASC' },
+      take: 100,
+    });
+    return rows.map((a) => ({
+      id: a.id,
+      bodyHtml: renderPostMarkdown(a.body),
+      author: a.isAnonymous ? null : (a.author ? `${a.author.firstName} ${a.author.lastName}`.trim() : null),
+      createdAt: a.createdAt,
+      ageHours: Math.floor((Date.now() - a.createdAt.getTime()) / 3_600_000),
+      question: a.question ? { slug: a.question.slug, title: a.question.title, language: a.question.language } : null,
+    }));
+  }
+
+  /** Vote on an answer. The unique constraint is the rule; a re-vote updates, value 0
+   *  clears. vote_score is recomputed from the rows, never a maintained delta. */
+  async vote(user: User, answerId: string, value: number) {
+    const answer = await this.answers.findOne({ where: { id: answerId, status: 'published' } });
+    if (!answer) throw new NotFoundException('Answer not found');
+
+    await this.assertVoteRate(user.id);
+
+    await this.dataSource.transaction(async (manager) => {
+      if (value === 0) {
+        await manager.delete(DawahVote, { answerId, userId: user.id });
+      } else {
+        await manager.query(
+          `INSERT INTO dawah_votes (answer_id, user_id, value) VALUES ($1, $2, $3)
+             ON CONFLICT (answer_id, user_id) DO UPDATE SET value = $3, updated_at = now()`,
+          [answerId, user.id, value],
+        );
+      }
+      await manager.query(
+        `UPDATE dawah_answers SET vote_score =
+           (SELECT COALESCE(SUM(value), 0) FROM dawah_votes WHERE answer_id = $1) WHERE id = $1`,
+        [answerId],
+      );
+    });
+    const fresh = await this.answers.findOne({ where: { id: answerId } });
+    return { id: answerId, voteScore: fresh!.voteScore };
+  }
+
+  private async assertVoteRate(userId: string): Promise<void> {
+    const anHourAgo = new Date(Date.now() - 3_600_000);
+    const recent = await this.votes.count({ where: { userId, updatedAt: MoreThan(anHourAgo) } });
+    if (recent >= DISCUSSION_LIMITS.MAX_VOTES_PER_HOUR) {
+      throw new HttpException('Too many votes — slow down.', HttpStatus.TOO_MANY_REQUESTS);
+    }
   }
 }

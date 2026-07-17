@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -12,6 +12,8 @@ import { QueryBooksDto } from './dto/query-books.dto';
 import { QueryDiscussionsDto } from './dto/query-discussions.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { CreateReportDto } from './dto/create-report.dto';
+import { CreateAnswerDto } from './dto/create-answer.dto';
+import { VoteDto } from './dto/vote.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { Public } from '../common/decorators/public.decorator';
@@ -54,8 +56,11 @@ export class DawahController {
   @Public()
   @Get('discussions/:slug')
   @ApiOperation({ summary: 'One question with its published answers, verified first.' })
-  discussionBySlug(@Param('slug') slug: string) {
-    return this.discussions.bySlug(slug);
+  discussionBySlug(@Param('slug') slug: string, @Req() req: Request) {
+    // Optional caller: a signed-in author sees their own pending answer; an anonymous
+    // reader sees only published. The token is read best-effort, never required.
+    const viewerId = this.caller.resolveUserId(req) ?? undefined;
+    return this.discussions.bySlug(slug, viewerId);
   }
 
   /**
@@ -80,6 +85,27 @@ export class DawahController {
   @ApiOperation({ summary: 'Report a question or answer (members only).' })
   report(@CurrentUser() user: User, @Body() dto: CreateReportDto) {
     return this.discussions.report(user, dto);
+  }
+
+  /** Answer a question. Status is computed from the category's answer_policy. */
+  @Post('discussions/:slug/answers')
+  @ApiOperation({ summary: 'Answer a question (members only).' })
+  answer(@CurrentUser() user: User, @Param('slug') slug: string, @Body() dto: CreateAnswerDto) {
+    return this.discussions.createAnswer(user, slug, dto);
+  }
+
+  /** Edit your own answer within the edit window. */
+  @Patch('discussions/answers/:id')
+  @ApiOperation({ summary: 'Edit your own answer (within the edit window).' })
+  editAnswer(@CurrentUser() user: User, @Param('id') id: string, @Body() dto: CreateAnswerDto) {
+    return this.discussions.editAnswer(user, id, dto.body);
+  }
+
+  /** Vote on an answer. value 1/-1, or 0 to clear. */
+  @Post('discussions/answers/:id/vote')
+  @ApiOperation({ summary: 'Vote on an answer (members only).' })
+  voteAnswer(@CurrentUser() user: User, @Param('id') id: string, @Body() dto: VoteDto) {
+    return this.discussions.vote(user, id, dto.value);
   }
 
   /**

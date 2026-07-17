@@ -1,7 +1,4 @@
-import {
-  Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query,
-  Res, UploadedFile, UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Res, UploadedFile, UseInterceptors,  } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -67,6 +64,38 @@ export class DawahAdminController {
     @Body() body: { reason?: string },
   ) {
     return this.discussions.moderateQuestion(user, id, action, body?.reason ?? '');
+  }
+
+  // ── Scholar actions (DISCUSSIONS_VERIFY at the decorator; the SERVICE additionally
+  //    demands role.slug === 'scholar', because a superadmin resolves to '*' and the
+  //    decorator alone would wave them through — the §3.2 wildcard fix). ──────────
+
+  @Get('discussions/pending')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'The scholar review queue — pending answers, oldest first.' })
+  pending() {
+    return this.discussions.pendingQueue();
+  }
+
+  @Post('discussions/answers/:id/release')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'Release an answer from review (publish, NO badge).' })
+  release(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.discussions.releaseAnswer(user, id);
+  }
+
+  @Post('discussions/answers/:id/verify')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'Verify an answer (publish + badge + pin). One per question.' })
+  verify(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.discussions.verifyAnswer(user, id);
+  }
+
+  @Delete('discussions/answers/:id/verify')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'Un-verify an answer (stays published).' })
+  unverify(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.discussions.unverifyAnswer(user, id);
   }
 
   // ── Categories ────────────────────────────────────────────────────────────

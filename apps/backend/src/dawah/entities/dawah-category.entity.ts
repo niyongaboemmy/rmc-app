@@ -48,6 +48,14 @@ export class DawahCategory {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  /**
+   * Discussions only: whether ANSWERS in this category are held for scholar review.
+   * 'scholar_review' (the default) holds them; 'open' publishes on submit. Courses and
+   * books never read this column. See plan §2.3.
+   */
+  @Column({ name: 'answer_policy', type: 'varchar', length: 20, default: 'scholar_review' })
+  answerPolicy: 'scholar_review' | 'open';
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

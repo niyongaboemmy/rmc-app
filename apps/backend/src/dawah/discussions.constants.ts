@@ -20,6 +20,16 @@ export const DISCUSSION_LIMITS = {
   /** Reporting is a weapon too. Per user. */
   MAX_REPORTS_PER_HOUR: 10,
 
+  /** Answering is legitimately faster than asking. Per user. */
+  MAX_ANSWERS_PER_HOUR: 20,
+
+  /** Voting is cheap; the cap is just an anti-script backstop. Per user. */
+  MAX_VOTES_PER_HOUR: 60,
+
+  /** After this an answer is frozen — a published answer others may have acted on must
+   *  not shift under them. */
+  ANSWER_EDIT_WINDOW_MIN: 15,
+
   /** New accounts cannot post — blunt, but effective against drive-by spam. */
   NEW_ACCOUNT_POST_DELAY_HOURS: 24,
 
