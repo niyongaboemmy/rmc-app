@@ -21,7 +21,7 @@ export class SeedMomoCredentials1781957702495 implements MigrationInterface {
           'username',        'testa004',
           'partnerPassword', '7Iy#+p}<>%0B*Vskc.sw}t+:T0*a.qr!r3;M8FT|',
           'accountNo',       '250260008866',
-          'callbackUrl',     'https://api.rmc.org.rw/api/v1/webhooks/intouch-pay',
+          'callbackUrl',     'https://api.isengesho.com/api/v1/webhooks/intouch-pay',
           'gatewayUrl',      'https://www.intouchpay.co.rw/api/requestpayment/'
         ),
         is_test_mode   = true,

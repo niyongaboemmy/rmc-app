@@ -153,7 +153,7 @@ export const PAYMENT_METHOD_FIELDS: Record<PaymentMethodCode, SettingField[]> = 
     { key: 'username',        label: 'Username',         placeholder: 'e.g. testa004',                     required: true },
     { key: 'partnerPassword', label: 'Partner Password', placeholder: 'Partner password from IntouchPay',  required: true, sensitive: true },
     { key: 'accountNo',       label: 'Account No.',      placeholder: 'e.g. 250260008866',                 required: true },
-    { key: 'callbackUrl',     label: 'Callback URL',     placeholder: 'https://api.rmc.org.rw/webhooks/intouch', type: 'url',
+    { key: 'callbackUrl',     label: 'Callback URL',     placeholder: 'https://api.isengesho.com/api/v1/webhooks/intouch-pay', type: 'url',
       hint: 'IntouchPay will POST the transaction status to this URL after confirmation' },
     { key: 'gatewayUrl',      label: 'Gateway URL',      placeholder: 'https://www.intouchpay.co.rw/api/requestpayment/',
       hint: 'Leave empty to use the default IntouchPay endpoint', type: 'url' },
