@@ -2713,7 +2713,40 @@
       },
       "otherLanguages": "Also showing questions in other languages",
       "writtenIn": "Written in {language}",
-      "count": "{count, plural, =1 {1 question} other {# questions}}"
+      "count": "{count, plural, =1 {1 question} other {# questions}}",
+      "ask": {
+        "heading": "Ask a question",
+        "signInRequired": "You need to be signed in to ask a question.",
+        "signIn": "Sign in",
+        "titleLabel": "Question",
+        "titlePlaceholder": "e.g. Can I combine prayers when travelling?",
+        "categoryLabel": "Category",
+        "noCategory": "No category",
+        "languageLabel": "Language",
+        "write": "Write",
+        "preview": "Preview",
+        "markdownHint": "Markdown supported",
+        "bodyPlaceholder": "Explain your question. You can use **bold**, lists, and links.",
+        "nothingToPreview": "Nothing to preview yet.",
+        "anonymousLabel": "Ask anonymously",
+        "anonymousHelp": "Your name will not be shown publicly. Moderators can still see it.",
+        "submit": "Post question",
+        "submitError": "We couldn't post your question. Please try again."
+      },
+      "moderation": {
+        "title": "Discussion reports",
+        "subtitle": "Reported questions and answers awaiting review.",
+        "empty": "No open reports. Nothing needs your attention.",
+        "reporter": "Reported by",
+        "reason": "Reason",
+        "view": "View",
+        "hide": "Hide",
+        "restore": "Restore",
+        "lock": "Lock",
+        "autoHidden": "Auto-hidden by reports",
+        "loadError": "We couldn't load the reports.",
+        "reasonNote": "Note"
+      }
     }
   }
 }

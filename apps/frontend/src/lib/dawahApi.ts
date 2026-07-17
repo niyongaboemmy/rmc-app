@@ -447,12 +447,59 @@ export interface DiscussionThread {
   answers: DiscussionAnswer[];
 }
 
+/** A member's new question. No `status`: the server always publishes it. */
+export interface CreateQuestionPayload {
+  title: string;
+  body: string;            // markdown; rendered + sanitised server-side
+  categoryId?: string;
+  language: PostLanguage;
+  isAnonymous?: boolean;
+}
+
+export interface CreateReportPayload {
+  targetType: 'question' | 'answer';
+  targetId: string;
+  reason: string;
+  note?: string;
+}
+
+/** Thrown on HTTP 429 so a caller can say "you're posting too quickly" rather than
+ *  string-matching a generic error. */
+export class ThrottledError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ThrottledError';
+  }
+}
+
+export interface DiscussionReport {
+  id: string;
+  targetType: 'question' | 'answer';
+  targetId: string;
+  reason: string;
+  note: string;
+  reporter: string | null;
+  createdAt: string;
+}
+
 export interface DiscussionsQuery {
   category?: string;
   language?: PostLanguage;
   sort?: DiscussionSort;
   page?: number;
   limit?: number;
+}
+
+/** Re-throw a 429 as a typed ThrottledError, carrying the server's message; pass anything
+ *  else through untouched. */
+function asThrottled(err: unknown): unknown {
+  const status = (err as { response?: { status?: number } })?.response?.status;
+  if (status === 429) {
+    const msg = (err as { response?: { data?: { error?: { message?: string } } } })
+      ?.response?.data?.error?.message;
+    return new ThrottledError(msg || 'You are posting too quickly. Try again shortly.');
+  }
+  return err;
 }
 
 export const dawahApi = {
@@ -474,6 +521,28 @@ export const dawahApi = {
     /** One thread; answers arrive verified-first from the API. 404s anything not published. */
     bySlug: (slug: string): Promise<DiscussionThread> =>
       unwrap(publicHttp.get(`/dawah/discussions/${slug}`)),
+
+    /** Ask a question. Authed (apiClient carries the token). Maps 429 → ThrottledError. */
+    create: async (payload: CreateQuestionPayload): Promise<DiscussionQuestion> => {
+      try {
+        return await unwrap(apiClient.post('/dawah/discussions', payload));
+      } catch (err) {
+        throw asThrottled(err);
+      }
+    },
+
+    /** Render markdown → sanitised HTML through the server's real pipeline, so the
+     *  preview cannot diverge from the published post. */
+    preview: (body: string): Promise<{ html: string }> =>
+      unwrap(apiClient.post('/dawah/discussions/preview', { body })),
+
+    report: async (payload: CreateReportPayload): Promise<{ reported: boolean }> => {
+      try {
+        return await unwrap(apiClient.post('/dawah/discussions/report', payload));
+      } catch (err) {
+        throw asThrottled(err);
+      }
+    },
   },
 
   courses: {
@@ -534,6 +603,17 @@ export const dawahApi = {
   },
 
   admin: {
+    discussions: {
+      /** The moderation queue — open reports, oldest first. Gated on DISCUSSIONS_MODERATE. */
+      reports: (): Promise<DiscussionReport[]> =>
+        unwrap(apiClient.get('/admin/dawah/discussions/reports')),
+
+      /** Hide / restore / lock a question. Always logged server-side. */
+      moderate: (id: string, action: 'hide' | 'restore' | 'lock' | 'unlock', reason = ''):
+        Promise<{ id: string; status: string }> =>
+        unwrap(apiClient.post(`/admin/dawah/discussions/${id}/${action}`, { reason })),
+    },
+
     categories: {
       list: (): Promise<DawahCategory[]> =>
         unwrap(apiClient.get('/admin/dawah/categories')),

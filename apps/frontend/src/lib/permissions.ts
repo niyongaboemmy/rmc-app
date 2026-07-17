@@ -50,6 +50,8 @@ export enum Permission {
   // ── Dawah Learning ────────────────────────────────────────────
   DAWAH_VIEW = 'dawah:view',
   DAWAH_MANAGE = 'dawah:manage',
+  DISCUSSIONS_MODERATE = 'discussions:moderate',
+  DISCUSSIONS_VERIFY = 'discussions:verify',
 
   CONTACT_MESSAGES_VIEW = 'contact_messages:view',
   CONTACT_MESSAGES_MANAGE = 'contact_messages:manage',

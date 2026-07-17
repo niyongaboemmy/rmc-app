@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, ArrowRight, MessagesSquare, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MessagesSquare, Plus, X } from 'lucide-react';
+import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/ui/Reveal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { useAuth } from '@/hooks/useAuth';
 import { DiscussionCard } from './DiscussionCard';
 import { localized } from './localize';
 import {
@@ -44,6 +46,7 @@ export function DiscussionsPageClient() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuth();
 
   const category = searchParams.get('category') ?? '';
   const language = searchParams.get('language') ?? '';
@@ -181,15 +184,27 @@ export function DiscussionsPageClient() {
                       <span className="ms-2 text-gray-400">· {t('discussions.otherLanguages')}</span>
                     )}
                   </p>
-                  {hasFilters && (
-                    <button
-                      type="button"
-                      onClick={() => setParams({ category: null, language: null, page: null })}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
-                    >
-                      <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {hasFilters && (
+                      <button
+                        type="button"
+                        onClick={() => setParams({ category: null, language: null, page: null })}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
+                      >
+                        <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}
+                      </button>
+                    )}
+                    {/* Ask only shows to signed-in members — the form 401s otherwise, and a
+                        button that leads to a wall is a worse offer than no button. */}
+                    {isAuthenticated && (
+                      <Link
+                        href={`/${locale}/dawah/discussions/ask`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> {t('discussions.askCta')}
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </Reveal>

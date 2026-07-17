@@ -2713,7 +2713,40 @@
       },
       "otherLanguages": "تُعرض أيضًا أسئلة بلغات أخرى",
       "writtenIn": "مكتوب بـ{language}",
-      "count": "{count, plural, =1 {سؤال واحد} other {# أسئلة}}"
+      "count": "{count, plural, =1 {سؤال واحد} other {# أسئلة}}",
+      "ask": {
+        "heading": "اطرح سؤالاً",
+        "signInRequired": "يجب تسجيل الدخول لطرح سؤال.",
+        "signIn": "تسجيل الدخول",
+        "titleLabel": "السؤال",
+        "titlePlaceholder": "مثال: هل يجوز الجمع بين الصلوات أثناء السفر؟",
+        "categoryLabel": "التصنيف",
+        "noCategory": "بدون تصنيف",
+        "languageLabel": "اللغة",
+        "write": "كتابة",
+        "preview": "معاينة",
+        "markdownHint": "يدعم Markdown",
+        "bodyPlaceholder": "اشرح سؤالك. يمكنك استخدام **الخط العريض** والقوائم والروابط.",
+        "nothingToPreview": "لا شيء للمعاينة بعد.",
+        "anonymousLabel": "اطرح السؤال دون اسم",
+        "anonymousHelp": "لن يظهر اسمك للعامة. لا يزال بإمكان المشرفين رؤيته.",
+        "submit": "انشر السؤال",
+        "submitError": "تعذّر نشر سؤالك. حاول مرة أخرى."
+      },
+      "moderation": {
+        "title": "بلاغات النقاشات",
+        "subtitle": "أسئلة وإجابات مُبلَّغ عنها بانتظار المراجعة.",
+        "empty": "لا توجد بلاغات مفتوحة.",
+        "reporter": "أبلغ عنه",
+        "reason": "السبب",
+        "view": "عرض",
+        "hide": "إخفاء",
+        "restore": "استعادة",
+        "lock": "قفل",
+        "autoHidden": "أُخفي تلقائيًا بسبب البلاغات",
+        "loadError": "تعذّر تحميل البلاغات.",
+        "reasonNote": "ملاحظة"
+      }
     }
   }
 }
