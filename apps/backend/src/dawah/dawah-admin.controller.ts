@@ -23,6 +23,9 @@ import { CreateDawahBookDto } from './dto/create-dawah-book.dto';
 import { UpdateDawahBookDto } from './dto/update-dawah-book.dto';
 import { QueryCoursesDto } from './dto/query-courses.dto';
 import { QueryBooksDto } from './dto/query-books.dto';
+import { DawahDiscussionsService } from './dawah-discussions.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
 
@@ -40,7 +43,31 @@ export class DawahAdminController {
     private readonly categories: DawahCategoryService,
     private readonly courses: DawahCourseService,
     private readonly books: DawahBookService,
+    private readonly discussions: DawahDiscussionsService,
   ) {}
+
+  // ── Discussions moderation (DISCUSSIONS_MODERATE) ───────────────────────────
+  // Separate from DAWAH_MANAGE on purpose: uploading a PDF and judging a member's
+  // religious post are different authorities held by different people.
+
+  @Get('discussions/reports')
+  @Permissions(Permission.DISCUSSIONS_MODERATE)
+  @ApiOperation({ summary: 'The moderation queue — open reports, auto-hidden first.' })
+  reportQueue() {
+    return this.discussions.reportQueue();
+  }
+
+  @Post('discussions/:id/:action')
+  @Permissions(Permission.DISCUSSIONS_MODERATE)
+  @ApiOperation({ summary: 'Hide / restore / lock / unlock a question. Always logged.' })
+  moderateQuestion(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Param('action') action: 'hide' | 'restore' | 'lock' | 'unlock',
+    @Body() body: { reason?: string },
+  ) {
+    return this.discussions.moderateQuestion(user, id, action, body?.reason ?? '');
+  }
 
   // ── Categories ────────────────────────────────────────────────────────────
 

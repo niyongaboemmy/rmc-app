@@ -1,11 +1,22 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException, HttpException, HttpStatus,
+  Injectable, Logger, NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, MoreThan, Repository } from 'typeorm';
 import { DawahQuestion } from './entities/dawah-question.entity';
 import { DawahAnswer } from './entities/dawah-answer.entity';
+import { DawahReport, type ReportTargetType } from './entities/dawah-report.entity';
+import { DawahModerationLog, type ModerationAction } from './entities/dawah-moderation-log.entity';
+import { DawahCategory } from './entities/dawah-category.entity';
 import { User } from '../users/entities/user.entity';
+import { randomBytes } from 'node:crypto';
 import { renderPostMarkdown } from './discussions-markdown';
+import { slugify } from './dawah-slug.util';
+import { DISCUSSION_LIMITS } from './discussions.constants';
 import type { QueryDiscussionsDto } from './dto/query-discussions.dto';
+import type { CreateQuestionDto } from './dto/create-question.dto';
+import type { CreateReportDto } from './dto/create-report.dto';
 
 /** The public shape of a post's author. `null` on the wire means anonymous. */
 export interface PublicAuthor {
@@ -40,6 +51,9 @@ export class DawahDiscussionsService {
   constructor(
     @InjectRepository(DawahQuestion) private readonly questions: Repository<DawahQuestion>,
     @InjectRepository(DawahAnswer) private readonly answers: Repository<DawahAnswer>,
+    @InjectRepository(DawahReport) private readonly reports: Repository<DawahReport>,
+    @InjectRepository(DawahCategory) private readonly categories: Repository<DawahCategory>,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -208,5 +222,271 @@ export class DawahDiscussionsService {
     void this.questions
       .increment({ id }, 'viewCount', 1)
       .catch((err) => this.logger.warn(`Failed to bump view_count for question ${id}: ${err.message}`));
+  }
+
+  /**
+   * Render a draft to sanitised HTML for the compose preview.
+   *
+   * Exists so the preview goes through the EXACT pipeline the published post will — render
+   * markdown client-side "just for preview" and the two drift, and the day they drift is
+   * the day someone finds the gap between what they saw and what shipped.
+   */
+  previewMarkdown(body: string): { html: string } {
+    return { html: renderPostMarkdown(body) };
+  }
+
+  // ══ WRITES (Phase B) ═══════════════════════════════════════════════════════
+  // Every write below ships in the same phase as the moderation that governs it.
+  // A question goes live on submit, so BE-3's report/auto-hide/queue land here too.
+
+  /**
+   * Ask a question.
+   *
+   * Status is NOT computed and NOT accepted — a question is always born `published`
+   * (§0.1). The rate limits are keyed on the USER, not the IP: posting requires auth, and
+   * IP keying punishes shared connections, which in Kigali is many people on one address.
+   */
+  async createQuestion(user: User, dto: CreateQuestionDto) {
+    await this.assertMayPost(user);
+
+    // Identical-to-last-post guard: catches the double-submit and the copy-paste spammer.
+    const last = await this.questions.findOne({
+      where: { authorId: user.id },
+      order: { createdAt: 'DESC' },
+      withDeleted: true,
+    });
+    if (last && last.title.trim() === dto.title.trim() && last.body.trim() === dto.body.trim()) {
+      throw new HttpException('You already posted this.', HttpStatus.CONFLICT);
+    }
+
+    let category: DawahCategory | null = null;
+    if (dto.categoryId) {
+      category = await this.categories.findOne({ where: { id: dto.categoryId } });
+      if (!category) throw new NotFoundException('Category not found');
+    }
+
+    // Slug: title → base, plus a short random suffix for uniqueness. A non-Latin title
+    // (Arabic, or Kinyarwanda after diacritics strip) can slugify to empty — fall back to
+    // a stable base so the URL is never just the suffix.
+    const base = slugify(dto.title) || 'question';
+    const question = await this.insertWithUniqueSlug(base, (slug) =>
+      this.questions.create({
+        slug,
+        title: dto.title.trim(),
+        body: dto.body,
+        language: dto.language,
+        categoryId: category?.id ?? null,
+        authorId: user.id,
+        isAnonymous: dto.isAnonymous ?? false,
+        status: 'published',
+        lastActivityAt: new Date(),
+      }),
+    );
+
+    // Reload with relations so toPublic() can resolve the (possibly hidden) author.
+    const full = await this.questions.findOne({
+      where: { id: question.id },
+      relations: { category: true, author: { roleEntity: true } },
+    });
+    return this.toPublic(full!);
+  }
+
+  /**
+   * The rate-limit gate. Throws 429 (or 403 for a brand-new account).
+   *
+   * Not @nestjs/throttler: that guard keys on IP and is not even registered globally here.
+   * A DB count keyed on author_id is what the plan actually asks for, and it survives a
+   * restart, which an in-memory limiter does not.
+   */
+  private async assertMayPost(user: User): Promise<void> {
+    const ageHours = (Date.now() - new Date(user.createdAt).getTime()) / 3_600_000;
+    if (ageHours < DISCUSSION_LIMITS.NEW_ACCOUNT_POST_DELAY_HOURS) {
+      throw new ForbiddenException(
+        'New accounts can post after 24 hours. This is a spam guard, not a judgement.',
+      );
+    }
+    const anHourAgo = new Date(Date.now() - 3_600_000);
+    const recent = await this.questions.count({
+      where: { authorId: user.id, createdAt: MoreThan(anHourAgo) },
+      withDeleted: true, // deleting your spam must not reset the meter
+    });
+    if (recent >= DISCUSSION_LIMITS.MAX_QUESTIONS_PER_HOUR) {
+      throw new HttpException(
+        "You're posting too quickly — try again in a little while.",
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  /** Insert, retrying with a fresh suffix if the slug collides. The DB's unique index is
+   *  the arbiter — a pre-check SELECT races. */
+  private async insertWithUniqueSlug(
+    base: string,
+    build: (slug: string) => DawahQuestion,
+  ): Promise<DawahQuestion> {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const suffix = randomBytes(3).toString('hex');
+      try {
+        return await this.questions.save(build(`${base}-${suffix}`.slice(0, 180)));
+      } catch (err: unknown) {
+        // 23505 = unique_violation. Anything else is a real error.
+        if ((err as { code?: string }).code === '23505' && attempt < 4) continue;
+        throw err;
+      }
+    }
+    throw new HttpException('Could not generate a unique link.', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  /**
+   * Report a question or answer — and auto-hide it if enough eligible reports pile up.
+   *
+   * The whole thing is ONE transaction: the report insert, the report_count increment, the
+   * possible status flip and the moderation-log row must be atomic, or two concurrent
+   * reports both read `2`, neither trips the hide, and the post stays up.
+   */
+  async report(user: User, dto: CreateReportDto) {
+    const table = dto.targetType === 'question' ? 'dawah_questions' : 'dawah_answers';
+
+    await this.assertReportRate(user.id);
+
+    await this.dataSource.transaction(async (manager) => {
+      // Target must exist and be visible — you cannot report what you cannot see.
+      const target = await manager.query(
+        `SELECT id, status, report_count FROM ${table} WHERE id = $1 AND deleted_at IS NULL`,
+        [dto.targetId],
+      );
+      if (!target.length) throw new NotFoundException('Not found');
+
+      // One report per person per item — the DB enforces it; we translate the violation
+      // into a clean 409 instead of a 500.
+      try {
+        await manager.insert(DawahReport, {
+          targetType: dto.targetType as ReportTargetType,
+          targetId: dto.targetId,
+          reporterId: user.id,
+          reason: dto.reason,
+          note: dto.note ?? '',
+        });
+      } catch (err: unknown) {
+        if ((err as { code?: string }).code === '23505') {
+          throw new HttpException('You already reported this.', HttpStatus.CONFLICT);
+        }
+        throw err;
+      }
+
+      await manager.query(`UPDATE ${table} SET report_count = report_count + 1 WHERE id = $1`, [
+        dto.targetId,
+      ]);
+
+      // Does this report TRIP the hide? Only reports from accounts older than the minimum
+      // count — three throwaways must not be able to silence anything.
+      const eligible = await manager.query(
+        `SELECT count(*)::int AS n
+           FROM dawah_reports r JOIN users u ON u.id = r.reporter_id
+          WHERE r.target_type = $1 AND r.target_id = $2
+            AND u.created_at < now() - ($3 || ' days')::interval`,
+        [dto.targetType, dto.targetId, DISCUSSION_LIMITS.REPORT_MIN_ACCOUNT_AGE_DAYS],
+      );
+      const eligibleCount: number = eligible[0].n;
+
+      const current = target[0];
+      const verifiedExempt =
+        dto.targetType === 'question' &&
+        (await manager.query(`SELECT verified_answer_id FROM dawah_questions WHERE id = $1`, [
+          dto.targetId,
+        ]))[0]?.verified_answer_id != null;
+
+      if (
+        current.status === 'published' &&
+        eligibleCount >= DISCUSSION_LIMITS.REPORT_AUTOHIDE_THRESHOLD &&
+        !verifiedExempt
+      ) {
+        await manager.query(`UPDATE ${table} SET status = 'auto_hidden' WHERE id = $1`, [
+          dto.targetId,
+        ]);
+        // moderator_id NULL = the crowd, not a person, made this call.
+        await manager.insert(DawahModerationLog, {
+          moderatorId: null,
+          action: 'auto_hide' as ModerationAction,
+          targetType: dto.targetType,
+          targetId: dto.targetId,
+          reason: `Auto-hidden at ${eligibleCount} eligible reports.`,
+        });
+      }
+    });
+
+    return { reported: true };
+  }
+
+  private async assertReportRate(userId: string): Promise<void> {
+    const anHourAgo = new Date(Date.now() - 3_600_000);
+    const recent = await this.reports.count({
+      where: { reporterId: userId, createdAt: MoreThan(anHourAgo) },
+    });
+    if (recent >= DISCUSSION_LIMITS.MAX_REPORTS_PER_HOUR) {
+      throw new HttpException('Too many reports — slow down.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+  }
+
+  // ── Moderator actions (gated on DISCUSSIONS_MODERATE at the controller) ──────
+
+  /** The report queue: open reports, auto_hidden targets first, oldest next. */
+  async reportQueue() {
+    const rows = await this.reports.find({
+      where: { status: 'open' },
+      relations: { reporter: true },
+      order: { createdAt: 'ASC' },
+      take: 100,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      targetType: r.targetType,
+      targetId: r.targetId,
+      reason: r.reason,
+      note: r.note,
+      reporter: r.reporter ? `${r.reporter.firstName} ${r.reporter.lastName}`.trim() : null,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  /** Hide, restore or lock a question. Every act is logged — no exceptions. */
+  async moderateQuestion(
+    moderator: User,
+    id: string,
+    action: 'hide' | 'restore' | 'lock' | 'unlock',
+    reason: string,
+  ) {
+    const question = await this.questions.findOne({ where: { id } });
+    if (!question) throw new NotFoundException('Question not found');
+
+    const nextStatus: Record<string, DawahQuestion['status']> = {
+      hide: 'hidden',
+      restore: 'published',
+      lock: 'locked',
+      unlock: 'published',
+    };
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(DawahQuestion, id, { status: nextStatus[action] });
+      // Restoring resets the report meter and dismisses the reports, so the same three
+      // reporters cannot immediately re-trip the auto-hide.
+      if (action === 'restore') {
+        await manager.update(DawahQuestion, id, { reportCount: 0 });
+        await manager.update(
+          DawahReport,
+          { targetType: 'question', targetId: id, status: 'open' },
+          { status: 'dismissed', handledById: moderator.id, handledAt: new Date() },
+        );
+      }
+      await manager.insert(DawahModerationLog, {
+        moderatorId: moderator.id,
+        action: action as ModerationAction,
+        targetType: 'question',
+        targetId: id,
+        reason: reason ?? '',
+      });
+    });
+
+    return { id, status: nextStatus[action] };
   }
 }

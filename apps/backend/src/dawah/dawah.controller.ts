@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -10,6 +10,10 @@ import { OptionalCallerService } from './optional-caller.service';
 import { QueryCoursesDto } from './dto/query-courses.dto';
 import { QueryBooksDto } from './dto/query-books.dto';
 import { QueryDiscussionsDto } from './dto/query-discussions.dto';
+import { CreateQuestionDto } from './dto/create-question.dto';
+import { CreateReportDto } from './dto/create-report.dto';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity';
 import { Public } from '../common/decorators/public.decorator';
 
 /**
@@ -52,6 +56,30 @@ export class DawahController {
   @ApiOperation({ summary: 'One question with its published answers, verified first.' })
   discussionBySlug(@Param('slug') slug: string) {
     return this.discussions.bySlug(slug);
+  }
+
+  /**
+   * Ask a question. NOT @Public — the global JwtAuthGuard requires a signed-in member.
+   * Rate-limited per user in the service (5/hour, 24h new-account delay, dup guard).
+   */
+  @Post('discussions')
+  @ApiOperation({ summary: 'Ask a question (members only).' })
+  ask(@CurrentUser() user: User, @Body() dto: CreateQuestionDto) {
+    return this.discussions.createQuestion(user, dto);
+  }
+
+  /** Live compose preview — same render+sanitise pipeline as the published post. */
+  @Post('discussions/preview')
+  @ApiOperation({ summary: 'Render markdown to sanitised HTML (compose preview).' })
+  preview(@Body() body: { body?: string }) {
+    return this.discussions.previewMarkdown(body?.body ?? '');
+  }
+
+  /** Report a question or answer. Auto-hides at the eligible-report threshold. */
+  @Post('discussions/report')
+  @ApiOperation({ summary: 'Report a question or answer (members only).' })
+  report(@CurrentUser() user: User, @Body() dto: CreateReportDto) {
+    return this.discussions.report(user, dto);
   }
 
   /**
