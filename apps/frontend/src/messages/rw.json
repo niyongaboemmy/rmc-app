@@ -2746,6 +2746,32 @@
         "autoHidden": "Auto-hidden by reports",
         "loadError": "We couldn't load the reports.",
         "reasonNote": "Note"
+      },
+      "answer": {
+        "yourAnswer": "Your answer",
+        "answerPlaceholder": "Share what you know. Be respectful and cite where you can.",
+        "post": "Post answer",
+        "posting": "Posting…",
+        "signInToAnswer": "Sign in to answer this question.",
+        "reviewNotice": "Answers in this category are reviewed by an RMC scholar before they appear publicly.",
+        "pendingOwn": "Your answer is awaiting review. Only you can see it here until a scholar releases it.",
+        "submitError": "We couldn't post your answer. Please try again.",
+        "lockedNotice": "This question is locked. New answers are closed."
+      },
+      "review": {
+        "title": "Answers to review",
+        "subtitle": "Answers held for scholar review, oldest first.",
+        "empty": "Nothing awaiting review.",
+        "release": "Release",
+        "verify": "Verify",
+        "releaseHelp": "Publish without endorsing — \"this may be seen\".",
+        "verifyHelp": "Publish and mark \"Verified by RMC\" — \"this is correct\".",
+        "inCategory": "in",
+        "waiting": "waiting {hours}h",
+        "loadError": "We couldn't load the queue.",
+        "onQuestion": "On",
+        "released": "Released",
+        "verified": "Verified"
       }
     }
   }

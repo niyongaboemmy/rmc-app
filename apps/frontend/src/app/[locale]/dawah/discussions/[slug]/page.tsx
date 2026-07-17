@@ -9,6 +9,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
 import { dawahApi, type DiscussionThread, type PostLanguage } from '@/lib/dawahApi';
+import { AnswerComposer } from '@/components/dawah/AnswerComposer';
 
 export const dynamic = 'force-dynamic';
 
@@ -220,6 +221,15 @@ export default async function DiscussionThreadPage({
                 )}
               </div>
             </Reveal>
+
+            {/* Compose. A client island in this server page. It knows whether the
+                category holds answers for review, so it can warn before submit. */}
+            <AnswerComposer
+              slug={question.slug}
+              language={question.language}
+              scholarReview={(question.category?.answerPolicy ?? 'scholar_review') === 'scholar_review'}
+              locked={question.status === 'locked'}
+            />
           </div>
         </section>
       </main>

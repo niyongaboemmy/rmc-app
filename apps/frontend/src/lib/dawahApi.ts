@@ -64,6 +64,9 @@ export interface DawahCategory {
   icon: string | null;
   sortOrder: number;
   isActive: boolean;
+  /** Discussions only: whether answers here are held for scholar review. Absent on
+   *  category lists that predate the column; treat missing as 'scholar_review'. */
+  answerPolicy?: 'scholar_review' | 'open';
   createdAt: string;
   updatedAt: string;
 }
@@ -482,6 +485,15 @@ export interface DiscussionReport {
   createdAt: string;
 }
 
+export interface PendingAnswer {
+  id: string;
+  bodyHtml: string;
+  author: string | null;
+  createdAt: string;
+  ageHours: number;
+  question: { slug: string; title: string; language: PostLanguage } | null;
+}
+
 export interface DiscussionsQuery {
   category?: string;
   language?: PostLanguage;
@@ -543,6 +555,19 @@ export const dawahApi = {
         throw asThrottled(err);
       }
     },
+
+    /** Answer a question. Server computes pending vs published from the category policy. */
+    answer: async (slug: string, body: string, isAnonymous = false): Promise<DiscussionAnswer> => {
+      try {
+        return await unwrap(apiClient.post(`/dawah/discussions/${slug}/answers`, { body, isAnonymous }));
+      } catch (err) {
+        throw asThrottled(err);
+      }
+    },
+
+    /** Vote on an answer: 1 up, -1 down, 0 clears. */
+    vote: (answerId: string, value: 1 | -1 | 0): Promise<{ id: string; voteScore: number }> =>
+      unwrap(apiClient.post(`/dawah/discussions/answers/${answerId}/vote`, { value })),
   },
 
   courses: {
@@ -612,6 +637,18 @@ export const dawahApi = {
       moderate: (id: string, action: 'hide' | 'restore' | 'lock' | 'unlock', reason = ''):
         Promise<{ id: string; status: string }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/${id}/${action}`, { reason })),
+
+      /** The scholar review queue — pending answers, oldest first. */
+      pending: (): Promise<PendingAnswer[]> =>
+        unwrap(apiClient.get('/admin/dawah/discussions/pending')),
+
+      /** Release: publish, NO badge ("not harmful"). */
+      release: (answerId: string): Promise<{ id: string; verified: boolean }> =>
+        unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/release`, {})),
+
+      /** Verify: publish + badge + pin ("RMC says this is correct"). */
+      verify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
+        unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/verify`, {})),
     },
 
     categories: {
