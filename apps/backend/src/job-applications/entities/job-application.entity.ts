@@ -46,8 +46,15 @@ export class JobApplication {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // Internal, sequential reference (admin-facing). NOT used for public lookup.
   @Column({ name: 'tracking_number', type: 'varchar', length: 40, unique: true })
   trackingNumber: string;
+
+  // Public, cryptographically-random, unguessable code the applicant uses to
+  // track their application (RMC-JOB-<YYMM>-<random>). Non-enumerable.
+  @Index('IDX_job_applications_tracking_code', { unique: true })
+  @Column({ name: 'tracking_code', type: 'varchar', length: 40 })
+  trackingCode: string;
 
   @Index('IDX_job_applications_applicant')
   @Column({ name: 'applicant_id', type: 'uuid' })

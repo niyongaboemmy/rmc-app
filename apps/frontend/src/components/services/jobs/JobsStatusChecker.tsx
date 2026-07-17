@@ -138,7 +138,7 @@ export function JobsStatusChecker() {
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 truncate">{app.positionAppliedFor}</p>
             <p className="text-xs text-gray-400 mt-0.5">
-              {app.trackingNumber} ·{' '}
+              {app.trackingCode} ·{' '}
               {new Date(app.createdAt).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
@@ -228,7 +228,7 @@ function ApplicationDetail({
         </div>
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
           <Detail label={t('submittedOn')} value={new Date(application.createdAt).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })} />
-          <Detail label={t('trackingNumber')} value={application.trackingNumber} />
+          <Detail label={t('trackingNumber')} value={application.trackingCode} />
         </div>
       </div>
 

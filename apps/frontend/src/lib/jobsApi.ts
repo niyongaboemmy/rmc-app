@@ -47,6 +47,7 @@ export interface JobApplicationDocuments {
 export interface JobApplication {
   id: string;
   trackingNumber: string;
+  trackingCode: string;
   applicantId: string;
   fullNames: string;
   email: string | null;
@@ -94,12 +95,14 @@ export const JOB_STATUS_COLORS: Record<JobApplicationStatus, string> = {
   cancelled: 'bg-gray-100 text-gray-500',
 };
 
-/** Minimal, public-safe status view returned by the tracking-number lookup. */
+/** Minimal, public-safe status view returned after phone-OTP verification. */
 export interface JobApplicationPublicStatus {
-  trackingNumber: string;
+  trackingCode: string;
   fullNames: string;
   positionAppliedFor: string;
   status: JobApplicationStatus;
+  moreInfoRequested: string | null;
+  rejectionReason: string | null;
   submittedAt: string | null;
   createdAt: string;
   statusHistory: { fromStatus: string | null; toStatus: string; changedAt: string }[];
@@ -123,16 +126,35 @@ export const jobsApi = {
     return data.data ?? data;
   },
 
-  /** Public status lookup by tracking number — returns null when not found. */
-  track: async (trackingNumber: string): Promise<JobApplicationPublicStatus | null> => {
-    try {
-      const { data } = await apiClient.get(
-        `/job-applications/track/${encodeURIComponent(trackingNumber.trim())}`,
-      );
-      return data.data ?? data;
-    } catch {
-      return null;
-    }
+  /** Step 1 — request an SMS OTP (code + phone must match). Generic on success. */
+  trackRequestOtp: async (trackingCode: string, phone: string): Promise<{ expiresAt: string }> => {
+    const { data } = await apiClient.post('/job-applications/track/request-otp', {
+      trackingCode: trackingCode.trim(),
+      phone: phone.trim(),
+    });
+    return data.data ?? data;
+  },
+
+  /** Step 2 — verify the OTP; returns a short-lived token plus the status. */
+  trackVerifyOtp: async (
+    trackingCode: string,
+    phone: string,
+    otp: string,
+  ): Promise<{ token: string } & JobApplicationPublicStatus> => {
+    const { data } = await apiClient.post('/job-applications/track/verify-otp', {
+      trackingCode: trackingCode.trim(),
+      phone: phone.trim(),
+      otp: otp.trim(),
+    });
+    return data.data ?? data;
+  },
+
+  /** Step 3 — refresh the status with a valid tracking token. */
+  trackSession: async (token: string): Promise<JobApplicationPublicStatus> => {
+    const { data } = await apiClient.get('/job-applications/track/session', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data.data ?? data;
   },
 
   cancel: async (id: string): Promise<JobApplication> => {

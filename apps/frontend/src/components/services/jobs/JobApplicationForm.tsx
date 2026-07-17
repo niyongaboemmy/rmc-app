@@ -257,7 +257,7 @@ export function JobApplicationForm() {
   // ── Success screen ──────────────────────────────────────────────────────────────
   if (result) {
     const copy = () => {
-      navigator.clipboard.writeText(result.trackingNumber);
+      navigator.clipboard.writeText(result.trackingCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     };
@@ -271,7 +271,7 @@ export function JobApplicationForm() {
         <div className="space-y-1">
           <p className="text-xs text-gray-400 uppercase tracking-wide">{t('trackingNumber')}</p>
           <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
-            <code className="text-sm font-mono text-gray-700">{result.trackingNumber}</code>
+            <code className="text-sm font-mono text-gray-700">{result.trackingCode}</code>
             <button onClick={copy} aria-label={t('trackingNumber')} className="text-gray-400 hover:text-gray-600">
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
             </button>

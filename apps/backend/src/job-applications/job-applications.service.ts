@@ -19,6 +19,7 @@ import {
 } from './entities/job-application.entity';
 import { JobApplicationStatusHistory } from './entities/job-application-status-history.entity';
 import { JobPostingsService } from './job-postings.service';
+import { generateTrackingCode } from './tracking-code.util';
 import { CreateJobApplicationDto } from './dto/create-job-application.dto';
 import {
   UpdateJobApplicationStatusDto,
@@ -91,14 +92,16 @@ export class JobApplicationsService {
     });
     if (duplicate) {
       throw new ConflictException(
-        `You already have an application in progress for "${positionAppliedFor}" (tracking ${duplicate.trackingNumber}).`,
+        `You already have an application in progress for "${positionAppliedFor}" (tracking ${duplicate.trackingCode}).`,
       );
     }
 
     const trackingNumber = await this.generateTrackingNumber();
+    const trackingCode = await this.generateUniqueTrackingCode();
 
     const application = this.applicationRepo.create({
       trackingNumber,
+      trackingCode,
       applicantId,
       jobPostingId,
       fullNames: dto.fullNames,
@@ -153,21 +156,23 @@ export class JobApplicationsService {
   }
 
   /**
-   * Public status lookup by tracking number — no auth. Returns only what an
-   * applicant needs to follow progress (no documents, phone or email), so a
-   * leaked tracking number can't expose sensitive personal data.
+   * Minimal, safe status view for a phone-verified tracking session (looked up
+   * by application id, which only comes from a valid signed tracking token).
+   * Returns no documents, phone or email.
    */
-  async trackByNumber(trackingNumber: string) {
+  async getTrackingInfo(applicationId: string) {
     const application = await this.applicationRepo.findOne({
-      where: { trackingNumber: trackingNumber.trim().toUpperCase() },
+      where: { id: applicationId },
       relations: ['statusHistory'],
     });
     if (!application) throw new NotFoundException('Application not found');
     return {
-      trackingNumber: application.trackingNumber,
+      trackingCode: application.trackingCode,
       fullNames: application.fullNames,
       positionAppliedFor: application.positionAppliedFor,
       status: application.status,
+      moreInfoRequested: application.moreInfoRequested,
+      rejectionReason: application.rejectionReason,
       submittedAt: application.submittedAt,
       createdAt: application.createdAt,
       statusHistory: (application.statusHistory ?? [])
@@ -356,6 +361,16 @@ export class JobApplicationsService {
     return `RMC-JOB-${year}${month}-${seq}`;
   }
 
+  /** Crypto-random public tracking code, retried on the (astronomically rare) collision. */
+  private async generateUniqueTrackingCode(): Promise<string> {
+    for (let i = 0; i < 5; i++) {
+      const code = generateTrackingCode();
+      const clash = await this.applicationRepo.count({ where: { trackingCode: code } });
+      if (clash === 0) return code;
+    }
+    throw new Error('Could not generate a unique tracking code');
+  }
+
   /**
    * Persist scalar column changes via a targeted `.update()` rather than
    * `.save()` on the loaded entity — mirrors GoodConductService.saveScalarFields:
@@ -417,15 +432,15 @@ export class JobApplicationsService {
 
   private notifySubmission(app: JobApplication): void {
     const url = this.statusUrl();
-    const msg = `RMC Jobs: Your application for "${app.positionAppliedFor}" was received. Tracking number: ${app.trackingNumber}. Track it at ${url}`;
+    const msg = `RMC Jobs: Your application for "${app.positionAppliedFor}" was received. Tracking number: ${app.trackingCode}. Track it at ${url}`;
     if (this.notifSettings.isSmsEnabled('jobApplications.submission')) this.dispatchSms(app.phone, msg);
     if (this.notifSettings.isEmailEnabled('jobApplications.submission')) {
       this.dispatchEmail(
         app.email,
-        `Job application received — ${app.trackingNumber}`,
+        `Job application received — ${app.trackingCode}`,
         this.emailShell(
           'Application received',
-          `<p>Dear ${this.esc(app.fullNames)},</p><p>We have received your application for <strong>${this.esc(app.positionAppliedFor)}</strong>.</p><p>Your tracking number is <strong>${this.esc(app.trackingNumber)}</strong>. Keep it safe — you can use it to check your status any time at <a href="${url}">${url}</a>.</p>`,
+          `<p>Dear ${this.esc(app.fullNames)},</p><p>We have received your application for <strong>${this.esc(app.positionAppliedFor)}</strong>.</p><p>Your tracking number is <strong>${this.esc(app.trackingCode)}</strong>. Keep it safe — you can use it to check your status any time at <a href="${url}">${url}</a>.</p>`,
         ),
       );
     }
@@ -433,15 +448,15 @@ export class JobApplicationsService {
 
   private notifyMoreInfo(app: JobApplication): void {
     const url = this.statusUrl();
-    const msg = `RMC Jobs: More information is needed for your application ${app.trackingNumber}. Please sign in to respond: ${url}`;
+    const msg = `RMC Jobs: More information is needed for your application ${app.trackingCode}. Please sign in to respond: ${url}`;
     if (this.notifSettings.isSmsEnabled('jobApplications.more_info')) this.dispatchSms(app.phone, msg);
     if (this.notifSettings.isEmailEnabled('jobApplications.more_info')) {
       this.dispatchEmail(
         app.email,
-        `More information needed — ${app.trackingNumber}`,
+        `More information needed — ${app.trackingCode}`,
         this.emailShell(
           'More information needed',
-          `<p>Dear ${this.esc(app.fullNames)},</p><p>Our team needs more information for your application <strong>${this.esc(app.trackingNumber)}</strong>.</p>${app.moreInfoRequested ? `<p><em>${this.esc(app.moreInfoRequested)}</em></p>` : ''}<p>Please sign in to respond: <a href="${url}">${url}</a></p>`,
+          `<p>Dear ${this.esc(app.fullNames)},</p><p>Our team needs more information for your application <strong>${this.esc(app.trackingCode)}</strong>.</p>${app.moreInfoRequested ? `<p><em>${this.esc(app.moreInfoRequested)}</em></p>` : ''}<p>Please sign in to respond: <a href="${url}">${url}</a></p>`,
         ),
       );
     }
@@ -450,16 +465,16 @@ export class JobApplicationsService {
   private notifyDecision(app: JobApplication, accepted: boolean): void {
     const key = accepted ? 'jobApplications.accepted' : 'jobApplications.rejected';
     const smsMsg = accepted
-      ? `RMC Jobs: Good news! Your application ${app.trackingNumber} for "${app.positionAppliedFor}" was accepted. We will contact you with next steps.`
-      : `RMC Jobs: Update on your application ${app.trackingNumber}: it was not selected this time. Thank you for applying.`;
+      ? `RMC Jobs: Good news! Your application ${app.trackingCode} for "${app.positionAppliedFor}" was accepted. We will contact you with next steps.`
+      : `RMC Jobs: Update on your application ${app.trackingCode}: it was not selected this time. Thank you for applying.`;
     if (this.notifSettings.isSmsEnabled(key)) this.dispatchSms(app.phone, smsMsg);
     if (this.notifSettings.isEmailEnabled(key)) {
       const subject = accepted
-        ? `Application accepted — ${app.trackingNumber}`
-        : `Application update — ${app.trackingNumber}`;
+        ? `Application accepted — ${app.trackingCode}`
+        : `Application update — ${app.trackingCode}`;
       const bodyHtml = accepted
-        ? `<p>Dear ${this.esc(app.fullNames)},</p><p>Congratulations — your application for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingNumber)}) has been <strong>accepted</strong>. Our team will contact you with the next steps.</p>`
-        : `<p>Dear ${this.esc(app.fullNames)},</p><p>Thank you for applying for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingNumber)}). After review, your application was not selected this time.${app.rejectionReason ? `<br/><em>${this.esc(app.rejectionReason)}</em>` : ''}</p>`;
+        ? `<p>Dear ${this.esc(app.fullNames)},</p><p>Congratulations — your application for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingCode)}) has been <strong>accepted</strong>. Our team will contact you with the next steps.</p>`
+        : `<p>Dear ${this.esc(app.fullNames)},</p><p>Thank you for applying for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingCode)}). After review, your application was not selected this time.${app.rejectionReason ? `<br/><em>${this.esc(app.rejectionReason)}</em>` : ''}</p>`;
       this.dispatchEmail(app.email, subject, this.emailShell(accepted ? 'Application accepted' : 'Application update', bodyHtml));
     }
   }

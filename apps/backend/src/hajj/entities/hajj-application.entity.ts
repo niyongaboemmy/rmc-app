@@ -51,6 +51,12 @@ export class HajjApplication {
   @Column({ name: 'application_number', type: 'varchar', length: 30 })
   applicationNumber: string;
 
+  // Public, cryptographically-random, unguessable code for the OTP-gated status
+  // lookup (RMC-HAJ-<YYMM>-<random>). Non-enumerable.
+  @Index('IDX_hajj_applications_tracking_code', { unique: true })
+  @Column({ name: 'tracking_code', type: 'varchar', length: 40 })
+  trackingCode: string;
+
   // ── Applicant ─────────────────────────────────────────────────────────────
   @Column({ name: 'full_name', type: 'varchar', length: 150 })
   fullName: string;

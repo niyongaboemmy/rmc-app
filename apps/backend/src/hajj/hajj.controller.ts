@@ -4,6 +4,8 @@ import {
   Post,
   Body,
   Param,
+  Ip,
+  Headers,
   HttpCode,
   HttpStatus,
   UseInterceptors,
@@ -20,7 +22,11 @@ import {
   type UploadedDocument,
 } from '../integrations/storage/public-upload.service';
 import { CreateHajjApplicationDto } from './dto/create-hajj-application.dto';
+import { TrackingVerificationService } from '../tracking/tracking-verification.service';
+import { RequestTrackingOtpDto, VerifyTrackingOtpDto } from '../tracking/dto/tracking-otp.dto';
 import { Public } from '../common/decorators/public.decorator';
+
+const HAJJ_SUBJECT = 'hajj_application';
 
 /** Must stay listed in the file server's PROTECTED_KEY_PREFIXES. */
 const HAJJ_PROOF_FOLDER = 'hajj-proofs';
@@ -33,6 +39,7 @@ export class HajjController {
     private readonly requirements: HajjRequirementService,
     private readonly bankAccounts: HajjBankAccountService,
     private readonly storage: PublicUploadService,
+    private readonly tracking: TrackingVerificationService,
   ) {}
 
   /**
@@ -88,22 +95,36 @@ export class HajjController {
     };
   }
 
-  @Get('applications/by-number/:number')
+  // ── Secure public tracking (phone-OTP gated) ─────────────────────────────────
+
+  @Post('applications/track/request-otp')
   @Public()
-  @ApiOperation({ summary: 'Look up an application status by its number' })
-  async byNumber(@Param('number') number: string) {
-    const app = await this.service.findByNumber(number);
-    // Deliberately narrow: this route is unauthenticated, so it must not leak the
-    // passport number, payment proofs or internal review notes.
-    return {
-      applicationNumber: app.applicationNumber,
-      fullName: app.fullName,
-      district: app.district,
-      sector: app.sector,
-      status: app.status,
-      rejectionReason: app.rejectionReason,
-      submittedAt: app.createdAt,
-      updatedAt: app.updatedAt,
-    };
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
+  @ApiOperation({ summary: 'Request an SMS OTP to unlock tracking (code + phone must match)' })
+  async requestTrackingOtp(@Body() dto: RequestTrackingOtpDto, @Ip() ip: string) {
+    const subject = await this.service.findSubjectByCode(dto.trackingCode);
+    return this.tracking.requestOtp(HAJJ_SUBJECT, subject, dto.phone, ip);
+  }
+
+  @Post('applications/track/verify-otp')
+  @Public()
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 600000 } })
+  @ApiOperation({ summary: 'Verify the OTP; returns a short-lived token + status' })
+  async verifyTrackingOtp(@Body() dto: VerifyTrackingOtpDto, @Ip() ip: string) {
+    const subject = await this.service.findSubjectByCode(dto.trackingCode);
+    const { token, subjectId } = await this.tracking.verifyOtp(HAJJ_SUBJECT, subject, dto.phone, dto.otp, ip);
+    const info = await this.service.getTrackingInfo(subjectId);
+    return { token, ...info };
+  }
+
+  @Get('applications/track/session')
+  @Public()
+  @ApiOperation({ summary: 'Refresh status using a valid tracking token (Authorization: Bearer)' })
+  async trackingSession(@Headers('authorization') authHeader?: string) {
+    const token = (authHeader || '').replace(/^Bearer\s+/i, '');
+    const id = this.tracking.verifyToken(token, HAJJ_SUBJECT);
+    return this.service.getTrackingInfo(id);
   }
 }
