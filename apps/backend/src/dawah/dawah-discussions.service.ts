@@ -750,6 +750,11 @@ export class DawahDiscussionsService {
       author: a.isAnonymous ? null : (a.author ? `${a.author.firstName} ${a.author.lastName}`.trim() : null),
       createdAt: a.createdAt,
       ageHours: Math.floor((Date.now() - a.createdAt.getTime()) / 3_600_000),
+      // Whether the question ALREADY has a verified answer. If so, this pending answer can
+      // be RELEASED (published as a community answer) but NOT verified — there is one
+      // verified answer per question. Surfacing it lets the UI disable Verify instead of
+      // offering a click that can only 409.
+      questionHasVerified: a.question?.verifiedAnswerId != null,
       question: a.question ? { slug: a.question.slug, title: a.question.title, language: a.question.language } : null,
     }));
   }

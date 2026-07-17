@@ -2773,7 +2773,8 @@
         "loadError": "We couldn't load the queue.",
         "onQuestion": "On",
         "released": "Released",
-        "verified": "Verified"
+        "verified": "Verified",
+        "alreadyVerified": "This question already has a verified answer."
       },
       "searchPlaceholder": "Search questions…",
       "policy": {

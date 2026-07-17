@@ -498,6 +498,9 @@ export interface PendingAnswer {
   author: string | null;
   createdAt: string;
   ageHours: number;
+  /** True when the question already has a verified answer — this one can be released but
+   *  not verified (one verified answer per question). */
+  questionHasVerified: boolean;
   question: { slug: string; title: string; language: PostLanguage } | null;
 }
 
@@ -512,6 +515,12 @@ export interface DiscussionsQuery {
 
 /** Re-throw a 429 as a typed ThrottledError, carrying the server's message; pass anything
  *  else through untouched. */
+/** The server's human message from an axios error, if any. */
+export function serverMessage(err: unknown): string | null {
+  return (err as { response?: { data?: { error?: { message?: string } } } })
+    ?.response?.data?.error?.message ?? null;
+}
+
 function asThrottled(err: unknown): unknown {
   const status = (err as { response?: { status?: number } })?.response?.status;
   if (status === 429) {

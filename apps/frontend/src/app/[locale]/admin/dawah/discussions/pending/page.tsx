@@ -8,7 +8,7 @@ import { GraduationCap, BadgeCheck, Check, Clock, ExternalLink, Loader2 } from '
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
-import { dawahApi, type PendingAnswer } from '@/lib/dawahApi';
+import { dawahApi, serverMessage, type PendingAnswer } from '@/lib/dawahApi';
 
 /**
  * Scholar review queue.
@@ -62,8 +62,12 @@ function ReviewQueue() {
       await dawahApi.admin.discussions[kind](a.id);
       success(t(`discussions.review.${kind === 'verify' ? 'verified' : 'released'}`));
       await load();
-    } catch {
-      error(t('discussions.review.loadError'));
+    } catch (err) {
+      // Surface the server's actual reason — e.g. "Another answer is already verified for
+      // this question." A generic "couldn't load" here is what made a correct 409 look
+      // like a broken button.
+      error(serverMessage(err) ?? t('discussions.review.loadError'));
+      await load(); // re-sync: the queue may have changed under us
     } finally {
       setBusyId(null);
     }
@@ -143,13 +147,16 @@ function ReviewQueue() {
                     <button
                       type="button"
                       onClick={() => act(a, 'verify')}
-                      disabled={busyId === a.id}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-gold px-3 py-1.5 text-xs font-bold text-rmc-green-deep transition-colors hover:bg-rmc-gold-light disabled:opacity-50"
+                      disabled={busyId === a.id || a.questionHasVerified}
+                      title={a.questionHasVerified ? t('discussions.review.alreadyVerified') : undefined}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-gold px-3 py-1.5 text-xs font-bold text-rmc-green-deep transition-colors hover:bg-rmc-gold-light disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BadgeCheck className="h-3.5 w-3.5" />}
                       {t('discussions.review.verify')}
                     </button>
-                    <span className="text-[10px] text-gray-400">{t('discussions.review.verifyHelp')}</span>
+                    <span className="text-[10px] text-gray-400">
+                      {a.questionHasVerified ? t('discussions.review.alreadyVerified') : t('discussions.review.verifyHelp')}
+                    </span>
                   </div>
                 </div>
               </li>

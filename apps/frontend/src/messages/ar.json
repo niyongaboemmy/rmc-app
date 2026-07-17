@@ -2773,7 +2773,8 @@
         "loadError": "تعذّر تحميل القائمة.",
         "onQuestion": "على",
         "released": "أُتيحت",
-        "verified": "اعتُمدت"
+        "verified": "اعتُمدت",
+        "alreadyVerified": "هذا السؤال له إجابة معتمدة بالفعل."
       },
       "searchPlaceholder": "ابحث في الأسئلة…",
       "policy": {
