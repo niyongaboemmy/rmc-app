@@ -2787,6 +2787,36 @@
         "notRetroactive": "التغيير لا يؤثر على الإجابات المنشورة سابقًا — فقط الجديدة.",
         "saved": "تم تحديث السياسة.",
         "saveError": "تعذّر تحديث السياسة."
+      },
+      "manage": {
+        "title": "كل الأسئلة",
+        "subtitle": "كل سؤال، بما في ذلك المخفي والمقفل. تصرّف في أي منها هنا.",
+        "searchPlaceholder": "ابحث في الأسئلة…",
+        "allStatuses": "كل الحالات",
+        "status": {
+          "published": "ظاهر",
+          "hidden": "مخفي",
+          "auto_hidden": "مخفي تلقائيًا",
+          "locked": "مقفل",
+          "deleted": "محذوف"
+        },
+        "colQuestion": "السؤال",
+        "colStatus": "الحالة",
+        "colActivity": "النشاط",
+        "colActions": "",
+        "hide": "إخفاء",
+        "restore": "استعادة",
+        "lock": "قفل",
+        "delete": "حذف",
+        "view": "عرض",
+        "answers": "{count} إجابة",
+        "reports": "{count} بلاغ",
+        "anonymous": "مجهول",
+        "empty": "لا أسئلة مطابقة.",
+        "loadError": "تعذّر تحميل الأسئلة.",
+        "deleteConfirm": "حذف هذا السؤال؟ يختفي من الموقع لكنه يُحفظ للمراجعة ويمكن استعادته.",
+        "acted": "تم.",
+        "actError": "تعذّر إتمام ذلك."
       }
     }
   }

@@ -2787,6 +2787,36 @@
         "notRetroactive": "Guhindura ibi ntibigira ingaruka ku bisubizo byatanzwe — ku bishya gusa.",
         "saved": "Politike yavuguruwe.",
         "saveError": "Ntibyashobotse kuvugurura politike."
+      },
+      "manage": {
+        "title": "Ibibazo byose",
+        "subtitle": "Buri kibazo, harimo ibihishwe n'ibifunze. Ushobora gukoraho ku kintu cyose hano.",
+        "searchPlaceholder": "Shakisha ibibazo…",
+        "allStatuses": "Uko bimeze kose",
+        "status": {
+          "published": "Bigaragara",
+          "hidden": "Byahishwe",
+          "auto_hidden": "Byahishwe byikoresha",
+          "locked": "Byafunzwe",
+          "deleted": "Byasibwe"
+        },
+        "colQuestion": "Ikibazo",
+        "colStatus": "Uko bimeze",
+        "colActivity": "Ibikorwa",
+        "colActions": "",
+        "hide": "Hisha",
+        "restore": "Garura",
+        "lock": "Funga",
+        "delete": "Siba",
+        "view": "Reba",
+        "answers": "ibisubizo {count}",
+        "reports": "ibirego {count}",
+        "anonymous": "mu ibanga",
+        "empty": "Nta kibazo gihuye.",
+        "loadError": "Ntibyashobotse gutangiza ibibazo.",
+        "deleteConfirm": "Gusiba iki kibazo? Kibura ku rubuga ariko kibikwa ku isuzuma kandi gishobora kugarurwa.",
+        "acted": "Byakozwe.",
+        "actError": "Ntibyashobotse kubikora."
       }
     }
   }

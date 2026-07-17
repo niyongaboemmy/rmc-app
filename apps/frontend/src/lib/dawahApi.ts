@@ -485,6 +485,20 @@ export interface DiscussionReport {
   createdAt: string;
 }
 
+export interface AdminQuestion {
+  id: string;
+  slug: string;
+  title: string;
+  language: PostLanguage;
+  status: QuestionStatus;
+  category: { nameEn: string } | null;
+  author: string | null;
+  isAnonymous: boolean;
+  answerCount: number;
+  reportCount: number;
+  createdAt: string;
+}
+
 export interface CategoryPolicy {
   id: string;
   slug: string;
@@ -650,8 +664,13 @@ export const dawahApi = {
       reports: (): Promise<DiscussionReport[]> =>
         unwrap(apiClient.get('/admin/dawah/discussions/reports')),
 
-      /** Hide / restore / lock a question. Always logged server-side. */
-      moderate: (id: string, action: 'hide' | 'restore' | 'lock' | 'unlock', reason = ''):
+      /** ALL questions incl. hidden/locked — so a moderator can act on unreported ones. */
+      questions: (query: { search?: string; status?: string; page?: number; limit?: number } = {}):
+        Promise<Paginated<AdminQuestion>> =>
+        unwrap(apiClient.get('/admin/dawah/discussions/questions', { params: query })),
+
+      /** Hide / restore / lock / delete a question. Delete is a soft-delete. Always logged. */
+      moderate: (id: string, action: 'hide' | 'restore' | 'lock' | 'unlock' | 'delete', reason = ''):
         Promise<{ id: string; status: string }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/${id}/${action}`, { reason })),
 

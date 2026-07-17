@@ -2787,6 +2787,36 @@
         "notRetroactive": "Changing this does not affect answers already posted — only new ones.",
         "saved": "Policy updated.",
         "saveError": "Couldn't update the policy."
+      },
+      "manage": {
+        "title": "All questions",
+        "subtitle": "Every question, including hidden and locked. Act on anything here.",
+        "searchPlaceholder": "Search questions…",
+        "allStatuses": "All statuses",
+        "status": {
+          "published": "Live",
+          "hidden": "Hidden",
+          "auto_hidden": "Auto-hidden",
+          "locked": "Locked",
+          "deleted": "Deleted"
+        },
+        "colQuestion": "Question",
+        "colStatus": "Status",
+        "colActivity": "Activity",
+        "colActions": "",
+        "hide": "Hide",
+        "restore": "Restore",
+        "lock": "Lock",
+        "delete": "Delete",
+        "view": "View",
+        "answers": "{count} ans",
+        "reports": "{count} reports",
+        "anonymous": "anonymous",
+        "empty": "No questions match.",
+        "loadError": "Couldn't load questions.",
+        "deleteConfirm": "Delete this question? It disappears from the site but is kept for audit and can be restored.",
+        "acted": "Done.",
+        "actError": "Couldn't complete that."
       }
     }
   }

@@ -77,10 +77,16 @@ function ModerationQueue() {
         <span className="grid h-10 w-10 place-items-center rounded-lg bg-rmc-green-light text-rmc-green">
           <ShieldAlert className="h-5 w-5" />
         </span>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-bold text-gray-900">{t('discussions.moderation.title')}</h1>
           <p className="text-sm text-gray-500">{t('discussions.moderation.subtitle')}</p>
         </div>
+        <Link
+          href={`/${locale}/admin/dawah/discussions/all`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+        >
+          {t('discussions.manage.title')}
+        </Link>
       </div>
 
       <PolicyPanel />
