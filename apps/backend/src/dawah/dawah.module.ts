@@ -5,9 +5,12 @@ import { DawahCategory } from './entities/dawah-category.entity';
 import { DawahCourse } from './entities/dawah-course.entity';
 import { DawahCourseLesson } from './entities/dawah-course-lesson.entity';
 import { DawahBook } from './entities/dawah-book.entity';
+import { DawahQuestion } from './entities/dawah-question.entity';
+import { DawahAnswer } from './entities/dawah-answer.entity';
 import { DawahCategoryService } from './dawah-category.service';
 import { DawahCourseService } from './dawah-course.service';
 import { DawahBookService } from './dawah-book.service';
+import { DawahDiscussionsService } from './dawah-discussions.service';
 import { OptionalCallerService } from './optional-caller.service';
 import { DawahController } from './dawah.controller';
 import { DawahAdminController } from './dawah-admin.controller';
@@ -27,7 +30,13 @@ import { PublicUploadModule } from '../integrations/storage/public-upload.module
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DawahCategory, DawahCourse, DawahCourseLesson, DawahBook]),
+    TypeOrmModule.forFeature([
+      DawahCategory, DawahCourse, DawahCourseLesson, DawahBook,
+      // Discussions. Votes/reports/moderation_log have tables but no entities yet —
+      // Phase A reads nothing from them, and an entity for a table nobody queries is
+      // dead code that looks like a feature.
+      DawahQuestion, DawahAnswer,
+    ]),
     PublicUploadModule,
     JwtModule.register({}),
   ],
@@ -35,9 +44,10 @@ import { PublicUploadModule } from '../integrations/storage/public-upload.module
     DawahCategoryService,
     DawahCourseService,
     DawahBookService,
+    DawahDiscussionsService,
     OptionalCallerService,
   ],
   controllers: [DawahController, DawahAdminController],
-  exports: [DawahCategoryService, DawahCourseService, DawahBookService],
+  exports: [DawahCategoryService, DawahCourseService, DawahBookService, DawahDiscussionsService],
 })
 export class DawahModule {}

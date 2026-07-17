@@ -5,9 +5,11 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { DawahCategoryService } from './dawah-category.service';
 import { DawahCourseService } from './dawah-course.service';
 import { DawahBookService, type BookFile } from './dawah-book.service';
+import { DawahDiscussionsService } from './dawah-discussions.service';
 import { OptionalCallerService } from './optional-caller.service';
 import { QueryCoursesDto } from './dto/query-courses.dto';
 import { QueryBooksDto } from './dto/query-books.dto';
+import { QueryDiscussionsDto } from './dto/query-discussions.dto';
 import { Public } from '../common/decorators/public.decorator';
 
 /**
@@ -25,8 +27,32 @@ export class DawahController {
     private readonly categories: DawahCategoryService,
     private readonly courses: DawahCourseService,
     private readonly books: DawahBookService,
+    private readonly discussions: DawahDiscussionsService,
     private readonly caller: OptionalCallerService,
   ) {}
+
+  // ── Community Discussions (Phase A: read-only) ────────────────────────────
+  // Posting arrives in Phase B WITH its report queue, never before: a question
+  // goes live on submit, so the phase that allows one must also be able to
+  // remove one. See docs/dawah-discussions-implementation-plan.md §9.
+
+  @Public()
+  @Get('discussions')
+  @ApiOperation({ summary: 'List published community questions.' })
+  listDiscussions(@Query() query: QueryDiscussionsDto) {
+    return this.discussions.list(query);
+  }
+
+  /**
+   * One thread. 404s anything not published — never 403, which would confirm the
+   * row exists and turn the status code itself into a moderation notice.
+   */
+  @Public()
+  @Get('discussions/:slug')
+  @ApiOperation({ summary: 'One question with its published answers, verified first.' })
+  discussionBySlug(@Param('slug') slug: string) {
+    return this.discussions.bySlug(slug);
+  }
 
   /**
    * Ship a PDF to the browser. `inline` renders it in the <iframe> the Library
