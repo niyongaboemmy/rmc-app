@@ -68,13 +68,20 @@ export class DawahAdminController {
     return this.discussions.reportQueue();
   }
 
+  @Get('discussions/questions')
+  @Permissions(Permission.DISCUSSIONS_MODERATE)
+  @ApiOperation({ summary: 'ALL questions (incl. hidden/locked) so a moderator can act on unreported ones.' })
+  allQuestions(@Query() query: { search?: string; status?: string; page?: number; limit?: number }) {
+    return this.discussions.adminQuestions(query);
+  }
+
   @Post('discussions/:id/:action')
   @Permissions(Permission.DISCUSSIONS_MODERATE)
   @ApiOperation({ summary: 'Hide / restore / lock / unlock a question. Always logged.' })
   moderateQuestion(
     @CurrentUser() user: User,
     @Param('id') id: string,
-    @Param('action') action: 'hide' | 'restore' | 'lock' | 'unlock',
+    @Param('action') action: 'hide' | 'restore' | 'lock' | 'unlock' | 'delete',
     @Body() body: { reason?: string },
   ) {
     return this.discussions.moderateQuestion(user, id, action, body?.reason ?? '');

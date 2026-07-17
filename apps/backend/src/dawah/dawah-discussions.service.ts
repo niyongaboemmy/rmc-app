@@ -498,6 +498,47 @@ export class DawahDiscussionsService {
     return { id: categoryId, answerPolicy: policy };
   }
 
+  /**
+   * ALL questions for a moderator, including hidden / locked / auto_hidden ones the public
+   * list never returns. This is how a moderator ACTS ON A QUESTION NOBODY REPORTED — spots
+   * it while browsing the admin, finds it here, removes it. Soft-deleted rows stay hidden
+   * (deletedAt IS NULL via the default scope).
+   */
+  async adminQuestions(query: { search?: string; status?: string; page?: number; limit?: number }) {
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(50, Math.max(1, query.limit ?? 20));
+    const qb = this.questions
+      .createQueryBuilder('q')
+      .leftJoinAndSelect('q.category', 'category')
+      .leftJoinAndSelect('q.author', 'author');
+    if (query.status) qb.andWhere('q.status = :status', { status: query.status });
+    if (query.search?.trim()) {
+      qb.andWhere(
+        `to_tsvector('simple', coalesce(q.title,'') || ' ' || coalesce(q.body,'')) @@ websearch_to_tsquery('simple', :q)`,
+        { q: query.search.trim() },
+      );
+    }
+    const [items, total] = await qb.orderBy('q.createdAt', 'DESC').skip((page - 1) * limit).take(limit).getManyAndCount();
+    return {
+      items: items.map((q) => ({
+        id: q.id,
+        slug: q.slug,
+        title: q.title,
+        language: q.language,
+        status: q.status,
+        category: q.category ? { nameEn: q.category.nameEn } : null,
+        // The real author name — moderators are trusted and need to see who posted, even
+        // for an anonymous question (that anonymity is public-facing, not from moderators).
+        author: q.author ? `${q.author.firstName} ${q.author.lastName}`.trim() : null,
+        isAnonymous: q.isAnonymous,
+        answerCount: q.answerCount,
+        reportCount: q.reportCount,
+        createdAt: q.createdAt,
+      })),
+      total, page, limit,
+    };
+  }
+
   /** The report queue: open reports, auto_hidden targets first, oldest next. */
   async reportQueue() {
     const rows = await this.reports.find({
@@ -521,10 +562,12 @@ export class DawahDiscussionsService {
   async moderateQuestion(
     moderator: User,
     id: string,
-    action: 'hide' | 'restore' | 'lock' | 'unlock',
+    action: 'hide' | 'restore' | 'lock' | 'unlock' | 'delete',
     reason: string,
   ) {
-    const question = await this.questions.findOne({ where: { id } });
+    // withDeleted: a moderator may need to restore a soft-deleted question, so it must be
+    // findable here even though every public path excludes it.
+    const question = await this.questions.findOne({ where: { id }, withDeleted: true });
     if (!question) throw new NotFoundException('Question not found');
 
     const nextStatus: Record<string, DawahQuestion['status']> = {
@@ -532,13 +575,21 @@ export class DawahDiscussionsService {
       restore: 'published',
       lock: 'locked',
       unlock: 'published',
+      delete: 'deleted',
     };
 
     await this.dataSource.transaction(async (manager) => {
       await manager.update(DawahQuestion, id, { status: nextStatus[action] });
-      // Restoring resets the report meter and dismisses the reports, so the same three
-      // reporters cannot immediately re-trip the auto-hide.
+      if (action === 'delete') {
+        // Soft delete: gone from every view, but the row survives for audit. Recoverable
+        // only by an engineer or an explicit restore — the plan's §10-Q5 retention answer.
+        await manager.softDelete(DawahQuestion, id);
+      }
       if (action === 'restore') {
+        // Un-delete AND un-hide: clear the soft-delete tombstone, reset the report meter,
+        // and dismiss the open reports so the same reporters cannot instantly re-trip
+        // auto-hide.
+        await manager.restore(DawahQuestion, id);
         await manager.update(DawahQuestion, id, { reportCount: 0 });
         await manager.update(
           DawahReport,
