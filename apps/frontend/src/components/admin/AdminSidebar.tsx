@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
-  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck,
+  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Flag,
 } from 'lucide-react';
 
 interface NavItem {
@@ -47,7 +47,8 @@ const NAV_ITEMS: NavItem[] = [
   // Moderator or Scholar has only discussions:moderate / discussions:verify. Nesting would
   // hide their queue behind a section they cannot see. Gated on the specific permission so
   // each role sees exactly its own surface (an admin, holding '*', sees both).
-  { key: 'discussionsMod',    href: '/admin/dawah/discussions',         icon: MessagesSquare,  labelKey: 'sidebar.discussionsMod',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
+  { key: 'discussionsAll',    href: '/admin/dawah/discussions/all',     icon: MessagesSquare,  labelKey: 'sidebar.discussionsAll',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
+  { key: 'discussionsMod',    href: '/admin/dawah/discussions',         icon: Flag,            labelKey: 'sidebar.discussionsMod',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
   { key: 'discussionsReview', href: '/admin/dawah/discussions/pending', icon: ClipboardCheck,  labelKey: 'sidebar.discussionsReview', group: 'content', permission: Permission.DISCUSSIONS_VERIFY },
   { key: 'inbox',     href: '/admin/inbox',        icon: Inbox,           labelKey: 'sidebar.inbox',     group: 'content', permission: Permission.CONTACT_MESSAGES_VIEW },
   { key: 'drive',     href: '/admin/drive',        icon: HardDrive,       labelKey: 'sidebar.drive',     group: 'content', permission: Permission.DRIVE_ADMIN       },
