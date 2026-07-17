@@ -18,6 +18,7 @@ import { OptionalCallerService } from './optional-caller.service';
 import { DawahController } from './dawah.controller';
 import { DawahAdminController } from './dawah-admin.controller';
 import { PublicUploadModule } from '../integrations/storage/public-upload.module';
+import { EmailModule } from '../integrations/email/email.module';
 
 /**
  * Dawah Learning — the public course catalogue and digital library.
@@ -41,6 +42,7 @@ import { PublicUploadModule } from '../integrations/storage/public-upload.module
       DawahQuestion, DawahAnswer, DawahReport, DawahModerationLog, DawahVote,
     ]),
     PublicUploadModule,
+    EmailModule,
     JwtModule.register({}),
   ],
   providers: [

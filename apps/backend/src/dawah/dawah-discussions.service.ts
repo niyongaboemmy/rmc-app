@@ -12,6 +12,9 @@ import { DawahVote } from './entities/dawah-vote.entity';
 import { DawahCategory } from './entities/dawah-category.entity';
 import { User } from '../users/entities/user.entity';
 import { randomBytes } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../integrations/email/email.service';
+import { newAnswerEmail, verifiedEmail } from './discussions-notifications';
 import { renderPostMarkdown } from './discussions-markdown';
 import { slugify } from './dawah-slug.util';
 import { DISCUSSION_LIMITS } from './discussions.constants';
@@ -57,6 +60,8 @@ export class DawahDiscussionsService {
     @InjectRepository(DawahVote) private readonly votes: Repository<DawahVote>,
     @InjectRepository(DawahCategory) private readonly categories: Repository<DawahCategory>,
     private readonly dataSource: DataSource,
+    private readonly email: EmailService,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -152,10 +157,33 @@ export class DawahDiscussionsService {
       qb.andWhere('q.language = :language', { language: query.language });
     }
 
+    // Full-text search. The tsvector expression MUST match the GIN index in migration 056
+    // byte-for-byte ('simple', coalesce(title)||' '||coalesce(body)) or Postgres builds
+    // the vector per-row instead of using the index. websearch_to_tsquery accepts what a
+    // human types ("wudu travelling", quoted phrases, -exclusions) without throwing on
+    // punctuation the way to_tsquery does.
+    const searchTerm = query.search?.trim();
+    if (searchTerm) {
+      qb.andWhere(
+        `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, ''))
+           @@ websearch_to_tsquery('simple', :q)`,
+        { q: searchTerm },
+      );
+    }
+
     // NOTE: orderBy() takes ENTITY PROPERTY paths (lastActivityAt), never column names
     // (last_activity_at). A column name typechecks perfectly and throws
     // "Cannot read properties of undefined (reading 'databaseName')" at runtime, because
     // TypeORM is looking up a property that does not exist. Verified the hard way.
+    if (searchTerm) {
+      // Relevance first when there is a query — a keyword match sorted by "most recently
+      // active" buries the best hit under chatter. addSelect so the rank is orderable.
+      qb.addSelect(
+        `ts_rank(to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '')),
+                 websearch_to_tsquery('simple', :q))`,
+        'rank',
+      ).orderBy('rank', 'DESC').addOrderBy('q.lastActivityAt', 'DESC');
+    } else
     switch (query.sort) {
       case 'new':
         qb.orderBy('q.createdAt', 'DESC');
@@ -443,6 +471,33 @@ export class DawahDiscussionsService {
 
   // ── Moderator actions (gated on DISCUSSIONS_MODERATE at the controller) ──────
 
+  /** Categories with their answer_policy, for the moderator policy editor. */
+  async listCategoryPolicies() {
+    const cats = await this.categories.find({ order: { sortOrder: 'ASC' } });
+    return cats.map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      nameEn: c.nameEn,
+      answerPolicy: c.answerPolicy,
+    }));
+  }
+
+  /**
+   * Set a category's answer_policy.
+   *
+   * NOT retroactive by design: flipping a category to scholar_review does not un-publish
+   * answers already live in it. If RMC ever needs that, it is a deliberate bulk action
+   * with its own moderation-log trail — never a silent side effect of a dropdown. The
+   * flip itself is a category setting, not a post-moderation act, so it does not write
+   * dawah_moderation_log (whose target_type is question|answer only).
+   */
+  async setAnswerPolicy(categoryId: string, policy: 'scholar_review' | 'open') {
+    const cat = await this.categories.findOne({ where: { id: categoryId } });
+    if (!cat) throw new NotFoundException('Category not found');
+    await this.categories.update(categoryId, { answerPolicy: policy });
+    return { id: categoryId, answerPolicy: policy };
+  }
+
   /** The report queue: open reports, auto_hidden targets first, oldest next. */
   async reportQueue() {
     const rows = await this.reports.find({
@@ -565,6 +620,7 @@ export class DawahDiscussionsService {
     // the top of "active" would leak its existence.
     if (status === 'published') {
       await this.recountAndTouch(question.id);
+      this.notifyNewAnswer(question.id, user.id); // now visible → tell the asker
     }
 
     const full = await this.answers.findOne({
@@ -663,6 +719,7 @@ export class DawahDiscussionsService {
       }
       throw err;
     }
+    this.notifyVerified(id);
     return { id, status: 'published', verified: true };
   }
 
@@ -731,5 +788,45 @@ export class DawahDiscussionsService {
     if (recent >= DISCUSSION_LIMITS.MAX_VOTES_PER_HOUR) {
       throw new HttpException('Too many votes — slow down.', HttpStatus.TOO_MANY_REQUESTS);
     }
+  }
+
+  // ══ NOTIFICATIONS (Phase D) ════════════════════════════════════════════════
+  // Fire-and-forget, errors swallowed — exactly like the view counter. An answer must
+  // succeed even if SMTP is down; the email is a courtesy, the action is the product.
+  // Self-notification is skipped: nobody needs an email about their own click.
+
+  private get frontendUrl(): string {
+    return this.config.get<string>('FRONTEND_URL') || 'http://localhost:3001';
+  }
+
+  /** Email the QUESTION author that their question got a now-visible answer. */
+  private notifyNewAnswer(questionId: string, answeringUserId: string): void {
+    void (async () => {
+      const rows = await this.dataSource.query(
+        `SELECT q.title, q.slug, q.language, q.author_id, u.email
+           FROM dawah_questions q JOIN users u ON u.id = q.author_id WHERE q.id = $1`,
+        [questionId],
+      );
+      const q = rows[0];
+      if (!q || !q.email || q.author_id === answeringUserId) return; // no self-notify
+      const mail = newAnswerEmail(this.frontendUrl, q.language, q.title, q.slug);
+      await this.email.sendEmail({ to: q.email, ...mail });
+    })().catch((err) => this.logger.warn(`newAnswer notification failed: ${err.message}`));
+  }
+
+  /** Email the ANSWER author that a scholar verified their answer. */
+  private notifyVerified(answerId: string): void {
+    void (async () => {
+      const rows = await this.dataSource.query(
+        `SELECT q.title, q.slug, q.language, u.email
+           FROM dawah_answers a JOIN dawah_questions q ON q.id = a.question_id
+           JOIN users u ON u.id = a.author_id WHERE a.id = $1`,
+        [answerId],
+      );
+      const a = rows[0];
+      if (!a || !a.email) return;
+      const mail = verifiedEmail(this.frontendUrl, a.language, a.title, a.slug);
+      await this.email.sendEmail({ to: a.email, ...mail });
+    })().catch((err) => this.logger.warn(`verified notification failed: ${err.message}`));
   }
 }

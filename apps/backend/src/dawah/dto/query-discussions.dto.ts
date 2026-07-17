@@ -38,8 +38,8 @@ export class QueryDiscussionsDto {
   @IsIn(DISCUSSION_SORTS)
   sort?: DiscussionSort = 'active';
 
-  /** Accepted and ignored until Phase D wires the GIN index (plan §7). */
-  @ApiPropertyOptional({ description: 'Reserved — full-text search lands in Phase D.' })
+  /** Full-text search across title + body (GIN index, 'simple' config). Phase D. */
+  @ApiPropertyOptional({ description: 'Full-text search across title and body.' })
   @IsOptional()
   @IsString()
   @MaxLength(150)

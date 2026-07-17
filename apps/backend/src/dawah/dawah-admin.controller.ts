@@ -47,6 +47,20 @@ export class DawahAdminController {
   // Separate from DAWAH_MANAGE on purpose: uploading a PDF and judging a member's
   // religious post are different authorities held by different people.
 
+  @Get('discussions/categories')
+  @Permissions(Permission.DISCUSSIONS_MODERATE)
+  @ApiOperation({ summary: 'Categories with their answer_policy (for the policy editor).' })
+  categoryPolicies() {
+    return this.discussions.listCategoryPolicies();
+  }
+
+  @Patch('discussions/categories/:id/policy')
+  @Permissions(Permission.DISCUSSIONS_MODERATE)
+  @ApiOperation({ summary: "Set a category's answer_policy. NOT retroactive." })
+  setPolicy(@Param('id') id: string, @Body() body: { answerPolicy: 'scholar_review' | 'open' }) {
+    return this.discussions.setAnswerPolicy(id, body.answerPolicy);
+  }
+
   @Get('discussions/reports')
   @Permissions(Permission.DISCUSSIONS_MODERATE)
   @ApiOperation({ summary: 'The moderation queue — open reports, auto-hidden first.' })
