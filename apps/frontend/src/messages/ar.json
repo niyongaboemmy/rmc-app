@@ -1263,7 +1263,9 @@
       "goodConduct": "حسن السلوك",
       "funeral": "الجنازة",
       "hajj": "الحج",
-      "dawah": "الدعوة"
+      "dawah": "الدعوة",
+      "discussionsMod": "بلاغات النقاشات",
+      "discussionsReview": "إجابات للمراجعة"
     },
     "topbar": {
       "viewSite": "عرض الموقع",
