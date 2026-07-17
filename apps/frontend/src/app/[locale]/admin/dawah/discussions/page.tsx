@@ -8,7 +8,7 @@ import { ShieldAlert, Eye, EyeOff, RotateCcw, Lock, ExternalLink, Loader2 } from
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
-import { dawahApi, type DiscussionReport } from '@/lib/dawahApi';
+import { dawahApi, type DiscussionReport, type CategoryPolicy } from '@/lib/dawahApi';
 
 /**
  * Discussion moderation queue.
@@ -83,6 +83,8 @@ function ModerationQueue() {
         </div>
       </div>
 
+      <PolicyPanel />
+
       {loading ? (
         <div className="mt-8 space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -140,6 +142,71 @@ function ModerationQueue() {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/**
+ * Category answer-policy editor. Co-located with the report queue because both are the
+ * moderator's job (DISCUSSIONS_MODERATE). Flipping a policy is NOT retroactive — the copy
+ * says so, because a moderator who assumes otherwise would think they had hidden live
+ * answers when they had not.
+ */
+function PolicyPanel() {
+  const t = useTranslations('dawah');
+  const { success, error } = useToast();
+  const [cats, setCats] = useState<CategoryPolicy[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    dawahApi.admin.discussions.categoryPolicies().then(setCats).catch(() => setCats([]));
+  }, []);
+
+  const toggle = async (c: CategoryPolicy) => {
+    const next = c.answerPolicy === 'open' ? 'scholar_review' : 'open';
+    setBusyId(c.id);
+    try {
+      await dawahApi.admin.discussions.setPolicy(c.id, next);
+      setCats((prev) => prev.map((x) => (x.id === c.id ? { ...x, answerPolicy: next } : x)));
+      success(t('discussions.policy.saved'));
+    } catch {
+      error(t('discussions.policy.saveError'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (!cats.length) return null;
+  return (
+    <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
+      <h2 className="text-sm font-bold text-gray-900">{t('discussions.policy.title')}</h2>
+      <p className="mt-0.5 text-xs text-gray-500">{t('discussions.policy.subtitle')}</p>
+      <p className="mt-2 rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-700">
+        {t('discussions.policy.notRetroactive')}
+      </p>
+      <ul className="mt-3 divide-y divide-gray-100">
+        {cats.map((c) => {
+          const reviewed = c.answerPolicy === 'scholar_review';
+          return (
+            <li key={c.id} className="flex items-center justify-between gap-3 py-2">
+              <span className="text-sm text-gray-700">{c.nameEn}</span>
+              <button
+                type="button"
+                onClick={() => toggle(c)}
+                disabled={busyId === c.id}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                  reviewed
+                    ? 'bg-rmc-green-light text-rmc-green'
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+                title={reviewed ? t('discussions.policy.reviewedHelp') : t('discussions.policy.openHelp')}
+              >
+                {reviewed ? t('discussions.policy.reviewed') : t('discussions.policy.open')}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

@@ -539,6 +539,13 @@ liability with RMC's name on it.
    "delete my account" do to their questions — orphan or purge?
 8. **Notifications:** email on answer / on verification / **on release from review**?
    Reuse the subscriber shell, and respect existing unsubscribe state.
+   > **BUILT (17 July, Phase D) with a KNOWN GAP.** Notifications now fire on
+   > answer-becomes-visible and on verification (fire-and-forget, so a dead SMTP never
+   > breaks the action). But recipients are USERS (question/answer authors), and there is
+   > no per-user "don't email me about discussions" opt-out — the subscribers table's
+   > unsubscribe is a separate identity system. **Before enabling in production, a member
+   > opt-out must exist**, or wire the two identity systems together. Until then the
+   > notifications are safe in dev (SMTP logs to console) but should stay off in prod.
 9. **Does an author see their own pending answer?** Recommended yes, marked "awaiting
    review" — the alternative is their answer vanishing with no explanation.
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, ArrowRight, MessagesSquare, Plus, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MessagesSquare, Plus, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -51,9 +51,13 @@ export function DiscussionsPageClient() {
   const category = searchParams.get('category') ?? '';
   const language = searchParams.get('language') ?? '';
   const sort = (searchParams.get('sort') as DiscussionSort) || 'active';
+  const search = searchParams.get('search') ?? '';
   const page = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
 
   const [categories, setCategories] = useState<DawahCategory[]>([]);
+  // Typed-but-not-yet-committed search text; mirrors the URL when it changes underneath
+  // us (back button, Clear filters).
+  const [searchInput, setSearchInput] = useState(search);
   const [data, setData] = useState<Paginated<DiscussionQuestion> | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -71,6 +75,16 @@ export function DiscussionsPageClient() {
     [pathname, router, searchParams],
   );
 
+  useEffect(() => setSearchInput(search), [search]);
+
+  // One request per pause, not per keystroke. Resets to page 1 — page 3 of the old
+  // results is meaningless against a new query.
+  useEffect(() => {
+    if (searchInput === search) return;
+    const id = setTimeout(() => setParams({ search: searchInput || null, page: null }), 300);
+    return () => clearTimeout(id);
+  }, [searchInput, search, setParams]);
+
   useEffect(() => {
     dawahApi.categories().then(setCategories).catch(() => setCategories([]));
   }, []);
@@ -82,6 +96,7 @@ export function DiscussionsPageClient() {
       .list({
         category: category || undefined,
         language: (language as PostLanguage) || undefined,
+        search: search || undefined,
         sort,
         page,
         limit: PAGE_SIZE,
@@ -100,9 +115,9 @@ export function DiscussionsPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [category, language, sort, page]);
+  }, [category, language, sort, search, page]);
 
-  const hasFilters = Boolean(category || language);
+  const hasFilters = Boolean(category || language || search);
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -140,7 +155,19 @@ export function DiscussionsPageClient() {
             {/* ── Filters ────────────────────────────────────────────────── */}
             <Reveal>
               <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                  <div className="relative">
+                    {/* start-3 + ps-9 (logical) so the icon flips under RTL. */}
+                    <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
+                    <input
+                      type="search"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder={t('discussions.searchPlaceholder')}
+                      aria-label={t('discussions.searchPlaceholder')}
+                      className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                    />
+                  </div>
                   <SearchableSelect
                     value={category}
                     onChange={(v) => setParams({ category: v || null, page: null })}
@@ -188,7 +215,7 @@ export function DiscussionsPageClient() {
                     {hasFilters && (
                       <button
                         type="button"
-                        onClick={() => setParams({ category: null, language: null, page: null })}
+                        onClick={() => setParams({ category: null, language: null, search: null, page: null })}
                         className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
                       >
                         <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}

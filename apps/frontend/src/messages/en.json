@@ -2772,6 +2772,18 @@
         "onQuestion": "On",
         "released": "Released",
         "verified": "Verified"
+      },
+      "searchPlaceholder": "Search questions…",
+      "policy": {
+        "title": "Answer review policy",
+        "subtitle": "Which categories hold answers for a scholar before they appear.",
+        "reviewed": "Scholar review",
+        "open": "Open",
+        "reviewedHelp": "Answers wait for a scholar.",
+        "openHelp": "Answers publish immediately.",
+        "notRetroactive": "Changing this does not affect answers already posted — only new ones.",
+        "saved": "Policy updated.",
+        "saveError": "Couldn't update the policy."
       }
     }
   }

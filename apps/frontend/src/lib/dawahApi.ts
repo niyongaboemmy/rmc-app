@@ -485,6 +485,13 @@ export interface DiscussionReport {
   createdAt: string;
 }
 
+export interface CategoryPolicy {
+  id: string;
+  slug: string;
+  nameEn: string;
+  answerPolicy: 'scholar_review' | 'open';
+}
+
 export interface PendingAnswer {
   id: string;
   bodyHtml: string;
@@ -498,6 +505,7 @@ export interface DiscussionsQuery {
   category?: string;
   language?: PostLanguage;
   sort?: DiscussionSort;
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -649,6 +657,12 @@ export const dawahApi = {
       /** Verify: publish + badge + pin ("RMC says this is correct"). */
       verify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/verify`, {})),
+
+      /** Category answer_policy — read + set. Setting is NOT retroactive. */
+      categoryPolicies: (): Promise<CategoryPolicy[]> =>
+        unwrap(apiClient.get('/admin/dawah/discussions/categories')),
+      setPolicy: (id: string, answerPolicy: 'scholar_review' | 'open'): Promise<CategoryPolicy> =>
+        unwrap(apiClient.patch(`/admin/dawah/discussions/categories/${id}/policy`, { answerPolicy })),
     },
 
     categories: {
