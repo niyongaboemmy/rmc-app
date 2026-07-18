@@ -18,6 +18,8 @@ import {
 } from './entities/marriage-application.entity';
 import { MarriageDocument, DocumentType } from './entities/marriage-document.entity';
 import { districtCode } from '../common/district-codes';
+import { generateTrackingCode } from '../tracking/tracking-code.util';
+import type { TrackingSubject } from '../tracking/tracking-verification.service';
 import { MarriageStatusHistory } from './entities/marriage-status-history.entity';
 import { MarriageTransaction } from './entities/marriage-transaction.entity';
 import {
@@ -120,6 +122,45 @@ export class MarriageService {
     return `RMC-${code}-${year}${month}-${seq}`;
   }
 
+  /** Crypto-random public tracking code, retried on the (rare) collision. */
+  private async generateUniqueTrackingCode(): Promise<string> {
+    for (let i = 0; i < 5; i++) {
+      const code = generateTrackingCode('RMC-MAR');
+      const clash = await this.applicationRepo.count({ where: { trackingCode: code } });
+      if (clash === 0) return code;
+    }
+    throw new Error('Could not generate a unique tracking code');
+  }
+
+  // ── Secure tracking (phone-OTP gated) ────────────────────────────────────────
+
+  /** Resolve a public tracking code to the OTP subject (id + contact phone), or null. */
+  async findSubjectByCode(trackingCode: string): Promise<TrackingSubject | null> {
+    const app = await this.applicationRepo.findOne({
+      where: { trackingCode: (trackingCode || '').trim().toUpperCase() },
+      select: { id: true, notificationPhone: true, groomPhone: true, bridePhone: true },
+    });
+    if (!app) return null;
+    return { id: app.id, phone: app.notificationPhone || app.groomPhone || app.bridePhone };
+  }
+
+  /** Minimal, safe status view for a verified tracking session (by id). No PII beyond names. */
+  async getTrackingInfo(id: string) {
+    const app = await this.applicationRepo.findOne({ where: { id }, relations: ['statusHistory'] });
+    if (!app) throw new NotFoundException('Application not found');
+    const parties = await this.getPartyConfirmations(app.id);
+    return {
+      trackingCode: app.trackingCode,
+      groomName: app.groomName,
+      brideName: app.brideName,
+      status: app.status,
+      rejectionReason: app.rejectionReason,
+      submittedAt: app.createdAt,
+      updatedAt: app.updatedAt,
+      parties: parties.map((p) => ({ role: p.role, confirmedAt: p.confirmedAt })),
+    };
+  }
+
   // ── Create / Draft ──────────────────────────────────────────────────────────
 
   async createDraft(
@@ -171,9 +212,11 @@ export class MarriageService {
 
     const amountDue = await this.resolveMarriageFee(dto.venueType);
     const applicationNumber = await this.generateApplicationNumber(dto.district);
+    const trackingCode = await this.generateUniqueTrackingCode();
 
     const app = this.applicationRepo.create({
       applicationNumber,
+      trackingCode,
       applicantId,
       notificationPhone: dto.notificationPhone,
       groomName: dto.groomName,

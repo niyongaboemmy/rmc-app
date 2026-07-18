@@ -14,6 +14,7 @@ import { NotificationSettingsModule } from '../integrations/notifications/notifi
 import { SmsModule } from '../integrations/sms/sms.module';
 import { EmailModule } from '../integrations/email/email.module';
 import { PublicUploadModule } from '../integrations/storage/public-upload.module';
+import { TrackingModule } from '../tracking/tracking.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PublicUploadModule } from '../integrations/storage/public-upload.module
     SmsModule,
     EmailModule,
     PublicUploadModule,
+    TrackingModule,
     TypeOrmModule.forFeature([
       HajjApplication,
       HajjStatusHistory,

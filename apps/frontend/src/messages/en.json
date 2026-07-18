@@ -1431,7 +1431,283 @@
     },
     "jobs": {
       "title": "Job Opportunities",
-      "desc": "Employment vacancies at RMC and affiliated organizations across Rwanda."
+      "desc": "Employment vacancies at RMC and affiliated organizations across Rwanda.",
+      "openings": {
+        "title": "Current openings",
+        "subtitle": "Browse and apply for open positions at RMC and affiliated organizations.",
+        "none": "No open positions right now",
+        "noneSub": "Please check back soon — new roles are posted here.",
+        "viewApply": "View & apply",
+        "deadline": "Apply by",
+        "positions": "positions",
+        "back": "Back to Jobs",
+        "about": "About this role",
+        "responsibilities": "Responsibilities",
+        "requirements": "Requirements",
+        "typeLabel": "Employment type",
+        "locationLabel": "Location",
+        "positionsLabel": "Open positions",
+        "salaryLabel": "Salary range",
+        "deadlineLabel": "Application deadline",
+        "applyNow": "Apply for this job",
+        "notFound": "This position is no longer available.",
+        "closed": "This position is closed and no longer accepting applications.",
+        "deadlineOver": "The application deadline for this position has passed."
+      },
+      "landing": {
+        "backToServices": "Back to services",
+        "heroTitle": "Job Opportunities",
+        "heroSubtitle": "Apply for open positions at RMC and affiliated organizations, and track your application status.",
+        "applyTitle": "Apply for a Job",
+        "applyText": "Submit your application with your CV, cover letter and supporting documents.",
+        "applyCta": "Apply now",
+        "statusTitle": "Check Application Status",
+        "statusText": "Track where your submitted application stands.",
+        "statusCta": "Check status",
+        "whoTitle": "Who it's for",
+        "whoSubtitle": "Open to community members ready to bring their skills to RMC and affiliated organizations.",
+        "who": {
+          "seekers": {
+            "title": "Job seekers",
+            "text": "Anyone looking for employment at RMC or an affiliated organization."
+          },
+          "graduates": {
+            "title": "Recent graduates",
+            "text": "New graduates with their academic papers ready to start a career."
+          },
+          "professionals": {
+            "title": "Experienced professionals",
+            "text": "Skilled workers seeking a new role within the community network."
+          },
+          "community": {
+            "title": "Community members",
+            "text": "Members who want to serve and grow within the RMC community."
+          }
+        },
+        "stepsTitle": "How to apply",
+        "stepsSubtitle": "Five simple steps from start to a tracked application.",
+        "steps": {
+          "s1": {
+            "title": "Sign in",
+            "text": "Sign in to your RMC account, or register in a minute if you're new."
+          },
+          "s2": {
+            "title": "Fill your details",
+            "text": "Enter your personal details and the position you're applying for."
+          },
+          "s3": {
+            "title": "Upload your documents",
+            "text": "Attach your application letter, CV, National ID, criminal record and academic papers."
+          },
+          "s4": {
+            "title": "Add good conduct",
+            "text": "Verify your good-conduct certificate number, or upload the certificate."
+          },
+          "s5": {
+            "title": "Submit & track",
+            "text": "Submit and keep your tracking number to follow your application status."
+          }
+        },
+        "needTitle": "What you'll need",
+        "needSubtitle": "Have these ready before you start — you can upload PDFs, Word files or images.",
+        "need": {
+          "r1": "Application letter",
+          "r2": "Curriculum Vitae (CV)",
+          "r3": "National ID",
+          "r4": "Criminal record certificate",
+          "r5": "Academic papers (diplomas / certificates)",
+          "r6": "Good conduct certificate — a number to verify, or a file to upload",
+          "r7": "Employer recommendation (optional)"
+        },
+        "faqTitle": "Frequently asked questions",
+        "faqs": {
+          "f1": {
+            "q": "Do I need an account to apply?",
+            "a": "Yes. Signing in lets us contact you and lets you track your application from start to decision."
+          },
+          "f2": {
+            "q": "What file types and sizes can I upload?",
+            "a": "PDF, Word documents and images (JPG or PNG). Each field shows its maximum size, and files are checked before they upload."
+          },
+          "f3": {
+            "q": "What if I don't have a good-conduct certificate number?",
+            "a": "No problem — you can upload a scan or photo of the certificate instead of entering a number."
+          },
+          "f4": {
+            "q": "How do I check my application status?",
+            "a": "Open the \"Check status\" page and sign in. You'll see each stage: submitted, under review, shortlisted and the final decision."
+          }
+        },
+        "ctaTitle": "Ready to apply?",
+        "ctaSubtitle": "Start your application now, or reach out if you have questions first.",
+        "ctaStart": "Start application",
+        "ctaContact": "Contact us"
+      },
+      "apply": {
+        "heroTitle": "Job Application",
+        "requirementsHeroTitle": "Apply for a Job",
+        "backToService": "Back to Jobs",
+        "signInPrompt": "Please sign in to start your job application.",
+        "signInToApply": "Sign in to apply",
+        "noAccount": "Don't have an account?",
+        "requestAccess": "Register",
+        "requirementsHeroSubtitle": "Have your CV, application letter, National ID, criminal record and academic papers ready.",
+        "sectionApplicant": "Applicant details",
+        "sectionApplicantSub": "Tell us who you are and how to reach you.",
+        "sectionResidence": "Residence",
+        "sectionDocuments": "Documents",
+        "sectionDocumentsSub": "Upload clear, readable files. The maximum size is shown on each field.",
+        "fullNames": "Full names",
+        "fullNamesError": "Please enter your full names.",
+        "email": "Email",
+        "emailError": "Enter a valid email address.",
+        "phone": "Phone",
+        "phoneHint": "Format: 0781234567",
+        "phoneFormatError": "Enter a valid Rwandan phone number.",
+        "positionAppliedFor": "Position applied for",
+        "positionError": "Please enter the position you are applying for.",
+        "jobSelect": "Position (open vacancy)",
+        "jobSelectPlaceholder": "Select a position",
+        "jobLoading": "Loading open positions…",
+        "jobNone": "No open positions right now",
+        "jobNoneHint": "There are no open vacancies at the moment.",
+        "jobBrowse": "Browse jobs",
+        "jobRequired": "Please select the position you're applying for.",
+        "jobPositions": "positions",
+        "district": "District",
+        "districtPlaceholder": "Select district",
+        "sector": "Sector",
+        "sectorPlaceholder": "Select sector",
+        "selectDistrictFirst": "Select a district first",
+        "cell": "Cell",
+        "village": "Village",
+        "optional": "optional",
+        "applicationLetter": "Application letter",
+        "applicationLetterHint": "PDF, DOC or image · 10 MB",
+        "cv": "Curriculum Vitae (CV)",
+        "cvHint": "PDF or DOC · 10 MB",
+        "nationalId": "National ID",
+        "nationalIdHint": "Image or PDF · 5 MB",
+        "criminalRecord": "Criminal record",
+        "criminalRecordHint": "PDF or image · 10 MB",
+        "academicPapers": "Academic papers",
+        "academicPapersHint": "Add each certificate or diploma. PDF or image · 10 MB each.",
+        "addAcademicPaper": "Add another paper",
+        "academicPapersRequired": "Add at least one academic paper.",
+        "goodConduct": "Good conduct certificate",
+        "goodConductSub": "Provide a certificate number to verify, or upload the certificate.",
+        "goodConductVerifyOption": "I have a certificate number",
+        "goodConductUploadOption": "Upload the certificate",
+        "goodConductNumber": "Certificate number",
+        "goodConductNumberPlaceholder": "e.g. GC-2024-000123",
+        "verify": "Verify",
+        "verifying": "Verifying…",
+        "verified": "Verified",
+        "verifiedFor": "Verified — {name}",
+        "verifyFailed": "We couldn't verify that certificate number.",
+        "goodConductFile": "Good conduct certificate",
+        "goodConductFileHint": "PDF or image · 5 MB",
+        "goodConductRequired": "Verify a certificate number or upload the certificate.",
+        "employerRecommendation": "Employer recommendation",
+        "employerRecommendationHint": "Optional · PDF or image · 10 MB",
+        "uploadOrDrop": "Upload or drop a file",
+        "change": "Change",
+        "remove": "Remove",
+        "unsupportedType": "Unsupported file type",
+        "fileTooLarge": "File too large (max {mb} MB)",
+        "requiredDocsMissing": "Please attach all required documents.",
+        "submit": "Submit application",
+        "submitting": "Submitting…",
+        "uploadingDocuments": "Uploading documents…",
+        "genericError": "Something went wrong. Please try again.",
+        "successTitle": "Application submitted",
+        "successText": "Your job application has been received. Keep your tracking number to check its status.",
+        "trackingNumber": "Tracking number",
+        "checkStatusBtn": "Check status",
+        "backToJobs": "Back to Jobs"
+      },
+      "status": {
+        "heroTitle": "Application Status",
+        "backToService": "Back to Jobs",
+        "signInPrompt": "Sign in to view your job applications.",
+        "signIn": "Sign in",
+        "noRequests": "You haven't submitted any job applications yet.",
+        "applyNow": "Apply now",
+        "checkAnother": "Back to my applications",
+        "detailsTitle": "Application",
+        "submittedOn": "Submitted on",
+        "positionLabel": "Position",
+        "trackingNumber": "Tracking number",
+        "currentStatus": "Current status",
+        "trackTitle": "Track with a tracking number",
+        "trackSubtitle": "Enter your tracking code and phone number — we'll text you a verification code to view your status.",
+        "trackPlaceholder": "e.g. RMC-JOB-202607-00001",
+        "trackButton": "Track",
+        "trackNotFound": "No application found with that tracking number. Check it and try again.",
+        "trackDetailsInvalid": "Enter your tracking code and a valid phone number.",
+        "trackPhonePlaceholder": "Phone number (e.g. 0781234567)",
+        "trackPhoneHint": "Use the phone number on your application — we'll send a code to it by SMS.",
+        "trackSendCode": "Send verification code",
+        "trackSending": "Sending…",
+        "trackOtpSent": "If your tracking code and phone match, we've sent a 6-digit code by SMS. Enter it below.",
+        "trackOtpPlaceholder": "6-digit code",
+        "trackOtpRequired": "Enter the code we sent you.",
+        "trackVerify": "Verify & view status",
+        "trackVerifying": "Verifying…",
+        "trackResend": "Resend code",
+        "trackResendIn": "Resend in {s}s",
+        "trackChangeDetails": "Change details",
+        "trackRateLimited": "Too many attempts. Please try again in a few minutes.",
+        "trackOtpInvalid": "Invalid or expired code. Please try again.",
+        "trackOtpExpired": "That code has expired. Request a new one.",
+        "trackOtpMaxAttempts": "Too many incorrect attempts. Request a new code.",
+        "trackGenericError": "Something went wrong. Please try again.",
+        "trackAnother": "Track another application",
+        "respondTitle": "Respond to this request",
+        "respondSubtitle": "Add the requested information and any supporting documents.",
+        "respondPlaceholder": "Type your response…",
+        "respondDocument": "Document",
+        "respondAddDoc": "Add a document",
+        "respondSubmit": "Send response",
+        "respondSubmitting": "Sending…",
+        "respondSuccess": "Your response was sent. Your application is back under review.",
+        "respondError": "Couldn't send your response. Please try again.",
+        "respondMessageRequired": "Please write a response.",
+        "withdraw": "Withdraw application",
+        "withdrawConfirm": "Are you sure you want to withdraw this application? This can’t be undone.",
+        "withdrawConfirmBtn": "Yes, withdraw",
+        "withdrawCancel": "Keep it",
+        "withdrawError": "Couldn’t withdraw your application. Please try again.",
+        "statusLabel": {
+          "submitted": "Submitted",
+          "under_review": "Under review",
+          "shortlisted": "Shortlisted",
+          "more_info_requested": "More info requested",
+          "accepted": "Accepted",
+          "rejected": "Not selected",
+          "cancelled": "Cancelled"
+        },
+        "stages": {
+          "submitted": "Submitted",
+          "review": "Under review",
+          "shortlisted": "Shortlisted",
+          "decision": "Decision"
+        },
+        "stageDesc": {
+          "submitted": "We've received your application.",
+          "review": "Our team is reviewing your documents.",
+          "shortlisted": "You've been shortlisted for consideration.",
+          "decision": "A final decision has been made."
+        },
+        "banner": {
+          "moreInfoTitle": "More information needed",
+          "moreInfoText": "The review team has requested additional information.",
+          "rejectedTitle": "Not selected",
+          "rejectedText": "Thank you for applying. This application was not selected.",
+          "cancelledTitle": "Application cancelled",
+          "cancelledText": "This application has been cancelled."
+        }
+      }
     },
     "hajj": {
       "title": "Hajj Services",
@@ -1536,6 +1812,30 @@
         "proofNote": "Keep your bank slip — you will be asked to upload it as proof of payment when you register."
       }
     }
+  },
+  "tracking": {
+    "title": "Track your application",
+    "subtitle": "Enter your tracking code and phone number — we'll text you a verification code to view your status.",
+    "codePlaceholder": "Tracking code (e.g. RMC-…-2607-XXXXXXXX)",
+    "phonePlaceholder": "Phone number (e.g. 0781234567)",
+    "phoneHint": "Use the phone number on your application — we'll send a code to it by SMS.",
+    "sendCode": "Send verification code",
+    "sending": "Sending…",
+    "otpSent": "If your tracking code and phone match, we've sent a 6-digit code by SMS. Enter it below.",
+    "otpPlaceholder": "6-digit code",
+    "verify": "Verify & view status",
+    "verifying": "Verifying…",
+    "resend": "Resend code",
+    "resendIn": "Resend in {s}s",
+    "changeDetails": "Change details",
+    "rateLimited": "Too many attempts. Please try again in a few minutes.",
+    "otpInvalid": "Invalid or expired code. Please try again.",
+    "otpExpired": "That code has expired. Request a new one.",
+    "otpMaxAttempts": "Too many incorrect attempts. Request a new code.",
+    "genericError": "Something went wrong. Please try again.",
+    "detailsInvalid": "Enter your tracking code and a valid phone number.",
+    "otpRequired": "Enter the code we sent you.",
+    "trackAnother": "Track another application"
   },
   "contact": {
     "title": "Contact Us",
@@ -1666,7 +1966,9 @@
       "discussionsMod": "Discussion reports",
       "discussionsReview": "Answers to review",
       "discussionsAll": "All questions",
-      "tenders": "Tenders"
+      "tenders": "Tenders",
+      "jobs": "Job Applications",
+      "jobPostings": "Job Postings"
     },
     "topbar": {
       "viewSite": "View site",

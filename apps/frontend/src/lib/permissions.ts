@@ -80,6 +80,8 @@ export enum Permission {
   SCHOLARSHIP_MANAGE = 'scholarship:manage',
   SCHOLARSHIP_APPROVE = 'scholarship:approve',
   SCHOLARSHIP_REPORTS = 'scholarship:reports',
+  JOB_APPLICATIONS_VIEW = 'job_applications:view',
+  JOB_APPLICATIONS_MANAGE = 'job_applications:manage',
 
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

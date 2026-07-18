@@ -5,22 +5,32 @@ import {
   Put,
   Param,
   Body,
+  Ip,
+  Headers,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MarriageService } from './marriage.service';
 import { CreateMarriageApplicationDto } from './dto/create-marriage-application.dto';
 import { SaveDocumentDto } from './dto/save-document.dto';
+import { TrackingVerificationService } from '../tracking/tracking-verification.service';
+import { RequestTrackingOtpDto, VerifyTrackingOtpDto } from '../tracking/dto/tracking-otp.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { Public } from '../common/decorators/public.decorator';
 
+const MARRIAGE_SUBJECT = 'marriage_application';
+
 @ApiTags('Marriage — Member')
 @Controller('marriage')
 export class MarriageController {
-  constructor(private readonly service: MarriageService) {}
+  constructor(
+    private readonly service: MarriageService,
+    private readonly tracking: TrackingVerificationService,
+  ) {}
 
   @Post('applications/draft')
   @ApiBearerAuth()
@@ -99,10 +109,48 @@ export class MarriageController {
     return this.service.findAllByApplicant(user.id);
   }
 
-  // NOTE: this must come BEFORE /applications/:id to avoid UUID parse conflicts
+  // ── Secure public tracking (phone-OTP gated) ─────────────────────────────────
+  // These must stay BEFORE /applications/:id to avoid UUID parse conflicts.
+
+  @Post('applications/track/request-otp')
+  @Public()
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
+  @ApiOperation({ summary: 'Request an SMS OTP to unlock tracking (code + phone must match)' })
+  async requestTrackingOtp(@Body() dto: RequestTrackingOtpDto, @Ip() ip: string) {
+    const subject = await this.service.findSubjectByCode(dto.trackingCode);
+    return this.tracking.requestOtp(MARRIAGE_SUBJECT, subject, dto.phone, ip);
+  }
+
+  @Post('applications/track/verify-otp')
+  @Public()
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 600000 } })
+  @ApiOperation({ summary: 'Verify the OTP; returns a short-lived token + status' })
+  async verifyTrackingOtp(@Body() dto: VerifyTrackingOtpDto, @Ip() ip: string) {
+    const subject = await this.service.findSubjectByCode(dto.trackingCode);
+    const { token, subjectId } = await this.tracking.verifyOtp(MARRIAGE_SUBJECT, subject, dto.phone, dto.otp, ip);
+    const info = await this.service.getTrackingInfo(subjectId);
+    return { token, ...info };
+  }
+
+  @Get('applications/track/session')
+  @Public()
+  @ApiOperation({ summary: 'Refresh status using a valid tracking token (Authorization: Bearer)' })
+  async trackingSession(@Headers('authorization') authHeader?: string) {
+    const token = (authHeader || '').replace(/^Bearer\s+/i, '');
+    const id = this.tracking.verifyToken(token, MARRIAGE_SUBJECT);
+    return this.service.getTrackingInfo(id);
+  }
+
+  // Used only by the certificate / provisional-certificate viewer pages (shareable
+  // certificate documents). Rate-limited. NOTE: this by-number lookup remains a
+  // follow-up for the lighter "unguessable + rate-limit" hardening of certificate
+  // links — the OTP-gated flow above is what secures status tracking.
   @Get('applications/by-number/:number')
   @Public()
-  @ApiOperation({ summary: 'Get application by application number (public)' })
+  @Throttle({ default: { limit: 20, ttl: 600000 } })
+  @ApiOperation({ summary: 'Get application by number (certificate viewer only, rate-limited)' })
   getByNumber(@Param('number') number: string) {
     return this.service.findByApplicationNumber(number);
   }
@@ -148,20 +196,8 @@ export class MarriageController {
     return this.service.getPartyConfirmations(id);
   }
 
-  @Get('applications/by-number/:number/parties')
-  @Public()
-  @ApiOperation({
-    summary: 'Get party confirmation status by application number (public — no PII)',
-  })
-  async getPartiesByNumber(@Param('number') number: string) {
-    const app = await this.service.findByApplicationNumber(number);
-    if (!app) return [];
-    const parties = await this.service.getPartyConfirmations(app.id);
-    return parties.map((p) => ({
-      role: p.role,
-      confirmedAt: p.confirmedAt,
-    }));
-  }
+  // (Public party-status by number removed — party confirmations are now
+  //  returned inside the OTP-verified tracking session.)
 
   @Get('confirm/:token')
   @Public()

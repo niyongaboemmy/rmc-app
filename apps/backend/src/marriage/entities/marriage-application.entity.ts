@@ -47,6 +47,12 @@ export class MarriageApplication {
   @Column({ name: 'application_number', type: 'varchar', length: 30, unique: true })
   applicationNumber: string;
 
+  // Public, cryptographically-random, unguessable code for the OTP-gated status
+  // lookup (RMC-MAR-<YYMM>-<random>). Non-enumerable.
+  @Index('IDX_marriage_applications_tracking_code', { unique: true })
+  @Column({ name: 'tracking_code', type: 'varchar', length: 40 })
+  trackingCode: string;
+
   @Index('IDX_marriage_app_applicant')
   @Column({ name: 'applicant_id', type: 'uuid' })
   applicantId: string;

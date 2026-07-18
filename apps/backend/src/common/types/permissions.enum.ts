@@ -77,6 +77,9 @@ export enum Permission {
   SCHOLARSHIP_MANAGE = 'scholarship:manage',
   SCHOLARSHIP_APPROVE = 'scholarship:approve',
   SCHOLARSHIP_REPORTS = 'scholarship:reports',
+  // ── Job Applications Service ──────────────────────────────────────
+  JOB_APPLICATIONS_VIEW = 'job_applications:view',
+  JOB_APPLICATIONS_MANAGE = 'job_applications:manage',
 
   // ── Funeral Service ───────────────────────────────────────────────
   FUNERAL_VIEW = 'funeral:view',

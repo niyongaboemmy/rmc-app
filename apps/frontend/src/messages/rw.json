@@ -1431,7 +1431,283 @@
     },
     "jobs": {
       "title": "Amahirwe y'Akazi",
-      "desc": "Imirimo ihagaze muri RMC n'imiryango ishamikiyeho muri Rwanda."
+      "desc": "Imirimo ihagaze muri RMC n'imiryango ishamikiyeho muri Rwanda.",
+      "openings": {
+        "title": "Imyanya ifunguye",
+        "subtitle": "Reba usabe imyanya ifunguye muri RMC n'imiryango ishamikiyeho.",
+        "none": "Nta myanya ifunguye ubu",
+        "noneSub": "Ongera urebe vuba — imyanya mishya ishyirwa hano.",
+        "viewApply": "Reba usabe",
+        "deadline": "Saba mbere ya",
+        "positions": "imyanya",
+        "back": "Subira ku Kazi",
+        "about": "Ibyerekeye uyu mwanya",
+        "responsibilities": "Inshingano",
+        "requirements": "Ibisabwa",
+        "typeLabel": "Ubwoko bw'akazi",
+        "locationLabel": "Aho gakorerwa",
+        "positionsLabel": "Imyanya ifunguye",
+        "salaryLabel": "Umushahara",
+        "deadlineLabel": "Itariki ntarengwa yo gusaba",
+        "applyNow": "Saba aka kazi",
+        "notFound": "Uyu mwanya ntukiriho.",
+        "closed": "Uyu mwanya warafunzwe, ntabwo ukiakira abasaba.",
+        "deadlineOver": "Igihe cyo gusaba uyu mwanya cyararangiye."
+      },
+      "landing": {
+        "backToServices": "Subira ku serivisi",
+        "heroTitle": "Amahirwe y'Akazi",
+        "heroSubtitle": "Saba imyanya ifunguye muri RMC n'imiryango ishamikiyeho, ukurikirane aho isaba ryawe rigeze.",
+        "applyTitle": "Saba Akazi",
+        "applyText": "Ohereza isaba ryawe rifite CV, ibaruwa isaba n'inyandiko zishyigikira.",
+        "applyCta": "Saba nonaha",
+        "statusTitle": "Reba Aho Isaba Rigeze",
+        "statusText": "Kurikirana aho isaba ryawe wohereje rigeze.",
+        "statusCta": "Reba aho rigeze",
+        "whoTitle": "Iyi serivisi igenewe bande",
+        "whoSubtitle": "Ifunguriwe abanyamuryango biteguye gukoresha ubumenyi bwabo muri RMC n'imiryango ishamikiyeho.",
+        "who": {
+          "seekers": {
+            "title": "Abashaka akazi",
+            "text": "Umuntu wese ushaka akazi muri RMC cyangwa umuryango ushamikiyeho."
+          },
+          "graduates": {
+            "title": "Abarangije vuba",
+            "text": "Abarangije bafite impamyabumenyi ziteguye gutangira umwuga."
+          },
+          "professionals": {
+            "title": "Abanyamwuga bafite uburambe",
+            "text": "Abakozi b'inzobere bashaka umwanya mushya mu muryango."
+          },
+          "community": {
+            "title": "Abanyamuryango",
+            "text": "Abanyamuryango bifuza gukorera no gukurira mu muryango wa RMC."
+          }
+        },
+        "stepsTitle": "Uko usaba",
+        "stepsSubtitle": "Intambwe eshanu zoroshye uhereye ku ntangiriro ukageza ku isaba rikurikiranwa.",
+        "steps": {
+          "s1": {
+            "title": "Injira",
+            "text": "Injira kuri konti yawe ya RMC, cyangwa wiyandikishe mu munota umwe niba uri mushya."
+          },
+          "s2": {
+            "title": "Uzuza amakuru yawe",
+            "text": "Andika amakuru yawe bwite n'umwanya usaba."
+          },
+          "s3": {
+            "title": "Ohereza inyandiko zawe",
+            "text": "Ohereza ibaruwa isaba, CV, Indangamuntu, icyemezo cy'imyifatire n'impamyabumenyi."
+          },
+          "s4": {
+            "title": "Ongeraho icyemezo cy'imyifatire",
+            "text": "Genzura nimero y'icyemezo cy'imyifatire, cyangwa uohereze icyemezo."
+          },
+          "s5": {
+            "title": "Ohereza & ukurikirane",
+            "text": "Ohereza ubike nimero yo gukurikirana kugira ngo urebe aho isaba rigeze."
+          }
+        },
+        "needTitle": "Ibyo ukeneye",
+        "needSubtitle": "Bitegure mbere yo gutangira — ushobora kohereza PDF, dosiye za Word cyangwa amafoto.",
+        "need": {
+          "r1": "Ibaruwa isaba",
+          "r2": "CV",
+          "r3": "Indangamuntu",
+          "r4": "Icyemezo cy'imyifatire",
+          "r5": "Impamyabumenyi (dipolome / impamyabumenyi)",
+          "r6": "Icyemezo cy'imyifatire myiza — nimero yo kugenzura, cyangwa dosiye yo kohereza",
+          "r7": "Icyemezo cy'umukoresha (bitegetswe)"
+        },
+        "faqTitle": "Ibibazo bikunze kubazwa",
+        "faqs": {
+          "f1": {
+            "q": "Ese nkeneye konti kugira ngo nsabe?",
+            "a": "Yego. Kwinjira bidufasha kukugeraho kandi bigufasha gukurikirana isaba ryawe kuva ku ntangiriro kugeza ku cyemezo."
+          },
+          "f2": {
+            "q": "Ni ubuhe bwoko n'ingano ya dosiye nshobora kohereza?",
+            "a": "PDF, dosiye za Word n'amafoto (JPG cyangwa PNG). Buri mwanya werekana ingano ntarengwa, kandi dosiye zigenzurwa mbere yo koherezwa."
+          },
+          "f3": {
+            "q": "Byagenda gute ntabonye nimero y'icyemezo cy'imyifatire?",
+            "a": "Nta kibazo — ushobora kohereza kopi cyangwa ifoto y'icyemezo aho kwandika nimero."
+          },
+          "f4": {
+            "q": "Nkurikirana nte aho isaba ryanjye rigeze?",
+            "a": "Fungura urupapuro rwa \"Reba aho rigeze\" winjire. Uzabona buri ntambwe: ryoherejwe, rirasuzumwa, ryatoranyijwe n'icyemezo cya nyuma."
+          }
+        },
+        "ctaTitle": "Witeguye gusaba?",
+        "ctaSubtitle": "Tangira isaba ryawe nonaha, cyangwa utubaze niba ufite ibibazo mbere.",
+        "ctaStart": "Tangira isaba",
+        "ctaContact": "Twandikire"
+      },
+      "apply": {
+        "heroTitle": "Isaba ry'Akazi",
+        "requirementsHeroTitle": "Saba Akazi",
+        "backToService": "Subira ku Kazi",
+        "signInPrompt": "Injira kugira ngo utangire isaba ry'akazi.",
+        "signInToApply": "Injira kugira usabe",
+        "noAccount": "Nta konti ufite?",
+        "requestAccess": "Iyandikishe",
+        "requirementsHeroSubtitle": "Tegura CV, ibaruwa isaba, Indangamuntu, icyemezo cy'imyifatire n'impamyabumenyi.",
+        "sectionApplicant": "Amakuru y'usaba",
+        "sectionApplicantSub": "Tubwire uwo uri we n'uko twakugeraho.",
+        "sectionResidence": "Aho utuye",
+        "sectionDocuments": "Inyandiko",
+        "sectionDocumentsSub": "Ohereza inyandiko zisomeka neza. Ingano ntarengwa igaragara kuri buri mwanya.",
+        "fullNames": "Amazina yombi",
+        "fullNamesError": "Andika amazina yawe yombi.",
+        "email": "Imeyili",
+        "emailError": "Andika imeyili yemewe.",
+        "phone": "Telefone",
+        "phoneHint": "Uburyo: 0781234567",
+        "phoneFormatError": "Andika nimero ya telefone y'u Rwanda yemewe.",
+        "positionAppliedFor": "Umwanya usaba",
+        "positionError": "Andika umwanya usaba.",
+        "jobSelect": "Umwanya (akazi gafunguye)",
+        "jobSelectPlaceholder": "Hitamo umwanya",
+        "jobLoading": "Turimo gushaka imyanya ifunguye…",
+        "jobNone": "Nta myanya ifunguye ubu",
+        "jobNoneHint": "Nta kazi gafunguye kuri ubu.",
+        "jobBrowse": "Reba akazi",
+        "jobRequired": "Hitamo umwanya usaba.",
+        "jobPositions": "imyanya",
+        "district": "Akarere",
+        "districtPlaceholder": "Hitamo akarere",
+        "sector": "Umurenge",
+        "sectorPlaceholder": "Hitamo umurenge",
+        "selectDistrictFirst": "Banza uhitemo akarere",
+        "cell": "Akagari",
+        "village": "Umudugudu",
+        "optional": "bitegetswe",
+        "applicationLetter": "Ibaruwa isaba",
+        "applicationLetterHint": "PDF, DOC cyangwa ifoto · 10 MB",
+        "cv": "CV",
+        "cvHint": "PDF cyangwa DOC · 10 MB",
+        "nationalId": "Indangamuntu",
+        "nationalIdHint": "Ifoto cyangwa PDF · 5 MB",
+        "criminalRecord": "Icyemezo cy'imyifatire",
+        "criminalRecordHint": "PDF cyangwa ifoto · 10 MB",
+        "academicPapers": "Impamyabumenyi",
+        "academicPapersHint": "Ongeraho buri cyemezo. PDF cyangwa ifoto · 10 MB buri kimwe.",
+        "addAcademicPaper": "Ongeraho indi mpamyabumenyi",
+        "academicPapersRequired": "Ongeraho nibura impamyabumenyi imwe.",
+        "goodConduct": "Icyemezo cy'imyifatire myiza",
+        "goodConductSub": "Tanga nimero y'icyemezo kugira ngo igenzurwe, cyangwa uohereze icyemezo.",
+        "goodConductVerifyOption": "Mfite nimero y'icyemezo",
+        "goodConductUploadOption": "Ohereza icyemezo",
+        "goodConductNumber": "Nimero y'icyemezo",
+        "goodConductNumberPlaceholder": "urugero GC-2024-000123",
+        "verify": "Genzura",
+        "verifying": "Kugenzura…",
+        "verified": "Byagenzuwe",
+        "verifiedFor": "Byagenzuwe — {name}",
+        "verifyFailed": "Ntitwashoboye kugenzura iyo nimero y'icyemezo.",
+        "goodConductFile": "Icyemezo cy'imyifatire myiza",
+        "goodConductFileHint": "PDF cyangwa ifoto · 5 MB",
+        "goodConductRequired": "Genzura nimero y'icyemezo cyangwa uohereze icyemezo.",
+        "employerRecommendation": "Icyemezo cy'umukoresha",
+        "employerRecommendationHint": "Bitegetswe · PDF cyangwa ifoto · 10 MB",
+        "uploadOrDrop": "Ohereza cyangwa ushyiremo dosiye",
+        "change": "Hindura",
+        "remove": "Kuraho",
+        "unsupportedType": "Ubwoko bwa dosiye butemewe",
+        "fileTooLarge": "Dosiye ni nini cyane (ntarengwa {mb} MB)",
+        "requiredDocsMissing": "Ohereza inyandiko zose zisabwa.",
+        "submit": "Ohereza isaba",
+        "submitting": "Kohereza…",
+        "uploadingDocuments": "Kohereza inyandiko…",
+        "genericError": "Hari ikitagenze neza. Ongera ugerageze.",
+        "successTitle": "Isaba ryoherejwe",
+        "successText": "Isaba ry'akazi ryawe ryakiriwe. Bika nimero yo gukurikirana kugira ngo urebe aho rigeze.",
+        "trackingNumber": "Nimero yo gukurikirana",
+        "checkStatusBtn": "Reba aho rigeze",
+        "backToJobs": "Subira ku Kazi"
+      },
+      "status": {
+        "heroTitle": "Aho Isaba Rigeze",
+        "backToService": "Subira ku Kazi",
+        "signInPrompt": "Injira kugira ngo urebe amasaba y'akazi yawe.",
+        "signIn": "Injira",
+        "noRequests": "Nta saba ry'akazi wigeze wohereza.",
+        "applyNow": "Saba nonaha",
+        "checkAnother": "Subira ku masaba yanjye",
+        "detailsTitle": "Isaba",
+        "submittedOn": "Ryoherejwe kuwa",
+        "positionLabel": "Umwanya",
+        "trackingNumber": "Nimero yo gukurikirana",
+        "currentStatus": "Aho rigeze",
+        "trackTitle": "Kurikirana ukoresheje nimero yo gukurikirana",
+        "trackSubtitle": "Andika kode yo gukurikirana na nimero ya telefone — tuzakoherereza kode y'ibanga kuri SMS kugira ngo urebe aho isaba rigeze.",
+        "trackPlaceholder": "urugero RMC-JOB-202607-00001",
+        "trackButton": "Kurikirana",
+        "trackNotFound": "Nta saba ryabonetse rifite iyo nimero. Reba neza wongere ugerageze.",
+        "trackDetailsInvalid": "Andika kode yo gukurikirana na nimero ya telefone yemewe.",
+        "trackPhonePlaceholder": "Nimero ya telefone (urugero 0781234567)",
+        "trackPhoneHint": "Koresha nimero ya telefone iri ku isaba ryawe — tuzayoherereza kode kuri SMS.",
+        "trackSendCode": "Ohereza kode y'ibanga",
+        "trackSending": "Kohereza…",
+        "trackOtpSent": "Niba kode yo gukurikirana na telefone bihuye, twoherereje kode y'imibare 6 kuri SMS. Yandike hano.",
+        "trackOtpPlaceholder": "Kode y'imibare 6",
+        "trackOtpRequired": "Andika kode twakoherereje.",
+        "trackVerify": "Emeza & reba aho rigeze",
+        "trackVerifying": "Kugenzura…",
+        "trackResend": "Ongera wohereze kode",
+        "trackResendIn": "Ongera wohereze mu masegonda {s}",
+        "trackChangeDetails": "Hindura amakuru",
+        "trackRateLimited": "Wagerageje kenshi cyane. Ongera ugerageze mu minota mike.",
+        "trackOtpInvalid": "Kode itariyo cyangwa yararangiye. Ongera ugerageze.",
+        "trackOtpExpired": "Iyo kode yararangiye. Saba iyindi nshya.",
+        "trackOtpMaxAttempts": "Wagerageje nabi kenshi. Saba kode nshya.",
+        "trackGenericError": "Hari ikitagenze neza. Ongera ugerageze.",
+        "trackAnother": "Kurikirana irindi saba",
+        "respondTitle": "Subiza iri saba",
+        "respondSubtitle": "Ongeraho amakuru asabwa n'inyandiko zishyigikira.",
+        "respondPlaceholder": "Andika igisubizo cyawe…",
+        "respondDocument": "Inyandiko",
+        "respondAddDoc": "Ongeraho inyandiko",
+        "respondSubmit": "Ohereza igisubizo",
+        "respondSubmitting": "Kohereza…",
+        "respondSuccess": "Igisubizo cyawe cyoherejwe. Isaba ryawe rongeye kuba mu isuzuma.",
+        "respondError": "Ntitwashoboye kohereza igisubizo. Ongera ugerageze.",
+        "respondMessageRequired": "Andika igisubizo.",
+        "withdraw": "Kuraho isaba",
+        "withdrawConfirm": "Uzi neza ko ushaka kuraho iri saba? Ntibishobora gusubizwa inyuma.",
+        "withdrawConfirmBtn": "Yego, kura ho",
+        "withdrawCancel": "Rireke",
+        "withdrawError": "Ntitwashoboye kuraho isaba ryawe. Ongera ugerageze.",
+        "statusLabel": {
+          "submitted": "Ryoherejwe",
+          "under_review": "Rirasuzumwa",
+          "shortlisted": "Ryatoranyijwe",
+          "more_info_requested": "Hasabwe andi makuru",
+          "accepted": "Ryemewe",
+          "rejected": "Ntiryatoranyijwe",
+          "cancelled": "Ryahagaritswe"
+        },
+        "stages": {
+          "submitted": "Ryoherejwe",
+          "review": "Rirasuzumwa",
+          "shortlisted": "Ryatoranyijwe",
+          "decision": "Icyemezo"
+        },
+        "stageDesc": {
+          "submitted": "Twakiriye isaba ryawe.",
+          "review": "Ikipe yacu irimo isuzuma inyandiko zawe.",
+          "shortlisted": "Watoranyijwe kugira ngo usuzumwe.",
+          "decision": "Icyemezo cya nyuma cyafashwe."
+        },
+        "banner": {
+          "moreInfoTitle": "Hakenewe andi makuru",
+          "moreInfoText": "Ikipe isuzuma yasabye andi makuru.",
+          "rejectedTitle": "Ntiryatoranyijwe",
+          "rejectedText": "Urakoze gusaba. Iri saba ntiryatoranyijwe.",
+          "cancelledTitle": "Isaba ryahagaritswe",
+          "cancelledText": "Iri saba ryahagaritswe."
+        }
+      }
     },
     "hajj": {
       "title": "Serivisi za Hija",
@@ -1536,6 +1812,30 @@
         "proofNote": "Bika inyemezabwishyu ya banki — uzasabwa kuyohereza nk’ikimenyetso cy’ubwishyu mu kwiyandikisha."
       }
     }
+  },
+  "tracking": {
+    "title": "Kurikirana isaba ryawe",
+    "subtitle": "Andika kode yo gukurikirana na nimero ya telefone — tuzakoherereza kode y'ibanga kuri SMS kugira ngo urebe aho rigeze.",
+    "codePlaceholder": "Kode yo gukurikirana (urugero RMC-…-2607-XXXXXXXX)",
+    "phonePlaceholder": "Nimero ya telefone (urugero 0781234567)",
+    "phoneHint": "Koresha nimero ya telefone iri ku isaba ryawe — tuzayoherereza kode kuri SMS.",
+    "sendCode": "Ohereza kode y'ibanga",
+    "sending": "Kohereza…",
+    "otpSent": "Niba kode yo gukurikirana na telefone bihuye, twoherereje kode y'imibare 6 kuri SMS. Yandike hano.",
+    "otpPlaceholder": "Kode y'imibare 6",
+    "verify": "Emeza & reba aho rigeze",
+    "verifying": "Kugenzura…",
+    "resend": "Ongera wohereze kode",
+    "resendIn": "Ongera wohereze mu masegonda {s}",
+    "changeDetails": "Hindura amakuru",
+    "rateLimited": "Wagerageje kenshi cyane. Ongera ugerageze mu minota mike.",
+    "otpInvalid": "Kode itariyo cyangwa yararangiye. Ongera ugerageze.",
+    "otpExpired": "Iyo kode yararangiye. Saba iyindi nshya.",
+    "otpMaxAttempts": "Wagerageje nabi kenshi. Saba kode nshya.",
+    "genericError": "Hari ikitagenze neza. Ongera ugerageze.",
+    "detailsInvalid": "Andika kode yo gukurikirana na nimero ya telefone yemewe.",
+    "otpRequired": "Andika kode twakoherereje.",
+    "trackAnother": "Kurikirana irindi saba"
   },
   "contact": {
     "title": "Twunganire",
@@ -1666,7 +1966,9 @@
       "discussionsMod": "Discussion reports",
       "discussionsReview": "Answers to review",
       "discussionsAll": "Ibibazo byose",
-      "tenders": "Amatumba"
+      "tenders": "Amatumba",
+      "jobs": "Amasaba y'Akazi",
+      "jobPostings": "Imyanya y'Akazi"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
