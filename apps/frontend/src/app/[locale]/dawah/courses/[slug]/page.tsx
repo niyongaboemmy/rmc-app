@@ -221,11 +221,11 @@ export default async function CourseDetailPage({
       )}
       <Navbar solid />
       <main className="bg-white">
-        {/* No image hero: a course page is for reading, and a 32vh cover pushed
-            the lesson the reader came for below the fold. A compact text header
-            keeps what the hero actually carried — back link, category, the h1
-            and the summary — and nothing else. pt clears the fixed navbar. */}
-        <section className="pt-28 md:pt-32">
+        {/* No image hero: a course page is for reading. Just the back link here;
+            the title now lives at the top of the header card below, together with
+            the instructor and meta. pt clears the fixed navbar (56/64px) and
+            leaves a 16px gap beneath it. */}
+        <section className="pt-[72px] md:pt-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Link
               href={`/${locale}/dawah/courses`}
@@ -234,72 +234,76 @@ export default async function CourseDetailPage({
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
               {t('courses.backToCourses')}
             </Link>
-
-            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green">
-              {category ?? t('title')}
-            </p>
-            <h1 className="mt-1.5 text-2xl font-bold leading-tight text-rmc-green-deep md:text-3xl">
-              {title}
-            </h1>
-            {summary && (
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-500 md:text-base">
-                {summary}
-              </p>
-            )}
-            <span
-              aria-hidden
-              className="mt-4 block h-px w-full rounded-full bg-gradient-to-r from-rmc-gold/40 to-transparent"
-            />
           </div>
         </section>
 
-        <section className="bg-white py-5 md:py-6">
+        <section className="bg-white py-3 md:py-4">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {/* ── Instructor + meta strip ─────────────────────────────────── */}
+            {/* ── Header card: title, instructor and meta. Sits in normal
+                document flow — it scrolls away with the page rather than
+                pinning to the top. ── */}
             <Reveal>
-              <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50/70 p-4 md:flex-row md:items-center md:justify-between">
-                {course.instructorName && (
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white ring-2 ring-rmc-gold/30">
-                      <User className="h-6 w-6" aria-hidden />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
-                        {t('courses.instructor')}
-                      </p>
-                      <p className="truncate text-sm font-bold text-gray-900">
-                        {course.instructorName}
-                      </p>
-                      {course.instructorTitle && (
-                        <p className="truncate text-xs text-gray-500">{course.instructorTitle}</p>
-                      )}
-                    </div>
-                  </div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
+                {/* Title block */}
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green">
+                  {category ?? t('title')}
+                </p>
+                <h1 className="mt-1 text-lg font-bold leading-tight text-rmc-green-deep md:text-xl">
+                  {title}
+                </h1>
+                {summary && (
+                  <p className="mt-1.5 max-w-2xl text-sm leading-snug text-gray-500 line-clamp-2">
+                    {summary}
+                  </p>
                 )}
 
-                <dl className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                  {meta.map(({ icon: Icon, value }) => (
-                    <div key={value} className="inline-flex items-center gap-1.5 text-xs text-gray-600">
-                      <Icon className="h-4 w-4 text-rmc-green" aria-hidden />
-                      <dd>{value}</dd>
+                {/* Instructor + meta, divided from the title above */}
+                <div className="mt-3 flex flex-col gap-3 border-t border-gray-200 pt-3 md:flex-row md:items-center md:justify-between">
+                  {course.instructorName && (
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white ring-2 ring-rmc-gold/30">
+                        <User className="h-5 w-5" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
+                          {t('courses.instructor')}
+                        </p>
+                        <p className="truncate text-sm font-bold text-gray-900">
+                          {course.instructorName}
+                        </p>
+                        {course.instructorTitle && (
+                          <p className="truncate text-xs text-gray-500">{course.instructorTitle}</p>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </dl>
+                  )}
+
+                  <dl className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    {meta.map(({ icon: Icon, value }) => (
+                      <div key={value} className="inline-flex items-center gap-1.5 text-xs text-gray-600">
+                        <Icon className="h-4 w-4 text-rmc-green" aria-hidden />
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
               </div>
             </Reveal>
 
             {/* ── Course content: nav on the left, the selected entry on the
                 right. The description is the first entry ("About this course")
                 rather than its own stacked section — one region, not two. ── */}
+            {/* Deliberately NOT wrapped in <Reveal>: .reveal keeps a transform
+                even once visible, and a transformed ancestor becomes the
+                containing block for the sticky lesson nav inside, which silently
+                breaks its pin. */}
             {(lessons.length > 0 || hasDescription) && (
-              <Reveal>
-                <div className="mt-6">
-                  <CourseLessonBrowser
-                    lessons={lessons}
-                    overviewHtml={hasDescription ? description : ''}
-                  />
-                </div>
-              </Reveal>
+              <div className="mt-6">
+                <CourseLessonBrowser
+                  lessons={lessons}
+                  overviewHtml={hasDescription ? description : ''}
+                />
+              </div>
             )}
 
             {/* ── Related ─────────────────────────────────────────────────── */}
@@ -316,8 +320,16 @@ export default async function CourseDetailPage({
                   {/* Landscape, matching the listing at /dawah/courses — a reader
                       arrives here from that list, so the cards should not change
                       shape under them. Two-up, because a landscape row needs the
-                      width; three-up would leave the text ~230px. */}
-                  <div className="grid gap-4 lg:grid-cols-2">
+                      width; three-up would leave the text ~230px. A lone related
+                      course is capped rather than stretched across a 2-col track,
+                      which would leave a gaping empty half. */}
+                  <div
+                    className={
+                      related.length === 1
+                        ? 'grid max-w-2xl gap-4'
+                        : 'grid gap-4 lg:grid-cols-2'
+                    }
+                  >
                     {related.map((c) => (
                       <CourseCard key={c.id} course={c} locale={locale} />
                     ))}

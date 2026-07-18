@@ -73,6 +73,9 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
   const ts = useTranslations('services');
   const { locale } = useParams<{ locale: string }>();
   const pathname = usePathname();
+  // The Bismillah + verse ticker belong to the Home page only. usePathname()
+  // includes the locale prefix, so Home is "/", "/en", "/en/", etc.
+  const isHome = pathname === '/' || pathname === `/${locale}` || pathname === `/${locale}/`;
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -229,7 +232,8 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
         style={{ width: `${progress}%` }}
       />
 
-      {/* ── Bismillah — shows only at the very top; collapses away once scrolled ── */}
+      {/* ── Bismillah — Home page only; shows at the very top and collapses away once scrolled. ── */}
+      {isHome && (
       <div
         aria-hidden={scrolled}
         className={`relative z-10 overflow-hidden transition-all duration-300 ${
@@ -240,9 +244,11 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
           بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
         </p>
       </div>
+      )}
 
-      {/* ── Verse of the day — slim right-to-left ticker sitting just below the Bismillah;
-            stays visible while scrolling, collapsing only while the mobile menu is open so the panel aligns. ── */}
+      {/* ── Verse of the day — Home page only; slim right-to-left ticker below the Bismillah,
+            staying visible while scrolling, collapsing only while the mobile menu is open. ── */}
+      {isHome && (
       <div
         aria-hidden={mobileOpen}
         className={`relative z-10 overflow-hidden transition-all duration-300 ${
@@ -271,6 +277,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
           </div>
         </div>
       </div>
+      )}
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-between h-14 md:h-16">

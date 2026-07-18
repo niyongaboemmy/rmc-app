@@ -26,13 +26,19 @@ interface PageHeroProps {
   title: string;
   /** Override the heading's responsive font-size classes (defaults to the large hero size). */
   titleClassName?: string;
+  /** Override the heading's font weight (defaults to bold). */
+  titleWeightClassName?: string;
   /** Supporting line under the title. */
   subtitle?: string;
+  /** Extra classes for the subtitle (e.g. a lighter weight). */
+  subtitleClassName?: string;
   /** Optional "back" pill (detail pages). */
   backHref?: string;
   backLabel?: string;
   /** Override the background crossfade images. */
   images?: string[];
+  /** Override the background image object-fit/position (defaults to cover/center). */
+  imageClassName?: string;
   /** Heading alignment. Detail/article pages read better left-aligned. */
   align?: 'center' | 'left';
   /** Show the gold ornament divider under the title (centered heroes). */
@@ -49,10 +55,13 @@ export function PageHero({
   eyebrow,
   title,
   titleClassName = 'text-3xl md:text-4xl lg:text-5xl',
+  titleWeightClassName = 'font-bold',
   subtitle,
+  subtitleClassName = '',
   backHref,
   backLabel,
   images = DEFAULT_SLIDES,
+  imageClassName = 'object-cover object-center',
   align = 'center',
   ornament = false,
   minHeightClassName = 'min-h-[50vh]',
@@ -92,7 +101,7 @@ export function PageHero({
           className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out motion-reduce:transition-none"
           style={{ opacity: i === current && !transitioning ? 1 : 0 }}
         >
-          <Image src={src} alt="" fill priority={i === 0} className="object-cover object-center" sizes="100vw" />
+          <Image src={src} alt="" fill priority={i === 0} className={imageClassName} sizes="100vw" />
         </div>
       ))}
 
@@ -122,7 +131,7 @@ export function PageHero({
               </div>
             )}
 
-            <h1 className={`font-bold leading-tight text-white drop-shadow-lg ${titleClassName}`}>
+            <h1 className={`${titleWeightClassName} leading-tight text-white drop-shadow-lg ${titleClassName}`}>
               {title}
             </h1>
 
@@ -136,7 +145,7 @@ export function PageHero({
               <p
                 className={`mt-4 text-sm leading-relaxed text-white/75 md:text-base ${
                   centered ? 'mx-auto max-w-xl' : 'max-w-2xl'
-                }`}
+                } ${subtitleClassName}`}
               >
                 {subtitle}
               </p>

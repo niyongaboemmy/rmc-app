@@ -152,6 +152,10 @@ export function HeroSection() {
         </div>
       ))}
 
+      {/* ── Uniform scrim so the photo reads quieter across the whole hero,
+            not just under the right-aligned copy ── */}
+      <div aria-hidden className="absolute inset-0 bg-black/35 pointer-events-none" />
+
       {/* ── Dark backdrop for the right-aligned copy; the photo stays visible on the left ── */}
       <div className="absolute inset-0 bg-gradient-to-l from-black/90 via-black/50 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20" />

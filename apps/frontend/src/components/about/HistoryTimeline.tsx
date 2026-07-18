@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import { X, Maximize2, Star, ArrowRight } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const FILE_SERVER = process.env.NEXT_PUBLIC_FILE_SERVER_URL || 'http://localhost:3002';
@@ -75,144 +75,26 @@ function pickLocale(entry: HistoryEntry, locale: string) {
 }
 
 /* ---------------------------------------------------------------------------
-   Year node — the focal "point" on the spine. Shows the FULL year.
+   Year badge — a solid rounded-rectangle tag in the left column. Minimal, no
+   glow or ring: the whole timeline reads as a clean list, not a set of cards.
 --------------------------------------------------------------------------- */
-function YearNode({ year, size = 'lg' }: { year: number; size?: 'lg' | 'sm' }) {
-  const dims =
-    size === 'lg'
-      ? 'h-10 min-w-[3.5rem] px-3.5 text-[15px]'
-      : 'h-8 min-w-[2.9rem] px-2.5 text-[12px]';
+function YearBadge({ year }: { year: number }) {
   return (
-    <span className="relative inline-flex">
-      {/* soft glow on hover */}
-      <span
-        aria-hidden
-        className="absolute inset-0 rounded-full bg-rmc-green/40 blur-md scale-150 opacity-0 transition-opacity duration-500 group-hover/entry:opacity-100"
-      />
-      <span
-        className={`relative inline-flex items-center justify-center rounded-full bg-gradient-to-br from-rmc-green to-rmc-green-dark font-extrabold tabular-nums tracking-wide text-white shadow-lg shadow-rmc-green/30 ring-4 ring-white transition-transform duration-500 group-hover/entry:scale-105 ${dims}`}
-      >
-        {year}
-      </span>
+    <span className="inline-flex items-center justify-center rounded-md bg-rmc-green-deep px-2.5 py-1.5 text-[13px] font-bold tabular-nums tracking-wide text-white">
+      {year}
     </span>
   );
 }
 
 /* ---------------------------------------------------------------------------
-   The milestone card — image-forward when an image exists, elegant
-   watermark-year layout when it doesn't.
+   One milestone — a minimal row: year badge in the left column, title and
+   description in the right, with the vertical rail as the content column's
+   leading border. No card, no shadow, no image inline. Logical props (ms-/ps-/
+   start-/border-s) so the whole rail mirrors to the right under Arabic.
+
+   `Read more` (opening the modal with the full text and any image) shows only
+   when there is more to see — an image, or a description too long to sit inline.
 --------------------------------------------------------------------------- */
-function MilestoneCard({
-  entry,
-  title,
-  description,
-  rtl,
-  readMore,
-  onOpen,
-}: {
-  entry: HistoryEntry;
-  title: string;
-  description: string;
-  rtl: boolean;
-  readMore: string;
-  onOpen: (entry: HistoryEntry) => void;
-}) {
-  const hasImage = !!entry.imageKey;
-
-  return (
-    <article className="group/card relative overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-[0_8px_30px_-14px_rgba(13,61,36,0.22)] transition-all duration-500 hover:-translate-y-1 hover:border-rmc-green/25 hover:shadow-[0_26px_55px_-22px_rgba(26,122,74,0.4)]">
-      {/* gold accent bar */}
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-gradient-to-r from-rmc-gold via-rmc-gold-light to-rmc-gold transition-transform duration-500 group-hover/card:scale-x-100"
-      />
-
-      {hasImage && (
-        <button
-          type="button"
-          onClick={() => onOpen(entry)}
-          className="group/img relative block h-52 w-full overflow-hidden"
-          aria-label={`Open details for ${title}`}
-        >
-          <Image
-            src={fileUrl(entry.imageKey!)}
-            alt={title}
-            fill
-            sizes="(max-width: 768px) 100vw, 420px"
-            className="object-cover transition-transform duration-700 ease-out group-hover/img:scale-110"
-          />
-          <span
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-t from-rmc-green-deep/75 via-rmc-green-deep/10 to-transparent"
-          />
-          {/* year ribbon on the image */}
-          <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1 text-[12px] font-bold tabular-nums tracking-wide text-rmc-green-dark shadow-sm backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-rmc-gold" />
-            {entry.year}
-          </span>
-          {/* zoom affordance */}
-          <span className="absolute bottom-4 right-4 inline-flex h-9 w-9 translate-y-1 items-center justify-center rounded-full bg-white/95 text-rmc-green-dark opacity-0 shadow-md transition-all duration-300 group-hover/img:translate-y-0 group-hover/img:opacity-100">
-            <Maximize2 className="h-4 w-4" />
-          </span>
-        </button>
-      )}
-
-      <div className="relative p-6 md:p-7">
-        {/* faint watermark year — anchors text-only cards */}
-        {!hasImage && (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -top-2 right-3 select-none text-[5.5rem] font-black leading-none tracking-tighter text-rmc-green/[0.06] tabular-nums"
-          >
-            {entry.year}
-          </span>
-        )}
-
-        {!hasImage && (
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-rmc-gold">
-            <span className="h-1.5 w-1.5 rounded-full bg-rmc-gold" />
-            <span className="tabular-nums">{entry.year}</span>
-          </span>
-        )}
-
-        <h3
-          className={`relative mt-2 text-lg font-bold text-gray-900 transition-colors duration-300 group-hover/card:text-rmc-green-dark md:text-xl ${
-            rtl ? 'font-arabic' : ''
-          }`}
-          dir={rtl ? 'rtl' : 'ltr'}
-        >
-          {title}
-        </h3>
-
-        <span
-          aria-hidden
-          className="my-3.5 block h-px w-12 rounded-full bg-gradient-to-r from-rmc-green via-rmc-gold to-rmc-green"
-        />
-
-        <p
-          className={`relative text-sm leading-relaxed text-gray-500 line-clamp-4 ${rtl ? 'font-arabic' : ''}`}
-          dir={rtl ? 'rtl' : 'ltr'}
-        >
-          {description}
-        </p>
-
-        <button
-          type="button"
-          onClick={() => onOpen(entry)}
-          className="group/more relative mt-4 inline-flex items-center gap-1.5 text-[13px] font-bold text-rmc-green transition-colors hover:text-rmc-green-dark"
-        >
-          {readMore}
-          <ArrowRight
-            className={`h-3.5 w-3.5 transition-transform duration-300 group-hover/more:translate-x-0.5 ${
-              rtl ? 'rotate-180' : ''
-            }`}
-          />
-        </button>
-      </div>
-    </article>
-  );
-}
-
 function TimelineEntry({
   entry,
   locale,
@@ -226,73 +108,55 @@ function TimelineEntry({
 }) {
   const { ref, visible } = useScrollReveal(0.12);
   const { title, description } = pickLocale(entry, locale);
-  const isLeft = index % 2 === 0;
   const rtl = locale === 'ar';
   const readMore = (HEADER[locale] ?? HEADER.en).readMore;
+  const hasMore = !!entry.imageKey || description.length > 180;
 
   return (
     <div
       ref={ref}
-      className={`group/entry relative pl-[4.75rem] transition-all duration-700 ease-out md:pl-0 ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+      className={`group/entry flex gap-4 transition-all duration-700 ease-out sm:gap-5 ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
       }`}
-      style={{ transitionDelay: `${(index % 2) * 90}ms` }}
+      style={{ transitionDelay: `${index * 60}ms` }}
     >
-      {/* ---- Mobile node + connector (left rail) ---- */}
-      <div className="absolute left-6 top-8 z-10 -translate-x-1/2 -translate-y-1/2 md:hidden">
-        <YearNode year={entry.year} size="sm" />
+      {/* Year column */}
+      <div className="shrink-0 pt-4 sm:pt-5">
+        <YearBadge year={entry.year} />
       </div>
-      <span
-        aria-hidden
-        className="absolute left-[2.85rem] top-8 h-px w-6 -translate-y-1/2 bg-gradient-to-r from-rmc-green/40 to-transparent md:hidden"
-      />
 
-      {/* ---- Desktop alternating row ---- */}
-      <div className="md:flex md:items-center">
-        {/* Card half */}
-        <div
-          className={`md:w-1/2 ${
-            isLeft ? 'md:flex md:justify-end md:pr-16' : 'md:order-3 md:pl-16'
+      {/* Content in a bordered card with a soft background — each entry reads as a
+          self-contained block. The year badge stays outside on the leading edge. */}
+      <div className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white/70 p-4 shadow-sm transition-all duration-300 hover:border-rmc-green/30 hover:bg-white hover:shadow-md sm:p-5">
+        <h3
+          className={`text-base font-bold leading-snug text-rmc-green-deep transition-colors group-hover/entry:text-rmc-green md:text-lg ${
+            rtl ? 'font-arabic' : ''
           }`}
+          dir={rtl ? 'rtl' : 'ltr'}
         >
-          <div className="w-full md:max-w-[26rem]">
-            <MilestoneCard
-              entry={entry}
-              title={title}
-              description={description}
-              rtl={rtl}
-              readMore={readMore}
-              onOpen={onOpen}
+          {title}
+        </h3>
+        <p
+          className={`mt-1.5 text-sm leading-relaxed text-gray-500 line-clamp-3 ${rtl ? 'font-arabic' : ''}`}
+          dir={rtl ? 'rtl' : 'ltr'}
+        >
+          {description}
+        </p>
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => onOpen(entry)}
+            className="group/more mt-2 inline-flex items-center gap-1.5 text-[13px] font-semibold text-rmc-green transition-colors hover:text-rmc-green-dark"
+          >
+            {readMore}
+            <ArrowRight
+              className={`h-3.5 w-3.5 transition-transform duration-300 group-hover/more:translate-x-0.5 ${
+                rtl ? 'rotate-180' : ''
+              }`}
             />
-          </div>
-        </div>
-
-        {/* Center node + connector (desktop) */}
-        <div className="relative hidden w-0 justify-center md:order-2 md:flex md:items-center">
-          <span
-            aria-hidden
-            className={`absolute top-1/2 h-px w-10 -translate-y-1/2 ${
-              isLeft
-                ? 'right-1/2 bg-gradient-to-l from-rmc-green/45 to-transparent'
-                : 'left-1/2 bg-gradient-to-r from-rmc-green/45 to-transparent'
-            }`}
-          />
-          <YearNode year={entry.year} />
-        </div>
-
-        {/* Empty half */}
-        <div className={`hidden md:block md:w-1/2 ${isLeft ? 'md:order-3' : 'md:order-1'}`} />
+          </button>
+        )}
       </div>
-    </div>
-  );
-}
-
-/* Decorative cap that sits on the spine (centered on desktop, on the left rail
-   on mobile) — used for the timeline's start marker. */
-function SpineCap({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative flex md:justify-center">
-      <div className="ml-6 -translate-x-1/2 md:ml-0 md:translate-x-0">{children}</div>
     </div>
   );
 }
@@ -329,7 +193,7 @@ function EntryModal({
       onClick={onClose}
     >
       <div
-        className="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl animate-modal-in"
+        className="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl animate-modal-in"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -412,12 +276,13 @@ export function HistoryTimeline({ locale }: { locale: string }) {
 
   if (entries.length === 0) return null;
 
-  // Newest milestone first.
-  const ordered = [...entries].reverse();
+  // Oldest milestone first — the natural reading for a history section, from the
+  // founding forward. Sort by year, then sortOrder, rather than trusting fetch order.
+  const ordered = [...entries].sort((a, b) => a.year - b.year || a.sortOrder - b.sortOrder);
 
   return (
     <>
-      <section className="relative overflow-hidden py-16 md:py-20">
+      <section className="relative overflow-hidden py-12 md:py-14">
         {/* subtle geometric backdrop */}
         <div aria-hidden className="pattern-light pointer-events-none absolute inset-0 opacity-70" />
         <div
@@ -430,23 +295,16 @@ export function HistoryTimeline({ locale }: { locale: string }) {
         />
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          {/* Section header */}
-          <div className="mb-16 text-center">
-            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-              {t.kicker}
-            </div>
+          {/* Section header — plain heading, no eyebrow or ornament */}
+          <div className="mb-8 text-center">
             <h2
-              className={`text-3xl font-bold text-gray-900 md:text-4xl ${rtl ? 'font-arabic' : ''}`}
+              className={`text-3xl font-medium text-gray-900 md:text-4xl ${rtl ? 'font-arabic' : ''}`}
               dir={rtl ? 'rtl' : 'ltr'}
             >
-              {t.title} <span className="text-rmc-green">{t.accent}</span>
+              {t.title} {t.accent}
             </h2>
-            <div className="ornament-divider mx-auto my-4 max-w-xs">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-            </div>
             <p
-              className={`mx-auto max-w-2xl text-sm text-gray-500 md:text-base ${
+              className={`mx-auto mt-4 max-w-xl text-sm text-gray-500 md:text-base ${
                 rtl ? 'font-arabic' : ''
               }`}
               dir={rtl ? 'rtl' : 'ltr'}
@@ -455,34 +313,18 @@ export function HistoryTimeline({ locale }: { locale: string }) {
             </p>
           </div>
 
-          {/* Timeline */}
-          <div className="relative">
-            {/* Spine — left rail on mobile, centered on desktop */}
-            <div
-              aria-hidden
-              className="absolute bottom-0 left-6 top-0 w-[2px] bg-gradient-to-b from-transparent via-rmc-green/25 to-transparent md:left-1/2 md:-translate-x-1/2"
-            />
-
-            {/* Start cap */}
-            <div className="mb-10 md:mb-12">
-              <SpineCap>
-                <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-rmc-gold/30 bg-white shadow-sm ring-4 ring-white">
-                  <Star className="h-4 w-4 fill-rmc-gold text-rmc-gold" />
-                </span>
-              </SpineCap>
-            </div>
-
-            <div className="space-y-12 md:space-y-10">
-              {ordered.map((entry, i) => (
-                <TimelineEntry
-                  key={entry.id}
-                  entry={entry}
-                  locale={locale}
-                  index={i}
-                  onOpen={setSelected}
-                />
-              ))}
-            </div>
+          {/* Timeline — a single clean column. The vertical rail is each entry's
+              content-column border (see TimelineEntry), so no separate spine. */}
+          <div className="mx-auto max-w-3xl space-y-4">
+            {ordered.map((entry, i) => (
+              <TimelineEntry
+                key={entry.id}
+                entry={entry}
+                locale={locale}
+                index={i}
+                onOpen={setSelected}
+              />
+            ))}
           </div>
         </div>
       </section>

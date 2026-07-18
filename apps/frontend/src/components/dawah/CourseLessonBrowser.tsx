@@ -100,9 +100,14 @@ export function CourseLessonBrowser({
   };
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:gap-6">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
       {/* ── Left: navigation ────────────────────────────────────────────── */}
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+      {/* Pinned beside the lesson while the lesson scrolls with the page.
+          Bounded to the viewport so a long outline scrolls inside itself rather
+          than running off the bottom of the screen. Sticky works because no
+          ancestor up to the page sets a transform (the browser is intentionally
+          not wrapped in <Reveal>). */}
+      <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
         {/* Mobile: a plain select — a 20-lesson list above the content would
             push the lesson itself off the screen on a phone. */}
         <label className="block lg:hidden">
@@ -202,6 +207,8 @@ export function CourseLessonBrowser({
       </aside>
 
       {/* ── Right: the active entry ─────────────────────────────────────── */}
+      {/* Scrolls with the page; scroll-mt keeps a switched-to entry clear of the
+          fixed navbar when select() brings it into view. */}
       <div ref={paneRef} className="min-w-0 scroll-mt-24">
         <div className="rounded-lg border border-gray-200 bg-white p-4 md:p-5">
           {isOverview ? (
