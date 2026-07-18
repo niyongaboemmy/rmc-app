@@ -4,8 +4,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * Seeds the GOOD_CONDUCT_FEE payment type and a default rate.
  * Placeholder amount (2000 RWF) — adjust via /admin/settings/payments once RMC leadership confirms the real fee.
  */
-export class GoodConductFeeSeed1700000000032 implements MigrationInterface {
-  name = 'GoodConductFeeSeed1700000000032';
+export class GoodConductFeeSeed1786100000032 implements MigrationInterface {
+  name = 'GoodConductFeeSeed1786100000032';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`

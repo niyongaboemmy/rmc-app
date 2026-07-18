@@ -40,6 +40,10 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.USERS_ASSIGN_ROLE,
   Permission.ROLES_VIEW,
   Permission.AUDIT_LOG_VIEW,
+  Permission.TENDER_VIEW,
+  Permission.TENDER_MANAGE,
+  Permission.TENDER_EVALUATE,
+  Permission.TENDER_REPORTS,
 ];
 
 const MARRIAGE_OFFICER_PERMISSIONS: Permission[] = [
@@ -67,6 +71,18 @@ const GOOD_CONDUCT_OFFICER_PERMISSIONS: Permission[] = [
   Permission.GOOD_CONDUCT_MANAGE,
   Permission.MEMBERS_VIEW,
   Permission.MOSQUES_VIEW,
+];
+
+const TENDER_OFFICER_PERMISSIONS: Permission[] = [
+  Permission.TENDER_VIEW,
+  Permission.TENDER_MANAGE,
+  Permission.TENDER_EVALUATE,
+  Permission.TENDER_REPORTS,
+  // Tenders are published as announcements (type='tender'), so an officer who
+  // evaluates bids also needs to see and post the tenders themselves.
+  Permission.CONTENT_VIEW,
+  Permission.CONTENT_CREATE,
+  Permission.CONTENT_EDIT,
 ];
 
 const DEFAULT_ROLES = [
@@ -110,6 +126,13 @@ const DEFAULT_ROLES = [
     slug: 'good_conduct_officer',
     description: 'Processes Good Conduct requests: payment confirmation, imam assignment',
     permissions: GOOD_CONDUCT_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  {
+    name: 'Tender Officer',
+    slug: 'tender_officer',
+    description: 'Publishes tenders and evaluates the bids submitted against them',
+    permissions: TENDER_OFFICER_PERMISSIONS,
     isSystem: false,
   },
   {

@@ -107,7 +107,10 @@ export default async function ServiceComingSoonPage({
   if (slug === 'conduct') redirect(`/${locale}/services/good-conduct`);
 
   if (!VALID_SLUGS.includes(slug as ServiceSlug)) notFound();
-  if (slug === 'tender') redirect(`/${locale}/tenders`);
+
+  // Note: 'tender' never reaches this file any more — `services/tender/page.tsx`
+  // is a static segment, and Next.js matches those ahead of this dynamic one. Its
+  // SERVICE_META entry is kept only because VALID_SLUGS is derived from those keys.
 
   const meta = SERVICE_META[slug as ServiceSlug];
   const { Icon } = meta;

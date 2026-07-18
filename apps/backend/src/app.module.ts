@@ -25,6 +25,7 @@ import { GoodConductModule } from './good-conduct/good-conduct.module';
 import { FuneralModule } from './funeral/funeral.module';
 import { HajjModule } from './hajj/hajj.module';
 import { DawahModule } from './dawah/dawah.module';
+import { TendersModule } from './tenders/tenders.module';
 import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
 import { FinanceModule } from './finance/finance.module';
@@ -72,6 +73,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     FuneralModule,
     HajjModule,
     DawahModule,
+    TendersModule,
     ContentModule,
     DonationsModule,
     FinanceModule,

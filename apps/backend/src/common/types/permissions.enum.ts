@@ -85,6 +85,12 @@ export enum Permission {
   DAWAH_VIEW = 'dawah:view',
   DAWAH_MANAGE = 'dawah:manage',
 
+  // ── Tender Service (bid submissions) ──────────────────────────────
+  TENDER_VIEW = 'tender:view',
+  TENDER_MANAGE = 'tender:manage',
+  TENDER_EVALUATE = 'tender:evaluate',
+  TENDER_REPORTS = 'tender:reports',
+
   // ── System ────────────────────────────────────────────────────────
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

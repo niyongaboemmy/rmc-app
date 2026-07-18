@@ -1029,7 +1029,201 @@
     },
     "tender": {
       "title": "Itumba",
-      "desc": "Amahirwe y'ubucuruzi ashyirwa ahagaragara na RMC ku mashirika n'abakozi bafite ubushobozi."
+      "desc": "Amahirwe y'ubucuruzi ashyirwa ahagaragara na RMC ku mashirika n'abakozi bafite ubushobozi.",
+      "landing": {
+        "backToServices": "Subira kuri Serivisi",
+        "applyTitle": "Saba itumba",
+        "applyText": "Tanga ipiganwa ku itumba rikinguye. Uzakenera amakuru y'ikigo cyawe n'inyandiko eshatu.",
+        "applyCta": "Tangira gusaba",
+        "statusTitle": "Reba aho ugeze",
+        "statusCta": "Reba aho bigeze",
+        "statusText": "Kurikirana ipiganwa wamaze gutanga, urihindure, cyangwa urikureho.",
+        "stepsTitle": "Uko usaba",
+        "stepsSubtitle": "Intambwe enye kuva ku ihirwe kugeza ku ipiganwa ryatanzwe.",
+        "steps": {
+          "browse": {
+            "title": "Reba amatumba akinguye",
+            "text": "Shakisha ihirwe ku rutonde rw'amatumba usome amabwiriza n'igihe ntarengwa."
+          },
+          "form": {
+            "title": "Uzuza ifishi",
+            "text": "Tanga amakuru y'ikigo cyawe, umuhuza, aderesi, n'igiciro utanga."
+          },
+          "documents": {
+            "title": "Ohereza inyandiko",
+            "text": "Shyiraho inyandiko eshatu zisabwa. PDF, JPG cyangwa PNG, ntizirenge 10 MB."
+          },
+          "track": {
+            "title": "Kurikirana ipiganwa",
+            "text": "Uzahabwa nomero y'ipiganwa, ukurikirane uko rigenda kugeza ku mwanzuro."
+          }
+        },
+        "requirementsTitle": "Ibyo ukeneye mbere yo gutangira",
+        "requirementsSubtitle": "Ibi bigomba kuba byiteguye — ntushobora gutanga ipiganwa utabifite.",
+        "requirements": {
+          "rdb": {
+            "title": "Icyemezo cy'iyandikwa ry'ikigo (RDB)",
+            "text": "Icyemezo cy'iyandikwa ry'ikigo cyawe gitangwa na Rwanda Development Board."
+          },
+          "tax": {
+            "title": "Icyemezo cy'imisoro (RRA)",
+            "text": "Icyemezo cyemewe cy'uko wishyuye imisoro gitangwa na Rwanda Revenue Authority."
+          },
+          "proposal": {
+            "title": "Igitekerezo cya tekiniki n'imari",
+            "text": "Igitekerezo cyawe cyuzuye ku itumba, hamwe n'ibiciro."
+          },
+          "company": {
+            "title": "Amakuru y'ikigo",
+            "text": "Izina ry'ikigo cyawe cyanditse, nomero ya TIN y'imibare 9, n'umuhuza twabasha kuvugana."
+          },
+          "deadline": {
+            "title": "Igihe mbere y'igihe ntarengwa",
+            "text": "Ipiganwa ntirishobora gutangwa cyangwa guhindurwa igihe ntarengwa cyarenze."
+          }
+        },
+        "boardTitle": "Reba ibikinguye ubu",
+        "boardText": "Reba amatumba yose RMC yatangaje, hamwe n'ibihe ntarengwa n'inyandiko.",
+        "boardCta": "Reba amatumba yose"
+      },
+      "apply": {
+        "heroTitle": "Saba Itumba",
+        "signInHeroTitle": "Injira kugira ngo usabe",
+        "signInHeroSubtitle": "Ukeneye konti ya RMC kugira ngo utange ipiganwa, unashobore kurikurikirana.",
+        "signInPrompt": "Injira muri konti yawe ya RMC kugira ngo utange ipiganwa.",
+        "signInToApply": "Injira kugira ngo usabe",
+        "noAccount": "Nta konti ufite?",
+        "requestAccess": "Iyandikishe",
+        "backToService": "Subira kuri serivisi y'Amatumba",
+        "moreInfoNoteLabel": "Usuzuma yasabye",
+        "progressLabel": "Aho gusaba kugeze",
+        "step1Title": "Ikigo",
+        "step1Subtitle": "Itumba upiganirwa, n'uwipiganira.",
+        "step2Title": "Aho tukugeraho n'ipiganwa",
+        "step2Subtitle": "Uko twakugeraho, aho uherereye, n'igiciro utanga.",
+        "step3Title": "Inyandiko",
+        "step3Subtitle": "Inyandiko zose uko ari eshatu zirasabwa. PDF, JPG cyangwa PNG, ntizirenge 10 MB.",
+        "tenderLabel": "Itumba",
+        "tenderPlaceholder": "Hitamo itumba upiganirwa",
+        "tenderLoading": "Gutegereza itumba…",
+        "tenderRequiredError": "Hitamo itumba upiganirwa",
+        "companyName": "Izina ry'ikigo",
+        "companyNameError": "Andika izina ry'ikigo cyawe cyanditse",
+        "companyTin": "TIN y'ikigo",
+        "tinHint": "Nomero ya TIN y'imibare 9 itangwa na RRA",
+        "tinFormatError": "TIN igomba kuba imibare 9 gusa",
+        "contactName": "Umuhuza",
+        "contactNameError": "Andika amazina yuzuye y'umuhuza",
+        "phone": "Telefone",
+        "phoneHint": "Uburyo: 0781234567",
+        "phoneFormatError": "Andika nomero ya telefone yemewe, urugero 0781234567",
+        "email": "Imeyili",
+        "emailError": "Andika imeyili yemewe",
+        "district": "Akarere",
+        "districtPlaceholder": "Hitamo akarere",
+        "sector": "Umurenge",
+        "sectorPlaceholder": "Hitamo umurenge",
+        "selectDistrictFirst": "Banza uhitemo akarere",
+        "cell": "Akagari",
+        "village": "Umudugudu",
+        "bidAmount": "Igiciro utanga",
+        "bidAmountHint": "Igiciro cyawe cyose mu RWF. Ushobora kutagishyiramo ukakivuga mu gitekerezo cyawe.",
+        "coverNote": "Ubutumwa bw'inyongera",
+        "optional": "bidasabwa",
+        "docs": {
+          "upload": "Ohereza",
+          "orDrop": "cyangwa uyikurure hano",
+          "hint": "PDF, JPG cyangwa PNG · ntirenge {max} MB",
+          "remove": "Kuraho inyandiko",
+          "errorType": "Hemewe gusa dosiye za PDF, JPG cyangwa PNG",
+          "errorSize": "Dosiye ni nini cyane (ntirenge {max} MB)",
+          "errorUpload": "Kohereza byanze. Reba interineti hanyuma wongere ugerageze.",
+          "errorMissing": "Inyandiko zose uko ari eshatu zirasabwa mbere yo kohereza.",
+          "rdb_certificate": {
+            "label": "Icyemezo cy'iyandikwa ry'ikigo (RDB)",
+            "hint": "Icyemezo cy'iyandikwa ry'ikigo cyawe gitangwa na Rwanda Development Board"
+          },
+          "tax_clearance": {
+            "label": "Icyemezo cy'imisoro (RRA)",
+            "hint": "Icyemezo cy'imisoro kikiri cyemewe"
+          },
+          "proposal": {
+            "label": "Igitekerezo cya tekiniki n'imari",
+            "hint": "Igitekerezo cyawe cyuzuye kuri iri tumba, hamwe n'ibiciro"
+          }
+        },
+        "next": "Komeza",
+        "back": "Subira inyuma",
+        "submit": "Ohereza ipiganwa",
+        "genericError": "Hari ikitagenze neza. Ongera ugerageze.",
+        "successTitle": "Ipiganwa ryoherejwe",
+        "successText": "Ipiganwa ryawe ryakiriwe. Tuzarisuzuma nyuma y'igihe ntarengwa hanyuma tukumenyeshe umwanzuro.",
+        "successEditTitle": "Ipiganwa ryahinduwe",
+        "successEditText": "Impinduka zawe zabitswe kandi ipiganwa ryawe ryagarutse ku itsinda risuzuma.",
+        "yourReference": "Nomero y'ipiganwa ryawe",
+        "copyReference": "Koporora nomero",
+        "checkStatusBtn": "Kurikirana iri piganwa",
+        "browseMoreBtn": "Reba andi matumba"
+      },
+      "status": {
+        "heroTitle": "Amapiganwa Yawe",
+        "heroSubtitle": "Kurikirana buri piganwa watanze muri RMC.",
+        "backToService": "Subira kuri serivisi y'Amatumba",
+        "signInPrompt": "Injira kugira ngo urebe amapiganwa watanze.",
+        "signIn": "Injira",
+        "noApplications": "Nta piganwa uratanga.",
+        "applyNow": "Saba itumba",
+        "unknownTender": "Itumba ntirikiboneka",
+        "checkAnother": "Subira ku mapiganwa yose",
+        "detailsTitle": "Ipiganwa kuri",
+        "reference": "Nomero",
+        "company": "Ikigo",
+        "submittedOn": "Ryatanzwe ku wa",
+        "bidAmount": "Igiciro cyatanzwe",
+        "currentStatus": "Aho bigeze",
+        "documentsTitle": "Inyandiko zawe",
+        "viewDocument": "Reba",
+        "verified": "Byemejwe",
+        "editBid": "Hindura ipiganwa",
+        "withdrawBid": "Kuraho ipiganwa",
+        "editAndResubmit": "Hindura wongere wohereze",
+        "awardedTitle": "Watsinze iri tumba",
+        "awardedText": "Turagushimiye. RMC izakuvugisha vuba ku bijyanye n'amasezerano.",
+        "statusLabel": {
+          "submitted": "Ryatanzwe",
+          "under_review": "Rirasuzumwa",
+          "more_info_requested": "Hakenewe andi makuru",
+          "shortlisted": "Ryatoranyijwe",
+          "awarded": "Ryatsindiye",
+          "rejected": "Ntiryatsinze",
+          "withdrawn": "Ryakuweho"
+        },
+        "stages": {
+          "submitted": "Ipiganwa ryatanzwe",
+          "review": "Rirasuzumwa",
+          "shortlisted": "Ryatoranyijwe",
+          "awarded": "Ryatsindiye"
+        },
+        "stageDesc": {
+          "submitted": "Twakiriye ipiganwa ryawe n'inyandiko zaryo.",
+          "review": "Itsinda risuzuma ipiganwa ryawe hakurikijwe amabwiriza y'itumba.",
+          "shortlisted": "Ipiganwa ryawe ryatsinze isuzuma kandi rikiri mu marushanwa.",
+          "awarded": "Itumba ryatanzwe kuri wowe."
+        },
+        "docType": {
+          "rdb_certificate": "Icyemezo cy'iyandikwa ry'ikigo (RDB)",
+          "tax_clearance": "Icyemezo cy'imisoro (RRA)",
+          "proposal": "Igitekerezo cya tekiniki n'imari"
+        },
+        "banner": {
+          "moreInfoTitle": "Hakenewe andi makuru",
+          "moreInfoText": "Itsinda risuzuma rikeneye ibindi kuri wowe mbere yo gukomeza. Hindura ipiganwa ryawe wongere urryohereze.",
+          "rejectedTitle": "Ipiganwa ntiryatsinze",
+          "rejectedText": "Iri piganwa ntiryatsinze. Turagushishikariza gusaba andi matumba azaza.",
+          "withdrawnTitle": "Ipiganwa ryakuweho",
+          "withdrawnText": "Wakuyeho iri piganwa. Ushobora gutanga irindi mu gihe itumba rikiri rikinguye."
+        }
+      }
     },
     "jobs": {
       "title": "Amahirwe y'Akazi",
@@ -1266,7 +1460,8 @@
       "dawah": "Dawah",
       "discussionsMod": "Discussion reports",
       "discussionsReview": "Answers to review",
-      "discussionsAll": "Ibibazo byose"
+      "discussionsAll": "Ibibazo byose",
+      "tenders": "Amatumba"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
