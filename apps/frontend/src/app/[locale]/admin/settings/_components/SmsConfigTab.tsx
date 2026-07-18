@@ -269,7 +269,7 @@ export function SmsConfigTab() {
               value={form.dlrUrl ?? ''}
               onChange={(e) => handleChange('dlrUrl', e.target.value)}
               disabled={!canManage}
-              placeholder="https://api.rmc.org.rw/api/v1/webhooks/sms-delivery"
+              placeholder="https://api.isengesho.com/api/v1/webhooks/sms-delivery"
               hint="InTouch will send a GET request to this URL with delivery status updates"
             />
 

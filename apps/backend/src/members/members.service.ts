@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import * as QRCode from 'qrcode';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { MemberProfile, ApprovalStatus, MemberStatus } from './entities/member-profile.entity';
@@ -19,6 +20,7 @@ export class MembersService {
   constructor(
     @InjectRepository(MemberProfile) private profiles: Repository<MemberProfile>,
     @InjectRepository(User) private users: Repository<User>,
+    private readonly config: ConfigService,
   ) {}
 
   private generateMembershipNumber(): string {
@@ -158,13 +160,14 @@ export class MembersService {
   async generateDigitalIdCard(id: string): Promise<Buffer> {
     const profile = await this.findById(id);
     const user = profile.user;
+    const frontendUrl = this.config.get<string>('FRONTEND_URL') || 'https://isengesho.com';
 
     const qrData = JSON.stringify({
       membershipNumber: profile.membershipNumber,
       name: `${user.firstName} ${user.lastName}`,
       category: profile.category,
       issued: new Date().toISOString().split('T')[0],
-      verify: `https://rmc.org.rw/verify/${profile.membershipNumber}`,
+      verify: `${frontendUrl}/verify/${profile.membershipNumber}`,
     });
 
     const qrCodeDataUrl = await QRCode.toDataURL(qrData, { width: 150, margin: 1 });
