@@ -72,7 +72,7 @@ export function HajjRegisterForm() {
   const money = new Intl.NumberFormat(locale);
 
   const [submitted, setSubmitted] = useState(false);
-  const [applicationNumber, setApplicationNumber] = useState('');
+  const [trackingCode, setTrackingCode] = useState('');
   const [submitError, setSubmitError] = useState('');
 
   // The fees an applicant must pay, as set in the requirements CMS.
@@ -165,7 +165,7 @@ export function HajjRegisterForm() {
           { ...advanceDoc, documentType: 'advance_payment' },
         ],
       });
-      setApplicationNumber(res.applicationNumber);
+      setTrackingCode(res.trackingCode);
       setSubmitted(true);
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
@@ -183,17 +183,17 @@ export function HajjRegisterForm() {
         <h2 className="text-xl font-bold text-gray-900">{t('success.title')}</h2>
         <p className="mt-2 text-sm leading-relaxed text-gray-500">{t('success.message')}</p>
 
-        {/* The application number is the applicant's only credential — it is how
-            they track the request and how we identify them in every message. */}
-        {applicationNumber && (
+        {/* The tracking code is the applicant's credential — with their phone it
+            is how they track the request, and how it appears in every message. */}
+        {trackingCode && (
           <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50/70 px-5 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
               {t('success.numberLabel')}
             </p>
-            <p className="mt-1 text-lg font-bold tracking-wide text-rmc-green">{applicationNumber}</p>
+            <p className="mt-1 text-lg font-bold tracking-wide text-rmc-green">{trackingCode}</p>
             <p className="mt-2 text-xs leading-relaxed text-gray-500">{t('success.numberHint')}</p>
             <Link
-              href={`/${locale}/services/hajj/status?number=${encodeURIComponent(applicationNumber)}`}
+              href={`/${locale}/services/hajj/status`}
               className="mt-3 inline-flex items-center justify-center rounded-full bg-rmc-green px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-rmc-green-dark"
             >
               {t('success.track')}
@@ -204,7 +204,7 @@ export function HajjRegisterForm() {
         <div className="mt-7 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
           <button
             type="button"
-            onClick={() => { reset(); setDistrictId(''); setSectors([]); setSubmitted(false); setApplicationNumber(''); }}
+            onClick={() => { reset(); setDistrictId(''); setSectors([]); setSubmitted(false); setTrackingCode(''); }}
             className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             {t('success.again')}

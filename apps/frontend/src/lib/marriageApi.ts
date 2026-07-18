@@ -60,6 +60,7 @@ export interface StatusHistoryEntry {
 export interface MarriageApplication {
   id: string;
   applicationNumber: string;
+  trackingCode: string;
   applicantId: string;
   notificationPhone: string | null;
   groomName: string;

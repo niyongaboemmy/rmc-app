@@ -1137,7 +1137,7 @@ export class MarriageService {
     const phone = await this.getRecipientPhone(app);
     this.dispatchSms(
       phone,
-      SmsTemplates.submission(app.applicationNumber, app.groomName, app.brideName),
+      SmsTemplates.submission(app.trackingCode, app.groomName, app.brideName),
     );
   }
 
@@ -1157,17 +1157,17 @@ export class MarriageService {
   private buildStatusMessage(app: MarriageApplication): string | null {
     switch (app.status) {
       case 'under_review':
-        return SmsTemplates.underReview(app.applicationNumber);
+        return SmsTemplates.underReview(app.trackingCode);
       case 'approved':
-        return SmsTemplates.approved(app.applicationNumber);
+        return SmsTemplates.approved(app.trackingCode);
       case 'rejected':
-        return SmsTemplates.rejected(app.applicationNumber, app.rejectionReason);
+        return SmsTemplates.rejected(app.trackingCode, app.rejectionReason);
       case 'amendments_requested':
-        return SmsTemplates.amendmentsRequested(app.applicationNumber, app.amendmentsRequestedText);
+        return SmsTemplates.amendmentsRequested(app.trackingCode, app.amendmentsRequestedText);
       case 'completed':
-        return SmsTemplates.completed(app.applicationNumber);
+        return SmsTemplates.completed(app.trackingCode);
       case 'closed':
-        return SmsTemplates.closed(app.applicationNumber);
+        return SmsTemplates.closed(app.trackingCode);
       default:
         return null;
     }

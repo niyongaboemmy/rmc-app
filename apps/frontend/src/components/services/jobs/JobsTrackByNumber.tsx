@@ -18,7 +18,6 @@ const PUBLIC_FLOW = ['submitted', 'review', 'shortlisted', 'decision'] as const;
 const STAGE_TO_STATUS: Record<(typeof PUBLIC_FLOW)[number], string> = {
   submitted: 'submitted', review: 'under_review', shortlisted: 'shortlisted', decision: 'accepted',
 };
-const PHONE_RE = /^(?:\+?250|0)7\d{8}$/;
 const RESEND_SECONDS = 60;
 
 function stepIndexFor(status: JobApplicationStatus): number {
@@ -37,14 +36,28 @@ function apiError(err: unknown): { code?: string; message?: string } {
   return e?.response?.data?.error ?? {};
 }
 
+/** Map a backend error code to a specific, translated message the user understands. */
+function messageForCode(t: ReturnType<typeof useTranslations>, code?: string): string {
+  switch (code) {
+    case 'TRACKING_CODE_NOT_FOUND': return t('trackCodeNotFound');
+    case 'TRACKING_RATE_LIMITED': return t('trackRateLimited');
+    case 'TRACKING_OTP_EXPIRED': return t('trackOtpExpired');
+    case 'TRACKING_OTP_MAX_ATTEMPTS': return t('trackOtpMaxAttempts');
+    case 'TRACKING_OTP_NONE': return t('trackOtpNone');
+    case 'TRACKING_OTP_INVALID': return t('trackOtpInvalid');
+    case 'TRACKING_SESSION_INVALID': return t('trackSessionInvalid');
+    default: return t('trackGenericError');
+  }
+}
+
 export function JobsTrackByNumber() {
   const t = useTranslations('services.jobs.status');
   const { locale } = useParams<{ locale: string }>();
 
   const [phase, setPhase] = useState<'enter' | 'otp' | 'result'>('enter');
   const [code, setCode] = useState('');
-  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
+  const [phoneHint, setPhoneHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<JobApplicationPublicStatus | null>(null);
@@ -58,19 +71,16 @@ export function JobsTrackByNumber() {
   }, [resendIn]);
 
   const requestOtp = async () => {
-    if (!code.trim() || !PHONE_RE.test(phone.trim())) {
-      setError(t('trackDetailsInvalid'));
-      return;
-    }
+    if (!code.trim()) { setError(t('trackCodeRequired')); return; }
     setLoading(true);
     setError(null);
     try {
-      await jobsApi.trackRequestOtp(code, phone);
+      const { phoneHint: hint } = await jobsApi.trackRequestOtp(code);
+      setPhoneHint(hint ?? '');
       setPhase('otp');
       setResendIn(RESEND_SECONDS);
     } catch (err) {
-      const { code: c } = apiError(err);
-      setError(c === 'TRACKING_RATE_LIMITED' ? t('trackRateLimited') : t('trackGenericError'));
+      setError(messageForCode(t, apiError(err).code));
     } finally {
       setLoading(false);
     }
@@ -81,24 +91,18 @@ export function JobsTrackByNumber() {
     setLoading(true);
     setError(null);
     try {
-      const res = await jobsApi.trackVerifyOtp(code, phone, otp);
+      const res = await jobsApi.trackVerifyOtp(code, otp);
       setResult(res);
       setPhase('result');
     } catch (err) {
-      const { code: c } = apiError(err);
-      setError(
-        c === 'TRACKING_OTP_EXPIRED' ? t('trackOtpExpired')
-          : c === 'TRACKING_OTP_MAX_ATTEMPTS' ? t('trackOtpMaxAttempts')
-          : c === 'TRACKING_RATE_LIMITED' ? t('trackRateLimited')
-          : t('trackOtpInvalid'),
-      );
+      setError(messageForCode(t, apiError(err).code));
     } finally {
       setLoading(false);
     }
   };
 
   const reset = () => {
-    setPhase('enter'); setOtp(''); setResult(null); setError(null); setResendIn(0);
+    setPhase('enter'); setOtp(''); setResult(null); setError(null); setResendIn(0); setPhoneHint('');
   };
 
   return (
@@ -110,23 +114,17 @@ export function JobsTrackByNumber() {
         <p className="text-xs text-gray-400 mt-1">{t('trackSubtitle')}</p>
       </div>
 
-      {/* Step 1 — code + phone */}
+      {/* Step 1 — tracking code only */}
       {phase === 'enter' && (
         <div className="space-y-3">
           <input
             value={code}
             onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') requestOtp(); }}
             placeholder={t('trackPlaceholder')}
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           />
-          <input
-            value={phone}
-            onChange={(e) => { setPhone(e.target.value); setError(null); }}
-            placeholder={t('trackPhonePlaceholder')}
-            inputMode="tel"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-          />
-          <p className="text-[11px] text-gray-400">{t('trackPhoneHint')}</p>
+          <p className="text-[11px] text-gray-400">{t('trackCodeHint')}</p>
           <button
             onClick={requestOtp}
             disabled={loading}
@@ -142,11 +140,13 @@ export function JobsTrackByNumber() {
       {phase === 'otp' && (
         <div className="space-y-3">
           <div className="rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm px-4 py-3 flex gap-2">
-            <KeyRound className="w-4 h-4 shrink-0 mt-0.5" /> <span>{t('trackOtpSent')}</span>
+            <KeyRound className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{phoneHint ? t('trackOtpSentTo', { phone: phoneHint }) : t('trackOtpSent')}</span>
           </div>
           <input
             value={otp}
             onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') verifyOtp(); }}
             placeholder={t('trackOtpPlaceholder')}
             inputMode="numeric"
             maxLength={6}
@@ -162,7 +162,7 @@ export function JobsTrackByNumber() {
           </button>
           <div className="flex items-center justify-between text-xs">
             <button onClick={reset} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700">
-              <ArrowLeft className="w-3.5 h-3.5" /> {t('trackChangeDetails')}
+              <ArrowLeft className="w-3.5 h-3.5" /> {t('trackChangeCode')}
             </button>
             <button
               onClick={requestOtp}

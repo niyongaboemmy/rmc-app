@@ -87,10 +87,12 @@ export class HajjController {
   @ApiOperation({ summary: 'Submit a Hajj application' })
   async apply(@Body() dto: CreateHajjApplicationDto) {
     const app = await this.service.apply(dto);
-    // Only what the applicant needs — the rest of the row is not public.
+    // Only what the applicant needs — the rest of the row is not public. The
+    // trackingCode is the credential they use (with their phone) to track it.
     return {
       id: app.id,
       applicationNumber: app.applicationNumber,
+      trackingCode: app.trackingCode,
       status: app.status,
     };
   }
@@ -101,10 +103,10 @@ export class HajjController {
   @Public()
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 600000 } })
-  @ApiOperation({ summary: 'Request an SMS OTP to unlock tracking (code + phone must match)' })
+  @ApiOperation({ summary: 'Request an SMS OTP to the phone on file for this tracking code' })
   async requestTrackingOtp(@Body() dto: RequestTrackingOtpDto, @Ip() ip: string) {
     const subject = await this.service.findSubjectByCode(dto.trackingCode);
-    return this.tracking.requestOtp(HAJJ_SUBJECT, subject, dto.phone, ip);
+    return this.tracking.requestOtp(HAJJ_SUBJECT, subject, ip);
   }
 
   @Post('applications/track/verify-otp')
@@ -114,7 +116,7 @@ export class HajjController {
   @ApiOperation({ summary: 'Verify the OTP; returns a short-lived token + status' })
   async verifyTrackingOtp(@Body() dto: VerifyTrackingOtpDto, @Ip() ip: string) {
     const subject = await this.service.findSubjectByCode(dto.trackingCode);
-    const { token, subjectId } = await this.tracking.verifyOtp(HAJJ_SUBJECT, subject, dto.phone, dto.otp, ip);
+    const { token, subjectId } = await this.tracking.verifyOtp(HAJJ_SUBJECT, subject, dto.otp, ip);
     const info = await this.service.getTrackingInfo(subjectId);
     return { token, ...info };
   }

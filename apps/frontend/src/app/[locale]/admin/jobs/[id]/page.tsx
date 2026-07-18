@@ -7,7 +7,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Briefcase, User, Phone, Mail, MapPin, FileText,
   CheckCircle2, XCircle, AlertTriangle, Clock, RefreshCw, Send, X,
-  Star, Search, ShieldCheck, Eye, ExternalLink, Download,
+  Star, Search, ShieldCheck, ExternalLink, Download,
 } from 'lucide-react';
 import { type JobApplication, JOB_STATUS_COLORS, type JobApplicationStatus } from '@/lib/jobsApi';
 import { jobsAdminApi, type JobStatusAction } from '@/lib/jobsAdminApi';
@@ -64,58 +64,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   );
 }
 
-/** Inline preview modal — renders images and PDFs in-page (no download). */
-function DocumentPreviewModal({ label, name, url, onClose }: { label: string; name?: string; url: string; onClose: () => void }) {
-  const fname = name || url;
-  const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(fname);
-  const isPdf = /\.pdf(\?|$)/i.test(fname);
-
-  if (typeof document === 'undefined') return null;
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-      className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-    >
-      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-100 shrink-0">
-          <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-gray-400 leading-none">{label}</p>
-            <p className="text-sm font-medium text-gray-900 truncate mt-0.5">{name}</p>
-          </div>
-          <a href={url} target="_blank" rel="noopener noreferrer" title="Open in new tab" className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 shrink-0">
-            <ExternalLink className="w-4 h-4" />
-          </a>
-          <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 shrink-0">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="flex-1 bg-gray-100 overflow-auto flex items-center justify-center">
-          {isImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt={name || label} className="max-w-full max-h-full object-contain" />
-          ) : isPdf ? (
-            <iframe src={url} title={name || label} className="w-full h-full border-0" />
-          ) : (
-            <div className="text-center p-8">
-              <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 mb-3">This file type can&apos;t be previewed here.</p>
-              <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
-                <ExternalLink className="w-4 h-4" /> Open in new tab
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
-
 function DocLink({ label, name, docKey }: { label: string; name?: string; docKey?: string }) {
-  const [preview, setPreview] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const url = docKey ? resolveMediaUrl(docKey) : '';
@@ -155,14 +104,16 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
           <p className="text-xs text-gray-500">{label}</p>
           <p className="text-sm font-medium text-gray-900 truncate">{name || docKey}</p>
         </div>
-        <button
-          onClick={() => setPreview(true)}
-          title="Preview"
-          aria-label={`Preview ${label}`}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open in new tab"
+          aria-label={`Open ${label} in a new tab`}
           className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors shrink-0"
         >
-          <Eye className="w-4 h-4" />
-        </button>
+          <ExternalLink className="w-4 h-4" />
+        </a>
         <button
           onClick={handleDownload}
           disabled={downloading}
@@ -173,7 +124,6 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
           {downloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
         </button>
       </div>
-      {preview && <DocumentPreviewModal label={label} name={name} url={url} onClose={() => setPreview(false)} />}
     </>
   );
 }

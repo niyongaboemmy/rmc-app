@@ -39,9 +39,9 @@ export class JobApplicationsController {
   @Public()
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 600000 } })
-  @ApiOperation({ summary: 'Request an SMS OTP to unlock tracking (code + phone must match)' })
+  @ApiOperation({ summary: 'Request an SMS OTP to the phone on file for this tracking code' })
   async requestTrackingOtp(@Body() dto: RequestTrackingOtpDto, @Ip() ip: string) {
-    return this.tracking.requestOtp(dto.trackingCode, dto.phone, ip);
+    return this.tracking.requestOtp(dto.trackingCode, ip);
   }
 
   @Post('track/verify-otp')
@@ -50,7 +50,7 @@ export class JobApplicationsController {
   @Throttle({ default: { limit: 20, ttl: 600000 } })
   @ApiOperation({ summary: 'Verify the OTP; returns a short-lived tracking token + status' })
   async verifyTrackingOtp(@Body() dto: VerifyTrackingOtpDto, @Ip() ip: string) {
-    const { token, applicationId } = await this.tracking.verifyOtp(dto.trackingCode, dto.phone, dto.otp, ip);
+    const { token, applicationId } = await this.tracking.verifyOtp(dto.trackingCode, dto.otp, ip);
     const info = await this.service.getTrackingInfo(applicationId);
     return { token, ...info };
   }
