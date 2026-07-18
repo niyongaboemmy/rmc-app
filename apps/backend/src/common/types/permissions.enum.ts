@@ -72,6 +72,12 @@ export enum Permission {
   GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
   GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
 
+  // ── Scholarship Service ───────────────────────────────────────────
+  SCHOLARSHIP_VIEW = 'scholarship:view',
+  SCHOLARSHIP_MANAGE = 'scholarship:manage',
+  SCHOLARSHIP_APPROVE = 'scholarship:approve',
+  SCHOLARSHIP_REPORTS = 'scholarship:reports',
+
   // ── Funeral Service ───────────────────────────────────────────────
   FUNERAL_VIEW = 'funeral:view',
   FUNERAL_MANAGE = 'funeral:manage',

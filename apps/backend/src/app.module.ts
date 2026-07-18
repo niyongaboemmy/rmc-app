@@ -22,6 +22,7 @@ import { MembersModule } from './members/members.module';
 import { PublicModule } from './public/public.module';
 import { MarriageModule } from './marriage/marriage.module';
 import { GoodConductModule } from './good-conduct/good-conduct.module';
+import { ScholarshipModule } from './scholarship/scholarship.module';
 import { FuneralModule } from './funeral/funeral.module';
 import { HajjModule } from './hajj/hajj.module';
 import { DawahModule } from './dawah/dawah.module';
@@ -70,6 +71,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     PublicModule,
     MarriageModule,
     GoodConductModule,
+    ScholarshipModule,
     FuneralModule,
     HajjModule,
     DawahModule,

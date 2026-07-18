@@ -76,6 +76,10 @@ export enum Permission {
   TENDER_MANAGE = 'tender:manage',
   TENDER_EVALUATE = 'tender:evaluate',
   TENDER_REPORTS = 'tender:reports',
+  SCHOLARSHIP_VIEW = 'scholarship:view',
+  SCHOLARSHIP_MANAGE = 'scholarship:manage',
+  SCHOLARSHIP_APPROVE = 'scholarship:approve',
+  SCHOLARSHIP_REPORTS = 'scholarship:reports',
 
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

@@ -177,3 +177,9 @@ apps/frontend/.next_bak_root/
 # Screenshots (PNG) — keep real app assets under public/
 *.png
 !apps/frontend/public/**/*.png
+
+# Local session notes
+HANDOFF.md
+
+# Ad-hoc reports dropped at the repo root — real docs belong in documentation/
+/*.pdf

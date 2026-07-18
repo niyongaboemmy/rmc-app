@@ -1,4 +1,12 @@
 {
+  "notFoundPage": {
+    "code": "404",
+    "eyebrow": "Error 404",
+    "title": "Page Not Found",
+    "subtitle": "The page you're looking for may have moved, or never existed. Let us guide you back.",
+    "home": "Back to Home",
+    "services": "Explore Services"
+  },
   "common": {
     "appName": "RMC Platform",
     "loading": "Loading...",
@@ -1025,7 +1033,203 @@
     },
     "scholarship": {
       "title": "Scholarships",
-      "desc": "Financial support for Muslim students pursuing education at all levels."
+      "desc": "Financial support for Muslim students pursuing education at all levels.",
+      "levels": {
+        "secondary": "Secondary School",
+        "tvet": "TVET / Vocational",
+        "university": "University"
+      },
+      "relationships": {
+        "parent": "Parent",
+        "guardian": "Guardian",
+        "sibling": "Sibling",
+        "other": "Other"
+      },
+      "docTypes": {
+        "transcript": "Transcript / Report Card",
+        "academic_record": "Academic Record",
+        "proof": "Proof of Need",
+        "additional": "Other Document"
+      },
+      "detail": {
+        "backToServices": "All Services",
+        "needTitle": "What you'll need",
+        "needSubtitle": "Have these ready before you start your application.",
+        "need": {
+          "i1": { "title": "Your personal details", "text": "Full name, date of birth, phone number, and (optionally) your national ID." },
+          "i2": { "title": "Where you live", "text": "Your district and sector." },
+          "i3": { "title": "Your education details", "text": "Current school, education level, and year or grade." },
+          "i4": { "title": "A guardian's contact", "text": "A parent or guardian's name, phone number, and their relationship to you." },
+          "i5": { "title": "A short statement", "text": "A brief explanation of why you need this scholarship." }
+        },
+        "processTitle": "How it works",
+        "processSubtitle": "From application to tracking, in a few simple steps.",
+        "steps": {
+          "s1": { "title": "Sign in", "text": "Sign in to your RMC account, or create one if you don't have one yet." },
+          "s2": { "title": "Fill in the form", "text": "Complete your personal, education, and guardian details across a short 3-step form." },
+          "s3": { "title": "Submit your application", "text": "Submit and receive a tracking number for your application." },
+          "s4": { "title": "Track your status", "text": "Use your tracking number anytime to check where your application stands." }
+        },
+        "faqTitle": "Frequently asked questions",
+        "faqs": {
+          "f1": {
+            "q": "Do I need an account to apply?",
+            "a": "Yes — you need to sign in to your RMC account to submit an application."
+          },
+          "f2": {
+            "q": "Is there a fee to apply?",
+            "a": "No, applying for a scholarship does not require any payment."
+          },
+          "f3": {
+            "q": "How do I check my application status?",
+            "a": "Use the tracking number you received after submitting, on the \"Check Status\" page — no account needed."
+          },
+          "f4": {
+            "q": "Can I apply again if I'm not approved?",
+            "a": "Yes, you're welcome to submit a new application."
+          }
+        },
+        "ctaTitle": "Ready to apply for a scholarship?",
+        "ctaSubtitle": "Sign in and submit your application in just a few minutes.",
+        "ctaStart": "Start application",
+        "ctaContact": "Contact us"
+      },
+      "apply": {
+        "heroTitle": "Apply for a Scholarship",
+        "requirementsHeroTitle": "Scholarships",
+        "requirementsHeroSubtitle": "Sign in to your RMC account to apply for a scholarship.",
+        "backToService": "Back to Scholarships",
+        "signInToApply": "Sign In to Apply",
+        "signInPrompt": "You need to be signed in to apply for a scholarship.",
+        "noAccount": "Don't have an account?",
+        "requestAccess": "Request access",
+        "step1Title": "Personal Information",
+        "step1Subtitle": "Tell us who you are and how to reach you",
+        "step2Title": "Academic Information",
+        "step2Subtitle": "Your school, program, and required academic documents",
+        "step3Title": "Scholarship Questions",
+        "step3Subtitle": "Tell us why this scholarship matters to you",
+        "step4Title": "Guardian & Documents",
+        "step4Subtitle": "Guardian details, supporting documents, and your declaration",
+        "fullNames": "Full Name",
+        "fullNamesError": "Enter your full name (at least 3 characters)",
+        "fullNamesTooLongError": "Full name is too long (max 150 characters)",
+        "studentId": "Student ID",
+        "email": "Email Address",
+        "emailError": "Enter a valid email address",
+        "phone": "Phone Number",
+        "phoneFormatError": "Enter a valid Rwanda mobile number: 07XXXXXXXX",
+        "phoneHint": "Format: 07XXXXXXXX (10 digits)",
+        "schoolName": "Current School",
+        "currentYear": "Current Grade / Year",
+        "currentYearPlaceholder": "e.g. Senior 5 or Year 2",
+        "program": "Current Program / Course",
+        "programPlaceholder": "e.g. Computer Science",
+        "averageGrade": "Overall Academic Average / GPA",
+        "averageGradePlaceholder": "e.g. 78% or 3.6",
+        "requiredError": "This field is required",
+        "requiredDocuments": "Required documents",
+        "supportingDocuments": "Supporting documents",
+        "q1Label": "Why do you deserve this scholarship?",
+        "q1Placeholder": "Tell us about yourself, your achievements, your educational goals, and why you believe you should receive this scholarship.",
+        "q2Label": "How will this scholarship help you achieve your educational goals?",
+        "q2Placeholder": "Explain how this support will make a difference to your studies and future.",
+        "q3Label": "Is there anything else you would like the scholarship committee to know?",
+        "q3Placeholder": "Anything else you'd like to add (optional).",
+        "questionRequiredError": "Please answer this question (at least 10 characters)",
+        "guardianName": "Parent / Guardian Name",
+        "guardianPhone": "Parent / Guardian Phone Number",
+        "householdIncome": "Monthly Household Income",
+        "householdIncomePlaceholder": "e.g. 150,000 RWF",
+        "docTranscript": "Academic Transcript",
+        "docReportCard": "Latest Report Card / Examination Results",
+        "docStudentId": "Student ID / School ID",
+        "docRecommendation": "Recommendation Letter",
+        "docCertificates": "Certificates & Awards",
+        "docFinancial": "Financial Support Documents",
+        "docHint": "PDF, JPG, PNG or WebP · up to 10 MB",
+        "docUpload": "Upload",
+        "docOrDrop": "or drop a file",
+        "docRemove": "Remove document",
+        "docTypeError": "Only PDF and image files are allowed",
+        "docSizeError": "Each file must be 10 MB or smaller",
+        "docRequiredError": "Please upload the required document(s) before continuing",
+        "declaration": "I certify that the information provided is true and accurate to the best of my knowledge.",
+        "next": "Next",
+        "back": "Back",
+        "submit": "Submit Application",
+        "submitting": "Submitting…",
+        "uploadFailed": "Some documents could not be uploaded",
+        "optional": "optional",
+        "genericError": "Something went wrong. Please try again.",
+        "successTitle": "Application Submitted!",
+        "successText": "Our team will review your application within 5–10 business days. You will be notified by SMS on every status change.",
+        "applicationIdLabel": "Your Application ID",
+        "saveIdHint": "Save this — you need it to track your application.",
+        "trackApplication": "Track Application",
+        "newApplication": "New Application",
+        "copyId": "Copy ID"
+      },
+      "status": {
+        "title": "Track Your Application",
+        "subtitle": "Check the status of a scholarship application using your tracking number.",
+        "backToService": "Back to Scholarships",
+        "idLabel": "Application Tracking Number",
+        "idPlaceholder": "e.g. RMC-SCH-KIC-202607-00001",
+        "checkButton": "Check Status",
+        "checking": "Checking…",
+        "notFoundTitle": "Application Not Found",
+        "notFoundText": "We couldn't find an application with that tracking number. Please check and try again.",
+        "detailsTitle": "Application",
+        "submittedOn": "Submitted On",
+        "applicant": "Applicant",
+        "school": "School",
+        "currentStatus": "Current Status",
+        "stages": {
+          "submitted": "Submitted",
+          "review": "Under Review",
+          "approved": "Approved",
+          "confirmed": "Confirmed"
+        },
+        "stageDesc": {
+          "submitted": "Your application has been received.",
+          "review": "A reviewer is verifying your details.",
+          "approved": "Your application has been approved.",
+          "confirmed": "Your scholarship has been confirmed."
+        },
+        "statusLabel": {
+          "draft": "Draft",
+          "submitted": "Submitted",
+          "under_review": "Under Review",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "cancelled": "Cancelled",
+          "confirmed": "Confirmed"
+        },
+        "banner": {
+          "rejectedTitle": "Application Not Approved",
+          "rejectedText": "Contact info@rmc.rw for details.",
+          "cancelledTitle": "Application Cancelled",
+          "cancelledText": "This application was cancelled."
+        }
+      },
+      "landing": {
+        "backToServices": "Back to Services",
+        "applyTitle": "Apply for a Scholarship",
+        "applyText": "Submit your details, education info, and reason for the request.",
+        "applyCta": "Apply Now",
+        "statusTitle": "Track My Application",
+        "statusText": "Check the status of an application you've already submitted.",
+        "statusCta": "Check Status",
+        "programsTitle": "Available Scholarships",
+        "programsSubtitle": "Open scholarship programs you can apply for right now.",
+        "programsEmptyTitle": "No open scholarships right now",
+        "programsEmptyText": "Check back soon — new scholarship programs are announced regularly.",
+        "programsLoadError": "Couldn't load scholarships. Please try again later.",
+        "deadlineLabel": "Deadline",
+        "amountLabel": "Amount",
+        "viewAndApply": "View & Apply"
+      }
     },
     "tender": {
       "title": "Tenders",
@@ -1455,6 +1659,7 @@
       "marriage": "Marriage",
       "drive": "Drive",
       "goodConduct": "Good Conduct",
+      "scholarship": "Scholarships",
       "funeral": "Funeral",
       "hajj": "Hajj",
       "dawah": "Dawah",
