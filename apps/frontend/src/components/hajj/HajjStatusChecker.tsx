@@ -32,7 +32,7 @@ function HajjResult({ app }: { app: HajjApplicationPublic }) {
   const reachedIndex = TIMELINE.indexOf(app.status as (typeof TIMELINE)[number]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
       <div className="border-b border-gray-100 bg-gray-50/60 px-5 py-4">
         <p className="text-lg font-bold tracking-wide text-rmc-green">{app.trackingCode}</p>
         <p className="mt-0.5 text-sm text-gray-600">
@@ -95,7 +95,7 @@ function RejectedPanel({ app }: { app: HajjApplicationPublic }) {
         <p className="text-sm font-semibold text-gray-900">{t('steps.rejected')}</p>
         <p className="mt-1 text-xs leading-relaxed text-gray-500">{t('stepHint.rejected')}</p>
         {app.rejectionReason && (
-          <div className="mt-3 rounded-xl bg-red-50 px-4 py-3 ring-1 ring-red-100">
+          <div className="mt-3 rounded-lg bg-red-50 px-4 py-3 ring-1 ring-red-100">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-red-500">{t('reason')}</p>
             <p className="mt-1 text-sm leading-relaxed text-red-800">{app.rejectionReason}</p>
           </div>

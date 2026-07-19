@@ -2,10 +2,9 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, CalendarDays, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, Clock } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
 import { getPosts, getPost, readingMinutes } from '@/components/blog/blogData';
 
 // Render on-demand like the rest of the app (gallery, about). The route lives
@@ -29,44 +28,63 @@ export default async function BlogPostPage({
 
   return (
     <div className="min-h-screen">
-      <Navbar />
+      {/* Solid navbar: with the image hero gone, a transparent bar would put
+          white links on the light page and read as invisible. */}
+      <Navbar solid />
       <main>
-        {/* Article header */}
+        {/* Article header — compact, on the light page (no image hero); pt
+            clears the fixed navbar. */}
         <article>
-          <PageHero
-            eyebrow={post.category}
-            title={post.title}
-            subtitle={post.summary}
-            backHref={`/${locale}/blog`}
-            backLabel={t('back')}
-            align="left"
-            titleClassName="text-xl md:text-2xl lg:text-3xl"
-            minHeightClassName="min-h-[32vh]"
-            paddingClassName="pt-36 pb-20"
-          >
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-white/15 pt-5 text-sm text-white/70">
-              {post.author && (
-                <span className="inline-flex items-center gap-2.5">
-                  <span className="grid place-items-center w-9 h-9 rounded-full bg-gradient-to-br from-rmc-green to-rmc-gold text-white text-xs font-bold ring-2 ring-white/30 shadow-sm">
-                    {post.author.charAt(0)}
+          <div className="px-4 sm:px-6 lg:px-8 pt-24 md:pt-28">
+            <div className="mx-auto max-w-3xl">
+              <Link
+                href={`/${locale}/blog`}
+                className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-rmc-green"
+              >
+                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
+                {t('back')}
+              </Link>
+              {/* Header card — background + borders matching the course detail page */}
+              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm md:p-5">
+                {post.category && (
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold">
+                    {post.category}
+                  </p>
+                )}
+                <h1 className="mt-1.5 text-lg font-bold leading-tight text-rmc-green-deep md:text-xl">
+                  {post.title}
+                </h1>
+                {post.summary && (
+                  <p className="mt-2 text-sm leading-relaxed text-gray-500 md:text-base">
+                    {post.summary}
+                  </p>
+                )}
+
+                <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-gray-200 pt-4 text-sm text-gray-500">
+                  {post.author && (
+                    <span className="inline-flex items-center gap-2.5">
+                      <span className="grid place-items-center w-9 h-9 rounded-full bg-gradient-to-br from-rmc-green to-rmc-gold text-white text-xs font-bold ring-2 ring-rmc-gold/30 shadow-sm">
+                        {post.author.charAt(0)}
+                      </span>
+                      <span className="font-semibold text-gray-900">{post.author}</span>
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarDays className="w-4 h-4 text-rmc-green" />
+                    <time dateTime={post.date}>{dateFmt.format(new Date(post.date))}</time>
                   </span>
-                  <span className="font-semibold text-white">{post.author}</span>
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="w-4 h-4 text-rmc-gold" />
-                <time dateTime={post.date}>{dateFmt.format(new Date(post.date))}</time>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-rmc-gold" />
-                {t('minRead', { count: minutes })}
-              </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-rmc-green" />
+                    {t('minRead', { count: minutes })}
+                  </span>
+                </div>
+              </div>
             </div>
-          </PageHero>
+          </div>
 
           {/* Hero image */}
           <div className="px-4 sm:px-6 lg:px-8 mt-8">
-            <div className="max-w-3xl mx-auto relative aspect-[16/9] overflow-hidden rounded-3xl shadow-[0_30px_70px_-30px_rgba(13,61,36,0.5)] ring-1 ring-black/5">
+            <div className="max-w-3xl mx-auto relative aspect-[16/9] overflow-hidden rounded-lg shadow-[0_30px_70px_-30px_rgba(13,61,36,0.5)] ring-1 ring-black/5">
               <Image
                 src={post.image}
                 alt={post.title}
@@ -107,7 +125,7 @@ export default async function BlogPostPage({
                   <Link
                     key={p.slug}
                     href={`/${locale}/blog/${p.slug}`}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-28px_rgba(13,61,36,0.3)]"
+                    className="group flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-rmc-green/50 hover:shadow-[0_24px_50px_-28px_rgba(13,61,36,0.3)]"
                   >
                     <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
                       <Image
@@ -117,7 +135,7 @@ export default async function BlogPostPage({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                       />
-                      <span className="absolute top-3 left-3 rounded-full bg-black/50 backdrop-blur-sm px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+                      <span className="absolute top-3 left-3 rounded-lg bg-black/50 backdrop-blur-sm px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
                         {p.category}
                       </span>
                     </div>

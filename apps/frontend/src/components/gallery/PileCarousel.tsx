@@ -57,7 +57,7 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
             <div
               key={`${img.src}-${i}`}
               aria-hidden={depth !== 0}
-              className="absolute inset-0 rounded-2xl bg-white p-2.5 shadow-[0_20px_45px_-18px_rgba(13,61,36,0.5)] ring-1 ring-black/5 transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none will-change-transform"
+              className="absolute inset-0 rounded-lg bg-white p-1.5 shadow-[0_20px_45px_-18px_rgba(13,61,36,0.5)] ring-1 ring-black/5 transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none will-change-transform"
               style={{
                 transform: `translateX(${tx}px) translateY(${ty}px) rotateY(${depth * -4}deg) rotate(${rot}deg) scale(${scale})`,
                 zIndex: n - depth,
@@ -65,7 +65,7 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
                 pointerEvents: depth === 0 ? 'auto' : 'none',
               }}
             >
-              <div className="relative w-full h-full overflow-hidden rounded-xl bg-gray-100">
+              <div className="relative w-full h-full overflow-hidden rounded-lg bg-gray-100">
                 <Image
                   src={img.src}
                   alt={depth === 0 ? img.alt ?? '' : ''}
@@ -77,7 +77,7 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
                 {depth === 0 && (
                   <>
                     <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-rmc-green-deep/40 via-transparent to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-90" />
-                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-2 rounded-full bg-white/90 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-2 rounded-lg bg-white/90 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
                       {viewAllLabel}
                     </span>
                   </>

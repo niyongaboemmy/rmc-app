@@ -27,7 +27,7 @@ export async function HajjSteps() {
 
   return (
     <section id="hajj-steps" className="relative scroll-mt-24 bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 py-12 md:py-16 sm:px-8 lg:px-12">
         <div className="mb-10 max-w-2xl">
           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold">
             {pick(heading.eyebrow, locale)}

@@ -35,7 +35,7 @@ export function TweetColumn({
         href={profileUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 text-center shadow-sm ring-1 ring-black/5 no-underline transition-colors hover:from-gray-100 hover:to-gray-200"
+        className="group flex flex-col items-center justify-center gap-3 rounded-lg border border-gray-200/70 bg-gradient-to-br from-gray-50 to-gray-100 p-6 text-center no-underline transition-colors hover:from-gray-100 hover:to-gray-200"
         style={{ minHeight: height }}
       >
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white shadow-lg transition-transform group-hover:scale-110">
@@ -60,7 +60,7 @@ export function TweetColumn({
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-black/5"
+      className="flex flex-col overflow-hidden rounded-lg border border-gray-200/70 bg-white"
       style={{ height }}
     >
       <div className="relative min-h-0 flex-1">

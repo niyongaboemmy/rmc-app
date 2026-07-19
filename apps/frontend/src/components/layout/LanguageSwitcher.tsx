@@ -59,7 +59,7 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
       {/* Trigger — flag + code, so the current language is obvious at a glance */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 pl-2 pr-2.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+        className={`flex items-center gap-1.5 pl-2 pr-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
           scrolled
             ? 'bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-700'
             : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-sm'
@@ -79,7 +79,7 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
 
       {/* Dropdown — flag + native name + clear selected state */}
       <div
-        className={`absolute end-0 mt-2 w-48 rounded-2xl bg-white shadow-xl shadow-black/10 border border-gray-100 overflow-hidden z-50 transition-all duration-200 origin-top ${
+        className={`absolute end-0 mt-2 w-48 rounded-lg bg-white shadow-xl shadow-black/10 border border-gray-100 overflow-hidden z-50 transition-all duration-200 origin-top ${
           open ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
         }`}
         role="listbox"

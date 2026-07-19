@@ -104,7 +104,7 @@ export function AskQuestionForm() {
   return (
     <div className="min-h-screen">
       <Navbar solid />
-      <main className="pt-28 md:pt-32">
+      <main className="pt-24 md:pt-28">
         <div className="mx-auto max-w-2xl px-4 pb-16 sm:px-6">
           <Link
             href={`/${locale}/dawah/discussions`}

@@ -3413,6 +3413,7 @@
       "nav": "Discussions",
       "navDesc": "Questions answered by the community and verified by RMC.",
       "askCta": "Ask a question",
+      "viewAll": "View all discussions",
       "empty": "No questions here yet.",
       "emptyFiltered": "No questions match these filters.",
       "clearFilters": "Clear filters",

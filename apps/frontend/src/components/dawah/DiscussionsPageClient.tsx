@@ -7,7 +7,6 @@ import { ArrowLeft, ArrowRight, MessagesSquare, Plus, Search, X } from 'lucide-r
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/ui/Reveal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useAuth } from '@/hooks/useAuth';
@@ -132,26 +131,32 @@ export function DiscussionsPageClient() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
+      {/* Solid navbar: with the image hero gone, a transparent bar would put
+          white links on the light section below and read as invisible. */}
+      <Navbar solid />
       <main>
-        <PageHero
-          eyebrow={t('title')}
-          title={t('discussions.title')}
-          subtitle={t('discussions.subtitle')}
-          titleClassName="text-2xl md:text-3xl"
-          // Matched to the Courses and Library heroes. The height comes from this
-          // padding, not min-h; pt-32 is the floor because the navbar is transparent
-          // over the hero and measures 114px.
-          minHeightClassName="min-h-[20vh]"
-          paddingClassName="pt-32 pb-10"
-          backHref={`/${locale}/dawah`}
-          backLabel={t('backToDawah')}
-          ornament
-        />
-
-        <section className="relative bg-gray-50/60 py-10 md:py-14">
+        <section className="relative bg-gray-50/60 pb-10 pt-24 md:pb-14 md:pt-28">
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {/* ── Compact header — back link + title + subtitle. Replaces the
+                image hero; pt clears the fixed navbar. Kept in step with the
+                Courses and Library listings — change all or none. ── */}
+            <div className="mb-6">
+              <Link
+                href={`/${locale}/dawah`}
+                className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-rmc-green"
+              >
+                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
+                {t('backToDawah')}
+              </Link>
+              <h1 className="mt-4 text-2xl font-bold text-rmc-green-deep md:text-3xl">
+                {t('discussions.title')}
+              </h1>
+              <p className="mt-1.5 text-sm text-gray-500 md:text-base">
+                {t('discussions.subtitle')}
+              </p>
+            </div>
+
             {/* ── Filters ────────────────────────────────────────────────── */}
             <Reveal>
               <div className="rounded-lg border border-gray-200 bg-white p-4">

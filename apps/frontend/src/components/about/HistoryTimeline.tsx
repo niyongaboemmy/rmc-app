@@ -218,22 +218,16 @@ function EntryModal({
         )}
 
         <div className="min-h-0 flex-1 overflow-y-auto p-7 md:p-8">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-rmc-gold">
-            <span className="h-1.5 w-1.5 rounded-full bg-rmc-gold" />
-            <span className="tabular-nums">{entry.year}</span>
-          </span>
+          {/* Same badge as the timeline rail, so the modal reads as the same entry. */}
+          <YearBadge year={entry.year} />
           <h3
             className={`mt-2 text-2xl font-bold text-gray-900 ${rtl ? 'font-arabic' : ''}`}
             dir={rtl ? 'rtl' : 'ltr'}
           >
             {title}
           </h3>
-          <span
-            aria-hidden
-            className="my-4 block h-px w-14 rounded-full bg-gradient-to-r from-rmc-green via-rmc-gold to-rmc-green"
-          />
           <p
-            className={`whitespace-pre-line text-[15px] leading-relaxed text-gray-600 ${rtl ? 'font-arabic' : ''}`}
+            className={`mt-4 whitespace-pre-line text-[15px] leading-relaxed text-gray-600 ${rtl ? 'font-arabic' : ''}`}
             dir={rtl ? 'rtl' : 'ltr'}
           >
             {description}
@@ -295,16 +289,20 @@ export function HistoryTimeline({ locale }: { locale: string }) {
         />
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          {/* Section header — plain heading, no eyebrow or ornament */}
+          {/* Section header — green heading with the gold ornament underline,
+              matching the other About-page section headings. */}
           <div className="mb-8 text-center">
             <h2
-              className={`text-3xl font-medium text-gray-900 md:text-4xl ${rtl ? 'font-arabic' : ''}`}
+              className={`text-3xl font-medium text-rmc-green-deep md:text-4xl ${rtl ? 'font-arabic' : ''}`}
               dir={rtl ? 'rtl' : 'ltr'}
             >
               {t.title} {t.accent}
             </h2>
+            <div className="ornament-divider mx-auto my-4 max-w-xs">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+            </div>
             <p
-              className={`mx-auto mt-4 max-w-xl text-sm text-gray-500 md:text-base ${
+              className={`mx-auto max-w-xl text-sm text-gray-500 md:text-base ${
                 rtl ? 'font-arabic' : ''
               }`}
               dir={rtl ? 'rtl' : 'ltr'}

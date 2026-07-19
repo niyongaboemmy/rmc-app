@@ -74,14 +74,14 @@ function StatCard({ value, label, suffix, Icon, ringColor, glowColor, delay = 0 
   return (
     <div
       ref={ref}
-      className={`group relative overflow-hidden bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 text-center transition-all duration-700 ${
+      className={`group relative overflow-hidden bg-white/5 border border-white/10 rounded-lg p-6 md:p-8 text-center transition-all duration-700 ${
         cardVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
       }`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {/* Hover glow overlay */}
       <div
-        className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+        className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
         style={{ background: `radial-gradient(ellipse at center, ${glowColor} 0%, transparent 70%)` }}
       />
 
@@ -159,15 +159,14 @@ export function StatsSection() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <div className={`inline-flex items-center gap-2 bg-rmc-gold/15 border border-rmc-gold/25 text-rmc-gold px-4 py-1.5 rounded-full text-sm font-medium mb-4 ${rtl ? 'font-arabic' : ''}`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold animate-pulse" />
-            {pick(content.eyebrow, locale)}
-          </div>
           <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-white ${rtl ? 'font-arabic' : ''}`}>
             {pick(content.title, locale)}{' '}
             <span className="text-emerald-400">{pick(content.titleAccent, locale)}</span>
           </h2>
-          <p className={`text-white/40 mt-2 text-sm ${rtl ? 'font-arabic' : ''}`}>{pick(content.subtitle, locale)}</p>
+          <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+          </div>
+          <p className={`text-white/40 text-sm ${rtl ? 'font-arabic' : ''}`}>{pick(content.subtitle, locale)}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">

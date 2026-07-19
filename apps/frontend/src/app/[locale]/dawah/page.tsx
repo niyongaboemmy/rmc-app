@@ -7,7 +7,8 @@ import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/ui/Reveal';
 import { CourseCard } from '@/components/dawah/CourseCard';
-import { getDawahContent, getFeaturedCourses } from '@/components/dawah/dawahData';
+import { DiscussionCard } from '@/components/dawah/DiscussionCard';
+import { getDawahContent, getFeaturedCourses, getRecentDiscussions } from '@/components/dawah/dawahData';
 import { pick, isRtl } from '@/lib/content-api';
 
 // Hero and description are CMS-managed and the course outline is live API data,
@@ -24,7 +25,11 @@ export default async function DawahPage({
   // Both loaders swallow their own failures — see dawahData.ts. The page renders
   // with seeded copy and an empty outline when the backend is down, rather than
   // 500ing. Fetched in parallel: neither depends on the other.
-  const [content, featured] = await Promise.all([getDawahContent(), getFeaturedCourses()]);
+  const [content, featured, discussions] = await Promise.all([
+    getDawahContent(),
+    getFeaturedCourses(),
+    getRecentDiscussions(),
+  ]);
 
   const rtl = isRtl(locale);
 
@@ -58,18 +63,18 @@ export default async function DawahPage({
       <main>
         {/* ── Hero — CMS copy ─────────────────────────────────────────────── */}
         <PageHero
-          eyebrow={pick(content.hero.eyebrow, locale)}
           title={pick(content.hero.title, locale)}
           subtitle={pick(content.hero.subtitle, locale)}
-          ornament
+          paddingClassName="pt-28 pb-10"
+          minHeightClassName="min-h-[40vh]"
         />
 
         {/* ── Description — CMS rich text ─────────────────────────────────── */}
         {hasDescription && (
           <Reveal>
-            <section className="bg-white py-16 lg:py-20">
-              <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-                <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gray-50/70 p-6 shadow-sm sm:p-8 lg:p-10">
+            <section className="bg-white py-14 lg:py-16">
+              <div className="mx-auto max-w-5xl px-6 sm:px-8 lg:px-12">
+                <div className="relative overflow-hidden rounded-lg border border-gray-100 bg-gray-50/70 p-5 shadow-sm sm:p-6 lg:p-7">
                   <div
                     className="pointer-events-none absolute inset-0 pattern-islamic opacity-[0.04]"
                     aria-hidden
@@ -81,24 +86,29 @@ export default async function DawahPage({
                     aria-hidden
                   />
 
-                  <div className="relative">
-                    <div className="mb-5 flex items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rmc-green-light text-rmc-green">
-                        <Sparkles className="h-4 w-4" aria-hidden />
+                  {/* Editorial two-column: the label (icon + eyebrow + title)
+                      sits in a slim leading column, the prose beside it with a
+                      hairline divider. Stacks on mobile. This fills the card
+                      intentionally and keeps the reading measure comfortable
+                      instead of one very wide block. */}
+                  <div className="relative grid gap-6 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-10">
+                    {/* Label column */}
+                    <div>
+                      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-rmc-green-light text-rmc-green ring-1 ring-inset ring-rmc-green/10">
+                        <Sparkles className="h-5 w-5" aria-hidden />
                       </span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold">
-                          {pick(content.description.eyebrow, locale)}
-                        </p>
-                        <h2 className="text-xl font-bold text-rmc-green-deep md:text-2xl">
-                          {pick(content.description.title, locale)}
-                        </h2>
-                      </div>
+                      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold">
+                        {pick(content.description.eyebrow, locale)}
+                      </p>
+                      <h2 className="mt-1.5 text-xl font-bold leading-snug text-rmc-green-deep md:text-2xl">
+                        {pick(content.description.title, locale)}
+                      </h2>
                     </div>
 
+                    {/* Body column */}
                     <div
                       dir={rtl ? 'rtl' : 'ltr'}
-                      className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-headings:text-rmc-green-deep prose-strong:text-gray-900 prose-a:text-rmc-green prose-blockquote:border-rmc-gold"
+                      className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-headings:text-rmc-green-deep prose-strong:text-gray-900 prose-a:text-rmc-green prose-blockquote:border-rmc-gold md:border-s md:border-gray-200/70 md:ps-10"
                       dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                     />
                   </div>
@@ -110,7 +120,7 @@ export default async function DawahPage({
 
         {/* ── Outline of courses — live from /dawah/courses/featured ──────── */}
         <Reveal>
-          <section className="bg-gray-50/60 py-16 lg:py-20">
+          <section className="bg-gray-50/60 py-14 lg:py-16">
             <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
               <div className="mx-auto max-w-2xl text-center">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rmc-gold">
@@ -141,7 +151,7 @@ export default async function DawahPage({
                   <div className="mt-10 text-center">
                     <Link
                       href={`/${locale}/dawah/courses`}
-                      className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rmc-green/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-rmc-green-dark"
+                      className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rmc-green/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-rmc-green-dark"
                     >
                       {pick(content.courses.cta, locale)}
                       <ArrowRight className="h-4 w-4 rtl:rotate-180" />
@@ -157,8 +167,8 @@ export default async function DawahPage({
                    right now", never "there are no courses" — from here we cannot
                    tell an empty catalogue from an unreachable one, and claiming
                    the former would be a lie on a bad day. */
-                <div className="mx-auto mt-12 max-w-md rounded-3xl border border-dashed border-gray-200 bg-white p-10 text-center">
-                  <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rmc-green-light text-rmc-green">
+                <div className="mx-auto mt-12 max-w-md rounded-lg border border-dashed border-gray-200 bg-white p-6 text-center">
+                  <span className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-rmc-green-light text-rmc-green">
                     <BookOpen className="h-6 w-6" aria-hidden />
                   </span>
                   <p className="mt-4 font-semibold text-gray-900">
@@ -173,21 +183,21 @@ export default async function DawahPage({
 
         {/* ── CTA cards → Courses and Library ─────────────────────────────── */}
         <Reveal>
-          <section className="bg-white py-16 lg:py-20">
+          <section className="bg-white py-14 lg:py-16">
             <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
               <div className="grid gap-6 md:grid-cols-2">
                 {ctaCards.map((card) => (
                   <Link
                     key={card.href}
                     href={card.href}
-                    className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-gray-200/70 bg-white p-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-300 hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_64px_-24px_rgba(26,122,74,0.3)]"
+                    className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200/70 bg-white p-6 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/30 hover:shadow-[0_12px_28px_-16px_rgba(26,122,74,0.2)]"
                   >
                     <div
                       className="pointer-events-none absolute inset-0 pattern-islamic opacity-[0.03]"
                       aria-hidden
                     />
 
-                    <span className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md shadow-rmc-green/25 ring-1 ring-inset ring-rmc-gold/30">
+                    <span className="relative grid h-14 w-14 place-items-center rounded-lg bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md shadow-rmc-green/25 ring-1 ring-inset ring-rmc-gold/30">
                       <card.icon className="h-7 w-7" aria-hidden />
                     </span>
 
@@ -211,6 +221,49 @@ export default async function DawahPage({
             </div>
           </section>
         </Reveal>
+
+        {/* ── Recent discussions — newest questions from the community ─────── */}
+        {discussions.length > 0 && (
+          <Reveal>
+            <section className="bg-gray-50/60 py-14 lg:py-16">
+              <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+                <div className="mx-auto max-w-2xl text-center">
+                  <h2 className="text-2xl font-bold text-rmc-green-deep md:text-3xl">
+                    {t('discussions.title')}
+                  </h2>
+                  <div className="ornament-divider mx-auto my-4 max-w-xs">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+                  </div>
+                  <p className="text-sm leading-relaxed text-gray-500">
+                    {t('discussions.subtitle')}
+                  </p>
+                </div>
+
+                <div className="mt-12 grid gap-4 md:grid-cols-2">
+                  {discussions.map((q) => (
+                    <DiscussionCard key={q.id} question={q} locale={locale} />
+                  ))}
+                </div>
+
+                <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+                  <Link
+                    href={`/${locale}/dawah/discussions`}
+                    className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rmc-green/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-rmc-green-dark"
+                  >
+                    {t('discussions.viewAll')}
+                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                  </Link>
+                  <Link
+                    href={`/${locale}/dawah/discussions/ask`}
+                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/40"
+                  >
+                    {t('discussions.askCta')}
+                  </Link>
+                </div>
+              </div>
+            </section>
+          </Reveal>
+        )}
       </main>
 
       <Footer />

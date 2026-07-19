@@ -84,7 +84,7 @@ export default async function DiscussionThreadPage({
       {/* solid: this page opens straight onto white, and the navbar's links are white. */}
       <Navbar solid />
       <main>
-        <section className="pt-28 md:pt-32">
+        <section className="pt-24 md:pt-28">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <Link
               href={`/${locale}/dawah/discussions`}

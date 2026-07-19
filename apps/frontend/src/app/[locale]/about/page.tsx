@@ -78,9 +78,7 @@ export default async function AboutPage() {
         =================================================================== */}
         <PageHero
           title={txt('title', t('title'))}
-          titleWeightClassName="font-light"
           subtitle={txt('subtitle', t('subtitle'))}
-          subtitleClassName="font-light"
           paddingClassName="pt-28 pb-10"
           minHeightClassName="min-h-[40vh]"
         />
@@ -98,7 +96,7 @@ export default async function AboutPage() {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header — centered */}
             <div className="max-w-7xl mx-auto text-center">
-              <h2 className="text-3xl md:text-[2.6rem] font-medium text-gray-900 leading-[1.15] tracking-tight mb-5">
+              <h2 className="text-3xl md:text-[2.6rem] font-medium text-rmc-green-deep leading-[1.15] tracking-tight mb-5">
                 {txt('whoWeAreHeading', t('whoWeAre.heading'))}{' '}
                 <span className="text-rmc-green">{txt('whoWeAreHighlight', t('whoWeAre.headingHighlight'))}</span>
               </h2>
@@ -197,14 +195,17 @@ export default async function AboutPage() {
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
-              <h2 className="text-3xl md:text-4xl font-medium text-gray-900">{txt('leadershipTitle', t('leadership.title'))}</h2>
-              <p className="mt-4 text-gray-400 max-w-xl mx-auto text-sm md:text-base">{txt('leadershipSubtitle', t('leadership.subtitle'))}</p>
+              <h2 className="text-3xl md:text-4xl font-medium text-rmc-green-deep">{txt('leadershipTitle', t('leadership.title'))}</h2>
+              <div className="ornament-divider mx-auto my-4 max-w-xs">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+              </div>
+              <p className="text-gray-400 max-w-xl mx-auto text-sm md:text-base">{txt('leadershipSubtitle', t('leadership.subtitle'))}</p>
             </div>
             <div className="mx-auto grid max-w-4xl grid-cols-1 md:grid-cols-2 gap-5">
               {leaderList.map(({ id, img, name, role, email, phone }) => (
                 <div
                   key={id}
-                  className="group flex items-center gap-5 rounded-lg border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/30 hover:shadow-md"
+                  className="group flex items-center gap-5 rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/30 hover:shadow-md"
                 >
                   {/* Portrait — gradient green→gold ring frame; dark-green head
                       placeholder when a leader has no photo set. */}
@@ -272,8 +273,11 @@ export default async function AboutPage() {
         <section className="py-12 px-4 sm:px-6 lg:px-8 bg-transparent">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-3xl md:text-4xl font-medium text-gray-900">{txt('galleryTitle', t('gallery.title'))}</h2>
-              <p className="mt-4 text-gray-400 max-w-2xl mx-auto text-sm md:text-base">{txt('gallerySubtitle', t('gallery.subtitle'))}</p>
+              <h2 className="text-3xl md:text-4xl font-medium text-rmc-green-deep">{txt('galleryTitle', t('gallery.title'))}</h2>
+              <div className="ornament-divider mx-auto my-4 max-w-xs">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+              </div>
+              <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">{txt('gallerySubtitle', t('gallery.subtitle'))}</p>
             </div>
 
             {galleryImages.length > 0 && (

@@ -39,7 +39,7 @@ export default function HajjServicesPage() {
 
         {/* Section D — Requirements. */}
         <section className="relative bg-gray-50/60 pattern-light">
-          <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-12">
+          <div className="mx-auto max-w-7xl px-6 py-12 md:py-16 sm:px-8 lg:px-12">
             <RequirementsList />
           </div>
         </section>
@@ -53,7 +53,7 @@ export default function HajjServicesPage() {
 
         {/* Section F — Where to pay. Hides itself until an admin adds accounts. */}
         <section className="relative bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-12">
+          <div className="mx-auto max-w-7xl px-6 py-12 md:py-16 sm:px-8 lg:px-12">
             <BankAccounts />
           </div>
         </section>

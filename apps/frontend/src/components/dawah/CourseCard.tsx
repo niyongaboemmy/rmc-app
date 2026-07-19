@@ -102,7 +102,7 @@ export function CourseCard({ course, locale }: { course: DawahCourse; locale: st
       <div className="flex min-w-0 flex-1 flex-col p-3.5 sm:p-4">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span
-            className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ring-1 ring-inset ${
+            className={`inline-flex w-fit items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ring-1 ring-inset ${
               LEVEL_STYLES[course.level] ?? LEVEL_STYLES.beginner
             }`}
           >

@@ -325,7 +325,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                         }`}
                       />
                       <span
-                        className={`absolute bottom-1 left-2.5 right-2.5 h-0.5 rounded-full bg-rmc-gold transition-transform duration-200 origin-center ${
+                        className={`absolute bottom-1 left-2.5 right-2.5 h-px rounded-full bg-rmc-gold transition-transform duration-200 origin-center ${
                           isSectionActive(link.href) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                         }`}
                       />
@@ -418,7 +418,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                   >
                     {link.label}
                     <span
-                      className={`absolute bottom-1 left-2.5 right-2.5 h-0.5 rounded-full bg-rmc-gold transition-transform duration-200 origin-center ${
+                      className={`absolute bottom-1 left-2.5 right-2.5 h-px rounded-full bg-rmc-gold transition-transform duration-200 origin-center ${
                         isActive(link.href) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                       }`}
                     />
@@ -442,7 +442,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
             {/* Donate */}
             <Link
               href={`/${locale}/donate`}
-              className="hidden sm:inline-flex items-center gap-1.5 bg-rmc-green text-white px-3.5 py-1.5 rounded-full text-[13px] font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 transition-all duration-300 motion-safe:hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-rmc-green text-white px-3.5 py-1.5 rounded-lg text-[13px] font-semibold shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors duration-300 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
               <Heart className="w-3.5 h-3.5 shrink-0" />
               {t('donate')}
@@ -453,7 +453,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
                   <Link
                     href={`/${locale}/admin/members`}
-                    className="text-[13px] font-medium px-3 py-1.5 rounded-full border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 transition-all duration-200 text-white/80 hover:text-white"
+                    className="text-[13px] font-medium px-3 py-1.5 rounded-lg border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 transition-all duration-200 text-white/80 hover:text-white"
                   >
                     {t('admin')}
                   </Link>
@@ -466,7 +466,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                     aria-haspopup="menu"
                     aria-expanded={userMenuOpen}
                     aria-label={`${user.firstName} ${user.lastName} — account menu`}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 focus-visible:ring-white focus-visible:ring-offset-transparent"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 focus-visible:ring-white focus-visible:ring-offset-transparent"
                   >
                     <div className="w-5 h-5 rounded-full bg-rmc-green flex items-center justify-center text-white text-[10px] font-bold shrink-0">
                       {user.firstName[0]}{user.lastName[0]}
@@ -478,7 +478,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                   </button>
 
                   {userMenuOpen && (
-                    <div className="absolute end-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-slide-down">
+                    <div className="absolute end-0 mt-2 w-56 bg-white rounded-lg shadow-2xl border border-gray-100 py-2 z-50 animate-slide-down">
                       <div className="px-4 py-3 border-b border-gray-50">
                         <p className="text-sm font-semibold text-gray-900 truncate">{user.firstName} {user.lastName}</p>
                         <p className="text-xs text-gray-400 truncate mt-0.5">{user.email}</p>
@@ -533,7 +533,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
             ) : (
               <Link
                 href={`/${locale}/login`}
-                className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-white/30 text-white text-[13px] font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
+                className="inline-flex items-center px-3.5 py-1.5 rounded-lg border border-white/30 text-white text-[13px] font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:ring-offset-transparent"
               >
                 {t('login')}
               </Link>
@@ -650,7 +650,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                   <Link
                     href={`/${locale}/donate`}
                     onClick={() => setMobileOpen(false)}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 bg-rmc-green text-white rounded-2xl text-sm font-semibold shadow-lg shadow-rmc-green/30 hover:bg-rmc-green-dark transition-colors"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 bg-rmc-green text-white rounded-lg text-sm font-semibold shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors"
                   >
                     <Heart className="w-3.5 h-3.5" /> {t('donate')}
                   </Link>

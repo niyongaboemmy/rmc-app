@@ -34,12 +34,12 @@ export function HajjAbout() {
   const about = content.about;
 
   return (
-    <section className="relative bg-white py-16 lg:py-20">
+    <section className="relative bg-white py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           {/* Photo */}
           <div className="relative">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-md ring-1 ring-black/5">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-lg shadow-md ring-1 ring-black/5">
               {/*
                 A plain <img>, not next/image: the photo is admin-supplied, and
                 next/image rejects any host not listed in remotePatterns — so an
@@ -59,7 +59,7 @@ export function HajjAbout() {
               </p>
             </div>
             {/* Soft gold accent behind the frame. */}
-            <div className="pointer-events-none absolute -bottom-4 -right-4 -z-10 h-32 w-32 rounded-3xl bg-rmc-gold/20 blur-2xl" aria-hidden="true" />
+            <div className="pointer-events-none absolute -bottom-4 -right-4 -z-10 h-32 w-32 rounded-lg bg-rmc-gold/20 blur-2xl" aria-hidden="true" />
           </div>
 
           {/* Text */}
@@ -69,7 +69,7 @@ export function HajjAbout() {
             <p className="mt-4 text-sm leading-relaxed text-gray-600 md:text-[15px]">{pick(about.description, locale)}</p>
 
             {/* Incentive callout */}
-            <div className="mt-5 flex gap-3 rounded-2xl border border-rmc-gold/30 bg-rmc-gold/[0.07] p-4">
+            <div className="mt-5 flex gap-3 rounded-lg border border-rmc-gold/30 bg-rmc-gold/[0.07] p-4">
               <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-rmc-gold" aria-hidden="true" />
               <p className="text-[13.5px] leading-relaxed text-gray-700">{pick(about.incentive, locale)}</p>
             </div>
