@@ -126,11 +126,14 @@ export const jobsApi = {
     return data.data ?? data;
   },
 
-  /** Step 1 — request an SMS OTP (code + phone must match). Generic on success. */
-  trackRequestOtp: async (trackingCode: string, phone: string): Promise<{ expiresAt: string }> => {
+  /**
+   * Step 1 — request an SMS OTP. Only the tracking code is needed; the code is
+   * sent to the phone captured when the application was submitted. Returns a
+   * masked hint of that phone so the applicant knows where to look.
+   */
+  trackRequestOtp: async (trackingCode: string): Promise<{ expiresAt: string; phoneHint: string }> => {
     const { data } = await apiClient.post('/job-applications/track/request-otp', {
       trackingCode: trackingCode.trim(),
-      phone: phone.trim(),
     });
     return data.data ?? data;
   },
@@ -138,12 +141,10 @@ export const jobsApi = {
   /** Step 2 — verify the OTP; returns a short-lived token plus the status. */
   trackVerifyOtp: async (
     trackingCode: string,
-    phone: string,
     otp: string,
   ): Promise<{ token: string } & JobApplicationPublicStatus> => {
     const { data } = await apiClient.post('/job-applications/track/verify-otp', {
       trackingCode: trackingCode.trim(),
-      phone: phone.trim(),
       otp: otp.trim(),
     });
     return data.data ?? data;

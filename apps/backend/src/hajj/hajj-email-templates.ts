@@ -21,12 +21,12 @@ function refBox(appNo: string): string {
 export const HajjEmailTemplates = {
   submission(app: HajjApplication): { subject: string; html: string } {
     return {
-      subject: `Hajj application ${app.applicationNumber} received`,
+      subject: `Hajj application ${app.trackingCode} received`,
       html:
         p(`Assalamu alaikum ${app.fullName},`) +
         p('We have received your Hajj application. Our team will verify your details and payment proofs, and you will be notified at every step until a final decision is made.') +
-        refBox(app.applicationNumber) +
-        p('Keep this number safe — you can use it to check your status at any time.'),
+        refBox(app.trackingCode) +
+        p('Keep this tracking code safe — with your phone number you can use it to check your status at any time.'),
     };
   },
 

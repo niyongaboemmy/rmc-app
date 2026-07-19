@@ -1,19 +1,14 @@
-import { IsString, IsNotEmpty, Length, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-// Accept 07XXXXXXXX, +2507XXXXXXXX or 2507XXXXXXXX — normalized server-side.
-const PHONE_RE = /^(?:\+?250|0)7[0-9]{8}$/;
-
+// The tracking code alone identifies the application; the phone to verify against
+// is the one captured when the application was submitted (never re-typed here).
 export class RequestTrackingOtpDto {
   @ApiProperty({ example: 'RMC-JOB-2607-K7QX9M2T' })
   @IsString()
   @IsNotEmpty()
   @Length(4, 40)
   trackingCode!: string;
-
-  @ApiProperty({ example: '0781234567' })
-  @Matches(PHONE_RE, { message: 'Enter a valid Rwandan phone number' })
-  phone!: string;
 }
 
 export class VerifyTrackingOtpDto {
@@ -22,10 +17,6 @@ export class VerifyTrackingOtpDto {
   @IsNotEmpty()
   @Length(4, 40)
   trackingCode!: string;
-
-  @ApiProperty({ example: '0781234567' })
-  @Matches(PHONE_RE, { message: 'Enter a valid Rwandan phone number' })
-  phone!: string;
 
   @ApiProperty({ example: '123456' })
   @IsString()

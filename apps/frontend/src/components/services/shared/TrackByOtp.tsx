@@ -6,7 +6,6 @@ import { Search, Loader2, CheckCircle2, KeyRound, ArrowLeft } from 'lucide-react
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-const PHONE_RE = /^(?:\+?250|0)7\d{8}$/;
 const RESEND_SECONDS = 60;
 
 const ACCENTS = {
@@ -20,6 +19,20 @@ function apiError(err: unknown): { code?: string; message?: string } {
   return e?.response?.data?.error ?? {};
 }
 
+/** Map a backend error code to a specific, translated message the user understands. */
+function messageForCode(t: ReturnType<typeof useTranslations>, code?: string): string {
+  switch (code) {
+    case 'TRACKING_CODE_NOT_FOUND': return t('codeNotFound');
+    case 'TRACKING_RATE_LIMITED': return t('rateLimited');
+    case 'TRACKING_OTP_EXPIRED': return t('otpExpired');
+    case 'TRACKING_OTP_MAX_ATTEMPTS': return t('otpMaxAttempts');
+    case 'TRACKING_OTP_NONE': return t('otpNone');
+    case 'TRACKING_OTP_INVALID': return t('otpInvalid');
+    case 'TRACKING_SESSION_INVALID': return t('sessionInvalid');
+    default: return t('genericError');
+  }
+}
+
 interface Props<T> {
   /** e.g. '/hajj/applications/track', '/marriage/applications/track'. */
   basePath: string;
@@ -29,9 +42,10 @@ interface Props<T> {
 }
 
 /**
- * Reusable, secure "track your application" gate. Collects a tracking code +
- * phone, sends an SMS OTP, verifies it, then hands the verified status to
- * `children`. A guessed code alone reveals nothing.
+ * Reusable, secure "track your application" gate. The applicant enters only
+ * their tracking code; an SMS OTP is sent to the phone they applied with (never
+ * re-typed). Once verified, the status is handed to `children`. A guessed code
+ * alone reveals nothing.
  */
 export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>) {
   const t = useTranslations('tracking');
@@ -39,8 +53,8 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
 
   const [phase, setPhase] = useState<'enter' | 'otp' | 'result'>('enter');
   const [code, setCode] = useState('');
-  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
+  const [phoneHint, setPhoneHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<T | null>(null);
@@ -53,14 +67,16 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
   }, [resendIn]);
 
   const requestOtp = async () => {
-    if (!code.trim() || !PHONE_RE.test(phone.trim())) { setError(t('detailsInvalid')); return; }
+    if (!code.trim()) { setError(t('codeRequired')); return; }
     setLoading(true); setError(null);
     try {
-      await apiClient.post(`${basePath}/request-otp`, { trackingCode: code.trim(), phone: phone.trim() });
+      const { data } = await apiClient.post(`${basePath}/request-otp`, { trackingCode: code.trim() });
+      const payload = (data.data ?? data) as { phoneHint?: string };
+      setPhoneHint(payload?.phoneHint ?? '');
       setPhase('otp');
       setResendIn(RESEND_SECONDS);
     } catch (err) {
-      setError(apiError(err).code === 'TRACKING_RATE_LIMITED' ? t('rateLimited') : t('genericError'));
+      setError(messageForCode(t, apiError(err).code));
     } finally { setLoading(false); }
   };
 
@@ -68,21 +84,15 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
     if (!otp.trim()) { setError(t('otpRequired')); return; }
     setLoading(true); setError(null);
     try {
-      const { data } = await apiClient.post(`${basePath}/verify-otp`, { trackingCode: code.trim(), phone: phone.trim(), otp: otp.trim() });
+      const { data } = await apiClient.post(`${basePath}/verify-otp`, { trackingCode: code.trim(), otp: otp.trim() });
       setResult((data.data ?? data) as T);
       setPhase('result');
     } catch (err) {
-      const c = apiError(err).code;
-      setError(
-        c === 'TRACKING_OTP_EXPIRED' ? t('otpExpired')
-          : c === 'TRACKING_OTP_MAX_ATTEMPTS' ? t('otpMaxAttempts')
-          : c === 'TRACKING_RATE_LIMITED' ? t('rateLimited')
-          : t('otpInvalid'),
-      );
+      setError(messageForCode(t, apiError(err).code));
     } finally { setLoading(false); }
   };
 
-  const reset = () => { setPhase('enter'); setOtp(''); setResult(null); setError(null); setResendIn(0); };
+  const reset = () => { setPhase('enter'); setOtp(''); setResult(null); setError(null); setResendIn(0); setPhoneHint(''); };
 
   const inputCls = cn('w-full rounded-xl border border-gray-200 bg-white py-2.5 px-4 text-sm text-gray-900 outline-none transition-colors', a.ring);
 
@@ -106,10 +116,9 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
         <div className="space-y-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-            <input value={code} onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }} placeholder={t('codePlaceholder')} aria-label={t('codePlaceholder')} className={cn(inputCls, 'pl-9 font-mono')} />
+            <input value={code} onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }} onKeyDown={(e) => { if (e.key === 'Enter') requestOtp(); }} placeholder={t('codePlaceholder')} aria-label={t('codePlaceholder')} className={cn(inputCls, 'pl-9 font-mono')} />
           </div>
-          <input value={phone} onChange={(e) => { setPhone(e.target.value); setError(null); }} placeholder={t('phonePlaceholder')} aria-label={t('phonePlaceholder')} inputMode="tel" className={inputCls} />
-          <p className="text-[11px] text-gray-400">{t('phoneHint')}</p>
+          <p className="text-[11px] text-gray-400">{t('codeHint')}</p>
           <button onClick={requestOtp} disabled={loading} className={cn('w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2', a.btn)}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} {loading ? t('sending') : t('sendCode')}
           </button>
@@ -119,14 +128,14 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
       {phase === 'otp' && (
         <div className="space-y-3">
           <div className={cn('rounded-xl border text-sm px-4 py-3 flex gap-2', a.soft)}>
-            <KeyRound className="w-4 h-4 shrink-0 mt-0.5" /> <span>{t('otpSent')}</span>
+            <KeyRound className="w-4 h-4 shrink-0 mt-0.5" /> <span>{phoneHint ? t('otpSentTo', { phone: phoneHint }) : t('otpSent')}</span>
           </div>
-          <input value={otp} onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(null); }} placeholder={t('otpPlaceholder')} inputMode="numeric" maxLength={6} className={cn(inputCls, 'text-center text-lg font-mono tracking-[0.4em]')} />
+          <input value={otp} onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(null); }} onKeyDown={(e) => { if (e.key === 'Enter') verifyOtp(); }} placeholder={t('otpPlaceholder')} inputMode="numeric" maxLength={6} className={cn(inputCls, 'text-center text-lg font-mono tracking-[0.4em]')} />
           <button onClick={verifyOtp} disabled={loading} className={cn('w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2', a.btn)}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {loading ? t('verifying') : t('verify')}
           </button>
           <div className="flex items-center justify-between text-xs">
-            <button onClick={reset} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700"><ArrowLeft className="w-3.5 h-3.5" /> {t('changeDetails')}</button>
+            <button onClick={reset} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700"><ArrowLeft className="w-3.5 h-3.5" /> {t('changeCode')}</button>
             <button onClick={requestOtp} disabled={resendIn > 0 || loading} className={cn('font-medium disabled:text-gray-400', a.text)}>
               {resendIn > 0 ? t('resendIn', { s: resendIn }) : t('resend')}
             </button>

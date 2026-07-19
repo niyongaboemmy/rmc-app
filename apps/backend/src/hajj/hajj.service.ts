@@ -404,7 +404,7 @@ export class HajjService {
 
   private async notifySubmission(app: HajjApplication): Promise<void> {
     if (this.notifSettings.isSmsEnabled(EVENT.SUBMISSION)) {
-      this.dispatchSms(app.phone, HajjSmsTemplates.submission(app.applicationNumber));
+      this.dispatchSms(app.phone, HajjSmsTemplates.submission(app.trackingCode));
     }
     if (this.notifSettings.isEmailEnabled(EVENT.SUBMISSION)) {
       await this.dispatchEmail(app, HajjEmailTemplates.submission(app));
@@ -425,11 +425,11 @@ export class HajjService {
   private buildStatusSms(app: HajjApplication): string | null {
     switch (app.status) {
       case HajjApplicationStatus.UNDER_REVIEW:
-        return HajjSmsTemplates.underReview(app.applicationNumber);
+        return HajjSmsTemplates.underReview(app.trackingCode);
       case HajjApplicationStatus.APPROVED:
-        return HajjSmsTemplates.approved(app.applicationNumber);
+        return HajjSmsTemplates.approved(app.trackingCode);
       case HajjApplicationStatus.REJECTED:
-        return HajjSmsTemplates.rejected(app.applicationNumber, app.rejectionReason);
+        return HajjSmsTemplates.rejected(app.trackingCode, app.rejectionReason);
       default:
         return null;
     }

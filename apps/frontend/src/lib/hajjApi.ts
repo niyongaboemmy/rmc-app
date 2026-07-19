@@ -230,7 +230,7 @@ export const hajjApi = {
   /** Public — submit an application. Returns the number the applicant must keep. */
   apply: async (
     payload: HajjApplicationPayload,
-  ): Promise<{ id: string; applicationNumber: string; status: HajjStatus }> => {
+  ): Promise<{ id: string; applicationNumber: string; trackingCode: string; status: HajjStatus }> => {
     const { data } = await apiClient.post('/hajj/apply', payload);
     return data.data ?? data;
   },

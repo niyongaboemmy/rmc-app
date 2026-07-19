@@ -76,46 +76,54 @@ export class TrackingVerificationService {
     }
   }
 
-  private phoneMatches(subject: TrackingSubject | null, provided: string): boolean {
-    return !!subject && !!subject.phone && this.normalizePhone(subject.phone) === this.normalizePhone(provided);
+  private notFound() {
+    return new BadRequestException({
+      code: 'TRACKING_CODE_NOT_FOUND',
+      message: "We couldn't find an application with that tracking code. Please check it and try again.",
+    });
   }
 
   // ── Step 1: request an OTP ────────────────────────────────────────────────────
 
+  /**
+   * Sends an OTP to the phone captured on the application. The requester only
+   * supplies the (unguessable) tracking code — the phone is never re-typed. If
+   * the code doesn't resolve to a record we say so plainly; brute-forcing codes
+   * is blocked by the per-IP rate limit, and SMS-bombing a known code's owner is
+   * blocked by the per-application limit.
+   */
   async requestOtp(
     subjectType: string,
     subject: TrackingSubject | null,
-    providedPhone: string,
     ip: string,
-  ): Promise<{ expiresAt: Date }> {
-    await this.enforceRateLimit(`trk_req:${subjectType}:${this.normalizePhone(providedPhone)}`, REQ_PER_PHONE);
+  ): Promise<{ expiresAt: Date; phoneHint: string }> {
     await this.enforceRateLimit(`trk_req_ip:${ip}`, REQ_PER_IP);
+
+    if (!subject || !subject.phone) throw this.notFound();
+    await this.enforceRateLimit(`trk_req:${subjectType}:${subject.id}`, REQ_PER_PHONE);
 
     const ttlMin = this.ttlMinutes();
     const expiresAt = new Date(Date.now() + ttlMin * 60 * 1000);
+    const phone = subject.phone;
 
-    if (this.phoneMatches(subject, providedPhone) && subject) {
-      const otp = crypto.randomInt(0, 10 ** OTP_LENGTH).toString().padStart(OTP_LENGTH, '0');
-      await this.otpRepo.save({
-        subjectType,
-        subjectId: subject.id,
-        phone: subject.phone as string,
-        otpHash: this.hashOtp(otp),
-        expiresAt,
-        attempts: 0,
-        consumedAt: null,
-      });
-      const msg = `RMC: your verification code is ${otp}. It expires in ${ttlMin} minutes. Do not share it with anyone.`;
-      this.smsService.sendSms(subject.phone as string, msg);
-      this.logger.log(`[tracking] request OK type=${subjectType} id=${subject.id} phone=${this.maskPhone(subject.phone as string)} ip=${ip}`);
-      if (process.env.NODE_ENV !== 'production') {
-        this.logger.log(`[tracking] DEV code type=${subjectType} id=${subject.id}: ${otp}`);
-      }
-    } else {
-      this.logger.warn(`[tracking] request no-match type=${subjectType} ip=${ip}`);
+    const otp = crypto.randomInt(0, 10 ** OTP_LENGTH).toString().padStart(OTP_LENGTH, '0');
+    await this.otpRepo.save({
+      subjectType,
+      subjectId: subject.id,
+      phone,
+      otpHash: this.hashOtp(otp),
+      expiresAt,
+      attempts: 0,
+      consumedAt: null,
+    });
+    const msg = `RMC: your verification code is ${otp}. It expires in ${ttlMin} minutes. Do not share it with anyone.`;
+    this.smsService.sendSms(phone, msg);
+    this.logger.log(`[tracking] request OK type=${subjectType} id=${subject.id} phone=${this.maskPhone(this.normalizePhone(phone))} ip=${ip}`);
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.log(`[tracking] DEV code type=${subjectType} id=${subject.id}: ${otp}`);
     }
 
-    return { expiresAt };
+    return { expiresAt, phoneHint: this.maskPhone(this.normalizePhone(phone)) };
   }
 
   // ── Step 2: verify the OTP ────────────────────────────────────────────────────
@@ -123,22 +131,23 @@ export class TrackingVerificationService {
   async verifyOtp(
     subjectType: string,
     subject: TrackingSubject | null,
-    providedPhone: string,
     otp: string,
     ip: string,
   ): Promise<{ token: string; subjectId: string }> {
     await this.enforceRateLimit(`trk_verify_ip:${ip}`, VERIFY_PER_IP);
 
-    const invalid = () =>
-      new BadRequestException({ code: 'TRACKING_OTP_INVALID', message: 'Invalid or expired verification code.' });
-
-    if (!this.phoneMatches(subject, providedPhone) || !subject) throw invalid();
+    if (!subject) throw this.notFound();
 
     const record = await this.otpRepo.findOne({
       where: { subjectType, subjectId: subject.id, consumedAt: IsNull() },
       order: { createdAt: 'DESC' },
     });
-    if (!record) throw invalid();
+    if (!record) {
+      throw new BadRequestException({
+        code: 'TRACKING_OTP_NONE',
+        message: 'Please request a verification code first.',
+      });
+    }
 
     if (record.expiresAt < new Date()) {
       throw new BadRequestException({ code: 'TRACKING_OTP_EXPIRED', message: 'This code has expired. Request a new one.' });
@@ -148,7 +157,10 @@ export class TrackingVerificationService {
     }
     if (this.hashOtp(otp) !== record.otpHash) {
       await this.otpRepo.update(record.id, { attempts: record.attempts + 1 });
-      throw invalid();
+      throw new BadRequestException({
+        code: 'TRACKING_OTP_INVALID',
+        message: 'That verification code is incorrect. Please check and try again.',
+      });
     }
 
     await this.otpRepo.update(record.id, { consumedAt: new Date() });
