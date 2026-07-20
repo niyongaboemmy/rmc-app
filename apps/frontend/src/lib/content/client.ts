@@ -48,6 +48,7 @@ export const ContentKeys = {
   funeral: 'funeral',
   hajj: 'hajj',
   dawah: 'dawah',
+  library: 'library',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

@@ -23,3 +23,4 @@ export * from './content/contact';
 export * from './content/hajj';
 export * from './content/funeral';
 export * from './content/dawah';
+export * from './content/library';

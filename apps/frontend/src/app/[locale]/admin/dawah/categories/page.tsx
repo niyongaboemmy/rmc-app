@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import * as LucideIcons from 'lucide-react';
-import { Tags, Plus, Pencil, Trash2, RefreshCw, Search, type LucideIcon } from 'lucide-react';
+import { Tags, Plus, Pencil, Trash2, RefreshCw, Search, X, type LucideIcon } from 'lucide-react';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,13 +19,121 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { dawahApi, type DawahCategory, type CategoryPayload } from '@/lib/dawahApi';
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
+  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 
 /** Render a lucide icon by its name string (the value stored on a category). */
 function CategoryIcon({ name, className }: { name: string | null; className?: string }) {
   const Icon = (name && (LucideIcons as unknown as Record<string, LucideIcon>)[name]) || LucideIcons.Tag;
   return <Icon className={className} />;
+}
+
+/**
+ * A curated set of lucide icons that suit a Dawah / Islamic-learning taxonomy —
+ * the common case, so the admin isn't hunting through 1,000+ icons. Any name not
+ * present in the installed lucide build is dropped at render (so the grid never
+ * shows the fallback Tag), and search still resolves ANY exact lucide name, so
+ * the picker never loses the old free-text field's reach.
+ */
+const CATEGORY_ICONS = [
+  'BookOpen', 'Book', 'BookMarked', 'BookText', 'Library', 'Scroll', 'ScrollText',
+  'GraduationCap', 'School', 'PenTool', 'Pencil', 'NotebookPen',
+  'Scale', 'Gavel', 'Compass', 'Navigation', 'MapPin',
+  'Sparkles', 'Star', 'Moon', 'Sun', 'Sunrise',
+  'Heart', 'HeartHandshake', 'HandHeart', 'Handshake',
+  'Users', 'User', 'UserPlus', 'Baby',
+  'Languages', 'Globe', 'Type',
+  'Mic', 'Speech', 'MessageCircle', 'MessagesSquare', 'Quote',
+  'Landmark', 'Home', 'Building2',
+  'Lightbulb', 'Brain', 'Target', 'Award', 'Medal', 'Trophy',
+  'Calendar', 'Clock', 'FileText', 'Feather', 'Flag', 'Bookmark',
+  'Tag', 'Tags', 'Gem', 'Leaf', 'Flower', 'TreePalm', 'Puzzle', 'Key',
+];
+
+/** Visual icon picker — a searchable grid over the curated set, storing the chosen name. */
+function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useTranslations('admin.dawah');
+  const [q, setQuery] = useState('');
+  const current = value.trim();
+
+  const icons = useMemo(() => {
+    const reg = LucideIcons as unknown as Record<string, unknown>;
+    const valid = CATEGORY_ICONS.filter((n) => reg[n]);
+    // Keep a currently-set icon visible even if it isn't in the curated set.
+    const base = current && !valid.includes(current) ? [current, ...valid] : valid;
+    const term = q.trim().toLowerCase();
+    if (!term) return base;
+    const filtered = base.filter((n) => n.toLowerCase().includes(term));
+    if (filtered.length > 0) return filtered;
+    // No curated match → resolve an exact lucide name so any icon stays reachable.
+    const exact = Object.keys(reg).find((k) => k.toLowerCase() === term);
+    return exact ? [exact] : [];
+  }, [q, current]);
+
+  return (
+    <div>
+      {/* Selected preview + clear */}
+      <div className="mb-2 flex items-center gap-2">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rmc-green/10 text-rmc-green">
+          <CategoryIcon name={current || null} className="h-5 w-5" />
+        </span>
+        {current ? (
+          <span className="font-mono text-sm text-gray-600">{current}</span>
+        ) : (
+          <span className="text-sm text-gray-400">{t('categories.iconNone')}</span>
+        )}
+        {current && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="ms-auto rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            aria-label={t('actions.cancel')}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input
+          value={q}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t('categories.iconSearch')}
+          className="w-full rounded-lg border border-gray-200 py-2 ps-9 pe-3 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30"
+        />
+      </div>
+
+      {/* Grid */}
+      <div className="mt-2 grid max-h-40 grid-cols-8 gap-1 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-2">
+        {icons.length === 0 ? (
+          <p className="col-span-8 py-6 text-center text-xs text-gray-400">—</p>
+        ) : (
+          icons.map((name) => {
+            const selected = name === current;
+            return (
+              <button
+                key={name}
+                type="button"
+                title={name}
+                onClick={() => onChange(name)}
+                className={cn(
+                  'flex h-9 items-center justify-center rounded-lg transition-colors',
+                  selected
+                    ? 'bg-rmc-green text-white'
+                    : 'text-gray-500 hover:bg-rmc-green/10 hover:text-rmc-green',
+                )}
+              >
+                <CategoryIcon name={name} className="h-4 w-4" />
+              </button>
+            );
+          })
+        )}
+      </div>
+      <p className="mt-1 text-[11px] text-gray-400">{t('categories.iconHint')}</p>
+    </div>
+  );
 }
 
 export default function AdminDawahCategoriesPage() {
@@ -286,7 +394,7 @@ function CategoryModal({ category, onClose, onSaved }: {
   };
 
   return (
-    <Modal open onClose={onClose} size="lg">
+    <Modal open onClose={onClose} size="lg" className="rounded-lg">
       <ModalHeader>
         <ModalTitle>{isEdit ? t('categories.edit') : t('categories.new')}</ModalTitle>
       </ModalHeader>
@@ -320,21 +428,14 @@ function CategoryModal({ category, onClose, onSaved }: {
             <input dir="rtl" value={nameAr} onChange={(e) => setNameAr(e.target.value)} className={inputClass} />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>{t('categories.fields.icon')}</label>
-              <div className="flex items-center gap-2">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rmc-green/10 text-rmc-green">
-                  <CategoryIcon name={icon.trim() || null} className="h-4 w-4" />
-                </span>
-                <input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="BookOpen" className={inputClass} />
-              </div>
-              <p className="mt-1 text-[11px] text-gray-400">{t('categories.iconHint')}</p>
-            </div>
-            <div>
-              <label className={labelClass}>{t('categories.fields.sortOrder')}</label>
-              <input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className={inputClass} />
-            </div>
+          <div>
+            <label className={labelClass}>{t('categories.fields.icon')}</label>
+            <IconPicker value={icon} onChange={setIcon} />
+          </div>
+
+          <div className="sm:max-w-[12rem]">
+            <label className={labelClass}>{t('categories.fields.sortOrder')}</label>
+            <input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className={inputClass} />
           </div>
 
           <label className="flex items-center gap-2">
@@ -349,13 +450,13 @@ function CategoryModal({ category, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+        <button onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
           {t('actions.cancel')}
         </button>
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
+          className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
         >
           {saving ? t('categories.saving') : isEdit ? t('actions.save') : t('actions.create')}
         </button>

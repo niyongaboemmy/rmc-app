@@ -45,15 +45,16 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'dawah-library',    href: '/admin/dawah/library',    icon: BookMarked, labelKey: 'dawah.tabs.library',    group: 'content', permission: Permission.DAWAH_VIEW   },
       { key: 'dawah-categories', href: '/admin/dawah/categories', icon: Tags,       labelKey: 'dawah.tabs.categories', group: 'content', permission: Permission.DAWAH_VIEW   },
       { key: 'dawah-content',    href: '/admin/content/dawah',    icon: FileText,   labelKey: 'dawah.tabs.content',    group: 'content', permission: Permission.CONTENT_VIEW },
+      // Discussions moderation & scholar review — nested here for grouping. Each stays gated
+      // on its OWN permission (moderate / verify), and the group filter below shows the Dawah
+      // parent whenever a user can see ANY child. So a pure Moderator or Scholar who lacks
+      // DAWAH_VIEW still reaches their queue under an expandable Dawah section (and the
+      // collapsed rail links to their first visible child, never a page they can't open).
+      { key: 'discussionsAll',    href: '/admin/dawah/discussions/all',     icon: MessagesSquare, labelKey: 'sidebar.discussionsAll',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
+      { key: 'discussionsMod',    href: '/admin/dawah/discussions',         icon: Flag,           labelKey: 'sidebar.discussionsMod',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
+      { key: 'discussionsReview', href: '/admin/dawah/discussions/pending', icon: ClipboardCheck, labelKey: 'sidebar.discussionsReview', group: 'content', permission: Permission.DISCUSSIONS_VERIFY   },
     ],
   },
-  // Standalone, NOT nested under Dawah: the Dawah parent is DAWAH_VIEW-gated, and a pure
-  // Moderator or Scholar has only discussions:moderate / discussions:verify. Nesting would
-  // hide their queue behind a section they cannot see. Gated on the specific permission so
-  // each role sees exactly its own surface (an admin, holding '*', sees both).
-  { key: 'discussionsAll',    href: '/admin/dawah/discussions/all',     icon: MessagesSquare,  labelKey: 'sidebar.discussionsAll',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
-  { key: 'discussionsMod',    href: '/admin/dawah/discussions',         icon: Flag,            labelKey: 'sidebar.discussionsMod',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
-  { key: 'discussionsReview', href: '/admin/dawah/discussions/pending', icon: ClipboardCheck,  labelKey: 'sidebar.discussionsReview', group: 'content', permission: Permission.DISCUSSIONS_VERIFY },
   { key: 'inbox',     href: '/admin/inbox',        icon: Inbox,           labelKey: 'sidebar.inbox',     group: 'content', permission: Permission.CONTACT_MESSAGES_VIEW },
   { key: 'drive',     href: '/admin/drive',        icon: HardDrive,       labelKey: 'sidebar.drive',     group: 'content', permission: Permission.DRIVE_ADMIN       },
   { key: 'content',   href: '/admin/content',      icon: BookOpen,        labelKey: 'sidebar.content',   group: 'content', permission: Permission.CONTENT_VIEW      },
@@ -183,11 +184,15 @@ function SidebarNavGroup({
   useEffect(() => { if (anyActive) setOpen(true); }, [anyActive]);
 
   // Collapsed rail: no room to expand, so the parent behaves like every other
-  // collapsed item — an icon link (to its href) with the hover tooltip.
+  // collapsed item — an icon link with the hover tooltip. It links to the FIRST
+  // VISIBLE child (childrenItems is already permission-filtered), never the
+  // parent's own href, so a role that can't open the parent page (e.g. a
+  // Moderator without DAWAH_VIEW) still lands somewhere it's allowed.
+  const railHref = childrenItems[0]?.href ?? item.href;
   if (collapsed) {
     return mounted ? (
       <SidebarNavItem
-        item={item}
+        item={{ ...item, href: railHref }}
         active={anyActive}
         collapsed={collapsed}
         locale={locale}
@@ -197,7 +202,7 @@ function SidebarNavGroup({
     ) : (
       <li className="lg:flex lg:justify-center">
         <Link
-          href={`/${locale}${item.href}`}
+          href={`/${locale}${railHref}`}
           className={`relative flex items-center rounded-md h-10 px-2 gap-3 lg:h-9 lg:w-9 lg:justify-center lg:px-0 lg:gap-0 ${
             anyActive ? 'bg-rmc-green/8 text-rmc-green' : 'text-gray-500'
           }`}
@@ -335,7 +340,15 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
       {/* Navigation — overflow-x-hidden is safe now because tooltips use portals */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3">
         {GROUPS.map((group) => {
-          const items = NAV_ITEMS.filter((i) => i.group === group.key && canSee(i));
+          // A leaf shows when its own permission is held. A PARENT shows when the user can
+          // see the parent itself OR any of its children — otherwise nesting a queue under a
+          // section the role can't open (e.g. discussions under DAWAH_VIEW-gated Dawah) would
+          // hide it. Children are re-filtered by their own permission where they're rendered.
+          const items = NAV_ITEMS.filter((i) => {
+            if (i.group !== group.key) return false;
+            const kids = (i.children ?? []).filter(canSee);
+            return canSee(i) || kids.length > 0;
+          });
           if (!items.length) return null;
           return (
             <div key={group.key} className={`mb-4 ${collapsed ? 'lg:px-2 px-3' : 'px-3'}`}>

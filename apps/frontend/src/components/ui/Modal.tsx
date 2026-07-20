@@ -129,6 +129,8 @@ interface ConfirmModalProps {
   cancelLabel?: string;
   variant?: 'danger' | 'default';
   isLoading?: boolean;
+  /** Forwarded to the underlying Modal panel (e.g. to override its radius). */
+  className?: string;
 }
 
 export function ConfirmModal({
@@ -143,10 +145,11 @@ export function ConfirmModal({
   cancelLabel = 'Cancel',
   variant = 'default',
   isLoading = false,
+  className,
 }: ConfirmModalProps) {
   const text = message ?? description ?? '';
   return (
-    <Modal open={open} isOpen={isOpen} onClose={onClose} size="sm" zIndex={10000}>
+    <Modal open={open} isOpen={isOpen} onClose={onClose} size="sm" zIndex={10000} className={className}>
       <ModalHeader>
         <ModalTitle>{title}</ModalTitle>
       </ModalHeader>
