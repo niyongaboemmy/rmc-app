@@ -70,11 +70,12 @@ export function BookFlipReader({
     (async () => {
       try {
         const pdfjs = await import('pdfjs-dist');
-        // Bundled worker — no CDN, and no second copy of pdf.js.
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-          'pdfjs-dist/build/pdf.worker.min.mjs',
-          import.meta.url,
-        ).toString();
+        // Served from public/ (copied by scripts/copy-pdf-worker.js at build
+        // time), NOT bundled via `new URL(..., import.meta.url)`. The bundled
+        // path emits the worker as a webpack chunk, and Next's SWC minifier then
+        // dies parsing its top-level `import.meta`/`export`. A static path keeps
+        // the already-minified ES-module worker out of the minify pipeline.
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
         const { PageFlip: PF } = await import('page-flip');
 
         task = pdfjs.getDocument({ url: src });

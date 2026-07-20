@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "copy-pdf-worker": "node scripts/copy-pdf-worker.js",
+    "predev": "node scripts/copy-pdf-worker.js",
     "dev": "next dev -p 3001",
+    "prebuild": "node scripts/copy-pdf-worker.js",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint",
