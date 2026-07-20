@@ -7,6 +7,8 @@ import { PWAInstallProvider } from '@/contexts/PWAInstallContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAAutoInstallPrompt } from '@/components/ui/PWAAutoInstallPrompt';
 import { AskAIButton } from '@/components/home/AskAIButton';
+import { EditModeProvider } from '@/lib/edit-mode/EditModeProvider';
+import { EditModeBar } from '@/components/edit-mode/EditModeBar';
 import '../globals.css';
 
 // Poppins — perfect circular geometric bowls, zero serifs, zero sharp angles.
@@ -68,10 +70,15 @@ export default function LocaleLayout({
             <PWAInstallProvider>
               <ToastProvider position="top-right">
                 <DonationCartProvider>
-                  {children}
-                  <PWAAutoInstallPrompt />
-                  {/* Floating "Ask AI" assistant — shown on every public page */}
-                  <AskAIButton />
+                  {/* In-context "Edit Mode" — super-admins edit real pages in place */}
+                  <EditModeProvider>
+                    {children}
+                    <PWAAutoInstallPrompt />
+                    {/* Floating "Ask AI" assistant — shown on every public page */}
+                    <AskAIButton />
+                    {/* Floating publish/discard bar — only visible in edit mode */}
+                    <EditModeBar />
+                  </EditModeProvider>
                 </DonationCartProvider>
               </ToastProvider>
             </PWAInstallProvider>

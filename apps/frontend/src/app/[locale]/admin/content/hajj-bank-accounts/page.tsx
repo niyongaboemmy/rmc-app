@@ -25,13 +25,13 @@ export default function HajjBankAccountsAdminPage() {
   return (
     <ProtectedRoute permissions={[Permission.HAJJ_VIEW]}>
       <ToastProvider>
-        <Manager />
+        <HajjBankAccountsManager />
       </ToastProvider>
     </ProtectedRoute>
   );
 }
 
-function Manager() {
+export function HajjBankAccountsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.HAJJ_MANAGE);
@@ -98,18 +98,20 @@ function Manager() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link href={`/${locale}/admin/content`} className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-rmc-green">
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Content
-          </Link>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Building2 className="h-5 w-5 text-rmc-green" strokeWidth={1.75} /> Hajj Bank Accounts
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            The accounts applicants pay the Hajj fees into, shown on the public Hajj page.
-            Until you add one, the page shows no accounts at all — it never invents a number.
-          </p>
-        </div>
+        {!embedded && (
+          <div>
+            <Link href={`/${locale}/admin/content`} className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-rmc-green">
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to Content
+            </Link>
+            <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+              <Building2 className="h-5 w-5 text-rmc-green" strokeWidth={1.75} /> Hajj Bank Accounts
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              The accounts applicants pay the Hajj fees into, shown on the public Hajj page.
+              Until you add one, the page shows no accounts at all — it never invents a number.
+            </p>
+          </div>
+        )}
         {canManage && (
           <button
             onClick={() => setEditing({ open: true })}

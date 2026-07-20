@@ -14,6 +14,7 @@ import {
   type HeroContent,
   type Tri,
 } from '@/lib/content-api';
+import { usePreviewStore } from '@/lib/content/preview-store';
 import { Images, ArrowLeft, Save, Plus, Trash2, ImageIcon } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -36,9 +37,15 @@ export default function HeroPage() {
   );
 }
 
-function HeroManager() {
+/**
+ * Hero editor. Rendered standalone by the route above, and embedded inside the
+ * admin Live Editor drawer (`embedded`), where a `PreviewStore` is present so
+ * every keystroke previews live on the real Hero section.
+ */
+export function HeroManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
+  const store = usePreviewStore();
   const [lang, setLang] = useState<Lang>('en');
   const [form, setForm] = useState<HeroContent>(INITIAL);
   const [saving, setSaving] = useState(false);
@@ -61,6 +68,18 @@ function HeroManager() {
       active = false;
     };
   }, []);
+
+  // Live-preview bridge: while embedded, mirror the in-progress form to the
+  // preview store so the real Hero section updates as the admin types; clear it
+  // when the drawer closes so the section falls back to persisted content.
+  useEffect(() => {
+    if (!store || loading) return;
+    store.setOverride(ContentKeys.hero, form);
+  }, [store, loading, form]);
+  useEffect(() => {
+    if (!store) return;
+    return () => store.clearOverride(ContentKeys.hero);
+  }, [store]);
 
   // Set a plain string field (salam / hrefs).
   const setField = useCallback(<K extends 'salam' | 'primaryHref' | 'secondaryHref'>(field: K, value: string) => {
@@ -91,13 +110,14 @@ function HeroManager() {
     try {
       const saved = await saveSiteContent(ContentKeys.hero, form);
       setForm((prev) => ({ ...prev, ...saved }));
+      store?.bumpRefresh();
       success('Content saved successfully.');
     } catch {
       error('Could not save content. Please try again.');
     } finally {
       setSaving(false);
     }
-  }, [form, success, error]);
+  }, [form, success, error, store]);
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
@@ -105,26 +125,28 @@ function HeroManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
-            <Images className="w-5 h-5 text-sky-600" />
+      {/* Header — hidden when embedded in the Live Editor drawer (which supplies its own chrome) */}
+      {!embedded && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
+              <Images className="w-5 h-5 text-sky-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Hero Section</h1>
+              <p className="text-xs text-gray-400">Update the homepage hero banner, copy & background slideshow</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Hero Section</h1>
-            <p className="text-xs text-gray-400">Update the homepage hero banner, copy & background slideshow</p>
-          </div>
+          <button onClick={handleSave} disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+            {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? 'Loading…' : 'Save Changes'}
+          </button>
         </div>
-        <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
-          {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-          {loading ? 'Loading…' : 'Save Changes'}
-        </button>
-      </div>
+      )}
 
       {/* Greeting (salam) — not translated */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-2">
@@ -270,6 +292,17 @@ function HeroManager() {
           ))}
         </div>
       </div>
+
+      {/* Embedded save bar — sticky footer inside the Live Editor drawer */}
+      {embedded && (
+        <div className="sticky bottom-0 -mx-1 mt-2 flex items-center justify-end gap-2 bg-white/90 backdrop-blur border-t border-gray-100 px-1 py-3">
+          <button onClick={handleSave} disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+            {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? 'Loading…' : 'Save Changes'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

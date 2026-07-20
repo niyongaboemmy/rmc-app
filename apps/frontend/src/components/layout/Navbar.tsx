@@ -8,6 +8,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { VERSES } from '@/data/verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { PermissionGate } from '@/components/auth/PermissionGate';
+import { EditModeToggle } from '@/components/edit-mode/EditModeToggle';
 import { Permission } from '@/lib/permissions';
 import Image from 'next/image';
 import { useScrollProgress } from '@/hooks/useScrollProgress';
@@ -238,6 +239,8 @@ export function Navbar() {
 
             {isAuthenticated && user ? (
               <div className="hidden lg:flex items-center gap-2">
+                {/* Super-admin: toggle in-context page editing */}
+                <EditModeToggle />
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
                   <Link
                     href={`/${locale}/admin/members`}
@@ -385,6 +388,8 @@ export function Navbar() {
                       <Shield className="w-4 h-4 text-white/50" /> {t('admin')}
                     </Link>
                   </PermissionGate>
+                  {/* Super-admin: toggle in-context page editing */}
+                  <EditModeToggle variant="mobile" onToggle={() => setMobileOpen(false)} />
                   <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm text-red-300 hover:bg-red-500/15 transition-colors">
                     <LogOut className="w-4 h-4" /> {t('logout')}
                   </button>

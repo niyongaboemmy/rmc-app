@@ -134,7 +134,7 @@ export default function AboutRMCPage() {
   );
 }
 
-function AboutRMCManager() {
+export function AboutRMCManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
@@ -288,18 +288,20 @@ function AboutRMCManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-slate-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-slate-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">About RMC</h1>
+              <p className="text-xs text-gray-400">Update the About page content</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">About RMC</h1>
-            <p className="text-xs text-gray-400">Update the About page content</p>
-          </div>
-        </div>
+        )}
         <button onClick={handleSave} disabled={saving}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-slate-700/20 transition-colors">
           {saving ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}

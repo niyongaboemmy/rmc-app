@@ -77,7 +77,7 @@ export default function HajjContentPage() {
   );
 }
 
-function HajjContentManager() {
+export function HajjContentManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
@@ -150,18 +150,20 @@ function HajjContentManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-rmc-green/30 hover:text-rmc-green">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rmc-green-light">
-            <Compass className="h-5 w-5 text-rmc-green" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-rmc-green/30 hover:text-rmc-green">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rmc-green-light">
+              <Compass className="h-5 w-5 text-rmc-green" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Hajj Service</h1>
+              <p className="text-xs text-gray-400">Update the Hajj page copy and photo</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Hajj Service</h1>
-            <p className="text-xs text-gray-400">Update the Hajj page copy and photo</p>
-          </div>
-        </div>
+        )}
         <button onClick={handleSave} disabled={saving}
           className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

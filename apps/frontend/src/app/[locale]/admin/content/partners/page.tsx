@@ -50,7 +50,7 @@ export default function PartnersPage() {
   );
 }
 
-function PartnersManager() {
+export function PartnersManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
@@ -156,18 +156,20 @@ function PartnersManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-            <Handshake className="w-5 h-5 text-amber-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+              <Handshake className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Our Partners</h1>
+              <p className="text-xs text-gray-400">{items.length} partner{items.length !== 1 ? 's' : ''}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Our Partners</h1>
-            <p className="text-xs text-gray-400">{items.length} partner{items.length !== 1 ? 's' : ''}</p>
-          </div>
-        </div>
+        )}
         <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-amber-600/20 transition-colors">
           <Plus className="w-4 h-4" /> Add Partner
         </button>

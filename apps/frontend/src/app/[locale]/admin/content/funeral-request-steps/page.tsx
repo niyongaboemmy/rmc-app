@@ -31,13 +31,13 @@ export default function FuneralStepsAdminPage() {
   return (
     <ProtectedRoute permissions={[Permission.FUNERAL_VIEW]}>
       <ToastProvider>
-        <Manager />
+        <FuneralStepsManager />
       </ToastProvider>
     </ProtectedRoute>
   );
 }
 
-function Manager() {
+export function FuneralStepsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.FUNERAL_MANAGE);
@@ -104,17 +104,19 @@ function Manager() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link href={`/${locale}/admin/content`} className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-rmc-green">
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Content
-          </Link>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Moon className="h-5 w-5 text-rmc-green" strokeWidth={1.75} /> Funeral Request Steps
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            The ordered active steps define the request lifecycle shown on the public status timeline.
-          </p>
-        </div>
+        {!embedded && (
+          <div>
+            <Link href={`/${locale}/admin/content`} className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-rmc-green">
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to Content
+            </Link>
+            <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+              <Moon className="h-5 w-5 text-rmc-green" strokeWidth={1.75} /> Funeral Request Steps
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              The ordered active steps define the request lifecycle shown on the public status timeline.
+            </p>
+          </div>
+        )}
         {canManage && (
           <button
             onClick={() => setEditing({ open: true })}

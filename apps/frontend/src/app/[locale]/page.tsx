@@ -12,6 +12,7 @@ import { PartnersSection } from '@/components/home/PartnersSection';
 import { SocialMediaSection } from '@/components/home/SocialMediaSection';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
+import { AdminEditLink } from '@/components/edit-mode/AdminEditLink';
 
 export default function HomePage() {
   return (
@@ -29,7 +30,9 @@ export default function HomePage() {
 
         {/* 3. Welcome — Updates & Programs (with live prayer times) */}
         <Reveal>
-          <WelcomeCarouselSection />
+          <AdminEditLink label="Updates & Programs" adminSlug="updates-programs">
+            <WelcomeCarouselSection />
+          </AdminEditLink>
         </Reveal>
 
         {/* 3b. How to Become a Muslim — auto-playing muted video, the Shahada, and steps */}
@@ -39,22 +42,30 @@ export default function HomePage() {
 
         {/* 5. Areas of Intervention: Dawa, Social & Dev, Education, Foreign Affairs */}
         <Reveal>
-          <AreasOfInterventionSection />
+          <AdminEditLink label="Areas of Intervention" adminSlug="areas">
+            <AreasOfInterventionSection />
+          </AdminEditLink>
         </Reveal>
 
         {/* 6. Activities: Latest & Upcoming Events */}
         <Reveal>
-          <ActivitiesEventsSection />
+          <AdminEditLink label="Activities & Events" adminSlug="activities-events">
+            <ActivitiesEventsSection />
+          </AdminEditLink>
         </Reveal>
 
         {/* 7. Announcements */}
         <Reveal>
-          <AnnouncementsSection />
+          <AdminEditLink label="Announcements" adminSlug="announcements">
+            <AnnouncementsSection />
+          </AdminEditLink>
         </Reveal>
 
         {/* 7b. Tenders */}
         <Reveal>
-          <TendersSection />
+          <AdminEditLink label="Tenders" adminSlug="tenders">
+            <TendersSection />
+          </AdminEditLink>
         </Reveal>
 
         {/* 8. RMC in Statistics */}
@@ -64,12 +75,16 @@ export default function HomePage() {
 
         {/* 9. Partners */}
         <Reveal>
-          <PartnersSection />
+          <AdminEditLink label="Partners" adminSlug="partners">
+            <PartnersSection />
+          </AdminEditLink>
         </Reveal>
 
         {/* 10. Latest on Social Media */}
         <Reveal>
-          <SocialMediaSection />
+          <AdminEditLink label="Social Media" adminSlug="social-media">
+            <SocialMediaSection />
+          </AdminEditLink>
         </Reveal>
       </main>
 
