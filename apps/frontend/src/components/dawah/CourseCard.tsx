@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { ArrowRight, BookOpen, Clock, GraduationCap, Layers } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, GraduationCap, Layers, Users } from 'lucide-react';
 import { fileUrl } from '@/lib/api';
 import type { DawahCourse } from '@/lib/dawahApi';
 import { localized } from './localize';
@@ -146,6 +146,14 @@ export function CourseCard({ course, locale }: { course: DawahCourse; locale: st
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-rmc-green" />
               {t('courses.duration', { minutes: course.durationMinutes })}
+            </span>
+          ) : null}
+          {/* Learner count as social proof — shown only once a course has takers,
+              so a brand-new course reads "0 learners" nowhere. */}
+          {course.enrollmentCount > 0 ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-rmc-green" />
+              {t('courses.learners', { count: course.enrollmentCount })}
             </span>
           ) : null}
           {/* ms-auto — trailing edge in both directions. */}

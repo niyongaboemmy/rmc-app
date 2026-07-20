@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useTranslations } from 'next-intl';
-import { BookOpen, Lock } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { fileUrl } from '@/lib/api';
 import type { DawahBook } from '@/lib/dawahApi';
 import { localized } from './localize';
@@ -43,7 +43,6 @@ export function BookCard({
 
   const title = localized(book, 'title', locale);
   const category = book.category ? localized(book.category, 'name', locale) : null;
-  const isMembers = book.visibility === 'members';
   const showCover = Boolean(book.coverImageKey) && !coverFailed;
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
@@ -136,15 +135,6 @@ export function BookCard({
             aria-hidden
             className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent"
           />
-
-          {/* Members-only stays on the cover: it changes what happens on click, so
-              the reader has to see it before committing. */}
-          {isMembers && (
-            <span className="absolute end-1.5 top-1.5 inline-flex items-center gap-1 rounded-full border border-rmc-gold/40 bg-black/55 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-rmc-gold backdrop-blur-sm">
-              <Lock className="h-2.5 w-2.5" aria-hidden />
-              {t('library.membersOnly')}
-            </span>
-          )}
 
           {/* Read hint. */}
           <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center bg-gradient-to-t from-black/75 to-transparent px-2 pb-2.5 pt-8 text-xs font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">

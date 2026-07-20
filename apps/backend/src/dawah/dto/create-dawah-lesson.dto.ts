@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min,
+  IsEnum, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LessonContentType } from '../entities/dawah-course-lesson.entity';
@@ -94,9 +94,4 @@ export class CreateDawahLessonDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
-
-  @ApiPropertyOptional({ description: 'Readable as a taster even when the course is gated.' })
-  @IsOptional()
-  @IsBoolean()
-  isPreview?: boolean;
 }

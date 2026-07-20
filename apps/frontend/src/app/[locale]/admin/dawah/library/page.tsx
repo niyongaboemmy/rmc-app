@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   BookMarked, Plus, Pencil, Trash2, RefreshCw, Search, Eye, EyeOff, BookOpen,
-  ImageOff, FileText, UploadCloud, X, AlertCircle, Lock, Globe, ExternalLink, Check,
+  ImageOff, FileText, UploadCloud, X, AlertCircle, ExternalLink,
   Download,
 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ import { PreviewOverlayShell, OverlayToolButton } from '@/components/ui/PreviewO
 import {
   dawahApi,
   type DawahBookAdmin, type DawahCategory, type BookPayload, type UploadedBookFile,
-  type BookLanguage, type BookVisibility, type ContentStatus,
+  type BookLanguage, type ContentStatus,
 } from '@/lib/dawahApi';
 
 const inputClass =
@@ -40,7 +40,6 @@ const LANGS: { key: Lang; dir: 'ltr' | 'rtl' }[] = [
 const emptyLangRecord = (): Record<Lang, string> => ({ en: '', rw: '', ar: '' });
 
 const BOOK_LANGS: BookLanguage[] = ['en', 'rw', 'ar', 'other'];
-const VISIBILITIES: BookVisibility[] = ['public', 'members'];
 const STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 
@@ -245,7 +244,6 @@ function LibraryAdmin() {
                   <th className="px-4 py-3.5 font-medium text-gray-600">{t('books.col.cover')}</th>
                   <th className="px-4 py-3.5 font-medium text-gray-600">{t('books.col.title')}</th>
                   <th className="hidden px-4 py-3.5 font-medium text-gray-600 lg:table-cell">{t('books.col.category')}</th>
-                  <th className="hidden px-4 py-3.5 font-medium text-gray-600 md:table-cell">{t('books.col.visibility')}</th>
                   <th className="hidden px-4 py-3.5 font-medium text-gray-600 lg:table-cell">{t('books.col.download')}</th>
                   <th className="hidden px-4 py-3.5 font-medium text-gray-600 md:table-cell" title={t('books.stats.hint')}>
                     {t('books.col.stats')}
@@ -273,15 +271,6 @@ function LibraryAdmin() {
                     </td>
                     <td className="hidden px-4 py-3.5 text-gray-600 lg:table-cell">
                       {b.category ? localized(b.category, 'name', locale) : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="hidden px-4 py-3.5 md:table-cell">
-                      <span className={cn(
-                        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                        b.visibility === 'members' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700',
-                      )}>
-                        {b.visibility === 'members' ? <Lock className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
-                        {t(`books.visibility.${b.visibility}`)}
-                      </span>
                     </td>
                     <td className="hidden px-4 py-3.5 lg:table-cell">
                       <span className={cn(
@@ -494,11 +483,6 @@ function BookModal({ book, categories, onClose, onSaved }: {
   const [fileMeta, setFileMeta] = useState<UploadedBookFile | null>(
     book ? { fileKey: book.fileKey, fileName: book.fileName, fileSize: book.fileSize, mimeType: book.mimeType } : null,
   );
-  const [previewMeta, setPreviewMeta] = useState<UploadedBookFile | null>(
-    book?.previewFileKey ? { fileKey: book.previewFileKey, fileName: 'excerpt.pdf', fileSize: 0, mimeType: 'application/pdf' } : null,
-  );
-
-  const [visibility, setVisibility] = useState<BookVisibility>(book?.visibility ?? 'public');
   const [allowDownload, setAllowDownload] = useState(book?.allowDownload ?? true);
   const [pageCount, setPageCount] = useState(book?.pageCount != null ? String(book.pageCount) : '');
   const [isFeatured, setIsFeatured] = useState(book?.isFeatured ?? false);
@@ -535,8 +519,6 @@ function BookModal({ book, categories, onClose, onSaved }: {
       fileSize: fileMeta.fileSize,
       mimeType: fileMeta.mimeType,
       pageCount: pageCount.trim() ? Number(pageCount) : null,
-      previewFileKey: previewMeta?.fileKey ?? null,
-      visibility,
       allowDownload,
       isFeatured,
       status,
@@ -642,17 +624,6 @@ function BookModal({ book, categories, onClose, onSaved }: {
             <h3 className="text-sm font-semibold text-gray-700">{t('books.sections.policy')}</h3>
 
             <div>
-              <label className={labelClass}>{t('books.fields.visibility')}</label>
-              <SearchableSelect
-                value={visibility}
-                onChange={(v) => setVisibility(v as BookVisibility)}
-                options={VISIBILITIES.map((v) => ({ value: v, label: t(`books.visibility.${v}`) }))}
-                triggerClassName={inputClass}
-              />
-              <p className="mt-1 text-[11px] text-gray-500">{t(`books.visibilityHelp.${visibility}`)}</p>
-            </div>
-
-            <div>
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} className="h-4 w-4 rounded border-gray-300 accent-rmc-green" />
                 <span className="text-sm font-medium text-gray-700">{t('books.fields.allowDownload')}</span>
@@ -663,15 +634,6 @@ function BookModal({ book, categories, onClose, onSaved }: {
                 <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
                 <span>{t('books.downloadDeterrent')}</span>
               </p>
-            </div>
-
-            <div>
-              <PdfUploadField
-                label={t('books.fields.previewFile')}
-                help={t('books.previewFileHelp')}
-                value={previewMeta}
-                onChange={setPreviewMeta}
-              />
             </div>
           </section>
 

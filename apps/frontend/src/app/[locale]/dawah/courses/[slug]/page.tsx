@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { sanitizeRichHtml } from '@/lib/sanitize';
-import { ArrowLeft, BookOpen, Clock, Globe, GraduationCap, Layers, User } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Globe, GraduationCap, Layers, User, Users } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
@@ -101,7 +101,6 @@ export default async function CourseDetailPage({
       summary: localized(lesson, 'summary', locale),
       bodyHtml: sanitizeRichHtml(localized(lesson, 'body', locale)),
       durationMinutes: lesson.durationMinutes,
-      isPreview: lesson.isPreview,
       contentType: lesson.contentType,
       mediaUrl: lesson.mediaUrl,
       // Audio lives under the PUBLIC dawah-media/ prefix — resolve the file-server
@@ -131,6 +130,10 @@ export default async function CourseDetailPage({
     { icon: Layers, value: t('courses.lessonCount', { count: course.lessonCount }) },
     ...(course.durationMinutes
       ? [{ icon: Clock, value: t('courses.duration', { minutes: course.durationMinutes }) }]
+      : []),
+    // Learner count — social proof, shown only once the course has takers.
+    ...(course.enrollmentCount > 0
+      ? [{ icon: Users, value: t('courses.enrolled', { count: course.enrollmentCount }) }]
       : []),
   ];
 
@@ -302,6 +305,7 @@ export default async function CourseDetailPage({
                 <CourseLessonBrowser
                   lessons={lessons}
                   overviewHtml={hasDescription ? description : ''}
+                  courseSlug={course.slug}
                 />
               </div>
             )}

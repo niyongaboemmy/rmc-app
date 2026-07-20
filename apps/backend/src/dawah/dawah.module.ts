@@ -4,6 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { DawahCategory } from './entities/dawah-category.entity';
 import { DawahCourse } from './entities/dawah-course.entity';
 import { DawahCourseLesson } from './entities/dawah-course-lesson.entity';
+import { DawahCourseEnrollment } from './entities/dawah-course-enrollment.entity';
+import { DawahLessonCompletion } from './entities/dawah-lesson-completion.entity';
 import { DawahBook } from './entities/dawah-book.entity';
 import { DawahQuestion } from './entities/dawah-question.entity';
 import { DawahAnswer } from './entities/dawah-answer.entity';
@@ -12,6 +14,7 @@ import { DawahModerationLog } from './entities/dawah-moderation-log.entity';
 import { DawahVote } from './entities/dawah-vote.entity';
 import { DawahCategoryService } from './dawah-category.service';
 import { DawahCourseService } from './dawah-course.service';
+import { DawahEnrollmentService } from './dawah-enrollment.service';
 import { DawahBookService } from './dawah-book.service';
 import { DawahDiscussionsService } from './dawah-discussions.service';
 import { OptionalCallerService } from './optional-caller.service';
@@ -36,6 +39,7 @@ import { EmailModule } from '../integrations/email/email.module';
   imports: [
     TypeOrmModule.forFeature([
       DawahCategory, DawahCourse, DawahCourseLesson, DawahBook,
+      DawahCourseEnrollment, DawahLessonCompletion,
       // Discussions. Votes/reports/moderation_log have tables but no entities yet —
       // Phase A reads nothing from them, and an entity for a table nobody queries is
       // dead code that looks like a feature.
@@ -48,6 +52,7 @@ import { EmailModule } from '../integrations/email/email.module';
   providers: [
     DawahCategoryService,
     DawahCourseService,
+    DawahEnrollmentService,
     DawahBookService,
     DawahDiscussionsService,
     OptionalCallerService,

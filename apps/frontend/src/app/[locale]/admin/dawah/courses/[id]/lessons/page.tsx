@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  ListTree, Plus, Pencil, Trash2, RefreshCw, GripVertical, ArrowLeft, BookOpen, Star,
+  ListTree, Plus, Pencil, Trash2, RefreshCw, GripVertical, ArrowLeft, BookOpen,
   UploadCloud, FileAudio, FileText, X, CheckCircle2, AlertCircle,
 } from 'lucide-react';
 
@@ -247,11 +247,6 @@ function LessonsBuilder() {
                     <span className="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
                       {t(`lessons.contentTypes.${lesson.contentType}`)}
                     </span>
-                    {lesson.isPreview && (
-                      <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                        <Star className="h-2.5 w-2.5" /> {t('lessons.fields.isPreview')}
-                      </span>
-                    )}
                   </div>
                 </div>
                 {canManage && (
@@ -404,7 +399,6 @@ function LessonModal({ courseId, lesson, onClose, onSaved }: {
   );
   const [modalLang, setModalLang] = useState<Lang>('en');
   const [durationMinutes, setDurationMinutes] = useState(lesson?.durationMinutes != null ? String(lesson.durationMinutes) : '');
-  const [isPreview, setIsPreview] = useState(lesson?.isPreview ?? false);
   const [saving, setSaving] = useState(false);
   const [titleErr, setTitleErr] = useState('');
 
@@ -460,7 +454,6 @@ function LessonModal({ courseId, lesson, onClose, onSaved }: {
       mediaUrl: (contentType === 'video' || contentType === 'link') ? mediaUrl.trim() : null,
       mediaKey: (contentType === 'audio' || contentType === 'pdf') ? mediaFile?.fileKey ?? null : null,
       durationMinutes: durationMinutes.trim() ? Number(durationMinutes) : null,
-      isPreview,
     };
     try {
       if (isEdit && lesson) await dawahApi.admin.lessons.update(lesson.id, payload);
@@ -613,16 +606,6 @@ function LessonModal({ courseId, lesson, onClose, onSaved }: {
           )}
 
           {mediaErr && <p className="text-[11px] text-red-600">{mediaErr}</p>}
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isPreview}
-              onChange={(e) => setIsPreview(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 accent-rmc-green"
-            />
-            <span className="text-sm text-gray-700">{t('lessons.fields.isPreview')}</span>
-          </label>
         </div>
       </ModalBody>
       <ModalFooter>

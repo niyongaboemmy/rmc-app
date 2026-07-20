@@ -2508,7 +2508,6 @@
           "summary": "Summary",
           "body": "Lesson content",
           "duration": "Duration (minutes)",
-          "isPreview": "Free preview",
           "mediaUrl": "Video URL (YouTube / Vimeo)",
           "audioFile": "Audio file",
           "pdfFile": "PDF file",
@@ -2573,22 +2572,15 @@
           "language": "Language",
           "cover": "Cover image",
           "file": "Book PDF",
-          "previewFile": "Preview excerpt (optional)",
           "pageCount": "Pages",
-          "visibility": "Visibility",
           "allowDownload": "Allow download",
           "featured": "Feature on the landing page",
           "sortOrder": "Sort order"
-        },
-        "visibility": {
-          "public": "Anyone can read",
-          "members": "Signed-in members only"
         },
         "uploadHint": "PDF only, up to 25 MB.",
         "uploading": "Uploading…",
         "uploadFailed": "Upload failed. Please try again.",
         "downloadWarning": "Turning downloads off hides the button and blocks the download link. It is a deterrent, not copy protection — anyone who can read a PDF can save it.",
-        "previewHint": "When an excerpt is set, visitors who are not signed in preview the excerpt instead of the full book.",
         "openFile": "Open file",
         "confirmDelete": "Delete this book?",
         "empty": "No books yet. Upload the first one.",
@@ -2616,7 +2608,6 @@
           "title": "Book",
           "category": "Category",
           "language": "Language",
-          "visibility": "Visibility",
           "download": "Download",
           "status": "Status",
           "updated": "Updated",
@@ -2637,13 +2628,8 @@
           "on": "Allowed",
           "off": "Read-only"
         },
-        "visibilityHelp": {
-          "public": "Anyone can open and read this book — no account needed.",
-          "members": "Only signed-in members can read the full book. Signed-out visitors see the preview excerpt (if you add one below) or a sign-in prompt."
-        },
         "allowDownloadHelp": "When off, the Download button is hidden and the download link is blocked — visitors read in the browser only.",
         "downloadDeterrent": "This is a deterrent, not protection. Anyone who can read a PDF in their browser can still save the file — it stops casual sharing, but it is not DRM.",
-        "previewFileHelp": "Optional short excerpt (a separate PDF). When the book is members-only, signed-out visitors see THIS instead of the full book — a way to show a taste without giving the whole thing away.",
         "stats": {
           "reads": "reads",
           "downloads": "downloads",
@@ -3302,6 +3288,18 @@
       "allLanguages": "All languages",
       "resultCount": "{count, plural, =0 {No courses} one {# course} other {# courses}}",
       "lessonCount": "{count, plural, =0 {No lessons} one {# lesson} other {# lessons}}",
+      "learners": "{count, plural, =0 {No learners yet} one {# learner} other {# learners}}",
+      "enrolled": "{count, plural, =0 {No learners yet} one {# learner enrolled} other {# learners enrolled}}",
+      "progress": {
+        "heading": "Your progress",
+        "lessonsDone": "{completed} of {total} lessons",
+        "percentComplete": "{percent}% complete",
+        "completed": "Completed",
+        "courseComplete": "You've completed this course",
+        "signInPrompt": "Sign in to track your progress through this course.",
+        "signIn": "Sign in",
+        "error": "Couldn't save. Please try again."
+      },
       "duration": "{minutes} min",
       "instructor": "Instructor",
       "level": {
@@ -3322,7 +3320,6 @@
       },
       "view": "View course",
       "outline": "Course outline",
-      "freePreview": "Free preview",
       "related": "Related courses",
       "loading": "Loading courses…",
       "empty": {
@@ -3374,10 +3371,6 @@
       "read": "Read",
       "download": "Download",
       "downloadDisabled": "This book cannot be downloaded",
-      "membersOnly": "Members only",
-      "signInToRead": "Sign in to read this book",
-      "signIn": "Sign in",
-      "excerptNotice": "This is a preview excerpt. Sign in to read the full book.",
       "close": "Close",
       "loading": "Loading library…",
       "empty": {
@@ -3390,7 +3383,6 @@
         "retry": "Retry"
       },
       "loadingBook": "Loading book…",
-      "signInBody": "This book is available to members. Sign in to read it in full.",
       "previewUnavailable": {
         "title": "Could not load this book",
         "body": "The file could not be loaded. Please try again, or open it in a new tab."

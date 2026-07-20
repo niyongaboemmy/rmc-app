@@ -132,6 +132,15 @@ export class DawahCourse {
   @Column({ name: 'lesson_count', type: 'int', default: 0 })
   lessonCount: number;
 
+  /**
+   * Denormalised count of enrolled learners — the "N learners" stat on the card
+   * and detail page. Maintained by DawahEnrollmentService the first time a user
+   * is auto-enrolled (never decremented on un-completing a lesson: enrolment is
+   * sticky once earned). Nothing else may write it.
+   */
+  @Column({ name: 'enrollment_count', type: 'int', default: 0 })
+  enrollmentCount: number;
+
   /** Surfaced in the landing page's course outline (/dawah/courses/featured). */
   @Index('IDX_dawah_courses_featured')
   @Column({ name: 'is_featured', type: 'boolean', default: false })

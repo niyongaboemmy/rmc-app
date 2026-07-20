@@ -363,7 +363,6 @@ export class DawahCourseService {
         mediaUrl: dto.mediaUrl ?? null,
         durationMinutes: dto.durationMinutes ?? null,
         sortOrder: dto.sortOrder ?? Number(max?.m ?? -1) + 1,
-        isPreview: dto.isPreview ?? false,
       });
 
       // Enforce content-type ⇄ media rules and clear irrelevant columns (DB-1 §2).
@@ -395,7 +394,6 @@ export class DawahCourseService {
       durationMinutes:
         dto.durationMinutes !== undefined ? dto.durationMinutes : lesson.durationMinutes,
       sortOrder: dto.sortOrder ?? lesson.sortOrder,
-      isPreview: dto.isPreview ?? lesson.isPreview,
     });
 
     // Re-enforce the rules against the merged content_type so a type switch
