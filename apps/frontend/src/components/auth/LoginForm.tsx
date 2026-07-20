@@ -206,6 +206,7 @@ export function LoginForm() {
   const { locale }                   = useParams<{ locale: string }>();
   const router                       = useRouter();
   const { login }                    = useAuth();
+
   const [step, setStep]              = useState<Step>('credentials');
   const [submitting, setSubmitting]  = useState(false);
   const [apiError, setApiError]      = useState<string | null>(null);

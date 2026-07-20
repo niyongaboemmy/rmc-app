@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   X, Download, ExternalLink, FileText, Film, Music,
   Image as ImageIcon, File, ZoomIn, ZoomOut, RotateCcw, AlertCircle,
 } from 'lucide-react';
 import { DriveItem, getFileIcon } from '@/lib/driveApi';
 import { apiClient } from '@/lib/api';
+import { PreviewOverlayShell, OverlayToolButton as ToolBtn } from '@/components/ui/PreviewOverlayShell';
 
 interface FilePreviewProps {
   item: DriveItem;
@@ -61,16 +61,7 @@ export function FilePreview({ item, onClose }: FilePreviewProps) {
   const tooLarge = !!item.size && item.size > MAX_PREVIEW_BYTES;
   const { url, loading, error } = useAuthBlob(tooLarge ? null : item.storageKey);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
+  // Esc, body-scroll-lock and the focus trap now live in PreviewOverlayShell.
 
   const handleDownload = () => {
     if (!url) return;
@@ -195,8 +186,8 @@ export function FilePreview({ item, onClose }: FilePreviewProps) {
     }
   };
 
-  const modal = (
-    <div className="fixed inset-0 z-[99999] flex flex-col bg-black/90 backdrop-blur-md">
+  return (
+    <PreviewOverlayShell onClose={onClose} label={item.name} className="flex flex-col bg-black/90 backdrop-blur-md">
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 bg-gray-900/80 text-white shrink-0 border-b border-white/10">
         <FileTypeIcon type={fileType} />
@@ -246,11 +237,8 @@ export function FilePreview({ item, onClose }: FilePreviewProps) {
       <div className="flex-1 overflow-auto relative">
         {renderContent()}
       </div>
-    </div>
+    </PreviewOverlayShell>
   );
-
-  if (typeof document === 'undefined') return null;
-  return createPortal(modal, document.body);
 }
 
 function TextPreview({ url, onLoad }: { url: string; onLoad: () => void }) {
@@ -281,28 +269,6 @@ function FileTypeIcon({ type }: { type: string }) {
     text: <FileText className="w-5 h-5 text-yellow-400 shrink-0" />,
   };
   return <>{icons[type] ?? <File className="w-5 h-5 text-gray-400 shrink-0" />}</>;
-}
-
-function ToolBtn({
-  onClick,
-  title,
-  children,
-  className = '',
-}: {
-  onClick: () => void;
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className={`p-1.5 sm:p-2 rounded-md hover:bg-white/10 transition-colors flex items-center justify-center ${className}`}
-    >
-      {children}
-    </button>
-  );
 }
 
 function formatBytes(bytes: number): string {

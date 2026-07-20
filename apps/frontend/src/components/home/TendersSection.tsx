@@ -72,7 +72,7 @@ export function TendersSection() {
   if (!loading && tenders.length === 0) return null;
 
   return (
-    <section className="py-14 bg-gradient-to-b from-rmc-green-deep/3 to-transparent">
+    <section className="py-12 md:py-16 bg-gradient-to-b from-rmc-green-deep/3 to-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -106,7 +106,7 @@ export function TendersSection() {
         {loading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-40 rounded-2xl bg-gray-100 animate-pulse" />
+              <div key={i} className="h-40 rounded-lg bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -119,7 +119,7 @@ export function TendersSection() {
               <Link
                 key={tender.id}
                 href={`/${locale}/tenders/${tender.id}`}
-                className={`flex flex-col p-5 rounded-2xl border border-rmc-gold/20 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 group ${
+                className={`flex flex-col p-5 rounded-lg border border-rmc-gold/20 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 group ${
                   visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                 }`}
                 style={{ transitionDelay: `${i * 100 + 200}ms` }}

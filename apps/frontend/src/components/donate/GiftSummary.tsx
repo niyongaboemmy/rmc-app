@@ -29,7 +29,7 @@ export function GiftSummary({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-black/5 ${className}`}
+      className={`flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm ring-1 ring-black/5 ${className}`}
     >
       {/* Header */}
       <div className="relative flex items-center gap-2.5 bg-rmc-green-deep px-5 py-4 text-white">
@@ -66,7 +66,7 @@ export function GiftSummary({
             {items.map((it) => (
               <li
                 key={it.id}
-                className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 ring-1 ring-black/5"
+                className="flex items-center gap-3 rounded-lg border border-gray-100 bg-white p-3 ring-1 ring-black/5"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-bold text-gray-900">{it.label}</p>
@@ -95,7 +95,7 @@ export function GiftSummary({
             <button
               type="button"
               onClick={onCheckout}
-              className="group flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark"
+              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark"
             >
               {t('summary.continue')}
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180" />

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Poppins, Noto_Naskh_Arabic } from 'next/font/google';
+import { Plus_Jakarta_Sans, Noto_Naskh_Arabic } from 'next/font/google';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { DonationCartProvider } from '@/contexts/DonationCartContext';
@@ -11,9 +11,11 @@ import { EditModeProvider } from '@/lib/edit-mode/EditModeProvider';
 import { EditModeBar } from '@/components/edit-mode/EditModeBar';
 import '../globals.css';
 
-// Poppins — perfect circular geometric bowls, zero serifs, zero sharp angles.
-// The standard font of modern Islamic apps (Athan, Muslim prayer platforms).
-const poppins = Poppins({
+// Plus Jakarta Sans — a humanist geometric sans with a slightly warmer, more
+// contemporary feel than Poppins. Keeps the same --font-latin slot so every
+// downstream consumer (Tailwind font-sans/body/display, globals.css) picks it
+// up unchanged.
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-latin',
   weight: ['300', '400', '500', '600', '700', '800'],
@@ -62,7 +64,7 @@ export default function LocaleLayout({
     <html
       lang={locale}
       dir={isRtl ? 'rtl' : 'ltr'}
-      className={`${poppins.variable} ${notoNaskh.variable}`}
+      className={`${plusJakarta.variable} ${notoNaskh.variable}`}
     >
       <body className={isRtl ? 'font-arabic' : 'font-latin'}>
         <NextIntlClientProvider locale={locale} messages={messages}>

@@ -47,7 +47,7 @@ function PillarCard({
     <Link
       href={`/${locale}/areas/${item.slug}`}
       dir={rtl ? 'rtl' : 'ltr'}
-      className="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-gray-200/70 bg-white p-7 lg:p-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.18)] transition-all duration-300 hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_64px_-24px_rgba(26,122,74,0.3)] cursor-pointer"
+      className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-gray-200/70 bg-white p-7 lg:p-8 transition-all duration-300 hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_12px_28px_-16px_rgba(26,122,74,0.2)] cursor-pointer"
     >
       {/* Ghosted index numeral — anchors the card. -webkit-text-stroke draws a hairline outline;
           a faint solid green fill is the cross-engine fallback so it never vanishes.
@@ -61,12 +61,12 @@ function PillarCard({
 
       {/* Icon tile or hero image */}
       {item.imageKey ? (
-        <span className="relative block w-16 h-16 rounded-2xl overflow-hidden shadow-md ring-1 ring-inset ring-rmc-gold/30 shrink-0">
+        <span className="relative block w-16 h-16 rounded-lg overflow-hidden shadow-md ring-1 ring-inset ring-rmc-gold/30 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={fileUrl(item.imageKey)} alt="" className="w-full h-full object-cover" aria-hidden />
         </span>
       ) : (
-        <span className="relative grid place-items-center w-16 h-16 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md shadow-rmc-green/25 ring-1 ring-inset ring-rmc-gold/30">
+        <span className="relative grid place-items-center w-16 h-16 rounded-lg bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md shadow-rmc-green/25 ring-1 ring-inset ring-rmc-gold/30">
           <Icon className="w-8 h-8" />
         </span>
       )}
@@ -142,22 +142,14 @@ export function AreasOfInterventionSection() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          {/* Gold-dot eyebrow chip — matches the WhoWeAre light-section grammar exactly */}
-          <span className={`inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm ${arFont}`}>
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-            {pick(content.eyebrow, locale)}
-          </span>
-
           {/* Heading keyword carries the canonical brand .title-underline (green→gold→green bar) —
               the single strongest brand echo. No second rule stacked directly beneath it. */}
-          <h2 className={`mt-7 text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}>
+          <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}>
             {pick(content.title, locale)} <span className="text-rmc-green">{pick(content.titleAccent, locale)}</span>
           </h2>
 
-          {/* One ornament rule below the lede — keeps the gold rhythm without competing with the
-              animated underline directly under the H2. */}
-          <div className="ornament-divider mx-auto mt-10 mb-6 max-w-xs" aria-hidden>
-            <span className="h-1.5 w-1.5 rounded-full bg-rmc-gold" />
+          <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
           </div>
 
           <p className={`mx-auto max-w-xl text-sm leading-relaxed text-gray-500 md:text-base ${arFont}`}>

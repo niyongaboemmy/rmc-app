@@ -29,7 +29,7 @@ function PartnerCard({
 }) {
   const linked = Boolean(partner.website);
 
-  const cardClass = `group relative flex h-full flex-col items-center rounded-3xl border border-gray-200/70 bg-white px-6 py-8 shadow-[0_1px_2px_rgba(13,61,36,0.04),0_12px_32px_-18px_rgba(13,61,36,0.16)] transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_28px_60px_-24px_rgba(26,122,74,0.28)] ${
+  const cardClass = `group relative flex h-full flex-col items-center rounded-lg border border-gray-200/70 bg-white px-6 py-8 transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_12px_28px_-16px_rgba(26,122,74,0.2)] ${
     visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
   }`;
 
@@ -119,7 +119,6 @@ export function PartnersSection() {
   const fontClass = rtl ? 'font-arabic' : '';
   const dir = rtl ? 'rtl' : 'ltr';
 
-  const eyebrow = pick(content.eyebrow, locale);
   const title = pick(content.title, locale);
   const lede = pick(content.lede, locale);
   const footerNote = pick(content.footerNote, locale);
@@ -143,24 +142,20 @@ export function PartnersSection() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <span
-            dir={dir}
-            className={`inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm ${fontClass}`}
-          >
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-            {eyebrow}
-          </span>
-
           <h2
             dir={dir}
-            className={`mt-7 text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${fontClass}`}
+            className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${fontClass}`}
           >
             <span className="text-rmc-green">{title}</span>
           </h2>
 
+          <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+          </div>
+
           <p
             dir={dir}
-            className={`mx-auto mt-9 max-w-xl text-sm leading-relaxed text-gray-500 md:text-base ${fontClass}`}
+            className={`mx-auto max-w-xl text-sm leading-relaxed text-gray-500 md:text-base ${fontClass}`}
           >
             {lede}
           </p>

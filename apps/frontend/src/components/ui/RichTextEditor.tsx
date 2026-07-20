@@ -1,12 +1,54 @@
 'use client';
 
-import { useEffect, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
 import {
   Bold, Italic, Heading2, Heading3, List, ListOrdered,
-  Quote, Link2, Unlink, Undo2, Redo2,
+  Quote, Link2, Unlink, Undo2, Redo2, ImagePlus, Loader2,
+  AlignLeft, AlignCenter, AlignRight,
 } from 'lucide-react';
+import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
+import { fileUrl } from '@/lib/api';
+
+/**
+ * Image + size/alignment, carried as `data-size` / `data-align`.
+ *
+ * data-* rather than a width attribute or an inline style on purpose: DOMPurify
+ * keeps data-attributes by default, so the sizing survives the public
+ * sanitiser. Both values are styled once in globals.css, which means the editor
+ * and the public page agree by construction.
+ */
+const SizedImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      size: {
+        default: 'full',
+        parseHTML: (el) => el.getAttribute('data-size') ?? 'full',
+        renderHTML: (attrs) => ({ 'data-size': attrs.size }),
+      },
+      align: {
+        default: 'center',
+        parseHTML: (el) => el.getAttribute('data-align') ?? 'center',
+        renderHTML: (attrs) => ({ 'data-align': attrs.align }),
+      },
+    };
+  },
+});
+
+const SIZES = [
+  { key: 'sm', label: 'Small image' },
+  { key: 'md', label: 'Medium image' },
+  { key: 'full', label: 'Full-width image' },
+] as const;
+
+const ALIGNS = [
+  { key: 'left', label: 'Align image left', Icon: AlignLeft },
+  { key: 'center', label: 'Align image centre', Icon: AlignCenter },
+  { key: 'right', label: 'Align image right', Icon: AlignRight },
+] as const;
 
 /**
  * Reusable rich-text editor (TipTap). Outputs HTML via `onChange`. The body is
@@ -36,6 +78,13 @@ export function RichTextEditor({ value, onChange, dir = 'ltr', fontClassName = '
           openOnClick: false,
           HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' },
         },
+      }),
+      // Images are uploaded to the file server and inserted as a plain <img src>
+      // pointing at the PUBLIC prefix — never inlined as a base64 data URI, which
+      // would bloat the HTML body straight past the request size limit.
+      SizedImage.configure({
+        inline: false,
+        HTMLAttributes: { loading: 'lazy', class: 'rounded-xl' },
       }),
     ],
     content: value,
@@ -83,6 +132,16 @@ function Toolbar({ editor }: { editor: Editor }) {
     return () => { editor.off('transaction', update); };
   }, [editor]);
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imgErr, setImgErr] = useState('');
+
+  // Recomputed on every transaction (the force-render above), so the contextual
+  // image controls follow the selection.
+  const imageSelected = editor.isActive('image');
+  const imgAttrs = editor.getAttributes('image') as { size?: string; align?: string; alt?: string };
+  const selectedAlt = imgAttrs.alt?.slice(0, 24) ?? '';
+
   const setLink = () => {
     const prev = editor.getAttributes('link').href as string | undefined;
     const url = window.prompt('Link URL', prev ?? 'https://');
@@ -91,8 +150,37 @@ function Toolbar({ editor }: { editor: Editor }) {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
+  /**
+   * Upload the picked image, then insert it at the cursor. Reuses the same
+   * resize+upload pipeline as ImageUploadField (covers/photos), so an inline
+   * image lands on the public prefix and is served like any other cover.
+   */
+  const pickImage = async (file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setImgErr('Please choose an image file.'); return; }
+    setUploading(true);
+    setImgErr('');
+    try {
+      const versions = await generateImageVersions(file);
+      const { fileKey } = await uploadGalleryVersions({ versions });
+      editor.chain().focus().setImage({ src: fileUrl(fileKey), alt: file.name.replace(/\.[^.]+$/, '') }).run();
+    } catch {
+      setImgErr('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-100 bg-gray-50/60 px-2 py-1.5">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => pickImage(e.target.files?.[0])}
+      />
       <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} label="Bold"><Bold className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} label="Italic"><Italic className="w-4 h-4" /></Btn>
       <Divider />
@@ -106,8 +194,45 @@ function Toolbar({ editor }: { editor: Editor }) {
       <Btn onClick={setLink} active={editor.isActive('link')} label="Add link"><Link2 className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().unsetLink().run()} disabled={!editor.isActive('link')} label="Remove link"><Unlink className="w-4 h-4" /></Btn>
       <Divider />
+      <Btn onClick={() => fileRef.current?.click()} disabled={uploading} label={uploading ? 'Uploading image…' : 'Insert image'}>
+        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+      </Btn>
+      <Divider />
       <Btn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} label="Undo"><Undo2 className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} label="Redo"><Redo2 className="w-4 h-4" /></Btn>
+      {imgErr && <span className="ms-2 text-[11px] text-red-600">{imgErr}</span>}
+
+      {/* Size + alignment appear only while an image is selected — they are
+          meaningless otherwise, and a permanently-visible row of dead buttons
+          reads as broken. */}
+      {imageSelected && (
+        <>
+          <Divider />
+          <span className="me-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            {selectedAlt || 'Image'}
+          </span>
+          {SIZES.map(({ key, label }) => (
+            <Btn
+              key={key}
+              onClick={() => editor.chain().focus().updateAttributes('image', { size: key }).run()}
+              active={imgAttrs.size === key}
+              label={label}
+            >
+              <span className="text-[11px] font-bold uppercase">{key === 'full' ? 'L' : key.charAt(0)}</span>
+            </Btn>
+          ))}
+          {ALIGNS.map(({ key, label, Icon }) => (
+            <Btn
+              key={key}
+              onClick={() => editor.chain().focus().updateAttributes('image', { align: key }).run()}
+              active={imgAttrs.align === key}
+              label={label}
+            >
+              <Icon className="w-4 h-4" />
+            </Btn>
+          ))}
+        </>
+      )}
     </div>
   );
 }

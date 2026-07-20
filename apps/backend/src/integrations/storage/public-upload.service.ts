@@ -35,6 +35,23 @@ export const DOCUMENT_MIME_TYPES = [
 export const DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
 
 /**
+ * Per-call overrides for the type/size rules.
+ *
+ * The defaults above describe an ANONYMOUS upload from a public form, and they
+ * must stay where they are — loosening them would loosen every unauthenticated
+ * write path in the platform at once. A caller with a different threat model
+ * (an authenticated admin uploading a 25 MB library PDF) passes its own limits
+ * explicitly, so the looser rule is scoped to that one route instead of
+ * becoming the global floor.
+ */
+export interface UploadRules {
+  maxBytes?: number;
+  mimeTypes?: string[];
+  /** Shown to the user when the type check fails. */
+  typeErrorMessage?: string;
+}
+
+/**
  * Uploads a supporting document to the file server on behalf of an ANONYMOUS
  * member of the public (a Hajj applicant, a family reporting a death…).
  *
@@ -77,15 +94,29 @@ export class PublicUploadService {
    * @param folder file-server folder — must be listed in PROTECTED_KEY_PREFIXES
    *               on the file server, or the document will be publicly readable.
    */
-  async upload(file: UploadedDocument | undefined, folder: string): Promise<StoredDocument> {
+  async upload(
+    file: UploadedDocument | undefined,
+    folder: string,
+    rules: UploadRules = {},
+  ): Promise<StoredDocument> {
+    const maxBytes = rules.maxBytes ?? DOCUMENT_MAX_BYTES;
+    const mimeTypes = rules.mimeTypes ?? DOCUMENT_MIME_TYPES;
+
     if (!file?.buffer?.length) {
       throw new BadRequestException('A file is required.');
     }
-    if (file.size > DOCUMENT_MAX_BYTES) {
-      throw new PayloadTooLargeException('The file must be 10 MB or smaller.');
+    if (file.size > maxBytes) {
+      throw new PayloadTooLargeException(
+        `The file must be ${Math.floor(maxBytes / 1024 / 1024)} MB or smaller.`,
+      );
     }
-    if (!DOCUMENT_MIME_TYPES.includes(file.mimetype)) {
-      throw new BadRequestException('The file must be an image (JPG, PNG, WEBP) or a PDF.');
+    // The mime type is checked, never the extension — an extension is a claim
+    // made by the client, and renaming evil.exe to book.pdf costs nothing.
+    if (!mimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        rules.typeErrorMessage ??
+          'The file must be an image (JPG, PNG, WEBP) or a PDF.',
+      );
     }
 
     const form = new FormData();

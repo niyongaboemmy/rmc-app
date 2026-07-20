@@ -26,6 +26,8 @@ export interface BroadcastResult {
 export interface FileBroadcastResult extends BroadcastResult {
   /** Non-empty rows that contained no email address (e.g. a header row). */
   invalidRows: number;
+  /** Addresses in the file that had previously unsubscribed — not mailed. */
+  suppressed: number;
 }
 
 export const subscribersApi = {

@@ -145,13 +145,6 @@ export function ActivitiesEventsSection() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* ── Header ── */}
         <div className="max-w-2xl mx-auto text-center mb-14 animate-fade-up">
-          <div className="inline-flex items-center gap-2.5 mb-5 px-4 py-1.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 backdrop-blur-sm text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-rmc-green-dark">
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-            <span className={arFont} dir={rtl ? 'rtl' : 'ltr'}>
-              {pick(content.eyebrow, locale)}
-            </span>
-          </div>
-
           <h2
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}
             dir={rtl ? 'rtl' : 'ltr'}
@@ -202,7 +195,7 @@ export function ActivitiesEventsSection() {
             </div>
 
             {/* News rows joined by hairlines — each opens an image gallery */}
-            <div className="flex-1 rounded-2xl border border-gray-100 ring-1 ring-black/5 bg-white shadow-sm divide-y divide-gray-100 overflow-hidden">
+            <div className="flex-1 rounded-lg border border-gray-200/70 bg-white divide-y divide-gray-100 overflow-hidden">
               {latestItems.map((item, i) => {
                 const delay = { animationDelay: `${i * 90 + 220}ms` };
 
@@ -281,7 +274,7 @@ export function ActivitiesEventsSection() {
                     style={delay}
                   >
                     {/* Muted date tile — this event has already happened */}
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl bg-gray-100 ring-1 ring-black/5 flex flex-col items-center justify-center">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-gray-100 ring-1 ring-black/5 flex flex-col items-center justify-center">
                       <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400 leading-none">
                         {MONTHS[d.m]}
                       </span>
@@ -352,7 +345,7 @@ export function ActivitiesEventsSection() {
 
             {/* Empty state — every event is in the past relative to today */}
             {upcomingEvents.length === 0 && (
-              <div className="flex-1 rounded-2xl border border-dashed border-gray-200 bg-white/50 p-8 text-center flex flex-col items-center justify-center animate-fade-up">
+              <div className="flex-1 rounded-lg border border-dashed border-gray-200 bg-white/50 p-8 text-center flex flex-col items-center justify-center animate-fade-up">
                 <Calendar className="w-8 h-8 text-gray-300 mb-2" aria-hidden="true" />
                 <p className={`text-sm font-semibold text-gray-600 ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
                   {pick({ en: 'No upcoming events', rw: 'Nta birori biteganyijwe', ar: 'لا توجد فعاليات قادمة' }, locale)}
@@ -367,7 +360,7 @@ export function ActivitiesEventsSection() {
             {featured && fDate && (
               <Link
                 href={`/${locale}/activities`}
-                className="group relative block rounded-2xl bg-rmc-green-deep text-white p-5 ring-1 ring-white/10 shadow-sm overflow-hidden motion-safe:hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 animate-fade-up"
+                className="group relative block rounded-lg bg-rmc-green-deep text-white p-5 overflow-hidden motion-safe:hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 animate-fade-up"
                 style={{ animationDelay: '320ms' }}
               >
                 <div className="absolute inset-0 pattern-islamic opacity-10 pointer-events-none" />
@@ -375,7 +368,7 @@ export function ActivitiesEventsSection() {
 
                 <div className="relative flex items-start gap-4">
                   {/* Gold day-tile on green-deep */}
-                  <div className="w-16 shrink-0 text-center rounded-xl bg-white/10 ring-1 ring-white/15 py-2.5 backdrop-blur-sm">
+                  <div className="w-16 shrink-0 text-center rounded-lg bg-white/10 ring-1 ring-white/15 py-2.5 backdrop-blur-sm">
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/70 leading-none">
                       {MONTHS[fDate.m]}
                     </p>
@@ -429,11 +422,11 @@ export function ActivitiesEventsSection() {
                   <Link
                     key={i}
                     href={`/${locale}/activities`}
-                    className="group flex items-start gap-3 p-4 rounded-2xl border border-gray-100 ring-1 ring-black/5 bg-white shadow-sm hover:border-rmc-green/30 hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-all duration-300 animate-fade-up"
+                    className="group flex items-start gap-3 p-4 rounded-lg border border-gray-200/70 bg-white hover:border-rmc-green/30 hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-all duration-300 animate-fade-up"
                     style={{ animationDelay: `${i * 80 + 380}ms` }}
                   >
                     {/* Date tile — gold day on green-deep, flips to solid green on hover */}
-                    <div className="w-12 shrink-0 text-center rounded-xl bg-rmc-green-deep py-2 group-hover:bg-rmc-green transition-colors duration-300">
+                    <div className="w-12 shrink-0 text-center rounded-lg bg-rmc-green-deep py-2 group-hover:bg-rmc-green transition-colors duration-300">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/70 leading-none">
                         {MONTHS[d.m]}
                       </p>
@@ -470,7 +463,7 @@ export function ActivitiesEventsSection() {
 
             {/* Subscribe CTA — matches the home-page system */}
             <div
-              className="mt-4 p-4 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/50 animate-fade-up"
+              className="mt-4 p-4 rounded-lg border border-rmc-green/15 bg-rmc-green-light/50 animate-fade-up"
               style={{ animationDelay: '620ms' }}
             >
               <div className="flex items-center gap-3">

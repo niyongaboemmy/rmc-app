@@ -7,13 +7,15 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import {
-  ContentKeys, getSiteContent, saveSiteContent, mergeContent, hajjPhotoSrc,
-  HAJJ_DEFAULT, type HajjContent,
+  ContentKeys, getSiteContent, saveSiteContent, mergeContent, hajjPhotoSrc, hajjSteps, tri,
+  HAJJ_DEFAULT, type HajjContent, type HajjStep,
 } from '@/lib/content-api';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { REQUIREMENT_ICON_NAMES, requirementIcon } from '@/components/hajj/requirementIcons';
 import { uploadAreaImage } from '@/lib/galleryApi';
 import {
   Compass, ArrowLeft, Save, Sparkles, BookOpen, ImageIcon, Upload, ListChecks, Loader2,
+  Footprints, Plus, Trash2, ArrowUp, ArrowDown,
 } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -60,6 +62,9 @@ const FIELDS: FieldDef[] = [
   { group: 'requirements', key: 'eyebrow', label: 'Requirements — Eyebrow', rows: 1 },
   { group: 'requirements', key: 'title', label: 'Requirements — Heading', rows: 1 },
   { group: 'requirements', key: 'subtitle', label: 'Requirements — Subheading', rows: 2 },
+  { group: 'steps', key: 'eyebrow', label: 'Steps — Eyebrow', rows: 1 },
+  { group: 'steps', key: 'title', label: 'Steps — Heading', rows: 1 },
+  { group: 'steps', key: 'subtitle', label: 'Steps — Subheading', rows: 2 },
 ];
 
 const GROUP_LABELS: Record<Group, string> = {
@@ -67,6 +72,7 @@ const GROUP_LABELS: Record<Group, string> = {
   about: 'About the pilgrimage',
   description: 'Description section',
   requirements: 'Requirements heading',
+  steps: 'Steps heading',
 };
 
 export default function HajjContentPage() {
@@ -87,10 +93,15 @@ export function HajjContentManager({ embedded = false }: { embedded?: boolean } 
   const fileInput = useRef<HTMLInputElement>(null);
 
   // Merged over the seeded defaults, so a blank translation falls back to English.
+  // The steps list is the exception: `mergeContent` merges arrays by index, which
+  // would resurrect a seeded step's text inside an admin's own step, so the saved
+  // list is taken as-is (see `hajjSteps`).
   useEffect(() => {
     getSiteContent<Record<string, unknown>>(ContentKeys.hajj)
       .then((data) => {
-        if (data) setForm(mergeContent(HAJJ_DEFAULT, data));
+        if (!data) return;
+        const merged = mergeContent(HAJJ_DEFAULT, data);
+        setForm({ ...merged, steps: { ...merged.steps, items: hajjSteps(data) } });
       })
       .catch(() => { /* keep defaults */ });
   }, []);
@@ -109,6 +120,42 @@ export function HajjContentManager({ embedded = false }: { embedded?: boolean } 
   const setPhoto = useCallback((value: string) => {
     setForm((prev) => ({ ...prev, about: { ...prev.about, photoUrl: value } }));
   }, []);
+
+  /** Replace the steps list through a mapper, keeping the rest of the form intact. */
+  const updateSteps = useCallback((next: (items: HajjStep[]) => HajjStep[]) => {
+    setForm((prev) => ({ ...prev, steps: { ...prev.steps, items: next(prev.steps.items) } }));
+  }, []);
+
+  const setStepText = useCallback((i: number, key: 'title' | 'description', l: Lang, value: string) => {
+    updateSteps((items) => items.map((s, idx) => (
+      idx === i ? { ...s, [key]: { ...s[key], [l]: value } } : s
+    )));
+  }, [updateSteps]);
+
+  const setStepIcon = useCallback((i: number, icon: string) => {
+    updateSteps((items) => items.map((s, idx) => (idx === i ? { ...s, icon } : s)));
+  }, [updateSteps]);
+
+  const addStep = useCallback(() => {
+    updateSteps((items) => [
+      ...items,
+      { id: `step-${Date.now()}`, icon: '', title: tri(''), description: tri('') },
+    ]);
+  }, [updateSteps]);
+
+  const removeStep = useCallback((i: number) => {
+    updateSteps((items) => items.filter((_, idx) => idx !== i));
+  }, [updateSteps]);
+
+  const moveStep = useCallback((i: number, delta: number) => {
+    updateSteps((items) => {
+      const to = i + delta;
+      if (to < 0 || to >= items.length) return items;
+      const next = [...items];
+      [next[i], next[to]] = [next[to], next[i]];
+      return next;
+    });
+  }, [updateSteps]);
 
   const handleUpload = useCallback(async (file: File) => {
     setUploading(true);
@@ -288,6 +335,94 @@ export function HajjContentManager({ embedded = false }: { embedded?: boolean } 
           })}
         </div>
       ))}
+
+      {/* Steps — the "How it works" list on the public page. */}
+      <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-50 pb-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-gray-700">
+            <Footprints className="h-4 w-4 text-rmc-green" />
+            Steps
+            <span className="font-normal text-gray-400">
+              ({form.steps.items.length}) — editing {LANGS.find((l) => l.key === lang)?.label}
+            </span>
+          </h2>
+          <button
+            type="button"
+            onClick={addStep}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-rmc-green px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add step
+          </button>
+        </div>
+
+        {form.steps.items.length === 0 ? (
+          <p className="py-6 text-center text-xs text-gray-400">
+            No steps yet — the section is hidden on the public page. Add one to show it.
+          </p>
+        ) : (
+          <ol className="space-y-3">
+            {form.steps.items.map((step, i) => {
+              const Icon = requirementIcon(step.icon);
+              return (
+                <li key={step.id} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-4">
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-rmc-green/20 bg-rmc-green/10 text-rmc-green">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="text-xs font-bold text-gray-400">Step {i + 1}</span>
+                    <select
+                      value={step.icon}
+                      onChange={(e) => setStepIcon(i, e.target.value)}
+                      aria-label={`Step ${i + 1} icon`}
+                      className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green/40"
+                    >
+                      <option value="">No icon</option>
+                      {REQUIREMENT_ICON_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                    <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                      <button type="button" onClick={() => moveStep(i, -1)} disabled={i === 0} aria-label="Move up"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-200/70 hover:text-gray-700 disabled:opacity-30">
+                        <ArrowUp className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={() => moveStep(i, 1)} disabled={i === form.steps.items.length - 1} aria-label="Move down"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-200/70 hover:text-gray-700 disabled:opacity-30">
+                        <ArrowDown className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={() => removeStep(i)} aria-label="Delete step"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <input
+                      dir={dir}
+                      type="text"
+                      value={step.title[lang]}
+                      onChange={(e) => setStepText(i, 'title', lang, e.target.value)}
+                      placeholder="Step title"
+                      className={inputClass}
+                    />
+                    <textarea
+                      dir={dir}
+                      rows={3}
+                      value={step.description[lang]}
+                      onChange={(e) => setStepText(i, 'description', lang, e.target.value)}
+                      placeholder="What happens at this step"
+                      className={`${inputClass} resize-none`}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+        <p className="text-[11px] text-gray-400">
+          Shown after the requirements checklist, in this order. The icon and order are shared
+          across all three languages.
+        </p>
+      </div>
 
       <p className="text-[11px] text-gray-400">
         Empty translations fall back to English on the public page.

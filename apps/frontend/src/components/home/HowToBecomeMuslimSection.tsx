@@ -49,7 +49,7 @@ export function HowToBecomeMuslimSection() {
   const { ref: mediaRef, visible: mediaVisible } = useScrollReveal(0.1);
 
   return (
-    <section className="relative bg-white py-16 md:py-24 overflow-hidden">
+    <section className="relative bg-white py-12 md:py-16 overflow-hidden">
       <div className="absolute inset-0 pattern-light opacity-70 pointer-events-none" />
       <div className="absolute top-0 left-0 w-[480px] h-[480px] bg-rmc-green-light rounded-full -translate-y-1/2 -translate-x-1/3 opacity-50 blur-[90px] pointer-events-none" />
 
@@ -61,20 +61,6 @@ export function HowToBecomeMuslimSection() {
             headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <div
-            className={`inline-flex items-center gap-2.5 mb-5 px-4 py-1.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 backdrop-blur-sm text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-rmc-green-dark ${isAr ? 'font-arabic' : ''}`}
-            dir={isAr ? 'rtl' : 'ltr'}
-          >
-            <HeartHandshake className="w-3.5 h-3.5 text-rmc-gold shrink-0" />
-            <InlineText
-              as="span"
-              lang={locale}
-              value={pick(content.eyebrow, locale)}
-              onCommit={(v) => setField((d) => { d.eyebrow[lang] = v; })}
-              placeholder="Eyebrow"
-            />
-          </div>
-
           <h2
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${isAr ? 'font-arabic' : ''}`}
             dir={isAr ? 'rtl' : 'ltr'}
@@ -91,17 +77,21 @@ export function HowToBecomeMuslimSection() {
               lang={locale}
               value={pick(content.titleAccent, locale)}
               onCommit={(v) => setField((d) => { d.titleAccent[lang] = v; })}
-              className="title-underline text-rmc-green"
+              className="text-rmc-green"
               placeholder="Accent"
             />
           </h2>
+
+          <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+          </div>
 
           <InlineText
             as="p"
             lang={locale}
             value={pick(content.lede, locale)}
             onCommit={(v) => setField((d) => { d.lede[lang] = v; })}
-            className={`text-gray-500 mt-4 text-sm md:text-base leading-relaxed ${isAr ? 'font-arabic' : ''}`}
+            className={`text-gray-500 text-sm md:text-base leading-relaxed ${isAr ? 'font-arabic' : ''}`}
             dir={isAr ? 'rtl' : 'ltr'}
             placeholder="Lede"
           />
@@ -116,7 +106,7 @@ export function HowToBecomeMuslimSection() {
             }`}
           >
             {/* The Shahada — words to read */}
-            <div className="mt-7 rounded-3xl border border-rmc-gold/25 bg-gradient-to-b from-rmc-green-light/40 to-white p-6 md:p-8 text-center">
+            <div className="mt-7 rounded-lg border border-rmc-gold/25 bg-gradient-to-b from-rmc-green-light/40 to-white p-6 md:p-8 text-center">
               <InlineText
                 as="p"
                 lang={locale}
@@ -204,7 +194,7 @@ function LinkCard({
       <a
         href={href}
         {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-        className={`group relative flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 transition-all duration-500 hover:border-rmc-green/30 hover:shadow-lg ${
+        className={`group relative flex items-center gap-4 rounded-lg border border-gray-200/70 bg-white p-5 transition-all duration-500 hover:border-rmc-green/30 hover:shadow-md ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
         }`}
         style={{ transitionDelay: `${index * 100}ms` }}

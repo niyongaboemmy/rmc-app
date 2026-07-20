@@ -53,7 +53,7 @@ export function RequirementsList() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-gray-400">
+        <div className="flex items-center justify-center py-12 md:py-16 text-gray-400">
           <Loader2 className="h-6 w-6 animate-spin" aria-label={t('loading')} />
         </div>
       ) : (
@@ -87,13 +87,13 @@ export function RequirementsList() {
 
                   <div className="mt-2 flex flex-wrap items-center gap-2 lg:justify-center">
                     {item.amount != null && (
-                      <span className="inline-flex items-center rounded-full bg-rmc-gold/20 px-2.5 py-0.5 text-[12px] font-bold text-rmc-green-deep">
+                      <span className="inline-flex items-center rounded-lg bg-rmc-gold/20 px-2.5 py-0.5 text-[12px] font-bold text-rmc-green-deep">
                         {money.format(item.amount)} {item.currency}
                       </span>
                     )}
                     <span
                       className={[
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                        'inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-semibold',
                         item.mandatory ? 'bg-gray-100 text-gray-500' : 'bg-rmc-green-light text-rmc-green',
                       ].join(' ')}
                     >

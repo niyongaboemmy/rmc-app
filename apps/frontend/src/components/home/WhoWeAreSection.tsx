@@ -33,7 +33,7 @@ export function WhoWeAreSection() {
   const description = pickLang(content, 'description', locale);
 
   return (
-    <section className="relative bg-transparent py-14 md:py-20 overflow-hidden">
+    <section className="relative bg-transparent py-12 md:py-16 overflow-hidden">
       {/* Faint Islamic geometric texture — echoes the hero's pattern overlay */}
       <div className="absolute inset-0 pattern-light opacity-70 pointer-events-none" />
       {/* Soft ambient light wash */}
@@ -49,15 +49,6 @@ export function WhoWeAreSection() {
             headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          {/* Shared hero-consistent eyebrow */}
-          <div
-            className={`inline-flex items-center gap-2.5 mb-6 px-4 py-1.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 backdrop-blur-sm text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-rmc-green-dark ${locale === 'ar' ? 'font-arabic' : ''}`}
-            dir={locale === 'ar' ? 'rtl' : 'ltr'}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-            {pick({ en: 'Who We Are', rw: 'Abo Turi Bo', ar: 'من نحن' }, locale)}
-          </div>
-
           <h2
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 mb-5 ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
@@ -123,7 +114,7 @@ export function WhoWeAreSection() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-12">
             <Link
               href={`/${locale}/about`}
-              className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 bg-rmc-green text-white text-sm font-bold rounded-full shadow-lg shadow-rmc-green/25 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 motion-safe:hover:scale-105 transition-all duration-300"
+              className="group inline-flex items-center justify-center gap-2 px-7 py-2.5 bg-rmc-green text-white text-sm font-bold rounded-lg shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors duration-300"
             >
               <BookOpen className="w-4 h-4" />
               {pick({ en: 'Learn Our Story', rw: 'Menya Inkuru Yacu', ar: 'تعرّف على قصتنا' }, locale)}
@@ -131,7 +122,7 @@ export function WhoWeAreSection() {
             </Link>
             <Link
               href={`/${locale}/contact`}
-              className="inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-full hover:border-rmc-green hover:text-rmc-green motion-safe:hover:scale-105 transition-all duration-300"
+              className="inline-flex items-center justify-center gap-2 px-7 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-lg hover:border-rmc-green hover:text-rmc-green transition-colors duration-300"
             >
               {pick({ en: 'Contact Us', rw: 'Twandikire', ar: 'اتصل بنا' }, locale)}
             </Link>

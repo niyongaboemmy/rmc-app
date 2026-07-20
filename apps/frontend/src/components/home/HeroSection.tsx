@@ -142,6 +142,10 @@ export function HeroSection() {
         </div>
       ))}
 
+      {/* ── Uniform scrim so the photo reads quieter across the whole hero,
+            not just under the right-aligned copy ── */}
+      <div aria-hidden className="absolute inset-0 bg-black/35 pointer-events-none" />
+
       {/* ── Dark backdrop for the right-aligned copy; the photo stays visible on the left ── */}
       <div className="absolute inset-0 bg-gradient-to-l from-black/90 via-black/50 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20" />
@@ -229,13 +233,13 @@ export function HeroSection() {
                 lang={locale}
                 value={pick(content.primaryCta, locale)}
                 onCommit={(v) => setField((d) => { d.primaryCta[lang] = v; })}
-                className={`inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-xl shadow-rmc-green/30 ${locale === 'ar' ? 'font-arabic' : ''}`}
+                className={`inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-lg text-sm shadow-sm shadow-rmc-green/20 ${locale === 'ar' ? 'font-arabic' : ''}`}
                 placeholder="Button label"
               />
             ) : (
               <Link
                 href={`/${locale}${content.primaryHref}`}
-                className={`group inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-xl shadow-rmc-green/30 hover:bg-rmc-green-dark hover:shadow-rmc-green/50 hover:scale-105 active:scale-100 transition-all duration-300 motion-reduce:transition-none motion-reduce:hover:scale-100 ${locale === 'ar' ? 'font-arabic' : ''}`}
+                className={`group inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-lg text-sm shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors duration-300 ${locale === 'ar' ? 'font-arabic' : ''}`}
               >
                 {pick(content.primaryCta, locale)}
               </Link>
@@ -246,13 +250,13 @@ export function HeroSection() {
                 lang={locale}
                 value={pick(content.secondaryCta, locale)}
                 onCommit={(v) => setField((d) => { d.secondaryCta[lang] = v; })}
-                className={`inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm ${locale === 'ar' ? 'font-arabic' : ''}`}
+                className={`inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-lg text-sm ${locale === 'ar' ? 'font-arabic' : ''}`}
                 placeholder="Button label"
               />
             ) : (
               <Link
                 href={`/${locale}${content.secondaryHref}`}
-                className={`group inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-full text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 motion-reduce:transition-none ${locale === 'ar' ? 'font-arabic' : ''}`}
+                className={`group inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-lg text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 motion-reduce:transition-none ${locale === 'ar' ? 'font-arabic' : ''}`}
               >
                 {pick(content.secondaryCta, locale)}
               </Link>
