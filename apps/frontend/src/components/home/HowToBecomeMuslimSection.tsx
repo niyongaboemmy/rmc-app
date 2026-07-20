@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   HeartHandshake, Heart, MessageSquareQuote, Droplets,
   Sparkles, MapPin, CheckCircle2, ExternalLink, ArrowRight,
@@ -10,13 +11,12 @@ import { useScrollReveal } from '@/hooks/useScrollReveal';
 import {
   ContentKeys,
   HOW_TO_BECOME_MUSLIM_DEFAULT,
+  getSiteContent,
+  mergeContent,
   pick,
   type HowToBecomeMuslimContent,
   type HowLink,
-  type Locale,
 } from '@/lib/content-api';
-import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
-import { InlineText } from '@/components/edit-mode/InlineText';
 
 // lucide icon names selectable for link cards → components.
 const ICONS: Record<string, LucideIcon> = {
@@ -37,13 +37,18 @@ export function HowToBecomeMuslimSection() {
   const { locale } = useParams<{ locale: string }>();
   const isAr = locale === 'ar';
 
-  // In super-admin Edit Mode the copy below is click-to-edit in place; the
-  // resource-link cards remain managed from the admin panel.
-  const { content, setField } = useEditableContent<HowToBecomeMuslimContent>(
-    ContentKeys.howToBecomeMuslim,
-    HOW_TO_BECOME_MUSLIM_DEFAULT,
-  );
-  const lang = locale as Locale;
+  const [content, setContent] = useState<HowToBecomeMuslimContent>(HOW_TO_BECOME_MUSLIM_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, unknown>>(ContentKeys.howToBecomeMuslim)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(HOW_TO_BECOME_MUSLIM_DEFAULT, data));
+      })
+      .catch(() => {/* keep defaults */});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const { ref: headerRef, visible: headerVisible } = useScrollReveal(0.15);
   const { ref: mediaRef, visible: mediaVisible } = useScrollReveal(0.1);
@@ -65,36 +70,20 @@ export function HowToBecomeMuslimSection() {
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${isAr ? 'font-arabic' : ''}`}
             dir={isAr ? 'rtl' : 'ltr'}
           >
-            <InlineText
-              as="span"
-              lang={locale}
-              value={pick(content.title, locale)}
-              onCommit={(v) => setField((d) => { d.title[lang] = v; })}
-              placeholder="Title"
-            />{' '}
-            <InlineText
-              as="span"
-              lang={locale}
-              value={pick(content.titleAccent, locale)}
-              onCommit={(v) => setField((d) => { d.titleAccent[lang] = v; })}
-              className="text-rmc-green"
-              placeholder="Accent"
-            />
+            {pick(content.title, locale)}{' '}
+            <span className="text-rmc-green">{pick(content.titleAccent, locale)}</span>
           </h2>
 
           <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
           </div>
 
-          <InlineText
-            as="p"
-            lang={locale}
-            value={pick(content.lede, locale)}
-            onCommit={(v) => setField((d) => { d.lede[lang] = v; })}
+          <p
             className={`text-gray-500 text-sm md:text-base leading-relaxed ${isAr ? 'font-arabic' : ''}`}
             dir={isAr ? 'rtl' : 'ltr'}
-            placeholder="Lede"
-          />
+          >
+            {pick(content.lede, locale)}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-start">
@@ -107,58 +96,31 @@ export function HowToBecomeMuslimSection() {
           >
             {/* The Shahada — words to read */}
             <div className="mt-7 rounded-lg border border-rmc-gold/25 bg-gradient-to-b from-rmc-green-light/40 to-white p-6 md:p-8 text-center">
-              <InlineText
-                as="p"
-                lang={locale}
-                value={pick(content.shahadaLabel, locale)}
-                onCommit={(v) => setField((d) => { d.shahadaLabel[lang] = v; })}
-                className={`text-rmc-gold text-[11px] font-semibold uppercase tracking-[0.18em] mb-4 ${isAr ? 'font-arabic' : ''}`}
-                placeholder="Shahada label"
-              />
+              <p className={`text-rmc-gold text-[11px] font-semibold uppercase tracking-[0.18em] mb-4 ${isAr ? 'font-arabic' : ''}`}>
+                {pick(content.shahadaLabel, locale)}
+              </p>
 
               <div className="ornament-divider max-w-md mx-auto mb-5">
-                <InlineText
-                  as="p"
-                  lang="shahadaArabic"
-                  value={content.shahadaArabic}
-                  onCommit={(v) => setField((d) => { d.shahadaArabic = v; })}
-                  className="font-arabic text-rmc-green-dark text-2xl md:text-3xl leading-loose px-2"
-                  dir="rtl"
-                  placeholder="Arabic Shahada"
-                />
+                <p className="font-arabic text-rmc-green-dark text-2xl md:text-3xl leading-loose px-2" dir="rtl">
+                  {content.shahadaArabic}
+                </p>
               </div>
 
-              <InlineText
-                as="p"
-                lang="shahadaTranslit"
-                value={content.shahadaTransliteration}
-                onCommit={(v) => setField((d) => { d.shahadaTransliteration = v; })}
-                className="text-gray-600 text-sm md:text-base italic mb-2"
-                placeholder="Transliteration"
-              />
-              <InlineText
-                as="p"
-                lang={locale}
-                value={pick(content.shahadaTranslation, locale)}
-                onCommit={(v) => setField((d) => { d.shahadaTranslation[lang] = v; })}
-                className={`text-gray-500 text-sm leading-relaxed ${isAr ? 'font-arabic' : ''}`}
-                dir={isAr ? 'rtl' : 'ltr'}
-                placeholder="Translation"
-              />
+              <p className="text-gray-600 text-sm md:text-base italic mb-2">{content.shahadaTransliteration}</p>
+              <p className={`text-gray-500 text-sm leading-relaxed ${isAr ? 'font-arabic' : ''}`} dir={isAr ? 'rtl' : 'ltr'}>
+                {pick(content.shahadaTranslation, locale)}
+              </p>
             </div>
           </div>
 
           {/* Right — resource links to continue the journey */}
           <div>
-            <InlineText
-              as="h3"
-              lang={locale}
-              value={pick(content.linksHeading, locale)}
-              onCommit={(v) => setField((d) => { d.linksHeading[lang] = v; })}
+            <h3
               className={`text-lg md:text-xl font-bold text-gray-900 mb-6 ${isAr ? 'font-arabic' : ''}`}
               dir={isAr ? 'rtl' : 'ltr'}
-              placeholder="Links heading"
-            />
+            >
+              {pick(content.linksHeading, locale)}
+            </h3>
 
             <ul className="space-y-4">
               {content.links.map((link, i) => (

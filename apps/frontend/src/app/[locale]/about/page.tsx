@@ -9,7 +9,6 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import { ArrowRight, Eye, Images, Mail, Phone, Target, User } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
 import { ContentKeys, getSiteContent, pickLang } from '@/lib/content-api';
-import { AboutEditProvider, AboutText } from '@/lib/edit-mode/AboutEditContext';
 import DOMPurify from 'isomorphic-dompurify';
 
 const FILE_SERVER = process.env.NEXT_PUBLIC_FILE_SERVER_URL || 'http://localhost:3002';
@@ -72,7 +71,6 @@ export default async function AboutPage() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <AboutEditProvider initial={about as Record<string, string> | null}>
       <main>
 
         {/* ===================================================================
@@ -99,26 +97,19 @@ export default async function AboutPage() {
             {/* Header — centered */}
             <div className="max-w-7xl mx-auto text-center">
               <h2 className="text-3xl md:text-[2.6rem] font-medium text-rmc-green-deep leading-[1.15] tracking-tight mb-5">
-                <AboutText base="whoWeAreHeading" fallback={t('whoWeAre.heading')} as="span" />{' '}
-                <AboutText base="whoWeAreHighlight" fallback={t('whoWeAre.headingHighlight')} as="span" className="text-rmc-green" />
+                {txt('whoWeAreHeading', t('whoWeAre.heading'))}{' '}
+                <span className="text-rmc-green">{txt('whoWeAreHighlight', t('whoWeAre.headingHighlight'))}</span>
               </h2>
 
               {/* Arabic verse framed by gold ornament — mirrors the home centerpiece */}
               <div className="ornament-divider max-w-md mx-auto mb-3">
-                <AboutText
-                  base="verse"
-                  fallback={'وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا'}
-                  as="p"
-                  className="font-arabic text-rmc-green-dark text-lg md:text-xl leading-loose text-center px-2"
-                  dir="rtl"
-                />
+                <p className="font-arabic text-rmc-green-dark text-lg md:text-xl leading-loose text-center px-2" dir="rtl">
+                  {txt('verse', 'وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا')}
+                </p>
               </div>
-              <AboutText
-                base="verseRef"
-                fallback={'“Hold firmly to the rope of Allah, all together” — Aal-Imran 3:103'}
-                as="p"
-                className="text-rmc-gold text-[11px] font-semibold tracking-wide mb-6"
-              />
+              <p className="text-rmc-gold text-[11px] font-semibold tracking-wide mb-6">
+                {txt('verseRef', '“Hold firmly to the rope of Allah, all together” — Aal-Imran 3:103')}
+              </p>
             </div>
 
             {/* Narrative — left-aligned in a centered reading container with a
@@ -151,7 +142,7 @@ export default async function AboutPage() {
                   <Target className="h-6 w-6" strokeWidth={1.75} aria-hidden />
                 </span>
                 <h2 className="text-center text-2xl font-medium tracking-tight text-gray-900">
-                  <AboutText base="missionTitle" fallback={t('mission.title')} as="span" />
+                  {txt('missionTitle', t('mission.title'))}
                 </h2>
                 {hasText(missionText) ? (
                   <div className={`${proseCls} mt-3 text-gray-500`} dangerouslySetInnerHTML={{ __html: clean(missionText) }} />
@@ -173,7 +164,7 @@ export default async function AboutPage() {
                   <Eye className="h-6 w-6" strokeWidth={1.75} aria-hidden />
                 </span>
                 <h2 className="text-center text-2xl font-medium tracking-tight text-white">
-                  <AboutText base="visionTitle" fallback={t('vision.title')} as="span" />
+                  {txt('visionTitle', t('vision.title'))}
                 </h2>
                 {hasText(visionText) ? (
                   <div className={`${cardProseCls} prose-invert mt-3 text-white/70`} dangerouslySetInnerHTML={{ __html: clean(visionText) }} />
@@ -204,11 +195,11 @@ export default async function AboutPage() {
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
-              <AboutText base="leadershipTitle" fallback={t('leadership.title')} as="h2" className="text-3xl md:text-4xl font-medium text-rmc-green-deep" />
+              <h2 className="text-3xl md:text-4xl font-medium text-rmc-green-deep">{txt('leadershipTitle', t('leadership.title'))}</h2>
               <div className="ornament-divider mx-auto my-4 max-w-xs">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
               </div>
-              <AboutText base="leadershipSubtitle" fallback={t('leadership.subtitle')} as="p" className="text-gray-400 max-w-xl mx-auto text-sm md:text-base" />
+              <p className="text-gray-400 max-w-xl mx-auto text-sm md:text-base">{txt('leadershipSubtitle', t('leadership.subtitle'))}</p>
             </div>
             <div className="mx-auto grid max-w-4xl grid-cols-1 md:grid-cols-2 gap-5">
               {leaderList.map(({ id, img, name, role, email, phone }) => (
@@ -282,11 +273,11 @@ export default async function AboutPage() {
         <section className="py-12 px-4 sm:px-6 lg:px-8 bg-transparent">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-8">
-              <AboutText base="galleryTitle" fallback={t('gallery.title')} as="h2" className="text-3xl md:text-4xl font-medium text-rmc-green-deep" />
+              <h2 className="text-3xl md:text-4xl font-medium text-rmc-green-deep">{txt('galleryTitle', t('gallery.title'))}</h2>
               <div className="ornament-divider mx-auto my-4 max-w-xs">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
               </div>
-              <AboutText base="gallerySubtitle" fallback={t('gallery.subtitle')} as="p" className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base" />
+              <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">{txt('gallerySubtitle', t('gallery.subtitle'))}</p>
             </div>
 
             {galleryImages.length > 0 && (
@@ -308,7 +299,6 @@ export default async function AboutPage() {
           </div>
         </section>
       </main>
-      </AboutEditProvider>
 
       {/* Footer (unchanged) */}
       <Footer />

@@ -697,30 +697,6 @@ main {
   }
 }
 
-/* ── In-context Edit Mode — click-to-edit text nodes (InlineText) ─────────────
-   Only present while a super-admin is editing; public markup never gets this
-   class. A subtle dashed outline invites the click, brightening on hover/focus,
-   with an empty-state placeholder so blank fields stay discoverable. */
-.ie-editable {
-  outline: 1px dashed transparent;
-  outline-offset: 2px;
-  border-radius: 3px;
-  cursor: text;
-  transition: outline-color 0.15s ease, background-color 0.15s ease;
-}
-.ie-editable:hover {
-  outline-color: rgba(56, 189, 248, 0.6); /* sky-400 */
-}
-.ie-editable:focus {
-  outline: 2px solid rgba(14, 165, 233, 0.9); /* sky-500 */
-  background: rgba(56, 189, 248, 0.06);
-}
-.ie-editable:empty::before {
-  content: attr(data-ph);
-  opacity: 0.5;
-  font-style: italic;
-}
-
 /* --------------------------------------------------------
    Rich-text inline images — size + alignment
    --------------------------------------------------------

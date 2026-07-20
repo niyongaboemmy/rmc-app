@@ -7,8 +7,6 @@ import { PWAInstallProvider } from '@/contexts/PWAInstallContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAAutoInstallPrompt } from '@/components/ui/PWAAutoInstallPrompt';
 import { AskAIButton } from '@/components/home/AskAIButton';
-import { EditModeProvider } from '@/lib/edit-mode/EditModeProvider';
-import { EditModeBar } from '@/components/edit-mode/EditModeBar';
 import '../globals.css';
 
 // Plus Jakarta Sans — a humanist geometric sans with a slightly warmer, more
@@ -72,15 +70,10 @@ export default function LocaleLayout({
             <PWAInstallProvider>
               <ToastProvider position="top-right">
                 <DonationCartProvider>
-                  {/* In-context "Edit Mode" — super-admins edit real pages in place */}
-                  <EditModeProvider>
-                    {children}
-                    <PWAAutoInstallPrompt />
-                    {/* Floating "Ask AI" assistant — shown on every public page */}
-                    <AskAIButton />
-                    {/* Floating publish/discard bar — only visible in edit mode */}
-                    <EditModeBar />
-                  </EditModeProvider>
+                  {children}
+                  <PWAAutoInstallPrompt />
+                  {/* Floating "Ask AI" assistant — shown on every public page */}
+                  <AskAIButton />
                 </DonationCartProvider>
               </ToastProvider>
             </PWAInstallProvider>

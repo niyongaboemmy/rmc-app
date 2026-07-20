@@ -8,12 +8,11 @@ import { ChevronDown } from 'lucide-react';
 import {
   ContentKeys,
   HERO_DEFAULT,
+  getSiteContent,
+  mergeContent,
   pick,
   type HeroContent,
-  type Locale,
 } from '@/lib/content-api';
-import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
-import { InlineText } from '@/components/edit-mode/InlineText';
 
 function SlideIndicators({
   total,
@@ -79,10 +78,21 @@ export function HeroSection() {
   const [transitioning, setTransitioning] = useState(false);
 
   // Content managed from Admin → Content → Hero. Falls back to the built-in
-  // defaults until something is saved. In super-admin Edit Mode every text below
-  // is click-to-edit in place and `content` reflects those edits live.
-  const { content, editing, setField } = useEditableContent<HeroContent>(ContentKeys.hero, HERO_DEFAULT);
-  const lang = locale as Locale;
+  // defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<HeroContent>(HERO_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<HeroContent>(ContentKeys.hero)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(HERO_DEFAULT, data));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const slides = content.slides;
   const slideCount = slides.length;
@@ -183,84 +193,44 @@ export function HeroSection() {
             <span aria-hidden className="h-px w-8 rounded-full bg-gradient-to-l from-transparent to-rmc-gold" />
           </div>
 
-          {/* Headline — split into white lead + gold accent when viewing; a single
-              editable field while editing (the two-tone split can't map to one
-              stored string). */}
+          {/* Headline */}
           <h2
             className={`animate-fade-up mt-5 text-3xl md:text-4xl font-bold text-white leading-tight tracking-tight drop-shadow-lg ${locale === 'ar' ? 'font-arabic' : ''}`}
             style={{ animationDelay: '260ms' }}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
           >
-            {editing ? (
-              <InlineText
-                as="span"
-                lang={locale}
-                value={pick(content.headline, locale)}
-                onCommit={(v) => setField((d) => { d.headline[lang] = v; })}
-                dir={locale === 'ar' ? 'rtl' : 'ltr'}
-                placeholder="Headline"
-              />
-            ) : (
-              <>
-                {headlineLead && <>{headlineLead} </>}
-                <span className="bg-gradient-to-r from-rmc-gold-light via-rmc-gold to-rmc-gold-light bg-clip-text text-transparent">
-                  {headlineAccent}
-                </span>
-              </>
-            )}
+            {headlineLead && <>{headlineLead} </>}
+            <span className="bg-gradient-to-r from-rmc-gold-light via-rmc-gold to-rmc-gold-light bg-clip-text text-transparent">
+              {headlineAccent}
+            </span>
           </h2>
 
           {/* Subtitle */}
-          <InlineText
-            as="p"
-            lang={locale}
-            value={pick(content.subtitle, locale)}
-            onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
+          <p
             className={`animate-fade-up mt-5 ml-auto max-w-md text-white/75 text-sm md:text-[15px] leading-relaxed ${locale === 'ar' ? 'font-arabic' : ''}`}
             style={{ animationDelay: '420ms' }}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
-            placeholder="Subtitle"
-          />
+          >
+            {pick(content.subtitle, locale)}
+          </p>
 
           {/* CTAs */}
           <div
             className="mt-8 flex flex-col sm:flex-row gap-3 items-end sm:items-center sm:justify-end animate-fade-up"
             style={{ animationDelay: '500ms' }}
           >
-            {editing ? (
-              <InlineText
-                as="span"
-                lang={locale}
-                value={pick(content.primaryCta, locale)}
-                onCommit={(v) => setField((d) => { d.primaryCta[lang] = v; })}
-                className={`inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-lg text-sm shadow-sm shadow-rmc-green/20 ${locale === 'ar' ? 'font-arabic' : ''}`}
-                placeholder="Button label"
-              />
-            ) : (
-              <Link
-                href={`/${locale}${content.primaryHref}`}
-                className={`group inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-lg text-sm shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors duration-300 ${locale === 'ar' ? 'font-arabic' : ''}`}
-              >
-                {pick(content.primaryCta, locale)}
-              </Link>
-            )}
-            {editing ? (
-              <InlineText
-                as="span"
-                lang={locale}
-                value={pick(content.secondaryCta, locale)}
-                onCommit={(v) => setField((d) => { d.secondaryCta[lang] = v; })}
-                className={`inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-lg text-sm ${locale === 'ar' ? 'font-arabic' : ''}`}
-                placeholder="Button label"
-              />
-            ) : (
-              <Link
-                href={`/${locale}${content.secondaryHref}`}
-                className={`group inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-lg text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 motion-reduce:transition-none ${locale === 'ar' ? 'font-arabic' : ''}`}
-              >
-                {pick(content.secondaryCta, locale)}
-              </Link>
-            )}
+            <Link
+              href={`/${locale}${content.primaryHref}`}
+              className={`group inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-lg text-sm shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors duration-300 ${locale === 'ar' ? 'font-arabic' : ''}`}
+            >
+              {pick(content.primaryCta, locale)}
+            </Link>
+            <Link
+              href={`/${locale}${content.secondaryHref}`}
+              className={`group inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-lg text-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 motion-reduce:transition-none ${locale === 'ar' ? 'font-arabic' : ''}`}
+            >
+              {pick(content.secondaryCta, locale)}
+            </Link>
           </div>
         </div>
       </div>

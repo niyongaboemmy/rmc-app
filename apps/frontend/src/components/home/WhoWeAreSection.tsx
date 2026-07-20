@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import {
   ContentKeys,
   WHO_WE_ARE_DEFAULT,
+  getSiteContent,
+  mergeContent,
   pick,
   pickLang,
   type WhoWeAreContent,
 } from '@/lib/content-api';
-import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
-import { InlineText } from '@/components/edit-mode/InlineText';
 
 export function WhoWeAreSection() {
   const { locale } = useParams<{ locale: string }>();
@@ -20,15 +21,21 @@ export function WhoWeAreSection() {
   const { ref: bodyRef, visible: bodyVisible } = useScrollReveal(0.1);
 
   // Content managed from Admin → Content → Who We Are. Falls back to the
-  // built-in defaults until something is saved. In super-admin Edit Mode the
-  // heading, verse and description below are click-to-edit in place.
-  const { content, setField } = useEditableContent<WhoWeAreContent>(ContentKeys.whoWeAre, WHO_WE_ARE_DEFAULT);
-
-  // Flat blob keyed by language suffix (headingEn/headingRw/…); the editor writes
-  // straight to the active-locale field.
-  const suffix = locale === 'rw' ? 'Rw' : locale === 'ar' ? 'Ar' : 'En';
-  const editWhoWeAre = (base: string) => (v: string) =>
-    setField((d) => { d[`${base}${suffix}`] = v; });
+  // built-in defaults until something is saved (or if the fetch fails).
+  const [content, setContent] = useState<WhoWeAreContent>(WHO_WE_ARE_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, string>>(ContentKeys.whoWeAre)
+      .then((data) => {
+        if (active && data) setContent(mergeContent(WHO_WE_ARE_DEFAULT, data));
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const description = pickLang(content, 'description', locale);
 
@@ -53,54 +60,31 @@ export function WhoWeAreSection() {
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 mb-5 ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
           >
-            <InlineText
-              as="span"
-              lang={locale}
-              value={pickLang(content, 'heading', locale)}
-              onCommit={editWhoWeAre('heading')}
-              placeholder="Heading"
-            />{' '}
-            <InlineText
-              as="span"
-              lang={locale}
-              value={pickLang(content, 'headingHighlight', locale)}
-              onCommit={editWhoWeAre('headingHighlight')}
-              className="text-rmc-green"
-              placeholder="Highlighted words"
-            />
+            {pickLang(content, 'heading', locale)}{' '}
+            <span className="text-rmc-green">
+              {pickLang(content, 'headingHighlight', locale)}
+            </span>
           </h2>
 
           {/* Arabic touch framed by gold ornament — echoes the hero's scripture centerpiece */}
           <div className="ornament-divider max-w-md mx-auto mb-3">
-            <InlineText
-              as="p"
-              lang={locale}
-              value={pickLang(content, 'verse', locale)}
-              onCommit={editWhoWeAre('verse')}
-              className="font-arabic text-rmc-green-dark text-lg md:text-xl leading-loose text-center px-2"
-              dir="rtl"
-              placeholder="Arabic verse"
-            />
+            <p className="font-arabic text-rmc-green-dark text-lg md:text-xl leading-loose text-center px-2" dir="rtl">
+              {pickLang(content, 'verse', locale)}
+            </p>
           </div>
-          <InlineText
-            as="p"
-            lang={locale}
-            value={pickLang(content, 'verseRef', locale)}
-            onCommit={editWhoWeAre('verseRef')}
+          <p
             className={`text-rmc-gold text-[11px] font-semibold tracking-wide mb-6 ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
-            placeholder="Verse reference"
-          />
+          >
+            {pickLang(content, 'verseRef', locale)}
+          </p>
 
-          <InlineText
-            as="p"
-            lang={locale}
-            value={description}
-            onCommit={editWhoWeAre('description')}
+          <p
             className={`text-gray-500 leading-relaxed text-sm md:text-base max-w-2xl mx-auto ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
-            placeholder="Description"
-          />
+          >
+            {description}
+          </p>
         </div>
 
         {/* Body */}
