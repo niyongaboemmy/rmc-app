@@ -80,7 +80,7 @@ export function PrayerColumn() {
   const location = usingLocation ? 'Your location' : 'Kigali, Rwanda';
 
   return (
-    <div className="relative h-full flex flex-col rounded-3xl overflow-hidden border border-gray-200/70 bg-white shadow-[0_1px_2px_rgba(13,61,36,0.04),0_16px_40px_-24px_rgba(13,61,36,0.22)]">
+    <div className="relative h-full flex flex-col rounded-lg overflow-hidden border border-gray-200/70 bg-white">
       <div className="relative flex flex-1 flex-col p-5 sm:p-6">
         {/* Header */}
         <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100">

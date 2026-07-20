@@ -32,7 +32,7 @@ export function InlineSubscribe({ source, className = '' }: { source?: string; c
 
   if (status === 'done') {
     return (
-      <span className={`inline-flex shrink-0 items-center gap-2 rounded-full bg-rmc-green-light px-4 py-2.5 text-xs font-semibold text-rmc-green-dark ring-1 ring-rmc-green/20 ${className}`}>
+      <span className={`inline-flex shrink-0 items-center gap-2 rounded-lg bg-rmc-green-light px-4 py-2.5 text-xs font-semibold text-rmc-green-dark ring-1 ring-rmc-green/20 ${className}`}>
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rmc-green text-white">
           <Check className="h-3 w-3" />
         </span>
@@ -44,7 +44,7 @@ export function InlineSubscribe({ source, className = '' }: { source?: string; c
   return (
     <form
       onSubmit={submit}
-      className={`group flex w-full shrink-0 items-center gap-1 rounded-full border border-rmc-green/20 bg-white py-1 pl-4 pr-1 shadow-sm transition-all duration-300 focus-within:border-rmc-green/50 focus-within:shadow-md focus-within:shadow-rmc-green/10 focus-within:ring-2 focus-within:ring-rmc-green/20 sm:w-auto ${className}`}
+      className={`group flex w-full shrink-0 items-center gap-1 rounded-lg border border-rmc-green/20 bg-white py-1 pl-4 pr-1 shadow-sm transition-all duration-300 focus-within:border-rmc-green/50 focus-within:shadow-md focus-within:shadow-rmc-green/10 focus-within:ring-2 focus-within:ring-rmc-green/20 sm:w-auto ${className}`}
     >
       <input
         type="email"
@@ -58,7 +58,7 @@ export function InlineSubscribe({ source, className = '' }: { source?: string; c
       <button
         type="submit"
         disabled={status === 'loading'}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rmc-green px-4 py-2 text-xs font-bold text-white transition-all duration-300 hover:bg-rmc-green-dark disabled:opacity-60"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-rmc-green px-4 py-2 text-xs font-bold text-white transition-all duration-300 hover:bg-rmc-green-dark disabled:opacity-60"
       >
         {status === 'loading' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellRing className="h-3.5 w-3.5" />}
         <span className={status === 'error' ? 'hidden' : ''}>{t('newsletterButton')}</span>

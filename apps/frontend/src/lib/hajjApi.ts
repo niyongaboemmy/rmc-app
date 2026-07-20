@@ -68,9 +68,9 @@ export interface HajjApplication {
   updatedAt: string;
 }
 
-/** The PII-free shape the public status lookup returns. */
+/** The PII-free shape the OTP-verified status lookup returns. */
 export interface HajjApplicationPublic {
-  applicationNumber: string;
+  trackingCode: string;
   fullName: string;
   district: string;
   sector: string;
@@ -230,18 +230,13 @@ export const hajjApi = {
   /** Public — submit an application. Returns the number the applicant must keep. */
   apply: async (
     payload: HajjApplicationPayload,
-  ): Promise<{ id: string; applicationNumber: string; status: HajjStatus }> => {
+  ): Promise<{ id: string; applicationNumber: string; trackingCode: string; status: HajjStatus }> => {
     const { data } = await apiClient.post('/hajj/apply', payload);
     return data.data ?? data;
   },
 
-  /** Public — applicant status lookup by application number. */
-  getByNumber: async (applicationNumber: string): Promise<HajjApplicationPublic> => {
-    const { data } = await apiClient.get(
-      `/hajj/applications/by-number/${encodeURIComponent(applicationNumber)}`,
-    );
-    return data.data ?? data;
-  },
+  // Public status lookup is now OTP-gated — see the shared <TrackByOtp> component
+  // (basePath '/hajj/applications/track'), which returns HajjApplicationPublic.
 
   admin: {
     list: async (params: {

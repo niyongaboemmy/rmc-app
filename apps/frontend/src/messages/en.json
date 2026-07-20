@@ -1,4 +1,12 @@
 {
+  "notFoundPage": {
+    "code": "404",
+    "eyebrow": "Error 404",
+    "title": "Page Not Found",
+    "subtitle": "The page you're looking for may have moved, or never existed. Let us guide you back.",
+    "home": "Back to Home",
+    "services": "Explore Services"
+  },
   "common": {
     "appName": "RMC Platform",
     "loading": "Loading...",
@@ -81,7 +89,16 @@
     "changePassword": "Change Password",
     "admin": "Admin",
     "schools": "Schools",
-    "projects": "Projects"
+    "projects": "Projects",
+    "dawah": "Dawah",
+    "dawahMenu": {
+      "overview": "Overview",
+      "overviewDesc": "Courses and library at a glance."
+    },
+    "servicesMenu": {
+      "overview": "Overview",
+      "overviewDesc": "Every service RMC offers, in one place."
+    }
   },
   "home": {
     "hero": {
@@ -1016,15 +1033,696 @@
     },
     "scholarship": {
       "title": "Scholarships",
-      "desc": "Financial support for Muslim students pursuing education at all levels."
+      "desc": "Financial support for Muslim students pursuing education at all levels.",
+      "levels": {
+        "secondary": "Secondary School",
+        "tvet": "TVET / Vocational",
+        "university": "University"
+      },
+      "relationships": {
+        "parent": "Parent",
+        "guardian": "Guardian",
+        "sibling": "Sibling",
+        "other": "Other"
+      },
+      "docTypes": {
+        "transcript": "Transcript / Report Card",
+        "academic_record": "Academic Record",
+        "proof": "Proof of Need",
+        "additional": "Other Document"
+      },
+      "detail": {
+        "backToServices": "All Services",
+        "needTitle": "What you'll need",
+        "needSubtitle": "Have these ready before you start your application.",
+        "need": {
+          "i1": { "title": "Your personal details", "text": "Full name, date of birth, phone number, and (optionally) your national ID." },
+          "i2": { "title": "Where you live", "text": "Your district and sector." },
+          "i3": { "title": "Your education details", "text": "Current school, education level, and year or grade." },
+          "i4": { "title": "A guardian's contact", "text": "A parent or guardian's name, phone number, and their relationship to you." },
+          "i5": { "title": "A short statement", "text": "A brief explanation of why you need this scholarship." }
+        },
+        "processTitle": "How it works",
+        "processSubtitle": "From application to tracking, in a few simple steps.",
+        "steps": {
+          "s1": { "title": "Sign in", "text": "Sign in to your RMC account, or create one if you don't have one yet." },
+          "s2": { "title": "Fill in the form", "text": "Complete your personal, education, and guardian details across a short 3-step form." },
+          "s3": { "title": "Submit your application", "text": "Submit and receive a tracking number for your application." },
+          "s4": { "title": "Track your status", "text": "Use your tracking number anytime to check where your application stands." }
+        },
+        "faqTitle": "Frequently asked questions",
+        "faqs": {
+          "f1": {
+            "q": "Do I need an account to apply?",
+            "a": "Yes — you need to sign in to your RMC account to submit an application."
+          },
+          "f2": {
+            "q": "Is there a fee to apply?",
+            "a": "No, applying for a scholarship does not require any payment."
+          },
+          "f3": {
+            "q": "How do I check my application status?",
+            "a": "Use the tracking number you received after submitting, on the \"Check Status\" page — no account needed."
+          },
+          "f4": {
+            "q": "Can I apply again if I'm not approved?",
+            "a": "Yes, you're welcome to submit a new application."
+          }
+        },
+        "ctaTitle": "Ready to apply for a scholarship?",
+        "ctaSubtitle": "Sign in and submit your application in just a few minutes.",
+        "ctaStart": "Start application",
+        "ctaContact": "Contact us"
+      },
+      "apply": {
+        "heroTitle": "Apply for a Scholarship",
+        "requirementsHeroTitle": "Scholarships",
+        "requirementsHeroSubtitle": "Sign in to your RMC account to apply for a scholarship.",
+        "backToService": "Back to Scholarships",
+        "signInToApply": "Sign In to Apply",
+        "signInPrompt": "You need to be signed in to apply for a scholarship.",
+        "noAccount": "Don't have an account?",
+        "requestAccess": "Request access",
+        "step1Title": "Personal Information",
+        "step1Subtitle": "Tell us who you are and how to reach you",
+        "step2Title": "Academic Information",
+        "step2Subtitle": "Your school, program, and required academic documents",
+        "step3Title": "Scholarship Questions",
+        "step3Subtitle": "Tell us why this scholarship matters to you",
+        "step4Title": "Guardian & Documents",
+        "step4Subtitle": "Guardian details, supporting documents, and your declaration",
+        "fullNames": "Full Name",
+        "fullNamesError": "Enter your full name (at least 3 characters)",
+        "fullNamesTooLongError": "Full name is too long (max 150 characters)",
+        "studentId": "Student ID",
+        "email": "Email Address",
+        "emailError": "Enter a valid email address",
+        "phone": "Phone Number",
+        "phoneFormatError": "Enter a valid Rwanda mobile number: 07XXXXXXXX",
+        "phoneHint": "Format: 07XXXXXXXX (10 digits)",
+        "schoolName": "Current School",
+        "currentYear": "Current Grade / Year",
+        "currentYearPlaceholder": "e.g. Senior 5 or Year 2",
+        "program": "Current Program / Course",
+        "programPlaceholder": "e.g. Computer Science",
+        "averageGrade": "Overall Academic Average / GPA",
+        "averageGradePlaceholder": "e.g. 78% or 3.6",
+        "requiredError": "This field is required",
+        "requiredDocuments": "Required documents",
+        "supportingDocuments": "Supporting documents",
+        "q1Label": "Why do you deserve this scholarship?",
+        "q1Placeholder": "Tell us about yourself, your achievements, your educational goals, and why you believe you should receive this scholarship.",
+        "q2Label": "How will this scholarship help you achieve your educational goals?",
+        "q2Placeholder": "Explain how this support will make a difference to your studies and future.",
+        "q3Label": "Is there anything else you would like the scholarship committee to know?",
+        "q3Placeholder": "Anything else you'd like to add (optional).",
+        "questionRequiredError": "Please answer this question (at least 10 characters)",
+        "guardianName": "Parent / Guardian Name",
+        "guardianPhone": "Parent / Guardian Phone Number",
+        "householdIncome": "Monthly Household Income",
+        "householdIncomePlaceholder": "e.g. 150,000 RWF",
+        "docTranscript": "Academic Transcript",
+        "docReportCard": "Latest Report Card / Examination Results",
+        "docStudentId": "Student ID / School ID",
+        "docRecommendation": "Recommendation Letter",
+        "docCertificates": "Certificates & Awards",
+        "docFinancial": "Financial Support Documents",
+        "docHint": "PDF, JPG, PNG or WebP · up to 10 MB",
+        "docUpload": "Upload",
+        "docOrDrop": "or drop a file",
+        "docRemove": "Remove document",
+        "docTypeError": "Only PDF and image files are allowed",
+        "docSizeError": "Each file must be 10 MB or smaller",
+        "docRequiredError": "Please upload the required document(s) before continuing",
+        "declaration": "I certify that the information provided is true and accurate to the best of my knowledge.",
+        "next": "Next",
+        "back": "Back",
+        "submit": "Submit Application",
+        "submitting": "Submitting…",
+        "uploadFailed": "Some documents could not be uploaded",
+        "optional": "optional",
+        "genericError": "Something went wrong. Please try again.",
+        "successTitle": "Application Submitted!",
+        "successText": "Our team will review your application within 5–10 business days. You will be notified by SMS on every status change.",
+        "applicationIdLabel": "Your Application ID",
+        "saveIdHint": "Save this — you need it to track your application.",
+        "trackApplication": "Track Application",
+        "newApplication": "New Application",
+        "copyId": "Copy ID"
+      },
+      "status": {
+        "title": "Track Your Application",
+        "subtitle": "Check the status of a scholarship application using your tracking number.",
+        "backToService": "Back to Scholarships",
+        "idLabel": "Application Tracking Number",
+        "idPlaceholder": "e.g. RMC-SCH-KIC-202607-00001",
+        "checkButton": "Check Status",
+        "checking": "Checking…",
+        "notFoundTitle": "Application Not Found",
+        "notFoundText": "We couldn't find an application with that tracking number. Please check and try again.",
+        "detailsTitle": "Application",
+        "submittedOn": "Submitted On",
+        "applicant": "Applicant",
+        "school": "School",
+        "currentStatus": "Current Status",
+        "stages": {
+          "submitted": "Submitted",
+          "review": "Under Review",
+          "approved": "Approved",
+          "confirmed": "Confirmed"
+        },
+        "stageDesc": {
+          "submitted": "Your application has been received.",
+          "review": "A reviewer is verifying your details.",
+          "approved": "Your application has been approved.",
+          "confirmed": "Your scholarship has been confirmed."
+        },
+        "statusLabel": {
+          "draft": "Draft",
+          "submitted": "Submitted",
+          "under_review": "Under Review",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "cancelled": "Cancelled",
+          "confirmed": "Confirmed"
+        },
+        "banner": {
+          "rejectedTitle": "Application Not Approved",
+          "rejectedText": "Contact info@rmc.rw for details.",
+          "cancelledTitle": "Application Cancelled",
+          "cancelledText": "This application was cancelled."
+        }
+      },
+      "landing": {
+        "backToServices": "Back to Services",
+        "applyTitle": "Apply for a Scholarship",
+        "applyText": "Submit your details, education info, and reason for the request.",
+        "applyCta": "Apply Now",
+        "statusTitle": "Track My Application",
+        "statusText": "Check the status of an application you've already submitted.",
+        "statusCta": "Check Status",
+        "programsTitle": "Available Scholarships",
+        "programsSubtitle": "Open scholarship programs you can apply for right now.",
+        "programsEmptyTitle": "No open scholarships right now",
+        "programsEmptyText": "Check back soon — new scholarship programs are announced regularly.",
+        "programsLoadError": "Couldn't load scholarships. Please try again later.",
+        "deadlineLabel": "Deadline",
+        "amountLabel": "Amount",
+        "viewAndApply": "View & Apply"
+      }
     },
     "tender": {
       "title": "Tenders",
-      "desc": "Business opportunities published by RMC for qualified organizations and contractors."
+      "desc": "Business opportunities published by RMC for qualified organizations and contractors.",
+      "landing": {
+        "backToServices": "Back to Services",
+        "applyTitle": "Apply for a tender",
+        "applyText": "Submit a bid for an open tender. You will need your company details and three documents.",
+        "applyCta": "Start an application",
+        "statusTitle": "Check your status",
+        "statusText": "Track a bid you have already submitted, update it, or withdraw it.",
+        "statusCta": "Check status",
+        "stepsTitle": "How to apply",
+        "stepsSubtitle": "Four steps from opportunity to submitted bid.",
+        "steps": {
+          "browse": {
+            "title": "Browse open tenders",
+            "text": "Find an opportunity on the tenders board and read its terms and deadline."
+          },
+          "form": {
+            "title": "Complete the form",
+            "text": "Give your company details, contact person, address and bid amount."
+          },
+          "documents": {
+            "title": "Upload your documents",
+            "text": "Attach the three required documents. PDF, JPG or PNG, up to 10 MB each."
+          },
+          "track": {
+            "title": "Track your bid",
+            "text": "Get a reference number, then follow your bid from evaluation to award."
+          }
+        },
+        "requirementsTitle": "What you need before you start",
+        "requirementsSubtitle": "Have these ready — you cannot submit a bid without them.",
+        "requirements": {
+          "rdb": {
+            "title": "Company Registration (RDB) certificate",
+            "text": "Your certificate of incorporation from the Rwanda Development Board."
+          },
+          "tax": {
+            "title": "RRA Tax Clearance certificate",
+            "text": "A valid tax clearance certificate from the Rwanda Revenue Authority."
+          },
+          "proposal": {
+            "title": "Technical & Financial Proposal",
+            "text": "Your full proposal for the tender, including your pricing."
+          },
+          "company": {
+            "title": "Company details",
+            "text": "Your registered company name, 9-digit TIN, and a contact person we can reach."
+          },
+          "deadline": {
+            "title": "Time before the deadline",
+            "text": "Bids cannot be submitted or edited once a tender's deadline has passed."
+          }
+        },
+        "boardTitle": "See what's open right now",
+        "boardText": "Browse every tender RMC has published, with deadlines and attached documents.",
+        "boardCta": "View all tenders"
+      },
+      "apply": {
+        "heroTitle": "Apply for a Tender",
+        "signInHeroTitle": "Sign in to apply",
+        "signInHeroSubtitle": "You need an RMC account to submit a bid, so you can track it afterwards.",
+        "signInPrompt": "Sign in to your RMC account to submit a bid.",
+        "signInToApply": "Sign in to apply",
+        "noAccount": "Don't have an account?",
+        "requestAccess": "Create one",
+        "backToService": "Back to Tenders service",
+        "moreInfoNoteLabel": "The evaluator asked for",
+        "progressLabel": "Application progress",
+        "step1Title": "Company",
+        "step1Subtitle": "Which tender you're bidding on, and who is bidding.",
+        "step2Title": "Contact & bid",
+        "step2Subtitle": "How we reach you, where you're based, and what you're bidding.",
+        "step3Title": "Documents",
+        "step3Subtitle": "All three documents are required. PDF, JPG or PNG, up to 10 MB each.",
+        "tenderLabel": "Tender",
+        "tenderPlaceholder": "Select the tender you're bidding on",
+        "tenderLoading": "Loading tender…",
+        "tenderRequiredError": "Choose the tender you're bidding on",
+        "companyName": "Company name",
+        "companyNameError": "Enter your registered company name",
+        "companyTin": "Company TIN",
+        "tinHint": "Your 9-digit RRA taxpayer identification number",
+        "tinFormatError": "TIN must be exactly 9 digits",
+        "contactName": "Contact person",
+        "contactNameError": "Enter the full name of your contact person",
+        "phone": "Phone",
+        "phoneHint": "Format: 0781234567",
+        "phoneFormatError": "Enter a valid Rwandan mobile number, e.g. 0781234567",
+        "email": "Email",
+        "emailError": "Enter a valid email address",
+        "district": "District",
+        "districtPlaceholder": "Select a district",
+        "sector": "Sector",
+        "sectorPlaceholder": "Select a sector",
+        "selectDistrictFirst": "Select a district first",
+        "cell": "Cell",
+        "village": "Village",
+        "bidAmount": "Bid amount",
+        "bidAmountHint": "Your total bid in RWF. You can leave this out and state it in your proposal instead.",
+        "coverNote": "Cover note",
+        "optional": "optional",
+        "docs": {
+          "upload": "Upload",
+          "orDrop": "or drop a file",
+          "hint": "PDF, JPG or PNG · up to {max} MB",
+          "remove": "Remove document",
+          "errorType": "Only PDF, JPG or PNG files are accepted",
+          "errorSize": "File is too large (maximum {max} MB)",
+          "errorUpload": "Upload failed. Check your connection and try again.",
+          "errorMissing": "All three documents are required before you can submit.",
+          "rdb_certificate": {
+            "label": "Company Registration (RDB) certificate",
+            "hint": "Your certificate of incorporation from the Rwanda Development Board"
+          },
+          "tax_clearance": {
+            "label": "RRA Tax Clearance certificate",
+            "hint": "A currently valid tax clearance certificate"
+          },
+          "proposal": {
+            "label": "Technical & Financial Proposal",
+            "hint": "Your full proposal for this tender, including pricing"
+          }
+        },
+        "next": "Next",
+        "back": "Back",
+        "submit": "Submit bid",
+        "genericError": "Something went wrong. Please try again.",
+        "successTitle": "Bid submitted",
+        "successText": "Your bid has been received. We'll evaluate it after the deadline closes and notify you of the outcome.",
+        "successEditTitle": "Bid updated",
+        "successEditText": "Your changes have been saved and your bid is back with the evaluation committee.",
+        "yourReference": "Your reference number",
+        "copyReference": "Copy reference number",
+        "checkStatusBtn": "Track this bid",
+        "browseMoreBtn": "Browse more tenders"
+      },
+      "status": {
+        "heroTitle": "Your Tender Bids",
+        "heroSubtitle": "Track every bid you've submitted to RMC.",
+        "backToService": "Back to Tenders service",
+        "signInPrompt": "Sign in to see the bids you've submitted.",
+        "signIn": "Sign in",
+        "noApplications": "You haven't submitted any bids yet.",
+        "applyNow": "Apply for a tender",
+        "unknownTender": "Tender no longer available",
+        "checkAnother": "Back to all bids",
+        "detailsTitle": "Bid for",
+        "reference": "Reference",
+        "company": "Company",
+        "submittedOn": "Submitted on",
+        "bidAmount": "Bid amount",
+        "currentStatus": "Progress",
+        "documentsTitle": "Your documents",
+        "viewDocument": "View",
+        "verified": "Verified",
+        "editBid": "Edit bid",
+        "withdrawBid": "Withdraw bid",
+        "editAndResubmit": "Edit and resubmit",
+        "awardedTitle": "You won this tender",
+        "awardedText": "Congratulations. RMC will contact you shortly about the contract.",
+        "statusLabel": {
+          "submitted": "Submitted",
+          "under_review": "Under review",
+          "more_info_requested": "More info needed",
+          "shortlisted": "Shortlisted",
+          "awarded": "Awarded",
+          "rejected": "Not successful",
+          "withdrawn": "Withdrawn"
+        },
+        "stages": {
+          "submitted": "Bid submitted",
+          "review": "Under evaluation",
+          "shortlisted": "Shortlisted",
+          "awarded": "Awarded"
+        },
+        "stageDesc": {
+          "submitted": "We've received your bid and its documents.",
+          "review": "The committee is evaluating your bid against the tender's terms.",
+          "shortlisted": "Your bid passed evaluation and is in contention.",
+          "awarded": "The tender has been awarded to you."
+        },
+        "docType": {
+          "rdb_certificate": "Company Registration (RDB) certificate",
+          "tax_clearance": "RRA Tax Clearance certificate",
+          "proposal": "Technical & Financial Proposal"
+        },
+        "banner": {
+          "moreInfoTitle": "More information needed",
+          "moreInfoText": "The evaluation committee needs more from you before it can continue. Update your bid to resubmit it.",
+          "rejectedTitle": "Bid not successful",
+          "rejectedText": "This bid was not successful. We encourage you to apply for future tenders.",
+          "withdrawnTitle": "Bid withdrawn",
+          "withdrawnText": "You withdrew this bid. You can submit a new one while the tender is still open."
+        }
+      }
     },
     "jobs": {
       "title": "Job Opportunities",
-      "desc": "Employment vacancies at RMC and affiliated organizations across Rwanda."
+      "desc": "Employment vacancies at RMC and affiliated organizations across Rwanda.",
+      "openings": {
+        "title": "Current openings",
+        "subtitle": "Browse and apply for open positions at RMC and affiliated organizations.",
+        "none": "No open positions right now",
+        "noneSub": "Please check back soon — new roles are posted here.",
+        "viewApply": "View & apply",
+        "deadline": "Apply by",
+        "positions": "positions",
+        "back": "Back to Jobs",
+        "about": "About this role",
+        "responsibilities": "Responsibilities",
+        "requirements": "Requirements",
+        "typeLabel": "Employment type",
+        "locationLabel": "Location",
+        "positionsLabel": "Open positions",
+        "salaryLabel": "Salary range",
+        "deadlineLabel": "Application deadline",
+        "applyNow": "Apply for this job",
+        "notFound": "This position is no longer available.",
+        "closed": "This position is closed and no longer accepting applications.",
+        "deadlineOver": "The application deadline for this position has passed."
+      },
+      "landing": {
+        "backToServices": "Back to services",
+        "heroTitle": "Job Opportunities",
+        "heroSubtitle": "Apply for open positions at RMC and affiliated organizations, and track your application status.",
+        "applyTitle": "Apply for a Job",
+        "applyText": "Submit your application with your CV, cover letter and supporting documents.",
+        "applyCta": "Apply now",
+        "statusTitle": "Check Application Status",
+        "statusText": "Track where your submitted application stands.",
+        "statusCta": "Check status",
+        "whoTitle": "Who it's for",
+        "whoSubtitle": "Open to community members ready to bring their skills to RMC and affiliated organizations.",
+        "who": {
+          "seekers": {
+            "title": "Job seekers",
+            "text": "Anyone looking for employment at RMC or an affiliated organization."
+          },
+          "graduates": {
+            "title": "Recent graduates",
+            "text": "New graduates with their academic papers ready to start a career."
+          },
+          "professionals": {
+            "title": "Experienced professionals",
+            "text": "Skilled workers seeking a new role within the community network."
+          },
+          "community": {
+            "title": "Community members",
+            "text": "Members who want to serve and grow within the RMC community."
+          }
+        },
+        "stepsTitle": "How to apply",
+        "stepsSubtitle": "Five simple steps from start to a tracked application.",
+        "steps": {
+          "s1": {
+            "title": "Sign in",
+            "text": "Sign in to your RMC account, or register in a minute if you're new."
+          },
+          "s2": {
+            "title": "Fill your details",
+            "text": "Enter your personal details and the position you're applying for."
+          },
+          "s3": {
+            "title": "Upload your documents",
+            "text": "Attach your application letter, CV, National ID, criminal record and academic papers."
+          },
+          "s4": {
+            "title": "Add good conduct",
+            "text": "Verify your good-conduct certificate number, or upload the certificate."
+          },
+          "s5": {
+            "title": "Submit & track",
+            "text": "Submit and keep your tracking number to follow your application status."
+          }
+        },
+        "needTitle": "What you'll need",
+        "needSubtitle": "Have these ready before you start — you can upload PDFs, Word files or images.",
+        "need": {
+          "r1": "Application letter",
+          "r2": "Curriculum Vitae (CV)",
+          "r3": "National ID",
+          "r4": "Criminal record certificate",
+          "r5": "Academic papers (diplomas / certificates)",
+          "r6": "Good conduct certificate — a number to verify, or a file to upload",
+          "r7": "Employer recommendation (optional)"
+        },
+        "faqTitle": "Frequently asked questions",
+        "faqs": {
+          "f1": {
+            "q": "Do I need an account to apply?",
+            "a": "Yes. Signing in lets us contact you and lets you track your application from start to decision."
+          },
+          "f2": {
+            "q": "What file types and sizes can I upload?",
+            "a": "PDF, Word documents and images (JPG or PNG). Each field shows its maximum size, and files are checked before they upload."
+          },
+          "f3": {
+            "q": "What if I don't have a good-conduct certificate number?",
+            "a": "No problem — you can upload a scan or photo of the certificate instead of entering a number."
+          },
+          "f4": {
+            "q": "How do I check my application status?",
+            "a": "Open the \"Check status\" page and sign in. You'll see each stage: submitted, under review, shortlisted and the final decision."
+          }
+        },
+        "ctaTitle": "Ready to apply?",
+        "ctaSubtitle": "Start your application now, or reach out if you have questions first.",
+        "ctaStart": "Start application",
+        "ctaContact": "Contact us"
+      },
+      "apply": {
+        "heroTitle": "Job Application",
+        "requirementsHeroTitle": "Apply for a Job",
+        "backToService": "Back to Jobs",
+        "signInPrompt": "Please sign in to start your job application.",
+        "signInToApply": "Sign in to apply",
+        "noAccount": "Don't have an account?",
+        "requestAccess": "Register",
+        "requirementsHeroSubtitle": "Have your CV, application letter, National ID, criminal record and academic papers ready.",
+        "sectionApplicant": "Applicant details",
+        "sectionApplicantSub": "Tell us who you are and how to reach you.",
+        "sectionResidence": "Residence",
+        "sectionDocuments": "Documents",
+        "sectionDocumentsSub": "Upload clear, readable files. The maximum size is shown on each field.",
+        "stepPosition": "Position & applicant",
+        "stepResidence": "Residence",
+        "stepDocuments": "Documents",
+        "stepReview": "Review & submit",
+        "stepReviewSub": "Please check everything is correct before you submit.",
+        "stepCounter": "Step {current} of {total}",
+        "next": "Continue",
+        "back": "Back",
+        "reviewNotProvided": "Not provided",
+        "reviewGoodConductVerified": "Verified certificate — {name}",
+        "reviewGoodConductUploaded": "Certificate uploaded",
+        "reviewDocsCount": "{count} file(s) attached",
+        "reviewEdit": "Edit",
+        "fullNames": "Full names",
+        "fullNamesError": "Please enter your full names.",
+        "email": "Email",
+        "emailError": "Enter a valid email address.",
+        "phone": "Phone",
+        "phoneHint": "Format: 0781234567",
+        "phoneFormatError": "Enter a valid Rwandan phone number.",
+        "positionAppliedFor": "Position applied for",
+        "positionError": "Please enter the position you are applying for.",
+        "jobSelect": "Position (open vacancy)",
+        "jobSelectPlaceholder": "Select a position",
+        "jobLoading": "Loading open positions…",
+        "jobNone": "No open positions right now",
+        "jobNoneHint": "There are no open vacancies at the moment.",
+        "jobBrowse": "Browse jobs",
+        "jobRequired": "Please select the position you're applying for.",
+        "jobPositions": "positions",
+        "district": "District",
+        "districtPlaceholder": "Select district",
+        "sector": "Sector",
+        "sectorPlaceholder": "Select sector",
+        "selectDistrictFirst": "Select a district first",
+        "cell": "Cell",
+        "village": "Village",
+        "optional": "optional",
+        "applicationLetter": "Application letter",
+        "applicationLetterHint": "PDF, DOC or image · 10 MB",
+        "cv": "Curriculum Vitae (CV)",
+        "cvHint": "PDF or DOC · 10 MB",
+        "nationalId": "National ID",
+        "nationalIdHint": "Image or PDF · 5 MB",
+        "criminalRecord": "Criminal record",
+        "criminalRecordHint": "PDF or image · 10 MB",
+        "academicPapers": "Academic papers",
+        "academicPapersHint": "Add each certificate or diploma. PDF or image · 10 MB each.",
+        "addAcademicPaper": "Add another paper",
+        "academicPapersRequired": "Add at least one academic paper.",
+        "goodConduct": "Good conduct certificate",
+        "goodConductSub": "Provide a certificate number to verify, or upload the certificate.",
+        "goodConductVerifyOption": "I have a certificate number",
+        "goodConductUploadOption": "Upload the certificate",
+        "goodConductNumber": "Certificate number",
+        "goodConductNumberPlaceholder": "e.g. GC-2024-000123",
+        "verify": "Verify",
+        "verifying": "Verifying…",
+        "verified": "Verified",
+        "verifiedFor": "Verified — {name}",
+        "verifyFailed": "We couldn't verify that certificate number.",
+        "goodConductFile": "Good conduct certificate",
+        "goodConductFileHint": "PDF or image · 5 MB",
+        "goodConductRequired": "Verify a certificate number or upload the certificate.",
+        "employerRecommendation": "Employer recommendation",
+        "employerRecommendationHint": "Optional · PDF or image · 10 MB",
+        "uploadOrDrop": "Upload or drop a file",
+        "change": "Change",
+        "remove": "Remove",
+        "unsupportedType": "Unsupported file type",
+        "fileTooLarge": "File too large (max {mb} MB)",
+        "requiredDocsMissing": "Please attach all required documents.",
+        "submit": "Submit application",
+        "submitting": "Submitting…",
+        "uploadingDocuments": "Uploading documents…",
+        "genericError": "Something went wrong. Please try again.",
+        "successTitle": "Application submitted",
+        "successText": "Your job application has been received. Keep your tracking number to check its status.",
+        "trackingNumber": "Tracking number",
+        "checkStatusBtn": "Check status",
+        "backToJobs": "Back to Jobs"
+      },
+      "status": {
+        "heroTitle": "Application Status",
+        "backToService": "Back to Jobs",
+        "signInPrompt": "Sign in to view your job applications.",
+        "signIn": "Sign in",
+        "noRequests": "You haven't submitted any job applications yet.",
+        "applyNow": "Apply now",
+        "checkAnother": "Back to my applications",
+        "detailsTitle": "Application",
+        "submittedOn": "Submitted on",
+        "positionLabel": "Position",
+        "trackingNumber": "Tracking number",
+        "currentStatus": "Current status",
+        "trackTitle": "Track with a tracking number",
+        "trackSubtitle": "Enter your tracking code — we'll text a verification code to the phone you applied with.",
+        "trackPlaceholder": "e.g. RMC-JOB-2607-XXXXXXXX",
+        "trackButton": "Track",
+        "trackCodeHint": "This is the code from your submission SMS/email. No need to type your phone — we already have it.",
+        "trackCodeRequired": "Enter your tracking code.",
+        "trackCodeNotFound": "We couldn't find an application with that tracking code. Please check it and try again.",
+        "trackSendCode": "Send verification code",
+        "trackSending": "Sending…",
+        "trackOtpSent": "We've sent a 6-digit code by SMS to the phone on your application. Enter it below.",
+        "trackOtpSentTo": "We've sent a 6-digit code by SMS to {phone}. Enter it below.",
+        "trackOtpPlaceholder": "6-digit code",
+        "trackOtpRequired": "Enter the code we sent you.",
+        "trackOtpNone": "Please request a verification code first.",
+        "trackVerify": "Verify & view status",
+        "trackVerifying": "Verifying…",
+        "trackResend": "Resend code",
+        "trackResendIn": "Resend in {s}s",
+        "trackChangeCode": "Use a different code",
+        "trackRateLimited": "Too many attempts. Please try again in a few minutes.",
+        "trackOtpInvalid": "That verification code is incorrect. Please check and try again.",
+        "trackOtpExpired": "That code has expired. Request a new one.",
+        "trackOtpMaxAttempts": "Too many incorrect attempts. Request a new code.",
+        "trackSessionInvalid": "Your tracking session has expired. Please verify again.",
+        "trackGenericError": "Something went wrong. Please try again.",
+        "trackAnother": "Track another application",
+        "respondTitle": "Respond to this request",
+        "respondSubtitle": "Add the requested information and any supporting documents.",
+        "respondPlaceholder": "Type your response…",
+        "respondDocument": "Document",
+        "respondAddDoc": "Add a document",
+        "respondSubmit": "Send response",
+        "respondSubmitting": "Sending…",
+        "respondSuccess": "Your response was sent. Your application is back under review.",
+        "respondError": "Couldn't send your response. Please try again.",
+        "respondMessageRequired": "Please write a response.",
+        "withdraw": "Withdraw application",
+        "withdrawConfirm": "Are you sure you want to withdraw this application? This can’t be undone.",
+        "withdrawConfirmBtn": "Yes, withdraw",
+        "withdrawCancel": "Keep it",
+        "withdrawError": "Couldn’t withdraw your application. Please try again.",
+        "statusLabel": {
+          "submitted": "Submitted",
+          "under_review": "Under review",
+          "shortlisted": "Shortlisted",
+          "more_info_requested": "More info requested",
+          "accepted": "Accepted",
+          "rejected": "Not selected",
+          "cancelled": "Cancelled"
+        },
+        "stages": {
+          "submitted": "Submitted",
+          "review": "Under review",
+          "shortlisted": "Shortlisted",
+          "decision": "Decision"
+        },
+        "stageDesc": {
+          "submitted": "We've received your application.",
+          "review": "Our team is reviewing your documents.",
+          "shortlisted": "You've been shortlisted for consideration.",
+          "decision": "A final decision has been made."
+        },
+        "banner": {
+          "moreInfoTitle": "More information needed",
+          "moreInfoText": "The review team has requested additional information.",
+          "rejectedTitle": "Not selected",
+          "rejectedText": "Thank you for applying. This application was not selected.",
+          "cancelledTitle": "Application cancelled",
+          "cancelledText": "This application has been cancelled."
+        }
+      }
     },
     "hajj": {
       "title": "Hajj Services",
@@ -1129,6 +1827,33 @@
         "proofNote": "Keep your bank slip — you will be asked to upload it as proof of payment when you register."
       }
     }
+  },
+  "tracking": {
+    "title": "Track your application",
+    "subtitle": "Enter your tracking code — we'll text a verification code to the phone you applied with.",
+    "codePlaceholder": "Tracking code (e.g. RMC-…-2607-XXXXXXXX)",
+    "codeHint": "This is the code from your submission SMS/email. No need to type your phone — we already have it.",
+    "sendCode": "Send verification code",
+    "sending": "Sending…",
+    "otpSent": "We've sent a 6-digit code by SMS to the phone on your application. Enter it below.",
+    "otpSentTo": "We've sent a 6-digit code by SMS to {phone}. Enter it below.",
+    "otpPlaceholder": "6-digit code",
+    "verify": "Verify & view status",
+    "verifying": "Verifying…",
+    "resend": "Resend code",
+    "resendIn": "Resend in {s}s",
+    "changeCode": "Use a different code",
+    "codeRequired": "Enter your tracking code.",
+    "codeNotFound": "We couldn't find an application with that tracking code. Please check it and try again.",
+    "rateLimited": "Too many attempts. Please try again in a few minutes.",
+    "otpInvalid": "That verification code is incorrect. Please check and try again.",
+    "otpExpired": "That code has expired. Request a new one.",
+    "otpMaxAttempts": "Too many incorrect attempts. Request a new code.",
+    "otpNone": "Please request a verification code first.",
+    "sessionInvalid": "Your tracking session has expired. Please verify again.",
+    "genericError": "Something went wrong. Please try again.",
+    "otpRequired": "Enter the code we sent you.",
+    "trackAnother": "Track another application"
   },
   "contact": {
     "title": "Contact Us",
@@ -1252,8 +1977,16 @@
       "marriage": "Marriage",
       "drive": "Drive",
       "goodConduct": "Good Conduct",
+      "scholarship": "Scholarships",
       "funeral": "Funeral",
-      "hajj": "Hajj"
+      "hajj": "Hajj",
+      "dawah": "Dawah",
+      "discussionsMod": "Discussion reports",
+      "discussionsReview": "Answers to review",
+      "discussionsAll": "All questions",
+      "tenders": "Tenders",
+      "jobs": "Job Applications",
+      "jobPostings": "Job Postings"
     },
     "topbar": {
       "viewSite": "View site",
@@ -1677,6 +2410,291 @@
         "certificateFailed": "This certificate could not be loaded from storage.",
         "noDocuments": "No documents uploaded.",
         "download": "Download"
+      }
+    },
+    "dawah": {
+      "title": "Dawah Learning",
+      "tabs": {
+        "courses": "Courses",
+        "library": "Library",
+        "categories": "Categories",
+        "content": "Landing page"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "actions": {
+        "create": "Create",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save",
+        "cancel": "Cancel",
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "archive": "Archive",
+        "upload": "Upload"
+      },
+      "readOnly": "You have view-only access to Dawah Learning.",
+      "courses": {
+        "title": "Courses",
+        "new": "New course",
+        "edit": "Edit course",
+        "fields": {
+          "title": "Title",
+          "summary": "Summary",
+          "description": "Description",
+          "category": "Category",
+          "level": "Level",
+          "language": "Language",
+          "format": "Format",
+          "cover": "Cover image",
+          "instructorName": "Instructor name",
+          "instructorTitle": "Instructor title",
+          "instructorPhoto": "Instructor photo",
+          "duration": "Duration (minutes)",
+          "featured": "Feature on the landing page",
+          "sortOrder": "Sort order",
+          "slug": "URL slug"
+        },
+        "slugLocked": "The URL cannot be changed once a course is published — existing links would break.",
+        "confirmDelete": "Delete this course? Its lessons will be removed with it.",
+        "empty": "No courses yet. Create the first one.",
+        "subtitle": "Manage the course catalogue shown on the public Dawah Learning pages.",
+        "searchPlaceholder": "Search by title…",
+        "allCategories": "All categories",
+        "allLevels": "All levels",
+        "allStatuses": "All statuses",
+        "refresh": "Refresh",
+        "manageLessons": "Manage lessons",
+        "saving": "Saving…",
+        "created": "Course created.",
+        "updated": "Course updated.",
+        "deleted": "Course deleted.",
+        "published": "Course published.",
+        "unpublished": "Course unpublished.",
+        "loadError": "Could not load courses. Please try again.",
+        "saveError": "Could not save the course. Please try again.",
+        "deleteError": "Could not delete the course. Please try again.",
+        "statusError": "Could not change the status. Please try again.",
+        "titleRequired": "An English title is required.",
+        "col": {
+          "cover": "Cover",
+          "title": "Course",
+          "category": "Category",
+          "level": "Level",
+          "lessons": "Lessons",
+          "status": "Status",
+          "updated": "Updated"
+        },
+        "sections": {
+          "content": "Content",
+          "meta": "Classification",
+          "instructor": "Instructor",
+          "cover": "Cover image",
+          "publishing": "Publishing"
+        },
+        "translationStatus": "Translation status",
+        "uncategorized": "Uncategorized",
+        "noCategory": "No category"
+      },
+      "lessons": {
+        "title": "Lessons",
+        "new": "Add lesson",
+        "edit": "Edit lesson",
+        "fields": {
+          "title": "Title",
+          "summary": "Summary",
+          "body": "Lesson content",
+          "duration": "Duration (minutes)",
+          "isPreview": "Free preview",
+          "mediaUrl": "Video URL (YouTube / Vimeo)",
+          "audioFile": "Audio file",
+          "pdfFile": "PDF file",
+          "linkUrl": "Link URL"
+        },
+        "reorderHint": "Drag to reorder. The whole outline is saved at once.",
+        "confirmDelete": "Delete this lesson? This cannot be undone.",
+        "empty": "This course has no lessons yet.",
+        "subtitle": "Build and order the lesson outline for this course.",
+        "backToCourses": "Back to courses",
+        "refresh": "Refresh",
+        "add": "Add lesson",
+        "saving": "Saving…",
+        "added": "Lesson added.",
+        "updated": "Lesson updated.",
+        "deleted": "Lesson deleted.",
+        "reordered": "Order saved.",
+        "loadError": "Could not load the course. Please try again.",
+        "saveError": "Could not save the lesson. Please try again.",
+        "deleteError": "Could not delete the lesson. Please try again.",
+        "reorderError": "Could not save the new order. Reverting.",
+        "titleRequired": "An English title is required.",
+        "contentType": "Content type",
+        "contentTypes": {
+          "text": "Text",
+          "video": "Video",
+          "audio": "Audio",
+          "pdf": "PDF",
+          "link": "Link"
+        },
+        "comingSoon": "coming soon",
+        "courseNotFound": "Course not found.",
+        "mediaUrlHelp": "Paste a YouTube or Vimeo link.",
+        "mediaUrlValid": "Valid {provider} link.",
+        "mediaUrlInvalid": "Enter a valid YouTube or Vimeo URL (https).",
+        "videoNeedsUrl": "A video lesson needs a valid YouTube or Vimeo link.",
+        "audioNeedsFile": "Upload an audio file for this lesson.",
+        "chooseAudio": "Choose audio file",
+        "replaceAudio": "Replace",
+        "uploadingPct": "Uploading… {pct}%",
+        "uploadFailed": "Upload failed. Please try again.",
+        "audioTypeError": "Please choose an audio file.",
+        "audioHint": "MP3, M4A, WAV or OGG. Up to 90 MB.",
+        "choosePdf": "Choose PDF",
+        "replaceMedia": "Replace",
+        "pdfHint": "PDF, up to 90 MB.",
+        "pdfTypeError": "Please choose a PDF file.",
+        "pdfNeedsFile": "Upload a PDF for this lesson.",
+        "linkHelp": "Any https link to an external resource.",
+        "linkInvalid": "Enter a valid https URL.",
+        "linkNeedsUrl": "A link lesson needs an https URL."
+      },
+      "books": {
+        "title": "Library",
+        "new": "Add book",
+        "edit": "Edit book",
+        "fields": {
+          "title": "Title",
+          "author": "Author",
+          "description": "Description",
+          "category": "Category",
+          "language": "Language",
+          "cover": "Cover image",
+          "file": "Book PDF",
+          "previewFile": "Preview excerpt (optional)",
+          "pageCount": "Pages",
+          "visibility": "Visibility",
+          "allowDownload": "Allow download",
+          "featured": "Feature on the landing page",
+          "sortOrder": "Sort order"
+        },
+        "visibility": {
+          "public": "Anyone can read",
+          "members": "Signed-in members only"
+        },
+        "uploadHint": "PDF only, up to 25 MB.",
+        "uploading": "Uploading…",
+        "uploadFailed": "Upload failed. Please try again.",
+        "downloadWarning": "Turning downloads off hides the button and blocks the download link. It is a deterrent, not copy protection — anyone who can read a PDF can save it.",
+        "previewHint": "When an excerpt is set, visitors who are not signed in preview the excerpt instead of the full book.",
+        "openFile": "Open file",
+        "confirmDelete": "Delete this book?",
+        "empty": "No books yet. Upload the first one.",
+        "subtitle": "Manage the digital library shown on the public Dawah pages.",
+        "searchPlaceholder": "Search by title or author…",
+        "allCategories": "All categories",
+        "allLanguages": "All languages",
+        "allStatuses": "All statuses",
+        "refresh": "Refresh",
+        "saving": "Saving…",
+        "created": "Book created.",
+        "updated": "Book updated.",
+        "deleted": "Book deleted.",
+        "published": "Book published.",
+        "unpublished": "Book unpublished.",
+        "loadError": "Could not load books. Please try again.",
+        "saveError": "Could not save the book. Please try again.",
+        "deleteError": "Could not delete the book. Please try again.",
+        "statusError": "Could not change the status. Please try again.",
+        "titleRequired": "An English title is required.",
+        "fileRequired": "A book PDF is required.",
+        "proof": "Read (proof before publishing)",
+        "col": {
+          "cover": "Cover",
+          "title": "Book",
+          "category": "Category",
+          "language": "Language",
+          "visibility": "Visibility",
+          "download": "Download",
+          "status": "Status",
+          "updated": "Updated",
+          "stats": "Activity"
+        },
+        "sections": {
+          "content": "Details",
+          "cover": "Cover image",
+          "file": "Book file",
+          "policy": "Access & licensing",
+          "publishing": "Publishing"
+        },
+        "chooseFile": "Choose PDF",
+        "replaceFile": "Replace PDF",
+        "currentFile": "Current file",
+        "uploadingPct": "Uploading… {pct}%",
+        "download": {
+          "on": "Allowed",
+          "off": "Read-only"
+        },
+        "visibilityHelp": {
+          "public": "Anyone can open and read this book — no account needed.",
+          "members": "Only signed-in members can read the full book. Signed-out visitors see the preview excerpt (if you add one below) or a sign-in prompt."
+        },
+        "allowDownloadHelp": "When off, the Download button is hidden and the download link is blocked — visitors read in the browser only.",
+        "downloadDeterrent": "This is a deterrent, not protection. Anyone who can read a PDF in their browser can still save the file — it stops casual sharing, but it is not DRM.",
+        "previewFileHelp": "Optional short excerpt (a separate PDF). When the book is members-only, signed-out visitors see THIS instead of the full book — a way to show a taste without giving the whole thing away.",
+        "stats": {
+          "reads": "reads",
+          "downloads": "downloads",
+          "hint": "Total opens and downloads since publishing. Counts every request, so the same person reading twice counts twice — not unique readers.",
+          "none": "No activity yet"
+        }
+      },
+      "categories": {
+        "title": "Categories",
+        "new": "New category",
+        "edit": "Edit category",
+        "fields": {
+          "name": "Name",
+          "icon": "Icon",
+          "sortOrder": "Sort order",
+          "active": "Active",
+          "slug": "Slug",
+          "nameEn": "Name (English)",
+          "nameRw": "Name (Kinyarwanda)",
+          "nameAr": "Name (Arabic)"
+        },
+        "slugLocked": "The slug cannot be changed — it is used in public filter links.",
+        "confirmDelete": "Delete this category? Courses and books in it keep working, but lose their category.",
+        "empty": "No categories yet.",
+        "subtitle": "The shared taxonomy for courses and books.",
+        "refresh": "Refresh",
+        "saving": "Saving…",
+        "created": "Category created.",
+        "updated": "Category updated.",
+        "deleted": "Category deleted.",
+        "loadError": "Could not load categories. Please try again.",
+        "saveError": "Could not save the category. Please try again.",
+        "deleteError": "Could not delete the category. Please try again.",
+        "nameRequired": "An English name is required.",
+        "active": "Active",
+        "inactive": "Inactive",
+        "iconHint": "A lucide-react icon name, e.g. BookOpen.",
+        "col": {
+          "icon": "Icon",
+          "slug": "Slug",
+          "name": "Name",
+          "order": "Order",
+          "status": "Status"
+        }
+      },
+      "translations": {
+        "complete": "All languages",
+        "englishOnly": "English only",
+        "missing": "Missing {langs}",
+        "label": "Translations",
+        "ok": "Complete"
       }
     }
   },
@@ -2266,6 +3284,261 @@
           "step2": "Scroll down and tap <strong>Add to Home Screen</strong>.",
           "step3": "Tap <strong>Add</strong> to confirm."
         }
+      }
+    }
+  },
+  "dawah": {
+    "title": "Dawah Learning",
+    "tabs": {
+      "courses": "Courses",
+      "library": "Library"
+    },
+    "courses": {
+      "title": "Courses",
+      "subtitle": "Structured lessons you can follow at your own pace.",
+      "searchPlaceholder": "Search courses…",
+      "allCategories": "All categories",
+      "allLevels": "All levels",
+      "allLanguages": "All languages",
+      "resultCount": "{count, plural, =0 {No courses} one {# course} other {# courses}}",
+      "lessonCount": "{count, plural, =0 {No lessons} one {# lesson} other {# lessons}}",
+      "duration": "{minutes} min",
+      "instructor": "Instructor",
+      "level": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
+      "format": {
+        "self_paced": "Self-paced",
+        "in_person": "In person",
+        "hybrid": "Hybrid"
+      },
+      "language": {
+        "en": "English",
+        "rw": "Kinyarwanda",
+        "ar": "Arabic",
+        "multi": "Multilingual"
+      },
+      "view": "View course",
+      "outline": "Course outline",
+      "freePreview": "Free preview",
+      "related": "Related courses",
+      "loading": "Loading courses…",
+      "empty": {
+        "title": "No courses found",
+        "body": "Try clearing your filters or searching for something else."
+      },
+      "error": {
+        "title": "Could not load courses",
+        "body": "Something went wrong. Please try again.",
+        "retry": "Retry"
+      },
+      "outlineEmpty": {
+        "title": "No courses to show yet",
+        "body": "Nothing is available here right now — please check back soon."
+      },
+      "backToCourses": "All courses",
+      "clearFilters": "Clear filters",
+      "filterCategory": "Filter by category",
+      "filterLevel": "Filter by level",
+      "filterLanguage": "Filter by language",
+      "aboutCourse": "About this course",
+      "playVideo": "Play video",
+      "audioLesson": "Audio lesson",
+      "openPdf": "Open PDF",
+      "openLink": "Open resource",
+      "contentType": {
+        "text": "Text",
+        "video": "Video",
+        "audio": "Audio",
+        "pdf": "PDF",
+        "link": "Link"
+      }
+    },
+    "library": {
+      "title": "Library",
+      "subtitle": "Read from our collection of Islamic books.",
+      "searchPlaceholder": "Search by title or author…",
+      "allCategories": "All categories",
+      "allLanguages": "All languages",
+      "resultCount": "{count, plural, =0 {No books} one {# book} other {# books}}",
+      "author": "Author",
+      "pageCount": "{count, plural, one {# page} other {# pages}}",
+      "language": {
+        "en": "English",
+        "rw": "Kinyarwanda",
+        "ar": "Arabic",
+        "other": "Other"
+      },
+      "read": "Read",
+      "download": "Download",
+      "downloadDisabled": "This book cannot be downloaded",
+      "membersOnly": "Members only",
+      "signInToRead": "Sign in to read this book",
+      "signIn": "Sign in",
+      "excerptNotice": "This is a preview excerpt. Sign in to read the full book.",
+      "close": "Close",
+      "loading": "Loading library…",
+      "empty": {
+        "title": "No books found",
+        "body": "Try clearing your filters or searching for something else."
+      },
+      "error": {
+        "title": "Could not load the library",
+        "body": "Something went wrong. Please try again.",
+        "retry": "Retry"
+      },
+      "loadingBook": "Loading book…",
+      "signInBody": "This book is available to members. Sign in to read it in full.",
+      "previewUnavailable": {
+        "title": "Could not load this book",
+        "body": "The file could not be loaded. Please try again, or open it in a new tab."
+      },
+      "openInNewTab": "Open in new tab",
+      "mobileHint": "For the best reading experience on a phone, open the book in a new tab.",
+      "backToLibrary": "All books",
+      "aboutBook": "About this book",
+      "related": "Related books"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {pages}"
+    },
+    "backToDawah": "Dawah",
+    "discussions": {
+      "title": "Discussions",
+      "subtitle": "Ask the community, and read what RMC scholars have answered.",
+      "nav": "Discussions",
+      "navDesc": "Questions answered by the community and verified by RMC.",
+      "askCta": "Ask a question",
+      "viewAll": "View all discussions",
+      "empty": "No questions here yet.",
+      "emptyFiltered": "No questions match these filters.",
+      "clearFilters": "Clear filters",
+      "loadError": "We couldn't load the discussions. Please try again.",
+      "anonymous": "Asked anonymously",
+      "anonymousAnswer": "Answered anonymously",
+      "scholar": "Scholar",
+      "verifiedBadge": "Verified by RMC",
+      "verifiedBy": "Verified by {name}",
+      "answers": "{count, plural, =0 {No answers yet} =1 {1 answer} other {# answers}}",
+      "views": "{count, plural, =1 {1 view} other {# views}}",
+      "communityAnswers": "Community answers",
+      "noAnswersYet": "No one has answered this yet.",
+      "backToDiscussions": "Discussions",
+      "allCategories": "All categories",
+      "allLanguages": "All languages",
+      "sort": {
+        "active": "Active",
+        "new": "Newest",
+        "unanswered": "Unanswered"
+      },
+      "otherLanguages": "Also showing questions in other languages",
+      "writtenIn": "Written in {language}",
+      "count": "{count, plural, =1 {1 question} other {# questions}}",
+      "ask": {
+        "heading": "Ask a question",
+        "signInRequired": "You need to be signed in to ask a question.",
+        "signIn": "Sign in",
+        "titleLabel": "Question",
+        "titlePlaceholder": "e.g. Can I combine prayers when travelling?",
+        "categoryLabel": "Category",
+        "noCategory": "No category",
+        "languageLabel": "Language",
+        "write": "Write",
+        "preview": "Preview",
+        "markdownHint": "Markdown supported",
+        "bodyPlaceholder": "Explain your question. You can use **bold**, lists, and links.",
+        "nothingToPreview": "Nothing to preview yet.",
+        "anonymousLabel": "Ask anonymously",
+        "anonymousHelp": "Your name will not be shown publicly. Moderators can still see it.",
+        "submit": "Post question",
+        "submitError": "We couldn't post your question. Please try again."
+      },
+      "moderation": {
+        "title": "Discussion reports",
+        "subtitle": "Reported questions and answers awaiting review.",
+        "empty": "No open reports. Nothing needs your attention.",
+        "reporter": "Reported by",
+        "reason": "Reason",
+        "view": "View",
+        "hide": "Hide",
+        "restore": "Restore",
+        "lock": "Lock",
+        "autoHidden": "Auto-hidden by reports",
+        "loadError": "We couldn't load the reports.",
+        "reasonNote": "Note"
+      },
+      "answer": {
+        "yourAnswer": "Your answer",
+        "answerPlaceholder": "Share what you know. Be respectful and cite where you can.",
+        "post": "Post answer",
+        "posting": "Posting…",
+        "signInToAnswer": "Sign in to answer this question.",
+        "reviewNotice": "Answers in this category are reviewed by an RMC scholar before they appear publicly.",
+        "pendingOwn": "Your answer is awaiting review. Only you can see it here until a scholar releases it.",
+        "submitError": "We couldn't post your answer. Please try again.",
+        "lockedNotice": "This question is locked. New answers are closed."
+      },
+      "review": {
+        "title": "Answers to review",
+        "subtitle": "Answers held for scholar review, oldest first.",
+        "empty": "Nothing awaiting review.",
+        "release": "Release",
+        "verify": "Verify",
+        "releaseHelp": "Publish without endorsing — \"this may be seen\".",
+        "verifyHelp": "Publish and mark \"Verified by RMC\" — \"this is correct\".",
+        "inCategory": "in",
+        "waiting": "waiting {hours}h",
+        "loadError": "We couldn't load the queue.",
+        "onQuestion": "On",
+        "released": "Released",
+        "verified": "Verified",
+        "alreadyVerified": "This question already has a verified answer."
+      },
+      "searchPlaceholder": "Search questions…",
+      "policy": {
+        "title": "Answer review policy",
+        "subtitle": "Which categories hold answers for a scholar before they appear.",
+        "reviewed": "Scholar review",
+        "open": "Open",
+        "reviewedHelp": "Answers wait for a scholar.",
+        "openHelp": "Answers publish immediately.",
+        "notRetroactive": "Changing this does not affect answers already posted — only new ones.",
+        "saved": "Policy updated.",
+        "saveError": "Couldn't update the policy."
+      },
+      "manage": {
+        "title": "All questions",
+        "subtitle": "Every question, including hidden and locked. Act on anything here.",
+        "searchPlaceholder": "Search questions…",
+        "allStatuses": "All statuses",
+        "status": {
+          "published": "Live",
+          "hidden": "Hidden",
+          "auto_hidden": "Auto-hidden",
+          "locked": "Locked",
+          "deleted": "Deleted"
+        },
+        "colQuestion": "Question",
+        "colStatus": "Status",
+        "colActivity": "Activity",
+        "colActions": "",
+        "hide": "Hide",
+        "restore": "Restore",
+        "lock": "Lock",
+        "delete": "Delete",
+        "view": "View",
+        "answers": "{count} ans",
+        "reports": "{count} reports",
+        "anonymous": "anonymous",
+        "empty": "No questions match.",
+        "loadError": "Couldn't load questions.",
+        "deleteConfirm": "Delete this question? It disappears from the site but is kept for audit and can be restored.",
+        "acted": "Done.",
+        "actError": "Couldn't complete that."
       }
     }
   }

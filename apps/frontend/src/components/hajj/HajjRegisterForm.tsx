@@ -62,7 +62,7 @@ function buildSchema(tr: (k: string) => string) {
 type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30';
+  'w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30';
 const inputError = 'border-red-300 focus:border-red-400 focus:ring-red-400/30';
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
 
@@ -72,7 +72,7 @@ export function HajjRegisterForm() {
   const money = new Intl.NumberFormat(locale);
 
   const [submitted, setSubmitted] = useState(false);
-  const [applicationNumber, setApplicationNumber] = useState('');
+  const [trackingCode, setTrackingCode] = useState('');
   const [submitError, setSubmitError] = useState('');
 
   // The fees an applicant must pay, as set in the requirements CMS.
@@ -165,7 +165,7 @@ export function HajjRegisterForm() {
           { ...advanceDoc, documentType: 'advance_payment' },
         ],
       });
-      setApplicationNumber(res.applicationNumber);
+      setTrackingCode(res.trackingCode);
       setSubmitted(true);
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
@@ -176,25 +176,25 @@ export function HajjRegisterForm() {
   // ── Success ──
   if (submitted) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center sm:px-6">
+      <div className="mx-auto max-w-lg px-4 py-12 md:py-16 text-center sm:px-6">
         <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-rmc-green-light ring-4 ring-rmc-green/10">
           <CheckCircle2 className="h-8 w-8 text-rmc-green" aria-hidden="true" />
         </span>
         <h2 className="text-xl font-bold text-gray-900">{t('success.title')}</h2>
         <p className="mt-2 text-sm leading-relaxed text-gray-500">{t('success.message')}</p>
 
-        {/* The application number is the applicant's only credential — it is how
-            they track the request and how we identify them in every message. */}
-        {applicationNumber && (
-          <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50/70 px-5 py-4">
+        {/* The tracking code is the applicant's credential — with their phone it
+            is how they track the request, and how it appears in every message. */}
+        {trackingCode && (
+          <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50/70 px-5 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
               {t('success.numberLabel')}
             </p>
-            <p className="mt-1 text-lg font-bold tracking-wide text-rmc-green">{applicationNumber}</p>
+            <p className="mt-1 text-lg font-bold tracking-wide text-rmc-green">{trackingCode}</p>
             <p className="mt-2 text-xs leading-relaxed text-gray-500">{t('success.numberHint')}</p>
             <Link
-              href={`/${locale}/services/hajj/status?number=${encodeURIComponent(applicationNumber)}`}
-              className="mt-3 inline-flex items-center justify-center rounded-full bg-rmc-green px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-rmc-green-dark"
+              href={`/${locale}/services/hajj/status`}
+              className="mt-3 inline-flex items-center justify-center rounded-lg bg-rmc-green px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-rmc-green-dark"
             >
               {t('success.track')}
             </Link>
@@ -204,14 +204,14 @@ export function HajjRegisterForm() {
         <div className="mt-7 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
           <button
             type="button"
-            onClick={() => { reset(); setDistrictId(''); setSectors([]); setSubmitted(false); setApplicationNumber(''); }}
-            className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            onClick={() => { reset(); setDistrictId(''); setSectors([]); setSubmitted(false); setTrackingCode(''); }}
+            className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             {t('success.again')}
           </button>
           <Link
             href={`/${locale}/services/hajj`}
-            className="inline-flex items-center justify-center rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             {t('success.home')}
           </Link>
@@ -321,7 +321,7 @@ export function HajjRegisterForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-rmc-green px-7 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-rmc-green px-7 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
           {isSubmitting ? t('submitting') : t('submit')}
@@ -335,7 +335,7 @@ export function HajjRegisterForm() {
 
 function SectionCard({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6">
+    <section className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6">
       <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900">
         <Icon className="h-4 w-4 text-rmc-green" aria-hidden="true" /> {title}
       </h2>
@@ -428,13 +428,13 @@ function ProofField({
         <span className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700">
           <Icon className="h-4 w-4 text-rmc-green" aria-hidden="true" /> {label} <span className="text-red-500">*</span>
         </span>
-        <span className="inline-flex items-center rounded-full bg-rmc-gold/20 px-2.5 py-0.5 text-[12px] font-bold text-rmc-green-deep">
+        <span className="inline-flex items-center rounded-lg bg-rmc-gold/20 px-2.5 py-0.5 text-[12px] font-bold text-rmc-green-deep">
           {amount}
         </span>
       </div>
 
       {uploaded ? (
-        <div className="flex items-center gap-3 rounded-xl border border-rmc-green/30 bg-rmc-green-light/40 px-3.5 py-3 text-sm">
+        <div className="flex items-center gap-3 rounded-lg border border-rmc-green/30 bg-rmc-green-light/40 px-3.5 py-3 text-sm">
           <FileCheck2 className="h-4 w-4 shrink-0 text-rmc-green" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium text-gray-900">{uploaded.fileName}</span>
@@ -451,7 +451,7 @@ function ProofField({
         </div>
       ) : (
         <label className={cx(
-          'flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3.5 py-3 text-sm transition-colors',
+          'flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3.5 py-3 text-sm transition-colors',
           shownError ? 'border-red-300 text-red-500' : 'border-gray-300 bg-gray-50 text-gray-500 hover:border-rmc-green/40 hover:text-rmc-green',
           busy && 'cursor-wait',
         )}>

@@ -169,12 +169,12 @@ export function CategoryGrid({
         return (
           <section key={cat.key}>
             {/* Category banner */}
-            <div className="relative mb-4 overflow-hidden rounded-2xl border border-gray-100 shadow-sm ring-1 ring-black/5">
+            <div className="relative mb-4 overflow-hidden rounded-lg border border-gray-100 shadow-sm ring-1 ring-black/5">
               {cat.image && <Image src={cat.image} alt="" fill className="object-cover object-center" sizes="(min-width: 1024px) 680px, 100vw" />}
               <div className="absolute inset-0 bg-gradient-to-r from-rmc-green-deep/95 via-rmc-green-deep/80 to-rmc-green-deep/45 rtl:bg-gradient-to-l" />
               <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-15" />
               <div className="relative flex items-start gap-3.5 p-5 sm:p-6">
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${toneChip(cat.tone === 'gold' ? 'gold' : 'green', true)}`}>
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ring-1 ${toneChip(cat.tone === 'gold' ? 'gold' : 'green', true)}`}>
                   <Icon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
@@ -274,7 +274,7 @@ function CauseCard({
 
   return (
     <div
-      className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 transition-all duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-lg hover:shadow-rmc-green/5 ${
+      className={`group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm ring-1 transition-all duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-lg hover:shadow-rmc-green/5 ${
         active ? 'border-rmc-green ring-rmc-green/30' : 'border-gray-100 ring-black/5 hover:border-rmc-green/40'
       }`}
     >
@@ -350,7 +350,7 @@ function CauseCard({
         {/* Add control */}
         <div className="mt-4 pt-1">
           {active ? (
-            <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+            <div className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
               <p className="mb-2 text-[11.5px] text-gray-500">{t('card.howMuch', { fund: cause.label })}</p>
               <AmountPicker key={resetKey} currency={currency} onAmount={onAmount} />
               <div className="mt-2.5 flex gap-2">
@@ -358,7 +358,7 @@ function CauseCard({
                   type="button"
                   onClick={add}
                   disabled={amount <= 0}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-rmc-green px-4 py-2 text-[13px] font-bold text-white transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-rmc-green px-4 py-2 text-[13px] font-bold text-white transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {t('card.add')} {amount > 0 ? money(currency, amount) : ''}
@@ -367,7 +367,7 @@ function CauseCard({
                   type="button"
                   onClick={onToggle}
                   aria-label={t('card.cancel')}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-400 transition-colors hover:bg-gray-100"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-colors hover:bg-gray-100"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -377,7 +377,7 @@ function CauseCard({
             <button
               type="button"
               onClick={onToggle}
-              className="flex w-full items-center justify-center gap-1.5 rounded-full border border-rmc-green/30 px-4 py-2 text-[13px] font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green hover:text-white"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-rmc-green/30 px-4 py-2 text-[13px] font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green hover:text-white"
             >
               <Plus className="h-3.5 w-3.5" />
               {t('card.addToGift')}

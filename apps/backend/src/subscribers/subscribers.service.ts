@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'node:crypto';
 import * as XLSX from 'xlsx';
 import { Subscriber } from './entities/subscriber.entity';
 import { CreateSubscriberDto, BroadcastDto } from './dto/subscriber.dto';
@@ -56,6 +57,11 @@ export class SubscribersService {
       locale: dto.locale ?? 'en',
       source: dto.source ?? null,
       isActive: true,
+      // Minted here, not left to the column's gen_random_uuid() default: TypeORM
+      // only reads a column back via RETURNING when the entity declares a default
+      // or a generator, so a DB-side default would leave `saved.unsubscribeToken`
+      // undefined and ship the welcome email a `?token=undefined` link.
+      unsubscribeToken: randomUUID(),
     });
     const saved = await this.subscribers.save(sub);
     this.sendWelcome(saved).catch(() => undefined);
@@ -119,33 +125,80 @@ export class SubscribersService {
   /**
    * Bulk-mail an uploaded recipient list (Excel/CSV). Parses every sheet/cell,
    * extracts + de-duplicates valid email addresses, and sends the same message
-   * to each. Recipients need not be subscribers (no per-recipient unsubscribe).
+   * to each.
+   *
+   * Every recipient is first resolved to a subscriber row, which is what makes
+   * the mail lawful to send: the row carries the token behind the footer's
+   * unsubscribe link, and a row already marked inactive means this address has
+   * opted out before — it is suppressed no matter what the uploaded file says.
+   * Addresses new to us are enrolled (source 'import'), so they also receive
+   * ordinary broadcasts from then on.
    */
   async broadcastFromFile(
     subject: string,
     html: string,
     fileBuffer: Buffer,
-  ): Promise<{ sent: number; failed: number; total: number; invalidRows: number }> {
+  ): Promise<{
+    sent: number;
+    failed: number;
+    total: number;
+    invalidRows: number;
+    suppressed: number;
+  }> {
     const { emails, invalidRows } = this.extractEmails(fileBuffer);
+
+    // Sequential: concurrent inserts of the same address would race the unique
+    // email index. The list is admin-sized, so the round-trips are affordable.
+    const recipients: Subscriber[] = [];
+    let suppressed = 0;
+    for (const email of emails) {
+      const sub = await this.ensureSubscriber(email);
+      if (sub.isActive) recipients.push(sub);
+      else suppressed += 1;
+    }
 
     let sent = 0;
     let failed = 0;
     await Promise.all(
-      emails.map(async (to) => {
+      recipients.map(async (sub) => {
         try {
-          await this.email.sendEmail({ to, subject, html: this.wrapHtml(html) });
+          await this.email.sendEmail({
+            to: sub.email,
+            subject,
+            html: this.wrapHtml(html, sub),
+          });
           sent += 1;
         } catch (err) {
           failed += 1;
-          this.logger.warn(`Bulk mail to ${to} failed: ${err}`);
+          this.logger.warn(`Bulk mail to ${sub.email} failed: ${err}`);
         }
       }),
     );
 
     this.logger.log(
-      `Bulk mail "${subject}" → ${sent} sent, ${failed} failed (of ${emails.length} valid; ${invalidRows} skipped).`,
+      `Bulk mail "${subject}" → ${sent} sent, ${failed} failed, ${suppressed} suppressed ` +
+        `(of ${emails.length} valid; ${invalidRows} skipped).`,
     );
-    return { sent, failed, total: emails.length, invalidRows };
+    return { sent, failed, total: emails.length, invalidRows, suppressed };
+  }
+
+  /** Find the subscriber for an address, enrolling it if we've never seen it. */
+  private async ensureSubscriber(email: string): Promise<Subscriber> {
+    const existing = await this.subscribers
+      .createQueryBuilder('s')
+      .where('LOWER(s.email) = :email', { email })
+      .getOne();
+    if (existing) return existing;
+
+    return this.subscribers.save(
+      this.subscribers.create({
+        email,
+        locale: 'en',
+        source: 'import',
+        isActive: true,
+        unsubscribeToken: randomUUID(),
+      }),
+    );
   }
 
   /** Parse a spreadsheet buffer → unique lower-cased emails (+ count of non-email cells). */
@@ -209,10 +262,14 @@ export class SubscribersService {
    */
   private wrapHtml(bodyHtml: string, sub?: Subscriber): string {
     const url = this.appUrl;
-    const footerNote = sub
-      ? `You receive this email because you subscribed to Rwanda Muslim Community updates.<br>
+    // Only link when we actually hold the token: a link built from an undefined
+    // token lands the reader on "invalid or expired", which is worse than the
+    // generic notice.
+    const footerNote =
+      sub && sub.unsubscribeToken
+        ? `You receive this email because you subscribed to Rwanda Muslim Community updates.<br>
          <a href="${url}/${sub.locale || 'en'}/unsubscribe?token=${sub.unsubscribeToken}" style="color:#1a7a4a;text-decoration:underline">Unsubscribe</a> at any time.`
-      : undefined;
+        : undefined;
 
     return wrapEmailHtml(bodyHtml, { appUrl: url, footerNote });
   }

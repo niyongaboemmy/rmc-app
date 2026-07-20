@@ -200,7 +200,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
   const [copied, setCopied] = useState(false);
 
   const copyId = async () => {
-    try { await navigator.clipboard.writeText(app.applicationNumber); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    try { await navigator.clipboard.writeText(app.trackingCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }
     catch { /* ignore */ }
   };
 
@@ -216,16 +216,16 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
           Our team will review your application within 1–3 business days. You will be notified by SMS on every status change.
         </p>
         <div className="max-w-xs mx-auto mb-8 rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Your Application ID</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Your tracking code</p>
           <div className="flex items-center justify-center gap-2.5">
-            <span className="font-mono text-lg font-bold text-gray-900">{app.applicationNumber}</span>
+            <span className="font-mono text-lg font-bold text-gray-900">{app.trackingCode}</span>
             <button type="button" onClick={copyId}
               className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 flex items-center justify-center hover:border-rose-300 hover:text-rose-600 transition-colors"
-              aria-label="Copy ID">
+              aria-label="Copy tracking code">
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2">Save this — you need it to track your application.</p>
+          <p className="text-xs text-gray-400 mt-2">Save this — with your phone number you use it to track your application.</p>
         </div>
         {app.paymentStatus === 'paid' && (
           <Link
@@ -243,7 +243,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
         )}
         <PartyPhonesForm applicationId={app.id} />
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
-          <Link href={`/${locale}/services/marriage/status?id=${app.applicationNumber}`}
+          <Link href={`/${locale}/services/marriage/status`}
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors">
             <Search className="w-4 h-4" /> Track application
           </Link>

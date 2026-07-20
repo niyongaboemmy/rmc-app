@@ -9,6 +9,8 @@ import { Repository, DataSource, Brackets } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 
 import { toXlsxBuffer, formatDateTime } from '../common/utils/xlsx';
+import { generateTrackingCode } from '../tracking/tracking-code.util';
+import type { TrackingSubject } from '../tracking/tracking-verification.service';
 
 import {
   HajjApplication,
@@ -114,6 +116,7 @@ export class HajjService {
     }
 
     const applicationNumber = await this.generateApplicationNumber();
+    const trackingCode = await this.generateUniqueTrackingCode();
     const { documents, ...fields } = dto;
 
     const app = this.applications.create({
@@ -121,6 +124,7 @@ export class HajjService {
       email: dto.email?.trim() || null,
       phone: normalizeRwPhone(dto.phone),
       applicationNumber,
+      trackingCode,
       status: HajjApplicationStatus.SUBMITTED,
       documents: documents.map((d) => this.documents.create(d)),
     });
@@ -347,6 +351,43 @@ export class HajjService {
     return `RMC-HAJ-${year}${month}-${seq}`;
   }
 
+  /** Crypto-random public tracking code, retried on the (rare) collision. */
+  private async generateUniqueTrackingCode(): Promise<string> {
+    for (let i = 0; i < 5; i++) {
+      const code = generateTrackingCode('RMC-HAJ');
+      const clash = await this.applications.count({ where: { trackingCode: code } });
+      if (clash === 0) return code;
+    }
+    throw new Error('Could not generate a unique tracking code');
+  }
+
+  // ── Secure tracking (phone-OTP gated) ────────────────────────────────────────
+
+  /** Resolve a public tracking code to the OTP subject (id + phone), or null. */
+  async findSubjectByCode(trackingCode: string): Promise<TrackingSubject | null> {
+    const app = await this.applications.findOne({
+      where: { trackingCode: (trackingCode || '').trim().toUpperCase() },
+      select: { id: true, phone: true },
+    });
+    return app ? { id: app.id, phone: app.phone } : null;
+  }
+
+  /** Minimal, safe status view for a verified tracking session (by id). */
+  async getTrackingInfo(id: string) {
+    const app = await this.applications.findOne({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
+    return {
+      trackingCode: app.trackingCode,
+      fullName: app.fullName,
+      district: app.district,
+      sector: app.sector,
+      status: app.status,
+      rejectionReason: app.rejectionReason,
+      submittedAt: app.createdAt,
+      updatedAt: app.updatedAt,
+    };
+  }
+
   private async recordStatusChange(
     applicationId: string,
     fromStatus: string | null,
@@ -363,7 +404,7 @@ export class HajjService {
 
   private async notifySubmission(app: HajjApplication): Promise<void> {
     if (this.notifSettings.isSmsEnabled(EVENT.SUBMISSION)) {
-      this.dispatchSms(app.phone, HajjSmsTemplates.submission(app.applicationNumber));
+      this.dispatchSms(app.phone, HajjSmsTemplates.submission(app.trackingCode));
     }
     if (this.notifSettings.isEmailEnabled(EVENT.SUBMISSION)) {
       await this.dispatchEmail(app, HajjEmailTemplates.submission(app));
@@ -384,11 +425,11 @@ export class HajjService {
   private buildStatusSms(app: HajjApplication): string | null {
     switch (app.status) {
       case HajjApplicationStatus.UNDER_REVIEW:
-        return HajjSmsTemplates.underReview(app.applicationNumber);
+        return HajjSmsTemplates.underReview(app.trackingCode);
       case HajjApplicationStatus.APPROVED:
-        return HajjSmsTemplates.approved(app.applicationNumber);
+        return HajjSmsTemplates.approved(app.trackingCode);
       case HajjApplicationStatus.REJECTED:
-        return HajjSmsTemplates.rejected(app.applicationNumber, app.rejectionReason);
+        return HajjSmsTemplates.rejected(app.trackingCode, app.rejectionReason);
       default:
         return null;
     }

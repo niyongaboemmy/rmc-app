@@ -5,8 +5,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * each independently toggleable in /admin/settings, matching the pattern
  * used for the marriage.* rows in migration 023-notification-settings.ts.
  */
-export class GoodConductNotificationSettings1700000000033 implements MigrationInterface {
-  name = 'GoodConductNotificationSettings1700000000033';
+export class GoodConductNotificationSettings1786100000033 implements MigrationInterface {
+  name = 'GoodConductNotificationSettings1786100000033';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`

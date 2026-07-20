@@ -87,6 +87,8 @@ export default function TenderDetailPage() {
   }, [id]);
 
   const diff = tender ? getDiffDays(tender.expiresAt) : null;
+  // A tender with no deadline never closes, so `diff === null` is open, not closed.
+  const isClosed = diff !== null && diff < 0;
   const styles = tender ? deadlineStyle(tender.expiresAt) : null;
   const priorityColor = tender ? (PRIORITY_COLOR[tender.priority] ?? PRIORITY_COLOR.normal) : null;
   const priorityLabel = tender
@@ -246,16 +248,25 @@ export default function TenderDetailPage() {
                   </div>
                 )}
 
-                {/* CTA */}
+                {/* CTA — deep-links into the wizard with this tender pre-selected
+                    and its picker locked. Hidden once the deadline has passed:
+                    the backend refuses a late bid, so offering the button would
+                    only walk the bidder into a 400. */}
                 <div className="bg-rmc-green-deep/5 rounded-2xl border border-rmc-green/10 p-8 text-center">
                   <p className="text-sm font-semibold text-gray-700 mb-1">{t('detail.cta.title')}</p>
                   <p className="text-xs text-gray-400 mb-5">{t('detail.cta.subtitle')}</p>
-                  <Link
-                    href={`/${locale}/contact`}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-rmc-green/20"
-                  >
-                    {t('detail.cta.button')}
-                  </Link>
+                  {isClosed ? (
+                    <p className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-400 text-sm font-semibold rounded-xl">
+                      {t('deadline.submissionClosed')}
+                    </p>
+                  ) : (
+                    <Link
+                      href={`/${locale}/services/tender/apply?tender=${tender.id}`}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-teal-600/20"
+                    >
+                      {t('detail.cta.button')}
+                    </Link>
+                  )}
                 </div>
 
               </div>

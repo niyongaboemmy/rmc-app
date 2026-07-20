@@ -146,7 +146,7 @@ export function DonatePageClient({ initialCause }: { initialCause?: string }) {
           <button
             type="button"
             onClick={() => setCartOpen(true)}
-            className="flex w-full items-center gap-3 rounded-full bg-rmc-green px-5 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors duration-300 hover:bg-rmc-green-dark"
+            className="flex w-full items-center gap-3 rounded-lg bg-rmc-green px-5 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors duration-300 hover:bg-rmc-green-dark"
           >
             <span className="relative shrink-0">
               <ShoppingBag className="h-5 w-5" />
@@ -207,11 +207,11 @@ function QuickGive({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-rmc-green/15 bg-white shadow-sm ring-1 ring-black/5">
+    <div className="overflow-hidden rounded-lg border border-rmc-green/15 bg-white shadow-sm ring-1 ring-black/5">
       {/* Accent header */}
       <div className="relative flex items-center gap-3 overflow-hidden border-b border-rmc-green/10 bg-gradient-to-br from-rmc-green-light/70 via-rmc-green-light/30 to-white px-5 py-4">
         <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-rmc-gold/10 blur-2xl" />
-        <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rmc-green text-white shadow-sm shadow-rmc-green/30">
+        <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-rmc-green text-white shadow-sm shadow-rmc-green/30">
           <HandHeart className="h-5 w-5" />
         </span>
         <div className="relative min-w-0">
@@ -249,7 +249,7 @@ function QuickGive({
           type="button"
           onClick={add}
           disabled={amount <= 0}
-          className="group flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+          className="group flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
           <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
           {t('card.addToGift')}

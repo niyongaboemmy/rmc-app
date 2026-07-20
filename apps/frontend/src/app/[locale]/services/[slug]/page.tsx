@@ -6,7 +6,6 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import {
   Moon,
-  GraduationCap,
   FileText,
   Briefcase,
   Bell,
@@ -17,7 +16,7 @@ import { BackToServices } from '@/components/services/BackToServices';
 
 // ─── Per-service visual config ───────────────────────────────────────────────
 
-type ServiceSlug = 'funeral' | 'scholarship' | 'tender' | 'jobs';
+type ServiceSlug = 'funeral' | 'tender' | 'jobs';
 
 const SERVICE_META: Record<
   ServiceSlug,
@@ -48,20 +47,6 @@ const SERVICE_META: Record<
     accentBorder: 'border-slate-200',
     accentBg: 'bg-slate-50',
     eta: 'Q3 2026',
-  },
-  scholarship: {
-    Icon: GraduationCap,
-    // Graduation caps thrown in the air
-    image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&q=80',
-    gradientFrom: 'from-violet-600',
-    gradientTo: 'to-violet-900',
-    overlay: 'from-black/85 via-violet-950/65 to-black/45',
-    eyebrowColor: 'text-violet-300',
-    iconBg: 'from-violet-600 to-violet-800',
-    accentText: 'text-violet-600',
-    accentBorder: 'border-violet-200',
-    accentBg: 'bg-violet-50',
-    eta: 'Q4 2026',
   },
   tender: {
     Icon: FileText,
@@ -107,7 +92,10 @@ export default async function ServiceComingSoonPage({
   if (slug === 'conduct') redirect(`/${locale}/services/good-conduct`);
 
   if (!VALID_SLUGS.includes(slug as ServiceSlug)) notFound();
-  if (slug === 'tender') redirect(`/${locale}/tenders`);
+
+  // Note: 'tender' never reaches this file any more — `services/tender/page.tsx`
+  // is a static segment, and Next.js matches those ahead of this dynamic one. Its
+  // SERVICE_META entry is kept only because VALID_SLUGS is derived from those keys.
 
   const meta = SERVICE_META[slug as ServiceSlug];
   const { Icon } = meta;

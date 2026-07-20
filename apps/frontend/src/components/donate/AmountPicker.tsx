@@ -40,7 +40,7 @@ export function AmountPicker({
                 setCustom('');
               }}
               aria-pressed={active}
-              className={`rounded-xl border py-2.5 text-[13px] font-bold tabular-nums transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
+              className={`rounded-lg border py-2.5 text-[13px] font-bold tabular-nums transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
                 active
                   ? 'border-rmc-green bg-rmc-green text-white shadow-sm'
                   : 'border-gray-200 text-gray-700 hover:border-rmc-green/40 hover:bg-rmc-green-light/20'
@@ -52,7 +52,7 @@ export function AmountPicker({
         })}
       </div>
       <div
-        className={`mt-2 flex items-center overflow-hidden rounded-xl border bg-white transition-colors ${
+        className={`mt-2 flex items-center overflow-hidden rounded-lg border bg-white transition-colors ${
           custom.trim() ? 'border-rmc-green ring-1 ring-rmc-green/30' : 'border-gray-200'
         }`}
       >
