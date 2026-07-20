@@ -111,6 +111,14 @@ const PERMISSION_GROUPS: { group: string; color: string; icon: React.ElementType
       'drive:delete', 'drive:share', 'drive:admin',
     ],
   },
+  {
+    group: 'Dawah Learning', color: 'emerald', icon: GraduationCap,
+    perms: ['dawah:view', 'dawah:manage'],
+  },
+  {
+    group: 'Discussions', color: 'indigo', icon: MessageSquare,
+    perms: ['discussions:moderate', 'discussions:verify'],
+  },
 ];
 
 const GROUP_COLORS: Record<string, { bg: string; border: string; header: string; check: string }> = {
