@@ -17,7 +17,7 @@ import {
 
 const LANGUAGES: PostLanguage[] = ['en', 'rw', 'ar'];
 const inputClass =
-  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30';
+  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
 
 /**
  * Ask a question.
@@ -209,7 +209,7 @@ export function AskQuestionForm() {
                   type="checkbox"
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-rmc-green focus:ring-rmc-green/40"
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-rmc-green focus:ring-rmc-green"
                 />
                 <span className="text-xs text-gray-600">
                   <span className="font-semibold">{t('discussions.ask.anonymousLabel')}</span>

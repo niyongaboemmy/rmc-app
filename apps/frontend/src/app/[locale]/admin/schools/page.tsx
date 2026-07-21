@@ -90,7 +90,7 @@ function SchoolsAdmin() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchSchools}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <RefreshCw className="h-4 w-4" /> {t('refresh')}
           </button>
@@ -113,7 +113,7 @@ function SchoolsAdmin() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30"
+            className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-4 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           />
         </div>
         <SearchableSelect
@@ -235,7 +235,7 @@ function SchoolsAdmin() {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
+  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 
 function ModalShell({ title, onClose, children, footer }: {
@@ -356,7 +356,7 @@ function SchoolModal({ school, onClose, onSaved }: {
       onClose={onClose}
       footer={
         <>
-          <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+          <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
             {t('cancel')}
           </button>
           <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
@@ -433,7 +433,7 @@ function SchoolModal({ school, onClose, onSaved }: {
               type="button"
               onClick={findMyLocation}
               disabled={locating}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-50"
             >
               <LocateFixed className={cn('h-3.5 w-3.5', locating && 'animate-spin')} />
               {locating ? t('locating') : t('findMyLocation')}
@@ -488,7 +488,7 @@ function DeleteConfirm({ school, onClose, onDeleted }: {
       onClose={onClose}
       footer={
         <>
-          <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+          <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
             {t('cancel')}
           </button>
           <button onClick={del} disabled={busy} className="rounded-xl bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">

@@ -9,9 +9,9 @@ import { cn } from '@/lib/utils';
 const RESEND_SECONDS = 60;
 
 const ACCENTS = {
-  green: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green/30 focus:border-rmc-green', text: 'text-rmc-green', soft: 'bg-rmc-green-light/60 border-rmc-green/20 text-rmc-green-dark' },
-  emerald: { btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500', ring: 'focus:ring-emerald-500/30', text: 'text-emerald-600', soft: 'bg-emerald-50 border-emerald-100 text-emerald-800' },
-  rose: { btn: 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500', ring: 'focus:ring-rose-500/30', text: 'text-rose-600', soft: 'bg-rose-50 border-rose-100 text-rose-800' },
+  green: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green focus:border-transparent', text: 'text-rmc-green', soft: 'bg-rmc-green-light/60 border-rmc-green/20 text-rmc-green-dark' },
+  emerald: { btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-rmc-green', ring: 'focus:ring-rmc-green', text: 'text-emerald-600', soft: 'bg-emerald-50 border-emerald-100 text-emerald-800' },
+  rose: { btn: 'bg-rose-600 hover:bg-rose-700 focus:ring-rmc-green', ring: 'focus:ring-rmc-green', text: 'text-rose-600', soft: 'bg-rose-50 border-rose-100 text-rose-800' },
 } as const;
 
 function apiError(err: unknown): { code?: string; message?: string } {
@@ -119,7 +119,7 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
             <input value={code} onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }} onKeyDown={(e) => { if (e.key === 'Enter') requestOtp(); }} placeholder={t('codePlaceholder')} aria-label={t('codePlaceholder')} className={cn(inputCls, 'pl-9 font-mono')} />
           </div>
           <p className="text-[11px] text-gray-400">{t('codeHint')}</p>
-          <button onClick={requestOtp} disabled={loading} className={cn('w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2', a.btn)}>
+          <button onClick={requestOtp} disabled={loading} className={cn('w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2', a.btn)}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} {loading ? t('sending') : t('sendCode')}
           </button>
         </div>
@@ -131,7 +131,7 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
             <KeyRound className="w-4 h-4 shrink-0 mt-0.5" /> <span>{phoneHint ? t('otpSentTo', { phone: phoneHint }) : t('otpSent')}</span>
           </div>
           <input value={otp} onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(null); }} onKeyDown={(e) => { if (e.key === 'Enter') verifyOtp(); }} placeholder={t('otpPlaceholder')} inputMode="numeric" maxLength={6} className={cn(inputCls, 'text-center text-lg font-mono tracking-[0.4em]')} />
-          <button onClick={verifyOtp} disabled={loading} className={cn('w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2', a.btn)}>
+          <button onClick={verifyOtp} disabled={loading} className={cn('w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2', a.btn)}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {loading ? t('verifying') : t('verify')}
           </button>
           <div className="flex items-center justify-between text-xs">

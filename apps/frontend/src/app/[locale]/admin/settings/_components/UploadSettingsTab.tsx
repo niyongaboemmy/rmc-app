@@ -219,7 +219,7 @@ export function UploadSettingsTab() {
                 onChange={(e) => setMaxSizeMB(e.target.value)}
                 disabled={!canManage}
                 placeholder="800"
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none disabled:bg-gray-50 disabled:text-gray-400"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none disabled:bg-gray-50 disabled:text-gray-400"
               />
               {canManage && (
                 <Button
@@ -319,7 +319,7 @@ export function UploadSettingsTab() {
                     onChange={(e) => setCustomMime(e.target.value)}
                     placeholder="e.g. application/zip"
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddMime(customMime); }}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                   />
                   <Button
                     onClick={() => handleAddMime(customMime)}

@@ -361,7 +361,7 @@ function MosquesManager() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or address…"
-            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rmc-green/50 focus:border-transparent"
+            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
           />
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
@@ -612,7 +612,7 @@ function MosquesManager() {
                     type="button"
                     onClick={findMyLocation}
                     disabled={locating}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-50"
                   >
                     <LocateFixed className={`h-3.5 w-3.5${locating ? ' animate-spin' : ''}`} />
                     {locating ? 'Locating…' : 'Find my location'}
@@ -632,7 +632,7 @@ function MosquesManager() {
                 {geoErr && <p className="mb-2 text-[11px] text-red-600">{geoErr}</p>}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Latitude
                     </label>
                     <input
@@ -647,7 +647,7 @@ function MosquesManager() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Longitude
                     </label>
                     <input
@@ -806,7 +806,7 @@ function MosquesManager() {
 }
 
 const inputCls =
-  'w-full rounded-lg border border-gray-200 px-3 py-1.5 text-[13px] text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/50 focus:border-transparent';
+  'w-full rounded-lg border border-gray-300 px-3 py-1.5 text-[13px] text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
 
 function Field({
   label,

@@ -107,7 +107,7 @@ function FuneralContentManager() {
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
-  const inputClass = `w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/40 focus:border-transparent ${fontClass}`;
+  const inputClass = `w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`;
 
   // Group the fields so the form reads like the page it edits.
   const groups = FIELDS.reduce<Record<string, FieldDef[]>>((acc, f) => {
@@ -162,24 +162,24 @@ function FuneralContentManager() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700">Number as displayed</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">Number as displayed</label>
             <input
               type="text"
               value={form.hotline.phone}
               onChange={(e) => setHotline('phone', e.target.value)}
               placeholder="(+250) 788 308 436"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green/40"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green"
             />
             <p className="mt-1 text-[11px] text-gray-400">Clearing this hides the call bar entirely.</p>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700">Number as dialled</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">Number as dialled</label>
             <input
               type="text"
               value={form.hotline.phoneHref}
               onChange={(e) => setHotline('phoneHref', e.target.value)}
               placeholder="tel:+250788308436"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green/40"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green"
             />
             <p className="mt-1 text-[11px] text-gray-400">
               What the phone actually dials, e.g. <span className="font-mono">tel:+250788308436</span>.
@@ -214,7 +214,7 @@ function FuneralContentManager() {
             const value = (form[group] as Record<string, Record<Lang, string>>)[key][lang];
             return (
               <div key={`${group}.${key}`}>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-700">{label}</label>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{label}</label>
                 {rich ? (
                   // Remounted per language: the editor only seeds its content once.
                   <RichTextEditor

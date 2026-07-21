@@ -253,7 +253,7 @@ function RequirementFormModal({
       onClose={onClose}
       footer={
         <>
-          <button type="button" onClick={onClose} className="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={onClose} className="rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50">Cancel</button>
           <button type="button" onClick={submit} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-rmc-green px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
           </button>
@@ -295,7 +295,7 @@ function RequirementFormModal({
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-gray-600">Description</span>
           <textarea dir={dir} rows={2} value={desc[lang]} onChange={(e) => setDesc((p) => ({ ...p, [lang]: e.target.value }))}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30" />
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green" />
         </label>
 
         {/* Amount + currency */}
@@ -321,7 +321,7 @@ function RequirementFormModal({
               value={currency}
               onChange={(e) => setCurrency(e.target.value as HajjCurrency)}
               disabled={amount.trim() === ''}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
             >
               {HAJJ_CURRENCIES.map((c) => (
                 <option key={c} value={c}>{c}</option>

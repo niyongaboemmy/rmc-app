@@ -98,7 +98,7 @@ function InlineEdit({ value, onSave, inputClass, type = 'text', placeholder, pre
         onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
         placeholder={placeholder}
         className={cn(
-          'px-2 py-0.5 rounded border border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-400 text-sm',
+          'px-2 py-0.5 rounded border border-violet-300 focus:outline-none focus:ring-2 focus:ring-rmc-green text-sm',
           inputClass,
         )}
       />
@@ -272,7 +272,7 @@ function AddRateForm({ typeId, onAdded, onCancel }: AddRateFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Rate name (e.g. Mosque Ceremony)"
-          className="col-span-2 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="col-span-2 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
         />
         <input
           value={amount}
@@ -280,13 +280,13 @@ function AddRateForm({ typeId, onAdded, onCancel }: AddRateFormProps) {
           min={1}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Amount (RWF)"
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
         />
         <input
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           placeholder="Description (optional)"
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
         />
       </div>
       <div className="flex gap-2 justify-end">

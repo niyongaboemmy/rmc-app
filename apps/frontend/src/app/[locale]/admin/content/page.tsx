@@ -418,7 +418,7 @@ export default function ManageContentPage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder='Search by name, keyword, or location… e.g. "prayer", "dawa", "carousel", "stats"'
-                    className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
+                    className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-lg border border-gray-300 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     {query && (

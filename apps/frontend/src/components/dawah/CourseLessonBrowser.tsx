@@ -117,7 +117,7 @@ export function CourseLessonBrowser({
           <select
             value={currentId}
             onChange={(e) => select(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           >
             {hasOverview && <option value={OVERVIEW}>{t('courses.aboutCourse')}</option>}
             {lessons.map((l, i) => (
@@ -138,7 +138,7 @@ export function CourseLessonBrowser({
                   type="button"
                   onClick={() => select(OVERVIEW)}
                   aria-current={isOverview ? 'true' : undefined}
-                  className={`flex w-full items-center gap-2.5 rounded-xl p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
+                  className={`flex w-full items-center gap-2.5 rounded-lg p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
                     isOverview ? 'bg-rmc-green-light' : 'hover:bg-gray-50'
                   }`}
                 >
@@ -164,7 +164,7 @@ export function CourseLessonBrowser({
                     type="button"
                     onClick={() => select(l.id)}
                     aria-current={isActive ? 'true' : undefined}
-                    className={`flex w-full items-start gap-2.5 rounded-xl p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
+                    className={`flex w-full items-start gap-2.5 rounded-lg p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
                       isActive ? 'bg-rmc-green-light' : 'hover:bg-gray-50'
                     }`}
                   >
@@ -278,7 +278,7 @@ export function CourseLessonBrowser({
               type="button"
               disabled={index === 0}
               onClick={() => select(ids[index - 1])}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
             >
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
               {t('pagination.previous')}
@@ -287,7 +287,7 @@ export function CourseLessonBrowser({
               type="button"
               disabled={index === ids.length - 1}
               onClick={() => select(ids[index + 1])}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
             >
               {t('pagination.next')}
               <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />

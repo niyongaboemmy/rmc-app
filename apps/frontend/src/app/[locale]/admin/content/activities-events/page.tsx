@@ -559,8 +559,8 @@ function ActivitiesEventsManager() {
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const INPUT_CLS = 'w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent';
-const SELECT_CLS = 'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 capitalize focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent';
+const INPUT_CLS = 'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
+const SELECT_CLS = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 capitalize focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
 const CANCEL_BTN = 'px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors';
 
 const modalDir = (l: Lang): 'ltr' | 'rtl' => (l === 'ar' ? 'rtl' : 'ltr');
@@ -595,7 +595,7 @@ function ModalLangTabs({ modalLang, onChange }: { modalLang: Lang; onChange: (l:
 function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}

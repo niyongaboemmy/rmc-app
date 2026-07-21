@@ -969,7 +969,7 @@ function SuccessScreen({
         </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">{t('successTitle')}</h2>
         <p className="text-sm text-gray-400 max-w-sm mx-auto mb-8">{t('successText')}</p>
-        <div className="max-w-xs mx-auto mb-8 rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+        <div className="max-w-xs mx-auto mb-8 rounded-xl bg-gray-50 border border-gray-300 px-5 py-4">
           <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">
             {t('applicationIdLabel')}
           </p>

@@ -128,7 +128,7 @@ function AdminMembersContent() {
           <input
             type="text"
             placeholder={t('search')}
-            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
@@ -271,7 +271,7 @@ function AdminMembersContent() {
               <label className="block text-sm font-medium text-gray-700 mb-2">{t('reason')}</label>
               <textarea
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green outline-none resize-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green outline-none resize-none"
                 placeholder="Provide reason for rejection..."
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}

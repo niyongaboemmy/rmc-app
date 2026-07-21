@@ -411,14 +411,14 @@ function DeathCertificateCard({
           <div className="flex items-center gap-1.5 pt-0.5">
             <button
               onClick={() => setOpen(true)}
-              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               <Eye className="h-3 w-3" aria-hidden="true" /> {t('detail.inspect')}
             </button>
             <a
               href={url || undefined}
               download={name}
-              className={`inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green ${url ? '' : 'pointer-events-none opacity-50'}`}
+              className={`inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green ${url ? '' : 'pointer-events-none opacity-50'}`}
             >
               <Download className="h-3 w-3" aria-hidden="true" /> {t('detail.download')}
             </a>

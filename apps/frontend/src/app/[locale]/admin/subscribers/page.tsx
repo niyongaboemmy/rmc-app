@@ -152,12 +152,12 @@ function SubscribersManager() {
                 value={testTo}
                 onChange={(e) => setTestTo(e.target.value)}
                 placeholder="you@example.com"
-                className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               />
               <button
                 onClick={doTest}
                 disabled={!testTo.includes('@') || testing}
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 {testing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send test
               </button>
@@ -171,16 +171,16 @@ function SubscribersManager() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
           <h2 className="text-sm font-bold text-gray-700">Send a newsletter</h2>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Subject</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="e.g. New programs are live"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Message</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
             <RichTextEditor value={body} onChange={setBody} />
           </div>
           <div className="flex items-center justify-end gap-3">

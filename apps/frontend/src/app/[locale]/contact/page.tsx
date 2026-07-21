@@ -215,7 +215,7 @@ export default function ContactPage() {
                             type={type}
                             aria-invalid={!!errors[key]}
                             className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:border-transparent outline-none ${
-                              errors[key] ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-rmc-green'
+                              errors[key] ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-rmc-green'
                             }`}
                             {...register(key)}
                           />
@@ -232,7 +232,7 @@ export default function ContactPage() {
                           rows={2}
                           aria-invalid={!!errors.message}
                           className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:border-transparent outline-none resize-none ${
-                            errors.message ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-rmc-green'
+                            errors.message ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-rmc-green'
                           }`}
                           {...register('message')}
                         />

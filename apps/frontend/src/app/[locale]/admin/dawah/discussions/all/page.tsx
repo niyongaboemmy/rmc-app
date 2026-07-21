@@ -105,13 +105,13 @@ function AllQuestions() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('discussions.manage.searchPlaceholder')}
-            className="w-full rounded-lg border border-gray-200 py-2.5 pe-4 ps-9 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+            className="w-full rounded-lg border border-gray-300 py-2.5 pe-4 ps-9 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green"
+          className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent"
         >
           <option value="">{t('discussions.manage.allStatuses')}</option>
           {STATUSES.map((s) => (

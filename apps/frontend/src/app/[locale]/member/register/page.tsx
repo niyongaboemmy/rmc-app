@@ -113,7 +113,7 @@ export default function MemberRegisterPage() {
                     type="text"
                     maxLength={16}
                     placeholder="1234567890123456"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                     {...register('nationalId')}
                   />
                   {errors.nationalId && <p className="text-red-500 text-xs mt-1">{errors.nationalId.message}</p>}
@@ -131,7 +131,7 @@ export default function MemberRegisterPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('occupation')}</label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                     {...register('occupation')}
                   />
                 </div>
@@ -171,7 +171,7 @@ export default function MemberRegisterPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyName')}</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                       {...register('emergencyContactName')}
                     />
                   </div>
@@ -179,7 +179,7 @@ export default function MemberRegisterPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyPhone')}</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                       {...register('emergencyContactPhone')}
                     />
                   </div>

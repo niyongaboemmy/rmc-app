@@ -182,7 +182,7 @@ function ActionModal({
             setError('');
           }}
           placeholder={placeholder ?? 'Notes (optional)'}
-          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 resize-none"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex gap-3 mt-4">
@@ -1175,7 +1175,7 @@ function AdminMarriageDetailContent() {
                       placeholder={
                         app.groomPhone ? app.groomPhone.replace(/[^0-9]/g, '') : '250788000000'
                       }
-                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400"
+                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-rmc-green"
                     />
                   </div>
                   <p className="text-[10px] text-gray-400">
@@ -1351,7 +1351,7 @@ function AdminMarriageDetailContent() {
                 type="datetime-local"
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 mb-3"
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green mb-3"
               />
               <button
                 onClick={handleSchedule}

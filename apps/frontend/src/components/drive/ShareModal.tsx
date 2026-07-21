@@ -128,7 +128,7 @@ export function ShareModal({ item, onClose }: ShareModalProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by name, email, or phone..."
-                className="w-full pl-9 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
+                className="w-full pl-9 pr-8 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
               />
             </div>
             <PermissionSelect value={permission} onChange={setPermission} />
@@ -256,7 +256,7 @@ function PermissionSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as 'viewer' | 'editor')}
-        className="appearance-none bg-gray-50 border border-gray-200 rounded-xl pl-3 pr-8 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-rmc-green/30 cursor-pointer"
+        className="appearance-none bg-gray-50 border border-gray-300 rounded-lg pl-3 pr-8 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-rmc-green/30 cursor-pointer"
       >
         <option value="viewer">Viewer</option>
         <option value="editor">Editor</option>

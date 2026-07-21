@@ -81,7 +81,7 @@ export function PrayerTimesEditor({ backHref }: PrayerTimesEditorProps) {
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
-        <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-rmc-green" />
           Default Location
         </label>
@@ -89,7 +89,7 @@ export function PrayerTimesEditor({ backHref }: PrayerTimesEditorProps) {
           type="text"
           value={form.location}
           onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
           placeholder="Kigali, Rwanda"
         />
         <p className="text-xs text-gray-400 mt-1.5">Shown on the homepage when user location is unavailable.</p>
@@ -108,7 +108,7 @@ export function PrayerTimesEditor({ backHref }: PrayerTimesEditorProps) {
                 type="time"
                 value={form[key]}
                 onChange={(e) => setTime(key, e.target.value)}
-                className={`w-full bg-white/80 rounded-xl border ${border} px-3 py-2.5 text-base font-bold ${color} focus:outline-none focus:ring-2 focus:ring-rmc-green/50 focus:border-transparent text-center`}
+                className={`w-full bg-white/80 rounded-lg border ${border} px-3 py-2.5 text-base font-bold ${color} focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent text-center`}
               />
             </div>
           ))}

@@ -170,7 +170,7 @@ function ActionModal({ title, placeholder, confirmLabel, confirmClass, onClose, 
           value={text}
           onChange={(e) => { setText(e.target.value); setError(''); }}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex gap-3 mt-4">

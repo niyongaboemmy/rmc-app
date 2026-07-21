@@ -122,7 +122,7 @@ export function JobsTrackByNumber() {
             onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }}
             onKeyDown={(e) => { if (e.key === 'Enter') requestOtp(); }}
             placeholder={t('trackPlaceholder')}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-rmc-green"
           />
           <p className="text-[11px] text-gray-400">{t('trackCodeHint')}</p>
           <button
@@ -150,7 +150,7 @@ export function JobsTrackByNumber() {
             placeholder={t('trackOtpPlaceholder')}
             inputMode="numeric"
             maxLength={6}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-center text-lg font-mono tracking-[0.4em] focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-center text-lg font-mono tracking-[0.4em] focus:outline-none focus:ring-2 focus:ring-rmc-green"
           />
           <button
             onClick={verifyOtp}

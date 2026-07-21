@@ -713,7 +713,7 @@ function FinanceAdmin() {
                       placeholder={t('searchPlaceholder')}
                       value={filters.search}
                       onChange={(e) => patch({ search: e.target.value })}
-                      className="w-full pl-9 pr-4 rtl:pl-4 rtl:pr-9 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40"
+                      className="w-full pl-9 pr-4 rtl:pl-4 rtl:pr-9 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </div>
                   <SearchableSelect
@@ -737,9 +737,9 @@ function FinanceAdmin() {
                     triggerClassName="px-3 py-2.5 rounded-xl text-sm"
                   />
                   <div className="flex items-center gap-2">
-                    <input type="date" value={filters.dateFrom} onChange={(e) => patch({ dateFrom: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 text-gray-600" aria-label={t('fromDate')} />
+                    <input type="date" value={filters.dateFrom} onChange={(e) => patch({ dateFrom: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label={t('fromDate')} />
                     <span className="text-gray-300 text-xs">→</span>
-                    <input type="date" value={filters.dateTo} onChange={(e) => patch({ dateTo: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 text-gray-600" aria-label={t('toDate')} />
+                    <input type="date" value={filters.dateTo} onChange={(e) => patch({ dateTo: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label={t('toDate')} />
                   </div>
                 </div>
                 {/* Cause / intention / method (client-side) */}
@@ -894,7 +894,7 @@ function FinanceAdmin() {
                                         <div className="mt-4 flex justify-end">
                                           <button
                                             onClick={(e) => { e.stopPropagation(); setEditDonation(d); }}
-                                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+                                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
                                           >
                                             <Pencil className="w-4 h-4" /> {t('edit')}
                                           </button>
@@ -953,7 +953,7 @@ function FinanceAdmin() {
                   placeholder="Search by couple or application number..."
                   value={marrSearch}
                   onChange={(e) => { setMarrSearch(e.target.value); setMarrPage(1); }}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-400"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                 />
               </div>
               <SearchableSelect
@@ -969,7 +969,7 @@ function FinanceAdmin() {
                   { value: 'cancelled', label: 'Cancelled' },
                   { value: 'closed', label: 'Closed' },
                 ]}
-                triggerClassName="px-3 py-2.5 rounded-xl text-sm focus:ring-rose-500/30"
+                triggerClassName="px-3 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
               />
               <SearchableSelect
                 value={marrPay}
@@ -982,12 +982,12 @@ function FinanceAdmin() {
                   { value: 'paid', label: 'Paid' },
                   { value: 'refunded', label: 'Refunded' },
                 ]}
-                triggerClassName="px-3 py-2.5 rounded-xl text-sm focus:ring-rose-500/30"
+                triggerClassName="px-3 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
               />
               <div className="flex items-center gap-2">
-                <input type="date" value={marrFrom} onChange={(e) => { setMarrFrom(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 text-gray-600" aria-label="From date" />
+                <input type="date" value={marrFrom} onChange={(e) => { setMarrFrom(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label="From date" />
                 <span className="text-gray-300 text-xs">→</span>
-                <input type="date" value={marrTo} onChange={(e) => { setMarrTo(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 text-gray-600" aria-label="To date" />
+                <input type="date" value={marrTo} onChange={(e) => { setMarrTo(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label="To date" />
               </div>
             </div>
             {(marrSearch || marrStatus || marrPay || marrFrom || marrTo) && (
@@ -1098,7 +1098,7 @@ function FinanceAdmin() {
                   placeholder="Search by payer, reference or fund..."
                   value={histSearch}
                   onChange={(e) => { setHistSearch(e.target.value); setHistPage(1); }}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                 />
               </div>
               <SearchableSelect
@@ -1573,7 +1573,7 @@ function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
   return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold', map[status])}>{labels[status]}</span>;
 }
 
-const inputClass = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40';
+const inputClass = 'w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
 const labelClass = 'block text-xs font-medium text-gray-500 mb-1.5';
 
 function slugify(s: string): string {

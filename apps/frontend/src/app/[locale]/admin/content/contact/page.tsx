@@ -128,7 +128,7 @@ function ContactContentManager() {
                 <Icon className="w-3.5 h-3.5 text-teal-500" /> {label}
               </label>
               <input type="text" value={form[key]} onChange={(e) => setPlain(key, e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent" />
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
               {hint && <p className="mt-1 text-[11px] text-gray-400">{hint}</p>}
             </div>
           ))}
@@ -151,10 +151,10 @@ function ContactContentManager() {
             </label>
             {rows === 1 ? (
               <input dir={dir} type="text" value={form[key][lang]} onChange={(e) => setTri(key, lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${fontClass}`} />
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`} />
             ) : (
               <textarea dir={dir} rows={rows} value={form[key][lang]} onChange={(e) => setTri(key, lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent resize-none ${fontClass}`} />
+                className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`} />
             )}
           </div>
         ))}

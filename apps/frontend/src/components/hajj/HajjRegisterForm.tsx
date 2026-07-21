@@ -62,7 +62,7 @@ function buildSchema(tr: (k: string) => string) {
 type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 const inputClass =
-  'w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30';
+  'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green';
 const inputError = 'border-red-300 focus:border-red-400 focus:ring-red-400/30';
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
 
@@ -205,13 +205,13 @@ export function HajjRegisterForm() {
           <button
             type="button"
             onClick={() => { reset(); setDistrictId(''); setSectors([]); setSubmitted(false); setTrackingCode(''); }}
-            className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             {t('success.again')}
           </button>
           <Link
             href={`/${locale}/services/hajj`}
-            className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             {t('success.home')}
           </Link>

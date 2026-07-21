@@ -123,7 +123,7 @@ function ActionModal({ title, onClose, onConfirm, placeholder, required, confirm
           value={notes}
           onChange={(e) => { setNotes(e.target.value); setError(''); }}
           placeholder={placeholder ?? 'Notes (optional)'}
-          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex gap-3 mt-4">
@@ -412,7 +412,7 @@ function AdminGoodConductDetailContent() {
                     <select
                       value={selectedImamId}
                       onChange={(e) => setSelectedImamId(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                     >
                       <option value="">— Select a registered imam —</option>
                       {imams.map((imam) => (
@@ -431,7 +431,7 @@ function AdminGoodConductDetailContent() {
                     value={imamNote}
                     onChange={(e) => setImamNote(e.target.value)}
                     placeholder="Note (e.g. confirmed with the mosque by phone)"
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
                   />
                   <button
                     onClick={handleAssignImam}

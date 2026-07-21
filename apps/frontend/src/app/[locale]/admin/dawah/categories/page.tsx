@@ -19,7 +19,7 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { dawahApi, type DawahCategory, type CategoryPayload } from '@/lib/dawahApi';
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
+  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 
 /** Render a lucide icon by its name string (the value stored on a category). */
@@ -106,7 +106,7 @@ function CategoriesAdmin() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchCategories}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <RefreshCw className="h-4 w-4" /> {t('categories.refresh')}
           </button>
@@ -134,7 +134,7 @@ function CategoriesAdmin() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('categories.title')}
-          className="w-full rounded-xl border border-gray-200 py-2.5 ps-9 pe-4 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30"
+          className="w-full rounded-lg border border-gray-300 py-2.5 ps-9 pe-4 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
         />
       </div>
 
@@ -349,7 +349,7 @@ function CategoryModal({ category, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+        <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
           {t('actions.cancel')}
         </button>
         <button

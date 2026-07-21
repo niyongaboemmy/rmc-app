@@ -3,7 +3,7 @@
 import { type InputHTMLAttributes, type ReactNode } from 'react';
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 disabled:bg-gray-50';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green disabled:bg-gray-50';
 
 /** Labelled text/number input used across the funeral admin forms. */
 export function Field({

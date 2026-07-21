@@ -180,7 +180,7 @@ export function CoursesPageClient() {
                       onChange={(e) => setSearchInput(e.target.value)}
                       placeholder={t('courses.searchPlaceholder')}
                       aria-label={t('courses.searchPlaceholder')}
-                      className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                      className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
                     />
                   </div>
 
@@ -280,7 +280,7 @@ export function CoursesPageClient() {
                         type="button"
                         disabled={page <= 1}
                         onClick={() => setParams({ page: page - 1 })}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
                       >
                         {/* The chevrons are direction, not decoration — they flip. */}
                         <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
@@ -290,7 +290,7 @@ export function CoursesPageClient() {
                         type="button"
                         disabled={page >= pages}
                         onClick={() => setParams({ page: page + 1 })}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
                       >
                         {t('pagination.next')}
                         <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />

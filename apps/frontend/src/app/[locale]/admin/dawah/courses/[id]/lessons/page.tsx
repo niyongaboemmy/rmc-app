@@ -29,7 +29,7 @@ import {
 const MEDIA_MAX_BYTES = 90 * 1024 * 1024; // mirrors backend MEDIA_MAX_BYTES
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
+  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -183,7 +183,7 @@ function LessonsBuilder() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchCourse}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <RefreshCw className="h-4 w-4" /> {t('lessons.refresh')}
           </button>
@@ -367,7 +367,7 @@ function MediaUploadField({ kind, value, onChange }: {
             <p className="truncate text-sm font-medium text-gray-800">{value.fileName}</p>
             {value.fileSize > 0 && <p className="text-[11px] text-gray-400">{(value.fileSize / (1024 * 1024)).toFixed(1)} MB</p>}
           </div>
-          <button type="button" onClick={() => fileRef.current?.click()} className="rounded-lg border border-gray-200 px-2.5 py-1 text-[11px] font-semibold text-gray-600 hover:bg-white">{t('lessons.replaceMedia')}</button>
+          <button type="button" onClick={() => fileRef.current?.click()} className="rounded-lg border border-gray-300 px-2.5 py-1 text-[11px] font-semibold text-gray-600 hover:bg-white">{t('lessons.replaceMedia')}</button>
           <button type="button" onClick={() => onChange(null)} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label={t('actions.delete')}><X className="h-4 w-4" /></button>
         </div>
       ) : (
@@ -628,7 +628,7 @@ function LessonModal({ courseId, lesson, onClose, onSaved }: {
       <ModalFooter>
         <button
           onClick={onClose}
-          className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
         >
           {t('actions.cancel')}
         </button>

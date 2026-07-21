@@ -670,7 +670,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                   <select
                     value={selectedMethodId}
                     onChange={(e) => setSelectedMethodId(e.target.value)}
-                    className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-rmc-green"
                   >
                     {activeMethods.length === 0 && <option value="">No active methods</option>}
                     {activeMethods.map((m) => (
@@ -691,7 +691,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     <select
                       value={selectedTypeKey}
                       onChange={(e) => setSelectedTypeKey(e.target.value)}
-                      className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+                      className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-rmc-green"
                     >
                       <option value="">— None —</option>
                       {activeTypes.map((t) => (
@@ -713,7 +713,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     value={mobilePhone}
                     onChange={(e) => setMobilePhone(e.target.value)}
                     placeholder="250788000000"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                   />
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Accepts: 0780313448 or 250780313448 — auto-converted to international format</p>
@@ -731,7 +731,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="100"
-                    className="w-full pl-12 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="w-full pl-12 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                   />
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Test account maximum: 100 RWF</p>

@@ -82,7 +82,7 @@ export default function UnsubscribePage() {
                 The link may have been copied incompletely. Open it again straight from the email —
                 and if you keep receiving messages, contact us and we’ll remove you.
               </p>
-              <Link href={`/${locale}`} className="inline-flex items-center justify-center rounded-full border border-gray-200 px-6 py-2.5 text-sm font-semibold text-gray-600 hover:border-rmc-green hover:text-rmc-green transition-colors">
+              <Link href={`/${locale}`} className="inline-flex items-center justify-center rounded-full border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-600 hover:border-rmc-green hover:text-rmc-green transition-colors">
                 Back to home
               </Link>
             </>
