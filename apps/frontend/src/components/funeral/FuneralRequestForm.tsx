@@ -17,6 +17,7 @@ import {
 } from '@/lib/funeralApi';
 import { mosqueApi } from '@/lib/mosqueApi';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Button } from '@/components/ui/Button';
 import type { Cemetery } from './types';
 
 // Rwandan phone: 10 digits starting 07 (e.g. 0788123456). National ID: 16 digits.
@@ -504,32 +505,32 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /> {t('back')}
             </Link>
           ) : (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              leftIcon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />}
             >
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /> {t('prev')}
-            </button>
+              {t('prev')}
+            </Button>
           )}
 
           {last ? (
-            <button
+            <Button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-60"
+              isLoading={isSubmitting}
+              leftIcon={<Check className="h-4 w-4" aria-hidden="true" />}
             >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
               {isSubmitting ? t('submitting') : t('submit')}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="button"
               onClick={goNext}
-              className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark"
+              rightIcon={<ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />}
             >
-              {t('next')} <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-            </button>
+              {t('next')}
+            </Button>
           )}
         </div>
       </form>
