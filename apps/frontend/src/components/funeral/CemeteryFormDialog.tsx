@@ -145,7 +145,7 @@ export function CemeteryFormDialog({
             <LocationPicker lat={latNum} lng={lngNum} onChange={setCoords} />
           </div>
           <p className="mt-1 text-[11px] text-gray-400">{t('pickHint')}</p>
-          {geoError && <p className="mt-1 text-[11px] text-red-500">{geoError}</p>}
+          {geoError && <p className="mt-1 text-xs text-red-600">{geoError}</p>}
         </div>
 
         <Field label={t('lat')} type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} />

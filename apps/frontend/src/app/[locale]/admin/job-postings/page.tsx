@@ -108,7 +108,7 @@ function AdminPostingsContent() {
           </select>
           {canManage && (
             <button onClick={() => setEditing('new')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold transition-colors">
               <Plus className="w-4 h-4" /> New posting
             </button>
           )}
@@ -125,7 +125,7 @@ function AdminPostingsContent() {
             <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-sm text-gray-500 mb-4">No job postings yet.</p>
             {canManage && (
-              <button onClick={() => setEditing('new')} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+              <button onClick={() => setEditing('new')} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold">
                 <Plus className="w-4 h-4" /> Create your first posting
               </button>
             )}
@@ -209,7 +209,7 @@ function AdminPostingsContent() {
             {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
             <div className="flex gap-3">
               <button onClick={() => setDeleteTarget(null)} disabled={busyId !== null} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-              <button onClick={confirmDelete} disabled={busyId !== null} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50">
+              <button onClick={confirmDelete} disabled={busyId !== null} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50">
                 {busyId ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Delete
               </button>
             </div>
@@ -326,7 +326,7 @@ function PostingFormModal({ posting, onClose, onSaved }: { posting: JobPosting |
 
         <div className="flex gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
           <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-          <button onClick={submit} disabled={saving} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50">
+          <button onClick={submit} disabled={saving} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50">
             {saving && <RefreshCw className="w-4 h-4 animate-spin" />} {isEdit ? 'Save changes' : 'Create posting'}
           </button>
         </div>

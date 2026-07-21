@@ -280,7 +280,7 @@ function AdminTenderDetailContent() {
           {error && (
             <div
               role="alert"
-              className="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-2.5"
+              className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-2.5"
             >
               {error}
             </div>

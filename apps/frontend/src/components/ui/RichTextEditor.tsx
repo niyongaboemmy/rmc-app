@@ -200,7 +200,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       <Divider />
       <Btn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} label="Undo"><Undo2 className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} label="Redo"><Redo2 className="w-4 h-4" /></Btn>
-      {imgErr && <span className="ms-2 text-[11px] text-red-600">{imgErr}</span>}
+      {imgErr && <span className="ms-2 text-xs text-red-600">{imgErr}</span>}
 
       {/* Size + alignment appear only while an image is selected — they are
           meaningless otherwise, and a permanently-visible row of dead buttons

@@ -449,7 +449,7 @@ function DeathCertificateCard({
             </div>
             <div className="flex min-h-0 flex-1 items-center justify-center" onClick={(e) => e.stopPropagation()}>
               {failed ? (
-                <p className="rounded-xl bg-white/10 px-5 py-4 text-sm text-white">{t('detail.certificateFailed')}</p>
+                <p className="rounded-lg bg-white/10 px-5 py-4 text-sm text-white">{t('detail.certificateFailed')}</p>
               ) : !url ? (
                 <Loader2 className="h-7 w-7 animate-spin text-white/70" aria-hidden="true" />
               ) : isImage ? (

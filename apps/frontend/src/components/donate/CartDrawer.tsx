@@ -258,7 +258,7 @@ function WaitingScreen({
       {error && (
         <div className="mb-4 flex w-full items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-left">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-          <p className="text-[12.5px] text-red-700">{error}</p>
+          <p className="text-[12.5px] text-red-600">{error}</p>
         </div>
       )}
 
@@ -770,7 +770,7 @@ export function CartDrawer({
                   {(error || phase === 'failed') && (
                     <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3">
                       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                      <p className="text-[12.5px] text-red-700">{error || t('cart.error')}</p>
+                      <p className="text-[12.5px] text-red-600">{error || t('cart.error')}</p>
                     </div>
                   )}
                 </div>

@@ -261,7 +261,7 @@ function BlogManager() {
             </p>
           </div>
         </div>
-        <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-cyan-600/20 transition-colors">
+        <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-cyan-600/20 transition-colors">
           <Plus className="w-4 h-4" /> New Post
         </button>
       </div>
@@ -488,11 +488,11 @@ function BlogManager() {
             </button>
           )}
           {step < STEPS.length - 1 ? (
-            <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold rounded-xl transition-colors">
+            <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors">
               Next <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button type="button" onClick={handleSaveItem} disabled={saving || uploading} className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+            <button type="button" onClick={handleSaveItem} disabled={saving || uploading} className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
               {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
               {editingIndex !== null ? 'Save Changes' : 'Create Post'}
             </button>
@@ -543,7 +543,7 @@ function Stepper({ step, onStepClick }: { step: number; onStepClick: (s: number)
             <button type="button" onClick={() => onStepClick(i)} disabled={!done}
               className={`flex items-center gap-2.5 text-left ${done ? 'cursor-pointer' : 'cursor-default'}`}>
               <span className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold shrink-0 transition-colors ${
-                done ? 'bg-cyan-600 text-white' : active ? 'bg-cyan-100 text-cyan-700 ring-2 ring-cyan-500' : 'bg-gray-100 text-gray-400'
+                done ? 'bg-rmc-green text-white' : active ? 'bg-cyan-100 text-cyan-700 ring-2 ring-cyan-500' : 'bg-gray-100 text-gray-400'
               }`}>
                 {done ? <Check className="w-4 h-4" /> : i + 1}
               </span>

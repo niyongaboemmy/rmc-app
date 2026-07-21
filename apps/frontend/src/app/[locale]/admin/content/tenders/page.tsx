@@ -298,7 +298,7 @@ function TendersManager() {
           <button
             onClick={openCreate}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-amber-500/20 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-amber-500/20 transition-colors"
           >
             <Plus className="w-4 h-4" /> New Tender
           </button>
@@ -607,7 +607,7 @@ function TendersManager() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             {saving
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
@@ -702,7 +702,7 @@ function UploadRow({ item, onRemove }: { item: UploadItem; onRemove: () => void 
             <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${item.pct}%` }} />
           </div>
         )}
-        {item.status === 'error'   && <p className="text-[10px] text-red-500">{item.errorMsg}</p>}
+        {item.status === 'error'   && <p className="text-xs text-red-600">{item.errorMsg}</p>}
         {item.status === 'done'    && <p className="text-[10px] text-green-600">Uploaded</p>}
         {item.status === 'pending' && <p className="text-[10px] text-gray-400">{formatSize(item.file.size)} — will upload on save</p>}
       </div>

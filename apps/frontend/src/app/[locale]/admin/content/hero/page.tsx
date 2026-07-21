@@ -120,7 +120,7 @@ function HeroManager() {
           </div>
         </div>
         <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-sky-600/20 transition-colors">
           {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           {loading ? 'Loading…' : 'Save Changes'}
         </button>
@@ -231,7 +231,7 @@ function HeroManager() {
             <p className="text-[11px] text-gray-400 mt-0.5">Image URLs that crossfade behind the hero copy.</p>
           </div>
           <button onClick={addSlide} type="button"
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-rmc-green hover:bg-rmc-green-dark text-white text-xs font-semibold rounded-lg transition-colors">
             <Plus className="w-3.5 h-3.5" /> Add Image
           </button>
         </div>

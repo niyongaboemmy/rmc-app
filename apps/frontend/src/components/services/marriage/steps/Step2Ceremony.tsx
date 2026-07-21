@@ -138,7 +138,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
             fee={fees ? `${fees.outside.amount.toLocaleString()} RWF` : '200,000 RWF'}
           />
         </div>
-        {errors.venueType && <p className="mt-2 text-xs text-red-500">{errors.venueType.message}</p>}
+        {errors.venueType && <p className="mt-2 text-xs text-red-600">{errors.venueType.message}</p>}
       </div>
 
       {/* Location */}
@@ -159,7 +159,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
                 <option key={k} value={k}>{PROVINCE_LABELS[k]}</option>
               ))}
             </select>
-            {errors.province && <p className="mt-1 text-xs text-red-500">{errors.province.message}</p>}
+            {errors.province && <p className="mt-1 text-xs text-red-600">{errors.province.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -173,7 +173,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
               <option value="">{province ? 'Select district' : 'Select province first'}</option>
               {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
-            {errors.district && <p className="mt-1 text-xs text-red-500">{errors.district.message}</p>}
+            {errors.district && <p className="mt-1 text-xs text-red-600">{errors.district.message}</p>}
           </div>
         </div>
 

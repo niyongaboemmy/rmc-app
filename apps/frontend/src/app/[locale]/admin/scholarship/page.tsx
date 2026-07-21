@@ -187,7 +187,7 @@ function ProgramModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -230,7 +230,7 @@ function ProgramsTab({ canManage }: { canManage: boolean }) {
         <div className="flex justify-end">
           <button
             onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" /> New Program
           </button>
@@ -434,7 +434,7 @@ function ApplicationsTab({ permReports }: { permReports: boolean }) {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-xs font-medium disabled:opacity-50 transition-colors"
             >
               <Download className="w-3.5 h-3.5" /> {exporting ? 'Exporting...' : 'Export CSV'}
             </button>

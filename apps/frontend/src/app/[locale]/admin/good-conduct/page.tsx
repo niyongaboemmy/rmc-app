@@ -226,7 +226,7 @@ function AdminGoodConductContent() {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-xs font-medium disabled:opacity-50 transition-colors"
             >
               <Download className="w-3.5 h-3.5" /> {exporting ? 'Exporting...' : 'Export CSV'}
             </button>

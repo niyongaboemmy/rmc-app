@@ -89,7 +89,7 @@ export function ImageUploadField({
           )}
         </button>
       )}
-      {err && <p className="mt-1 text-[11px] text-red-600">{err}</p>}
+      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
     </div>
   );
 }

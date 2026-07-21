@@ -180,7 +180,7 @@ function LibraryAdmin() {
           {canManage && (
             <button
               onClick={() => setModal({ open: true, book: null })}
-              className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+              className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
             >
               <Plus className="h-4 w-4" /> {t('books.new')}
             </button>
@@ -461,7 +461,7 @@ function PdfUploadField({ label, help, value, onChange }: {
       )}
 
       {help && <p className="mt-1 text-[11px] text-gray-400">{help}</p>}
-      {err && <p className="mt-1 text-[11px] text-red-600">{err}</p>}
+      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
     </div>
   );
 }
@@ -706,7 +706,7 @@ function BookModal({ book, categories, onClose, onSaved }: {
       </ModalBody>
       <ModalFooter>
         <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t('actions.cancel')}</button>
-        <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
+        <button onClick={save} disabled={saving} className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
           {saving ? t('books.saving') : isEdit ? t('actions.save') : t('actions.create')}
         </button>
       </ModalFooter>

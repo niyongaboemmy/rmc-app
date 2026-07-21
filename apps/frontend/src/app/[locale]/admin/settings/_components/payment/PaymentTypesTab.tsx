@@ -294,7 +294,7 @@ function AddRateForm({ typeId, onAdded, onCancel }: AddRateFormProps) {
         <button
           onClick={handleSave}
           disabled={!name.trim() || !amount || saving}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold disabled:opacity-50 transition-colors hover:bg-violet-700"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rmc-green text-white text-xs font-semibold disabled:opacity-50 transition-colors hover:bg-violet-700"
         >
           {saving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
           Add Rate

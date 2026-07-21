@@ -114,7 +114,7 @@ export function TransportFormDialog({
             triggerClassName="px-3"
           />
           {touched && !mosqueId
-            ? <span className="mt-1 block text-[11px] text-red-500">{t('required')}</span>
+            ? <span className="mt-1 block text-xs text-red-600">{t('required')}</span>
             : <span className="mt-1 block text-[11px] text-gray-400">{t('mosqueHint')}</span>}
         </label>
 

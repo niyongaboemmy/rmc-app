@@ -196,8 +196,8 @@ function ActionModal({
             onClick={handleConfirm}
             disabled={loading}
             className={cn(
-              'flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50',
-              confirmClass ?? 'bg-rose-600 hover:bg-rose-700',
+              'flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50',
+              confirmClass ?? 'bg-rmc-green hover:bg-rmc-green-dark',
             )}
           >
             {loading ? 'Processing...' : confirmLabel}
@@ -1145,7 +1145,7 @@ function AdminMarriageDetailContent() {
               <button
                 onClick={handleConfirmPayment}
                 disabled={actionLoading}
-                className="w-full px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {activeAction === 'payment' ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1181,7 +1181,7 @@ function AdminMarriageDetailContent() {
                   <p className="text-[10px] text-gray-400">
                     Default: groom&apos;s phone. Another person can pay — enter their number above.
                   </p>
-                  {momoError && <p className="text-[10px] text-red-600">{momoError}</p>}
+                  {momoError && <p className="text-xs text-red-600">{momoError}</p>}
                   {momoStatusMsg && (
                     <p
                       className={cn(
@@ -1235,7 +1235,7 @@ function AdminMarriageDetailContent() {
                 <button
                   onClick={() => setModal('approve')}
                   disabled={actionLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-60 transition-colors"
                 >
                   {activeAction === 'approved' ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1249,7 +1249,7 @@ function AdminMarriageDetailContent() {
                 <button
                   onClick={() => setModal('amendments')}
                   disabled={actionLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-60 transition-colors"
                 >
                   {activeAction === 'amendments_requested' ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1263,7 +1263,7 @@ function AdminMarriageDetailContent() {
                 <button
                   onClick={() => setModal('reject')}
                   disabled={actionLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors"
                 >
                   {activeAction === 'rejected' ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1301,7 +1301,7 @@ function AdminMarriageDetailContent() {
                     )
                   }
                   disabled={actionLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                 >
                   {activeAction === 'completed' ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1321,7 +1321,7 @@ function AdminMarriageDetailContent() {
                         ? 'Attach the signed provisional certificate first to enable this'
                         : undefined
                     }
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                   >
                     {activeAction === 'certificate' ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1356,7 +1356,7 @@ function AdminMarriageDetailContent() {
               <button
                 onClick={handleSchedule}
                 disabled={!scheduleDate || actionLoading}
-                className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {activeAction === 'schedule' ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1432,7 +1432,7 @@ function AdminMarriageDetailContent() {
                     <button
                       onClick={handleUploadSignedProvisional}
                       disabled={!signedProvisionalFile || actionLoading}
-                      className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                     >
                       {activeAction === 'signed-provisional' ? (
                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1491,7 +1491,7 @@ function AdminMarriageDetailContent() {
                     <button
                       onClick={handleUploadWeddingPhoto}
                       disabled={!weddingPhotoFile || actionLoading}
-                      className="w-full px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                     >
                       {activeAction === 'wedding-photo' ? (
                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1578,7 +1578,7 @@ function AdminMarriageDetailContent() {
                 href={app.certificateUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
               >
                 <Eye className="w-4 h-4" /> View Certificate
               </a>
@@ -1595,7 +1595,7 @@ function AdminMarriageDetailContent() {
           {app.rejectionReason && (
             <div className="bg-red-50 rounded-2xl border border-red-100 p-4 text-sm text-red-800">
               <p className="font-semibold mb-1">Rejection reason</p>
-              <p className="text-red-700/80 text-xs">{app.rejectionReason}</p>
+              <p className="text-red-600/80 text-xs">{app.rejectionReason}</p>
             </div>
           )}
           {app.amendmentsRequestedText && (
@@ -1645,7 +1645,7 @@ function AdminMarriageDetailContent() {
           title="Request Amendments"
           placeholder="Describe what the applicant needs to correct or provide..."
           confirmLabel="Request Amendments"
-          confirmClass="bg-orange-500 hover:bg-orange-600"
+          confirmClass="bg-rmc-green hover:bg-rmc-green-dark"
           required
           onClose={() => setModal(null)}
           onConfirm={async (notes) => {

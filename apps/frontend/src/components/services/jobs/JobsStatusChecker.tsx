@@ -280,7 +280,7 @@ function ApplicationDetail({
             </button>
           ) : (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
-              <p className="text-sm text-red-800">{t('withdrawConfirm')}</p>
+              <p className="text-sm text-red-600">{t('withdrawConfirm')}</p>
               {withdrawError && <p className="text-xs text-red-600">{withdrawError}</p>}
               <div className="flex gap-3">
                 <Button variant="outline" size="sm" onClick={() => setConfirmWithdraw(false)} disabled={withdrawing}>

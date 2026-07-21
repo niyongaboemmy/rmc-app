@@ -357,7 +357,7 @@ function GalleryManagerInner() {
           </button>
           <button
             onClick={() => { resetUpload(); setUploadOpen(true); }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl shadow-sm shadow-rmc-green/20 transition-all active:scale-95"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg shadow-sm shadow-rmc-green/20 transition-all active:scale-95"
           >
             <Upload className="w-4 h-4" /> Upload Images
           </button>
@@ -572,7 +572,7 @@ function GalleryCard({
           icon={item.isPublic ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
           title={item.isPublic ? 'Make private' : 'Make public'}
           onClick={onToggleVisibility}
-          className={item.isPublic ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-gray-500 hover:bg-gray-600 text-white'}
+          className={item.isPublic ? 'bg-rmc-green hover:bg-rmc-green-dark text-white' : 'bg-gray-500 hover:bg-gray-600 text-white'}
         />
         <ActionBtn
           icon={<Edit2 className="w-3 h-3" />}
@@ -711,7 +711,7 @@ function PreviewModal({
             className="w-full max-h-[88vh] object-contain rounded-xl shadow-2xl"
           />
         ) : (
-          <div className="w-80 h-60 flex flex-col items-center justify-center bg-white/5 rounded-xl border border-white/10 text-white/30 gap-3">
+          <div className="w-80 h-60 flex flex-col items-center justify-center bg-white/5 rounded-lg border border-white/10 text-white/30 gap-3">
             <ImageOff className="w-10 h-10" />
             <span className="text-sm">No image available</span>
           </div>
@@ -975,7 +975,7 @@ function UploadModal(props: UploadModalProps) {
               {allDone ? (
                 <>
                   <button type="button" onClick={onReset}
-                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors">
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors">
                     <Plus className="w-4 h-4" /> Upload More
                   </button>
                   <button type="button" onClick={onClose}
@@ -990,7 +990,7 @@ function UploadModal(props: UploadModalProps) {
                     Cancel
                   </button>
                   <button type="button" onClick={onUpload} disabled={uploading || pendingCount === 0}
-                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
                     {uploading ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
                     ) : (
@@ -1034,7 +1034,7 @@ function QueueRow({ item, uploading, onRemove }: { item: QueueItem; uploading: b
             <div className="h-full bg-rmc-green rounded-full transition-all duration-300" style={{ width: `${item.pct}%` }} />
           </div>
         )}
-        {item.status === 'error' && <p className="text-[10px] text-red-500 font-medium mt-0.5">{item.error}</p>}
+        {item.status === 'error' && <p className="text-xs text-red-600 font-medium mt-0.5">{item.error}</p>}
       </div>
       <div className="shrink-0 w-7 flex items-center justify-center">
         {busy ? (
@@ -1168,7 +1168,7 @@ function EditModal({
               Cancel
             </button>
             <button type="button" onClick={onSave} disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
@@ -1210,7 +1210,7 @@ function EmptyGallery({ onUpload }: { onUpload: () => void }) {
       <button
         type="button"
         onClick={onUpload}
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors"
       >
         <Upload className="w-4 h-4" /> Upload First Image
       </button>

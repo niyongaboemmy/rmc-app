@@ -480,7 +480,7 @@ export default function AdminDrivePage() {
               <button
                 onClick={handleCreateFolder}
                 disabled={!newFolderName.trim() || newFolderLoading}
-                className="px-4 py-2 text-sm bg-rmc-green text-white rounded-xl hover:bg-rmc-green/90 disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 text-sm bg-rmc-green text-white rounded-lg hover:bg-rmc-green/90 disabled:opacity-50 flex items-center gap-1.5"
               >
                 {newFolderLoading
                   ? <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Creating…</>

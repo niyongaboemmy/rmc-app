@@ -100,7 +100,7 @@ export function CategoriesTab({
         {canManage && (
           <button
             onClick={() => setCatModal({ open: true, category: null })}
-            className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
           >
             <Plus className="h-4 w-4" /> New category
           </button>
@@ -422,7 +422,7 @@ function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
       </ModalBody>
       <ModalFooter>
         <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-        <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
+        <button onClick={save} disabled={saving} className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
         </button>
       </ModalFooter>
@@ -536,7 +536,7 @@ function SubFundModal({ categoryId, subfund, onClose, onSaved }: {
       </ModalBody>
       <ModalFooter>
         <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-        <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
+        <button onClick={save} disabled={saving} className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
         </button>
       </ModalFooter>

@@ -225,7 +225,7 @@ function ActionModal({ title, onClose, onConfirm, placeholder, required, confirm
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className={cn('flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass ?? 'bg-violet-600 hover:bg-violet-700')}
+            className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass ?? 'bg-rmc-green hover:bg-rmc-green-dark')}
           >
             {loading ? 'Processing...' : confirmLabel}
           </button>
@@ -417,7 +417,7 @@ function AdminScholarshipDetailContent() {
                   <button
                     onClick={() => handleStatusUpdate('start_review')}
                     disabled={actionLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
                   >
                     {activeAction === 'start_review' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                     Start Review
@@ -428,7 +428,7 @@ function AdminScholarshipDetailContent() {
                     <button
                       onClick={() => handleStatusUpdate('approve')}
                       disabled={actionLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
                     >
                       {activeAction === 'approve' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                       Approve
@@ -436,7 +436,7 @@ function AdminScholarshipDetailContent() {
                     <button
                       onClick={() => setModal('reject')}
                       disabled={actionLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
                     >
                       <XCircle className="w-4 h-4" /> Reject
                     </button>
@@ -446,7 +446,7 @@ function AdminScholarshipDetailContent() {
                   <button
                     onClick={() => handleStatusUpdate('confirm')}
                     disabled={actionLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
                   >
                     {activeAction === 'confirm' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
                     Confirm Scholarship
@@ -492,7 +492,7 @@ function AdminScholarshipDetailContent() {
               <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2 text-sm">
                 <XCircle className="w-4 h-4" /> Rejection Reason
               </h3>
-              <p className="text-sm text-red-800">{application.rejectionReason}</p>
+              <p className="text-sm text-red-600">{application.rejectionReason}</p>
             </div>
           )}
         </div>

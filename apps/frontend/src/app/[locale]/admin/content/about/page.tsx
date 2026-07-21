@@ -301,7 +301,7 @@ function AboutRMCManager() {
           </div>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-slate-700/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-slate-700/20 transition-colors">
           {saving ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           Save Changes
         </button>
@@ -354,7 +354,7 @@ function AboutRMCManager() {
             <span className="text-xs text-gray-400 font-normal">({leaders.length}) · editing {LANGS.find((l) => l.key === lang)?.label}</span>
           </div>
           <button onClick={addLeader}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors">
             <Plus className="w-3.5 h-3.5" /> Add Leader
           </button>
         </div>
@@ -433,7 +433,7 @@ function AboutRMCManager() {
             <span className="text-xs text-gray-400 font-normal">({entries.length} entries)</span>
           </div>
           <button onClick={openCreateEntry} disabled={loadingEntries}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold rounded-lg transition-colors">
             <Plus className="w-3.5 h-3.5" /> Add Entry
           </button>
         </div>
@@ -556,7 +556,7 @@ function AboutRMCManager() {
         <ModalFooter>
           <button type="button" onClick={() => setEntryModal(false)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
           <button type="button" onClick={handleSaveEntry} disabled={savingEntry}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
             {savingEntry && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {editingEntry ? 'Save Changes' : 'Add Entry'}
           </button>

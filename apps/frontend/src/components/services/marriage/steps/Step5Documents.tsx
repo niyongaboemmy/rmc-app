@@ -140,7 +140,7 @@ function PhotoDropZone({ slot, file, onChange }: DropZoneProps) {
           </label>
         )}
       </div>
-      {error && <p className="text-[10px] text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }
@@ -210,7 +210,7 @@ function FileDropZone({ slot, file, onChange }: DropZoneProps) {
           </label>
         )}
       </div>
-      {error && <p className="text-[10px] text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }

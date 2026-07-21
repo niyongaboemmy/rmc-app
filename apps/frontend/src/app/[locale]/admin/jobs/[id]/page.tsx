@@ -175,7 +175,7 @@ function ActionModal({ title, placeholder, confirmLabel, confirmClass, onClose, 
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex gap-3 mt-4">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-          <button onClick={handleConfirm} disabled={loading} className={cn('flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass)}>
+          <button onClick={handleConfirm} disabled={loading} className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass)}>
             {loading ? 'Processing…' : confirmLabel}
           </button>
         </div>
@@ -336,28 +336,28 @@ function AdminJobDetailContent() {
               <div className="space-y-2.5">
                 {canStartReview && (
                   <button onClick={() => doAction('start_review')} disabled={actionLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
                     {activeAction === 'start_review' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Start Review
                   </button>
                 )}
                 {canShortlist && (
                   <button onClick={() => doAction('shortlist')} disabled={actionLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
                     {activeAction === 'shortlist' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />} Shortlist
                   </button>
                 )}
                 {canDecide && (
                   <>
                     <button onClick={() => setConfirmAccept(true)} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
                       {activeAction === 'accept' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Accept / Approve
                     </button>
                     <button onClick={() => setModal('reject')} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
                       <XCircle className="w-4 h-4" /> Reject
                     </button>
                     <button onClick={() => setModal('more_info')} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
                       <Send className="w-4 h-4" /> Request More Info
                     </button>
                   </>
@@ -390,7 +390,7 @@ function AdminJobDetailContent() {
           title="Request More Information"
           placeholder="What information is needed? (required)"
           confirmLabel="Send Request"
-          confirmClass="bg-amber-500 hover:bg-amber-600"
+          confirmClass="bg-rmc-green hover:bg-rmc-green-dark"
           onClose={() => setModal(null)}
           onConfirm={(notes) => doAction('request_more_info', { notes })}
         />
@@ -422,7 +422,7 @@ function AdminJobDetailContent() {
               <button onClick={() => setConfirmAccept(false)} disabled={actionLoading} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
                 Cancel
               </button>
-              <button onClick={() => { setConfirmAccept(false); doAction('accept'); }} disabled={actionLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
+              <button onClick={() => { setConfirmAccept(false); doAction('accept'); }} disabled={actionLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
                 <CheckCircle2 className="w-4 h-4" /> Approve
               </button>
             </div>

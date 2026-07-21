@@ -199,7 +199,7 @@ function CoursesAdmin() {
           {canManage && (
             <button
               onClick={() => setModal({ open: true, course: null })}
-              className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+              className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
             >
               <Plus className="h-4 w-4" /> {t('courses.new')}
             </button>
@@ -531,7 +531,7 @@ function CourseModal({ course, categories, onClose, onSaved }: {
                 onChange={(e) => { setLang(setTitle)(e.target.value); setTitleErr(''); }}
                 className={inputClass}
               />
-              {titleErr && <p className="mt-1 text-[11px] text-red-600">{titleErr}</p>}
+              {titleErr && <p className="mt-1 text-xs text-red-600">{titleErr}</p>}
             </div>
 
             <div>
@@ -701,7 +701,7 @@ function CourseModal({ course, categories, onClose, onSaved }: {
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
+          className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
         >
           {saving ? t('courses.saving') : isEdit ? t('actions.save') : t('actions.create')}
         </button>

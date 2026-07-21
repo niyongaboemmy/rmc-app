@@ -555,7 +555,7 @@ function FinanceAdmin() {
       </div>
 
       {exportError && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">{exportError}</p>
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">{exportError}</p>
       )}
 
       {/* Submenu */}
@@ -1635,7 +1635,7 @@ function Field({ label, hint, error, required, children }: { label: string; hint
         {label}{required && <span className="text-red-500"> *</span>}
       </label>
       {children}
-      {error ? <p className="mt-1 text-[11px] text-red-600">{error}</p> : hint ? <p className="mt-1 text-[11px] text-gray-400">{hint}</p> : null}
+      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : hint ? <p className="mt-1 text-[11px] text-gray-400">{hint}</p> : null}
     </div>
   );
 }
@@ -1816,11 +1816,11 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium text-gray-400">{t('campaignModal.step', { current: step + 1, total: STEPS.length })}</span>
             {last ? (
-              <button onClick={save} disabled={saving} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
+              <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
                 {saving ? t('campaignModal.saving') : isEdit ? t('campaignModal.save') : t('campaignModal.create')}
               </button>
             ) : (
-              <button onClick={goNext} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark">
+              <button onClick={goNext} className="px-5 py-2 rounded-lg bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark">
                 {t('campaignModal.next')}
               </button>
             )}
@@ -2007,7 +2007,7 @@ function EditDonationModal({ donation, campaigns, onClose, onSaved }: {
           <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
             {t('editModal.cancel')}
           </button>
-          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
             {saving ? t('editModal.saving') : t('editModal.save')}
           </button>
         </>

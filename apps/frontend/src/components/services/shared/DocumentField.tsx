@@ -175,7 +175,7 @@ export function DocumentField({
         )}
       </div>
 
-      {shownError && <p className="text-[10px] text-red-500">{shownError}</p>}
+      {shownError && <p className="text-xs text-red-600">{shownError}</p>}
     </div>
   );
 }

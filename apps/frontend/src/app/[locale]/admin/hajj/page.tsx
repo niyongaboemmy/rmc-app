@@ -176,7 +176,7 @@ function HajjAdmin() {
         />
       </div>
 
-      {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">{error}</p>}
+      {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">{error}</p>}
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -435,7 +435,7 @@ function ReviewDrawer({
                 </label>
               )}
 
-              {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
+              {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
 
               <div className="flex flex-wrap gap-2">
                 {app.status === 'submitted' && (
@@ -443,7 +443,7 @@ function ReviewDrawer({
                     onClick={() => void move('under_review')}
                     busy={busy === 'under_review'}
                     icon={Clock}
-                    className="bg-amber-500 hover:bg-amber-600"
+                    className="bg-rmc-green hover:bg-rmc-green-dark"
                   >
                     Start review
                   </ActionButton>
@@ -695,7 +695,7 @@ function Lightbox({ doc, onClose }: { doc: HajjDocument; onClose: () => void }) 
 
       <div className="flex min-h-0 flex-1 items-center justify-center" onClick={(e) => e.stopPropagation()}>
         {failed ? (
-          <p className="rounded-xl bg-white/10 px-5 py-4 text-sm text-white">
+          <p className="rounded-lg bg-white/10 px-5 py-4 text-sm text-white">
             This receipt could not be loaded from storage.
           </p>
         ) : !url ? (
@@ -800,7 +800,7 @@ function ActionButton({
       onClick={onClick}
       disabled={busy || disabled}
       className={cn(
-        'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-white transition-colors disabled:opacity-50',
+        'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors disabled:opacity-50',
         className,
       )}
     >

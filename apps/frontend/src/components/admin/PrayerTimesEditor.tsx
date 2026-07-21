@@ -71,7 +71,7 @@ export function PrayerTimesEditor({ backHref }: PrayerTimesEditorProps) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green/90 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-rmc-green/20 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green/90 disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-rmc-green/20 transition-colors"
         >
           {saving
             ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

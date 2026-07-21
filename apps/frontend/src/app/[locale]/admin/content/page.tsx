@@ -747,7 +747,7 @@ function EmptyState({ query, onClear }: { query: string; onClear: () => void }) 
       </p>
       <button
         onClick={onClear}
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors"
       >
         <X className="w-4 h-4" /> Clear filters
       </button>

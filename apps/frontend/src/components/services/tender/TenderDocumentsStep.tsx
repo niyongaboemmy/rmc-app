@@ -302,7 +302,7 @@ function DocumentSlot({
       </div>
 
       {state.phase === 'error' && (
-        <p className="text-[11px] text-red-600 flex items-center gap-1">
+        <p className="text-xs text-red-600 flex items-center gap-1">
           <AlertCircle className="w-3 h-3 shrink-0" /> {state.message}
         </p>
       )}

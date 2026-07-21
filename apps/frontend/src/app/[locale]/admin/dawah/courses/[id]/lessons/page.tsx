@@ -190,7 +190,7 @@ function LessonsBuilder() {
           {canManage && (
             <button
               onClick={() => setModal({ open: true, lesson: null })}
-              className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+              className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
             >
               <Plus className="h-4 w-4" /> {t('lessons.add')}
             </button>
@@ -376,7 +376,7 @@ function MediaUploadField({ kind, value, onChange }: {
         </button>
       )}
       <p className="mt-1 text-[11px] text-gray-400">{t(kind === 'audio' ? 'lessons.audioHint' : 'lessons.pdfHint')}</p>
-      {err && <p className="mt-1 text-[11px] text-red-600">{err}</p>}
+      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
     </div>
   );
 }
@@ -508,7 +508,7 @@ function LessonModal({ courseId, lesson, onClose, onSaved }: {
               onChange={(e) => { setLang(setTitle)(e.target.value); setTitleErr(''); }}
               className={inputClass}
             />
-            {titleErr && <p className="mt-1 text-[11px] text-red-600">{titleErr}</p>}
+            {titleErr && <p className="mt-1 text-xs text-red-600">{titleErr}</p>}
           </div>
 
           <div>
@@ -612,7 +612,7 @@ function LessonModal({ courseId, lesson, onClose, onSaved }: {
             <MediaUploadField kind="pdf" value={mediaFile} onChange={(f) => { setMediaFile(f); setMediaErr(''); }} />
           )}
 
-          {mediaErr && <p className="text-[11px] text-red-600">{mediaErr}</p>}
+          {mediaErr && <p className="text-xs text-red-600">{mediaErr}</p>}
 
           <label className="flex items-center gap-2">
             <input
@@ -635,7 +635,7 @@ function LessonModal({ courseId, lesson, onClose, onSaved }: {
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
+          className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
         >
           {saving ? t('lessons.saving') : isEdit ? t('actions.save') : t('actions.create')}
         </button>

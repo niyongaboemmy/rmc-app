@@ -188,7 +188,7 @@ function SubscribersManager() {
             <button
               onClick={() => setConfirmSend(true)}
               disabled={!subject.trim() || !bodyHasText || active === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50 transition-colors"
             >
               <Send className="w-4 h-4" /> Send broadcast
             </button>

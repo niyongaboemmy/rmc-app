@@ -489,7 +489,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
             </div>
 
             {submitError && (
-              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">{submitError}</p>
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-600">{submitError}</p>
             )}
           </Section>
         )}

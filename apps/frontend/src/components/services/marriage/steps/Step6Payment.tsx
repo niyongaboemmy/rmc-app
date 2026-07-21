@@ -274,7 +274,7 @@ export function Step6Payment({ formData, onBack, onSubmit, isSubmitting, fees }:
                     )}
                   />
                 </div>
-                {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
+                {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
                 <p className="text-[10px] text-gray-400">
                   Amount: <strong>{feeFormatted}</strong> · Rwandan numbers only
                 </p>

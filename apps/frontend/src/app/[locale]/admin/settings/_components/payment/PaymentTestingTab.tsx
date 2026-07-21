@@ -642,7 +642,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     className={cn(
                       'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
                       direction === 'collect'
-                        ? 'bg-violet-600 border-violet-600 text-white'
+                        ? 'bg-rmc-green border-violet-600 text-white'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
                     )}
                   >
@@ -654,7 +654,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     className={cn(
                       'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
                       direction === 'deposit'
-                        ? 'bg-violet-600 border-violet-600 text-white'
+                        ? 'bg-rmc-green border-violet-600 text-white'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
                     )}
                   >
@@ -744,7 +744,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                   'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all',
                   sending || activeMethods.length === 0
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm hover:shadow',
+                    : 'bg-rmc-green hover:bg-rmc-green-dark text-white shadow-sm hover:shadow',
                 )}
               >
                 {sending ? (

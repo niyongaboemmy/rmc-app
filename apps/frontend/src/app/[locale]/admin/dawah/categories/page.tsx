@@ -113,7 +113,7 @@ function CategoriesAdmin() {
           {canManage && (
             <button
               onClick={() => setModal({ open: true, category: null })}
-              className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+              className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
             >
               <Plus className="h-4 w-4" /> {t('categories.new')}
             </button>
@@ -309,7 +309,7 @@ function CategoryModal({ category, onClose, onSaved }: {
               {t('categories.fields.nameEn')} <span className="text-red-500">*</span>
             </label>
             <input value={nameEn} onChange={(e) => { setNameEn(e.target.value); setNameErr(''); }} className={inputClass} />
-            {nameErr && <p className="mt-1 text-[11px] text-red-600">{nameErr}</p>}
+            {nameErr && <p className="mt-1 text-xs text-red-600">{nameErr}</p>}
           </div>
           <div>
             <label className={labelClass}>{t('categories.fields.nameRw')}</label>
@@ -355,7 +355,7 @@ function CategoryModal({ category, onClose, onSaved }: {
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
+          className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
         >
           {saving ? t('categories.saving') : isEdit ? t('actions.save') : t('actions.create')}
         </button>
