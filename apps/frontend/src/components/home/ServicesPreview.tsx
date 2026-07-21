@@ -14,9 +14,9 @@ const serviceKeys = [
 const serviceConfig: Record<string, { Icon: React.ComponentType<{ className?: string }>; gradient: string; iconBg: string; iconColor: string }> = {
   marriage: {
     Icon: Heart,
-    gradient: 'from-rose-50 to-white',
-    iconBg: 'bg-rose-100',
-    iconColor: 'text-rose-500',
+    gradient: 'from-rmc-green-light to-white',
+    iconBg: 'bg-rmc-green-light',
+    iconColor: 'text-rmc-green',
   },
   funeral: {
     Icon: FileText,

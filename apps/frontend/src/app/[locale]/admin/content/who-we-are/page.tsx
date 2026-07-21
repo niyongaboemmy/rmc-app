@@ -113,7 +113,7 @@ function WhoWeAreManager() {
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Active Members', field: 'membersCount' as const, icon: Users, suffix: '+', color: 'text-emerald-600' },
+            { label: 'Active Members', field: 'membersCount' as const, icon: Users, suffix: '+', color: 'text-rmc-green' },
             { label: 'Mosques', field: 'mosquesCount' as const, icon: Building2, suffix: '+', color: 'text-blue-600' },
             { label: 'Provinces', field: 'provincesCount' as const, icon: Map, suffix: '', color: 'text-violet-600' },
             { label: 'Years of Service', field: 'yearsOfService' as const, icon: Star, suffix: '+', color: 'text-amber-600' },

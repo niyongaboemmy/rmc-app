@@ -88,7 +88,7 @@ export function JobsStatusChecker() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-rmc-green animate-spin" />
       </div>
     );
   }
@@ -98,7 +98,7 @@ export function JobsStatusChecker() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
         <p className="text-sm text-gray-500">{t('signInPrompt')}</p>
         <Button
-          className="!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark focus:!ring-rmc-green"
           onClick={() => router.push(`/${locale}/login?redirect=/services/jobs/status`)}
           leftIcon={<LogIn className="w-4 h-4" />}
         >
@@ -118,7 +118,7 @@ export function JobsStatusChecker() {
         <Inbox className="w-10 h-10 text-gray-300 mx-auto" />
         <p className="text-sm text-gray-500">{t('noRequests')}</p>
         <Button
-          className="!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark focus:!ring-rmc-green"
           onClick={() => router.push(`/${locale}/services/jobs/apply`)}
         >
           {t('applyNow')}
@@ -216,7 +216,7 @@ function ApplicationDetail({
         <StateBanner tone="gray" icon={<Ban className="w-6 h-6" />} title={t('banner.cancelledTitle')} text={t('banner.cancelledText')} />
       )}
 
-      <div className="rounded-2xl bg-emerald-950 text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
+      <div className="rounded-2xl bg-rmc-green-deep text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/25">
             <Briefcase className="w-6 h-6 text-white" strokeWidth={2.25} />
@@ -246,8 +246,8 @@ function ApplicationDetail({
                   <span
                     className={cn(
                       'relative z-10 w-8 h-8 shrink-0 rounded-full flex items-center justify-center ring-4 ring-white',
-                      done && 'bg-emerald-600 text-white',
-                      active && 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md',
+                      done && 'bg-rmc-green text-white',
+                      active && 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md',
                       !done && !active && 'bg-gray-100 text-gray-400',
                     )}
                   >
@@ -255,7 +255,7 @@ function ApplicationDetail({
                   </span>
                   <div className={cn('pt-1 flex-1', !done && !active && 'opacity-50')}>
                     <div className="flex items-center justify-between gap-2">
-                      <p className={cn('font-semibold', active ? 'text-emerald-700' : 'text-gray-900')}>
+                      <p className={cn('font-semibold', active ? 'text-rmc-green-dark' : 'text-gray-900')}>
                         {t(`stages.${stage}`)}
                       </p>
                       {date && <span className="text-xs text-gray-400 shrink-0">{date}</span>}
@@ -361,7 +361,7 @@ function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; on
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
       <div>
         <h3 className="font-bold text-gray-900 flex items-center gap-2">
-          <Send className="w-4 h-4 text-emerald-500" /> {t('respondTitle')}
+          <Send className="w-4 h-4 text-rmc-green" /> {t('respondTitle')}
         </h3>
         <p className="text-xs text-gray-400 mt-1">{t('respondSubtitle')}</p>
       </div>
@@ -402,7 +402,7 @@ function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; on
         </div>
       )}
 
-      <button type="button" onClick={addDoc} className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+      <button type="button" onClick={addDoc} className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark">
         <Plus className="w-4 h-4" /> {t('respondAddDoc')}
       </button>
 
@@ -412,7 +412,7 @@ function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; on
         <Button
           onClick={submit}
           isLoading={submitting}
-          className="!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark focus:!ring-rmc-green"
           leftIcon={!submitting ? <Send className="w-4 h-4" /> : undefined}
         >
           {submitting ? t('respondSubmitting') : t('respondSubmit')}

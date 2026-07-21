@@ -18,8 +18,8 @@ const pillars: Pillar[] = [
     arabic: 'الشَّهَادَة',
     name: 'Shahada',
     description: 'Declaration of faith — there is no god but Allah, and Muhammad is His messenger.',
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 border-emerald-100 hover:border-emerald-300',
+    color: 'text-rmc-green',
+    bgColor: 'bg-rmc-green-light border-rmc-green-light hover:border-rmc-green',
   },
   {
     number: '٢',

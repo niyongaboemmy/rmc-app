@@ -34,7 +34,7 @@ interface PaymentCallbackEvent {
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
   pending:    { label: 'Pending',    icon: Clock,         color: 'text-amber-600',   bg: 'bg-amber-50 border-amber-200' },
-  successful: { label: 'Successful', icon: CheckCircle2,  color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
+  successful: { label: 'Successful', icon: CheckCircle2,  color: 'text-rmc-green', bg: 'bg-rmc-green-light border-rmc-green' },
   failed:     { label: 'Failed',     icon: XCircle,       color: 'text-red-600',     bg: 'bg-red-50 border-red-200' },
   cancelled:  { label: 'Cancelled',  icon: XCircle,       color: 'text-slate-500',   bg: 'bg-slate-50 border-slate-200' },
 };
@@ -598,14 +598,14 @@ export default function PaymentTestingTab({ methods, types }: Props) {
       <div className="space-y-6">
 
         {/* Balance banner */}
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
-          <Wallet className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-rmc-green-light to-teal-50 border border-rmc-green">
+          <Wallet className="w-5 h-5 text-rmc-green shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-emerald-700 font-medium uppercase tracking-wide">IntouchPay Account Balance</p>
+            <p className="text-xs text-rmc-green-dark font-medium uppercase tracking-wide">IntouchPay Account Balance</p>
             {loadingBalance ? (
               <p className="text-sm text-slate-400 mt-0.5">Loading…</p>
             ) : balance?.success ? (
-              <p className="text-lg font-bold text-emerald-800">{balance.balance} RWF</p>
+              <p className="text-lg font-bold text-rmc-green-dark">{balance.balance} RWF</p>
             ) : (
               <p className="text-sm text-slate-500 mt-0.5">Could not retrieve balance</p>
             )}
@@ -613,7 +613,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
           <button
             onClick={loadBalance}
             disabled={loadingBalance}
-            className="shrink-0 p-2 rounded-lg hover:bg-emerald-100 text-emerald-600 transition-colors"
+            className="shrink-0 p-2 rounded-lg hover:bg-rmc-green-light text-rmc-green transition-colors"
           >
             <RefreshCw className={cn('w-4 h-4', loadingBalance && 'animate-spin')} />
           </button>

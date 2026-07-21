@@ -26,7 +26,7 @@ export default async function GoodConductStatusPage({
             className="object-cover object-center"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-indigo-950/70 to-black/55" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-rmc-green-deep/70 to-black/55" />
           <div className="absolute inset-0 pattern-islamic opacity-25" />
           <div className="relative max-w-4xl mx-auto text-center w-full">
             <div className="flex justify-center mb-4 pt-24">

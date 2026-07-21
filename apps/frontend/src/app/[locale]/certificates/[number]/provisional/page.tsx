@@ -93,7 +93,7 @@ export default function ProvisionalCertificatePage() {
   if (phase === 'loading' || phase === 'building') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-6 h-6 text-rose-500 animate-spin" />
+        <Loader2 className="w-6 h-6 text-rmc-green animate-spin" />
         <p className="text-sm text-gray-500">
           {phase === 'loading' ? 'Loading your certificate…' : 'Preparing your provisional certificate…'}
         </p>
@@ -124,7 +124,7 @@ export default function ProvisionalCertificatePage() {
         </p>
         <Link
           href={`/${locale}/services/marriage/status?id=${number}`}
-          className="text-sm text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1"
+          className="text-sm text-rmc-green hover:text-rmc-green-dark font-medium flex items-center gap-1"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Check application status
         </Link>
@@ -145,7 +145,7 @@ export default function ProvisionalCertificatePage() {
         </p>
         <button
           onClick={() => setPhase('building')}
-          className="text-sm text-rose-600 hover:text-rose-700 font-medium"
+          className="text-sm text-rmc-green hover:text-rmc-green-dark font-medium"
         >
           Try again
         </button>
@@ -175,7 +175,7 @@ export default function ProvisionalCertificatePage() {
           </button>
           <button
             onClick={handleDownload}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium transition-colors"
           >
             <Download className="w-4 h-4" /> Download
           </button>

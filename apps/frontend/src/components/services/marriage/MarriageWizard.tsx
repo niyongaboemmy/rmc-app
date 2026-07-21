@@ -167,7 +167,7 @@ function PartyPhonesForm({ applicationId }: { applicationId: string }) {
   return (
     <div className="max-w-sm mx-auto mt-6">
       <button onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-dashed border-gray-300 hover:border-rose-400 text-sm text-gray-600 hover:text-rose-700 transition-colors">
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-dashed border-gray-300 hover:border-rmc-green text-sm text-gray-600 hover:text-rmc-green-dark transition-colors">
         <span className="flex items-center gap-2"><Phone className="w-4 h-4" /> Send confirmation requests to parties</span>
         {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </button>
@@ -184,7 +184,7 @@ function PartyPhonesForm({ applicationId }: { applicationId: string }) {
           ))}
           {err && <p className="text-xs text-red-600">{err}</p>}
           <button onClick={handleSend} disabled={sending}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-sm font-semibold transition-colors">
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold transition-colors">
             {sending ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
             {sending ? 'Sending…' : 'Send Confirmation Requests'}
           </button>
@@ -206,7 +206,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="h-1 bg-rose-500" />
+      <div className="h-1 bg-rmc-green" />
       <div className="px-6 sm:px-10 py-10 text-center">
         <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-green-100 flex items-center justify-center">
           <CheckCircle2 className="w-7 h-7 text-green-600" />
@@ -220,7 +220,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
           <div className="flex items-center justify-center gap-2.5">
             <span className="font-mono text-lg font-bold text-gray-900">{app.trackingCode}</span>
             <button type="button" onClick={copyId}
-              className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 flex items-center justify-center hover:border-rose-300 hover:text-rose-600 transition-colors"
+              className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 flex items-center justify-center hover:border-rmc-green hover:text-rmc-green transition-colors"
               aria-label="Copy tracking code">
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
@@ -230,7 +230,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
         {app.paymentStatus === 'paid' && (
           <Link
             href={`/${locale}/certificates/${app.applicationNumber}/provisional`}
-            className="group max-w-md mx-auto mb-2 flex items-center gap-4 rounded-2xl bg-gradient-to-br from-green-600 to-emerald-700 text-white p-4 shadow-md hover:shadow-lg transition-shadow text-left"
+            className="group max-w-md mx-auto mb-2 flex items-center gap-4 rounded-2xl bg-gradient-to-br from-green-600 to-rmc-green-dark text-white p-4 shadow-md hover:shadow-lg transition-shadow text-left"
           >
             <div className="w-11 h-11 rounded-xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center shrink-0">
               <FileText className="w-5 h-5" />
@@ -244,7 +244,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
         <PartyPhonesForm applicationId={app.id} />
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
           <Link href={`/${locale}/services/marriage/status`}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors">
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors">
             <Search className="w-4 h-4" /> Track application
           </Link>
           <Button variant="outline" onClick={onReset} className="text-sm">New application</Button>
@@ -270,11 +270,11 @@ function PaymentWaitingScreen({
     <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
       <div className="relative w-24 h-24">
         {[0, 1, 2].map((i) => (
-          <span key={i} className="absolute inset-0 rounded-full border-2 border-rose-400 opacity-0"
+          <span key={i} className="absolute inset-0 rounded-full border-2 border-rmc-green opacity-0"
             style={{ animation: `_momo-ripple 2s ease-out ${i * 0.6}s infinite` }} />
         ))}
-        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-rose-50 border-2 border-rose-200">
-          <Smartphone className="w-10 h-10 text-rose-500" />
+        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-rmc-green-light border-2 border-rmc-green">
+          <Smartphone className="w-10 h-10 text-rmc-green" />
         </div>
       </div>
 
@@ -299,7 +299,7 @@ function PaymentWaitingScreen({
       </div>
 
       <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
+        <Loader2 className="w-4 h-4 animate-spin text-rmc-green" />
         Checking payment status…
       </div>
 
@@ -311,11 +311,11 @@ function PaymentWaitingScreen({
           'flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors',
           isResending
             ? 'border-gray-200 text-gray-400 cursor-not-allowed'
-            : 'border-rose-200 text-rose-600 hover:bg-rose-50',
+            : 'border-rmc-green text-rmc-green hover:bg-rmc-green-light',
         )}
       >
         {isResending
-          ? <><span className="w-4 h-4 border-2 border-rose-300 border-t-rose-600 rounded-full animate-spin" /> Sending…</>
+          ? <><span className="w-4 h-4 border-2 border-rmc-green border-t-rmc-green rounded-full animate-spin" /> Sending…</>
           : <><RefreshCw className="w-4 h-4" /> Resend MoMo prompt</>
         }
       </button>
@@ -744,7 +744,7 @@ export function MarriageWizard() {
   if (paymentPhase === 'waiting' && pendingDraftApp) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="h-1 bg-rose-500" />
+        <div className="h-1 bg-rmc-green" />
         <PaymentWaitingScreen
           applicationNumber={pendingDraftApp.applicationNumber}
           phone={formData.mobilePhone ?? ''}

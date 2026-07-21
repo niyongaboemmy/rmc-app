@@ -10,7 +10,7 @@ const PRAYERS = [
   { key: 'sunrise', label: 'Sunrise', icon: Sunrise,  color: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-100'  },
   { key: 'dhuhr',   label: 'Dhuhr',   icon: Sun,      color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100' },
   { key: 'asr',     label: 'Asr',     icon: CloudSun, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
-  { key: 'maghrib', label: 'Maghrib', icon: Sunset,   color: 'text-rose-600',   bg: 'bg-rose-50',   border: 'border-rose-100'   },
+  { key: 'maghrib', label: 'Maghrib', icon: Sunset,   color: 'text-rmc-green',   bg: 'bg-rmc-green-light',   border: 'border-rmc-green-light'   },
   { key: 'isha',    label: 'Isha',    icon: Star,     color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
 ] as const;
 

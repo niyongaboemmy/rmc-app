@@ -111,7 +111,7 @@ function Section({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-        <span className="text-rose-500">{icon}</span>
+        <span className="text-rmc-green">{icon}</span>
         {title}
       </h3>
       {children}
@@ -646,7 +646,7 @@ function AdminMarriageDetailContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <RefreshCw className="w-6 h-6 text-rose-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-rmc-green animate-spin" />
         <span className="ml-2 text-gray-500">Loading application...</span>
       </div>
     );
@@ -658,7 +658,7 @@ function AdminMarriageDetailContent() {
         <p className="text-red-600 font-medium">{error ?? 'Application not found'}</p>
         <Link
           href={`/${locale}/admin/marriage`}
-          className="text-rose-600 text-sm mt-2 inline-block hover:underline"
+          className="text-rmc-green text-sm mt-2 inline-block hover:underline"
         >
           Back to applications
         </Link>
@@ -688,14 +688,14 @@ function AdminMarriageDetailContent() {
       <div>
         <Link
           href={`/${locale}/admin/marriage`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-rose-700 mb-4 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-rmc-green-dark mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to applications
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Heart className="w-5 h-5 text-rose-600" />
+              <Heart className="w-5 h-5 text-rmc-green" />
               <h1 className="text-xl font-bold text-gray-900 font-mono">{app.applicationNumber}</h1>
             </div>
             <p className="text-gray-500 text-sm">
@@ -791,7 +791,7 @@ function AdminMarriageDetailContent() {
                 />
               </div>
               <div>
-                <p className="text-xs font-semibold text-rose-700 uppercase tracking-wide mb-2">
+                <p className="text-xs font-semibold text-rmc-green-dark uppercase tracking-wide mb-2">
                   Bride
                 </p>
                 <InfoRow
@@ -984,7 +984,7 @@ function AdminMarriageDetailContent() {
                         return (
                           <div
                             key={doc.id}
-                            className="group relative flex flex-col rounded-xl border border-gray-100 overflow-hidden hover:border-rose-300 hover:shadow-md transition-all"
+                            className="group relative flex flex-col rounded-xl border border-gray-100 overflow-hidden hover:border-rmc-green hover:shadow-md transition-all"
                           >
                             {/* Thumbnail / icon area — click to preview */}
                             <button
@@ -1081,7 +1081,7 @@ function AdminMarriageDetailContent() {
               <ol className="relative space-y-4">
                 {[...app.statusHistory].reverse().map((h, i) => (
                   <li key={h.id} className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-rose-400 mt-2 shrink-0" />
+                    <div className="w-2 h-2 rounded-full bg-rmc-green mt-2 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {h.fromStatus ? `${STATUS_LABELS[h.fromStatus] ?? h.fromStatus} → ` : ''}
@@ -1104,7 +1104,7 @@ function AdminMarriageDetailContent() {
           {/* Payment */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-              <DollarSign className="w-4 h-4 text-rose-500" /> Payment
+              <DollarSign className="w-4 h-4 text-rmc-green" /> Payment
             </h3>
             <div className="space-y-2 text-sm mb-4">
               <div className="flex justify-between">
@@ -1228,7 +1228,7 @@ function AdminMarriageDetailContent() {
           {/* Actions */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-semibold text-gray-900 mb-4 text-sm flex items-center gap-2">
-              <Send className="w-4 h-4 text-rose-500" /> Actions
+              <Send className="w-4 h-4 text-rmc-green" /> Actions
             </h3>
             <div className="space-y-2.5">
               {canApprove && permApprove && (
@@ -1301,7 +1301,7 @@ function AdminMarriageDetailContent() {
                     )
                   }
                   disabled={actionLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rmc-green-dark disabled:opacity-60 transition-colors"
                 >
                   {activeAction === 'completed' ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1321,7 +1321,7 @@ function AdminMarriageDetailContent() {
                         ? 'Attach the signed provisional certificate first to enable this'
                         : undefined
                     }
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rmc-green-dark disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                   >
                     {activeAction === 'certificate' ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1345,7 +1345,7 @@ function AdminMarriageDetailContent() {
           {canSchedule && permApprove && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-rose-500" /> Schedule Ceremony
+                <Calendar className="w-4 h-4 text-rmc-green" /> Schedule Ceremony
               </h3>
               <input
                 type="datetime-local"
@@ -1356,7 +1356,7 @@ function AdminMarriageDetailContent() {
               <button
                 onClick={handleSchedule}
                 disabled={!scheduleDate || actionLoading}
-                className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rmc-green-dark disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {activeAction === 'schedule' ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1376,7 +1376,7 @@ function AdminMarriageDetailContent() {
             return (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
-                  <FileSignature className="w-4 h-4 text-rose-500" /> Signed Provisional Certificate
+                  <FileSignature className="w-4 h-4 text-rmc-green" /> Signed Provisional Certificate
                 </h3>
                 {signedDoc ? (
                   <div className="space-y-2">
@@ -1412,8 +1412,8 @@ function AdminMarriageDetailContent() {
                       className={cn(
                         'flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors',
                         signedProvisionalFile
-                          ? 'border-rose-300 bg-rose-50'
-                          : 'border-gray-200 hover:border-rose-300',
+                          ? 'border-rmc-green bg-rmc-green-light'
+                          : 'border-gray-200 hover:border-rmc-green',
                       )}
                     >
                       <FileSignature className="w-6 h-6 text-gray-300" />
@@ -1432,7 +1432,7 @@ function AdminMarriageDetailContent() {
                     <button
                       onClick={handleUploadSignedProvisional}
                       disabled={!signedProvisionalFile || actionLoading}
-                      className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rmc-green-dark disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                     >
                       {activeAction === 'signed-provisional' ? (
                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1454,7 +1454,7 @@ function AdminMarriageDetailContent() {
             permManage && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-rose-500" /> Marriage Photo
+                  <Camera className="w-4 h-4 text-rmc-green" /> Marriage Photo
                 </h3>
                 {app.weddingPhotoUrl ? (
                   <div className="space-y-2">
@@ -1471,8 +1471,8 @@ function AdminMarriageDetailContent() {
                       className={cn(
                         'flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors',
                         weddingPhotoFile
-                          ? 'border-rose-300 bg-rose-50'
-                          : 'border-gray-200 hover:border-rose-300',
+                          ? 'border-rmc-green bg-rmc-green-light'
+                          : 'border-gray-200 hover:border-rmc-green',
                       )}
                     >
                       <ImageIcon className="w-6 h-6 text-gray-300" />
@@ -1491,7 +1491,7 @@ function AdminMarriageDetailContent() {
                     <button
                       onClick={handleUploadWeddingPhoto}
                       disabled={!weddingPhotoFile || actionLoading}
-                      className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rmc-green-dark disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                     >
                       {activeAction === 'wedding-photo' ? (
                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1508,7 +1508,7 @@ function AdminMarriageDetailContent() {
           {/* Party Confirmations */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-              <CheckCheck className="w-4 h-4 text-rose-500" /> Party Confirmations
+              <CheckCheck className="w-4 h-4 text-rmc-green" /> Party Confirmations
             </h3>
             {loadingParties ? (
               <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
@@ -1570,15 +1570,15 @@ function AdminMarriageDetailContent() {
 
           {/* Certificate */}
           {app.status === 'closed' && app.certificateUrl && (
-            <div className="bg-purple-50 rounded-2xl border border-purple-200 p-5">
-              <h3 className="font-semibold text-purple-900 mb-2 text-sm flex items-center gap-2">
+            <div className="bg-rmc-green-light rounded-2xl border border-rmc-green p-5">
+              <h3 className="font-semibold text-rmc-green-dark mb-2 text-sm flex items-center gap-2">
                 <FileText className="w-4 h-4" /> Certificate
               </h3>
               <a
                 href={app.certificateUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-rmc-green-dark transition-colors"
               >
                 <Eye className="w-4 h-4" /> View Certificate
               </a>

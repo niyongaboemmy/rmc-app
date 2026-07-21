@@ -292,7 +292,7 @@ function BlogManager() {
                   <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-7 h-7 text-gray-300" /></div>
                 )}
                 <span className={`absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
-                  post.status === 'published' ? 'bg-emerald-500/90 text-white' : 'bg-gray-800/80 text-white'
+                  post.status === 'published' ? 'bg-rmc-green/90 text-white' : 'bg-gray-800/80 text-white'
                 }`}>
                   {post.status === 'published' ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                   {post.status}
@@ -587,7 +587,7 @@ function ReviewStep({ form, lang, onLangChange }: { form: BlogPostItem; lang: La
             <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-8 h-8 text-gray-300" /></div>
           )}
           <span className={`absolute top-3 left-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
-            form.status === 'published' ? 'bg-emerald-500/90 text-white' : 'bg-gray-800/80 text-white'
+            form.status === 'published' ? 'bg-rmc-green/90 text-white' : 'bg-gray-800/80 text-white'
           }`}>
             {form.status === 'published' ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
             {form.status}

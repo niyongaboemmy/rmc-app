@@ -109,7 +109,7 @@ export function JobsTrackByNumber() {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-7 space-y-4">
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" /> {t('trackTitle')}
+          <ShieldCheck className="w-4 h-4 text-rmc-green" /> {t('trackTitle')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('trackSubtitle')}</p>
       </div>
@@ -128,7 +128,7 @@ export function JobsTrackByNumber() {
           <button
             onClick={requestOtp}
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold disabled:opacity-50 transition-colors"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? t('trackSending') : t('trackSendCode')}
@@ -139,7 +139,7 @@ export function JobsTrackByNumber() {
       {/* Step 2 — OTP */}
       {phase === 'otp' && (
         <div className="space-y-3">
-          <div className="rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm px-4 py-3 flex gap-2">
+          <div className="rounded-xl bg-rmc-green-light border border-rmc-green-light text-rmc-green-dark text-sm px-4 py-3 flex gap-2">
             <KeyRound className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{phoneHint ? t('trackOtpSentTo', { phone: phoneHint }) : t('trackOtpSent')}</span>
           </div>
@@ -155,7 +155,7 @@ export function JobsTrackByNumber() {
           <button
             onClick={verifyOtp}
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold disabled:opacity-50 transition-colors"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             {loading ? t('trackVerifying') : t('trackVerify')}
@@ -167,7 +167,7 @@ export function JobsTrackByNumber() {
             <button
               onClick={requestOtp}
               disabled={resendIn > 0 || loading}
-              className="font-medium text-emerald-600 hover:text-emerald-700 disabled:text-gray-400"
+              className="font-medium text-rmc-green hover:text-rmc-green-dark disabled:text-gray-400"
             >
               {resendIn > 0 ? t('trackResendIn', { s: resendIn }) : t('trackResend')}
             </button>
@@ -230,15 +230,15 @@ function TrackingResult({
               <li key={stage} className="relative flex gap-3 pb-5 last:pb-0">
                 <span className={cn(
                   'relative z-10 w-6 h-6 shrink-0 rounded-full flex items-center justify-center ring-4 ring-gray-50',
-                  done && 'bg-emerald-600 text-white',
-                  active && 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white',
+                  done && 'bg-rmc-green text-white',
+                  active && 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white',
                   !done && !active && 'bg-gray-200 text-gray-400',
                 )}>
                   {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
                 </span>
                 <div className={cn('pt-0.5 flex-1', !done && !active && 'opacity-50')}>
                   <div className="flex items-center justify-between gap-2">
-                    <p className={cn('text-sm font-semibold', active ? 'text-emerald-700' : 'text-gray-900')}>{t(`stages.${stage}`)}</p>
+                    <p className={cn('text-sm font-semibold', active ? 'text-rmc-green-dark' : 'text-gray-900')}>{t(`stages.${stage}`)}</p>
                     {date && <span className="text-xs text-gray-400 shrink-0">{date}</span>}
                   </div>
                   <p className="text-gray-500 text-xs mt-0.5">{t(`stageDesc.${stage}`)}</p>
@@ -249,7 +249,7 @@ function TrackingResult({
         </ol>
       )}
 
-      <button onClick={onReset} className="text-xs font-medium text-emerald-600 hover:text-emerald-700">{t('trackAnother')}</button>
+      <button onClick={onReset} className="text-xs font-medium text-rmc-green hover:text-rmc-green-dark">{t('trackAnother')}</button>
     </div>
   );
 }

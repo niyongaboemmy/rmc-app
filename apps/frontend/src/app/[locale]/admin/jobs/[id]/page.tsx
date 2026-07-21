@@ -56,7 +56,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-        <span className="text-emerald-500">{icon}</span>
+        <span className="text-rmc-green">{icon}</span>
         {title}
       </h3>
       {children}
@@ -97,8 +97,8 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
   return (
     <>
       <div className="flex items-center gap-3 py-2.5 border-b border-gray-100 last:border-0">
-        <span className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-          <FileText className="w-4 h-4 text-emerald-600" />
+        <span className="w-9 h-9 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0">
+          <FileText className="w-4 h-4 text-rmc-green" />
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-500">{label}</p>
@@ -110,7 +110,7 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
           rel="noopener noreferrer"
           title="Open in new tab"
           aria-label={`Open ${label} in a new tab`}
-          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors shrink-0"
+          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors shrink-0"
         >
           <ExternalLink className="w-4 h-4" />
         </a>
@@ -119,7 +119,7 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
           disabled={downloading}
           title="Download"
           aria-label={`Download ${label}`}
-          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors shrink-0 disabled:opacity-50"
+          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors shrink-0 disabled:opacity-50"
         >
           {downloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
         </button>
@@ -238,7 +238,7 @@ function AdminJobDetailContent() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-24"><RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
+    return <div className="flex items-center justify-center py-24"><RefreshCw className="w-6 h-6 text-rmc-green animate-spin" /></div>;
   }
   if (!app) {
     return <div className="text-center py-24"><p className="text-gray-500">Application not found.</p></div>;
@@ -258,8 +258,8 @@ function AdminJobDetailContent() {
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-            <Briefcase className="w-5 h-5 text-emerald-700" />
+          <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+            <Briefcase className="w-5 h-5 text-rmc-green-dark" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{app.fullNames}</h1>
@@ -305,7 +305,7 @@ function AdminJobDetailContent() {
               <ol className="relative space-y-4">
                 {[...app.statusHistory].reverse().map((h) => (
                   <li key={h.id} className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2 shrink-0" />
+                    <div className="w-2 h-2 rounded-full bg-rmc-green mt-2 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {h.fromStatus ? `${STATUS_LABELS[h.fromStatus] ?? h.fromStatus} → ` : ''}
@@ -325,7 +325,7 @@ function AdminJobDetailContent() {
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-              <AlertTriangle className="w-4 h-4 text-emerald-500" /> Review Decision
+              <AlertTriangle className="w-4 h-4 text-rmc-green" /> Review Decision
             </h3>
 
             {!canManage ? (

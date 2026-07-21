@@ -91,7 +91,7 @@ export default function GoodConductCertificatePage() {
   if (phase === 'loading' || phase === 'building') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+        <Loader2 className="w-6 h-6 text-rmc-green animate-spin" />
         <p className="text-sm text-gray-500">
           {phase === 'loading' ? 'Loading certificate…' : 'Preparing your certificate…'}
         </p>
@@ -111,7 +111,7 @@ export default function GoodConductCertificatePage() {
         </p>
         <Link
           href={`/${locale}/services/good-conduct/status`}
-          className="text-sm text-indigo-700 hover:text-indigo-800 font-medium flex items-center gap-1"
+          className="text-sm text-rmc-green-dark hover:text-rmc-green-dark font-medium flex items-center gap-1"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Check request status
         </Link>
@@ -129,7 +129,7 @@ export default function GoodConductCertificatePage() {
         <p className="text-gray-500 text-sm text-center max-w-sm">
           Something went wrong while preparing the document. Please try again in a moment.
         </p>
-        <button onClick={() => setPhase('building')} className="text-sm text-indigo-700 hover:text-indigo-800 font-medium">
+        <button onClick={() => setPhase('building')} className="text-sm text-rmc-green-dark hover:text-rmc-green-dark font-medium">
           Try again
         </button>
       </div>
@@ -155,15 +155,15 @@ export default function GoodConductCertificatePage() {
           </button>
           <button
             onClick={handleDownload}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rmc-green-dark hover:bg-rmc-green-dark text-white text-sm font-medium transition-colors"
           >
             <Download className="w-4 h-4" /> Download
           </button>
         </div>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-5 h-5 text-indigo-700" />
+          <div className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-5 h-5 text-rmc-green-dark" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900 leading-tight">Good Conduct Certificate</h1>
@@ -185,7 +185,7 @@ export default function GoodConductCertificatePage() {
 
         <p className="text-xs text-gray-400 text-center mt-4 max-w-2xl mx-auto">
           This certificate is issued by the Rwanda Muslim Community (RMC). Verify it at{' '}
-          <span className="font-mono text-indigo-700">
+          <span className="font-mono text-rmc-green-dark">
             {data?.verifyUrl ?? `rwandamuslim.org/verify/good-conduct/${data?.certificateNumber}`}
           </span>
           .

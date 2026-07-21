@@ -91,8 +91,8 @@ function AdminPostingsContent() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-          <Briefcase className="w-5 h-5 text-emerald-700" />
+        <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+          <Briefcase className="w-5 h-5 text-rmc-green-dark" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Job Postings</h1>
@@ -119,7 +119,7 @@ function AdminPostingsContent() {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" /></div>
+          <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 text-rmc-green animate-spin" /></div>
         ) : items.length === 0 ? (
           <div className="text-center py-20">
             <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -164,12 +164,12 @@ function AdminPostingsContent() {
                       {canManage && (
                         <div className="inline-flex items-center gap-1.5 justify-end">
                           <button onClick={() => setEditing(p)} title="Edit"
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors">
+                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button onClick={() => toggleStatus(p)} disabled={busyId === p.id}
                             title={p.status === 'open' ? 'Close (stop accepting)' : 'Publish (open)'}
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors disabled:opacity-50">
+                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors disabled:opacity-50">
                             {busyId === p.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : p.status === 'open' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                           <button onClick={() => { setDeleteTarget(p); setError(null); }} title="Delete"

@@ -22,13 +22,13 @@ function RequirementsView({ locale }: { locale: string }) {
         <p className="text-sm text-gray-500">{t('signInPrompt')}</p>
         <button
           onClick={() => router.push(`/${locale}/login?redirect=/services/scholarship/apply`)}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-violet-500/20"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors shadow-lg shadow-rmc-green/20"
         >
           <LogIn className="w-4 h-4" /> {t('signInToApply')}
         </button>
         <p className="text-xs text-gray-400">
           {t('noAccount')}{' '}
-          <Link href={`/${locale}/register`} className="text-violet-600 hover:underline font-medium">
+          <Link href={`/${locale}/register`} className="text-rmc-green hover:underline font-medium">
             {t('requestAccess')}
           </Link>
         </p>
@@ -113,13 +113,13 @@ export default function ScholarshipApplyPage() {
           className="object-cover object-center"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-violet-950/65 to-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/65 to-black/45" />
         <div className="absolute inset-0 pattern-islamic opacity-25" />
 
         <div className="relative flex-1 flex items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-8 pb-4">
           <div className="max-w-2xl mx-auto">
             <div className="flex justify-center mb-4 pt-24">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-violet-800 flex items-center justify-center shadow-xl shadow-violet-900/50 ring-1 ring-white/20">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark flex items-center justify-center shadow-xl shadow-rmc-green-dark/50 ring-1 ring-white/20">
                 <GraduationCap className="w-7 h-7 text-white" strokeWidth={2.25} />
               </div>
             </div>

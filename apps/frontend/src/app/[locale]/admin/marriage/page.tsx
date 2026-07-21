@@ -128,14 +128,14 @@ function AdminMarriageContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Heart className="w-6 h-6 text-rose-600" />
+            <Heart className="w-6 h-6 text-rmc-green" />
             Marriage Applications
           </h1>
           <p className="text-gray-500 text-sm mt-1">Manage Nikah service applications</p>
         </div>
         <button
           onClick={fetchApps}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:border-rose-300 hover:text-rose-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:border-rmc-green hover:text-rmc-green-dark transition-colors"
         >
           <RefreshCw className="w-4 h-4" /> Refresh
         </button>
@@ -148,7 +148,7 @@ function AdminMarriageContent() {
             { label: 'Total Applications', value: stats.total, icon: <Users className="w-5 h-5" />, color: 'text-blue-600 bg-blue-50' },
             { label: 'Awaiting Review', value: pending, icon: <Clock className="w-5 h-5" />, color: 'text-yellow-600 bg-yellow-50' },
             { label: 'Approved', value: approved, icon: <CheckCircle2 className="w-5 h-5" />, color: 'text-green-600 bg-green-50' },
-            { label: 'Revenue', value: `${Number(stats.revenue).toLocaleString()} RWF`, icon: <DollarSign className="w-5 h-5" />, color: 'text-rose-600 bg-rose-50' },
+            { label: 'Revenue', value: `${Number(stats.revenue).toLocaleString()} RWF`, icon: <DollarSign className="w-5 h-5" />, color: 'text-rmc-green bg-rmc-green-light' },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mb-3', stat.color)}>
@@ -199,7 +199,7 @@ function AdminMarriageContent() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-6 h-6 text-rose-500 animate-spin" />
+            <RefreshCw className="w-6 h-6 text-rmc-green animate-spin" />
             <span className="ml-2 text-gray-500">Loading applications...</span>
           </div>
         ) : apps.length === 0 ? (
@@ -225,9 +225,9 @@ function AdminMarriageContent() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {apps.map((app) => (
-                    <tr key={app.id} className="hover:bg-rose-50/20 transition-colors">
+                    <tr key={app.id} className="hover:bg-rmc-green-light/20 transition-colors">
                       <td className="px-5 py-4">
-                        <p className="font-mono text-xs font-semibold text-rose-700">{app.applicationNumber}</p>
+                        <p className="font-mono text-xs font-semibold text-rmc-green-dark">{app.applicationNumber}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{app.district ?? '—'}</p>
                       </td>
                       <td className="px-4 py-4">
@@ -256,7 +256,7 @@ function AdminMarriageContent() {
                       <td className="px-4 py-4">
                         <Link
                           href={`/${locale}/admin/marriage/${app.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-800 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-rmc-green hover:text-rmc-green-dark transition-colors"
                         >
                           Review <ChevronRight className="w-3.5 h-3.5" />
                         </Link>
@@ -277,14 +277,14 @@ function AdminMarriageContent() {
                   <button
                     onClick={() => setPage((p) => Math.max(p - 1, 1))}
                     disabled={page === 1}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rose-300 transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green transition-colors"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setPage((p) => Math.min(p + 1, pages))}
                     disabled={page === pages}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rose-300 transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green transition-colors"
                   >
                     Next
                   </button>

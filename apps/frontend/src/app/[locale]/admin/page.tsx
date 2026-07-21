@@ -67,7 +67,7 @@ function StatCard({ label, value, icon: Icon, iconBg, iconColor, trend, href, ac
         </div>
         {trend !== undefined && (
           <span className={`flex items-center gap-0.5 text-[11px] font-semibold ${
-            trend > 0 ? 'text-emerald-600' : trend < 0 ? 'text-red-500' : 'text-gray-400'
+            trend > 0 ? 'text-rmc-green' : trend < 0 ? 'text-red-500' : 'text-gray-400'
           }`}>
             {trend > 0 ? <TrendingUp className="w-3 h-3" /> : trend < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
             {trend !== 0 ? `${Math.abs(trend)}%` : 'flat'}
@@ -122,7 +122,7 @@ interface ActivityItemProps {
 }
 
 const STATUS_STYLES = {
-  approved: 'text-emerald-600 bg-emerald-50',
+  approved: 'text-rmc-green bg-rmc-green-light',
   pending:  'text-amber-600 bg-amber-50',
   rejected: 'text-red-500 bg-red-50',
 };
@@ -153,8 +153,8 @@ function StatusRow({ label, ok }: { label: string; ok: boolean }) {
     <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
       <span className="text-[12px] text-gray-600">{label}</span>
       <div className="flex items-center gap-1.5">
-        <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
-        <span className={`text-[11px] font-medium ${ok ? 'text-emerald-600' : 'text-red-500'}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-rmc-green' : 'bg-red-400'}`} />
+        <span className={`text-[11px] font-medium ${ok ? 'text-rmc-green' : 'text-red-500'}`}>
           {ok ? 'Operational' : 'Down'}
         </span>
       </div>
@@ -254,7 +254,7 @@ function AdminDashboardContent() {
   const STAT_CARDS: Omit<StatProps, 'active'>[] = [
     { label: t('dashboard.totalMembers'),    value: stats.totalMembers,    icon: Users,        iconBg: 'bg-violet-50',       iconColor: 'text-violet-500',  trend: 12, href: `/${locale}/admin/members` },
     { label: t('dashboard.pendingApproval'), value: stats.pendingMembers,  icon: Clock,        iconBg: 'bg-amber-50',        iconColor: 'text-amber-500',   trend: -3, href: `/${locale}/admin/members` },
-    { label: t('dashboard.approved'),        value: stats.approvedMembers, icon: CheckCircle2, iconBg: 'bg-emerald-50',      iconColor: 'text-emerald-500', trend: 8                                   },
+    { label: t('dashboard.approved'),        value: stats.approvedMembers, icon: CheckCircle2, iconBg: 'bg-rmc-green-light',      iconColor: 'text-rmc-green', trend: 8                                   },
     { label: t('dashboard.rejected'),        value: stats.rejectedMembers, icon: XCircle,      iconBg: 'bg-red-50',          iconColor: 'text-red-400',     trend: 0                                   },
     { label: t('dashboard.totalMosques'),    value: stats.totalMosques,    icon: Landmark,     iconBg: 'bg-sky-50',          iconColor: 'text-sky-500',               href: `/${locale}/admin/mosques` },
     { label: t('dashboard.totalUsers'),      value: stats.totalUsers,      icon: UserCheck,    iconBg: 'bg-green-50',        iconColor: 'text-green-600',             href: `/${locale}/admin/users`   },
@@ -411,8 +411,8 @@ function AdminDashboardContent() {
               <p className="text-[12px] font-semibold text-gray-700">All systems normal</p>
               <p className="text-[11px] text-gray-400 mt-0.5">Last checked just now</p>
             </div>
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-rmc-green bg-rmc-green-light px-2.5 py-1 rounded-full shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-rmc-green" />
               100% uptime
             </span>
           </div>

@@ -35,7 +35,7 @@ export default function JobOpeningDetailPage() {
       <Navbar />
 
       <section className="relative text-white overflow-hidden flex flex-col" style={{ minHeight: 'max(30vh, 240px)' }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 via-emerald-900 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-br from-rmc-green-dark via-rmc-green-dark to-black" />
         <div className="absolute inset-0 pattern-islamic opacity-20" />
         <div className="relative flex-1 flex items-center px-4 sm:px-6 lg:px-8 pt-24 pb-6">
           <div className="max-w-4xl mx-auto w-full">
@@ -58,12 +58,12 @@ export default function JobOpeningDetailPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         {loading ? (
-          <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-emerald-500 animate-spin" /></div>
+          <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-rmc-green animate-spin" /></div>
         ) : notFound || !posting ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
             <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
             <p className="font-semibold text-gray-900">{t('notFound')}</p>
-            <Link href={`/${locale}/services/jobs`} className="inline-block mt-4 text-emerald-600 hover:underline text-sm font-medium">{t('back')}</Link>
+            <Link href={`/${locale}/services/jobs`} className="inline-block mt-4 text-rmc-green hover:underline text-sm font-medium">{t('back')}</Link>
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-6">
@@ -87,7 +87,7 @@ export default function JobOpeningDetailPage() {
 
               {canApply ? (
                 <Link href={`/${locale}/services/jobs/apply?job=${posting.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-900/30 transition-all">
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-semibold hover:shadow-lg hover:shadow-rmc-green-dark/30 transition-all">
                   {t('applyNow')} <ArrowRight className="w-4 h-4" />
                 </Link>
               ) : (
@@ -116,7 +116,7 @@ function Section({ title, body }: { title: string; body: string }) {
 function Meta({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-emerald-500 shrink-0">{icon}</span>
+      <span className="text-rmc-green shrink-0">{icon}</span>
       <div className="min-w-0">
         <p className="text-[11px] text-gray-400 leading-none">{label}</p>
         <p className="text-sm font-medium text-gray-900 mt-0.5 truncate">{value}</p>

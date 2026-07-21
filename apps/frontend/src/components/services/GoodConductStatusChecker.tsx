@@ -91,7 +91,7 @@ export function GoodConductStatusChecker() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-rmc-green animate-spin" />
       </div>
     );
   }
@@ -189,7 +189,7 @@ function RequestDetail({
       </button>
 
       {isClosed && (
-        <div className="rounded-2xl bg-gradient-to-br from-green-600 to-emerald-700 text-white p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="rounded-2xl bg-gradient-to-br from-green-600 to-rmc-green-dark text-white p-6 flex flex-col sm:flex-row sm:items-center gap-4">
           <FileCheck className="w-8 h-8 shrink-0" />
           <div className="flex-1">
             <p className="font-bold">{t('certificateReadyTitle')}</p>
@@ -197,7 +197,7 @@ function RequestDetail({
           </div>
           <Link
             href={`/${locale}/certificates/good-conduct/${request.id}`}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-emerald-700 text-sm font-semibold hover:bg-emerald-50 transition-colors shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-rmc-green-dark text-sm font-semibold hover:bg-rmc-green-light transition-colors shrink-0"
           >
             <Download className="w-4 h-4" /> {t('downloadCertificate')}
           </Link>
@@ -233,7 +233,7 @@ function RequestDetail({
         <StateBanner tone="gray" icon={<Ban className="w-6 h-6" />} title={t('banner.cancelledTitle')} text={t('banner.cancelledText')} />
       )}
 
-      <div className="rounded-2xl bg-indigo-950 text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
+      <div className="rounded-2xl bg-rmc-green-deep text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/25">
             <ShieldCheck className="w-6 h-6 text-white" strokeWidth={2.25} />
@@ -268,8 +268,8 @@ function RequestDetail({
                   <span
                     className={cn(
                       'relative z-10 w-8 h-8 shrink-0 rounded-full flex items-center justify-center ring-4 ring-white',
-                      done && 'bg-indigo-600 text-white',
-                      active && 'bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-md',
+                      done && 'bg-rmc-green text-white',
+                      active && 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md',
                       !done && !active && 'bg-gray-100 text-gray-400',
                     )}
                   >
@@ -277,7 +277,7 @@ function RequestDetail({
                   </span>
                   <div className={cn('pt-1 flex-1', !done && !active && 'opacity-50')}>
                     <div className="flex items-center justify-between gap-2">
-                      <p className={cn('font-semibold', active ? 'text-indigo-700' : 'text-gray-900')}>
+                      <p className={cn('font-semibold', active ? 'text-rmc-green-dark' : 'text-gray-900')}>
                         {t(`stages.${stage}`)}
                       </p>
                       {date && <span className="text-xs text-gray-400 shrink-0">{date}</span>}

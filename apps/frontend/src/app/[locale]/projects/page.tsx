@@ -41,7 +41,7 @@ export default async function ProjectsComingSoonPage({
 
             {/* Coming Soon badge */}
             <div className="flex justify-center mb-3">
-              <span className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-emerald-200 text-[11px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-rmc-green text-[11px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-full">
                 <Clock className="w-3 h-3" /> {t('badge')}
               </span>
             </div>

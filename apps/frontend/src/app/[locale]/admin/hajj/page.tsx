@@ -391,7 +391,7 @@ function ReviewDrawer({
               className={cn(
                 'rounded-xl px-4 py-3 text-sm ring-1',
                 app.status === 'approved'
-                  ? 'bg-emerald-50 text-emerald-800 ring-emerald-100'
+                  ? 'bg-rmc-green-light text-rmc-green-dark ring-rmc-green-light'
                   : 'bg-red-50 text-red-800 ring-red-100',
               )}
             >
@@ -633,7 +633,7 @@ function DocumentCard({
               className={cn(
                 'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50',
                 doc.verified
-                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                  ? 'bg-rmc-green-light text-rmc-green-dark ring-1 ring-rmc-green'
                   : 'border border-gray-200 text-gray-500 hover:text-gray-700',
               )}
             >
@@ -744,7 +744,7 @@ function StatCard({
   const tones = {
     gray: 'bg-gray-50 text-gray-500',
     amber: 'bg-amber-50 text-amber-600',
-    green: 'bg-emerald-50 text-emerald-600',
+    green: 'bg-rmc-green-light text-rmc-green',
     red: 'bg-red-50 text-red-600',
   } as const;
   return (

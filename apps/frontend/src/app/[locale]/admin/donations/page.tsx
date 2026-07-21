@@ -571,7 +571,7 @@ function FinanceAdmin() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard icon={<Wallet className="w-5 h-5" />} color="text-rmc-green bg-rmc-green/10" label="Total revenue" value={formatCurrency('RWF', combinedRevenue)} sub="Donations + marriage" />
             <StatCard icon={<HandCoins className="w-5 h-5" />} color="text-blue-600 bg-blue-50" label="Donations received" value={formatCurrency('RWF', rwf?.received ?? 0)} sub={`${stats?.count ?? 0} gifts`} />
-            <StatCard icon={<Heart className="w-5 h-5" />} color="text-rose-600 bg-rose-50" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} sub={canViewMarriage ? `${marriageStats?.total ?? 0} applications` : 'No access'} />
+            <StatCard icon={<Heart className="w-5 h-5" />} color="text-rmc-green bg-rmc-green-light" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} sub={canViewMarriage ? `${marriageStats?.total ?? 0} applications` : 'No access'} />
             <StatCard icon={<Clock className="w-5 h-5" />} color="text-yellow-600 bg-yellow-50" label="Donations pending" value={formatCurrency('RWF', rwf?.pending ?? 0)} />
           </div>
 
@@ -937,7 +937,7 @@ function FinanceAdmin() {
       {section === 'marriage' && canViewMarriage && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={<Wallet className="w-5 h-5" />} color="text-rose-600 bg-rose-50" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} />
+            <StatCard icon={<Wallet className="w-5 h-5" />} color="text-rmc-green bg-rmc-green-light" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} />
             <StatCard icon={<Heart className="w-5 h-5" />} color="text-blue-600 bg-blue-50" label="Applications" value={String(marriageStats?.total ?? 0)} />
             <StatCard icon={<CheckCircle2 className="w-5 h-5" />} color="text-green-600 bg-green-50" label="Approved" value={marriageStats?.byStatus.find((s) => s.status === 'approved')?.count ?? '0'} />
             <StatCard icon={<Clock className="w-5 h-5" />} color="text-yellow-600 bg-yellow-50" label="Awaiting review" value={marriageStats?.byStatus.find((s) => s.status === 'submitted')?.count ?? '0'} />
@@ -993,7 +993,7 @@ function FinanceAdmin() {
             {(marrSearch || marrStatus || marrPay || marrFrom || marrTo) && (
               <button
                 onClick={() => { setMarrSearch(''); setMarrStatus(''); setMarrPay(''); setMarrFrom(''); setMarrTo(''); setMarrPage(1); }}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rose-600 transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rmc-green transition-colors"
               >
                 <X className="w-3.5 h-3.5" /> Clear filters
               </button>
@@ -1004,7 +1004,7 @@ function FinanceAdmin() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {marrLoading ? (
               <div className="flex items-center justify-center py-20">
-                <RefreshCw className="w-6 h-6 text-rose-500 animate-spin" />
+                <RefreshCw className="w-6 h-6 text-rmc-green animate-spin" />
                 <span className="ml-2 text-gray-500">Loading applications...</span>
               </div>
             ) : marrApps.length === 0 ? (
@@ -1029,9 +1029,9 @@ function FinanceAdmin() {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {marrApps.map((app) => (
-                        <tr key={app.id} className="hover:bg-rose-50/20 transition-colors align-top">
+                        <tr key={app.id} className="hover:bg-rmc-green-light/20 transition-colors align-top">
                           <td className="px-5 py-4">
-                            <p className="font-mono text-xs font-semibold text-rose-700">{app.applicationNumber}</p>
+                            <p className="font-mono text-xs font-semibold text-rmc-green-dark">{app.applicationNumber}</p>
                             <p className="text-xs text-gray-400 mt-0.5">{new Date(app.createdAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                           </td>
                           <td className="px-4 py-4">
@@ -1058,7 +1058,7 @@ function FinanceAdmin() {
                           <td className="px-4 py-4 text-right">
                             <Link
                               href={`/${locale}/admin/marriage/${app.id}`}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-800 transition-colors"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-rmc-green hover:text-rmc-green-dark transition-colors"
                             >
                               Review <ChevronRight className="w-3.5 h-3.5" />
                             </Link>
@@ -1075,8 +1075,8 @@ function FinanceAdmin() {
                       Showing {(marrPage - 1) * 20 + 1}–{Math.min(marrPage * 20, marrTotal)} of {marrTotal} applications
                     </p>
                     <div className="flex gap-2">
-                      <button onClick={() => setMarrPage((p) => Math.max(p - 1, 1))} disabled={marrPage === 1} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rose-300 transition-colors">Previous</button>
-                      <button onClick={() => setMarrPage((p) => Math.min(p + 1, marrPages))} disabled={marrPage === marrPages} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rose-300 transition-colors">Next</button>
+                      <button onClick={() => setMarrPage((p) => Math.max(p - 1, 1))} disabled={marrPage === 1} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green transition-colors">Previous</button>
+                      <button onClick={() => setMarrPage((p) => Math.min(p + 1, marrPages))} disabled={marrPage === marrPages} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green transition-colors">Next</button>
                     </div>
                   </div>
                 )}
@@ -1154,7 +1154,7 @@ function FinanceAdmin() {
                         <td className="px-4 py-4">
                           <span className={cn(
                             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                            e.source === 'marriage' ? 'bg-rose-50 text-rose-600' : 'bg-rmc-green/10 text-rmc-green',
+                            e.source === 'marriage' ? 'bg-rmc-green-light text-rmc-green' : 'bg-rmc-green/10 text-rmc-green',
                           )}>
                             {e.source === 'marriage' ? <Heart className="w-3 h-3" /> : <HandCoins className="w-3 h-3" />}
                             {e.source === 'marriage' ? 'Marriage' : 'Donation'}

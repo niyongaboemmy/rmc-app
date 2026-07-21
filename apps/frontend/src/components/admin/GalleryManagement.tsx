@@ -22,10 +22,10 @@ import { fileUrl } from '@/lib/api';
 
 const CATEGORIES = [
   { id: 'events',     label: 'Events',     color: 'bg-violet-100 text-violet-700 border-violet-200' },
-  { id: 'ceremonies', label: 'Ceremonies', color: 'bg-rose-100 text-rose-700 border-rose-200' },
+  { id: 'ceremonies', label: 'Ceremonies', color: 'bg-rmc-green-light text-rmc-green-dark border-rmc-green' },
   { id: 'community',  label: 'Community',  color: 'bg-blue-100 text-blue-700 border-blue-200' },
   { id: 'education',  label: 'Education',  color: 'bg-amber-100 text-amber-700 border-amber-200' },
-  { id: 'charity',    label: 'Charity',    color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  { id: 'charity',    label: 'Charity',    color: 'bg-rmc-green-light text-rmc-green-dark border-rmc-green' },
   { id: 'other',      label: 'Other',      color: 'bg-gray-100 text-gray-600 border-gray-200' },
 ];
 
@@ -549,7 +549,7 @@ function GalleryCard({
             {catLabel}
           </span>
         ) : <span />}
-        <span className={`w-2 h-2 rounded-full border border-white/60 ${item.isPublic ? 'bg-emerald-400' : 'bg-gray-400'}`} />
+        <span className={`w-2 h-2 rounded-full border border-white/60 ${item.isPublic ? 'bg-rmc-green' : 'bg-gray-400'}`} />
       </div>
 
       {/* Version dots bottom-left */}
@@ -913,7 +913,7 @@ function UploadModal(props: UploadModalProps) {
                 <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-rmc-green" />
                   {total} image{total > 1 ? 's' : ''}
-                  {doneCount > 0 && <span className="text-emerald-600 font-medium"> · {doneCount} done</span>}
+                  {doneCount > 0 && <span className="text-rmc-green font-medium"> · {doneCount} done</span>}
                   {errorCount > 0 && <span className="text-red-500 font-medium"> · {errorCount} failed</span>}
                 </p>
                 {!uploading && (
@@ -1016,7 +1016,7 @@ function QueueRow({ item, uploading, onRemove }: { item: QueueItem; uploading: b
       <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0">
         <img src={item.preview} alt="" className="w-full h-full object-cover" />
         {item.status === 'done' && (
-          <div className="absolute inset-0 bg-emerald-500/70 flex items-center justify-center">
+          <div className="absolute inset-0 bg-rmc-green/70 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5 text-white" />
           </div>
         )}
@@ -1040,7 +1040,7 @@ function QueueRow({ item, uploading, onRemove }: { item: QueueItem; uploading: b
         {busy ? (
           <Loader2 className="w-4 h-4 text-rmc-green animate-spin" />
         ) : item.status === 'done' ? (
-          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <CheckCircle2 className="w-4 h-4 text-rmc-green" />
         ) : !uploading ? (
           <button type="button" onClick={onRemove} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
             <X className="w-3.5 h-3.5" />

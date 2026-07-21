@@ -10,8 +10,8 @@ const RESEND_SECONDS = 60;
 
 const ACCENTS = {
   green: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green focus:border-transparent', text: 'text-rmc-green', soft: 'bg-rmc-green-light/60 border-rmc-green/20 text-rmc-green-dark' },
-  emerald: { btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-rmc-green', ring: 'focus:ring-rmc-green', text: 'text-emerald-600', soft: 'bg-emerald-50 border-emerald-100 text-emerald-800' },
-  rose: { btn: 'bg-rose-600 hover:bg-rose-700 focus:ring-rmc-green', ring: 'focus:ring-rmc-green', text: 'text-rose-600', soft: 'bg-rose-50 border-rose-100 text-rose-800' },
+  emerald: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green', text: 'text-rmc-green', soft: 'bg-rmc-green-light border-rmc-green-light text-rmc-green-dark' },
+  rose: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green', text: 'text-rmc-green', soft: 'bg-rmc-green-light border-rmc-green-light text-rmc-green-dark' },
 } as const;
 
 function apiError(err: unknown): { code?: string; message?: string } {

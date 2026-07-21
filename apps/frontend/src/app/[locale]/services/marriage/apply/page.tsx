@@ -58,7 +58,7 @@ function RequirementsView({ locale }: { locale: string }) {
           <p className="text-sm text-gray-500">{t('signInPrompt')}</p>
           <button
             onClick={() => router.push(`/${locale}/login?redirect=/services/marriage/apply`)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors shadow-sm shadow-rose-500/20"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors shadow-sm shadow-rmc-green/20"
           >
             <LogIn className="w-4 h-4" /> {t('signInToApply')}
           </button>
@@ -67,7 +67,7 @@ function RequirementsView({ locale }: { locale: string }) {
         {/* Required documents */}
         <section>
           <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-rose-500" />
+            <FileText className="w-4 h-4 text-rmc-green" />
             {t('docsTitle')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -76,8 +76,8 @@ function RequirementsView({ locale }: { locale: string }) {
                 key={key}
                 className="flex items-start gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
               >
-                <span className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-rose-500" />
+                <span className="w-8 h-8 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-rmc-green" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{t(`docs.${key}.label`)}</p>
@@ -91,17 +91,17 @@ function RequirementsView({ locale }: { locale: string }) {
         {/* Application process */}
         <section>
           <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-rose-500" />
+            <CheckCircle2 className="w-4 h-4 text-rmc-green" />
             {t('processTitle')}
           </h2>
           <div className="relative flex flex-col gap-0">
             {processSteps.map(({ icon: Icon, key }, i) => (
               <div key={key} className="flex gap-4">
                 <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-rose-600 flex items-center justify-center shrink-0 z-10">
+                  <div className="w-8 h-8 rounded-full bg-rmc-green flex items-center justify-center shrink-0 z-10">
                     <Icon className="w-4 h-4 text-white" />
                   </div>
-                  {i < processSteps.length - 1 && <div className="w-0.5 flex-1 bg-rose-100 my-1" />}
+                  {i < processSteps.length - 1 && <div className="w-0.5 flex-1 bg-rmc-green-light my-1" />}
                 </div>
                 <div className="pb-6">
                   <p className="text-sm font-semibold text-gray-800">{t(`process.${key}.label`)}</p>
@@ -115,7 +115,7 @@ function RequirementsView({ locale }: { locale: string }) {
         {/* Fees */}
         <section>
           <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-rose-500" />
+            <CreditCard className="w-4 h-4 text-rmc-green" />
             {t('fees.title')}
           </h2>
           <div className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
@@ -142,13 +142,13 @@ function RequirementsView({ locale }: { locale: string }) {
         {/* Witness requirements */}
         <section>
           <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4 text-rose-500" />
+            <Users className="w-4 h-4 text-rmc-green" />
             {t('witnessTitle')}
           </h2>
           <div className="rounded-xl border border-gray-100 bg-white shadow-sm px-5 py-4 space-y-2.5">
             {witnessReqKeys.map((key) => (
               <div key={key} className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-rmc-green shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-600">{t(`witnessReqs.${key}`)}</p>
               </div>
             ))}
@@ -159,7 +159,7 @@ function RequirementsView({ locale }: { locale: string }) {
         <div className="text-center pb-2">
           <button
             onClick={() => router.push(`/${locale}/login?redirect=/services/marriage/apply`)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-rose-500/20"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors shadow-lg shadow-rmc-green/20"
           >
             <LogIn className="w-4 h-4" /> {t('signInToSubmit')}
           </button>
@@ -167,7 +167,7 @@ function RequirementsView({ locale }: { locale: string }) {
             {t('noAccount')}{' '}
             <Link
               href={`/${locale}/register`}
-              className="text-rose-600 hover:underline font-medium"
+              className="text-rmc-green hover:underline font-medium"
             >
               {t('requestAccess')}
             </Link>
@@ -201,18 +201,18 @@ export default function MarriageApplyPage() {
           className="object-cover object-center"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rose-950/65 to-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/65 to-black/45" />
         <div className="absolute inset-0 pattern-islamic opacity-25" />
 
         {/* Centered hero content */}
         <div className="relative flex-1 flex items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-8 pb-4">
           <div className="max-w-2xl mx-auto">
             <div className="flex justify-center mb-4 pt-24">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-600 to-rose-800 flex items-center justify-center shadow-xl shadow-rose-900/50 ring-1 ring-white/20">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark flex items-center justify-center shadow-xl shadow-rmc-green-dark/50 ring-1 ring-white/20">
                 <Heart className="w-7 h-7 text-white" strokeWidth={2.25} />
               </div>
             </div>
-            <p className="text-[11px] font-bold tracking-widest uppercase text-rose-300 mb-2">
+            <p className="text-[11px] font-bold tracking-widest uppercase text-rmc-green mb-2">
               {t('applyHeroBadge')}
             </p>
             <h1 className="text-3xl md:text-4xl font-bold drop-shadow-lg">
