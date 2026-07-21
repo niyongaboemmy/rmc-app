@@ -861,7 +861,7 @@ function UploadModal(props: UploadModalProps) {
             </div>
           </div>
           {!uploading && (
-            <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
+            <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -1082,7 +1082,7 @@ function EditModal({
             <Edit2 className="w-4 h-4 text-rmc-green" /> Edit Image
           </h2>
           {!saving && (
-            <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
+            <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
               <X className="w-4 h-4" />
             </button>
           )}

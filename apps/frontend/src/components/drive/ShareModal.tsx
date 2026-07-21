@@ -160,7 +160,7 @@ export function ShareModal({ item, onClose }: ShareModalProps) {
             <button
               onClick={handleShare}
               disabled={sharing}
-              className="w-full py-2.5 bg-rmc-green text-white text-sm font-semibold rounded-xl hover:bg-rmc-green/90 transition-colors disabled:opacity-50"
+              className="w-full py-2.5 bg-rmc-green text-white text-sm font-semibold rounded-lg hover:bg-rmc-green/90 transition-colors disabled:opacity-50"
             >
               {sharing ? 'Sharing…' : `Share with ${selected.length} ${selected.length === 1 ? 'person' : 'people'}`}
             </button>

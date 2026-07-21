@@ -58,7 +58,7 @@ function RequirementsView({ locale }: { locale: string }) {
           <p className="text-sm text-gray-500">{t('signInPrompt')}</p>
           <button
             onClick={() => router.push(`/${locale}/login?redirect=/services/marriage/apply`)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors shadow-sm shadow-rmc-green/20"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors shadow-sm shadow-rmc-green/20"
           >
             <LogIn className="w-4 h-4" /> {t('signInToApply')}
           </button>

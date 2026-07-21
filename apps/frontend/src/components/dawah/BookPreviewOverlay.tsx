@@ -287,7 +287,7 @@ function SignInCard({
         <p className="mt-2 text-sm leading-relaxed text-gray-500">{body}</p>
         <Link
           href={href}
-          className="mt-6 inline-flex items-center justify-center rounded-xl bg-rmc-green px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+          className="mt-6 inline-flex items-center justify-center rounded-lg bg-rmc-green px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
         >
           {cta}
         </Link>

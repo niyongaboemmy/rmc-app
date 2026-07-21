@@ -365,7 +365,7 @@ export function DriveLayout({ isAdmin = false, title }: DriveLayoutProps) {
             </button>
           </div>
 
-          <button onClick={loadItems} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors shrink-0" title="Refresh">
+          <button onClick={loadItems} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0" title="Refresh">
             <RefreshCw className="w-3.5 h-3.5 text-gray-500" />
           </button>
         </div>

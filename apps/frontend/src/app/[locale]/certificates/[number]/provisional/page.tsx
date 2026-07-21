@@ -175,7 +175,7 @@ export default function ProvisionalCertificatePage() {
           </button>
           <button
             onClick={handleDownload}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium transition-colors"
           >
             <Download className="w-4 h-4" /> Download
           </button>

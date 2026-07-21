@@ -181,7 +181,7 @@ function ProgramModal({
         </div>
         {error && <p className="text-xs text-red-600 mt-3">{error}</p>}
         <div className="flex gap-3 mt-5">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">
             Cancel
           </button>
           <button

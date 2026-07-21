@@ -80,7 +80,7 @@ function pickLocale(entry: HistoryEntry, locale: string) {
 --------------------------------------------------------------------------- */
 function YearBadge({ year }: { year: number }) {
   return (
-    <span className="inline-flex items-center justify-center rounded-md bg-rmc-green-deep px-2.5 py-1.5 text-[13px] font-bold tabular-nums tracking-wide text-white">
+    <span className="inline-flex items-center justify-center rounded-lg bg-rmc-green-deep px-2.5 py-1.5 text-[13px] font-bold tabular-nums tracking-wide text-white">
       {year}
     </span>
   );

@@ -989,7 +989,7 @@ function SuccessScreen({
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
           <Link
             href={`/${locale}/services/scholarship/status?id=${app.applicationNumber}`}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors"
           >
             <Search className="w-4 h-4" /> {t('trackApplication')}
           </Link>

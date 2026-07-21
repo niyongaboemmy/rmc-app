@@ -483,7 +483,7 @@ function BlogManager() {
           {step === 0 ? (
             <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
           ) : (
-            <button type="button" onClick={goBack} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={goBack} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
           )}

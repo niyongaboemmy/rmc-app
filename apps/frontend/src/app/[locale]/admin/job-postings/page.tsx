@@ -325,7 +325,7 @@ function PostingFormModal({ posting, onClose, onSaved }: { posting: JobPosting |
         </div>
 
         <div className="flex gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
-          <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+          <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
           <button onClick={submit} disabled={saving} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50">
             {saving && <RefreshCw className="w-4 h-4 animate-spin" />} {isEdit ? 'Save changes' : 'Create posting'}
           </button>

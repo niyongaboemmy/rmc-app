@@ -283,7 +283,7 @@ function LangTabs({ lang, setLang }: { lang: LangKey; setLang: (l: LangKey) => v
           key={l.key}
           type="button"
           onClick={() => setLang(l.key)}
-          className={cn('rounded-md px-3 py-1 text-xs font-bold transition-colors', lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green')}
+          className={cn('rounded-lg px-3 py-1 text-xs font-bold transition-colors', lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green')}
         >
           {l.label}
         </button>

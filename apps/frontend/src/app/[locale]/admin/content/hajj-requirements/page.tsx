@@ -281,7 +281,7 @@ function RequirementFormModal({
         {/* Language tabs */}
         <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
           {LANGS.map((l) => (
-            <button key={l.key} type="button" onClick={() => setLang(l.key)} className={`rounded-md px-3 py-1 text-xs font-bold transition-colors ${lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'}`}>{l.label}</button>
+            <button key={l.key} type="button" onClick={() => setLang(l.key)} className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'}`}>{l.label}</button>
           ))}
         </div>
 

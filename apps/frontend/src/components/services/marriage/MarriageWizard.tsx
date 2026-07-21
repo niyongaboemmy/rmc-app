@@ -184,7 +184,7 @@ function PartyPhonesForm({ applicationId }: { applicationId: string }) {
           ))}
           {err && <p className="text-xs text-red-600">{err}</p>}
           <button onClick={handleSend} disabled={sending}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold transition-colors">
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold transition-colors">
             {sending ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
             {sending ? 'Sending…' : 'Send Confirmation Requests'}
           </button>
@@ -244,7 +244,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
         <PartyPhonesForm applicationId={app.id} />
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
           <Link href={`/${locale}/services/marriage/status`}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors">
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors">
             <Search className="w-4 h-4" /> Track application
           </Link>
           <Button variant="outline" onClick={onReset} className="text-sm">New application</Button>

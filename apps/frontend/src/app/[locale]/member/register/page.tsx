@@ -204,7 +204,7 @@ export default function MemberRegisterPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3.5 bg-rmc-green text-white font-semibold rounded-xl hover:bg-rmc-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3.5 bg-rmc-green text-white font-semibold rounded-lg hover:bg-rmc-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? '...' : t('submit')}
                 </button>

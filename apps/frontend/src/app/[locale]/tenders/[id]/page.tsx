@@ -262,7 +262,7 @@ export default function TenderDetailPage() {
                   ) : (
                     <Link
                       href={`/${locale}/services/tender/apply?tender=${tender.id}`}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-rmc-green/20"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-rmc-green/20"
                     >
                       {t('detail.cta.button')}
                     </Link>

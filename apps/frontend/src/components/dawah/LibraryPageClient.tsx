@@ -291,7 +291,7 @@ function ErrorState({
       <button
         type="button"
         onClick={onRetry}
-        className="mt-4 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+        className="mt-4 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
       >
         {retry}
       </button>

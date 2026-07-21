@@ -128,7 +128,7 @@ export function JobsTrackByNumber() {
           <button
             onClick={requestOtp}
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold disabled:opacity-50 transition-colors"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? t('trackSending') : t('trackSendCode')}
@@ -155,7 +155,7 @@ export function JobsTrackByNumber() {
           <button
             onClick={verifyOtp}
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold disabled:opacity-50 transition-colors"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             {loading ? t('trackVerifying') : t('trackVerify')}

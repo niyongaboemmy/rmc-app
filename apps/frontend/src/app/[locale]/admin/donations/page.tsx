@@ -1451,7 +1451,7 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored
     <div className="space-y-4">
       {canManage && (
         <div className="flex justify-end">
-          <button onClick={onNew} className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rmc-green text-white text-sm font-bold shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark transition-all duration-300">
+          <button onClick={onNew} className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-bold shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark transition-all duration-300">
             <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" /> {t('programs.new')}
           </button>
         </div>
@@ -2004,7 +2004,7 @@ function EditDonationModal({ donation, campaigns, onClose, onSaved }: {
       onClose={onClose}
       footer={
         <>
-          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
             {t('editModal.cancel')}
           </button>
           <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">

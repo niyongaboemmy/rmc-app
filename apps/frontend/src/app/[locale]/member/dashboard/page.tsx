@@ -231,7 +231,7 @@ export default function MemberDashboardPage() {
           <p className="text-gray-500 text-sm mb-7">{error || "You haven't submitted a membership application yet."}</p>
           <Link
             href={`/${locale}/member/register`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green text-white rounded-xl text-sm font-semibold hover:bg-rmc-green-dark transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green text-white rounded-lg text-sm font-semibold hover:bg-rmc-green-dark transition-colors shadow-sm"
           >
             Start Application <ArrowRight className="w-4 h-4" />
           </Link>
