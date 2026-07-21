@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { PaymentEventsService } from './payment-events.service';
+import { PaymentSimulatorService } from './payment-simulator.service';
+import { PaymentOperation } from './entities/payment-provider-event.entity';
 
 export interface IntouchPayRequest {
   username: string;
@@ -104,9 +107,44 @@ const DEFAULT_BALANCE_URL = 'https://www.intouchpay.co.rw/api/getbalance/';
 export class IntouchPayService {
   private readonly logger = new Logger(IntouchPayService.name);
 
+  constructor(
+    private readonly events: PaymentEventsService,
+    private readonly simulator: PaymentSimulatorService,
+  ) {}
+
+  // ── Resilience config (env-overridable, sane defaults) ─────────────────────
+
+  /** Per-attempt request timeout. A slow/hung provider is aborted after this. */
+  private get timeoutMs(): number {
+    return Number(process.env.PAYMENT_TIMEOUT_MS) || 20_000;
+  }
+  /** Extra attempts for READ-ONLY calls only (status/balance). Charges are never auto-retried. */
+  private get maxRetries(): number {
+    const n = Number(process.env.PAYMENT_MAX_RETRIES);
+    return Number.isFinite(n) ? Math.max(0, n) : 2;
+  }
+  private get backoffMs(): number {
+    return Number(process.env.PAYMENT_RETRY_BACKOFF_MS) || 500;
+  }
+  /** Latency at/above which an attempt is flagged "slow" for monitoring. */
+  private get slowMs(): number {
+    return Number(process.env.PAYMENT_SLOW_MS) || 8_000;
+  }
+
   // ── §2. Request Payment (collect from subscriber) ──────────────────────────
 
   async requestPayment(req: IntouchPayRequest): Promise<IntouchPayResult> {
+    if (this.simulator.isActive()) {
+      const sim = await this.simulate('request_payment', req.transactionId);
+      return {
+        requestTransactionId: req.transactionId,
+        transactionId: sim.transactionId,
+        status: sim.status,
+        responseCode: sim.responseCode,
+        message: sim.message,
+      };
+    }
+
     const timestamp = this.buildTimestamp();
     const password = this.generatePassword(
       req.username,
@@ -133,7 +171,38 @@ export class IntouchPayService {
       `[IntouchPay] RequestPayment → ${req.mobilePhone} ${req.amount} RWF (txn: ${req.transactionId})`,
     );
 
-    return this.formPost(req.gatewayUrl ?? DEFAULT_PAYMENT_URL, params, req.transactionId);
+    // A charge is NOT retryable: a blindly re-sent request risks a double charge
+    // (or a "2400 Duplicate Transaction ID" rejection). On timeout/outage we
+    // return PENDING and let status polling + the reconciler settle it.
+    const { data, degraded } = await this.request(
+      'request_payment',
+      req.gatewayUrl ?? DEFAULT_PAYMENT_URL,
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      },
+      { retryable: false, requestTransactionId: req.transactionId },
+    );
+
+    if (degraded) {
+      return {
+        requestTransactionId: req.transactionId,
+        transactionId: '',
+        status: 'PENDING',
+        responseCode: degraded.code,
+        message: degraded.message,
+      };
+    }
+
+    const rc = String(data!['responsecode'] ?? '');
+    return {
+      requestTransactionId: req.transactionId,
+      transactionId: String(data!['transactionid'] ?? ''),
+      status: this.resolveStatus(rc, String(data!['status'] ?? '')),
+      responseCode: rc,
+      message: String(data!['message'] ?? data!['statusdesc'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
+      raw: data,
+    };
   }
 
   // ── §4. Get Transaction Status ─────────────────────────────────────────────
@@ -147,6 +216,17 @@ export class IntouchPayService {
     transactionId: string;
     gatewayBaseUrl?: string;
   }): Promise<IntouchPayStatusResult> {
+    if (this.simulator.isActive()) {
+      const sim = await this.simulate('get_status', opts.requestTransactionId);
+      return {
+        requestTransactionId: opts.requestTransactionId,
+        transactionId: opts.transactionId,
+        status: sim.status,
+        responseCode: sim.responseCode,
+        message: sim.message,
+      };
+    }
+
     const timestamp = this.buildTimestamp();
     const password = this.generatePassword(
       opts.username,
@@ -169,35 +249,34 @@ export class IntouchPayService {
 
     this.logger.log(`[IntouchPay] GetTransactionStatus → txn: ${opts.requestTransactionId}`);
 
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data: Record<string, unknown> = await res.json();
-      const rc = String(data['responsecode'] ?? '');
-      const status = this.resolveStatus(rc, String(data['status'] ?? ''));
+    // Status checks are read-only and idempotent → safe to retry with backoff.
+    const { data, degraded } = await this.request(
+      'get_status',
+      url,
+      { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      { retryable: true, requestTransactionId: opts.requestTransactionId },
+    );
 
-      return {
-        requestTransactionId: opts.requestTransactionId,
-        transactionId: opts.transactionId,
-        status,
-        responseCode: rc,
-        message: String(data['message'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
-      };
-    } catch (err) {
-      // Network error — we cannot determine the payment outcome.
-      // Return PENDING so callers do NOT permanently mark the donation as failed.
-      this.logger.error(`[IntouchPay] GetTransactionStatus network error: ${err}`);
+    if (degraded) {
+      // We cannot determine the outcome — return PENDING so callers never
+      // permanently mark a payment as failed on a transient outage.
       return {
         requestTransactionId: opts.requestTransactionId,
         transactionId: opts.transactionId,
         status: 'PENDING',
-        responseCode: 'NETWORK_ERROR',
-        message: 'Status check unreachable — will retry',
+        responseCode: degraded.code,
+        message: degraded.message,
       };
     }
+
+    const rc = String(data!['responsecode'] ?? '');
+    return {
+      requestTransactionId: opts.requestTransactionId,
+      transactionId: opts.transactionId,
+      status: this.resolveStatus(rc, String(data!['status'] ?? '')),
+      responseCode: rc,
+      message: String(data!['message'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
+    };
   }
 
   // ── §5. Balance Inquiry ────────────────────────────────────────────────────
@@ -230,23 +309,27 @@ export class IntouchPayService {
 
     this.logger.log(`[IntouchPay] GetBalance for account ${opts.accountNo}`);
 
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      });
-      const data: Record<string, unknown> = await res.json();
+    const { data, degraded } = await this.request(
+      'get_balance',
+      url,
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() },
+      { retryable: true, requestTransactionId: `balance-${opts.accountNo}` },
+    );
+
+    if (degraded) {
       return {
-        balance: String(data['balance'] ?? '0.0'),
-        success: data['success'] === true || data['success'] === 'true',
-        responseCode: String(data['responsecode'] ?? ''),
-        message: String(data['message'] ?? ''),
+        balance: '0.0',
+        success: false,
+        message: 'Balance inquiry failed',
+        responseCode: degraded.code,
       };
-    } catch (err) {
-      this.logger.error(`[IntouchPay] GetBalance error: ${err}`);
-      return { balance: '0.0', success: false, message: 'Balance inquiry failed' };
     }
+    return {
+      balance: String(data!['balance'] ?? '0.0'),
+      success: data!['success'] === true || data!['success'] === 'true',
+      responseCode: String(data!['responsecode'] ?? ''),
+      message: String(data!['message'] ?? ''),
+    };
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -296,42 +379,180 @@ export class IntouchPayService {
     return 'FAILED';
   }
 
-  // ── Private helpers ───────────────────────────────────────────────────────
+  // ── Resilient HTTP core ─────────────────────────────────────────────────────
 
-  private async formPost(
+  /**
+   * POSTs to the provider with a hard timeout, optional bounded retries (with
+   * exponential backoff) for read-only calls, per-attempt latency logging, and
+   * monitoring events. Returns the parsed JSON on success, or a `degraded`
+   * marker (TIMEOUT / NETWORK_ERROR) when the provider never gave a usable
+   * answer — callers map that to a PENDING/"try again shortly" state rather
+   * than a hard failure.
+   */
+  private async request(
+    operation: PaymentOperation,
     url: string,
-    params: URLSearchParams,
-    txId: string,
-  ): Promise<IntouchPayResult> {
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      });
-      const data: Record<string, unknown> = await res.json();
-      const rc = String(data['responsecode'] ?? '');
-      const status = this.resolveStatus(rc, String(data['status'] ?? ''));
+    init: { headers: Record<string, string>; body: string },
+    opts: { retryable: boolean; requestTransactionId: string },
+  ): Promise<{ data?: Record<string, unknown>; degraded?: { code: string; message: string } }> {
+    const attempts = opts.retryable ? this.maxRetries + 1 : 1;
 
-      return {
-        requestTransactionId: txId,
-        transactionId: String(data['transactionid'] ?? ''),
-        status,
-        responseCode: rc,
-        message: String(data['message'] ?? data['statusdesc'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
-        raw: data,
-      };
-    } catch (err) {
-      // Network error — IntouchPay may have received and processed the request.
-      // Return PENDING so the donation is not permanently marked as failed.
-      this.logger.error(`[IntouchPay] POST ${url} network error: ${err}`);
-      return {
-        requestTransactionId: txId,
-        transactionId: '',
-        status: 'PENDING',
-        responseCode: 'NETWORK_ERROR',
-        message: 'Gateway unreachable — treat as pending',
-      };
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      const start = Date.now();
+      try {
+        const res = await this.fetchWithTimeout(url, { method: 'POST', ...init });
+        const data = (await res.json()) as Record<string, unknown>;
+        const latencyMs = Date.now() - start;
+        const slow = latencyMs >= this.slowMs;
+        this.events.record({
+          operation,
+          outcome: 'success',
+          latencyMs,
+          slow,
+          attempt,
+          requestTransactionId: opts.requestTransactionId,
+          responseCode: String(data['responsecode'] ?? ''),
+        });
+        if (slow) {
+          this.logger.warn(
+            `[IntouchPay] SLOW ${operation} took ${latencyMs}ms (txn ${opts.requestTransactionId})`,
+          );
+        }
+        return { data };
+      } catch (err) {
+        const latencyMs = Date.now() - start;
+        const isTimeout = (err as Error)?.name === 'AbortError';
+        this.events.record({
+          operation,
+          outcome: isTimeout ? 'timeout' : 'error',
+          latencyMs,
+          attempt,
+          requestTransactionId: opts.requestTransactionId,
+          detail: String(err),
+        });
+        this.logger.error(
+          `[IntouchPay] ${operation} attempt ${attempt}/${attempts} ${
+            isTimeout ? `TIMED OUT after ${latencyMs}ms` : `ERROR: ${err}`
+          } (txn ${opts.requestTransactionId})`,
+        );
+
+        if (attempt < attempts) {
+          await this.sleep(this.backoffMs * attempt);
+          continue;
+        }
+        return {
+          degraded: isTimeout
+            ? {
+                code: 'TIMEOUT',
+                message: 'Payment is taking longer than expected. Please try again shortly.',
+              }
+            : {
+                code: 'NETWORK_ERROR',
+                message:
+                  'Payment service is temporarily unavailable. Any payment made will be confirmed automatically once it clears.',
+              },
+        };
+      }
+    }
+    // Unreachable, but keeps the type checker happy.
+    return { degraded: { code: 'NETWORK_ERROR', message: 'Payment service unavailable.' } };
+  }
+
+  /** fetch() that aborts after `timeoutMs`, turning a hung provider into a catchable AbortError. */
+  private async fetchWithTimeout(
+    url: string,
+    init: { method: string; headers: Record<string, string>; body: string },
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * DEV/TEST only — returns a forced outcome (and records a monitoring event)
+   * instead of calling the real gateway, so payment resilience can be exercised
+   * without live MoMo credentials. Never reached in production (mode stays 'off').
+   */
+  private async simulate(
+    operation: PaymentOperation,
+    requestTransactionId: string,
+  ): Promise<{
+    status: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
+    responseCode: string;
+    message: string;
+    transactionId: string;
+  }> {
+    const { mode, delayMs } = this.simulator.state;
+    const start = Date.now();
+    const record = (outcome: 'success' | 'timeout' | 'error', responseCode: string) => {
+      const latencyMs = Date.now() - start;
+      this.events.record({
+        operation,
+        outcome,
+        latencyMs,
+        slow: latencyMs >= this.slowMs,
+        requestTransactionId,
+        responseCode,
+        simulated: true,
+        detail: `simulator:${mode}`,
+      });
+    };
+    this.logger.warn(`[IntouchPay][SIM] ${operation} forced mode="${mode}"`);
+
+    switch (mode) {
+      case 'slow':
+        await this.sleep(delayMs);
+        record('success', '01');
+        return {
+          status: 'SUCCESSFUL',
+          responseCode: '01',
+          message: '[SIM] Payment successful (after delay)',
+          transactionId: `SIM-${requestTransactionId}`,
+        };
+      case 'timeout':
+        // Brief representative pause, then the timeout/degraded path.
+        await this.sleep(Math.min(this.timeoutMs, 1500));
+        record('timeout', 'TIMEOUT');
+        return {
+          status: 'PENDING',
+          responseCode: 'TIMEOUT',
+          message: 'Payment is taking longer than expected. Please try again shortly.',
+          transactionId: '',
+        };
+      case 'unavailable':
+        record('error', 'NETWORK_ERROR');
+        return {
+          status: 'PENDING',
+          responseCode: 'NETWORK_ERROR',
+          message:
+            'Payment service is temporarily unavailable. Any payment made will be confirmed automatically once it clears.',
+          transactionId: '',
+        };
+      case 'fail':
+        record('success', '1005');
+        return {
+          status: 'FAILED',
+          responseCode: '1005',
+          message: '[SIM] Failed Due to Insufficient Funds',
+          transactionId: `SIM-${requestTransactionId}`,
+        };
+      case 'success':
+      default:
+        record('success', '01');
+        return {
+          status: 'SUCCESSFUL',
+          responseCode: '01',
+          message: '[SIM] Payment successful',
+          transactionId: `SIM-${requestTransactionId}`,
+        };
     }
   }
 }
