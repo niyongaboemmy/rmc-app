@@ -3,12 +3,12 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Heart, FileText, GraduationCap, Home, ClipboardList, Briefcase, ArrowRight, ChevronRight } from 'lucide-react';
+import { Heart, FileText, GraduationCap, Compass, ClipboardList, Briefcase, ArrowRight, ChevronRight } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { useTilt } from '@/hooks/useTilt';
 
 const serviceKeys = [
-  'marriage', 'funeral', 'conduct', 'scholarship', 'hijra', 'tender', 'jobs',
+  'marriage', 'funeral', 'conduct', 'scholarship', 'hajj', 'tender', 'jobs',
 ] as const;
 
 const serviceConfig: Record<string, { Icon: React.ComponentType<{ className?: string }>; gradient: string; iconBg: string; iconColor: string }> = {
@@ -36,8 +36,8 @@ const serviceConfig: Record<string, { Icon: React.ComponentType<{ className?: st
     iconBg: 'bg-violet-100',
     iconColor: 'text-violet-500',
   },
-  hijra: {
-    Icon: Home,
+  hajj: {
+    Icon: Compass,
     gradient: 'from-amber-50 to-white',
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-500',

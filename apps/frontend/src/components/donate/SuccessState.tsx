@@ -169,11 +169,11 @@ export function SuccessState({
       <section className="relative bg-gray-50 py-14">
         <div className="pointer-events-none absolute inset-0 pattern-light opacity-60" />
         <div className="relative mx-auto max-w-xl px-4 sm:px-6">
-          <div className="animate-fade-up rounded-3xl border border-gray-100 bg-white p-8 shadow-sm ring-1 ring-black/5">
+          <div className="animate-fade-up rounded-lg border border-gray-100 bg-white p-8 shadow-sm ring-1 ring-black/5">
 
             {/* Payment status banners */}
             {paymentStatus === 'pending' && (
-              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left rtl:text-right">
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-left rtl:text-right">
                 <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                 <div className="min-w-0">
                   <p className="text-[13.5px] font-bold text-amber-900">{t('payment.pendingTitle')}</p>
@@ -186,20 +186,20 @@ export function SuccessState({
               </div>
             )}
             {paymentStatus === 'failed' && (
-              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-left rtl:text-right">
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-left rtl:text-right">
                 <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
                 <p className="text-[13px] leading-relaxed text-red-700">{t('payment.failed')}</p>
               </div>
             )}
             {paymentStatus === 'completed' && (
-              <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-rmc-green/20 bg-rmc-green-light/40 p-4 text-left rtl:text-right">
+              <div className="mb-6 flex items-center gap-2.5 rounded-lg border border-rmc-green/20 bg-rmc-green-light/40 p-4 text-left rtl:text-right">
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-rmc-green" />
                 <p className="text-[13px] font-semibold text-rmc-green-dark">{t('payment.completed')}</p>
               </div>
             )}
 
             {/* Du'ā section */}
-            <div className="mb-8 rounded-2xl border border-rmc-green/15 bg-rmc-green-light/30 p-5">
+            <div className="mb-8 rounded-lg border border-rmc-green/15 bg-rmc-green-light/30 p-5">
               <p className="mb-3 flex items-center gap-1.5 text-[13px] font-bold text-rmc-green-dark">
                 <Heart className="h-4 w-4" />
                 {t('success.duaTitle')}
@@ -209,7 +209,7 @@ export function SuccessState({
                 onChange={(e) => setDua(e.target.value)}
                 rows={3}
                 placeholder={t('success.duaPlaceholder')}
-                className="w-full resize-none rounded-xl border border-rmc-green/20 bg-white px-3.5 py-2.5 text-[13px] text-gray-800 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                className="w-full resize-none rounded-lg border border-rmc-green/20 bg-white px-3.5 py-2.5 text-[13px] text-gray-800 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
               />
               {dua.trim() && (
                 <p className="mt-2 text-[12px] italic text-rmc-green-dark">{t('success.duaAmin')}</p>
@@ -222,7 +222,7 @@ export function SuccessState({
               <button
                 type="button"
                 onClick={printReceipt}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-rmc-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-md shadow-rmc-green/25 transition-all duration-200 hover:bg-rmc-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
               >
                 <Printer className="h-4 w-4 shrink-0" />
                 {t('success.downloadReceipt')}
@@ -232,7 +232,7 @@ export function SuccessState({
               <div className="grid grid-cols-2 gap-3">
                 <Link
                   href={`/${locale}`}
-                  className="flex items-center justify-center gap-2 rounded-full border border-rmc-green/30 px-4 py-2.5 text-sm font-semibold text-rmc-green transition-all duration-200 hover:bg-rmc-green hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-rmc-green/30 px-4 py-2.5 text-sm font-semibold text-rmc-green transition-all duration-200 hover:bg-rmc-green hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
                 >
                   <Home className="h-4 w-4 shrink-0" />
                   {t('success.backHome')}
@@ -241,7 +241,7 @@ export function SuccessState({
                 <button
                   type="button"
                   onClick={onReset}
-                  className="flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-all duration-200 hover:border-rmc-green/30 hover:bg-rmc-green-light/40 hover:text-rmc-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-all duration-200 hover:border-rmc-green/30 hover:bg-rmc-green-light/40 hover:text-rmc-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50"
                 >
                   <RotateCcw className="h-4 w-4 shrink-0" />
                   {t('success.giveAgain')}

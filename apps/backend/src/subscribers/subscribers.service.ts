@@ -2,10 +2,12 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'node:crypto';
 import * as XLSX from 'xlsx';
 import { Subscriber } from './entities/subscriber.entity';
 import { CreateSubscriberDto, BroadcastDto } from './dto/subscriber.dto';
 import { EmailService } from '../integrations/email/email.service';
+import { wrapEmailHtml } from '../integrations/email/email-template';
 
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 
@@ -55,6 +57,11 @@ export class SubscribersService {
       locale: dto.locale ?? 'en',
       source: dto.source ?? null,
       isActive: true,
+      // Minted here, not left to the column's gen_random_uuid() default: TypeORM
+      // only reads a column back via RETURNING when the entity declares a default
+      // or a generator, so a DB-side default would leave `saved.unsubscribeToken`
+      // undefined and ship the welcome email a `?token=undefined` link.
+      unsubscribeToken: randomUUID(),
     });
     const saved = await this.subscribers.save(sub);
     this.sendWelcome(saved).catch(() => undefined);
@@ -118,33 +125,80 @@ export class SubscribersService {
   /**
    * Bulk-mail an uploaded recipient list (Excel/CSV). Parses every sheet/cell,
    * extracts + de-duplicates valid email addresses, and sends the same message
-   * to each. Recipients need not be subscribers (no per-recipient unsubscribe).
+   * to each.
+   *
+   * Every recipient is first resolved to a subscriber row, which is what makes
+   * the mail lawful to send: the row carries the token behind the footer's
+   * unsubscribe link, and a row already marked inactive means this address has
+   * opted out before — it is suppressed no matter what the uploaded file says.
+   * Addresses new to us are enrolled (source 'import'), so they also receive
+   * ordinary broadcasts from then on.
    */
   async broadcastFromFile(
     subject: string,
     html: string,
     fileBuffer: Buffer,
-  ): Promise<{ sent: number; failed: number; total: number; invalidRows: number }> {
+  ): Promise<{
+    sent: number;
+    failed: number;
+    total: number;
+    invalidRows: number;
+    suppressed: number;
+  }> {
     const { emails, invalidRows } = this.extractEmails(fileBuffer);
+
+    // Sequential: concurrent inserts of the same address would race the unique
+    // email index. The list is admin-sized, so the round-trips are affordable.
+    const recipients: Subscriber[] = [];
+    let suppressed = 0;
+    for (const email of emails) {
+      const sub = await this.ensureSubscriber(email);
+      if (sub.isActive) recipients.push(sub);
+      else suppressed += 1;
+    }
 
     let sent = 0;
     let failed = 0;
     await Promise.all(
-      emails.map(async (to) => {
+      recipients.map(async (sub) => {
         try {
-          await this.email.sendEmail({ to, subject, html: this.wrapHtml(html) });
+          await this.email.sendEmail({
+            to: sub.email,
+            subject,
+            html: this.wrapHtml(html, sub),
+          });
           sent += 1;
         } catch (err) {
           failed += 1;
-          this.logger.warn(`Bulk mail to ${to} failed: ${err}`);
+          this.logger.warn(`Bulk mail to ${sub.email} failed: ${err}`);
         }
       }),
     );
 
     this.logger.log(
-      `Bulk mail "${subject}" → ${sent} sent, ${failed} failed (of ${emails.length} valid; ${invalidRows} skipped).`,
+      `Bulk mail "${subject}" → ${sent} sent, ${failed} failed, ${suppressed} suppressed ` +
+        `(of ${emails.length} valid; ${invalidRows} skipped).`,
     );
-    return { sent, failed, total: emails.length, invalidRows };
+    return { sent, failed, total: emails.length, invalidRows, suppressed };
+  }
+
+  /** Find the subscriber for an address, enrolling it if we've never seen it. */
+  private async ensureSubscriber(email: string): Promise<Subscriber> {
+    const existing = await this.subscribers
+      .createQueryBuilder('s')
+      .where('LOWER(s.email) = :email', { email })
+      .getOne();
+    if (existing) return existing;
+
+    return this.subscribers.save(
+      this.subscribers.create({
+        email,
+        locale: 'en',
+        source: 'import',
+        isActive: true,
+        unsubscribeToken: randomUUID(),
+      }),
+    );
   }
 
   /** Parse a spreadsheet buffer → unique lower-cased emails (+ count of non-email cells). */
@@ -206,76 +260,17 @@ export class SubscribersService {
    * The logo is a PNG (WebP isn't supported by many email clients) served from
    * the frontend's public dir; in production FRONTEND_URL is the live domain.
    */
-  /**
-   * Rewrite root-relative links/images (href="/..", src="/..") in admin-authored
-   * email HTML to absolute URLs on the live domain. Email clients have no page
-   * origin, so a relative link is dead in the inbox — this makes them resolve.
-   * Skips protocol-relative ("//cdn..."), anchors ("#..") and already-absolute URLs.
-   */
-  private absolutizeLinks(html: string, baseUrl: string): string {
-    return html.replace(
-      /(\b(?:href|src)\s*=\s*)(["'])(\/(?!\/)[^"']*)\2/gi,
-      (_m, attr: string, quote: string, path: string) => `${attr}${quote}${baseUrl}${path}${quote}`,
-    );
-  }
-
   private wrapHtml(bodyHtml: string, sub?: Subscriber): string {
     const url = this.appUrl;
-    const body = this.absolutizeLinks(bodyHtml, url);
-    const year = new Date().getFullYear();
-    const sans = 'Arial,Helvetica,sans-serif';
-
-    const footerNote = sub
-      ? `You receive this email because you subscribed to Rwanda Muslim Community updates.<br>
+    // Only link when we actually hold the token: a link built from an undefined
+    // token lands the reader on "invalid or expired", which is worse than the
+    // generic notice.
+    const footerNote =
+      sub && sub.unsubscribeToken
+        ? `You receive this email because you subscribed to Rwanda Muslim Community updates.<br>
          <a href="${url}/${sub.locale || 'en'}/unsubscribe?token=${sub.unsubscribeToken}" style="color:#1a7a4a;text-decoration:underline">Unsubscribe</a> at any time.`
-      : 'You received this message from the Rwanda Muslim Community.';
+        : undefined;
 
-    return `
-      <div style="margin:0;padding:0;background:#f4f6f5;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f6f5;">
-          <tr>
-            <td align="center" style="padding:24px 12px;">
-              <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border:1px solid #e8ebe9;border-radius:14px;overflow:hidden;">
-                <!-- Header -->
-                <tr>
-                  <td style="background-color:#0d3d24;background-image:linear-gradient(135deg,#0d3d24 0%,#1a7a4a 100%);padding:22px 28px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td valign="middle" style="padding-right:14px;">
-                          <img src="${url}/logo.png" width="44" height="44" alt="RMC" style="display:block;border:0;outline:none;border-radius:8px;background:#ffffff;" />
-                        </td>
-                        <td valign="middle">
-                          <div style="color:#ffffff;font-family:${sans};font-size:18px;font-weight:bold;line-height:1.2;">Rwanda Muslim Community</div>
-                          <div style="color:#cfe6da;font-family:${sans};font-size:12px;line-height:1.4;letter-spacing:.3px;">Umuryango w'Abayisilamu mu Rwanda</div>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <!-- Gold accent -->
-                <tr><td style="height:4px;line-height:4px;font-size:0;background:#d4a017;">&nbsp;</td></tr>
-                <!-- Body -->
-                <tr>
-                  <td style="padding:28px;color:#1f2937;font-family:${sans};font-size:15px;line-height:1.65;">
-                    ${body}
-                  </td>
-                </tr>
-                <!-- Footer -->
-                <tr>
-                  <td style="padding:20px 28px;background:#fafbfa;border-top:1px solid #eef0ee;">
-                    <div style="color:#6b7280;font-family:${sans};font-size:12px;line-height:1.6;">
-                      ${footerNote}
-                    </div>
-                    <div style="margin-top:10px;color:#9ca3af;font-family:${sans};font-size:11px;line-height:1.5;">
-                      &copy; ${year} Rwanda Muslim Community &middot;
-                      <a href="${url}" style="color:#1a7a4a;text-decoration:none;">Visit our website</a>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </div>`;
+    return wrapEmailHtml(bodyHtml, { appUrl: url, footerNote });
   }
 }

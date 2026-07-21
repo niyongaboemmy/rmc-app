@@ -37,7 +37,7 @@ export function ImpactBars({ campaigns }: { campaigns: PublicCampaign[] }) {
   if (top.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-black/5">
+    <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-black/5">
       <div className="mb-5 flex items-center gap-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rmc-green-light text-rmc-green ring-1 ring-rmc-green/15">
           <TrendingUp className="h-4 w-4" />

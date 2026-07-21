@@ -40,6 +40,19 @@ export enum Permission {
   SCHOOLS_VIEW = 'schools:view',
   SCHOOLS_MANAGE = 'schools:manage',
 
+  FUNERAL_VIEW = 'funeral:view',
+  FUNERAL_MANAGE = 'funeral:manage',
+
+  HAJJ_VIEW = 'hajj:view',
+  HAJJ_MANAGE = 'hajj:manage',
+  HAJJ_APPROVE = 'hajj:approve',
+
+  // ── Dawah Learning ────────────────────────────────────────────
+  DAWAH_VIEW = 'dawah:view',
+  DAWAH_MANAGE = 'dawah:manage',
+  DISCUSSIONS_MODERATE = 'discussions:moderate',
+  DISCUSSIONS_VERIFY = 'discussions:verify',
+
   CONTACT_MESSAGES_VIEW = 'contact_messages:view',
   CONTACT_MESSAGES_MANAGE = 'contact_messages:manage',
 
@@ -63,6 +76,12 @@ export enum Permission {
   TENDER_MANAGE = 'tender:manage',
   TENDER_EVALUATE = 'tender:evaluate',
   TENDER_REPORTS = 'tender:reports',
+  SCHOLARSHIP_VIEW = 'scholarship:view',
+  SCHOLARSHIP_MANAGE = 'scholarship:manage',
+  SCHOLARSHIP_APPROVE = 'scholarship:approve',
+  SCHOLARSHIP_REPORTS = 'scholarship:reports',
+  JOB_APPLICATIONS_VIEW = 'job_applications:view',
+  JOB_APPLICATIONS_MANAGE = 'job_applications:manage',
 
   SYSTEM_SETTINGS = 'system:settings',
   AUDIT_LOG_VIEW = 'audit_log:view',

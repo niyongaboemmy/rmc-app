@@ -89,12 +89,10 @@ export default async function GalleryPage() {
       <main>
         {/* Hero header */}
         <PageHero
-          eyebrow="RMC"
           title={t('title')}
           subtitle={t('subtitle')}
-          ornament
-          minHeightClassName="min-h-[25vh]"
-          paddingClassName="pt-36 pb-8"
+          minHeightClassName="min-h-[40vh]"
+          paddingClassName="pt-28 pb-10"
         />
 
         {isEmpty ? (
@@ -109,9 +107,9 @@ export default async function GalleryPage() {
         ) : (
           <>
             {/* ALL — 3D carousel of every photo */}
-            <section className="py-8 md:py-10 bg-transparent">
+            <section className="py-6 md:py-8 bg-transparent">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="relative rounded-3xl overflow-hidden w-full max-w-4xl mx-auto min-h-[340px] md:min-h-[440px]">
+                <div className="relative rounded-lg overflow-hidden w-full max-w-3xl mx-auto min-h-[400px] md:min-h-[520px]">
                   <ImageCarousel3D images={allImages} />
                 </div>
               </div>

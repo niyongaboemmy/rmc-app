@@ -45,6 +45,9 @@ export const ContentKeys = {
   howToBecomeMuslim: 'how-to-become-muslim',
   about: 'about',
   contact: 'contact',
+  funeral: 'funeral',
+  hajj: 'hajj',
+  dawah: 'dawah',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

@@ -55,7 +55,7 @@ export function AnnouncementsSection() {
   const rtl = isRtl(locale);
 
   return (
-    <section className="bg-transparent py-10">
+    <section className="bg-transparent py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -137,7 +137,7 @@ function AnnouncementItem({
   return (
     <Link
       href={`/${locale}/announcements/${item.id}`}
-      className={`flex items-start gap-4 p-5 rounded-2xl border transition-all duration-500 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer ${config.bg} ${
+      className={`flex items-start gap-4 p-5 rounded-lg border transition-all duration-500 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer ${config.bg} ${
         parentVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
       }`}
       style={{ transitionDelay: `${delay + 200}ms` }}

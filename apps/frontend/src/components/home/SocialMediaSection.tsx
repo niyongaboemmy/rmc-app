@@ -75,7 +75,6 @@ export function SocialMediaSection() {
   }, []);
 
   const rtl = isRtl(locale);
-  const eyebrow = pick(content.eyebrow, locale);
   const title = pick(content.title, locale);
   const subtitle = pick(content.subtitle, locale);
 
@@ -111,18 +110,17 @@ export function SocialMediaSection() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <div className="inline-flex items-center gap-2 bg-rmc-green/10 text-rmc-green px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-green animate-pulse" />
-            {eyebrow}
-          </div>
           <h2
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
             dir={rtl ? 'rtl' : 'ltr'}
           >
             {title}
           </h2>
+          <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+          </div>
           <p
-            className={`text-gray-400 mt-2 max-w-xl mx-auto text-sm md:text-base ${rtl ? 'font-arabic' : ''}`}
+            className={`text-gray-400 max-w-xl mx-auto text-sm md:text-base ${rtl ? 'font-arabic' : ''}`}
             dir={rtl ? 'rtl' : 'ltr'}
           >
             {subtitle}
@@ -139,7 +137,7 @@ export function SocialMediaSection() {
               {pick({ en: 'Latest video', rw: 'Iyamamaza riheruka', ar: 'أحدث فيديو' }, locale)}
             </div>
             {latestVideoId ? (
-              <div className="relative w-full overflow-hidden rounded-2xl border border-gray-100 shadow-xl ring-1 ring-black/5 aspect-video lg:aspect-auto lg:h-[420px] bg-black">
+              <div className="relative w-full overflow-hidden rounded-lg border border-gray-200/70 aspect-video lg:aspect-auto lg:h-[420px] bg-black">
                 <iframe
                   className="absolute inset-0 h-full w-full"
                   src={`https://www.youtube-nocookie.com/embed/${latestVideoId}`}
@@ -154,7 +152,7 @@ export function SocialMediaSection() {
                 href={youtubeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex aspect-video w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 text-center no-underline shadow-sm ring-1 ring-black/5"
+                className="group relative flex aspect-video w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-lg border border-gray-200/70 bg-gradient-to-br from-gray-50 to-gray-100 text-center no-underline"
               >
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition-transform group-hover:scale-110">
                   <Youtube className="h-7 w-7" />
@@ -207,7 +205,7 @@ export function SocialMediaSection() {
                 href={liveLinks[channel.key] || channel.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`group flex items-center gap-3 p-4 w-[calc(50%-0.5rem)] sm:w-64 rounded-2xl bg-white border border-gray-100 hover:border-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${
+                className={`group flex items-center gap-3 p-4 w-[calc(50%-0.5rem)] sm:w-64 rounded-lg bg-white border border-gray-200/70 hover:border-transparent hover:shadow-md hover:-translate-y-1 transition-all duration-300 ${
                   titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
                 }`}
                 style={{ transitionDelay: `${i * 80}ms` }}

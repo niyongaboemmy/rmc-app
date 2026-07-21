@@ -34,6 +34,30 @@ export interface IntouchPayStatusResult {
   message: string;
 }
 
+export interface IntouchPayDepositRequest {
+  username: string;
+  partnerPassword: string;
+  accountNo: string;
+  amount: number;
+  mobilePhone: string;
+  transactionId: string;
+  /** Reason shown to the recipient for the deposit. */
+  reason?: string;
+  /** Set true to include withdraw charges in the amount sent to the subscriber. */
+  withdrawCharge?: boolean;
+  gatewayUrl?: string;
+}
+
+export interface IntouchPayDepositResult {
+  requestTransactionId: string;
+  /** IntouchPay's reference id — only present when the deposit succeeded (§3.6). */
+  referenceId: string;
+  status: 'SUCCESSFUL' | 'FAILED';
+  responseCode: string;
+  message: string;
+  raw?: Record<string, unknown>;
+}
+
 export interface IntouchPayBalanceResult {
   balance: string;
   success: boolean;
@@ -203,6 +227,68 @@ export class IntouchPayService {
       message: String(data!['message'] ?? data!['statusdesc'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
       raw: data,
     };
+  }
+
+  // ── §3. Request Deposit (send money to a subscriber) ───────────────────────
+
+  async requestDeposit(req: IntouchPayDepositRequest): Promise<IntouchPayDepositResult> {
+    const timestamp = this.buildTimestamp();
+    const password = this.generatePassword(
+      req.username,
+      req.accountNo,
+      req.partnerPassword,
+      timestamp,
+    );
+
+    // §3.3 Python example uses `mobilephone` (the §3.5 table lists `mobilephoneno` but that
+    // mirrors the same typo already noted for §2.5 request payment).
+    const params = new URLSearchParams({
+      username: req.username,
+      timestamp,
+      amount: String(req.amount),
+      withdrawcharge: req.withdrawCharge ? '1' : '0',
+      reason: req.reason ?? 'RMC Payment',
+      sid: '1',
+      password,
+      mobilephone: this.normalizePhone(req.mobilePhone),
+      requesttransactionid: req.transactionId,
+      accountno: req.accountNo,
+    });
+
+    const url = req.gatewayUrl ?? DEFAULT_DEPOSIT_URL;
+
+    this.logger.log(
+      `[IntouchPay] RequestDeposit → ${req.mobilePhone} ${req.amount} RWF (txn: ${req.transactionId})`,
+    );
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+      const data: Record<string, unknown> = await res.json();
+      const rc = String(data['responsecode'] ?? '');
+      const success = data['success'] === true || data['success'] === 'true';
+
+      return {
+        requestTransactionId: req.transactionId,
+        referenceId: String(data['referenceid'] ?? ''),
+        status: success ? 'SUCCESSFUL' : 'FAILED',
+        responseCode: rc,
+        message: String(data['message'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
+        raw: data,
+      };
+    } catch (err) {
+      this.logger.error(`[IntouchPay] RequestDeposit error: ${err}`);
+      return {
+        requestTransactionId: req.transactionId,
+        referenceId: '',
+        status: 'FAILED',
+        responseCode: 'NETWORK_ERROR',
+        message: 'Gateway unreachable',
+      };
+    }
   }
 
   // ── §4. Get Transaction Status ─────────────────────────────────────────────

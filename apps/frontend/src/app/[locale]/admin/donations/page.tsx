@@ -9,7 +9,7 @@ import {
   HandCoins, Search, RefreshCw, TrendingUp, Wallet, Clock, Receipt,
   Plus, Pencil, Trash2, RotateCcw, X, Download, Trophy, Layers, CheckCircle2, CalendarRange, Sparkles, ChevronDown, Upload,
   LayoutDashboard, Heart, History, ChevronRight, Building2, MapPin, ArrowUpRight,
-  ArrowUp, ArrowDown, ArrowUpDown, Activity,
+  ArrowUp, ArrowDown, ArrowUpDown, Activity, Loader2,
 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +29,7 @@ import { ConfirmModal } from '@/components/ui/Modal';
 import { NotifySubscribersButton } from '@/components/admin/NotifySubscribersButton';
 import { donationCategoriesApi, type AdminCategory } from '@/lib/donationCategoriesApi';
 import { formatMoney, fundedPercent } from '@/components/activities/data';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { cn } from '@/lib/utils';
 
 /** Top-level Finance sections (the requested submenu). */
@@ -165,6 +166,8 @@ function FinanceAdmin() {
   const [donTab, setDonTab] = useState<DonationsTab>('transactions');
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [metaFilters, setMetaFilters] = useState<MetaFilters>(EMPTY_META);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<DonationSort>('date');
   const [order, setOrder] = useState<SortOrder>('DESC');
@@ -484,35 +487,32 @@ function FinanceAdmin() {
     setHistPage(1);
   };
 
-  const exportCsv = () => {
-    const header = [t('col.transaction'), t('col.date'), t('col.donor'), t('editModal.donorEmail'), t('col.cause'), t('col.intention'), t('col.amount'), t('editModal.currency'), t('col.method')];
-    const rows = visible.map((d) => {
-      const ml = metaLabels(td, parseDonationMeta(d.message));
-      const fund = ml.fund ?? d.campaign?.title ?? t('generalFund');
-      const cause = ml.category ? `${ml.category} › ${fund}` : fund;
-      return [
-        txnRef(d.id),
-        new Date(d.donatedAt).toISOString().slice(0, 10),
-        donorLabel(d),
-        d.isAnonymous ? '' : d.donorEmail ?? '',
-        cause,
-        ml.niyyah ?? '',
-        String(d.amount),
-        d.currency,
-        methodLabel(d.paymentMethod),
-      ];
-    });
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `donations-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  /**
+   * Export whichever report the admin is looking at, as a spreadsheet.
+   *
+   * Both are built by the backend over the *whole* filtered data set. The old CSV
+   * was written from the rows already in memory, which is only the current 20-row
+   * page (and, for the ledger, the 50 most recent of each source) — so on any real
+   * database it silently produced a truncated file.
+   */
+  const exportReport = async () => {
+    setExporting(true);
+    try {
+      if (section === 'history') {
+        await donationsApi.admin.exportPaymentsXlsx({ source: histSource, search: histSearch });
+      } else {
+        await donationsApi.admin.exportXlsx({ ...filters, ...metaFilters });
+      }
+    } catch (err) {
+      console.error(err);
+      setExportError(t('exportError'));
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const showExport = section === 'donations' && donTab === 'transactions';
+  const showExport =
+    (section === 'donations' && donTab === 'transactions') || section === 'history';
 
   const SECTIONS: { key: Section; label: string; icon: React.ReactNode; hidden?: boolean }[] = [
     { key: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -537,10 +537,12 @@ function FinanceAdmin() {
         <div className="flex items-center gap-2">
           {showExport && (
             <button
-              onClick={exportCsv}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:border-rmc-green/40 hover:text-rmc-green transition-colors"
+              onClick={() => void exportReport()}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:border-rmc-green/40 hover:text-rmc-green transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Download className="w-4 h-4" /> {t('export')}
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {t('export')}
             </button>
           )}
           <button
@@ -551,6 +553,10 @@ function FinanceAdmin() {
           </button>
         </div>
       </div>
+
+      {exportError && (
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">{exportError}</p>
+      )}
 
       {/* Submenu */}
       <div className="flex items-center gap-1 overflow-x-auto border-b border-gray-100">
@@ -710,14 +716,26 @@ function FinanceAdmin() {
                       className="w-full pl-9 pr-4 rtl:pl-4 rtl:pr-9 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40"
                     />
                   </div>
-                  <select value={filters.campaignId} onChange={(e) => patch({ campaignId: e.target.value })} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
-                    <option value="">{t('allPrograms')}</option>
-                    <option value="general">{t('generalFund')}</option>
-                    {campaigns.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                  </select>
-                  <select value={filters.status} onChange={(e) => patch({ status: e.target.value })} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
-                    {STATUS_KEYS.map((k) => <option key={k} value={k}>{k === '' ? t('status.all') : t(`status.${k}`)}</option>)}
-                  </select>
+                  <SearchableSelect
+                    value={filters.campaignId}
+                    onChange={(v) => patch({ campaignId: v })}
+                    options={[
+                      { value: '', label: t('allPrograms') },
+                      { value: 'general', label: t('generalFund') },
+                      ...campaigns.map((c) => ({ value: c.id, label: c.title })),
+                    ]}
+                    searchPlaceholder={t('searchPlaceholder')}
+                    triggerClassName="px-3 py-2.5 rounded-xl text-sm"
+                  />
+                  <SearchableSelect
+                    value={filters.status}
+                    onChange={(v) => patch({ status: v })}
+                    options={STATUS_KEYS.map((k) => ({
+                      value: k,
+                      label: k === '' ? t('status.all') : t(`status.${k}`),
+                    }))}
+                    triggerClassName="px-3 py-2.5 rounded-xl text-sm"
+                  />
                   <div className="flex items-center gap-2">
                     <input type="date" value={filters.dateFrom} onChange={(e) => patch({ dateFrom: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 text-gray-600" aria-label={t('fromDate')} />
                     <span className="text-gray-300 text-xs">→</span>
@@ -726,18 +744,33 @@ function FinanceAdmin() {
                 </div>
                 {/* Cause / intention / method (client-side) */}
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <select value={metaFilters.category} onChange={(e) => setMetaFilters((m) => ({ ...m, category: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
-                    <option value="">{t('allCategories')}</option>
-                    {categoryFilterOptions.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-                  </select>
-                  <select value={metaFilters.niyyah} onChange={(e) => setMetaFilters((m) => ({ ...m, niyyah: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
-                    <option value="">{t('allIntentions')}</option>
-                    {NIYYAH.map((n) => <option key={n.key} value={n.key}>{td(`niyyah.${n.key}.label`)}</option>)}
-                  </select>
-                  <select value={metaFilters.method} onChange={(e) => setMetaFilters((m) => ({ ...m, method: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white">
-                    <option value="">{t('allMethods')}</option>
-                    {METHODS.map((m) => <option key={m.key} value={m.key}>{td(`methods.${m.key}.title`)}</option>)}
-                  </select>
+                  <SearchableSelect
+                    value={metaFilters.category}
+                    onChange={(v) => setMetaFilters((m) => ({ ...m, category: v }))}
+                    options={[
+                      { value: '', label: t('allCategories') },
+                      ...categoryFilterOptions.map((o) => ({ value: o.key, label: o.label })),
+                    ]}
+                    triggerClassName="px-3 py-2.5 rounded-xl text-sm"
+                  />
+                  <SearchableSelect
+                    value={metaFilters.niyyah}
+                    onChange={(v) => setMetaFilters((m) => ({ ...m, niyyah: v }))}
+                    options={[
+                      { value: '', label: t('allIntentions') },
+                      ...NIYYAH.map((n) => ({ value: n.key, label: td(`niyyah.${n.key}.label`) })),
+                    ]}
+                    triggerClassName="px-3 py-2.5 rounded-xl text-sm"
+                  />
+                  <SearchableSelect
+                    value={metaFilters.method}
+                    onChange={(v) => setMetaFilters((m) => ({ ...m, method: v }))}
+                    options={[
+                      { value: '', label: t('allMethods') },
+                      ...METHODS.map((m) => ({ value: m.key, label: td(`methods.${m.key}.title`) })),
+                    ]}
+                    triggerClassName="px-3 py-2.5 rounded-xl text-sm"
+                  />
                 </div>
                 {hasActiveFilters && (
                   <button onClick={clearAll} className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rmc-green transition-colors">
@@ -923,32 +956,34 @@ function FinanceAdmin() {
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-400"
                 />
               </div>
-              <select
+              <SearchableSelect
                 value={marrStatus}
-                onChange={(e) => { setMarrStatus(e.target.value); setMarrPage(1); }}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 bg-white"
-              >
-                <option value="">All statuses</option>
-                <option value="submitted">Submitted</option>
-                <option value="under_review">Under Review</option>
-                <option value="approved">Approved</option>
-                <option value="completed">Completed</option>
-                <option value="rejected">Rejected</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="closed">Closed</option>
-              </select>
-              <select
+                onChange={(v) => { setMarrStatus(v); setMarrPage(1); }}
+                options={[
+                  { value: '', label: 'All statuses' },
+                  { value: 'submitted', label: 'Submitted' },
+                  { value: 'under_review', label: 'Under Review' },
+                  { value: 'approved', label: 'Approved' },
+                  { value: 'completed', label: 'Completed' },
+                  { value: 'rejected', label: 'Rejected' },
+                  { value: 'cancelled', label: 'Cancelled' },
+                  { value: 'closed', label: 'Closed' },
+                ]}
+                triggerClassName="px-3 py-2.5 rounded-xl text-sm focus:ring-rose-500/30"
+              />
+              <SearchableSelect
                 value={marrPay}
-                onChange={(e) => { setMarrPay(e.target.value); setMarrPage(1); }}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 bg-white"
-              >
-                <option value="">All payments</option>
-                <option value="unpaid">Unpaid</option>
-                <option value="pending_cash">Cash Pending</option>
-                <option value="processing">Processing</option>
-                <option value="paid">Paid</option>
-                <option value="refunded">Refunded</option>
-              </select>
+                onChange={(v) => { setMarrPay(v); setMarrPage(1); }}
+                options={[
+                  { value: '', label: 'All payments' },
+                  { value: 'unpaid', label: 'Unpaid' },
+                  { value: 'pending_cash', label: 'Cash Pending' },
+                  { value: 'processing', label: 'Processing' },
+                  { value: 'paid', label: 'Paid' },
+                  { value: 'refunded', label: 'Refunded' },
+                ]}
+                triggerClassName="px-3 py-2.5 rounded-xl text-sm focus:ring-rose-500/30"
+              />
               <div className="flex items-center gap-2">
                 <input type="date" value={marrFrom} onChange={(e) => { setMarrFrom(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 text-gray-600" aria-label="From date" />
                 <span className="text-gray-300 text-xs">→</span>
@@ -1066,15 +1101,17 @@ function FinanceAdmin() {
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green/40"
                 />
               </div>
-              <select
+              <SearchableSelect
                 value={histSource}
-                onChange={(e) => { setHistSource(e.target.value as typeof histSource); setHistPage(1); }}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/30 bg-white"
-              >
-                <option value="">All sources</option>
-                <option value="donation">Donations</option>
-                {canViewMarriage && <option value="marriage">Marriage</option>}
-              </select>
+                onChange={(v) => { setHistSource(v as typeof histSource); setHistPage(1); }}
+                options={[
+                  { value: '', label: 'All sources' },
+                  { value: 'donation', label: 'Donations' },
+                  ...(canViewMarriage ? [{ value: 'marriage', label: 'Marriage' }] : []),
+                ]}
+                className="w-full sm:w-52"
+                triggerClassName="px-3 py-2.5 rounded-xl text-sm"
+              />
             </div>
             <p className="mt-3 text-[11px] text-gray-400">
               Most recent payments across donations{canViewMarriage ? ' and marriage services' : ''}.
@@ -1859,21 +1896,30 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
             <input type="number" min={0} value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} className={inputClass} />
           </Field>
           <Field label={t('campaignModal.currency')}>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
-              {['RWF', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <SearchableSelect
+              value={currency}
+              onChange={setCurrency}
+              options={['RWF', 'USD', 'EUR', 'GBP'].map((c) => ({ value: c, label: c }))}
+              triggerClassName={inputClass}
+            />
           </Field>
           <Field label={t('campaignModal.category')} hint={t('campaignModal.categoryHint')}>
-            <select value={fundType} onChange={(e) => { setFundType(e.target.value); setSubFundId(null); }} className={inputClass}>
-              {catOptions.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+            <SearchableSelect
+              value={fundType}
+              onChange={(v) => { setFundType(v); setSubFundId(null); }}
+              options={catOptions.map((o) => ({ value: o.key, label: o.label }))}
+              triggerClassName={inputClass}
+            />
           </Field>
           {hasSubFunds && (
             <Field label={t('campaignModal.subFund')} hint={t('campaignModal.subFundHint')} required error={fieldErr.subFund}>
-              <select value={subFundId ?? ''} onChange={(e) => setSubFundId(e.target.value || null)} className={inputClass}>
-                <option value="">{t('campaignModal.subFundPlaceholder')}</option>
-                {subFundOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-              </select>
+              <SearchableSelect
+                value={subFundId ?? ''}
+                onChange={(v) => setSubFundId(v || null)}
+                options={subFundOptions.map((o) => ({ value: o.id, label: o.label }))}
+                noneLabel={t('campaignModal.subFundPlaceholder')}
+                triggerClassName={inputClass}
+              />
             </Field>
           )}
         </div>
@@ -1890,9 +1936,12 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
             <input type="date" value={endDate ?? ''} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
           </Field>
           <Field label={t('campaignModal.status')}>
-            <select value={status} onChange={(e) => setStatus(e.target.value as CampaignStatus)} className={inputClass}>
-              {(['active', 'paused', 'closed'] as CampaignStatus[]).map((s) => <option key={s} value={s}>{statusLabels[s]}</option>)}
-            </select>
+            <SearchableSelect
+              value={status}
+              onChange={(v) => setStatus(v as CampaignStatus)}
+              options={(['active', 'paused', 'closed'] as CampaignStatus[]).map((s) => ({ value: s, label: statusLabels[s] }))}
+              triggerClassName={inputClass}
+            />
           </Field>
         </div>
       </FormSection>
@@ -1972,23 +2021,34 @@ function EditDonationModal({ donation, campaigns, onClose, onSaved }: {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t('editModal.status')}>
-          <select value={status} onChange={(e) => setStatus(e.target.value as DonationStatus)} className={inputClass}>
-            {EDIT_STATUSES.map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
-          </select>
+          <SearchableSelect
+            value={status}
+            onChange={(v) => setStatus(v as DonationStatus)}
+            options={EDIT_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))}
+            triggerClassName={inputClass}
+          />
         </Field>
         <Field label={t('editModal.program')}>
-          <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className={inputClass}>
-            <option value="">{t('generalFund')}</option>
-            {campaigns.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-          </select>
+          <SearchableSelect
+            value={campaignId}
+            onChange={setCampaignId}
+            options={[
+              { value: '', label: t('generalFund') },
+              ...campaigns.map((c) => ({ value: c.id, label: c.title })),
+            ]}
+            triggerClassName={inputClass}
+          />
         </Field>
         <Field label={t('editModal.amount')}>
           <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} />
         </Field>
         <Field label={t('editModal.currency')}>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
-            {EDIT_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <SearchableSelect
+            value={currency}
+            onChange={setCurrency}
+            options={EDIT_CURRENCIES.map((c) => ({ value: c, label: c }))}
+            triggerClassName={inputClass}
+          />
         </Field>
         <Field label={t('editModal.donorName')}>
           <input value={donorName} onChange={(e) => setDonorName(e.target.value)} className={inputClass} />

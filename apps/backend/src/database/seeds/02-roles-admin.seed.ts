@@ -29,6 +29,8 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.DONATIONS_MANAGE,
   Permission.SCHOOLS_VIEW,
   Permission.SCHOOLS_MANAGE,
+  Permission.DAWAH_VIEW,
+  Permission.DAWAH_MANAGE,
   Permission.CONTACT_MESSAGES_VIEW,
   Permission.CONTACT_MESSAGES_MANAGE,
   Permission.REPORTS_EXPORT,
@@ -42,6 +44,10 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.TENDER_MANAGE,
   Permission.TENDER_EVALUATE,
   Permission.TENDER_REPORTS,
+  Permission.SCHOLARSHIP_VIEW,
+  Permission.SCHOLARSHIP_MANAGE,
+  Permission.SCHOLARSHIP_APPROVE,
+  Permission.SCHOLARSHIP_REPORTS,
 ];
 
 const MARRIAGE_OFFICER_PERMISSIONS: Permission[] = [
@@ -81,6 +87,13 @@ const TENDER_OFFICER_PERMISSIONS: Permission[] = [
   Permission.CONTENT_VIEW,
   Permission.CONTENT_CREATE,
   Permission.CONTENT_EDIT,
+];
+
+const SCHOLARSHIP_OFFICER_PERMISSIONS: Permission[] = [
+  Permission.SCHOLARSHIP_VIEW,
+  Permission.SCHOLARSHIP_MANAGE,
+  Permission.SCHOLARSHIP_REPORTS,
+  Permission.MEMBERS_VIEW,
 ];
 
 const DEFAULT_ROLES = [
@@ -131,6 +144,13 @@ const DEFAULT_ROLES = [
     slug: 'tender_officer',
     description: 'Publishes tenders and evaluates the bids submitted against them',
     permissions: TENDER_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  {
+    name: 'Scholarship Officer',
+    slug: 'scholarship_officer',
+    description: 'Manages scholarship programs and reviews applications',
+    permissions: SCHOLARSHIP_OFFICER_PERMISSIONS,
     isSystem: false,
   },
   {

@@ -13,6 +13,8 @@ import { PaymentSettingsService } from '../payment-settings/payment-settings.ser
 import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { SmsService } from '../integrations/sms/sms.service';
 import { DonationSmsTemplates } from './donation-sms-templates';
+import { parseDonationMeta } from './donation-meta';
+import { toXlsxBuffer, formatDateTime } from '../common/utils/xlsx';
 
 export interface DonationFilters {
   dateFrom?: string;
@@ -24,6 +26,49 @@ export interface DonationFilters {
   limit?: number;
   sort?: string;
   order?: string;
+  /** Structured metadata carried in `message` (see donationMeta on the frontend). */
+  category?: string;
+  niyyah?: string;
+  /** Real column, unlike the two above. */
+  method?: string;
+}
+
+/** Keys of the exported donation rows, in column order. */
+const DONATION_EXPORT_COLUMNS = [
+  'Transaction Ref',
+  'Date',
+  'Donor',
+  'Donor Email',
+  'Donor Phone',
+  'Anonymous',
+  'Fund',
+  'Category',
+  'Intention',
+  'Amount',
+  'Currency',
+  'Method',
+  'Status',
+  'Frequency',
+  'Payment Reference',
+];
+
+/**
+ * Match one `key:value` segment of the pipe-delimited metadata packed into a
+ * donation's `message` ("niyyah:sadaqah|category:charity").
+ *
+ * A plain LIKE '%category:charity%' would also match "category:charity2", so this
+ * anchors on the segment boundary. Values are restricted to the same charset the
+ * writer uses; anything else can't be a real key and is made to match nothing
+ * rather than being interpolated into a regex.
+ */
+function metaSegmentRegex(key: 'category' | 'niyyah', value: string): string {
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) return '(?!)';
+  return `(^|\\|)${key}:${value}(\\||$)`;
+}
+
+/** The short reference the admin UI shows for a donation — keep the two in step. */
+export function txnRef(id: string): string {
+  return `TXN-${id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
 
 /** Whitelist of sortable columns for the admin donations list. */
@@ -233,7 +278,66 @@ export class DonationsService {
         { s: `%${filters.search}%`, ids: `%${raw}%` },
       );
     }
+    // Category and intention are not columns — they live in the `message` metadata.
+    if (filters.category) {
+      qb.andWhere('donation.message ~ :catRe', {
+        catRe: metaSegmentRegex('category', filters.category),
+      });
+    }
+    if (filters.niyyah) {
+      qb.andWhere('donation.message ~ :niyRe', {
+        niyRe: metaSegmentRegex('niyyah', filters.niyyah),
+      });
+    }
+    if (filters.method) {
+      qb.andWhere('donation.paymentMethod = :method', { method: filters.method });
+    }
     return qb;
+  }
+
+  /**
+   * Every donation matching the filters as an .xlsx report.
+   *
+   * Reuses applyFilters, so the export inherits the list's exact semantics — the
+   * inclusive end date, the "general" campaign sentinel, the TXN- prefix strip — and
+   * deliberately ignores page/limit: the point of a report is the whole filtered set,
+   * not the 20 rows that happen to be on screen.
+   */
+  async adminExportXlsx(filters: DonationFilters): Promise<Buffer> {
+    const qb = this.donations
+      .createQueryBuilder('donation')
+      .leftJoinAndSelect('donation.campaign', 'campaign')
+      .orderBy('donation.donatedAt', 'DESC')
+      .addOrderBy('donation.id', 'DESC');
+
+    this.applyFilters(qb, filters);
+    const donations = await qb.getMany();
+
+    const rows = donations.map((d) => {
+      const meta = parseDonationMeta(d.message);
+      return {
+        'Transaction Ref': txnRef(d.id),
+        Date: formatDateTime(d.donatedAt),
+        // An anonymous donor's identity is hidden in the UI; a spreadsheet that
+        // names them anyway would leak exactly what the flag exists to protect.
+        Donor: d.isAnonymous ? 'Anonymous' : (d.donorName?.trim() || 'Unknown'),
+        'Donor Email': d.isAnonymous ? '' : (d.donorEmail ?? ''),
+        'Donor Phone': d.isAnonymous ? '' : (d.donorPhone ?? ''),
+        Anonymous: d.isAnonymous ? 'Yes' : 'No',
+        Fund: d.campaign?.title ?? 'General Fund',
+        // Stable metadata keys, not localized labels — the file has no locale.
+        Category: meta.category ?? '',
+        Intention: meta.niyyah ?? '',
+        Amount: Number(d.amount),
+        Currency: d.currency,
+        Method: d.paymentMethod ?? '',
+        Status: d.status,
+        Frequency: d.frequency,
+        'Payment Reference': d.paymentReference ?? '',
+      };
+    });
+
+    return toXlsxBuffer('Donations', DONATION_EXPORT_COLUMNS, rows);
   }
 
   async adminFindAll(filters: DonationFilters) {

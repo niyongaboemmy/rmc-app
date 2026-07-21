@@ -7,7 +7,10 @@ import {
   Index,
 } from 'typeorm';
 
-export type NotificationGroup = 'Authentication' | 'Marriage Service';
+export type NotificationGroup =
+  | 'Authentication'
+  | 'Marriage Service'
+  | 'Hajj Service';
 
 @Entity('notification_settings')
 export class NotificationSetting {

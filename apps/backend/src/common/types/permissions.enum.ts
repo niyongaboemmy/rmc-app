@@ -72,6 +72,28 @@ export enum Permission {
   GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
   GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
 
+  // ── Scholarship Service ───────────────────────────────────────────
+  SCHOLARSHIP_VIEW = 'scholarship:view',
+  SCHOLARSHIP_MANAGE = 'scholarship:manage',
+  SCHOLARSHIP_APPROVE = 'scholarship:approve',
+  SCHOLARSHIP_REPORTS = 'scholarship:reports',
+  // ── Job Applications Service ──────────────────────────────────────
+  JOB_APPLICATIONS_VIEW = 'job_applications:view',
+  JOB_APPLICATIONS_MANAGE = 'job_applications:manage',
+
+  // ── Funeral Service ───────────────────────────────────────────────
+  FUNERAL_VIEW = 'funeral:view',
+  FUNERAL_MANAGE = 'funeral:manage',
+
+  // ── Hajj Service ──────────────────────────────────────────────────
+  HAJJ_VIEW = 'hajj:view',
+  HAJJ_MANAGE = 'hajj:manage',
+  HAJJ_APPROVE = 'hajj:approve',
+
+  // ── Dawah Learning ────────────────────────────────────────────────
+  DAWAH_VIEW = 'dawah:view',
+  DAWAH_MANAGE = 'dawah:manage',
+
   // ── Tender Service (bid submissions) ──────────────────────────────
   TENDER_VIEW = 'tender:view',
   TENDER_MANAGE = 'tender:manage',
@@ -116,6 +138,16 @@ export enum Permission {
 
   // ── User Drive (admin view of any user's drive) ────────────────────
   USERS_VIEW_DRIVE = 'users:view_drive',
+
+  // ── Dawah Discussions ──────────────────────────────────────────────
+  // Deliberately NOT folded into dawah:manage. Uploading a course PDF and
+  // passing religious judgement on a member's answer are different
+  // authorities, held by different people. See
+  // docs/dawah-discussions-implementation-plan.md §3.1.
+  /** Hide/restore/lock posts, work the report queue, set a category's answer policy. */
+  DISCUSSIONS_MODERATE = 'discussions:moderate',
+  /** Mark one answer "Verified by RMC" — i.e. speak for RMC on a point of religion. */
+  DISCUSSIONS_VERIFY = 'discussions:verify',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);

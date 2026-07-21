@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { json, urlencoded } from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as compression from 'compression';
 import helmet from 'helmet';
@@ -11,6 +12,17 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  /**
+   * JSON body limit. Express defaults to 100 kB, which a legitimate rich-text
+   * body overruns: a long lesson/course description with inline images is easily
+   * 150-300 kB of HTML. Worse, exceeding the default surfaced as a generic 500
+   * rather than a 413, so an admin lost their work to an unexplained error.
+   * 2 MB is ample for prose (media itself is uploaded separately, never inlined
+   * into JSON) while still bounding the request size.
+   */
+  app.use(json({ limit: '2mb' }));
+  app.use(urlencoded({ limit: '2mb', extended: true }));
 
   // Security
   app.use(helmet());

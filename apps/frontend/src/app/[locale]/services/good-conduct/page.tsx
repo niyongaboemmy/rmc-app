@@ -3,7 +3,8 @@ import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { ShieldCheck, ArrowLeft, ArrowRight, FileText, Search } from 'lucide-react';
+import { ShieldCheck, ArrowRight, FileText, Search } from 'lucide-react';
+import { BackToServices } from '@/components/services/BackToServices';
 
 export default async function GoodConductServicePage({
   params: { locale },
@@ -44,14 +45,7 @@ export default async function GoodConductServicePage({
             </div>
           </div>
 
-          <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
-            <Link
-              href={`/${locale}/services`}
-              className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/25 hover:border-white/50 shadow-sm"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> {t('landing.backToServices')}
-            </Link>
-          </div>
+          <BackToServices locale={locale} />
         </section>
 
         {/* CTA cards */}

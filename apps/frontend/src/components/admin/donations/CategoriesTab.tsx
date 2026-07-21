@@ -13,6 +13,7 @@ import {
   type AdminCategory, type AdminSubFund, type CategoryPayload, type SubFundPayload,
 } from '@/lib/donationCategoriesApi';
 import { ICON_NAMES, resolveIcon } from '@/components/donate/categoryIcons';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { cn } from '@/lib/utils';
 
 const LANGS = [
@@ -351,10 +352,15 @@ function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
           </div>
           <div>
             <label className={labelCls}>Tone</label>
-            <select value={tone} onChange={(e) => setTone(e.target.value)} className={inputCls}>
-              <option value="green">Green</option>
-              <option value="gold">Gold</option>
-            </select>
+            <SearchableSelect
+              value={tone}
+              onChange={setTone}
+              options={[
+                { value: 'green', label: 'Green' },
+                { value: 'gold', label: 'Gold' },
+              ]}
+              triggerClassName={inputCls}
+            />
           </div>
           <div>
             <label className={labelCls}>Order</label>
@@ -362,10 +368,15 @@ function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
           </div>
           <div>
             <label className={labelCls}>Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')} className={inputCls}>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            <SearchableSelect
+              value={status}
+              onChange={(v) => setStatus(v as 'active' | 'inactive')}
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+              triggerClassName={inputCls}
+            />
           </div>
         </div>
 
@@ -375,9 +386,13 @@ function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rmc-green-light text-rmc-green ring-1 ring-rmc-green/10">
               <Icon className="h-5 w-5" />
             </span>
-            <select value={icon} onChange={(e) => setIcon(e.target.value)} className={inputCls}>
-              {ICON_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
+            <SearchableSelect
+              value={icon}
+              onChange={setIcon}
+              options={ICON_NAMES.map((n) => ({ value: n, label: n }))}
+              searchPlaceholder="Search icons…"
+              triggerClassName={inputCls}
+            />
           </div>
         </div>
 
@@ -479,10 +494,15 @@ function SubFundModal({ categoryId, subfund, onClose, onSaved }: {
           </div>
           <div>
             <label className={labelCls}>Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')} className={inputCls}>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            <SearchableSelect
+              value={status}
+              onChange={(v) => setStatus(v as 'active' | 'inactive')}
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+              triggerClassName={inputCls}
+            />
           </div>
           <div className="col-span-2 sm:col-span-1">
             <label className={labelCls}>Campaign slug</label>
