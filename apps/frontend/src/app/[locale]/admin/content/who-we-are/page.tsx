@@ -106,7 +106,7 @@ function WhoWeAreManager() {
       </div>
 
       {/* Community stats */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <h2 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
           <BarIcon />
           Community Statistics
@@ -141,7 +141,7 @@ function WhoWeAreManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Text content */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Content — {LANGS.find((l) => l.key === lang)?.label}</h2>
 
         <div>

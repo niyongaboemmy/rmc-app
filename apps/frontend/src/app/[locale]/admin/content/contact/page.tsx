@@ -117,7 +117,7 @@ function ContactContentManager() {
       </div>
 
       {/* Plain contact details (shared across languages) */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <h2 className="text-sm font-bold text-gray-700 pb-3 border-b border-gray-50">
           Contact Details <span className="font-normal text-gray-400">— shared across all languages</span>
         </h2>
@@ -139,7 +139,7 @@ function ContactContentManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Tri-lingual fields */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
         <h2 className="text-sm font-bold text-gray-700 pb-3 border-b border-gray-50">
           Content — {LANGS.find((l) => l.key === lang)?.label}
         </h2>

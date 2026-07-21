@@ -170,7 +170,7 @@ function SocialMediaManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Header text content */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Section Header — {langLabel}</h2>
 
         <div>
@@ -206,7 +206,7 @@ function SocialMediaManager() {
       </div>
 
       {/* Posts list editor */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-sky-600" />
@@ -305,7 +305,7 @@ function SocialMediaManager() {
       </div>
 
       {/* Channels list editor */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
             <Users className="w-4 h-4 text-sky-600" />

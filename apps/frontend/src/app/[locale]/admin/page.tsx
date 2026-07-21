@@ -58,7 +58,7 @@ function StatCard({ label, value, icon: Icon, iconBg, iconColor, trend, href, ac
 
   const inner = (
     <div
-      className="group bg-white rounded-xl border border-gray-100 p-5 hover:border-gray-200 hover:shadow-sm transition-all duration-200"
+      className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:border-gray-200 hover:shadow-sm transition-all duration-200"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between mb-3">
@@ -304,7 +304,7 @@ function AdminDashboardContent() {
       {/* Middle: chart + quick actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-4 sm:mb-5">
             <div>
               <p className="text-[13px] font-semibold text-gray-900">Weekly Registrations</p>
@@ -328,7 +328,7 @@ function AdminDashboardContent() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
           <p className="text-[13px] font-semibold text-gray-900 mb-3">Quick Actions</p>
           <div className="space-y-1">
             {[
@@ -367,7 +367,7 @@ function AdminDashboardContent() {
       {/* Bottom: activity + system */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <p className="text-[13px] font-semibold text-gray-900">Recent Activity</p>
             <Link href={`/${locale}/admin/members`} className="text-[12px] text-rmc-green font-medium hover:underline">
@@ -398,7 +398,7 @@ function AdminDashboardContent() {
           })}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
           <p className="text-[13px] font-semibold text-gray-900 mb-3 sm:mb-4">System Status</p>
           <StatusRow label="API Server"   ok={true} />
           <StatusRow label="PostgreSQL"   ok={true} />

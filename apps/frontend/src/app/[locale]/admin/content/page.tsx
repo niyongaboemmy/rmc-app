@@ -730,7 +730,7 @@ function SectionRow({
 
 function EmptyState({ query, onClear }: { query: string; onClear: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-gray-100">
+    <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
       <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
         <Search className="w-5 h-5 text-gray-300" />
       </div>

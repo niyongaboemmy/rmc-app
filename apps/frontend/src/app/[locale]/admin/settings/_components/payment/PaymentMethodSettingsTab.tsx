@@ -226,7 +226,7 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
     <>
       <div className="space-y-5">
         {/* Method selector */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
             <Globe className="w-4 h-4 text-rmc-green" />
             <span className="text-sm font-semibold text-gray-900">Select Payment Method</span>
@@ -315,7 +315,7 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
             </div>
 
             {/* Settings form */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                 {(() => { const Icon = METHOD_ICONS[selectedMethod.code] ?? Banknote; return <Icon className="w-4 h-4 text-rmc-green" />; })()}
                 <h2 className="text-sm font-semibold text-gray-900">{selectedMethod.name} — Credentials</h2>

@@ -1199,7 +1199,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
 
 function EmptyGallery({ onUpload }: { onUpload: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-gray-100 border-dashed">
+    <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-gray-100 shadow-sm border-dashed">
       <div className="w-16 h-16 rounded-2xl bg-rmc-green/8 flex items-center justify-center mb-4">
         <Images className="w-8 h-8 text-rmc-green/40" />
       </div>

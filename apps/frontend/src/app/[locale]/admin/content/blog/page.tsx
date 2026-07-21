@@ -282,7 +282,7 @@ function BlogManager() {
           const category = post.category[lang] || post.category.en;
           const img = resolveBlogImage(post.image);
           return (
-            <div key={index} className="group relative bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-cyan-100">
+            <div key={index} className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-cyan-100">
               {/* Image */}
               <div className="relative aspect-[16/9] bg-gray-100">
                 {img ? (

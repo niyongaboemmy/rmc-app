@@ -80,7 +80,7 @@ export function PrayerTimesEditor({ backHref }: PrayerTimesEditorProps) {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-rmc-green" />
           Default Location
@@ -95,7 +95,7 @@ export function PrayerTimesEditor({ backHref }: PrayerTimesEditorProps) {
         <p className="text-xs text-gray-400 mt-1.5">Shown on the homepage when user location is unavailable.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="text-sm font-bold text-gray-700 mb-5">Daily Prayer Schedule</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {PRAYERS.map(({ key, label, icon: PrayerIcon, color, bg, border }) => (

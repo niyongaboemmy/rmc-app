@@ -222,7 +222,7 @@ function AreasManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Section header */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700">Section Header — {LANGS.find((l) => l.key === lang)?.label}</h2>
           <button onClick={handleSaveHeader} disabled={saving || loading}

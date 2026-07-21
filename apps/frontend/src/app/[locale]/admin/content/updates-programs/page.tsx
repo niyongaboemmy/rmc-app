@@ -232,7 +232,7 @@ function UpdatesProgramsManager() {
       </div>
 
       {/* ── Section heading (Tri) ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-gray-700">Section Heading</h2>
           <button

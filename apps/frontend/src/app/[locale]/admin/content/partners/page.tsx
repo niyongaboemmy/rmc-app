@@ -174,7 +174,7 @@ function PartnersManager() {
       </div>
 
       {/* Section header editing */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-sm font-bold text-gray-700">Section Header</h2>
           <button onClick={handleSaveHeader} disabled={saving || loading}
@@ -244,7 +244,7 @@ function PartnersManager() {
         {items.map((item, index) => {
           const sector = item.sector[lang] || item.sector.en;
           return (
-            <div key={index} className="group relative bg-white rounded-2xl border border-gray-100 transition-all duration-200 hover:shadow-lg hover:border-amber-100 p-5">
+            <div key={index} className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-amber-100 p-5">
               {/* Logo */}
               <div className="flex items-start justify-between mb-4">
                 <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">

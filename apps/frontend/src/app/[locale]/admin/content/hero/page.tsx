@@ -127,7 +127,7 @@ function HeroManager() {
       </div>
 
       {/* Greeting (salam) — not translated */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-2">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-2">
         <label className="block text-sm font-medium text-gray-700">Arabic Greeting (eyebrow)</label>
         <p className="text-[11px] text-gray-400 mb-1.5">Shown above the headline in all languages — not translated.</p>
         <input
@@ -143,7 +143,7 @@ function HeroManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Translatable copy */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Copy — {langLabel}</h2>
 
         <div>
@@ -170,7 +170,7 @@ function HeroManager() {
       </div>
 
       {/* CTAs */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Call-to-action Buttons — {langLabel}</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -224,7 +224,7 @@ function HeroManager() {
       </div>
 
       {/* Background slideshow */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-gray-700">Background Slideshow</h2>

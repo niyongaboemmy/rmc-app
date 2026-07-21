@@ -329,7 +329,7 @@ function ActivitiesEventsManager() {
       </div>
 
       {/* ── Section header text (Tri) ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-gray-700">Section Header</h2>
           <button onClick={handleSaveHeader} disabled={saving || loading}

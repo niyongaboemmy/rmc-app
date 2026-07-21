@@ -140,7 +140,7 @@ function SubscribersManager() {
 
       {/* Send a test email (verify SMTP) */}
       {canManage && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1">
               <h2 className="text-sm font-bold text-gray-700">Test email delivery</h2>
@@ -168,7 +168,7 @@ function SubscribersManager() {
 
       {/* Compose broadcast */}
       {canManage && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
           <h2 className="text-sm font-bold text-gray-700">Send a newsletter</h2>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
@@ -236,7 +236,7 @@ function SubscribersManager() {
       )}
 
       {/* List */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
           <h2 className="text-sm font-bold text-gray-700">All subscribers ({items.length})</h2>
           <button onClick={load} className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rmc-green">
@@ -305,7 +305,7 @@ function SubscribersManager() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       <div className="flex items-center gap-2 text-gray-400 mb-1.5">{icon}<span className="text-xs font-medium">{label}</span></div>
       <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
     </div>

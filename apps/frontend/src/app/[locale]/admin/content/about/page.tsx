@@ -311,7 +311,7 @@ function AboutRMCManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Content fields */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
         <h2 className="text-sm font-bold text-gray-700 pb-3 border-b border-gray-50">
           Content — {LANGS.find((l) => l.key === lang)?.label}
         </h2>
@@ -346,7 +346,7 @@ function AboutRMCManager() {
       </div>
 
       {/* ── Leadership CRUD ───────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-slate-500" />
@@ -425,7 +425,7 @@ function AboutRMCManager() {
       </div>
 
       {/* ── History Entries CRUD ──────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-500" />
