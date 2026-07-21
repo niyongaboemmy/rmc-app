@@ -91,7 +91,7 @@ type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 const inputClass =
   'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green';
-const inputError = 'border-red-300 focus:border-red-400 focus:ring-red-400/30';
+const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/30';
 
 const STEP_KEYS = ['deceased', 'family', 'arrangements', 'review'] as const;
 
@@ -351,7 +351,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
                   <label className={cx(
                     'flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3.5 py-3 text-sm transition-colors',
                     certError
-                      ? 'border-red-300 text-red-500'
+                      ? 'border-red-400 text-red-500'
                       : 'border-gray-300 bg-gray-50 text-gray-500 hover:border-rmc-green/40 hover:text-rmc-green',
                     certUploading && 'cursor-wait',
                   )}>
