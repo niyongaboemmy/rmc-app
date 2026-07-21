@@ -249,7 +249,7 @@ function HajjAdmin() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[10000] -translate-x-1/2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+        <div className="fixed bottom-6 left-1/2 z-[10000] -translate-x-1/2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
           {toast}
         </div>
       )}

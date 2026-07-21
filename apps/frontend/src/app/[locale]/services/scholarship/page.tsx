@@ -71,7 +71,7 @@ export default async function ScholarshipServicePage({
           <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
             <Link
               href={`/${locale}/services`}
-              className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/25 hover:border-white/50 shadow-sm"
+              className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/25 hover:border-white/50 shadow-sm"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> {t('detail.backToServices')}
             </Link>
@@ -223,13 +223,13 @@ export default async function ScholarshipServicePage({
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href={`/${locale}/services/scholarship/apply`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-semibold rounded-full hover:shadow-lg hover:shadow-rmc-green-dark/40 transition-all duration-200 hover:scale-105 active:scale-100"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-rmc-green-dark/40 transition-all duration-200 hover:scale-105 active:scale-100"
               >
                 {t('detail.ctaStart')} <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href={`/${locale}/contact`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/25 text-white text-sm font-semibold rounded-full hover:bg-white/20 transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/25 text-white text-sm font-semibold rounded-lg hover:bg-white/20 transition-all duration-200"
               >
                 <Phone className="w-4 h-4" /> {t('detail.ctaContact')}
               </Link>

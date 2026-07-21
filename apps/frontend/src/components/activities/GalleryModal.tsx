@@ -157,7 +157,7 @@ export function GalleryModal({
             </span>
             <Link
               href={`/${locale}/activities`}
-              className="group inline-flex items-center gap-1.5 px-4 py-2 shrink-0 bg-rmc-green text-white text-xs font-bold rounded-full shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 motion-safe:hover:scale-105 transition-all duration-300"
+              className="group inline-flex items-center gap-1.5 px-4 py-2 shrink-0 bg-rmc-green text-white text-xs font-bold rounded-lg shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 motion-safe:hover:scale-105 transition-all duration-300"
             >
               Read full story
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />

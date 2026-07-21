@@ -220,7 +220,7 @@ export function MarriageApplicationForm() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href={`/${locale}/services/marriage/status?id=${appId}`}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white font-semibold text-sm hover:shadow-lg hover:shadow-rmc-green-dark/30 transition-all duration-200"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white font-semibold text-sm hover:shadow-lg hover:shadow-rmc-green-dark/30 transition-all duration-200"
           >
             <Search className="w-4 h-4" /> {t('checkStatusBtn')}
           </Link>

@@ -124,13 +124,13 @@ export default async function MarriageServicePage({
               <div className="flex flex-col sm:flex-row gap-2.5">
                 <Link
                   href={`/${locale}/services/marriage/apply`}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-semibold rounded-full hover:shadow-lg hover:shadow-rmc-green-dark/30 transition-all duration-200 hover:scale-105 active:scale-100"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-rmc-green-dark/30 transition-all duration-200 hover:scale-105 active:scale-100"
                 >
                   {t('detail.startApplication')} <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
                   href={`/${locale}/services/marriage/status`}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-rmc-green text-rmc-green-dark text-sm font-semibold rounded-full hover:border-rmc-green hover:bg-rmc-green-light transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-rmc-green text-rmc-green-dark text-sm font-semibold rounded-lg hover:border-rmc-green hover:bg-rmc-green-light transition-all duration-200"
                 >
                   <Search className="w-4 h-4" /> {t('detail.checkStatus')}
                 </Link>
@@ -333,13 +333,13 @@ export default async function MarriageServicePage({
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href={`/${locale}/services/marriage/apply`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-semibold rounded-full hover:shadow-lg hover:shadow-rmc-green-dark/40 transition-all duration-200 hover:scale-105 active:scale-100"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-rmc-green-dark/40 transition-all duration-200 hover:scale-105 active:scale-100"
               >
                 {t('detail.ctaStart')} <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href={`/${locale}/contact`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/25 text-white text-sm font-semibold rounded-full hover:bg-white/20 transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/25 text-white text-sm font-semibold rounded-lg hover:bg-white/20 transition-all duration-200"
               >
                 <Phone className="w-4 h-4" /> {t('detail.ctaContact')}
               </Link>

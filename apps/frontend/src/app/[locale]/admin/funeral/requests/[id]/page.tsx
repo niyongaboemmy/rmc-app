@@ -127,7 +127,7 @@ function RequestDetail() {
           <button
             type="button"
             onClick={() => setManaging(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> {t('detail.manage')}
           </button>

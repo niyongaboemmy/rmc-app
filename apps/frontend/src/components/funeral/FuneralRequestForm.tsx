@@ -240,13 +240,13 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
             <button
               type="button"
               onClick={() => { reset(); setSubmitted(false); setCertificate(null); setStep(0); }}
-              className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               {t('success.again')}
             </button>
             <Link
               href={`/${locale}/services/funeral`}
-              className="inline-flex items-center justify-center rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               {t('success.home')}
             </Link>

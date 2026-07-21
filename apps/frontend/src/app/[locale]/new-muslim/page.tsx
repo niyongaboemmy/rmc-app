@@ -106,7 +106,7 @@ export default function NewMuslimPage() {
         <Reveal>
           <section>
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <div className={`inline-flex items-center gap-2 mb-3 px-4 py-1.5 rounded-full bg-rmc-green/10 text-rmc-green text-xs font-semibold ${isAr ? 'font-arabic' : ''}`}>
+              <div className={`inline-flex items-center gap-2 mb-3 px-4 py-1.5 rounded-lg bg-rmc-green/10 text-rmc-green text-xs font-semibold ${isAr ? 'font-arabic' : ''}`}>
                 <Sparkles className="w-3.5 h-3.5" />
                 {pick({ en: 'What\'s Next', rw: 'Ibikurikira', ar: 'الخطوات التالية' }, locale)}
               </div>
@@ -310,7 +310,7 @@ function RegisterForm({ locale, isAr }: { locale: string; isAr: boolean }) {
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="mt-5 inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-rmc-green text-white text-sm font-bold rounded-full shadow-lg shadow-rmc-green/25 hover:bg-rmc-green-dark disabled:opacity-60 transition-colors"
+        className="mt-5 inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-rmc-green text-white text-sm font-bold rounded-lg shadow-lg shadow-rmc-green/25 hover:bg-rmc-green-dark disabled:opacity-60 transition-colors"
       >
         {status === 'sending' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         {pick({ en: 'Send & connect me', rw: 'Ohereza unyhuze', ar: 'أرسل وتواصل معي' }, locale)}
