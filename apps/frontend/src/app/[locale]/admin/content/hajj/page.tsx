@@ -245,7 +245,7 @@ function HajjContentManager() {
             className="h-28 w-40 shrink-0 rounded-xl object-cover ring-1 ring-gray-100"
           />
           <div className="min-w-0 flex-1">
-            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+            <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
               <ImageIcon className="h-3.5 w-3.5 text-rmc-green" /> Photo
             </label>
             <input

@@ -19,8 +19,8 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { dawahApi, type DawahCategory, type CategoryPayload } from '@/lib/dawahApi';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
-const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+const labelClass = 'mb-1.5 block text-sm font-medium text-gray-700';
 
 /** Render a lucide icon by its name string (the value stored on a category). */
 function CategoryIcon({ name, className }: { name: string | null; className?: string }) {

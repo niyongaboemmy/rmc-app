@@ -412,7 +412,7 @@ function AdminGoodConductDetailContent() {
                     <select
                       value={selectedImamId}
                       onChange={(e) => setSelectedImamId(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                     >
                       <option value="">— Select a registered imam —</option>
                       {imams.map((imam) => (

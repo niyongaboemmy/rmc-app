@@ -113,7 +113,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
 
   const onSubmit = (data: FormData) => onNext({ ...data, venueType: venue ?? data.venueType });
 
-  const selectCls = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent transition-colors';
+  const selectCls = 'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent transition-colors';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">

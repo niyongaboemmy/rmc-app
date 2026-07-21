@@ -30,8 +30,8 @@ import {
 } from '@/lib/dawahApi';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
-const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+const labelClass = 'mb-1.5 block text-sm font-medium text-gray-700';
 
 type Lang = 'en' | 'rw' | 'ar';
 const LANGS: { key: Lang; dir: 'ltr' | 'rtl' }[] = [

@@ -468,7 +468,7 @@ export default function AdminDrivePage() {
                 if (e.key === 'Escape') { setNewFolderOpen(false); setNewFolderName(''); }
               }}
               placeholder="Untitled folder"
-              className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
+              className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
             />
             <div className="flex justify-end gap-2 mt-4">
               <button
@@ -506,7 +506,7 @@ export default function AdminDrivePage() {
                 value={renaming.value}
                 onChange={(e) => setRenaming({ ...renaming, value: e.target.value })}
                 onKeyDown={(e) => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') setRenaming(null); }}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
+                className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
               />
               <div className="flex justify-end gap-2 mt-4">
                 <button onClick={() => setRenaming(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>

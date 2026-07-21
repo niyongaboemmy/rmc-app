@@ -50,7 +50,7 @@ export function ImageUploadField({
 
   return (
     <div>
-      {label && <label className="mb-1.5 block text-xs font-medium text-gray-500">{label}</label>}
+      {label && <label className="mb-1.5 block text-sm font-medium text-gray-700">{label}</label>}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
       {value ? (
         <div className={`relative w-full overflow-hidden ${rounded} border border-gray-200 bg-gray-50 ${heightClass}`}>

@@ -320,7 +320,7 @@ function AboutRMCManager() {
           const isRich = key === 'history' || key === 'mission' || key === 'vision';
           return (
             <div key={key}>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
                 {Icon && <Icon className="w-3.5 h-3.5 text-slate-500" />}
                 {label}
               </label>

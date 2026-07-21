@@ -108,7 +108,7 @@ export function PrayerTimesEditor({ backHref }: PrayerTimesEditorProps) {
                 type="time"
                 value={form[key]}
                 onChange={(e) => setTime(key, e.target.value)}
-                className={`w-full bg-white/80 rounded-lg border ${border} px-3 py-2.5 text-base font-bold ${color} focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent text-center`}
+                className={`w-full bg-white/80 rounded-lg border ${border} px-4 py-2.5 text-base font-bold ${color} focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent text-center`}
               />
             </div>
           ))}

@@ -295,7 +295,7 @@ function RequirementFormModal({
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-gray-600">Description</span>
           <textarea dir={dir} rows={2} value={desc[lang]} onChange={(e) => setDesc((p) => ({ ...p, [lang]: e.target.value }))}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green" />
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green" />
         </label>
 
         {/* Amount + currency */}
@@ -321,7 +321,7 @@ function RequirementFormModal({
               value={currency}
               onChange={(e) => setCurrency(e.target.value as HajjCurrency)}
               disabled={amount.trim() === ''}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
             >
               {HAJJ_CURRENCIES.map((c) => (
                 <option key={c} value={c}>{c}</option>

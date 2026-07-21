@@ -205,7 +205,7 @@ function SubscribersManager() {
               will be sent to every email found (any column; header rows are ignored).
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <label className="inline-flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:border-rmc-green/40 hover:bg-gray-50 cursor-pointer">
+              <label className="inline-flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:border-rmc-green/40 hover:bg-gray-50 cursor-pointer">
                 <Upload className="w-4 h-4" />
                 {file ? 'Change file' : 'Choose Excel / CSV'}
                 <input

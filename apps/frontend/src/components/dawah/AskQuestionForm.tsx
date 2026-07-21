@@ -17,7 +17,7 @@ import {
 
 const LANGUAGES: PostLanguage[] = ['en', 'rw', 'ar'];
 const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
 
 /**
  * Ask a question.
@@ -130,7 +130,7 @@ export function AskQuestionForm() {
           ) : (
             <form onSubmit={submit} className="mt-6 space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-500">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
                   {t('discussions.ask.titleLabel')}
                 </label>
                 <input
@@ -146,13 +146,13 @@ export function AskQuestionForm() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-500">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
                     {t('discussions.ask.categoryLabel')}
                   </label>
                   <SearchableSelect value={categoryId} onChange={setCategoryId} options={categoryOptions} size="md" />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-500">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
                     {t('discussions.ask.languageLabel')}
                   </label>
                   <SearchableSelect

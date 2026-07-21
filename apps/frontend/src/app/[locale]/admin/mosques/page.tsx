@@ -819,7 +819,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}

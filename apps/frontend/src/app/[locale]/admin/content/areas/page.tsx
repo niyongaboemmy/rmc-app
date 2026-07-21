@@ -320,7 +320,7 @@ function AreasManager() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Icon <span className="font-normal text-gray-400">(fallback)</span></label>
               <select value={formData.icon} onChange={(e) => setFormData((p) => ({ ...p, icon: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent">
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent">
                 {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
               </select>
             </div>

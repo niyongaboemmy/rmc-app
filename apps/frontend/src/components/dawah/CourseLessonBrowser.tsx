@@ -117,7 +117,7 @@ export function CourseLessonBrowser({
           <select
             value={currentId}
             onChange={(e) => select(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           >
             {hasOverview && <option value={OVERVIEW}>{t('courses.aboutCourse')}</option>}
             {lessons.map((l, i) => (

@@ -124,7 +124,7 @@ function ContactContentManager() {
         <div className="grid sm:grid-cols-2 gap-4">
           {PLAIN_FIELDS.map(({ key, label, hint, icon: Icon }) => (
             <div key={key}>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
                 <Icon className="w-3.5 h-3.5 text-teal-500" /> {label}
               </label>
               <input type="text" value={form[key]} onChange={(e) => setPlain(key, e.target.value)}
@@ -145,7 +145,7 @@ function ContactContentManager() {
         </h2>
         {TRI_SECTIONS.map(({ key, label, rows, icon: Icon }) => (
           <div key={key}>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
               {Icon && <Icon className="w-3.5 h-3.5 text-teal-500" />}
               {label}
             </label>

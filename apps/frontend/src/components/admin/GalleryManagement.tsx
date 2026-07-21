@@ -934,7 +934,7 @@ function UploadModal(props: UploadModalProps) {
           {total > 0 && !allDone && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category <span className="text-gray-400 font-normal">(applied to all)</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1093,7 +1093,7 @@ function EditModal({
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-3 order-2 sm:order-1">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Title</label>
                 <input
                   type="text"
                   value={form.title}
@@ -1103,7 +1103,7 @@ function EditModal({
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
                 <textarea
                   rows={3}
                   value={form.description}
@@ -1137,7 +1137,7 @@ function EditModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               <Tag className="w-3 h-3 inline mr-1" />Category
             </label>
             <div className="flex flex-wrap gap-2">

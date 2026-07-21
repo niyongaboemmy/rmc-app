@@ -969,7 +969,7 @@ function FinanceAdmin() {
                   { value: 'cancelled', label: 'Cancelled' },
                   { value: 'closed', label: 'Closed' },
                 ]}
-                triggerClassName="px-3 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
+                triggerClassName="px-4 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
               />
               <SearchableSelect
                 value={marrPay}
@@ -982,7 +982,7 @@ function FinanceAdmin() {
                   { value: 'paid', label: 'Paid' },
                   { value: 'refunded', label: 'Refunded' },
                 ]}
-                triggerClassName="px-3 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
+                triggerClassName="px-4 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
               />
               <div className="flex items-center gap-2">
                 <input type="date" value={marrFrom} onChange={(e) => { setMarrFrom(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label="From date" />
@@ -1573,8 +1573,8 @@ function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
   return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold', map[status])}>{labels[status]}</span>;
 }
 
-const inputClass = 'w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
-const labelClass = 'block text-xs font-medium text-gray-500 mb-1.5';
+const inputClass = 'w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
+const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
 
 function slugify(s: string): string {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
