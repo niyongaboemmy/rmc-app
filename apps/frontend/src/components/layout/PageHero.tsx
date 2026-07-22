@@ -22,14 +22,14 @@ const DEFAULT_SLIDES = [
 interface PageHeroProps {
   /** Small uppercase pill above the title. */
   eyebrow?: string;
-  /** Main heading. */
-  title: string;
+  /** Main heading. Accepts a node so callers can render an inline editor in its place. */
+  title: ReactNode;
   /** Override the heading's responsive font-size classes (defaults to the large hero size). */
   titleClassName?: string;
   /** Override the heading's font weight (defaults to bold). */
   titleWeightClassName?: string;
-  /** Supporting line under the title. */
-  subtitle?: string;
+  /** Supporting line under the title. Accepts a node for inline editing. */
+  subtitle?: ReactNode;
   /** Extra classes for the subtitle (e.g. a lighter weight). */
   subtitleClassName?: string;
   /** Optional "back" pill (detail pages). */
