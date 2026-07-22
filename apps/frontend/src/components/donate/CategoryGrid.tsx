@@ -46,17 +46,15 @@ export function CategoryGrid({
   liveBySlug,
   campaigns,
   onAdd,
-  initialEvent,
 }: {
   categories: PublicCategory[];
   currency: string;
   liveBySlug: Map<string, PublicCampaignLike>;
   campaigns: PublicCampaign[];
   onAdd: (item: NewItem) => void;
-  initialEvent?: string | null;
 }) {
   const t = useTranslations('donate');
-  const [activeKey, setActiveKey] = useState<string | null>(initialEvent ? `events:${initialEvent}` : null);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [added, setAdded] = useState<Record<string, boolean>>({});
 
   const toggle = useCallback((key: string) => {
