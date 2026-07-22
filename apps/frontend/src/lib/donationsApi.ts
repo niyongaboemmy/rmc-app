@@ -5,13 +5,7 @@ import { downloadXlsx } from './downloadXlsx';
 
 export type DonationStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type DonationFrequency = 'once' | 'monthly' | 'yearly';
-export type CampaignStatus =
-  | 'draft'
-  | 'active'
-  | 'paused'
-  | 'completed'
-  | 'closed'
-  | 'archived';
+export type CampaignStatus = 'active' | 'paused' | 'closed';
 
 export interface DonationCampaign {
   id: string;
@@ -44,32 +38,12 @@ export interface PublicCampaign {
   description: string;
   targetAmount: number;
   receivedAmount: number;
-  donationCount: number;
   currency: string;
   fundType: string;
   subFundId: string | null;
   heroImageUrl: string | null;
-  galleryImages: string[];
-  isFeatured: boolean;
-  ctaText: string | null;
-  status: CampaignStatus;
   startDate: string;
   endDate: string | null;
-}
-
-/** A dated news/progress update shown on a campaign's detail page. */
-export interface CampaignUpdate {
-  id: string;
-  campaignId: string;
-  title: string;
-  body: string;
-  publishedAt: string;
-  createdAt: string;
-}
-
-/** A single campaign for its public detail page — includes its updates feed. */
-export interface PublicCampaignDetail extends PublicCampaign {
-  updates: CampaignUpdate[];
 }
 
 export interface Donation {
@@ -222,12 +196,6 @@ export const donationsApi = {
   // Public
   listCampaigns: async (): Promise<PublicCampaign[]> => {
     const { data } = await apiClient.get('/donations/campaigns');
-    return data.data ?? data;
-  },
-
-  /** One campaign (with its updates) for the public detail page. */
-  getCampaign: async (slug: string): Promise<PublicCampaignDetail> => {
-    const { data } = await apiClient.get(`/donations/campaigns/${encodeURIComponent(slug)}`);
     return data.data ?? data;
   },
 

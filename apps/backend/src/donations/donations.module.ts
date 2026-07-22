@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Donation } from './entities/donation.entity';
 import { DonationCampaign } from './entities/donation-campaign.entity';
-import { CampaignUpdate } from './entities/campaign-update.entity';
 import { DonationCategory } from './entities/donation-category.entity';
 import { DonationSubFund } from './entities/donation-subfund.entity';
 import { DonationsService } from './donations.service';
@@ -18,13 +17,7 @@ import { SmsModule } from '../integrations/sms/sms.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Donation,
-      DonationCampaign,
-      CampaignUpdate,
-      DonationCategory,
-      DonationSubFund,
-    ]),
+    TypeOrmModule.forFeature([Donation, DonationCampaign, DonationCategory, DonationSubFund]),
     IntouchPayModule,
     PaymentSettingsModule,
     SmsModule,
