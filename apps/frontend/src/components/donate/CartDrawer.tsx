@@ -619,7 +619,7 @@ export function CartDrawer({
                   Your payment of <span className="font-bold text-gray-900">{money(currency, confirmedTotal)}</span> is being processed.
                 </p>
                 <p className="mb-6 text-[12.5px] leading-relaxed text-gray-400">
-                  MTN MoMo can take a few minutes to confirm. If you approved the prompt on your phone, your donation will be recorded automatically — you'll receive an SMS.
+                  MTN MoMo can take a few minutes to confirm. If you approved the prompt on your phone, your donation will be recorded automatically — you&apos;ll receive an SMS.
                 </p>
                 <div className="flex w-full flex-col gap-2.5">
                   <button
@@ -636,7 +636,7 @@ export function CartDrawer({
                     onClick={onClose}
                     className="text-sm font-medium text-gray-400 underline-offset-2 transition-colors hover:text-gray-600 hover:underline"
                   >
-                    Close — I'll wait for the SMS
+                    Close — I&apos;ll wait for the SMS
                   </button>
                 </div>
               </div>

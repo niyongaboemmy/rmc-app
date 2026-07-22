@@ -312,7 +312,7 @@ export default function MemberDashboardPage() {
                   <Bell className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-amber-700">Under Review</p>
-                    <p className="text-[11px] text-amber-600 mt-0.5 leading-relaxed">Our team is reviewing your application. You'll be notified once approved.</p>
+                    <p className="text-[11px] text-amber-600 mt-0.5 leading-relaxed">Our team is reviewing your application. You&apos;ll be notified once approved.</p>
                   </div>
                 </div>
               )}
@@ -343,7 +343,7 @@ export default function MemberDashboardPage() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Verse of the Day</p>
               </div>
               <p className="font-arabic text-right text-gray-800 text-base leading-loose mb-2">{verse.arabic}</p>
-              <p className="text-gray-500 text-xs italic leading-relaxed">"{verse.translation}"</p>
+              <p className="text-gray-500 text-xs italic leading-relaxed">&quot;{verse.translation}&quot;</p>
               <p className="text-gray-300 text-[10px] mt-1.5 font-semibold tracking-widest uppercase">{verse.ref}</p>
             </div>
           </div>
