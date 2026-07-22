@@ -10,6 +10,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { CourseCard } from '@/components/dawah/CourseCard';
 import { CourseEditBar } from '@/components/dawah/CourseEditBar';
+import { CourseInlineText } from '@/components/dawah/CourseInlineText';
 import { CourseLessons } from '@/components/dawah/CourseLessons';
 import { type OutlineLesson } from '@/components/dawah/CourseLessonBrowser';
 import { localized } from '@/components/dawah/localize';
@@ -256,14 +257,24 @@ export default async function CourseDetailPage({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green">
                   {category ?? t('title')}
                 </p>
-                <h1 className="mt-1 text-lg font-bold leading-tight text-rmc-green-deep md:text-xl">
-                  {title}
-                </h1>
-                {summary && (
-                  <p className="mt-1.5 max-w-2xl text-sm leading-snug text-gray-500 line-clamp-2">
-                    {summary}
-                  </p>
-                )}
+                <CourseInlineText
+                  as="h1"
+                  courseId={course.id}
+                  field="title"
+                  value={title}
+                  locale={locale}
+                  className="mt-1 block text-lg font-bold leading-tight text-rmc-green-deep md:text-xl"
+                />
+                <CourseInlineText
+                  as="p"
+                  courseId={course.id}
+                  field="summary"
+                  value={summary}
+                  locale={locale}
+                  className="mt-1.5 block max-w-2xl text-sm leading-snug text-gray-500"
+                  readClassName="line-clamp-2"
+                  placeholder={t('courses.subtitle')}
+                />
 
                 {/* Instructor + meta, divided from the title above */}
                 <div className="mt-3 flex flex-col gap-3 border-t border-gray-200 pt-3 md:flex-row md:items-center md:justify-between">
