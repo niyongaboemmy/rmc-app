@@ -3,18 +3,16 @@
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { HandHeart, Plus } from 'lucide-react';
-import { CURRENCY_KEYS, type CartItem } from './donateData';
+import { type CartItem } from './donateData';
 import { AmountPicker } from './AmountPicker';
 
-/* Compact "I know where I want to give" card — custom/preset amount straight to
-   the general fund, plus the currency switcher for the whole page. */
+/* "Give to the general fund" card — a custom/preset amount straight to the
+   general fund. The page-wide currency is set from the causes toolbar. */
 export function QuickGive({
   currency,
-  onCurrency,
   onAdd,
 }: {
   currency: string;
-  onCurrency: (c: string) => void;
   onAdd: (item: Omit<CartItem, 'id'>) => void;
 }) {
   const t = useTranslations('donate');
@@ -50,28 +48,6 @@ export function QuickGive({
       </div>
 
       <div className="space-y-3.5 p-5">
-        {/* Currency switcher — sets the currency for the whole page */}
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400">
-            {t('quickGive.currency')}
-          </span>
-          <div className="flex shrink-0 gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
-            {CURRENCY_KEYS.map((cur) => (
-              <button
-                key={cur}
-                type="button"
-                onClick={() => onCurrency(cur)}
-                aria-pressed={currency === cur}
-                className={`rounded-md px-2.5 py-1 text-xs font-bold transition-colors ${
-                  currency === cur ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'
-                }`}
-              >
-                {cur}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <AmountPicker key={`${currency}-${resetKey}`} currency={currency} onAmount={onAmount} />
 
         <button

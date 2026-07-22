@@ -9,13 +9,11 @@ import { Footer } from '@/components/layout/Footer';
 import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
 import { donationCategoriesApi, type PublicCategory } from '@/lib/donationCategoriesApi';
 import { useDonationCart } from '@/contexts/DonationCartContext';
-import { money } from './donateData';
-import { SpiritualHeader } from './SpiritualHeader';
+import { CURRENCY_KEYS, money } from './donateData';
+import { DonateHero } from './DonateHero';
 import { CategoryGrid } from './CategoryGrid';
 import { QuickGive } from './QuickGive';
 import { ZakatCalculator } from './ZakatCalculator';
-import { ImpactBars } from './ImpactBars';
-import { GiftSummary } from './GiftSummary';
 import { CartDrawer } from './CartDrawer';
 import { SuccessState, type DonationSummary } from './SuccessState';
 
@@ -24,20 +22,16 @@ export function DonatePageClient() {
   const t = useTranslations('donate');
 
   // Cart, currency and niyyah live in a persisted context (survives page
-  // navigation and reloads); donor details below stay ephemeral.
+  // navigation and reloads); donor details in the checkout drawer stay ephemeral.
   const { cart, currency, niyyah, total, addItem, removeItem, clear, setCurrency, setNiyyah } =
     useDonationCart();
   const [cartOpen, setCartOpen] = useState(false);
   const [summary, setSummary] = useState<DonationSummary | null>(null);
 
-  // Live campaign funding (raised = completed transactions) — same figures as
-  // the admin Programs tab; falls back to static data if unavailable.
+  // Live campaign funding (raised = completed transactions).
   const [liveCampaigns, setLiveCampaigns] = useState<PublicCampaign[]>([]);
   useEffect(() => {
-    donationsApi
-      .listCampaigns()
-      .then(setLiveCampaigns)
-      .catch(() => {});
+    donationsApi.listCampaigns().then(setLiveCampaigns).catch(() => {});
   }, []);
   const liveBySlug = useMemo(() => {
     const m = new Map<string, PublicCampaign>();
@@ -48,10 +42,7 @@ export function DonatePageClient() {
   // Admin-managed categories & sub-funds (localized to the current locale).
   const [categories, setCategories] = useState<PublicCategory[]>([]);
   useEffect(() => {
-    donationCategoriesApi
-      .listPublic(locale)
-      .then(setCategories)
-      .catch(() => setCategories([]));
+    donationCategoriesApi.listPublic(locale).then(setCategories).catch(() => setCategories([]));
   }, [locale]);
 
   const niyyahLabel = t(`niyyah.${niyyah}.label`);
@@ -61,67 +52,60 @@ export function DonatePageClient() {
     setSummary(donationSummary);
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
   const reset = () => {
     setSummary(null);
     clear();
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#fbfcfb]">
       <Navbar />
       <main>
         {summary ? (
           <SuccessState locale={locale} summary={summary} onReset={reset} />
         ) : (
           <>
-            <SpiritualHeader niyyah={niyyah} onNiyyah={setNiyyah} />
+            <DonateHero niyyah={niyyah} onNiyyah={setNiyyah} />
 
-            <section className="relative bg-transparent py-8 md:py-10">
-              <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent" />
-
-              <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <div className="space-y-6 lg:col-span-2">
-                    <div>
-                      <h2 className="mb-1 text-xl font-bold text-gray-900">{t('sectionHeading')}</h2>
-                      <p className="mb-4 text-sm text-gray-500">{t('sectionSub')}</p>
-                      <CategoryGrid
-                        categories={categories}
-                        currency={currency}
-                        liveBySlug={liveBySlug}
-                        campaigns={liveCampaigns}
-                        onAdd={addItem}
-                      />
-                    </div>
-                    <ImpactBars campaigns={liveCampaigns} />
+            {/* ── Causes — the heart of the page ── */}
+            <section id="causes" className="scroll-mt-20 py-12 md:py-16">
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-[28px]">
+                      {t('sectionHeading')}
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-500">{t('sectionSub')}</p>
                   </div>
-
-                  {/* Right rail: quick-give + the always-visible cart, sticky on
-                      desktop and stacked beneath the categories on mobile (a
-                      quick-checkout bar floats below). */}
-                  <aside className="lg:col-span-1">
-                    <div className="space-y-6 lg:sticky lg:top-24">
-                      <QuickGive currency={currency} onCurrency={setCurrency} onAdd={addItem} />
-                      <GiftSummary
-                        items={cart}
-                        currency={currency}
-                        total={total}
-                        niyyahLabel={niyyahLabel}
-                        onRemove={removeItem}
-                        onCheckout={() => setCartOpen(true)}
-                      />
-                    </div>
-                  </aside>
+                  <CurrencyToggle currency={currency} onCurrency={setCurrency} label={t('quickGive.currency')} />
                 </div>
+
+                {categories.length === 0 ? (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="h-72 animate-pulse rounded-2xl bg-gray-100" />
+                    ))}
+                  </div>
+                ) : (
+                  <CategoryGrid
+                    categories={categories}
+                    currency={currency}
+                    liveBySlug={liveBySlug}
+                    campaigns={liveCampaigns}
+                    onAdd={addItem}
+                  />
+                )}
               </div>
             </section>
 
-            {/* Zakat calculator — a self-serve estimator at the foot of the page */}
-            <section className="relative bg-transparent pb-12 md:pb-16">
-              <div className="relative mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-                <ZakatCalculator currency={currency} onAddZakat={addItem} />
+            {/* ── Give your way — general fund + Zakat ── */}
+            <section id="give" className="scroll-mt-20 border-t border-gray-100 bg-white py-12 md:py-16">
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+                <h2 className="mb-8 text-center text-xl font-bold text-gray-900">More ways to give</h2>
+                <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+                  <QuickGive currency={currency} onAdd={addItem} />
+                  <ZakatCalculator currency={currency} onAddZakat={addItem} />
+                </div>
               </div>
             </section>
           </>
@@ -129,14 +113,13 @@ export function DonatePageClient() {
       </main>
       <Footer />
 
-      {/* Mobile quick-checkout bar — keeps the running total in reach while
-          scrolling categories (desktop uses the sticky sidebar instead). */}
+      {/* Floating cart — desktop pill + mobile bar, both open the checkout drawer */}
       {!summary && cart.length > 0 && !cartOpen && (
-        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-gray-100 bg-white/95 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden animate-fade-up">
+        <>
           <button
             type="button"
             onClick={() => setCartOpen(true)}
-            className="flex w-full items-center gap-3 rounded-lg bg-rmc-green px-5 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors duration-300 hover:bg-rmc-green-dark"
+            className="fixed bottom-6 right-6 z-[60] hidden items-center gap-3 rounded-full bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-rmc-green/30 transition-colors hover:bg-rmc-green-dark lg:flex animate-fade-up"
           >
             <span className="relative shrink-0">
               <ShoppingBag className="h-5 w-5" />
@@ -144,11 +127,28 @@ export function DonatePageClient() {
                 {cart.length}
               </span>
             </span>
-            <span className="flex-1 text-left">{t('floatingCart')}</span>
             <span className="tabular-nums">{money(currency, total)}</span>
-            <ArrowRight className="h-4 w-4 shrink-0 rtl:rotate-180" />
+            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
           </button>
-        </div>
+
+          <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-gray-100 bg-white/95 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden animate-fade-up">
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="flex w-full items-center gap-3 rounded-lg bg-rmc-green px-5 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+            >
+              <span className="relative shrink-0">
+                <ShoppingBag className="h-5 w-5" />
+                <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rmc-gold px-1 text-[10px] font-bold text-rmc-green-deep">
+                  {cart.length}
+                </span>
+              </span>
+              <span className="flex-1 text-left">{t('floatingCart')}</span>
+              <span className="tabular-nums">{money(currency, total)}</span>
+              <ArrowRight className="h-4 w-4 shrink-0 rtl:rotate-180" />
+            </button>
+          </div>
+        </>
       )}
 
       <CartDrawer
@@ -163,6 +163,40 @@ export function DonatePageClient() {
         onRemove={removeItem}
         onSuccess={handleSuccess}
       />
+    </div>
+  );
+}
+
+/* Page-wide currency switcher (sets the currency used for every donation). */
+function CurrencyToggle({
+  currency,
+  onCurrency,
+  label,
+}: {
+  currency: string;
+  onCurrency: (c: string) => void;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400 sm:inline">
+        {label}
+      </span>
+      <div className="flex shrink-0 gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+        {CURRENCY_KEYS.map((cur) => (
+          <button
+            key={cur}
+            type="button"
+            onClick={() => onCurrency(cur)}
+            aria-pressed={currency === cur}
+            className={`rounded-md px-2.5 py-1 text-xs font-bold transition-colors ${
+              currency === cur ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'
+            }`}
+          >
+            {cur}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
