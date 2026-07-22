@@ -1898,6 +1898,7 @@
         "title": "Iyandikishe kuri Hija",
         "subtitle": "Uzuza ifishi ikurikira kugira ngo utangire kwiyandikisha kuri Hija. Ibisabwa bifite * birakenewe.",
         "back": "Subira kuri Serivisi za Hija",
+        "nav": { "back": "Subira inyuma", "next": "Komeza" },
         "submit": "Ohereza iyandikwa",
         "submitting": "Kohereza…",
         "sections": {

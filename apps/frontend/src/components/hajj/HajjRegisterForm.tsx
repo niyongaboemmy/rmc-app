@@ -7,8 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  UserRound, Phone, MapPin, BookUser, Receipt, Banknote, Upload,
-  Check, CheckCircle2, Loader2, X, FileCheck2,
+  UserRound, MapPin, BookUser, Receipt, Banknote, Upload,
+  Check, CheckCircle2, Loader2, X, FileCheck2, ArrowLeft, ArrowRight,
 } from 'lucide-react';
 import {
   hajjApi,
@@ -20,6 +20,18 @@ import {
 } from '@/lib/hajjApi';
 import { publicApi } from '@/lib/public-api';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
+
+/**
+ * Hajj registration, as a multi-step wizard — the same shape as the Scholarship
+ * application (stepper + one StepShell card per step + Back/Next nav), so every
+ * public form on the site reads as one product. The steps are: Applicant &
+ * contact → Residence → Passport → Payments. Each step owns its own form/schema
+ * and hands validated data up; the parent holds the cross-step state that must
+ * survive Back/Next — the residence selects, the uploaded proofs and the fees.
+ */
 
 /**
  * Last-resort fallbacks, used only if the requirements CMS is unreachable — the
@@ -44,42 +56,56 @@ const normalizeRwPhone = (v: string) => {
   return d.startsWith('250') ? `0${d.slice(3)}` : d;
 };
 
-function buildSchema(tr: (k: string) => string) {
+// ── Per-step schemas ─────────────────────────────────────────────────────────
+function step1Schema(tr: (k: string) => string) {
   return z.object({
     fullName: z.string().trim().min(2, tr('validation.required')),
     phone: z.string().trim().min(1, tr('validation.required'))
       .refine((v) => RW_PHONE.test(normalizeRwPhone(v)), tr('validation.phone')),
     email: z.string().trim().email(tr('validation.email')).optional().or(z.literal('')),
-    district: z.string().trim().min(1, tr('validation.required')),
-    sector: z.string().trim().min(1, tr('validation.required')),
+  });
+}
+function step3Schema(tr: (k: string) => string) {
+  return z.object({
     passportNumber: z.string().trim().min(1, tr('validation.required'))
       .refine((v) => PASSPORT.test(v), tr('validation.passport')),
-    registrationFeeProof: z.string().min(1, tr('validation.proof')),
-    advancePaymentProof: z.string().min(1, tr('validation.proof')),
   });
 }
 
-type FormValues = z.infer<ReturnType<typeof buildSchema>>;
+type Step1Values = z.infer<ReturnType<typeof step1Schema>>;
+type Step3Values = z.infer<ReturnType<typeof step3Schema>>;
 
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green';
-const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/30';
-const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
+type Phase = 1 | 2 | 3 | 4;
 
 export function HajjRegisterForm() {
   const t = useTranslations('services.hajj.register');
   const locale = useLocale();
   const money = new Intl.NumberFormat(locale);
 
+  const [phase, setPhase] = useState<Phase>(1);
   const [submitted, setSubmitted] = useState(false);
   const [trackingCode, setTrackingCode] = useState('');
   const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Step data kept in the parent so Back/Next never loses what was typed.
+  const [step1, setStep1] = useState<Partial<Step1Values>>({});
+  const [passport, setPassport] = useState<Partial<Step3Values>>({});
+
+  // Residence: cascading district → sector selects (all of Rwanda, seeded).
+  const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
+  const [sectors, setSectors] = useState<{ id: string; name: string }[]>([]);
+  const [districtId, setDistrictId] = useState('');
+  const [districtName, setDistrictName] = useState('');
+  const [sector, setSector] = useState('');
+  const [residenceError, setResidenceError] = useState('');
+
+  // The uploaded payment proofs (the file-server keys + metadata to submit).
+  const [feeDoc, setFeeDoc] = useState<UploadedProof | null>(null);
+  const [advanceDoc, setAdvanceDoc] = useState<UploadedProof | null>(null);
 
   // The fees an applicant must pay, as set in the requirements CMS.
-  const [fees, setFees] = useState({
-    registration: REGISTRATION_FEE,
-    advance: ADVANCE_PAYMENT,
-  });
+  const [fees, setFees] = useState({ registration: REGISTRATION_FEE, advance: ADVANCE_PAYMENT });
 
   useEffect(() => {
     let active = true;
@@ -102,28 +128,6 @@ export function HajjRegisterForm() {
     return () => { active = false; };
   }, []);
 
-  // Residence: cascading district → sector selects (all of Rwanda, seeded).
-  const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
-  const [sectors, setSectors] = useState<{ id: string; name: string }[]>([]);
-  const [districtId, setDistrictId] = useState('');
-
-  const {
-    register, handleSubmit, setValue, watch, reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(buildSchema((k) => t(k))) as Resolver<FormValues>,
-    mode: 'onTouched',
-    defaultValues: {
-      fullName: '', phone: '', email: '', district: '', sector: '',
-      passportNumber: '', registrationFeeProof: '', advancePaymentProof: '',
-    },
-  });
-
-  // The form fields hold the file-server KEY; the metadata lives here so we can
-  // show the applicant what they actually attached and submit it with the form.
-  const [feeDoc, setFeeDoc] = useState<UploadedProof | null>(null);
-  const [advanceDoc, setAdvanceDoc] = useState<UploadedProof | null>(null);
-
   // Load districts once; sectors reload whenever the chosen district changes.
   useEffect(() => {
     let active = true;
@@ -144,22 +148,35 @@ export function HajjRegisterForm() {
 
   const onDistrictChange = (id: string) => {
     setDistrictId(id);
-    setValue('district', districts.find((d) => d.id === id)?.name ?? '', { shouldValidate: true });
-    setValue('sector', '', { shouldValidate: false }); // reset dependent sector
+    setDistrictName(districts.find((d) => d.id === id)?.name ?? '');
+    setSector(''); // reset dependent sector
+    setResidenceError('');
   };
 
-  const onSubmit = async (data: FormValues) => {
+  const goResidenceNext = () => {
+    if (!districtName || !sector) {
+      setResidenceError(t('validation.required'));
+      return;
+    }
+    setResidenceError('');
+    setPhase(3);
+  };
+
+  const finalSubmit = async () => {
     setSubmitError('');
     if (!feeDoc || !advanceDoc) {
       setSubmitError(t('validation.proof'));
       return;
     }
+    setSubmitting(true);
     try {
-      const { registrationFeeProof: _fee, advancePaymentProof: _advance, ...fields } = data;
       const res = await hajjApi.apply({
-        ...fields,
-        phone: normalizeRwPhone(data.phone),
-        email: data.email || undefined,
+        fullName: step1.fullName!,
+        phone: normalizeRwPhone(step1.phone!),
+        email: step1.email || undefined,
+        district: districtName,
+        sector,
+        passportNumber: passport.passportNumber!,
         documents: [
           { ...feeDoc, documentType: 'registration_fee' },
           { ...advanceDoc, documentType: 'advance_payment' },
@@ -170,7 +187,24 @@ export function HajjRegisterForm() {
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       setSubmitError(t('validation.submitError'));
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const resetAll = () => {
+    setPhase(1);
+    setStep1({});
+    setPassport({});
+    setDistrictId('');
+    setDistrictName('');
+    setSector('');
+    setSectors([]);
+    setFeeDoc(null);
+    setAdvanceDoc(null);
+    setSubmitted(false);
+    setTrackingCode('');
+    setSubmitError('');
   };
 
   // ── Success ──
@@ -204,7 +238,7 @@ export function HajjRegisterForm() {
         <div className="mt-7 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
           <button
             type="button"
-            onClick={() => { reset(); setDistrictId(''); setSectors([]); setSubmitted(false); setTrackingCode(''); }}
+            onClick={resetAll}
             className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             {t('success.again')}
@@ -220,96 +254,300 @@ export function HajjRegisterForm() {
     );
   }
 
+  const stepLabels = [
+    t('sections.personal'),
+    t('sections.residence'),
+    t('sections.passport'),
+    t('sections.payments'),
+  ];
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:px-6">
-      {/* Applicant */}
-      <SectionCard icon={UserRound} title={t('sections.personal')}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('fields.fullName')} required error={errors.fullName?.message} hint={t('fields.fullNameHint')} className="sm:col-span-2">
-            <input className={cx(inputClass, errors.fullName && inputError)} {...register('fullName')} />
-          </Field>
-        </div>
-      </SectionCard>
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:px-6">
+      <WizardProgress labels={stepLabels} current={phase} />
 
-      {/* Contact */}
-      <SectionCard icon={Phone} title={t('sections.contact')}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('fields.phone')} required error={errors.phone?.message} hint={t('fields.phoneHint')}>
-            <input type="tel" inputMode="tel" placeholder="07XXXXXXXX" className={cx(inputClass, errors.phone && inputError)} {...register('phone')} />
-          </Field>
-          <Field label={t('fields.email')} error={errors.email?.message} hint={t('fields.emailHint')}>
-            <input type="email" className={cx(inputClass, errors.email && inputError)} {...register('email')} />
-          </Field>
-        </div>
-      </SectionCard>
+      {phase === 1 && (
+        <Step1PersonalContact
+          initialData={step1}
+          onNext={(d) => { setStep1(d); setPhase(2); }}
+        />
+      )}
 
-      {/* Residence */}
-      <SectionCard icon={MapPin} title={t('sections.residence')}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('fields.district')} required error={errors.district?.message}>
-            <SearchableSelect
-              value={districtId}
-              onChange={onDistrictChange}
-              options={districts.map((d) => ({ value: d.id, label: d.name }))}
-              placeholder={t('fields.selectDistrict')}
-              searchPlaceholder={t('fields.searchPlaceholder')}
-              zIndex={45}
-              size="md"
-              triggerClassName={cx(errors.district && '!border-red-400')}
-            />
-          </Field>
-          <Field label={t('fields.sector')} required error={errors.sector?.message}>
-            <SearchableSelect
-              value={watch('sector')}
-              onChange={(v) => setValue('sector', v, { shouldValidate: true })}
-              options={sectors.map((s) => ({ value: s.name, label: s.name }))}
-              disabled={!districtId}
-              placeholder={t(districtId ? 'fields.selectSector' : 'fields.selectDistrictFirst')}
-              searchPlaceholder={t('fields.searchPlaceholder')}
-              zIndex={45}
-              size="md"
-              triggerClassName={cx(errors.sector && '!border-red-400')}
-            />
-          </Field>
-        </div>
-      </SectionCard>
+      {phase === 2 && (
+        <Step2Residence
+          districtId={districtId}
+          districts={districts}
+          sectors={sectors}
+          sector={sector}
+          onDistrictChange={onDistrictChange}
+          onSectorChange={(v) => { setSector(v); setResidenceError(''); }}
+          error={residenceError}
+          onBack={() => setPhase(1)}
+          onNext={goResidenceNext}
+        />
+      )}
 
-      {/* Passport */}
-      <SectionCard icon={BookUser} title={t('sections.passport')}>
-        <Field label={t('fields.passportNumber')} required error={errors.passportNumber?.message} hint={t('fields.passportHint')}>
-          <input className={cx(inputClass, errors.passportNumber && inputError)} {...register('passportNumber')} />
-        </Field>
-      </SectionCard>
+      {phase === 3 && (
+        <Step3Passport
+          initialData={passport}
+          onBack={() => setPhase(2)}
+          onNext={(d) => { setPassport(d); setPhase(4); }}
+        />
+      )}
 
-      {/* Payments */}
-      <SectionCard icon={Receipt} title={t('sections.payments')}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ProofField
-            icon={Receipt}
-            label={t('fields.registrationFee')}
-            amount={`${money.format(fees.registration.amount)} ${fees.registration.currency}`}
-            uploadLabel={t('fields.uploadProof')}
-            error={errors.registrationFeeProof?.message}
-            uploaded={feeDoc}
-            onUploaded={(doc) => {
-              setFeeDoc(doc);
-              setValue('registrationFeeProof', doc?.fileKey ?? '', { shouldValidate: true });
-            }}
+      {phase === 4 && (
+        <Step4Payments
+          fees={fees}
+          money={money}
+          feeDoc={feeDoc}
+          advanceDoc={advanceDoc}
+          onFeeDoc={setFeeDoc}
+          onAdvanceDoc={setAdvanceDoc}
+          submitting={submitting}
+          submitError={submitError}
+          onBack={() => setPhase(3)}
+          onSubmit={finalSubmit}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Wizard chrome (mirrors the Scholarship wizard) ────────────────────────────
+
+function WizardProgress({ labels, current }: { labels: string[]; current: number }) {
+  return (
+    <div className="flex items-center gap-2 sm:gap-3" role="list">
+      {labels.map((label, i) => {
+        const done = i < current - 1;
+        const active = i === current - 1;
+        return (
+          <div key={label} className="flex items-center gap-2 flex-1" role="listitem">
+            <span
+              aria-current={active ? 'step' : undefined}
+              className={cn(
+                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors',
+                active
+                  ? 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md'
+                  : done
+                    ? 'bg-rmc-green text-white'
+                    : 'bg-gray-100 text-gray-400',
+              )}
+            >
+              {done ? <Check className="w-4 h-4" /> : i + 1}
+            </span>
+            <span className={cn('text-xs sm:text-sm font-medium hidden sm:inline', active ? 'text-gray-900' : 'text-gray-400')}>
+              {label}
+            </span>
+            {i < labels.length - 1 && (
+              <div className={cn('flex-1 h-px transition-colors', done ? 'bg-rmc-green' : 'bg-gray-200')} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StepShell({
+  icon, title, children,
+}: {
+  icon: React.ReactNode; title: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
+      <h2 className="font-bold text-gray-900 flex items-center gap-2">
+        <span className="text-rmc-green">{icon}</span> {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
+
+function Step1PersonalContact({
+  initialData, onNext,
+}: {
+  initialData: Partial<Step1Values>;
+  onNext: (data: Step1Values) => void;
+}) {
+  const t = useTranslations('services.hajj.register');
+  const {
+    register, handleSubmit, formState: { errors },
+  } = useForm<Step1Values>({
+    resolver: zodResolver(step1Schema((k) => t(k))) as Resolver<Step1Values>,
+    mode: 'onTouched',
+    defaultValues: { fullName: '', phone: '', email: '', ...initialData },
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onNext)} noValidate>
+      <StepShell icon={<UserRound className="w-4 h-4" />} title={t('sections.personal')}>
+        <Input
+          label={t('fields.fullName')}
+          required
+          {...register('fullName')}
+          error={errors.fullName?.message}
+          hint={!errors.fullName ? t('fields.fullNameHint') : undefined}
+        />
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input
+            label={t('fields.phone')}
+            required
+            type="tel"
+            inputMode="tel"
+            placeholder="07XXXXXXXX"
+            {...register('phone')}
+            error={errors.phone?.message}
+            hint={!errors.phone ? t('fields.phoneHint') : undefined}
           />
-          <ProofField
-            icon={Banknote}
-            label={t('fields.advancePayment')}
-            amount={`${money.format(fees.advance.amount)} ${fees.advance.currency}`}
-            uploadLabel={t('fields.uploadProof')}
-            error={errors.advancePaymentProof?.message}
-            uploaded={advanceDoc}
-            onUploaded={(doc) => {
-              setAdvanceDoc(doc);
-              setValue('advancePaymentProof', doc?.fileKey ?? '', { shouldValidate: true });
-            }}
+          <Input
+            label={t('fields.email')}
+            type="email"
+            {...register('email')}
+            error={errors.email?.message}
+            hint={!errors.email ? t('fields.emailHint') : undefined}
           />
         </div>
-      </SectionCard>
+        <div className="flex justify-end pt-2">
+          <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
+            {t('nav.next')}
+          </Button>
+        </div>
+      </StepShell>
+    </form>
+  );
+}
+
+function Step2Residence({
+  districtId, districts, sectors, sector, onDistrictChange, onSectorChange, error, onBack, onNext,
+}: {
+  districtId: string;
+  districts: { id: string; name: string }[];
+  sectors: { id: string; name: string }[];
+  sector: string;
+  onDistrictChange: (id: string) => void;
+  onSectorChange: (v: string) => void;
+  error: string;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const t = useTranslations('services.hajj.register');
+  return (
+    <StepShell icon={<MapPin className="w-4 h-4" />} title={t('sections.residence')}>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <SelectField label={t('fields.district')} required error={error && !districtId ? error : undefined}>
+          <SearchableSelect
+            value={districtId}
+            onChange={onDistrictChange}
+            options={districts.map((d) => ({ value: d.id, label: d.name }))}
+            placeholder={t('fields.selectDistrict')}
+            searchPlaceholder={t('fields.searchPlaceholder')}
+            zIndex={45}
+            size="md"
+            triggerClassName={cn(error && !districtId && '!border-red-400')}
+          />
+        </SelectField>
+        <SelectField label={t('fields.sector')} required error={error && !sector ? error : undefined}>
+          <SearchableSelect
+            value={sector}
+            onChange={onSectorChange}
+            options={sectors.map((s) => ({ value: s.name, label: s.name }))}
+            disabled={!districtId}
+            placeholder={t(districtId ? 'fields.selectSector' : 'fields.selectDistrictFirst')}
+            searchPlaceholder={t('fields.searchPlaceholder')}
+            zIndex={45}
+            size="md"
+            triggerClassName={cn(error && !sector && '!border-red-400')}
+          />
+        </SelectField>
+      </div>
+      <div className="flex justify-between pt-2">
+        <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack}>
+          {t('nav.back')}
+        </Button>
+        <Button type="button" onClick={onNext} rightIcon={<ArrowRight className="w-4 h-4" />}>
+          {t('nav.next')}
+        </Button>
+      </div>
+    </StepShell>
+  );
+}
+
+function Step3Passport({
+  initialData, onBack, onNext,
+}: {
+  initialData: Partial<Step3Values>;
+  onBack: () => void;
+  onNext: (data: Step3Values) => void;
+}) {
+  const t = useTranslations('services.hajj.register');
+  const {
+    register, handleSubmit, formState: { errors },
+  } = useForm<Step3Values>({
+    resolver: zodResolver(step3Schema((k) => t(k))) as Resolver<Step3Values>,
+    mode: 'onTouched',
+    defaultValues: { passportNumber: '', ...initialData },
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onNext)} noValidate>
+      <StepShell icon={<BookUser className="w-4 h-4" />} title={t('sections.passport')}>
+        <Input
+          label={t('fields.passportNumber')}
+          required
+          {...register('passportNumber')}
+          error={errors.passportNumber?.message}
+          hint={!errors.passportNumber ? t('fields.passportHint') : undefined}
+        />
+        <div className="flex justify-between pt-2">
+          <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack}>
+            {t('nav.back')}
+          </Button>
+          <Button type="submit" rightIcon={<ArrowRight className="w-4 h-4" />}>
+            {t('nav.next')}
+          </Button>
+        </div>
+      </StepShell>
+    </form>
+  );
+}
+
+function Step4Payments({
+  fees, money, feeDoc, advanceDoc, onFeeDoc, onAdvanceDoc, submitting, submitError, onBack, onSubmit,
+}: {
+  fees: { registration: Fee; advance: Fee };
+  money: Intl.NumberFormat;
+  feeDoc: UploadedProof | null;
+  advanceDoc: UploadedProof | null;
+  onFeeDoc: (d: UploadedProof | null) => void;
+  onAdvanceDoc: (d: UploadedProof | null) => void;
+  submitting: boolean;
+  submitError: string;
+  onBack: () => void;
+  onSubmit: () => void;
+}) {
+  const t = useTranslations('services.hajj.register');
+  return (
+    <StepShell icon={<Receipt className="w-4 h-4" />} title={t('sections.payments')}>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ProofField
+          icon={Receipt}
+          label={t('fields.registrationFee')}
+          amount={`${money.format(fees.registration.amount)} ${fees.registration.currency}`}
+          uploadLabel={t('fields.uploadProof')}
+          uploaded={feeDoc}
+          onUploaded={onFeeDoc}
+        />
+        <ProofField
+          icon={Banknote}
+          label={t('fields.advancePayment')}
+          amount={`${money.format(fees.advance.amount)} ${fees.advance.currency}`}
+          uploadLabel={t('fields.uploadProof')}
+          uploaded={advanceDoc}
+          onUploaded={onAdvanceDoc}
+        />
+      </div>
 
       {submitError && (
         <p className="flex items-center gap-1.5 text-sm font-medium text-red-600">
@@ -317,52 +555,44 @@ export function HajjRegisterForm() {
         </p>
       )}
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-rmc-green px-7 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-60"
+      <div className="flex justify-between pt-2">
+        <Button type="button" variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={onBack} disabled={submitting}>
+          {t('nav.back')}
+        </Button>
+        <Button
+          type="button"
+          onClick={onSubmit}
+          isLoading={submitting}
+          rightIcon={!submitting ? <Check className="w-4 h-4" /> : undefined}
         >
-          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
-          {isSubmitting ? t('submitting') : t('submit')}
-        </button>
+          {submitting ? t('submitting') : t('submit')}
+        </Button>
       </div>
-    </form>
+    </StepShell>
   );
 }
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── Field helpers ─────────────────────────────────────────────────────────────
 
-function SectionCard({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6">
-      <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900">
-        <Icon className="h-4 w-4 text-rmc-green" aria-hidden="true" /> {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function Field({
-  label, hint, error, required, className, children,
+/** A labelled wrapper for a non-<input> control (the residence selects), matching
+ *  the ui/Input label + error styling so the wizard reads consistently. */
+function SelectField({
+  label, required, error, children,
 }: {
-  label: string; hint?: string; error?: string; required?: boolean; className?: string; children: React.ReactNode;
+  label: string; required?: boolean; error?: string; children: React.ReactNode;
 }) {
   return (
-    <div className={className}>
-      <label className="mb-1.5 block text-[13px] font-semibold text-gray-700">
+    <div className="w-full">
+      <label className="block text-sm font-medium text-gray-700 mb-1.5 select-none">
         {label}
-        {required && <span className="text-red-500"> *</span>}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       {children}
-      {error ? (
-        <p className="mt-1 flex items-center gap-1 text-[11.5px] font-medium text-red-600">
-          <X className="h-3 w-3 shrink-0" aria-hidden="true" /> {error}
+      {error && (
+        <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+          <X className="w-3 h-3 shrink-0" aria-hidden="true" /> {error}
         </p>
-      ) : hint ? (
-        <p className="mt-1 text-[11.5px] text-gray-400">{hint}</p>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -379,13 +609,12 @@ function prettySize(bytes: number): string {
  * holding a stored file the admin can open — not just a filename.
  */
 function ProofField({
-  icon: Icon, label, amount, uploadLabel, error, uploaded, onUploaded,
+  icon: Icon, label, amount, uploadLabel, uploaded, onUploaded,
 }: {
   icon: React.ElementType;
   label: string;
   amount: string;
   uploadLabel: string;
-  error?: string;
   uploaded: UploadedProof | null;
   onUploaded: (doc: UploadedProof | null) => void;
 }) {
@@ -393,6 +622,8 @@ function ProofField({
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
   const [uploadError, setUploadError] = useState('');
+
+  const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
 
   const pick = async (file: File | undefined) => {
     if (!file) return;
@@ -419,8 +650,6 @@ function ProofField({
       setBusy(false);
     }
   };
-
-  const shownError = uploadError || error;
 
   return (
     <div>
@@ -452,7 +681,7 @@ function ProofField({
       ) : (
         <label className={cx(
           'flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3.5 py-3 text-sm transition-colors',
-          shownError ? 'border-red-400 text-red-500' : 'border-gray-300 bg-gray-50 text-gray-500 hover:border-rmc-green/40 hover:text-rmc-green',
+          uploadError ? 'border-red-400 text-red-500' : 'border-gray-300 bg-gray-50 text-gray-500 hover:border-rmc-green/40 hover:text-rmc-green',
           busy && 'cursor-wait',
         )}>
           {busy ? (
@@ -474,12 +703,12 @@ function ProofField({
         </label>
       )}
 
-      {!uploaded && !busy && !shownError && (
+      {!uploaded && !busy && !uploadError && (
         <p className="mt-1 text-[11.5px] text-gray-400">{t('fields.proofHint')}</p>
       )}
-      {shownError && (
+      {uploadError && (
         <p className="mt-1 flex items-center gap-1 text-[11.5px] font-medium text-red-600">
-          <X className="h-3 w-3 shrink-0" aria-hidden="true" /> {shownError}
+          <X className="h-3 w-3 shrink-0" aria-hidden="true" /> {uploadError}
         </p>
       )}
     </div>

@@ -1898,6 +1898,7 @@
         "title": "Register for Hajj",
         "subtitle": "Complete the form below to begin your Hajj registration. Fields marked * are required.",
         "back": "Back to Hajj Services",
+        "nav": { "back": "Back", "next": "Next" },
         "submit": "Submit registration",
         "submitting": "Submitting…",
         "sections": {
