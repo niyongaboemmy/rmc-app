@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { BadgeCheck, Loader2, X } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
 import { Permission } from '@/lib/permissions';
-import { useEditMode } from '@/contexts/EditModeContext';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { dawahApi, serverMessage } from '@/lib/dawahApi';
 
 /**
@@ -36,15 +35,14 @@ export function VerifyAnswerControl({
   /** True when this IS the currently-verified answer → show "Un-verify". */
   verified?: boolean;
 }) {
-  const { hasPermission } = useAuth();
-  const { editing } = useEditMode();
+  const { editMode, hasPermission } = useEditMode();
   const t = useTranslations('dawah');
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
   // Only in edit mode, and only for a verifier — otherwise this is the public view.
-  if (!editing || !hasPermission(Permission.DISCUSSIONS_VERIFY)) return null;
+  if (!editMode || !hasPermission(Permission.DISCUSSIONS_VERIFY)) return null;
 
   const run = async () => {
     setBusy(true);

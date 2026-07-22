@@ -5,10 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { BadgeCheck, Check, Clock, Loader2 } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
 import { Permission } from '@/lib/permissions';
 import { useToast } from '@/components/ui/Toast';
-import { useEditMode } from '@/contexts/EditModeContext';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { dawahApi, serverMessage, type PendingAnswer } from '@/lib/dawahApi';
 
 /**
@@ -30,12 +29,11 @@ import { dawahApi, serverMessage, type PendingAnswer } from '@/lib/dawahApi';
  * as on the admin queue: Release = "may be seen", Verify = "RMC says this is correct".
  */
 export function ThreadPendingAnswers({ slug }: { slug: string }) {
-  const { hasPermission } = useAuth();
-  const { editing } = useEditMode();
+  const { editMode, hasPermission } = useEditMode();
   // Edit mode + verifier only. Gating here (not inside PendingList) means the global
   // pending queue is only fetched once a scholar actually turns edit mode on — the
-  // public view never pays for it. The page's ToastProvider hosts the action toasts.
-  if (!editing || !hasPermission(Permission.DISCUSSIONS_VERIFY)) return null;
+  // public view never pays for it. The layout's ToastProvider hosts the action toasts.
+  if (!editMode || !hasPermission(Permission.DISCUSSIONS_VERIFY)) return null;
   return <PendingList slug={slug} />;
 }
 

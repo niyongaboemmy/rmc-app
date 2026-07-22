@@ -12,13 +12,13 @@ import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmModal } from '@/components/ui/Modal';
-import { ToastProvider, useToast } from '@/components/ui/Toast';
+import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Permission } from '@/lib/permissions';
-import { EditModeProvider, useEditMode } from '@/contexts/EditModeContext';
-import { EditableText } from '@/components/cms/EditableText';
-import { EditToolbar } from '@/components/cms/EditToolbar';
-import { ContentKeys, DISCUSSIONS_DEFAULT } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { ContentKeys, DISCUSSIONS_DEFAULT, pick, type DiscussionsContent, type Locale } from '@/lib/content-api';
 import { DiscussionCard } from './DiscussionCard';
 import { localized } from './localize';
 import {
@@ -41,12 +41,11 @@ const PAGE_SIZE = 12;
  * Same discipline as CoursesPageClient: filtering is SERVER-SIDE and the URL is the
  * single source of truth, so a filtered view is shareable and survives the back button.
  *
- * For admins the page doubles as its own CMS — the mirror of the Courses/Library
- * pages. `EditModeProvider` wraps the view so the header/empty/error prose becomes
- * editable in place (persisted to the `discussions` content section), and — for a
- * `discussions:moderate` holder — each question card grows hide/lock/delete controls
- * so it can be moderated straight from the public listing. Everyone else sees exactly
- * the page they always did; the toolbar and controls never render without permission.
+ * The page doubles as its own CMS via the site-wide in-context Edit Mode
+ * (`lib/edit-mode`): `useEditableContent` makes the header/empty/error prose editable
+ * (content:edit), and — for a `discussions:moderate` holder in edit mode — each
+ * question card grows hide/lock/delete controls so it can be moderated from the public
+ * listing. Everyone else sees exactly the page they always did.
  *
  * ── The language default is a product decision, not a detail ─────────────────────────
  *
@@ -57,36 +56,18 @@ const PAGE_SIZE = 12;
  * abandoned on day one — which is how a Q&A dies before it starts. See plan §4.
  */
 export function DiscussionsPageClient() {
-  const { hasPermission } = useAuth();
-  const canEditCopy = hasPermission(Permission.CONTENT_EDIT);
-  const canModerate = hasPermission(Permission.DISCUSSIONS_MODERATE);
-
-  return (
-    <ToastProvider>
-      <EditModeProvider
-        sectionKey={ContentKeys.discussions}
-        defaults={DISCUSSIONS_DEFAULT}
-        canEdit={canEditCopy || canModerate}
-        canSave={canEditCopy}
-      >
-        <DiscussionsView canModerate={canModerate} />
-        <EditToolbar />
-      </EditModeProvider>
-    </ToastProvider>
-  );
-}
-
-function DiscussionsView({ canModerate }: { canModerate: boolean }) {
   const t = useTranslations('dawah');
   const { locale } = useParams<{ locale: string }>();
+  const lang = locale as Locale;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const { editing } = useEditMode();
   const { success, error: toastError } = useToast();
 
-  const moderate = editing && canModerate;
+  const { content, setField } = useEditableContent<DiscussionsContent>(ContentKeys.discussions, DISCUSSIONS_DEFAULT);
+  const { editMode, hasPermission } = useEditMode();
+  const moderate = editMode && hasPermission(Permission.DISCUSSIONS_MODERATE);
 
   const category = searchParams.get('category') ?? '';
   const language = searchParams.get('language') ?? '';
@@ -197,16 +178,12 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
 
   return (
     <div className="min-h-screen">
-      {/* Solid navbar: with the image hero gone, a transparent bar would put
-          white links on the light section below and read as invisible. */}
       <Navbar solid />
       <main>
         <section className="relative bg-gray-50/60 pb-10 pt-24 md:pb-14 md:pt-28">
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {/* ── Compact header — back link + title + subtitle. Replaces the
-                image hero; pt clears the fixed navbar. Kept in step with the
-                Courses and Library listings — change all or none. ── */}
+            {/* ── Compact header — back link + title + subtitle. ── */}
             <div className="mb-6">
               <Link
                 href={`/${locale}/dawah`}
@@ -215,16 +192,19 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
                 <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                 {t('backToDawah')}
               </Link>
-              <EditableText
+              <InlineText
                 as="h1"
-                path="header.title"
+                lang={locale}
+                value={pick(content.header.title, locale) || t('discussions.title')}
+                onCommit={(v) => setField((d) => { d.header.title[lang] = v; })}
                 placeholder={t('discussions.title')}
                 className="mt-4 block text-2xl font-bold text-rmc-green-deep md:text-3xl"
               />
-              <EditableText
+              <InlineText
                 as="p"
-                path="header.subtitle"
-                multiline
+                lang={locale}
+                value={pick(content.header.subtitle, locale) || t('discussions.subtitle')}
+                onCommit={(v) => setField((d) => { d.header.subtitle[lang] = v; })}
                 placeholder={t('discussions.subtitle')}
                 className="mt-1.5 block text-sm text-gray-500 md:text-base"
               />
@@ -235,7 +215,6 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                   <div className="relative">
-                    {/* start-3 + ps-9 (logical) so the icon flips under RTL. */}
                     <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
                     <input
                       type="search"
@@ -243,7 +222,7 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
                       onChange={(e) => setSearchInput(e.target.value)}
                       placeholder={t('discussions.searchPlaceholder')}
                       aria-label={t('discussions.searchPlaceholder')}
-                      className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
+                      className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
                     />
                   </div>
                   <SearchableSelect
@@ -317,10 +296,11 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
             {/* ── The list ───────────────────────────────────────────────── */}
             {failed ? (
               <div className="mx-auto mt-12 max-w-md rounded-lg border border-dashed border-red-200 bg-white p-10 text-center">
-                <EditableText
+                <InlineText
                   as="p"
-                  path="error.body"
-                  multiline
+                  lang={locale}
+                  value={pick(content.error.body, locale) || t('discussions.loadError')}
+                  onCommit={(v) => setField((d) => { d.error.body[lang] = v; })}
                   placeholder={t('discussions.loadError')}
                   className="block font-medium text-gray-600"
                 />
@@ -336,10 +316,14 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-rmc-green-light text-rmc-green">
                   <MessagesSquare className="h-6 w-6" />
                 </span>
-                <EditableText
+                <InlineText
                   as="p"
-                  path={hasFilters ? 'emptyFiltered.body' : 'empty.body'}
-                  multiline
+                  lang={locale}
+                  value={pick(hasFilters ? content.emptyFiltered.body : content.empty.body, locale)}
+                  onCommit={(v) => setField((d) => {
+                    if (hasFilters) d.emptyFiltered.body[lang] = v;
+                    else d.empty.body[lang] = v;
+                  })}
                   placeholder={hasFilters ? t('discussions.emptyFiltered') : t('discussions.empty')}
                   className="mt-4 block font-medium text-gray-500"
                 />
@@ -402,7 +386,7 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
                       type="button"
                       disabled={page <= 1}
                       onClick={() => setParams({ page: page - 1 })}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
                     >
                       <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
                     </button>
@@ -413,7 +397,7 @@ function DiscussionsView({ canModerate }: { canModerate: boolean }) {
                       type="button"
                       disabled={page >= pages}
                       onClick={() => setParams({ page: page + 1 })}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
                     >
                       <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                     </button>

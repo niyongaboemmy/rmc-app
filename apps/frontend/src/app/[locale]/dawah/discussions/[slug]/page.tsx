@@ -12,7 +12,6 @@ import { dawahApi, type DiscussionThread, type PostLanguage } from '@/lib/dawahA
 import { AnswerComposer } from '@/components/dawah/AnswerComposer';
 import { VerifyAnswerControl } from '@/components/dawah/VerifyAnswerControl';
 import { ThreadPendingAnswers } from '@/components/dawah/ThreadPendingAnswers';
-import { ThreadEditProvider } from '@/components/dawah/ThreadEditProvider';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,7 +82,6 @@ export default async function DiscussionThreadPage({
   const community = answers.filter((a) => !a.isVerified);
 
   return (
-    <ThreadEditProvider>
     <div className="min-h-screen">
       {/* solid: this page opens straight onto white, and the navbar's links are white. */}
       <Navbar solid />
@@ -252,6 +250,5 @@ export default async function DiscussionThreadPage({
       </main>
       <Footer />
     </div>
-    </ThreadEditProvider>
   );
 }
