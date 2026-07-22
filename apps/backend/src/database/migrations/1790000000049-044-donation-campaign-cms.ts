@@ -11,8 +11,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * The `status` column is a plain varchar with no CHECK constraint, so the new
  * draft/completed/archived statuses need no DB change — the enum + DTO cover it.
  */
-export class DonationCampaignCms1790000000047 implements MigrationInterface {
-  name = 'DonationCampaignCms1790000000047';
+export class DonationCampaignCms1790000000049 implements MigrationInterface {
+  name = 'DonationCampaignCms1790000000049';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ── New campaign columns ────────────────────────────────────────────────
