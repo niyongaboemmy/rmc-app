@@ -258,7 +258,7 @@ function WaitingScreen({
       {error && (
         <div className="mb-4 flex w-full items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-left">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-          <p className="text-[12.5px] text-red-700">{error}</p>
+          <p className="text-[12.5px] text-red-600">{error}</p>
         </div>
       )}
 
@@ -700,14 +700,14 @@ export function CartDrawer({
                       onChange={(e) => setName(e.target.value)}
                       disabled={anonymous}
                       placeholder={anonymous ? t('cart.anonName') : t('cart.namePlaceholder')}
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 disabled:bg-gray-50 disabled:text-gray-400"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green disabled:bg-gray-50 disabled:text-gray-400"
                     />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={t('cart.emailPlaceholder')}
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
                     />
                     <label className="flex cursor-pointer items-center gap-2 text-[12.5px] text-gray-600">
                       <input
@@ -770,7 +770,7 @@ export function CartDrawer({
                   {(error || phase === 'failed') && (
                     <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3">
                       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                      <p className="text-[12.5px] text-red-700">{error || t('cart.error')}</p>
+                      <p className="text-[12.5px] text-red-600">{error || t('cart.error')}</p>
                     </div>
                   )}
                 </div>

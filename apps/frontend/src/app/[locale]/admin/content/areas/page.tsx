@@ -213,7 +213,7 @@ function AreasManager() {
             <p className="text-xs text-gray-400">{content.items.length} area{content.items.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
-        <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-orange-600/20 transition-colors">
+        <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-orange-600/20 transition-colors">
           <Plus className="w-4 h-4" /> Add Area
         </button>
       </div>
@@ -222,38 +222,38 @@ function AreasManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Section header */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700">Section Header — {LANGS.find((l) => l.key === lang)?.label}</h2>
           <button onClick={handleSaveHeader} disabled={saving || loading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 px-4 py-2 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-xs font-semibold rounded-lg transition-colors">
             {saving || loading ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             {loading ? 'Loading…' : 'Save Header'}
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Eyebrow</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Eyebrow</label>
             <input dir={dir} type="text" value={content.eyebrow[lang]} onChange={(e) => setHeader('eyebrow', lang, e.target.value)}
-              className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fontClass}`} />
+              className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Title</label>
               <input dir={dir} type="text" value={content.title[lang]} onChange={(e) => setHeader('title', lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fontClass}`} />
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title Accent</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Title Accent</label>
               <input dir={dir} type="text" value={content.titleAccent[lang]} onChange={(e) => setHeader('titleAccent', lang, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fontClass}`} />
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`} />
             </div>
           </div>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Lede</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Lede</label>
           <textarea dir={dir} rows={3} value={content.lede[lang]} onChange={(e) => setHeader('lede', lang, e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none ${fontClass}`} />
+            className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`} />
         </div>
       </div>
 
@@ -318,14 +318,14 @@ function AreasManager() {
           {/* Icon + Slug */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Icon <span className="font-normal text-gray-400">(fallback)</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Icon <span className="font-normal text-gray-400">(fallback)</span></label>
               <select value={formData.icon} onChange={(e) => setFormData((p) => ({ ...p, icon: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent">
                 {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Slug <span className="text-red-500">*</span>
                 <span className="ml-1 text-gray-400 font-normal">(URL path)</span>
               </label>
@@ -334,14 +334,14 @@ function AreasManager() {
                 value={formData.slug}
                 onChange={(e) => setFormData((p) => ({ ...p, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
                 placeholder="e.g. education"
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Hero image upload */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Cover / Hero Image <span className="ml-1 font-normal text-gray-400">(replaces icon on cards)</span>
             </label>
             {formData.imageKey ? (
@@ -391,7 +391,7 @@ function AreasManager() {
           {/* Gallery images */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold text-gray-700">
+              <label className="block text-sm font-medium text-gray-700">
                 Gallery Images <span className="ml-1 font-normal text-gray-400">({formData.galleryImages?.length ?? 0} images — shown on detail page)</span>
               </label>
               <button
@@ -450,20 +450,20 @@ function AreasManager() {
                 return (
                   <div key={l} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title {l === 'en' && <span className="text-red-500">*</span>}</label>
-                      <input dir={d} type="text" value={formData.title[l]} onChange={(e) => setItemField('title', l, e.target.value)} className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fc}`} />
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Title {l === 'en' && <span className="text-red-500">*</span>}</label>
+                      <input dir={d} type="text" value={formData.title[l]} onChange={(e) => setItemField('title', l, e.target.value)} className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fc}`} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description {l === 'en' && <span className="text-red-500">*</span>}</label>
-                      <textarea dir={d} rows={3} value={formData.description[l]} onChange={(e) => setItemField('description', l, e.target.value)} className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none ${fc}`} />
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Description {l === 'en' && <span className="text-red-500">*</span>}</label>
+                      <textarea dir={d} rows={3} value={formData.description[l]} onChange={(e) => setItemField('description', l, e.target.value)} className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fc}`} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Rich Content <span className="ml-1 font-normal text-gray-400">(HTML — shown on detail page)</span>
                       </label>
                       <textarea dir={d} rows={6} value={formData.richContent?.[l] ?? ''} onChange={(e) => setItemField('richContent', l, e.target.value)}
                         placeholder="<p>Full description shown on the area detail page...</p>"
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-y font-mono ${fc}`} />
+                        className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-y font-mono ${fc}`} />
                     </div>
                   </div>
                 );
@@ -473,7 +473,7 @@ function AreasManager() {
         </ModalBody>
         <ModalFooter>
           <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
-          <button type="button" onClick={handleSaveItem} disabled={saving || heroUploading || galleryUploading} className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+          <button type="button" onClick={handleSaveItem} disabled={saving || heroUploading || galleryUploading} className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
             {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {editingIndex !== null ? 'Save Changes' : 'Add Area'}
           </button>

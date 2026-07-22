@@ -28,7 +28,7 @@ interface Stat {
 
 /** Per-position visual accents (preserved from the original design). */
 const ACCENTS = [
-  { ringColor: 'border-emerald-400 text-emerald-400', glowColor: 'rgba(52,211,153,0.07)' },
+  { ringColor: 'border-rmc-green text-rmc-green', glowColor: 'rgba(52,211,153,0.07)' },
   { ringColor: 'border-amber-400 text-amber-400', glowColor: 'rgba(251,191,36,0.07)' },
   { ringColor: 'border-sky-400 text-sky-400', glowColor: 'rgba(56,189,248,0.07)' },
 ];
@@ -161,7 +161,7 @@ export function StatsSection() {
         >
           <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-white ${rtl ? 'font-arabic' : ''}`}>
             {pick(content.title, locale)}{' '}
-            <span className="text-emerald-400">{pick(content.titleAccent, locale)}</span>
+            <span className="text-rmc-green">{pick(content.titleAccent, locale)}</span>
           </h2>
           <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />

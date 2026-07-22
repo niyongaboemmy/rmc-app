@@ -120,22 +120,22 @@ function HeroManager() {
           </div>
         </div>
         <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-sky-600/20 transition-colors">
           {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           {loading ? 'Loading…' : 'Save Changes'}
         </button>
       </div>
 
       {/* Greeting (salam) — not translated */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-2">
-        <label className="block text-xs font-semibold text-gray-700">Arabic Greeting (eyebrow)</label>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Arabic Greeting (eyebrow)</label>
         <p className="text-[11px] text-gray-400 mb-1.5">Shown above the headline in all languages — not translated.</p>
         <input
           dir="rtl"
           type="text"
           value={form.salam}
           onChange={(e) => setField('salam', e.target.value)}
-          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 font-arabic focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 font-arabic focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
         />
       </div>
 
@@ -143,80 +143,80 @@ function HeroManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Translatable copy */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Copy — {langLabel}</h2>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Headline</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Headline</label>
           <textarea
             dir={dir}
             rows={2}
             value={form.headline[lang]}
             onChange={(e) => setTri('headline', lang, e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Subtitle</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Subtitle</label>
           <textarea
             dir={dir}
             rows={3}
             value={form.subtitle[lang]}
             onChange={(e) => setTri('subtitle', lang, e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`}
           />
         </div>
       </div>
 
       {/* CTAs */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Call-to-action Buttons — {langLabel}</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Primary Button Label</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Primary Button Label</label>
             <input
               dir={dir}
               type="text"
               value={form.primaryCta[lang]}
               onChange={(e) => setTri('primaryCta', lang, e.target.value)}
-              className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent ${fontClass}`}
+              className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Primary Button Link</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Primary Button Link</label>
             <input
               dir="ltr"
               type="text"
               placeholder="/services"
               value={form.primaryHref}
               onChange={(e) => setField('primaryHref', e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Secondary Button Label</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Secondary Button Label</label>
             <input
               dir={dir}
               type="text"
               value={form.secondaryCta[lang]}
               onChange={(e) => setTri('secondaryCta', lang, e.target.value)}
-              className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent ${fontClass}`}
+              className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Secondary Button Link</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Secondary Button Link</label>
             <input
               dir="ltr"
               type="text"
               placeholder="/activities"
               value={form.secondaryHref}
               onChange={(e) => setField('secondaryHref', e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
             />
           </div>
         </div>
@@ -224,14 +224,14 @@ function HeroManager() {
       </div>
 
       {/* Background slideshow */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-gray-700">Background Slideshow</h2>
             <p className="text-[11px] text-gray-400 mt-0.5">Image URLs that crossfade behind the hero copy.</p>
           </div>
           <button onClick={addSlide} type="button"
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-rmc-green hover:bg-rmc-green-dark text-white text-xs font-semibold rounded-lg transition-colors">
             <Plus className="w-3.5 h-3.5" /> Add Image
           </button>
         </div>
@@ -260,7 +260,7 @@ function HeroManager() {
                 placeholder="https://…/image.jpg"
                 value={src}
                 onChange={(e) => setSlide(index, e.target.value)}
-                className="flex-1 min-w-0 rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                className="flex-1 min-w-0 rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
               />
               <button onClick={() => removeSlide(index)} type="button"
                 className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">

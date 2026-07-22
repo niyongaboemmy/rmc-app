@@ -36,7 +36,7 @@ export async function FuneralCallBar() {
         </div>
         <a
           href={hotline.phoneHref || `tel:${hotline.phone.replace(/[^\d+]/g, '')}`}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-rmc-green px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
         >
           <Phone className="h-4 w-4" aria-hidden="true" />
           <span dir="ltr">{hotline.phone}</span>

@@ -301,7 +301,7 @@ function AboutRMCManager() {
           </div>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-slate-700/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-slate-700/20 transition-colors">
           {saving ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           Save Changes
         </button>
@@ -311,7 +311,7 @@ function AboutRMCManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Content fields */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
         <h2 className="text-sm font-bold text-gray-700 pb-3 border-b border-gray-50">
           Content — {LANGS.find((l) => l.key === lang)?.label}
         </h2>
@@ -320,7 +320,7 @@ function AboutRMCManager() {
           const isRich = key === 'history' || key === 'mission' || key === 'vision';
           return (
             <div key={key}>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
                 {Icon && <Icon className="w-3.5 h-3.5 text-slate-500" />}
                 {label}
               </label>
@@ -335,10 +335,10 @@ function AboutRMCManager() {
                 />
               ) : rows === 1 ? (
                 <input dir={dir} type="text" value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
-                  className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fontClass}`} />
+                  className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`} />
               ) : (
                 <textarea dir={dir} rows={rows} value={getField(key, lang)} onChange={(e) => setField(key, lang, e.target.value)}
-                  className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none ${fontClass}`} />
+                  className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`} />
               )}
             </div>
           );
@@ -346,7 +346,7 @@ function AboutRMCManager() {
       </div>
 
       {/* ── Leadership CRUD ───────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-slate-500" />
@@ -354,7 +354,7 @@ function AboutRMCManager() {
             <span className="text-xs text-gray-400 font-normal">({leaders.length}) · editing {LANGS.find((l) => l.key === lang)?.label}</span>
           </div>
           <button onClick={addLeader}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors">
             <Plus className="w-3.5 h-3.5" /> Add Leader
           </button>
         </div>
@@ -386,32 +386,32 @@ function AboutRMCManager() {
                         </button>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Name ({lang.toUpperCase()})</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Name ({lang.toUpperCase()})</label>
                         <input dir={lang === 'ar' ? 'rtl' : 'ltr'} type="text" value={l[nameKey]}
                           onChange={(e) => setLeaderField(l.id, nameKey, e.target.value)}
-                          className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
+                          className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Role ({lang.toUpperCase()})</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Role ({lang.toUpperCase()})</label>
                         <input dir={lang === 'ar' ? 'rtl' : 'ltr'} type="text" value={l[roleKey]}
                           onChange={(e) => setLeaderField(l.id, roleKey, e.target.value)}
-                          className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
+                          className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
                       </div>
                       {/* Email + phone — shared across languages */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
                           <input type="email" value={l.email ?? ''}
                             onChange={(e) => setLeaderField(l.id, 'email', e.target.value)}
                             placeholder="name@rmc.org.rw"
-                            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Phone</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
                           <input type="tel" value={l.phone ?? ''}
                             onChange={(e) => setLeaderField(l.id, 'phone', e.target.value)}
                             placeholder="+250 7XX XXX XXX"
-                            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                         </div>
                       </div>
                     </div>
@@ -425,7 +425,7 @@ function AboutRMCManager() {
       </div>
 
       {/* ── History Entries CRUD ──────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-500" />
@@ -433,7 +433,7 @@ function AboutRMCManager() {
             <span className="text-xs text-gray-400 font-normal">({entries.length} entries)</span>
           </div>
           <button onClick={openCreateEntry} disabled={loadingEntries}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold rounded-lg transition-colors">
             <Plus className="w-3.5 h-3.5" /> Add Entry
           </button>
         </div>
@@ -487,30 +487,30 @@ function AboutRMCManager() {
           {/* Year + Sort Order */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Year <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Year <span className="text-red-500">*</span></label>
               <input type="number" min={1900} max={2100} value={entryForm.year}
                 onChange={(e) => setEF('year', parseInt(e.target.value) || 0)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Sort Order <span className="ml-1 font-normal text-gray-400">(lower = earlier)</span>
               </label>
               <input type="number" min={0} value={entryForm.sortOrder}
                 onChange={(e) => setEF('sortOrder', parseInt(e.target.value) || 0)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent" />
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
             </div>
           </div>
 
           {/* Image key */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Image Key <span className="ml-1 font-normal text-gray-400">(file-server key — optional)</span>
             </label>
             <input type="text" value={entryForm.imageKey ?? ''}
               onChange={(e) => setEF('imageKey', e.target.value || null)}
               placeholder="e.g. history/1962-founding.jpg"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent font-mono" />
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent font-mono" />
           </div>
 
           {/* Language tabs */}
@@ -532,20 +532,20 @@ function AboutRMCManager() {
                 return (
                   <div key={l} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Title {l === 'en' && <span className="text-red-500">*</span>}
                       </label>
                       <input dir={d} type="text" value={entryForm[titleKey] as string}
                         onChange={(e) => setEF(titleKey, e.target.value)}
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${fc}`} />
+                        className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fc}`} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Description {l === 'en' && <span className="text-red-500">*</span>}
                       </label>
                       <textarea dir={d} rows={4} value={entryForm[descKey] as string}
                         onChange={(e) => setEF(descKey, e.target.value)}
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent resize-none ${fc}`} />
+                        className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fc}`} />
                     </div>
                   </div>
                 );
@@ -556,7 +556,7 @@ function AboutRMCManager() {
         <ModalFooter>
           <button type="button" onClick={() => setEntryModal(false)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
           <button type="button" onClick={handleSaveEntry} disabled={savingEntry}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
             {savingEntry && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {editingEntry ? 'Save Changes' : 'Add Entry'}
           </button>

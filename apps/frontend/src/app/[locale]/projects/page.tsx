@@ -41,7 +41,7 @@ export default async function ProjectsComingSoonPage({
 
             {/* Coming Soon badge */}
             <div className="flex justify-center mb-3">
-              <span className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-emerald-200 text-[11px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-rmc-green text-[11px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-full">
                 <Clock className="w-3 h-3" /> {t('badge')}
               </span>
             </div>
@@ -55,7 +55,7 @@ export default async function ProjectsComingSoonPage({
         <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
           <Link
             href={`/${locale}`}
-            className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/25 hover:border-white/50 shadow-sm"
+            className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/25 hover:border-white/50 shadow-sm"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> {t('backToHome')}
           </Link>

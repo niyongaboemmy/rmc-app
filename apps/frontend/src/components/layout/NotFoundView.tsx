@@ -207,7 +207,7 @@ export function NotFoundView() {
           >
             <Link
               href={`/${loc}`}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rmc-green/20 transition-all duration-200 hover:scale-105 hover:bg-rmc-green-dark hover:shadow-xl active:scale-100"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rmc-green/20 transition-all duration-200 hover:scale-105 hover:bg-rmc-green-dark hover:shadow-xl active:scale-100"
             >
               <Home className="h-4 w-4" /> {t('home')}
             </Link>

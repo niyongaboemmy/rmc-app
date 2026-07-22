@@ -117,7 +117,7 @@ export function AnswerComposer({
         rows={5}
         required
         minLength={20}
-        className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2.5 font-mono text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+        className="w-full resize-y rounded-lg border border-gray-300 px-4 py-2.5 font-mono text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
         placeholder={t('discussions.answer.answerPlaceholder')}
       />
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

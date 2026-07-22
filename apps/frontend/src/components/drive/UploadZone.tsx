@@ -220,7 +220,7 @@ export const UploadZone = forwardRef<UploadZoneHandle, UploadZoneProps>(
                     />
                   </div>
                   {item.error && (
-                    <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1">
+                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" /> {item.error}
                     </p>
                   )}

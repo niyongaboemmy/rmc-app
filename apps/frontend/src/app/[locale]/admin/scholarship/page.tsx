@@ -123,29 +123,29 @@ function ProgramModal({
         </div>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Title</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Title</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 resize-none"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Level</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Level</label>
               <select
                 value={level}
                 onChange={(e) => setLevel(e.target.value as typeof level)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               >
                 <option value="">Any level</option>
                 <option value="secondary">Secondary School</option>
@@ -154,23 +154,23 @@ function ProgramModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Amount (RWF)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (RWF)</label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 items-end">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Deadline</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Deadline</label>
               <input
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               />
             </div>
             <label className="inline-flex items-center gap-2 pb-2.5 text-sm text-gray-700">
@@ -181,13 +181,13 @@ function ProgramModal({
         </div>
         {error && <p className="text-xs text-red-600 mt-3">{error}</p>}
         <div className="flex gap-3 mt-5">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -230,7 +230,7 @@ function ProgramsTab({ canManage }: { canManage: boolean }) {
         <div className="flex justify-end">
           <button
             onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" /> New Program
           </button>
@@ -434,7 +434,7 @@ function ApplicationsTab({ permReports }: { permReports: boolean }) {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-xs font-medium disabled:opacity-50 transition-colors"
             >
               <Download className="w-3.5 h-3.5" /> {exporting ? 'Exporting...' : 'Export CSV'}
             </button>
@@ -460,13 +460,13 @@ function ApplicationsTab({ permReports }: { permReports: boolean }) {
               placeholder="Search by name or phone..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           >
             {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
@@ -474,13 +474,13 @@ function ApplicationsTab({ permReports }: { permReports: boolean }) {
             type="date"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           />
           <input
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           />
         </div>
       </div>

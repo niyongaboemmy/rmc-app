@@ -100,7 +100,7 @@ export default function MemberRegisterPage() {
 
             <div className="bg-white rounded-2xl shadow-sm p-8">
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                   {error}
                 </div>
               )}
@@ -113,10 +113,10 @@ export default function MemberRegisterPage() {
                     type="text"
                     maxLength={16}
                     placeholder="1234567890123456"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                     {...register('nationalId')}
                   />
-                  {errors.nationalId && <p className="text-red-500 text-xs mt-1">{errors.nationalId.message}</p>}
+                  {errors.nationalId && <p className="text-red-600 text-xs mt-1">{errors.nationalId.message}</p>}
                 </div>
 
                 {/* Category */}
@@ -131,7 +131,7 @@ export default function MemberRegisterPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('occupation')}</label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                     {...register('occupation')}
                   />
                 </div>
@@ -171,7 +171,7 @@ export default function MemberRegisterPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyName')}</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                       {...register('emergencyContactName')}
                     />
                   </div>
@@ -179,7 +179,7 @@ export default function MemberRegisterPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t('emergencyPhone')}</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                       {...register('emergencyContactPhone')}
                     />
                   </div>
@@ -198,13 +198,13 @@ export default function MemberRegisterPage() {
                   </label>
                 </div>
                 {errors.consentGiven && (
-                  <p className="text-red-500 text-xs">{errors.consentGiven.message}</p>
+                  <p className="text-red-600 text-xs">{errors.consentGiven.message}</p>
                 )}
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3.5 bg-rmc-green text-white font-semibold rounded-xl hover:bg-rmc-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3.5 bg-rmc-green text-white font-semibold rounded-lg hover:bg-rmc-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? '...' : t('submit')}
                 </button>

@@ -254,7 +254,7 @@ function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
                       onChange={(e) => setSearchInput(e.target.value)}
                       placeholder={t('library.searchPlaceholder')}
                       aria-label={t('library.searchPlaceholder')}
-                      className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                      className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
                     />
                   </div>
 
@@ -383,7 +383,7 @@ function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
                         type="button"
                         disabled={page <= 1}
                         onClick={() => setParams({ page: page - 1 })}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
                       >
                         <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                         {t('pagination.previous')}
@@ -392,7 +392,7 @@ function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
                         type="button"
                         disabled={page >= pages}
                         onClick={() => setParams({ page: page + 1 })}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
                       >
                         {t('pagination.next')}
                         <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />
@@ -460,7 +460,7 @@ function ErrorState({ retry, onRetry }: { retry: string; onRetry: () => void }) 
       <button
         type="button"
         onClick={onRetry}
-        className="mt-4 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+        className="mt-4 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
       >
         {retry}
       </button>

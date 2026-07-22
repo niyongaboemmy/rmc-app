@@ -25,7 +25,7 @@ export function WizardLayout({ steps, currentStep, children, title, subtitle }: 
       {/* Thin progress bar */}
       <div className="h-[3px] bg-gray-100">
         <div
-          className="h-full bg-rose-500 transition-all duration-500 ease-out"
+          className="h-full bg-rmc-green transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -44,8 +44,8 @@ export function WizardLayout({ steps, currentStep, children, title, subtitle }: 
                   <div
                     className={cn(
                       'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 shrink-0',
-                      done && 'bg-rose-500 text-white',
-                      active && 'bg-rose-600 text-white ring-[3px] ring-rose-100 scale-110',
+                      done && 'bg-rmc-green text-white',
+                      active && 'bg-rmc-green text-white ring-[3px] ring-rmc-green-light scale-110',
                       !done && !active && 'bg-gray-100 text-gray-400',
                     )}
                   >
@@ -53,7 +53,7 @@ export function WizardLayout({ steps, currentStep, children, title, subtitle }: 
                   </div>
                   <span className={cn(
                     'text-[10px] font-medium hidden sm:block whitespace-nowrap leading-none',
-                    active ? 'text-rose-600' : done ? 'text-gray-400' : 'text-gray-300',
+                    active ? 'text-rmc-green' : done ? 'text-gray-400' : 'text-gray-300',
                   )}>
                     {step.label}
                   </span>
@@ -62,7 +62,7 @@ export function WizardLayout({ steps, currentStep, children, title, subtitle }: 
                 {!isLast && (
                   <div className={cn(
                     'flex-1 h-px mx-2 mb-4 sm:mb-5 transition-colors duration-300',
-                    done ? 'bg-rose-300' : 'bg-gray-200',
+                    done ? 'bg-rmc-green' : 'bg-gray-200',
                   )} />
                 )}
               </div>
@@ -73,7 +73,7 @@ export function WizardLayout({ steps, currentStep, children, title, subtitle }: 
         {/* Mobile label */}
         <p className="sm:hidden text-xs text-center text-gray-400 mt-3">
           Step{' '}
-          <span className="font-semibold text-rose-600">{currentStep}</span>
+          <span className="font-semibold text-rmc-green">{currentStep}</span>
           {' '}of {steps.length}
           <span className="text-gray-500"> — {steps.find((s) => s.id === currentStep)?.label}</span>
         </p>

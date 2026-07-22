@@ -10,9 +10,9 @@ import { localized } from './localize';
 
 /** Level → the pill's colour. Beginner reads calm, advanced reads earned. */
 const LEVEL_STYLES: Record<string, string> = {
-  beginner: 'bg-emerald-50 text-emerald-700 ring-emerald-600/15',
+  beginner: 'bg-rmc-green-light text-rmc-green-dark ring-rmc-green/15',
   intermediate: 'bg-amber-50 text-amber-700 ring-amber-600/15',
-  advanced: 'bg-rose-50 text-rose-700 ring-rose-600/15',
+  advanced: 'bg-rmc-green-light text-rmc-green-dark ring-rmc-green/15',
 };
 
 /**

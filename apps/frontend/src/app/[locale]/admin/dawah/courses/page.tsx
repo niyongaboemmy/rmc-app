@@ -142,14 +142,14 @@ function CoursesAdmin() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchCourses}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <RefreshCw className="h-4 w-4" /> {t('courses.refresh')}
           </button>
           {canManage && (
             <button
               onClick={() => setModal({ open: true, course: null })}
-              className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+              className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
             >
               <Plus className="h-4 w-4" /> {t('courses.new')}
             </button>
@@ -171,7 +171,7 @@ function CoursesAdmin() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('courses.searchPlaceholder')}
-            className="w-full rounded-xl border border-gray-200 py-2.5 ps-9 pe-4 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30"
+            className="w-full rounded-lg border border-gray-300 py-2.5 ps-9 pe-4 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           />
         </div>
         <SearchableSelect

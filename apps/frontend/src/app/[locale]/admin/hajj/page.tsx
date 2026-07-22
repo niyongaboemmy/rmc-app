@@ -129,7 +129,7 @@ function HajjAdmin() {
           <button
             onClick={() => void exportReport()}
             disabled={exporting}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:cursor-not-allowed disabled:opacity-60"
           >
             {exporting ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -140,7 +140,7 @@ function HajjAdmin() {
           </button>
           <button
             onClick={() => void load()}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} aria-hidden="true" /> Refresh
           </button>
@@ -164,7 +164,7 @@ function HajjAdmin() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by number, name, phone or passport…"
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           />
         </div>
         <SearchableSelect
@@ -176,7 +176,7 @@ function HajjAdmin() {
         />
       </div>
 
-      {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">{error}</p>}
+      {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">{error}</p>}
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -226,7 +226,7 @@ function HajjAdmin() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setSelected(a)}
-                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
                       >
                         Review
                       </button>
@@ -249,7 +249,7 @@ function HajjAdmin() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[10000] -translate-x-1/2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+        <div className="fixed bottom-6 left-1/2 z-[10000] -translate-x-1/2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
           {toast}
         </div>
       )}
@@ -391,7 +391,7 @@ function ReviewDrawer({
               className={cn(
                 'rounded-xl px-4 py-3 text-sm ring-1',
                 app.status === 'approved'
-                  ? 'bg-emerald-50 text-emerald-800 ring-emerald-100'
+                  ? 'bg-rmc-green-light text-rmc-green-dark ring-rmc-green-light'
                   : 'bg-red-50 text-red-800 ring-red-100',
               )}
             >
@@ -407,14 +407,14 @@ function ReviewDrawer({
           ) : (
             <section className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-gray-600">
+                <span className="mb-1.5 block text-sm font-medium text-gray-700">
                   Internal note <span className="font-normal text-gray-400">(optional — not sent to the applicant)</span>
                 </span>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
-                  className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                  className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
                   placeholder="e.g. Passport verified against the payment receipt"
                 />
               </label>
@@ -429,13 +429,13 @@ function ReviewDrawer({
                     onChange={(e) => setReason(e.target.value)}
                     rows={2}
                     autoFocus
-                    className="w-full resize-none rounded-xl border border-red-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400/30"
+                    className="w-full resize-none rounded-lg border border-red-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400/30"
                     placeholder="e.g. The advance payment proof is not legible"
                   />
                 </label>
               )}
 
-              {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
+              {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
 
               <div className="flex flex-wrap gap-2">
                 {app.status === 'submitted' && (
@@ -443,7 +443,7 @@ function ReviewDrawer({
                     onClick={() => void move('under_review')}
                     busy={busy === 'under_review'}
                     icon={Clock}
-                    className="bg-amber-500 hover:bg-amber-600"
+                    className="bg-rmc-green hover:bg-rmc-green-dark"
                   >
                     Start review
                   </ActionButton>
@@ -469,7 +469,7 @@ function ReviewDrawer({
                     </ActionButton>
                     <button
                       onClick={() => { setRejecting(false); setReason(''); }}
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-white"
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-white"
                     >
                       Cancel
                     </button>
@@ -622,7 +622,7 @@ function DocumentCard({
         <div className="flex items-center gap-1.5 pt-1">
           <button
             onClick={onOpen}
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <Eye className="h-3 w-3" aria-hidden="true" /> Inspect
           </button>
@@ -633,7 +633,7 @@ function DocumentCard({
               className={cn(
                 'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50',
                 doc.verified
-                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                  ? 'bg-rmc-green-light text-rmc-green-dark ring-1 ring-rmc-green'
                   : 'border border-gray-200 text-gray-500 hover:text-gray-700',
               )}
             >
@@ -695,7 +695,7 @@ function Lightbox({ doc, onClose }: { doc: HajjDocument; onClose: () => void }) 
 
       <div className="flex min-h-0 flex-1 items-center justify-center" onClick={(e) => e.stopPropagation()}>
         {failed ? (
-          <p className="rounded-xl bg-white/10 px-5 py-4 text-sm text-white">
+          <p className="rounded-lg bg-white/10 px-5 py-4 text-sm text-white">
             This receipt could not be loaded from storage.
           </p>
         ) : !url ? (
@@ -744,7 +744,7 @@ function StatCard({
   const tones = {
     gray: 'bg-gray-50 text-gray-500',
     amber: 'bg-amber-50 text-amber-600',
-    green: 'bg-emerald-50 text-emerald-600',
+    green: 'bg-rmc-green-light text-rmc-green',
     red: 'bg-red-50 text-red-600',
   } as const;
   return (
@@ -800,7 +800,7 @@ function ActionButton({
       onClick={onClick}
       disabled={busy || disabled}
       className={cn(
-        'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-white transition-colors disabled:opacity-50',
+        'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors disabled:opacity-50',
         className,
       )}
     >

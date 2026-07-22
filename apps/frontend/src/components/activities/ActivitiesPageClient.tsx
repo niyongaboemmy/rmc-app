@@ -185,7 +185,7 @@ export function ActivitiesPageClient() {
                   </div>
                 </div>
 
-                <span className="mt-6 inline-flex items-center gap-1.5 self-start rounded-full bg-rmc-green px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 group-hover:bg-rmc-green-dark motion-safe:group-hover:scale-105">
+                <span className="mt-6 inline-flex items-center gap-1.5 self-start rounded-lg bg-rmc-green px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 group-hover:bg-rmc-green-dark motion-safe:group-hover:scale-105">
                   <Images className="h-3.5 w-3.5 shrink-0" />
                   View gallery
                   <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
@@ -298,7 +298,7 @@ export function ActivitiesPageClient() {
                       <FundingBar raised={event.raisedAmount} goal={event.goalAmount} />
                       <Link
                         href={`/${locale}/donate?cause=${event.id}`}
-                        className="group/donate mt-4 flex w-full items-center justify-center gap-1.5 rounded-full bg-rmc-green/10 px-4 py-2 text-xs font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green hover:text-white"
+                        className="group/donate mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-rmc-green/10 px-4 py-2 text-xs font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green hover:text-white"
                       >
                         <HandHeart className="h-3.5 w-3.5 shrink-0" />
                         Donate

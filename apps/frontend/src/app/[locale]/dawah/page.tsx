@@ -255,7 +255,7 @@ export default async function DawahPage({
                   </Link>
                   <Link
                     href={`/${locale}/dawah/discussions/ask`}
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/40"
+                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/40"
                   >
                     {t('discussions.askCta')}
                   </Link>

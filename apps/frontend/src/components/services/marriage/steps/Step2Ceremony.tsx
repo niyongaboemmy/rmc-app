@@ -66,27 +66,27 @@ function VenueOption({
       className={cn(
         'relative flex flex-col gap-3 w-full rounded-xl border-2 px-4 py-4 text-left transition-all duration-200',
         selected
-          ? 'border-rose-500 bg-rose-50/60'
+          ? 'border-rmc-green bg-rmc-green-light/60'
           : 'border-gray-200 bg-white hover:border-gray-300',
       )}
     >
       <div className="flex items-center justify-between">
         <span className={cn(
           'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
-          selected ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-500',
+          selected ? 'bg-rmc-green text-white' : 'bg-gray-100 text-gray-500',
         )}>
           {icon}
         </span>
         <div className={cn(
           'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
-          selected ? 'border-rose-500 bg-rose-500' : 'border-gray-300',
+          selected ? 'border-rmc-green bg-rmc-green' : 'border-gray-300',
         )}>
           {selected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
         </div>
       </div>
       <div>
         <p className={cn('font-semibold text-sm', selected ? 'text-gray-900' : 'text-gray-700')}>{title}</p>
-        <p className={cn('text-xs mt-0.5 font-medium', selected ? 'text-rose-600' : 'text-gray-400')}>{fee}</p>
+        <p className={cn('text-xs mt-0.5 font-medium', selected ? 'text-rmc-green' : 'text-gray-400')}>{fee}</p>
       </div>
     </button>
   );
@@ -113,13 +113,13 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
 
   const onSubmit = (data: FormData) => onNext({ ...data, venueType: venue ?? data.venueType });
 
-  const selectCls = 'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-colors';
+  const selectCls = 'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent transition-colors';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
       {/* Venue */}
       <div>
-        <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-3">Venue type <span className="text-rose-500">*</span></p>
+        <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-3">Venue type <span className="text-rmc-green">*</span></p>
         <div className="grid grid-cols-2 gap-3">
           <VenueOption
             value="mosque"
@@ -138,7 +138,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
             fee={fees ? `${fees.outside.amount.toLocaleString()} RWF` : '200,000 RWF'}
           />
         </div>
-        {errors.venueType && <p className="mt-2 text-xs text-red-500">{errors.venueType.message}</p>}
+        {errors.venueType && <p className="mt-2 text-xs text-red-600">{errors.venueType.message}</p>}
       </div>
 
       {/* Location */}
@@ -147,7 +147,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Province <span className="text-rose-500">*</span>
+              Province <span className="text-rmc-green">*</span>
             </label>
             <select
               className={selectCls}
@@ -159,11 +159,11 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
                 <option key={k} value={k}>{PROVINCE_LABELS[k]}</option>
               ))}
             </select>
-            {errors.province && <p className="mt-1 text-xs text-red-500">{errors.province.message}</p>}
+            {errors.province && <p className="mt-1 text-xs text-red-600">{errors.province.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              District <span className="text-rose-500">*</span>
+              District <span className="text-rmc-green">*</span>
             </label>
             <select
               className={cn(selectCls, !province && 'opacity-50 cursor-not-allowed')}
@@ -173,7 +173,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
               <option value="">{province ? 'Select district' : 'Select province first'}</option>
               {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
-            {errors.district && <p className="mt-1 text-xs text-red-500">{errors.district.message}</p>}
+            {errors.district && <p className="mt-1 text-xs text-red-600">{errors.district.message}</p>}
           </div>
         </div>
 
@@ -220,7 +220,7 @@ export function Step2Ceremony({ initialData, onNext, onBack, fees }: Props) {
         <Button
           type="submit"
           rightIcon={<ArrowRight className="w-4 h-4" />}
-          className="!bg-rose-600 hover:!bg-rose-700 !text-white !shadow-none"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark !text-white !shadow-none"
         >
           Continue
         </Button>

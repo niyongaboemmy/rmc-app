@@ -264,7 +264,7 @@ function UserDetailContent() {
                   onClick={() => switchFilter('shared')}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
                     driveFilter === 'shared'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-rmc-green text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
