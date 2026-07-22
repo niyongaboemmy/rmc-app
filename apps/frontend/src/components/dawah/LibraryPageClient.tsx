@@ -12,13 +12,12 @@ import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmModal } from '@/components/ui/Modal';
-import { ToastProvider, useToast } from '@/components/ui/Toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/Toast';
 import { Permission } from '@/lib/permissions';
-import { EditModeProvider, useEditMode } from '@/contexts/EditModeContext';
-import { EditableText } from '@/components/cms/EditableText';
-import { EditToolbar } from '@/components/cms/EditToolbar';
-import { ContentKeys, LIBRARY_DEFAULT } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { ContentKeys, LIBRARY_DEFAULT, pick, type LibraryContent, type Locale } from '@/lib/content-api';
 import { BookCard } from './BookCard';
 import { BookModal } from './BookModal';
 import { BookPreviewOverlay } from './BookPreviewOverlay';
@@ -45,44 +44,30 @@ const PAGE_SIZE = 12;
  * selected book lives in component state; the overlay's shareable/indexable
  * twin is the /library/[slug] route the cards also point at.
  *
- * For admins the page doubles as its own CMS: `EditModeProvider` wraps the view
- * so the header/empty/error prose becomes editable in place (persisted to the
- * `library` content section), and — for a `dawah:manage` holder — each card
- * grows edit/delete controls plus an "add book" tile that open the very same
- * `BookModal` the admin dashboard uses. Everyone else sees exactly the page they
- * always did; the toolbar and controls never render without the permission.
+ * The page doubles as its own CMS through the site-wide in-context Edit Mode
+ * (`lib/edit-mode`): the global provider + EditModeBar live in the locale layout,
+ * so this page just opts in. `useEditableContent` makes the header/empty/error
+ * prose editable in place (gated on content:edit, published with the rest of the
+ * batch), and — for a `dawah:manage` holder in edit mode — each card grows
+ * edit/delete controls plus an "add book" tile that open the same `BookModal` the
+ * admin dashboard uses. Book CRUD saves immediately via `dawahApi`, independent
+ * of the copy batch. Everyone else sees exactly the page they always did.
  */
 export function LibraryPageClient() {
-  const { hasPermission } = useAuth();
-  const canEditCopy = hasPermission(Permission.CONTENT_EDIT);
-  const canManageBooks = hasPermission(Permission.DAWAH_MANAGE);
-
-  return (
-    <ToastProvider>
-      <EditModeProvider
-        sectionKey={ContentKeys.library}
-        defaults={LIBRARY_DEFAULT}
-        canEdit={canEditCopy || canManageBooks}
-        canSave={canEditCopy}
-      >
-        <LibraryView canManageBooks={canManageBooks} />
-        <EditToolbar />
-      </EditModeProvider>
-    </ToastProvider>
-  );
-}
-
-function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
   const t = useTranslations('dawah');
   const ta = useTranslations('admin.dawah');
   const { locale } = useParams<{ locale: string }>();
+  const lang = locale as Locale;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { editing } = useEditMode();
   const { success, error: toastError } = useToast();
 
-  const manage = editing && canManageBooks;
+  // Copy editing (content:edit) via the shared preview store; book management
+  // (dawah:manage) rides the same global edit-mode toggle but a different gate.
+  const { content, setField } = useEditableContent<LibraryContent>(ContentKeys.library, LIBRARY_DEFAULT);
+  const { editMode, hasPermission } = useEditMode();
+  const manage = editMode && hasPermission(Permission.DAWAH_MANAGE);
 
   const category = searchParams.get('category') ?? '';
   const language = searchParams.get('language') ?? '';
@@ -224,16 +209,19 @@ function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
                 <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                 {t('backToDawah')}
               </Link>
-              <EditableText
+              <InlineText
                 as="h1"
-                path="header.title"
+                lang={locale}
+                value={pick(content.header.title, locale) || t('library.title')}
+                onCommit={(v) => setField((d) => { d.header.title[lang] = v; })}
                 placeholder={t('library.title')}
                 className="mt-4 block text-2xl font-bold text-rmc-green-deep md:text-3xl"
               />
-              <EditableText
+              <InlineText
                 as="p"
-                path="header.subtitle"
-                multiline
+                lang={locale}
+                value={pick(content.header.subtitle, locale) || t('library.subtitle')}
+                onCommit={(v) => setField((d) => { d.header.subtitle[lang] = v; })}
                 placeholder={t('library.subtitle')}
                 className="mt-1.5 block text-sm text-gray-500 md:text-base"
               />
@@ -298,7 +286,29 @@ function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
 
             {/* ── Results ────────────────────────────────────────────────── */}
             {failed ? (
-              <ErrorState retry={t('library.error.retry')} onRetry={() => router.refresh()} />
+              <div className="mx-auto mt-12 max-w-md rounded-3xl border border-dashed border-red-200 bg-white p-10 text-center">
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pick(content.error.title, locale)}
+                  onCommit={(v) => setField((d) => { d.error.title[lang] = v; })}
+                  className="block font-semibold text-gray-900"
+                />
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pick(content.error.body, locale)}
+                  onCommit={(v) => setField((d) => { d.error.body[lang] = v; })}
+                  className="mt-1.5 block text-sm text-gray-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => router.refresh()}
+                  className="mt-4 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+                >
+                  {t('library.error.retry')}
+                </button>
+              </div>
             ) : loading && !data ? (
               <div className="mt-8 grid grid-cols-3 gap-x-5 gap-y-8 sm:grid-cols-4 lg:grid-cols-6">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -310,16 +320,19 @@ function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rmc-green-light text-rmc-green">
                   <LibraryIcon className="h-6 w-6" aria-hidden />
                 </span>
-                <EditableText
+                <InlineText
                   as="p"
-                  path="empty.title"
+                  lang={locale}
+                  value={pick(content.empty.title, locale)}
+                  onCommit={(v) => setField((d) => { d.empty.title[lang] = v; })}
                   placeholder={t('library.empty.title')}
                   className="mt-4 block font-semibold text-gray-900"
                 />
-                <EditableText
+                <InlineText
                   as="p"
-                  path="empty.body"
-                  multiline
+                  lang={locale}
+                  value={pick(content.empty.body, locale)}
+                  onCommit={(v) => setField((d) => { d.empty.body[lang] = v; })}
                   placeholder={t('library.empty.body')}
                   className="mt-1.5 block text-sm text-gray-500"
                 />
@@ -439,31 +452,6 @@ function LibraryView({ canManageBooks }: { canManageBooks: boolean }) {
         isLoading={deleteBusy}
         className="rounded-lg"
       />
-    </div>
-  );
-}
-
-function ErrorState({ retry, onRetry }: { retry: string; onRetry: () => void }) {
-  return (
-    <div className="mx-auto mt-12 max-w-md rounded-3xl border border-dashed border-red-200 bg-white p-10 text-center">
-      <EditableText
-        as="p"
-        path="error.title"
-        className="block font-semibold text-gray-900"
-      />
-      <EditableText
-        as="p"
-        path="error.body"
-        multiline
-        className="mt-1.5 block text-sm text-gray-500"
-      />
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-4 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
-      >
-        {retry}
-      </button>
     </div>
   );
 }
