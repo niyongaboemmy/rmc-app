@@ -9,7 +9,9 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { CourseCard } from '@/components/dawah/CourseCard';
-import { CourseLessonBrowser, type OutlineLesson } from '@/components/dawah/CourseLessonBrowser';
+import { CourseEditBar } from '@/components/dawah/CourseEditBar';
+import { CourseLessons } from '@/components/dawah/CourseLessons';
+import { type OutlineLesson } from '@/components/dawah/CourseLessonBrowser';
 import { localized } from '@/components/dawah/localize';
 import { dawahApi, type DawahCourse } from '@/lib/dawahApi';
 import { fileUrl } from '@/lib/api';
@@ -223,6 +225,9 @@ export default async function CourseDetailPage({
         />
       )}
       <Navbar solid />
+      {/* Admin-only in-place editor for this course record; renders nothing for
+          everyone else. */}
+      <CourseEditBar course={course} />
       <main className="bg-white">
         {/* No image hero: a course page is for reading. Just the back link here;
             the title now lives at the top of the header card below, together with
@@ -299,16 +304,19 @@ export default async function CourseDetailPage({
             {/* Deliberately NOT wrapped in <Reveal>: .reveal keeps a transform
                 even once visible, and a transformed ancestor becomes the
                 containing block for the sticky lesson nav inside, which silently
-                breaks its pin. */}
-            {(lessons.length > 0 || hasDescription) && (
-              <div className="mt-6">
-                <CourseLessonBrowser
-                  lessons={lessons}
-                  overviewHtml={hasDescription ? description : ''}
-                  courseSlug={course.slug}
-                />
-              </div>
-            )}
+                breaks its pin.
+
+                CourseLessons is the reader for everyone; for a dawah:manage admin
+                it adds an in-place "Manage lessons" toggle. It renders nothing for
+                a visitor when the course has neither lessons nor a description. */}
+            <div className="mt-6">
+              <CourseLessons
+                lessons={lessons}
+                overviewHtml={hasDescription ? description : ''}
+                courseSlug={course.slug}
+                courseId={course.id}
+              />
+            </div>
 
             {/* ── Related ─────────────────────────────────────────────────── */}
             {related.length > 0 && (

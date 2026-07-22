@@ -45,6 +45,13 @@ interface EditModeValue {
   getText: (path: string, locale: string) => string;
   /** Write the active-locale string at a dotted path. */
   setText: (path: string, locale: string, value: string) => void;
+  /** Read the RAW node (object/array/primitive) at a dotted path — for iterating
+   *  a repeatable collection's keys/length without knowing its shape up front. */
+  getValue: (path: string) => unknown;
+  /** Write a RAW node at a dotted path (e.g. append an item to an array). */
+  setValue: (path: string, value: unknown) => void;
+  /** Delete the node at a dotted path (array item spliced, object key removed). */
+  removeAt: (path: string) => void;
   save: () => Promise<void>;
   discard: () => void;
 }
@@ -64,13 +71,39 @@ function getAtPath(obj: unknown, path: string): unknown {
   );
 }
 
-/** Immutable set: returns a structurally-shared clone with `value` at `path`. */
+/** Immutable set: returns a structurally-shared clone with `value` at `path`.
+ *  Array-safe — spreading an array into an object would turn `[a,b]` into
+ *  `{0:a,1:b}` and silently break every array field, so arrays clone as arrays. */
 function setAtPath(obj: unknown, path: string[], value: unknown): unknown {
   if (path.length === 0) return value;
   const [head, ...rest] = path;
-  const clone: Json = { ...(obj as Json) };
-  clone[head] = setAtPath(clone[head], rest, value);
+  const clone: Record<string, unknown> | unknown[] = Array.isArray(obj)
+    ? [...obj]
+    : { ...(obj as Json) };
+  (clone as Record<string, unknown>)[head] = setAtPath((clone as Record<string, unknown>)[head], rest, value);
   return clone;
+}
+
+/** Immutable delete of the node at `path`. An array parent is SPLICED (indices
+ *  stay contiguous); an object parent has the key deleted. Used to remove a
+ *  repeatable item (e.g. a service requirement) from the draft. */
+function removeAtPath(obj: unknown, path: string[]): unknown {
+  if (path.length === 0) return obj;
+  const [head, ...rest] = path;
+  if (Array.isArray(obj)) {
+    const clone = [...obj];
+    const idx = Number(head);
+    if (rest.length === 0) clone.splice(idx, 1);
+    else clone[idx] = removeAtPath(clone[idx], rest);
+    return clone;
+  }
+  if (obj != null && typeof obj === 'object') {
+    const clone: Json = { ...(obj as Json) };
+    if (rest.length === 0) delete clone[head];
+    else clone[head] = removeAtPath(clone[head], rest);
+    return clone;
+  }
+  return obj;
 }
 
 export function EditModeProvider<T extends object>({
@@ -135,6 +168,16 @@ export function EditModeProvider<T extends object>({
     setDraft((prev) => setAtPath(prev, [...path.split('.'), locale], value) as Json);
   }, []);
 
+  const getValue = useCallback((path: string) => getAtPath(draft, path), [draft]);
+
+  const setValue = useCallback((path: string, value: unknown) => {
+    setDraft((prev) => setAtPath(prev, path.split('.'), value) as Json);
+  }, []);
+
+  const removeAt = useCallback((path: string) => {
+    setDraft((prev) => removeAtPath(prev, path.split('.')) as Json);
+  }, []);
+
   const save = useCallback(async () => {
     if (!canSave || saving) return;
     setSaving(true);
@@ -155,9 +198,9 @@ export function EditModeProvider<T extends object>({
   const value = useMemo<EditModeValue>(
     () => ({
       editing, setEditing, canEdit, canSave, loading, saving, dirty,
-      getText, setText, save, discard,
+      getText, setText, getValue, setValue, removeAt, save, discard,
     }),
-    [editing, setEditing, canEdit, canSave, loading, saving, dirty, getText, setText, save, discard],
+    [editing, setEditing, canEdit, canSave, loading, saving, dirty, getText, setText, getValue, setValue, removeAt, save, discard],
   );
 
   return <EditModeContext.Provider value={value}>{children}</EditModeContext.Provider>;

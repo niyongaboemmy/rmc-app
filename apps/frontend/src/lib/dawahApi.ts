@@ -704,9 +704,14 @@ export const dawahApi = {
       release: (answerId: string): Promise<{ id: string; verified: boolean }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/release`, {})),
 
-      /** Verify: publish + badge + pin ("RMC says this is correct"). */
+      /** Verify: publish + badge + pin ("RMC says this is correct"). One per question —
+       *  409s if another answer is already verified (un-verify it first). */
       verify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/verify`, {})),
+
+      /** Un-verify: drops the badge/pin. The answer stays published. */
+      unverify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
+        unwrap(apiClient.delete(`/admin/dawah/discussions/answers/${answerId}/verify`)),
 
       /** Category answer_policy — read + set. Setting is NOT retroactive. */
       categoryPolicies: (): Promise<CategoryPolicy[]> =>

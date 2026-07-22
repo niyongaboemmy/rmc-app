@@ -39,12 +39,12 @@ export function EditToolbar() {
   };
 
   return (
-    <div className="fixed top-24 z-[60] flex ltr:right-4 rtl:left-4 print:hidden">
+    <div className="fixed top-16 z-[10000] flex ltr:right-4 rtl:left-4 print:hidden">
       {!editing ? (
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+          className="inline-flex items-center gap-2 rounded-lg border border-rmc-green bg-white px-3 py-1.5 text-sm font-semibold text-rmc-green shadow-lg shadow-rmc-green/10 transition-colors hover:bg-rmc-green-light"
         >
           <Pencil className="h-4 w-4" aria-hidden />
           {t('editPage')}

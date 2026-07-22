@@ -381,7 +381,11 @@
       "register": "Iyandikishe",
       "report": "Menyesha urupfu",
       "cemeteries": "Amarimbi",
-      "viewDetails": "Reba birambuye byose"
+      "viewDetails": "Reba birambuye byose",
+      "cardDescription": "Ibisobanuro by'ikarita (bigaragara ku rutonde)",
+      "addRequirement": "Ongeraho icyo ukeneye",
+      "addStep": "Ongeraho intambwe",
+      "removeItem": "Kuraho"
     },
     "marriage": {
       "modal": {
@@ -2676,6 +2680,7 @@
         "empty": "This course has no lessons yet.",
         "subtitle": "Build and order the lesson outline for this course.",
         "backToCourses": "Back to courses",
+        "donePreview": "Back to preview",
         "refresh": "Refresh",
         "add": "Add lesson",
         "saving": "Saving…",
@@ -3640,6 +3645,7 @@
         "empty": "Nta kintu gitegereje isuzuma.",
         "release": "Rekura",
         "verify": "Emeza",
+        "unverify": "Kuraho iyemeza",
         "releaseHelp": "Tangaza utabyemeje — \"bishobora kubonwa\".",
         "verifyHelp": "Tangaza kandi ushyireho \"Byemejwe na RMC\" — \"ibi ni ukuri\".",
         "inCategory": "muri",

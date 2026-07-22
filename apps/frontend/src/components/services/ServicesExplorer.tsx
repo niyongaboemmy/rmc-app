@@ -2,10 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
 import { ChevronRight } from 'lucide-react';
 import { SERVICES, ACCENTS, type ServiceDef } from '@/lib/services/serviceCatalog';
 import { ServiceModal } from './ServiceModal';
+import { useAuth } from '@/hooks/useAuth';
+import { Permission } from '@/lib/permissions';
+import { EditModeProvider, useEditMode } from '@/contexts/EditModeContext';
+import { EditToolbar } from '@/components/cms/EditToolbar';
+import { ContentKeys, SERVICES_DEFAULT } from '@/lib/content-api';
 
 /**
  * The Services landing list — minimalist, scannable rows. A service with a
@@ -13,9 +17,33 @@ import { ServiceModal } from './ServiceModal';
  * one without links to its full detail page. Content is server-rendered on first
  * paint (this is a client component but Next still SSRs it), so it stays
  * indexable while the modal interaction lives on the client.
+ *
+ * For a `content:edit` admin the page doubles as its own CMS: `EditModeProvider`
+ * wraps the list so the per-service copy — row title/description, and the modal's
+ * summary / requirements / steps / notes — becomes editable in place (persisted to
+ * the `services` content section). Rows display from the store; the editing itself
+ * happens inside each service's modal. Everyone else sees exactly the page they
+ * always did.
  */
 export function ServicesExplorer({ locale }: { locale: string }) {
-  const t = useTranslations('services');
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission(Permission.CONTENT_EDIT);
+
+  return (
+    <EditModeProvider
+      sectionKey={ContentKeys.services}
+      defaults={SERVICES_DEFAULT}
+      canEdit={canEdit}
+      canSave={canEdit}
+    >
+      <ExplorerList locale={locale} />
+      <EditToolbar />
+    </EditModeProvider>
+  );
+}
+
+function ExplorerList({ locale }: { locale: string }) {
+  const { getText } = useEditMode();
   const [open, setOpen] = useState<ServiceDef | null>(null);
 
   return (
@@ -23,8 +51,8 @@ export function ServicesExplorer({ locale }: { locale: string }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {SERVICES.map((service) => {
           const accent = ACCENTS[service.accent];
-          const title = t(`${service.key}.title`);
-          const desc = t(`${service.key}.desc`);
+          const title = getText(`${service.key}.title`, locale);
+          const desc = getText(`${service.key}.desc`, locale);
 
           const inner = (
             <>

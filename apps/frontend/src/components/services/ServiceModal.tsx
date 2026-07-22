@@ -2,15 +2,26 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { ArrowRight, Search, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Search, ExternalLink, CheckCircle2, Plus, X } from 'lucide-react';
 import { Modal, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { ACCENTS, type ServiceDef } from '@/lib/services/serviceCatalog';
+import { EditableText } from '@/components/cms/EditableText';
+import { useEditMode } from '@/contexts/EditModeContext';
+
+/** A fresh, empty tri-lingual value for a newly-added requirement/step. */
+const emptyTri = () => ({ en: '', rw: '', ar: '' });
 
 /**
- * The concise per-service overview shown on the Services landing page. Renders
- * generically from the catalog: summary → requirements → steps → notes → actions
- * (+ a "full details" link). All content is i18n under `services.{key}.modal.*`,
- * with shared labels under `services.explore.*`.
+ * The concise per-service overview shown on the Services landing page: summary →
+ * requirements → steps → notes → actions (+ a "full details" link). The words come
+ * from the `services` content store (seeded from i18n), addressed by the same keys.
+ *
+ * In edit mode (`content:edit`) every field is editable in place, and the
+ * requirement/step lists gain inline add (＋) and per-item remove (✕) controls —
+ * the lists are stored as arrays, and their LENGTH now comes from the store, so a
+ * catalog no longer fixes how many rows render. The row's card description (which
+ * shows on the list, not here) is exposed as an edit-only field so it can be
+ * edited too.
  */
 export function ServiceModal({
   service,
@@ -22,27 +33,58 @@ export function ServiceModal({
   onClose: () => void;
 }) {
   const t = useTranslations('services');
+  const { editing, canSave, getValue, setValue, removeAt } = useEditMode();
   const accent = ACCENTS[service.accent];
   const { modal, actions = [] } = service;
   if (!modal) return null;
 
-  const reqs = Array.from({ length: modal.requirements }, (_, i) =>
-    t(`${service.key}.modal.req.${i + 1}`),
-  );
-  const steps = Array.from({ length: modal.steps }, (_, i) =>
-    t(`${service.key}.modal.step.${i + 1}`),
-  );
+  // May this user restructure the lists (add/remove items)? Same gate as editing copy.
+  const managing = editing && canSave;
+
+  const reqPath = `${service.key}.modal.req`;
+  const stepPath = `${service.key}.modal.step`;
+  const reqLen = ((getValue(reqPath) as unknown[]) ?? []).length;
+  const stepLen = ((getValue(stepPath) as unknown[]) ?? []).length;
+
+  const add = (path: string) => {
+    const arr = (getValue(path) as unknown[]) ?? [];
+    setValue(path, [...arr, emptyTri()]);
+  };
 
   return (
-    <Modal open onClose={onClose} size="lg" className="rounded-lg">
+    <Modal open onClose={onClose} size="xl" className="rounded-lg">
       {/* Header — icon chip + title + one-line summary */}
       <div className="flex items-start gap-3 border-b border-gray-100 px-6 pb-4 pt-6">
         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${accent.soft} ${accent.text}`}>
           <service.Icon className="h-6 w-6" />
         </span>
         <div className="min-w-0 pe-8">
-          <h2 className="text-lg font-bold leading-tight text-gray-900">{t(`${service.key}.title`)}</h2>
-          <p className="mt-1 text-sm leading-relaxed text-gray-500">{t(`${service.key}.modal.summary`)}</p>
+          <EditableText
+            as="h2"
+            path={`${service.key}.title`}
+            className="block text-lg font-bold leading-tight text-gray-900"
+          />
+          <EditableText
+            as="p"
+            path={`${service.key}.modal.summary`}
+            multiline
+            className="mt-1 block text-sm leading-relaxed text-gray-500"
+          />
+          {/* The list-row description — shown here ONLY in edit mode, since it
+              appears on the /services list, not in the modal for normal readers. */}
+          {managing && (
+            <div className="mt-2">
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                {t('explore.cardDescription')}
+              </span>
+              <EditableText
+                as="p"
+                path={`${service.key}.desc`}
+                multiline
+                className="block text-sm leading-relaxed text-gray-500"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -54,13 +96,33 @@ export function ServiceModal({
               {t('explore.requirements')}
             </h3>
             <ul className="space-y-2">
-              {reqs.map((r, i) => (
+              {Array.from({ length: reqLen }, (_, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
                   <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${accent.text}`} aria-hidden />
-                  <span>{r}</span>
+                  <EditableText as="span" multiline path={`${reqPath}.${i}`} className="block flex-1" />
+                  {managing && (
+                    <button
+                      type="button"
+                      onClick={() => removeAt(`${reqPath}.${i}`)}
+                      aria-label={t('explore.removeItem')}
+                      title={t('explore.removeItem')}
+                      className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded text-gray-300 transition-colors hover:bg-red-50 hover:text-red-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
+            {managing && (
+              <button
+                type="button"
+                onClick={() => add(reqPath)}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-500 transition-colors hover:border-rmc-green/50 hover:text-rmc-green"
+              >
+                <Plus className="h-3.5 w-3.5" /> {t('explore.addRequirement')}
+              </button>
+            )}
           </section>
 
           {/* Steps */}
@@ -69,15 +131,35 @@ export function ServiceModal({
               {t('explore.steps')}
             </h3>
             <ol className="space-y-2">
-              {steps.map((s, i) => (
+              {Array.from({ length: stepLen }, (_, i) => (
                 <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
                   <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${accent.soft} ${accent.text}`}>
                     {i + 1}
                   </span>
-                  <span className="pt-px">{s}</span>
+                  <EditableText as="span" multiline path={`${stepPath}.${i}`} className="block flex-1 pt-px" />
+                  {managing && (
+                    <button
+                      type="button"
+                      onClick={() => removeAt(`${stepPath}.${i}`)}
+                      aria-label={t('explore.removeItem')}
+                      title={t('explore.removeItem')}
+                      className="grid h-5 w-5 shrink-0 place-items-center rounded text-gray-300 transition-colors hover:bg-red-50 hover:text-red-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </li>
               ))}
             </ol>
+            {managing && (
+              <button
+                type="button"
+                onClick={() => add(stepPath)}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-500 transition-colors hover:border-rmc-green/50 hover:text-rmc-green"
+              >
+                <Plus className="h-3.5 w-3.5" /> {t('explore.addStep')}
+              </button>
+            )}
           </section>
 
           {/* Notes */}
@@ -86,9 +168,12 @@ export function ServiceModal({
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
                 {t('explore.notes')}
               </h3>
-              <p className="rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm leading-relaxed text-gray-600">
-                {t(`${service.key}.modal.notes`)}
-              </p>
+              <EditableText
+                as="p"
+                path={`${service.key}.modal.notes`}
+                multiline
+                className="block rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm leading-relaxed text-gray-600"
+              />
             </section>
           )}
 

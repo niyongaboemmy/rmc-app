@@ -4,12 +4,21 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, BookOpen, Search, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ConfirmModal } from '@/components/ui/Modal';
+import { ToastProvider, useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { Permission } from '@/lib/permissions';
+import { EditModeProvider, useEditMode } from '@/contexts/EditModeContext';
+import { EditableText } from '@/components/cms/EditableText';
+import { EditToolbar } from '@/components/cms/EditToolbar';
+import { ContentKeys, COURSES_DEFAULT } from '@/lib/content-api';
 import { CourseCard } from './CourseCard';
+import { CourseModal, LEVELS } from './CourseModal';
 import { localized } from './localize';
 import {
   dawahApi,
@@ -20,7 +29,6 @@ import {
   type Paginated,
 } from '@/lib/dawahApi';
 
-const LEVELS: CourseLevel[] = ['beginner', 'intermediate', 'advanced'];
 const LANGUAGES: CourseLanguage[] = ['en', 'rw', 'ar', 'multi'];
 const PAGE_SIZE = 12;
 
@@ -37,13 +45,46 @@ const PAGE_SIZE = 12;
  * shareable, survives a refresh, and works with the back button. Component
  * state exists only for the search box (which needs to feel instant while its
  * commit to the URL is debounced) and for the fetched page itself.
+ *
+ * For admins the page doubles as its own CMS — the exact mirror of the Library
+ * page. `EditModeProvider` wraps the view so the header/empty/error prose becomes
+ * editable in place (persisted to the `courses` content section), and — for a
+ * `dawah:manage` holder — each card grows edit/delete controls plus an "add
+ * course" tile that open the very same `CourseModal` the admin dashboard uses.
+ * Everyone else sees exactly the page they always did; the toolbar and controls
+ * never render without the permission.
  */
 export function CoursesPageClient() {
+  const { hasPermission } = useAuth();
+  const canEditCopy = hasPermission(Permission.CONTENT_EDIT);
+  const canManageCourses = hasPermission(Permission.DAWAH_MANAGE);
+
+  return (
+    <ToastProvider>
+      <EditModeProvider
+        sectionKey={ContentKeys.courses}
+        defaults={COURSES_DEFAULT}
+        canEdit={canEditCopy || canManageCourses}
+        canSave={canEditCopy}
+      >
+        <CoursesView canManageCourses={canManageCourses} />
+        <EditToolbar />
+      </EditModeProvider>
+    </ToastProvider>
+  );
+}
+
+function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
   const t = useTranslations('dawah');
+  const ta = useTranslations('admin.dawah');
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { editing } = useEditMode();
+  const { success, error: toastError } = useToast();
+
+  const manage = editing && canManageCourses;
 
   const category = searchParams.get('category') ?? '';
   const level = searchParams.get('level') ?? '';
@@ -55,6 +96,15 @@ export function CoursesPageClient() {
   const [data, setData] = useState<Paginated<DawahCourse> | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+
+  // Course management (edit mode only). `refreshKey` re-runs the list fetch after
+  // a create/edit/delete without disturbing the URL-driven filter state.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [editingCourse, setEditingCourse] = useState<DawahCourse | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deletingCourse, setDeletingCourse] = useState<DawahCourse | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [busyCourseId, setBusyCourseId] = useState<string | null>(null);
 
   // Typed-but-not-yet-committed search text. Mirrors the URL when the URL
   // changes underneath us (back button, a shared link, Clear filters).
@@ -117,7 +167,42 @@ export function CoursesPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [category, level, language, search, page]);
+  }, [category, level, language, search, page, refreshKey]);
+
+  const reloadCourses = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  // The public listing may strip the rich `description` for payload size; fetch
+  // the admin projection before opening the editor so the form has every field
+  // it needs to re-save (mirrors the Library's book editor).
+  const openEdit = useCallback(
+    async (course: DawahCourse) => {
+      setBusyCourseId(course.id);
+      try {
+        const full = await dawahApi.admin.courses.get(course.id);
+        setEditingCourse(full);
+      } catch {
+        toastError(ta('courses.loadError'));
+      } finally {
+        setBusyCourseId(null);
+      }
+    },
+    [ta, toastError],
+  );
+
+  const confirmDelete = useCallback(async () => {
+    if (!deletingCourse) return;
+    setDeleteBusy(true);
+    try {
+      await dawahApi.admin.courses.remove(deletingCourse.id);
+      success(ta('courses.deleted'));
+      setDeletingCourse(null);
+      reloadCourses();
+    } catch {
+      toastError(ta('courses.deleteError'));
+    } finally {
+      setDeleteBusy(false);
+    }
+  }, [deletingCourse, ta, success, toastError, reloadCourses]);
 
   const hasFilters = Boolean(category || level || language || search);
   const total = data?.total ?? 0;
@@ -146,7 +231,8 @@ export function CoursesPageClient() {
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* ── Compact header — back link + title + subtitle. Replaces the
-                image hero; pt clears the fixed navbar. ── */}
+                image hero; pt clears the fixed navbar. Kept in step with the
+                Library listing — change both or neither. ── */}
             <div className="mb-6">
               <Link
                 href={`/${locale}/dawah`}
@@ -155,12 +241,19 @@ export function CoursesPageClient() {
                 <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                 {t('backToDawah')}
               </Link>
-              <h1 className="mt-4 text-2xl font-bold text-rmc-green-deep md:text-3xl">
-                {t('courses.title')}
-              </h1>
-              <p className="mt-1.5 text-sm text-gray-500 md:text-base">
-                {t('courses.subtitle')}
-              </p>
+              <EditableText
+                as="h1"
+                path="header.title"
+                placeholder={t('courses.title')}
+                className="mt-4 block text-2xl font-bold text-rmc-green-deep md:text-3xl"
+              />
+              <EditableText
+                as="p"
+                path="header.subtitle"
+                multiline
+                placeholder={t('courses.subtitle')}
+                className="mt-1.5 block text-sm text-gray-500 md:text-base"
+              />
             </div>
 
             {/* ── Filter bar ─────────────────────────────────────────────── */}
@@ -232,19 +325,14 @@ export function CoursesPageClient() {
 
             {/* ── Results ────────────────────────────────────────────────── */}
             {failed ? (
-              <ErrorState
-                title={t('courses.error.title')}
-                body={t('courses.error.body')}
-                retry={t('courses.error.retry')}
-                onRetry={() => router.refresh()}
-              />
+              <ErrorState retry={t('courses.error.retry')} onRetry={() => router.refresh()} />
             ) : loading && !data ? (
               <div className="mt-8 grid gap-4 lg:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="h-[26rem] rounded-[1.75rem] skeleton" />
                 ))}
               </div>
-            ) : total === 0 ? (
+            ) : total === 0 && !manage ? (
               <div className="mx-auto mt-12 max-w-md rounded-3xl border border-dashed border-gray-200 bg-white p-10 text-center">
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rmc-green-light text-rmc-green">
                   <BookOpen className="h-6 w-6" aria-hidden />
@@ -252,8 +340,19 @@ export function CoursesPageClient() {
                 {/* `empty` (with its "clear your filters" advice) is the right copy
                     HERE — this page has filters. The landing page uses
                     `outlineEmpty` instead, because it has none. */}
-                <p className="mt-4 font-semibold text-gray-900">{t('courses.empty.title')}</p>
-                <p className="mt-1.5 text-sm text-gray-500">{t('courses.empty.body')}</p>
+                <EditableText
+                  as="p"
+                  path="empty.title"
+                  placeholder={t('courses.empty.title')}
+                  className="mt-4 block font-semibold text-gray-900"
+                />
+                <EditableText
+                  as="p"
+                  path="empty.body"
+                  multiline
+                  placeholder={t('courses.empty.body')}
+                  className="mt-1.5 block text-sm text-gray-500"
+                />
               </div>
             ) : (
               <>
@@ -262,10 +361,49 @@ export function CoursesPageClient() {
                     loading ? 'opacity-50' : 'opacity-100'
                   }`}
                 >
-                  {data!.items.map((course) => (
-                    <CourseCard key={course.id} course={course} locale={locale} />
+                  {manage && (
+                    <button
+                      type="button"
+                      onClick={() => setCreating(true)}
+                      className="flex min-h-[9rem] w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-white/60 text-gray-400 transition-colors hover:border-rmc-green/50 hover:text-rmc-green"
+                    >
+                      <Plus className="h-6 w-6" aria-hidden />
+                      <span className="px-2 text-center text-xs font-semibold">{ta('courses.new')}</span>
+                    </button>
+                  )}
+                  {data?.items.map((course) => (
+                    <div key={course.id} className="relative">
+                      <CourseCard course={course} locale={locale} />
+                      {manage && (
+                        <div className="absolute end-2 top-2 z-10 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(course)}
+                            disabled={busyCourseId === course.id}
+                            aria-label={ta('actions.edit')}
+                            title={ta('actions.edit')}
+                            className="grid h-7 w-7 place-items-center rounded-lg bg-white/90 text-gray-600 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-rmc-green disabled:opacity-50"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingCourse(course)}
+                            aria-label={ta('actions.delete')}
+                            title={ta('actions.delete')}
+                            className="grid h-7 w-7 place-items-center rounded-lg bg-white/90 text-gray-600 shadow-sm backdrop-blur transition-colors hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
+
+                {total === 0 && manage && (
+                  <p className="mt-8 text-center text-sm text-gray-400">{t('courses.empty.title')}</p>
+                )}
 
                 {pages > 1 && (
                   <nav
@@ -304,25 +442,53 @@ export function CoursesPageClient() {
         </section>
       </main>
       <Footer />
+
+      {(creating || editingCourse) && (
+        <CourseModal
+          course={editingCourse}
+          categories={categories}
+          onClose={() => {
+            setCreating(false);
+            setEditingCourse(null);
+          }}
+          onSaved={() => {
+            setCreating(false);
+            setEditingCourse(null);
+            reloadCourses();
+          }}
+        />
+      )}
+
+      <ConfirmModal
+        open={!!deletingCourse}
+        onClose={() => (deleteBusy ? undefined : setDeletingCourse(null))}
+        onConfirm={confirmDelete}
+        title={ta('actions.delete')}
+        message={ta('courses.confirmDelete')}
+        confirmLabel={ta('actions.delete')}
+        cancelLabel={ta('actions.cancel')}
+        variant="danger"
+        isLoading={deleteBusy}
+        className="rounded-lg"
+      />
     </div>
   );
 }
 
-function ErrorState({
-  title,
-  body,
-  retry,
-  onRetry,
-}: {
-  title: string;
-  body: string;
-  retry: string;
-  onRetry: () => void;
-}) {
+function ErrorState({ retry, onRetry }: { retry: string; onRetry: () => void }) {
   return (
     <div className="mx-auto mt-12 max-w-md rounded-3xl border border-dashed border-red-200 bg-white p-10 text-center">
-      <p className="font-semibold text-gray-900">{title}</p>
-      <p className="mt-1.5 text-sm text-gray-500">{body}</p>
+      <EditableText
+        as="p"
+        path="error.title"
+        className="block font-semibold text-gray-900"
+      />
+      <EditableText
+        as="p"
+        path="error.body"
+        multiline
+        className="mt-1.5 block text-sm text-gray-500"
+      />
       <button
         type="button"
         onClick={onRetry}

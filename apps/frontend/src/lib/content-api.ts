@@ -24,3 +24,6 @@ export * from './content/hajj';
 export * from './content/funeral';
 export * from './content/dawah';
 export * from './content/library';
+export * from './content/courses';
+export * from './content/discussions';
+export * from './content/services';

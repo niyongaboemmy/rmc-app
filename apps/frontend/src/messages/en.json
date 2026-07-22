@@ -381,7 +381,11 @@
       "register": "Register",
       "report": "Report a death",
       "cemeteries": "Cemeteries",
-      "viewDetails": "View full details"
+      "viewDetails": "View full details",
+      "cardDescription": "Card description (shown on the list)",
+      "addRequirement": "Add requirement",
+      "addStep": "Add step",
+      "removeItem": "Remove"
     },
     "marriage": {
       "modal": {
@@ -2676,6 +2680,7 @@
         "empty": "This course has no lessons yet.",
         "subtitle": "Build and order the lesson outline for this course.",
         "backToCourses": "Back to courses",
+        "donePreview": "Back to preview",
         "refresh": "Refresh",
         "add": "Add lesson",
         "saving": "Saving…",
@@ -3640,6 +3645,7 @@
         "empty": "Nothing awaiting review.",
         "release": "Release",
         "verify": "Verify",
+        "unverify": "Un-verify",
         "releaseHelp": "Publish without endorsing — \"this may be seen\".",
         "verifyHelp": "Publish and mark \"Verified by RMC\" — \"this is correct\".",
         "inCategory": "in",

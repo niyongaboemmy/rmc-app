@@ -90,7 +90,7 @@ function JobsIcon({ className }: { className?: string }) {
   );
 }
 
-export type AccentKey = 'rose' | 'slate' | 'indigo' | 'violet' | 'amber' | 'teal' | 'emerald';
+export type AccentKey = 'rose' | 'slate' | 'indigo' | 'violet' | 'amber' | 'teal' | 'emerald' | 'brand';
 
 /**
  * Accent classes, spelled out fully so Tailwind's JIT keeps them. `soft`/`text`
@@ -105,6 +105,8 @@ export const ACCENTS: Record<AccentKey, { soft: string; text: string; hoverBorde
   amber:   { soft: 'bg-amber-50',   text: 'text-amber-600',   hoverBorder: 'hover:border-amber-200',   btn: 'bg-amber-600 hover:bg-amber-700' },
   teal:    { soft: 'bg-teal-50',    text: 'text-teal-600',    hoverBorder: 'hover:border-teal-200',    btn: 'bg-teal-600 hover:bg-teal-700' },
   emerald: { soft: 'bg-emerald-50', text: 'text-emerald-600', hoverBorder: 'hover:border-emerald-200', btn: 'bg-emerald-600 hover:bg-emerald-700' },
+  // The RMC brand green — a distinct green from `emerald`, used for scholarship.
+  brand:   { soft: 'bg-rmc-green-light', text: 'text-rmc-green', hoverBorder: 'hover:border-rmc-green/40', btn: 'bg-rmc-green hover:bg-rmc-green-dark' },
 };
 
 export interface ServiceAction {
@@ -159,7 +161,7 @@ export const SERVICES: ServiceDef[] = [
     ],
   },
   {
-    key: 'scholarship', Icon: ScholarshipIcon, accent: 'violet',
+    key: 'scholarship', Icon: ScholarshipIcon, accent: 'brand',
     detailHref: '/services/scholarship',
     modal: { requirements: 5, steps: 4, notes: true },
     actions: [
