@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ShoppingBag, ArrowRight } from 'lucide-react';
+import { ShoppingBag, ArrowRight, HeartHandshake } from 'lucide-react';
+import { pick } from '@/lib/content-api';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
@@ -41,8 +42,14 @@ export function DonatePageClient() {
 
   // Admin-managed categories & sub-funds (localized to the current locale).
   const [categories, setCategories] = useState<PublicCategory[]>([]);
+  const [catsLoaded, setCatsLoaded] = useState(false);
   useEffect(() => {
-    donationCategoriesApi.listPublic(locale).then(setCategories).catch(() => setCategories([]));
+    setCatsLoaded(false);
+    donationCategoriesApi
+      .listPublic(locale)
+      .then(setCategories)
+      .catch(() => setCategories([]))
+      .finally(() => setCatsLoaded(true));
   }, [locale]);
 
   const niyyahLabel = t(`niyyah.${niyyah}.label`);
@@ -80,11 +87,28 @@ export function DonatePageClient() {
                   <CurrencyToggle currency={currency} onCurrency={setCurrency} label={t('quickGive.currency')} />
                 </div>
 
-                {categories.length === 0 ? (
+                {!catsLoaded ? (
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {[0, 1, 2, 3, 4, 5].map((i) => (
                       <div key={i} className="h-72 animate-pulse rounded-2xl bg-gray-100" />
                     ))}
+                  </div>
+                ) : categories.length === 0 && liveCampaigns.length === 0 ? (
+                  <div className="mx-auto max-w-md rounded-2xl border border-dashed border-gray-200 bg-white/60 p-10 text-center">
+                    <HeartHandshake className="mx-auto mb-3 h-9 w-9 text-gray-300" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-gray-700">
+                      {pick({ en: 'No causes yet', rw: 'Nta mpamvu irahari', ar: 'لا توجد قضايا بعد' }, locale)}
+                    </p>
+                    <p className="mt-1 text-[13px] leading-relaxed text-gray-500">
+                      {pick(
+                        {
+                          en: 'Donation causes and programs will appear here once they are added. You can still give to the general fund or your Zakat below.',
+                          rw: "Impamvu na gahunda zo gutanga zizagaragara hano nyuma yo kongerwaho. Ushobora gutanga ku kigega rusange cyangwa Zakat yawe hepfo.",
+                          ar: 'ستظهر قضايا وبرامج التبرع هنا بمجرد إضافتها. لا يزال بإمكانك التبرع للصندوق العام أو زكاتك أدناه.',
+                        },
+                        locale,
+                      )}
+                    </p>
                   </div>
                 ) : (
                   <CategoryGrid

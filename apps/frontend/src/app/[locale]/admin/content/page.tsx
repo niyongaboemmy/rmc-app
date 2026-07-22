@@ -7,7 +7,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { GalleryManagement } from '@/components/admin/GalleryManagement';
 import {
-  BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
+  BookOpen, Megaphone, Info, Clock, Globe,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
@@ -128,19 +128,6 @@ const SECTIONS: SectionConfig[] = [
     bg: 'bg-orange-50', iconColor: 'text-orange-600', border: 'border-orange-100',
     badge: 'bg-orange-100 text-orange-700',
     accentBar: 'bg-orange-400',
-  },
-  {
-    id: 'activities-events',
-    icon: CalendarDays,
-    title: 'Activities & Events',
-    description: 'Recent news articles and upcoming community event listings.',
-    type: 'crud', itemLabel: 'items',
-    page: 'Homepage', positionOrder: 6,
-    locationLabel: 'Homepage · Events Section',
-    keywords: ['activities', 'events', 'news', 'blog', 'calendar', 'upcoming', 'dates', 'eid', 'conference', 'gathering', 'ceremony', 'latest', 'schedule', 'venue', 'community'],
-    bg: 'bg-teal-50', iconColor: 'text-teal-600', border: 'border-teal-100',
-    badge: 'bg-teal-100 text-teal-700',
-    accentBar: 'bg-teal-400',
   },
   {
     id: 'announcements',

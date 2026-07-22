@@ -235,7 +235,7 @@ function HeroManager({ embedded = false }: { embedded?: boolean } = {}) {
             <input
               dir="ltr"
               type="text"
-              placeholder="/activities"
+              placeholder="/donate"
               value={form.secondaryHref}
               onChange={(e) => setField('secondaryHref', e.target.value)}
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
