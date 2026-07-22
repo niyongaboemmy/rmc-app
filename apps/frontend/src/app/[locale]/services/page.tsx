@@ -1,7 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
-import { getTranslations } from 'next-intl/server';
+import { EditablePageHero } from '@/components/layout/EditablePageHero';
+import { ContentKeys, SERVICES_HERO_DEFAULT } from '@/lib/content-api';
 import { ServicesExplorer } from '@/components/services/ServicesExplorer';
 
 /**
@@ -12,15 +12,13 @@ import { ServicesExplorer } from '@/components/services/ServicesExplorer';
  * live in the client `ServicesExplorer`. This page stays a thin server wrapper.
  */
 export default async function ServicesPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = await getTranslations();
-
   return (
     <div className="min-h-screen">
       <Navbar />
       <main>
-        <PageHero
-          title={t('services.title')}
-          subtitle={t('services.subtitle')}
+        <EditablePageHero
+          contentKey={ContentKeys.servicesHero}
+          defaults={SERVICES_HERO_DEFAULT}
         />
 
         <section className="py-16 px-4 sm:px-6 lg:px-8 pattern-light">

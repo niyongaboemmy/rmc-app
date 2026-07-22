@@ -6,7 +6,8 @@ import { useParams } from 'next/navigation';
 import { FileText, Clock, ArrowRight, AlertCircle, Paperclip } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
+import { EditablePageHero } from '@/components/layout/EditablePageHero';
+import { ContentKeys, TENDERS_HERO_DEFAULT } from '@/lib/content-api';
 import { publicApi } from '@/lib/public-api';
 import { useTranslations } from 'next-intl';
 
@@ -96,10 +97,10 @@ export default function TendersPage() {
     <div className="min-h-screen">
       <Navbar />
       <main>
-        <PageHero
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          subtitle={t('subtitle')}
+        <EditablePageHero
+          contentKey={ContentKeys.tendersHero}
+          defaults={TENDERS_HERO_DEFAULT}
+          showEyebrow
           ornament
           minHeightClassName="min-h-[38vh]"
           paddingClassName="pt-36 pb-10"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
@@ -26,12 +26,13 @@ import { GalleryModal } from '@/components/activities/GalleryModal';
 import {
   ContentKeys,
   ACTIVITIES_DEFAULT,
-  getSiteContent,
-  mergeContent,
   pick,
   isRtl,
   type ActivitiesContent,
+  type Locale,
 } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 // Activity dates are free-form display strings (e.g. "June 4, 2026"); parse to a
 // timestamp for recency sorting, falling back to 0 when unparseable.
@@ -45,22 +46,13 @@ export function ActivitiesEventsSection() {
   const rtl = isRtl(locale);
   const arFont = rtl ? 'font-arabic' : '';
 
-  // Content managed from Admin → Content → Activities & Events. Falls back to the
-  // built-in defaults until something is saved (or if the fetch fails).
-  const [content, setContent] = useState<ActivitiesContent>(ACTIVITIES_DEFAULT);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<ActivitiesContent>(ContentKeys.activities)
-      .then((data) => {
-        if (active && data) setContent(mergeContent(ACTIVITIES_DEFAULT, data));
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Content managed from Admin → Content → Activities & Events, and inline in
+  // Edit Mode. Falls back to the built-in defaults until something is saved.
+  const { content, editing, setField } = useEditableContent<ActivitiesContent>(
+    ContentKeys.activities,
+    ACTIVITIES_DEFAULT,
+  );
+  const lang = locale as Locale;
 
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [imgIndex, setImgIndex] = useState(0);
@@ -145,12 +137,24 @@ export function ActivitiesEventsSection() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* ── Header ── */}
         <div className="max-w-2xl mx-auto text-center mb-14 animate-fade-up">
-          <h2
-            className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}
-            dir={rtl ? 'rtl' : 'ltr'}
-          >
-            {pick(content.title, locale)}
-          </h2>
+          {editing ? (
+            <InlineText
+              as="h2"
+              lang={locale}
+              value={pick(content.title, locale)}
+              onCommit={(v) => setField((d) => { d.title[lang] = v; })}
+              className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+              placeholder="Section title"
+            />
+          ) : (
+            <h2
+              className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+            >
+              {pick(content.title, locale)}
+            </h2>
+          )}
 
           {/* Gold ornament flourish with a small Arabic touch */}
           <div className="ornament-divider max-w-xs mx-auto mt-4 mb-4">
@@ -159,12 +163,24 @@ export function ActivitiesEventsSection() {
             </p>
           </div>
 
-          <p
-            className={`text-gray-500 max-w-xl mx-auto text-sm md:text-base leading-relaxed ${arFont}`}
-            dir={rtl ? 'rtl' : 'ltr'}
-          >
-            {pick(content.lede, locale)}
-          </p>
+          {editing ? (
+            <InlineText
+              as="p"
+              lang={locale}
+              value={pick(content.lede, locale)}
+              onCommit={(v) => setField((d) => { d.lede[lang] = v; })}
+              className={`text-gray-500 max-w-xl mx-auto text-sm md:text-base leading-relaxed ${arFont}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+              placeholder="Section lede"
+            />
+          ) : (
+            <p
+              className={`text-gray-500 max-w-xl mx-auto text-sm md:text-base leading-relaxed ${arFont}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+            >
+              {pick(content.lede, locale)}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-12">
@@ -176,12 +192,24 @@ export function ActivitiesEventsSection() {
                   <Newspaper className="w-4 h-4 text-rmc-green" />
                 </span>
                 <div>
-                  <h3
-                    className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
-                    dir={rtl ? 'rtl' : 'ltr'}
-                  >
-                    {pick(content.activitiesHeading, locale)}
-                  </h3>
+                  {editing ? (
+                    <InlineText
+                      as="h3"
+                      lang={locale}
+                      value={pick(content.activitiesHeading, locale)}
+                      onCommit={(v) => setField((d) => { d.activitiesHeading[lang] = v; })}
+                      className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
+                      dir={rtl ? 'rtl' : 'ltr'}
+                      placeholder="Column heading"
+                    />
+                  ) : (
+                    <h3
+                      className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
+                      dir={rtl ? 'rtl' : 'ltr'}
+                    >
+                      {pick(content.activitiesHeading, locale)}
+                    </h3>
+                  )}
                   <p className="text-[11px] text-gray-400 mt-1">Tap a story to view its gallery</p>
                 </div>
               </div>
@@ -325,12 +353,24 @@ export function ActivitiesEventsSection() {
                   <Calendar className="w-4 h-4 text-rmc-gold" />
                 </span>
                 <div>
-                  <h3
-                    className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
-                    dir={rtl ? 'rtl' : 'ltr'}
-                  >
-                    {pick(content.eventsHeading, locale)}
-                  </h3>
+                  {editing ? (
+                    <InlineText
+                      as="h3"
+                      lang={locale}
+                      value={pick(content.eventsHeading, locale)}
+                      onCommit={(v) => setField((d) => { d.eventsHeading[lang] = v; })}
+                      className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
+                      dir={rtl ? 'rtl' : 'ltr'}
+                      placeholder="Column heading"
+                    />
+                  ) : (
+                    <h3
+                      className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
+                      dir={rtl ? 'rtl' : 'ltr'}
+                    >
+                      {pick(content.eventsHeading, locale)}
+                    </h3>
+                  )}
                   <p className="text-[11px] text-gray-400 mt-1">Save the date</p>
                 </div>
               </div>

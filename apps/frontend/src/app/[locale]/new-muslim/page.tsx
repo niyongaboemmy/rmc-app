@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
+import { EditablePageHero } from '@/components/layout/EditablePageHero';
 import { Reveal } from '@/components/ui/Reveal';
-import { pick } from '@/lib/content-api';
+import { pick, ContentKeys, NEW_MUSLIM_HERO_DEFAULT } from '@/lib/content-api';
 import { submitContactMessage } from '@/lib/contactApi';
 
 // Leaflet touches `window`, so the map only loads on the client.
@@ -87,17 +87,10 @@ export default function NewMuslimPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <PageHero
-        eyebrow={pick({ en: 'Welcome to Islam', rw: 'Murakaza neza muri Islam', ar: 'مرحباً بك في الإسلام' }, locale)}
-        title={pick({ en: 'Your Journey Begins Here', rw: 'Urugendo Rwawe Rutangirira Hano', ar: 'رحلتك تبدأ من هنا' }, locale)}
-        subtitle={pick(
-          {
-            en: 'Congratulations and welcome, dear brother or sister. Here is what comes next — and how the Rwanda Muslim Community is here to walk with you.',
-            rw: 'Twishimiye kandi turagusuhuje, mwene wacu nkunda. Dore ibikurikira — n\'uko Umuryango w\'Abayisilamu bo mu Rwanda uri kumwe nawe.',
-            ar: 'مبروك وأهلاً بك، أخي أو أختي العزيزة. إليك ما يأتي بعد ذلك — وكيف يقف المجتمع الإسلامي الرواندي معك.',
-          },
-          locale,
-        )}
+      <EditablePageHero
+        contentKey={ContentKeys.newMuslimHero}
+        defaults={NEW_MUSLIM_HERO_DEFAULT}
+        showEyebrow
         ornament
       />
 

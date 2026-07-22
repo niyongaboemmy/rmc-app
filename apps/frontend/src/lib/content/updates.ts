@@ -16,13 +16,22 @@ export interface UpdateSlide {
 }
 
 export interface UpdatesContent {
+  /**
+   * Legacy field kept for the admin editor; the carousel does NOT render it.
+   * The visible section header is `headingTitle` + `headingAccent` below.
+   */
   heading: Tri;
+  /** The visible carousel header, split so the accent word renders in green. */
+  headingTitle: Tri;
+  headingAccent: Tri;
   items: UpdateSlide[];
 }
 
 /** Seeded from the live landing (WelcomeCarouselSection SLIDES) — English canonical. */
 export const UPDATES_DEFAULT: UpdatesContent = {
   heading: tri('Updates & Programs', "Amakuru n'Gahunda", 'المستجدات والبرامج'),
+  headingTitle: tri('Initiatives shaping the', 'Gahunda zubaka', 'مبادرات تبني'),
+  headingAccent: tri('Rwandan ummah', 'umat nyarwanda', 'الأمة الرواندية'),
   items: [
     {
       badge: tri('Scholarships 2025', "Buruse z'Amashuri 2025", 'المنح الدراسية 2025'),

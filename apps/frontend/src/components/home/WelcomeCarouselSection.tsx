@@ -20,12 +20,13 @@ import { PrayerColumn } from './PrayerColumn';
 import {
   ContentKeys,
   UPDATES_DEFAULT,
-  getSiteContent,
-  mergeContent,
   isRtl,
   pick,
   type UpdatesContent,
+  type Locale,
 } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 interface Slide {
   badge: string;
@@ -50,22 +51,13 @@ export function WelcomeCarouselSection() {
   const [paused, setPaused] = useState(false);
   const liveRef = useRef<HTMLParagraphElement>(null);
 
-  // Content managed from Admin → Content → Updates & Programs. Falls back to the
-  // built-in defaults until something is saved (or if the fetch fails).
-  const [content, setContent] = useState<UpdatesContent>(UPDATES_DEFAULT);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<UpdatesContent>(ContentKeys.updates)
-      .then((data) => {
-        if (active && data) setContent(mergeContent(UPDATES_DEFAULT, data));
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Content managed from Admin → Content → Updates & Programs, and inline in Edit
+  // Mode (the section header). Falls back to the built-in defaults until saved.
+  const { content, editing, setField } = useEditableContent<UpdatesContent>(
+    ContentKeys.updates,
+    UPDATES_DEFAULT,
+  );
+  const lang = locale as Locale;
 
   const rtl = isRtl(locale);
 
@@ -148,10 +140,30 @@ export function WelcomeCarouselSection() {
             className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
             dir={rtl ? 'rtl' : 'ltr'}
           >
-            {pick({ en: 'Initiatives shaping the', rw: 'Gahunda zubaka', ar: 'مبادرات تبني' }, locale)}{' '}
-            <span className="text-rmc-green">
-              {pick({ en: 'Rwandan ummah', rw: 'umat nyarwanda', ar: 'الأمة الرواندية' }, locale)}
-            </span>
+            {editing ? (
+              <>
+                <InlineText
+                  as="span"
+                  lang={locale}
+                  value={pick(content.headingTitle, locale)}
+                  onCommit={(v) => setField((d) => { d.headingTitle[lang] = v; })}
+                  placeholder="Heading"
+                />{' '}
+                <InlineText
+                  as="span"
+                  lang={locale}
+                  value={pick(content.headingAccent, locale)}
+                  onCommit={(v) => setField((d) => { d.headingAccent[lang] = v; })}
+                  className="text-rmc-green"
+                  placeholder="Accent"
+                />
+              </>
+            ) : (
+              <>
+                {pick(content.headingTitle, locale)}{' '}
+                <span className="text-rmc-green">{pick(content.headingAccent, locale)}</span>
+              </>
+            )}
           </h2>
           <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />

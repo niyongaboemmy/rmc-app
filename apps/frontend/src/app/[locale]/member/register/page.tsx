@@ -8,7 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
+import { EditablePageHero } from '@/components/layout/EditablePageHero';
+import { ContentKeys, REGISTER_HERO_DEFAULT } from '@/lib/content-api';
 import { Select } from '@/components/ui/Select';
 import { publicApi } from '@/lib/public-api';
 import { apiClient } from '@/lib/api';
@@ -86,10 +87,10 @@ export default function MemberRegisterPage() {
     <div className="min-h-screen">
       <Navbar />
       <main>
-        <PageHero
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          subtitle={t('subtitle')}
+        <EditablePageHero
+          contentKey={ContentKeys.registerHero}
+          defaults={REGISTER_HERO_DEFAULT}
+          showEyebrow
           ornament
           minHeightClassName="min-h-[38vh]"
           paddingClassName="pt-36 pb-10"

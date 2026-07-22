@@ -19,7 +19,7 @@ import {
 import { useTranslations, useLocale } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
+import { EditablePageHero } from '@/components/layout/EditablePageHero';
 import { Reveal } from '@/components/Reveal';
 import { MosqueFinder } from '@/components/contact/MosqueFinder';
 import { submitContactMessage } from '@/lib/contactApi';
@@ -27,6 +27,7 @@ import {
   ContentKeys,
   SOCIAL_DEFAULT,
   CONTACT_DEFAULT,
+  CONTACT_HERO_DEFAULT,
   getSiteContent,
   mergeContent,
   pick,
@@ -114,10 +115,10 @@ export default function ContactPage() {
       <Navbar />
       <main>
         {/* Header */}
-        <PageHero
-          eyebrow="RMC"
-          title={pick(content.title, locale)}
-          subtitle={pick(content.subtitle, locale)}
+        <EditablePageHero
+          contentKey={ContentKeys.contactHero}
+          defaults={CONTACT_HERO_DEFAULT}
+          showEyebrow
           ornament
           minHeightClassName="min-h-[25vh]"
           paddingClassName="pt-36 pb-8"

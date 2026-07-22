@@ -32,3 +32,7 @@ export * from './content/library';
 export * from './content/courses';
 export * from './content/discussions';
 export * from './content/services';
+export * from './content/history';
+export * from './content/gallery';
+export * from './content/page-heroes';
+export * from './content/tenders-home';
