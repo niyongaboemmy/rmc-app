@@ -31,10 +31,10 @@ import {
  * for its filters and translation chips.
  */
 
-// ── Shared field classes (from admin/schools) ────────────────────────────────
+// ── Shared field classes — the unified form spec (matches admin/dawah/categories) ──
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
-const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+const labelClass = 'mb-1.5 block text-sm font-medium text-gray-700';
 
 export const LEVELS: CourseLevel[] = ['beginner', 'intermediate', 'advanced'];
 export const FORMATS: CourseFormat[] = ['self_paced', 'in_person', 'hybrid'];
@@ -359,14 +359,14 @@ export function CourseModal({ course, categories, onClose, onSaved }: {
       <ModalFooter>
         <button
           onClick={onClose}
-          className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
         >
           {t('actions.cancel')}
         </button>
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
+          className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
         >
           {saving ? t('courses.saving') : isEdit ? t('actions.save') : t('actions.create')}
         </button>

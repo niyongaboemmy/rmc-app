@@ -29,8 +29,8 @@ import {
 const MEDIA_MAX_BYTES = 90 * 1024 * 1024; // mirrors backend MEDIA_MAX_BYTES
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
-const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+const labelClass = 'mb-1.5 block text-sm font-medium text-gray-700';
 
 type Lang = 'en' | 'rw' | 'ar';
 const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl' }[] = [
@@ -86,7 +86,7 @@ function MediaUploadField({ kind, value, onChange }: {
       <label className={labelClass}>{t(kind === 'audio' ? 'lessons.fields.audioFile' : 'lessons.fields.pdfFile')}</label>
       <input ref={fileRef} type="file" accept={accept} className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
       {uploading ? (
-        <div className="rounded-xl border border-gray-200 p-3">
+        <div className="rounded-lg border border-gray-200 p-3">
           <div className="mb-1.5 flex items-center gap-2 text-sm text-gray-600">
             <UploadCloud className="h-4 w-4 text-rmc-green" /> {t('lessons.uploadingPct', { pct })}
           </div>
@@ -95,7 +95,7 @@ function MediaUploadField({ kind, value, onChange }: {
           </div>
         </div>
       ) : value ? (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/60 p-3">
+        <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50/60 p-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rmc-green/10 text-rmc-green"><FileIcon className="h-4 w-4" /></span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-gray-800">{value.fileName}</p>
@@ -105,7 +105,7 @@ function MediaUploadField({ kind, value, onChange }: {
           <button type="button" onClick={() => onChange(null)} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label={t('actions.delete')}><X className="h-4 w-4" /></button>
         </div>
       ) : (
-        <button type="button" onClick={() => fileRef.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-4 text-sm font-semibold text-gray-400 transition-colors hover:border-rmc-green/40 hover:text-rmc-green">
+        <button type="button" onClick={() => fileRef.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 py-4 text-sm font-semibold text-gray-400 transition-colors hover:border-rmc-green/40 hover:text-rmc-green">
           <UploadCloud className="h-5 w-5" /> {t(kind === 'audio' ? 'lessons.chooseAudio' : 'lessons.choosePdf')}
         </button>
       )}
@@ -350,14 +350,14 @@ export function LessonModal({ courseId, lesson, onClose, onSaved }: {
       <ModalFooter>
         <button
           onClick={onClose}
-          className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
         >
           {t('actions.cancel')}
         </button>
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
+          className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50"
         >
           {saving ? t('lessons.saving') : isEdit ? t('actions.save') : t('actions.create')}
         </button>
