@@ -226,9 +226,6 @@ export default async function CourseDetailPage({
         />
       )}
       <Navbar solid />
-      {/* Admin-only in-place editor for this course record; renders nothing for
-          everyone else. */}
-      <CourseEditBar course={course} />
       <main className="bg-white">
         {/* No image hero: a course page is for reading. Just the back link here;
             the title now lives at the top of the header card below, together with
@@ -252,7 +249,11 @@ export default async function CourseDetailPage({
                 document flow — it scrolls away with the page rather than
                 pinning to the top. ── */}
             <Reveal>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
+              <div className="relative rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
+                {/* Admin-only "Edit course" button for the STRUCTURAL fields
+                    (description, cover, instructor, level…); renders nothing
+                    outside edit mode. Title & summary edit inline below. */}
+                <CourseEditBar course={course} />
                 {/* Title block */}
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green">
                   {category ?? t('title')}

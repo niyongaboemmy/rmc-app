@@ -15,15 +15,15 @@ import { dawahApi, type DawahCategory, type DawahCourse } from '@/lib/dawahApi';
  * visitor (and every anonymous crawler) gets nothing, so the public page is
  * byte-for-byte what it always was.
  *
- * It carries two affordances: "Edit course" opens the same `CourseModal` the
- * admin dashboard and the catalogue use, seeded from the record the server
- * already resolved (the detail route returns the full course, description and
- * all — no extra fetch); and "Manage lessons" links straight into the admin
- * lessons editor, since lessons are structured records, not page copy, and have
- * no sensible in-place representation here.
+ * "Edit course" opens the same `CourseModal` the admin dashboard and the
+ * catalogue use, seeded from the record the server already resolved (the detail
+ * route returns the full course — no extra fetch) for the STRUCTURAL fields that
+ * have no inline representation: the rich description, cover, instructor, level,
+ * language, format, status, etc. (The visible title & summary edit inline — see
+ * `CourseInlineText`.)
  *
- * A fixed island, positioned to sit under the floating toolbar's slot so it
- * reads as the same family of control as the Library/Courses catalogue toolbar.
+ * Rendered as a small button in the header card's corner (the page makes the card
+ * `relative`), NOT a floating toolbar — the site-wide EditModeBar is the toolbar.
  */
 export function CourseEditBar({ course }: { course: DawahCourse }) {
   const { editMode, hasPermission } = useEditMode();
@@ -52,17 +52,17 @@ export function CourseEditBar({ course }: { course: DawahCourse }) {
 
   return (
     <>
-      <div className="fixed top-16 z-[60] flex ltr:right-4 rtl:left-4 print:hidden">
+      <div className="absolute end-3 top-3 z-10 print:hidden">
         <button
           type="button"
           onClick={() => setModalOpen(true)}
           disabled={loadingCats}
-          className="inline-flex items-center gap-2 rounded-lg border border-rmc-green bg-white px-3 py-1.5 text-sm font-semibold text-rmc-green shadow-lg shadow-rmc-green/10 transition-colors hover:bg-rmc-green-light disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 shadow-sm transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-60"
         >
           {loadingCats ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
           ) : (
-            <Pencil className="h-4 w-4" aria-hidden />
+            <Pencil className="h-3.5 w-3.5" aria-hidden />
           )}
           {t('courses.edit')}
         </button>
