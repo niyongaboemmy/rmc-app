@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, X } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { assetUrl } from '@/lib/api';
 import {
@@ -27,6 +29,7 @@ interface PartnerCardEditHandlers {
   onLogo: (key: string) => void;
   onName: (value: string) => void;
   onSector: (value: string) => void;
+  onDescription: (value: string) => void;
   onWebsite: (value: string) => void;
   onDelete: () => void;
   onMoveUp: () => void;
@@ -36,22 +39,26 @@ interface PartnerCardEditHandlers {
 function PartnerCard({
   partner,
   sector,
+  description,
   delay,
   visible,
   editing,
   locale,
   index,
   count,
+  onOpen,
   handlers,
 }: {
   partner: PartnerItem;
   sector: string;
+  description: string;
   delay: number;
   visible: boolean;
   editing: boolean;
   locale: string;
   index: number;
   count: number;
+  onOpen: () => void;
   handlers: PartnerCardEditHandlers;
 }) {
   const linked = Boolean(partner.website);
@@ -106,6 +113,16 @@ function PartnerCard({
           placeholder="Sector"
         />
 
+        {/* Description (per-language) — shown in the partner modal */}
+        <InlineText
+          as="p"
+          lang={locale}
+          value={description}
+          onCommit={handlers.onDescription}
+          className="mt-3 text-center text-xs leading-relaxed text-gray-500"
+          placeholder="Short description"
+        />
+
         {/* Website target */}
         <div className="mt-4">
           <InlineLink value={partner.website ?? ''} onChange={handlers.onWebsite} />
@@ -158,25 +175,95 @@ function PartnerCard({
   const ring =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white';
 
-  if (linked) {
-    return (
-      <a
-        href={partner.website}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Visit ${partner.name} (opens in a new tab)`}
-        className={`${cardClass} ${ring}`}
-        style={{ transitionDelay: `${delay}ms` }}
-      >
-        {content}
-      </a>
-    );
-  }
-
+  // Clicking any partner opens its detail modal (short note + optional website).
   return (
-    <div className={cardClass} style={{ transitionDelay: `${delay}ms` }}>
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`About ${partner.name}`}
+      className={`${cardClass} ${ring} text-center`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
       {content}
-    </div>
+    </button>
+  );
+}
+
+/* Partner detail modal — the short descriptive note + a link out to the
+   partner's website when there is one. */
+function PartnerModal({
+  partner,
+  sector,
+  description,
+  locale,
+  onClose,
+}: {
+  partner: PartnerItem;
+  sector: string;
+  description: string;
+  locale: string;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  if (!mounted) return null;
+
+  const rtl = isRtl(locale);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center p-4 sm:items-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl" dir={rtl ? 'rtl' : 'ltr'}>
+        <div className="h-1.5 bg-gradient-to-r from-rmc-green via-rmc-gold to-rmc-green" />
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="px-6 pb-6 pt-7 text-center">
+          <div className="mx-auto flex h-20 w-40 items-center justify-center">
+            {partner.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={assetUrl(partner.logo)} alt={`${partner.name} logo`} className="h-full w-full object-contain" />
+            ) : (
+              <div className="h-full w-full rounded-md bg-gray-50" aria-hidden />
+            )}
+          </div>
+
+          <h3 className="mt-5 text-lg font-bold uppercase tracking-wide text-gray-900">{partner.name}</h3>
+          {sector && (
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">{sector}</p>
+          )}
+
+          {description ? (
+            <p className="mt-4 text-sm leading-relaxed text-gray-600">{description}</p>
+          ) : (
+            <p className="mt-4 text-sm italic text-gray-400">No description yet.</p>
+          )}
+
+          {partner.website && (
+            <a
+              href={partner.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+            >
+              <ExternalLink className="h-4 w-4" /> Visit website
+            </a>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -195,10 +282,11 @@ export function PartnersSection() {
   );
   const { bumpSeed } = useEditMode();
   const lang = locale as Locale;
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const addPartner = () =>
     setField((d) => {
-      d.items.push({ name: '', sector: tri(''), logo: '', website: '' });
+      d.items.push({ name: '', sector: tri(''), description: tri(''), logo: '', website: '' });
     });
 
   const deletePartner = (i: number) => {
@@ -289,16 +377,22 @@ export function PartnersSection() {
               key={i}
               partner={partner}
               sector={pick(partner.sector, locale)}
+              description={pick(partner.description, locale)}
               delay={i * 90}
               visible={gridVisible}
               editing={editing}
               locale={locale}
               index={i}
               count={content.items.length}
+              onOpen={() => setOpenIndex(i)}
               handlers={{
                 onLogo: (key) => setField((d) => { d.items[i].logo = key; }),
                 onName: (v) => setField((d) => { d.items[i].name = v; }),
                 onSector: (v) => setField((d) => { d.items[i].sector[lang] = v; }),
+                onDescription: (v) => setField((d) => {
+                  if (!d.items[i].description) d.items[i].description = tri('');
+                  d.items[i].description![lang] = v;
+                }),
                 onWebsite: (v) => setField((d) => { d.items[i].website = v; }),
                 onDelete: () => deletePartner(i),
                 onMoveUp: () => movePartner(i, -1),
@@ -352,6 +446,16 @@ export function PartnersSection() {
           </p>
         )}
       </div>
+
+      {openIndex !== null && content.items[openIndex] && (
+        <PartnerModal
+          partner={content.items[openIndex]}
+          sector={pick(content.items[openIndex].sector, locale)}
+          description={pick(content.items[openIndex].description, locale)}
+          locale={locale}
+          onClose={() => setOpenIndex(null)}
+        />
+      )}
     </section>
   );
 }
