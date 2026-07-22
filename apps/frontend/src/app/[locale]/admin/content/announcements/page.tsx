@@ -102,7 +102,7 @@ export default function AnnouncementsAdminPage() {
 
 // ── Main manager ──────────────────────────────────────────────────────────────
 
-export function AnnouncementsManager({ embedded = false }: { embedded?: boolean } = {}) {
+function AnnouncementsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 

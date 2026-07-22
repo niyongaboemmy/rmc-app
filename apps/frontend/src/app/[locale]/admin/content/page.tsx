@@ -11,7 +11,7 @@ import {
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
-  Compass, ListChecks, MousePointerClick,
+  Compass, ListChecks,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -385,25 +385,7 @@ export default function ManageContentPage() {
             </p>
           </div>
           <div className="flex-1" />
-          <Link
-            href={`/${locale}/admin/content/live`}
-            className="hidden sm:inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold transition-colors shrink-0"
-          >
-            <MousePointerClick className="w-4 h-4" /> Live-edit About page
-          </Link>
         </div>
-
-        {/* Live editor callout (mobile-friendly) */}
-        <Link
-          href={`/${locale}/admin/content/live`}
-          className="sm:hidden flex items-center gap-3 bg-gray-900 text-white rounded-2xl px-4 py-3"
-        >
-          <MousePointerClick className="w-5 h-5 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-sm font-bold leading-tight">Live-edit the About page</p>
-            <p className="text-[11px] text-white/70 leading-tight">Click any text on the page to edit it in place</p>
-          </div>
-        </Link>
 
         {/* ── Tab switcher ── */}
         <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 w-fit">

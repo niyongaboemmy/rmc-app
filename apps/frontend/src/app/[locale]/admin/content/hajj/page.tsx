@@ -83,7 +83,7 @@ export default function HajjContentPage() {
   );
 }
 
-export function HajjContentManager({ embedded = false }: { embedded?: boolean } = {}) {
+function HajjContentManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');

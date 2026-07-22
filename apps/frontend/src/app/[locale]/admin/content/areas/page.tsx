@@ -55,7 +55,7 @@ export default function AreasPage() {
   );
 }
 
-export function AreasManager({ embedded = false }: { embedded?: boolean } = {}) {
+function AreasManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 

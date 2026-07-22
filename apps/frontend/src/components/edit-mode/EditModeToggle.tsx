@@ -8,6 +8,7 @@
  */
 
 import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
+import { useToast } from '@/components/ui/Toast';
 import { Pencil } from 'lucide-react';
 
 export function EditModeToggle({
@@ -18,9 +19,14 @@ export function EditModeToggle({
   onToggle?: () => void;
 }) {
   const { canEdit, editMode, toggleEditMode } = useEditMode();
+  const toast = useToast();
   if (!canEdit) return null;
 
   const handleClick = () => {
+    // `editMode` is this render's value, so !editMode is the state we're entering.
+    if (!editMode) {
+      toast.success('Edit mode on — click any text, image, or link to edit. Publish when you’re done.');
+    }
     toggleEditMode();
     onToggle?.();
   };

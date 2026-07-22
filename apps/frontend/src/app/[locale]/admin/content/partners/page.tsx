@@ -50,7 +50,7 @@ export default function PartnersPage() {
   );
 }
 
-export function PartnersManager({ embedded = false }: { embedded?: boolean } = {}) {
+function PartnersManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 

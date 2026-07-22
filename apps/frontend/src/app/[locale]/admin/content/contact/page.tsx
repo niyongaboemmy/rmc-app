@@ -53,7 +53,7 @@ export default function ContactContentPage() {
   );
 }
 
-export function ContactContentManager({ embedded = false }: { embedded?: boolean } = {}) {
+function ContactContentManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');

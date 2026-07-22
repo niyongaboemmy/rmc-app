@@ -59,7 +59,7 @@ export default function BlogAdminPage() {
   );
 }
 
-export function BlogManager({ embedded = false }: { embedded?: boolean } = {}) {
+function BlogManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 

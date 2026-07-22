@@ -44,7 +44,7 @@ export default function HowToBecomeMuslimAdminPage() {
   );
 }
 
-export function HowToBecomeMuslimManager({ embedded = false }: { embedded?: boolean } = {}) {
+function HowToBecomeMuslimManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const store = usePreviewStore();

@@ -91,7 +91,7 @@ export default function ActivitiesEventsPage() {
   );
 }
 
-export function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = {}) {
+function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 

@@ -59,7 +59,7 @@ export default function SocialMediaPage() {
   );
 }
 
-export function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
+function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');

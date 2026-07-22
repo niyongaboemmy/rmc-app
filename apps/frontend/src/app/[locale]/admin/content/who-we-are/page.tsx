@@ -36,7 +36,7 @@ export default function WhoWeArePage() {
   );
 }
 
-export function WhoWeAreManager({ embedded = false }: { embedded?: boolean } = {}) {
+function WhoWeAreManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const store = usePreviewStore();

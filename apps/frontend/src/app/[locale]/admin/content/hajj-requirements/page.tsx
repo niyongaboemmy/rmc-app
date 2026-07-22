@@ -42,7 +42,7 @@ export default function HajjRequirementsAdminPage() {
   );
 }
 
-export function HajjRequirementsManager({ embedded = false }: { embedded?: boolean } = {}) {
+function HajjRequirementsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.HAJJ_MANAGE);

@@ -124,7 +124,7 @@ export default function TendersAdminPage() {
 
 // ── Main manager ──────────────────────────────────────────────────────────────
 
-export function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
+function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 

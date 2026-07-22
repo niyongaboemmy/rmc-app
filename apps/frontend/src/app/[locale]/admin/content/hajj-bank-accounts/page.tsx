@@ -31,7 +31,7 @@ export default function HajjBankAccountsAdminPage() {
   );
 }
 
-export function HajjBankAccountsManager({ embedded = false }: { embedded?: boolean } = {}) {
+function HajjBankAccountsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.HAJJ_MANAGE);

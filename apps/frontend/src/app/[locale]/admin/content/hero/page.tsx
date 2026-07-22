@@ -42,7 +42,7 @@ export default function HeroPage() {
  * admin Live Editor drawer (`embedded`), where a `PreviewStore` is present so
  * every keystroke previews live on the real Hero section.
  */
-export function HeroManager({ embedded = false }: { embedded?: boolean } = {}) {
+function HeroManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const store = usePreviewStore();

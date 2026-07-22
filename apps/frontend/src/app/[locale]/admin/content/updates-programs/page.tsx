@@ -76,7 +76,7 @@ export default function UpdatesProgramsPage() {
   );
 }
 
-export function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {}) {
+function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 

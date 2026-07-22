@@ -37,7 +37,7 @@ export default function FuneralStepsAdminPage() {
   );
 }
 
-export function FuneralStepsManager({ embedded = false }: { embedded?: boolean } = {}) {
+function FuneralStepsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.FUNERAL_MANAGE);

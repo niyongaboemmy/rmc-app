@@ -57,6 +57,10 @@ interface EditModeContextValue {
   registerDirty: (key: string) => void;
   /** Bumped on publish/discard to force editable fields to re-seed. */
   seedVersion: number;
+  /** Force all inline-editable fields to re-seed from current content — call
+   *  after structurally mutating a collection (add/delete/reorder) so index-keyed
+   *  editables reflect the new order instead of showing stale text. */
+  bumpSeed: () => void;
   saving: boolean;
   /** Persist every dirty section. Resolves to true when all saved. */
   saveAll: () => Promise<boolean>;
@@ -77,6 +81,7 @@ const DEFAULT: EditModeContextValue = {
   saving: false,
   saveAll: async () => true,
   discardAll: noop,
+  bumpSeed: noop,
 };
 
 const EditModeContext = createContext<EditModeContextValue>(DEFAULT);
@@ -133,6 +138,8 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
     setSeedVersion((v) => v + 1); // remount editables → re-seed from saved content
   }, [dirty, store]);
 
+  const bumpSeed = useCallback(() => setSeedVersion((v) => v + 1), []);
+
   const saveAll = useCallback(async (): Promise<boolean> => {
     const keys = Array.from(dirty);
     if (keys.length === 0) return true;
@@ -166,11 +173,12 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
       dirtyKeys: Array.from(dirty),
       registerDirty,
       seedVersion,
+      bumpSeed,
       saving,
       saveAll,
       discardAll,
     }),
-    [canEdit, editMode, setEditMode, toggleEditMode, store, dirty, registerDirty, seedVersion, saving, saveAll, discardAll],
+    [canEdit, editMode, setEditMode, toggleEditMode, store, dirty, registerDirty, seedVersion, bumpSeed, saving, saveAll, discardAll],
   );
 
   return (
