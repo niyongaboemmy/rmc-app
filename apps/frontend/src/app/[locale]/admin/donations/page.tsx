@@ -9,7 +9,7 @@ import {
   HandCoins, Search, RefreshCw, TrendingUp, Wallet, Clock, Receipt,
   Plus, Pencil, Trash2, RotateCcw, X, Download, Trophy, Layers, CheckCircle2, CalendarRange, Sparkles, ChevronDown, Upload,
   LayoutDashboard, Heart, History, ChevronRight, Building2, MapPin, ArrowUpRight,
-  ArrowUp, ArrowDown, ArrowUpDown, Activity, Loader2, Star, Copy, ExternalLink, Megaphone,
+  ArrowUp, ArrowDown, ArrowUpDown, Activity, Loader2,
 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +17,7 @@ import { Permission } from '@/lib/permissions';
 import {
   donationsApi, Donation, DonationStats, CampaignWithStats,
   CampaignStatus, DonationStatus, UpdateDonationPayload, formatCurrency, STATUS_COLORS,
-  type DonationSort, type SortOrder, type DailyPoint, type CampaignUpdate,
+  type DonationSort, type SortOrder, type DailyPoint,
 } from '@/lib/donationsApi';
 import { marriageApi, MarriageApplication, AdminStats as MarriageStats } from '@/lib/marriageApi';
 import { fileUrl } from '@/lib/api';
@@ -926,7 +926,7 @@ function FinanceAdmin() {
               </div>
             </>
           ) : donTab === 'programs' ? (
-            <ProgramsTab locale={locale} campaigns={campaigns} canManage={canManage} onNew={() => setCampaignModal({ open: true, campaign: null })} onEdit={(c) => setCampaignModal({ open: true, campaign: c })} onDelete={(c) => setDeleteCampaignTarget(c)} onRestored={refreshAll} />
+            <ProgramsTab campaigns={campaigns} canManage={canManage} onNew={() => setCampaignModal({ open: true, campaign: null })} onEdit={(c) => setCampaignModal({ open: true, campaign: c })} onDelete={(c) => setDeleteCampaignTarget(c)} onRestored={refreshAll} />
           ) : (
             <CategoriesTab categories={categories} canManage={canManage} onChanged={fetchCategories} />
           )}
@@ -1401,8 +1401,7 @@ function TabButton({ active, onClick, icon, label, count }: { active: boolean; o
   );
 }
 
-function ProgramsTab({ locale, campaigns, canManage, onNew, onEdit, onDelete, onRestored }: {
-  locale: string;
+function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored }: {
   campaigns: CampaignWithStats[];
   canManage: boolean;
   onNew: () => void;
@@ -1411,20 +1410,6 @@ function ProgramsTab({ locale, campaigns, canManage, onNew, onEdit, onDelete, on
   onRestored: () => void;
 }) {
   const t = useTranslations('admin.donations');
-
-  const [updatesFor, setUpdatesFor] = useState<CampaignWithStats | null>(null);
-  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
-  const duplicate = async (c: CampaignWithStats) => {
-    setDuplicatingId(c.id);
-    try {
-      await donationsApi.admin.duplicateCampaign(c.id);
-      onRestored();
-    } catch (err) {
-      console.error('Failed to duplicate program', err);
-    } finally {
-      setDuplicatingId(null);
-    }
-  };
 
   // "Recently deleted" disclosure — soft-deleted programs, lazily loaded on expand.
   const [showDeleted, setShowDeleted] = useState(false);
@@ -1486,29 +1471,17 @@ function ProgramsTab({ locale, campaigns, canManage, onNew, onEdit, onDelete, on
               <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm ring-1 ring-black/5 p-5 transition-all duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <h3 className="flex items-center gap-1.5 font-semibold text-gray-900 leading-tight">
-                      {c.isFeatured && <Star className="h-3.5 w-3.5 shrink-0 fill-rmc-gold text-rmc-gold" aria-label="Featured" />}
-                      <span className="truncate">{c.title}</span>
-                    </h3>
+                    <h3 className="font-semibold text-gray-900 leading-tight truncate">{c.title}</h3>
                     <p className="text-xs text-gray-400 mt-0.5 capitalize">{c.fundType} · {c.donationCount} {c.donationCount === 1 ? t('programs.donation') : t('programs.donations')}</p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <CampaignStatusBadge status={c.status} />
-                    <a href={`/${locale}/donate/${c.slug}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5 transition-colors" aria-label="Preview" title="Preview">
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
                     {canManage && (
                       <>
-                        <button onClick={() => setUpdatesFor(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5 transition-colors" aria-label="Updates" title="Campaign updates">
-                          <Megaphone className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => duplicate(c)} disabled={duplicatingId === c.id} className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5 transition-colors disabled:opacity-50" aria-label="Duplicate" title="Duplicate">
-                          {duplicatingId === c.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                        <button onClick={() => onEdit(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5 transition-colors" aria-label={t('campaignModal.editTitle')} title={t('campaignModal.editTitle')}>
+                        <button onClick={() => onEdit(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5 transition-colors" aria-label={t('campaignModal.editTitle')}>
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button onClick={() => onDelete(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" aria-label={t('programs.delete')} title={t('programs.delete')}>
+                        <button onClick={() => onDelete(c)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" aria-label={t('programs.delete')}>
                           <Trash2 className="w-4 h-4" />
                         </button>
                         <NotifySubscribersButton
@@ -1581,107 +1554,7 @@ function ProgramsTab({ locale, campaigns, canManage, onNew, onEdit, onDelete, on
           )}
         </div>
       )}
-
-      {updatesFor && (
-        <CampaignUpdatesModal campaign={updatesFor} onClose={() => setUpdatesFor(null)} />
-      )}
     </div>
-  );
-}
-
-/* Manage a campaign's dated news/progress updates (shown on its detail page). */
-function CampaignUpdatesModal({ campaign, onClose }: {
-  campaign: CampaignWithStats;
-  onClose: () => void;
-}) {
-  const [updates, setUpdates] = useState<CampaignUpdate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setUpdates(await donationsApi.admin.listCampaignUpdates(campaign.id));
-    } catch (err) {
-      console.error('Failed to load updates', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [campaign.id]);
-  useEffect(() => { load(); }, [load]);
-
-  const resetForm = () => { setTitle(''); setBody(''); setEditingId(null); };
-
-  const save = async () => {
-    if (!title.trim() || !body.trim()) return;
-    setSaving(true);
-    try {
-      if (editingId) await donationsApi.admin.updateCampaignUpdate(editingId, { title: title.trim(), body: body.trim() });
-      else await donationsApi.admin.createCampaignUpdate(campaign.id, { title: title.trim(), body: body.trim() });
-      resetForm();
-      await load();
-    } catch (err) {
-      console.error('Failed to save update', err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const edit = (u: CampaignUpdate) => { setEditingId(u.id); setTitle(u.title); setBody(u.body); };
-  const remove = async (id: string) => {
-    try { await donationsApi.admin.deleteCampaignUpdate(id); await load(); }
-    catch (err) { console.error('Failed to delete update', err); }
-  };
-
-  return (
-    <ModalShell
-      title={`Updates — ${campaign.title}`}
-      onClose={onClose}
-      footer={
-        <div className="flex w-full justify-end">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Done</button>
-        </div>
-      }
-    >
-      {/* Composer */}
-      <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-700">{editingId ? 'Edit update' : 'Post a new update'}</p>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Update title" className={inputClass} />
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} placeholder="What's the latest on this campaign?" className={inputClass} />
-        <div className="flex justify-end gap-2">
-          {editingId && <button onClick={resetForm} className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>}
-          <button onClick={save} disabled={saving || !title.trim() || !body.trim()} className="px-4 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
-            {saving ? 'Saving…' : editingId ? 'Save update' : 'Post update'}
-          </button>
-        </div>
-      </div>
-
-      {/* List */}
-      <div className="mt-4 space-y-2">
-        {loading ? (
-          <p className="text-xs text-gray-400 py-4 text-center">Loading…</p>
-        ) : updates.length === 0 ? (
-          <p className="text-xs text-gray-400 py-6 text-center">No updates yet. Post the first one above.</p>
-        ) : (
-          updates.map((u) => (
-            <div key={u.id} className="flex items-start gap-3 rounded-xl border border-gray-100 p-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-800">{u.title}</p>
-                <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{u.body}</p>
-                <p className="mt-1 text-[10px] text-gray-400">{new Date(u.publishedAt).toLocaleDateString()}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <button onClick={() => edit(u)} className="p-1.5 rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green/5" aria-label="Edit"><Pencil className="h-3.5 w-3.5" /></button>
-                <button onClick={() => remove(u.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" aria-label="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </ModalShell>
   );
 }
 
@@ -1821,12 +1694,6 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
   const [startDate, setStartDate] = useState(campaign?.startDate ?? '');
   const [endDate, setEndDate] = useState(campaign?.endDate ?? '');
   const [status, setStatus] = useState<CampaignStatus>(campaign?.status ?? 'active');
-  const [galleryImages, setGalleryImages] = useState<string[]>(campaign?.galleryImages ?? []);
-  const [isFeatured, setIsFeatured] = useState(campaign?.isFeatured ?? false);
-  const [sortOrder, setSortOrder] = useState(String(campaign?.sortOrder ?? 0));
-  const [ctaText, setCtaText] = useState(campaign?.ctaText ?? '');
-  const [uploadingGallery, setUploadingGallery] = useState(false);
-  const galleryRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [fieldErr, setFieldErr] = useState<{ title?: string; targetAmount?: string; heroImage?: string; subFund?: string }>({});
@@ -1892,25 +1759,6 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
     }
   };
 
-  const onPickGallery = async (files?: FileList | null) => {
-    if (!files || !files.length) return;
-    setUploadingGallery(true);
-    try {
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith('image/')) continue;
-        const versions = await generateImageVersions(file);
-        const { fileKey } = await uploadGalleryVersions({ versions });
-        setGalleryImages((p) => [...p, fileKey]);
-      }
-    } catch {
-      /* a failed file is simply skipped */
-    } finally {
-      setUploadingGallery(false);
-      if (galleryRef.current) galleryRef.current.value = '';
-    }
-  };
-  const removeGallery = (i: number) => setGalleryImages((p) => p.filter((_, idx) => idx !== i));
-
   const STEPS = [
     { key: 'basics', title: t('campaignModal.basics') },
     { key: 'funding', title: t('campaignModal.funding') },
@@ -1946,10 +1794,6 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
       slug: slug.trim() || undefined,
       description: description.trim(),
       heroImageUrl: heroImageUrl.trim() || null,
-      galleryImages,
-      ctaText: ctaText.trim() || null,
-      isFeatured,
-      sortOrder: Number(sortOrder) || 0,
       targetAmount: Number(targetAmount),
       currency,
       fundType,
@@ -2051,28 +1895,6 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
             </button>
           )}
         </Field>
-        <Field label="Gallery images" hint="Extra photos shown on the campaign detail page">
-          <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => onPickGallery(e.target.files)} />
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {galleryImages.map((key, i) => (
-              <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-gray-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={resolveImg(key)} alt="" className="h-full w-full object-cover" />
-                <button type="button" onClick={() => removeGallery(i)} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-red-600 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-            <button type="button" onClick={() => galleryRef.current?.click()} disabled={uploadingGallery}
-              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-60">
-              {uploadingGallery ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
-              <span className="text-[10px] font-semibold">Add</span>
-            </button>
-          </div>
-        </Field>
-        <Field label="Donate button label" hint="Overrides the default “Donate” button (optional)">
-          <input value={ctaText} onChange={(e) => setCtaText(e.target.value)} placeholder="Donate" className={inputClass} />
-        </Field>
       </FormSection>
       )}
 
@@ -2110,23 +1932,6 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
             </Field>
           )}
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Featured" hint="Show in the featured hero block on the donate page">
-            <button
-              type="button"
-              onClick={() => setIsFeatured((v) => !v)}
-              className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5"
-            >
-              <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${isFeatured ? 'bg-rmc-green' : 'bg-gray-300'}`}>
-                <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${isFeatured ? 'translate-x-5' : ''}`} />
-              </span>
-              <span className="text-sm font-medium text-gray-700">{isFeatured ? 'Featured campaign' : 'Not featured'}</span>
-            </button>
-          </Field>
-          <Field label="Display order" hint="Lower numbers appear first in the grid">
-            <input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className={inputClass} />
-          </Field>
-        </div>
       </FormSection>
       )}
 
@@ -2143,7 +1948,7 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
             <SearchableSelect
               value={status}
               onChange={(v) => setStatus(v as CampaignStatus)}
-              options={(['draft', 'active', 'paused', 'completed', 'closed', 'archived'] as CampaignStatus[]).map((s) => ({ value: s, label: statusLabels[s] }))}
+              options={(['active', 'paused', 'closed'] as CampaignStatus[]).map((s) => ({ value: s, label: statusLabels[s] }))}
               triggerClassName={inputClass}
             />
           </Field>

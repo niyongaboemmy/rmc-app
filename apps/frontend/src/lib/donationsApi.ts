@@ -26,10 +26,6 @@ export interface DonationCampaign {
   startDate: string;
   endDate: string | null;
   heroImageUrl: string | null;
-  galleryImages: string[];
-  isFeatured: boolean;
-  sortOrder: number;
-  ctaText: string | null;
   status: CampaignStatus;
   createdAt: string;
   updatedAt: string;
@@ -184,17 +180,7 @@ export interface CampaignPayload {
   startDate?: string;
   endDate?: string | null;
   heroImageUrl?: string | null;
-  galleryImages?: string[];
-  isFeatured?: boolean;
-  sortOrder?: number;
-  ctaText?: string | null;
   status?: CampaignStatus;
-}
-
-export interface CampaignUpdatePayload {
-  title?: string;
-  body?: string;
-  publishedAt?: string;
 }
 
 export interface UpdateDonationPayload {
@@ -321,31 +307,6 @@ export const donationsApi = {
 
     deleteCampaign: async (id: string): Promise<void> => {
       await apiClient.delete(`/admin/donations/campaigns/${id}`);
-    },
-
-    duplicateCampaign: async (id: string): Promise<DonationCampaign> => {
-      const { data } = await apiClient.post(`/admin/donations/campaigns/${id}/duplicate`);
-      return data.data ?? data;
-    },
-
-    // ── Campaign updates (news feed) ──────────────────────────────────────────
-    listCampaignUpdates: async (id: string): Promise<CampaignUpdate[]> => {
-      const { data } = await apiClient.get(`/admin/donations/campaigns/${id}/updates`);
-      return data.data ?? data;
-    },
-
-    createCampaignUpdate: async (id: string, payload: CampaignUpdatePayload): Promise<CampaignUpdate> => {
-      const { data } = await apiClient.post(`/admin/donations/campaigns/${id}/updates`, payload);
-      return data.data ?? data;
-    },
-
-    updateCampaignUpdate: async (updateId: string, payload: CampaignUpdatePayload): Promise<CampaignUpdate> => {
-      const { data } = await apiClient.patch(`/admin/donations/campaigns/updates/${updateId}`, payload);
-      return data.data ?? data;
-    },
-
-    deleteCampaignUpdate: async (updateId: string): Promise<void> => {
-      await apiClient.delete(`/admin/donations/campaigns/updates/${updateId}`);
     },
   },
 };
