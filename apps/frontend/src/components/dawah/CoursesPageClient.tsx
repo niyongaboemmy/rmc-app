@@ -10,13 +10,12 @@ import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmModal } from '@/components/ui/Modal';
-import { ToastProvider, useToast } from '@/components/ui/Toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/Toast';
 import { Permission } from '@/lib/permissions';
-import { EditModeProvider, useEditMode } from '@/contexts/EditModeContext';
-import { EditableText } from '@/components/cms/EditableText';
-import { EditToolbar } from '@/components/cms/EditToolbar';
-import { ContentKeys, COURSES_DEFAULT } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { ContentKeys, COURSES_DEFAULT, pick, type CoursesContent, type Locale } from '@/lib/content-api';
 import { CourseCard } from './CourseCard';
 import { CourseModal, LEVELS } from './CourseModal';
 import { localized } from './localize';
@@ -33,58 +32,30 @@ const LANGUAGES: CourseLanguage[] = ['en', 'rw', 'ar', 'multi'];
 const PAGE_SIZE = 12;
 
 /**
- * The course catalogue.
+ * The course catalogue. Filtering is SERVER-SIDE and the URL is the single source
+ * of truth (a filtered view is shareable and survives the back button).
  *
- * Filtering is SERVER-SIDE. The admin/schools page can get away with a
- * client-side useMemo because it loads every school in one request; this list
- * is paginated, so a client-side filter would only ever search the twelve rows
- * that happen to be on the current page and would silently lie about the rest.
- * Every filter goes to the API as a query param.
- *
- * The URL is the single source of truth for filter state, so a filtered view is
- * shareable, survives a refresh, and works with the back button. Component
- * state exists only for the search box (which needs to feel instant while its
- * commit to the URL is debounced) and for the fetched page itself.
- *
- * For admins the page doubles as its own CMS — the exact mirror of the Library
- * page. `EditModeProvider` wraps the view so the header/empty/error prose becomes
- * editable in place (persisted to the `courses` content section), and — for a
- * `dawah:manage` holder — each card grows edit/delete controls plus an "add
- * course" tile that open the very same `CourseModal` the admin dashboard uses.
- * Everyone else sees exactly the page they always did; the toolbar and controls
- * never render without the permission.
+ * The page doubles as its own CMS via the site-wide in-context Edit Mode
+ * (`lib/edit-mode`): `useEditableContent` makes the header/empty/error prose
+ * editable (content:edit, published with the global batch), and — for a
+ * `dawah:manage` holder in edit mode — each card grows edit/delete controls plus
+ * an "add course" tile opening the same `CourseModal` the admin dashboard uses.
+ * Course CRUD saves immediately via `dawahApi`. Everyone else sees the page they
+ * always did.
  */
 export function CoursesPageClient() {
-  const { hasPermission } = useAuth();
-  const canEditCopy = hasPermission(Permission.CONTENT_EDIT);
-  const canManageCourses = hasPermission(Permission.DAWAH_MANAGE);
-
-  return (
-    <ToastProvider>
-      <EditModeProvider
-        sectionKey={ContentKeys.courses}
-        defaults={COURSES_DEFAULT}
-        canEdit={canEditCopy || canManageCourses}
-        canSave={canEditCopy}
-      >
-        <CoursesView canManageCourses={canManageCourses} />
-        <EditToolbar />
-      </EditModeProvider>
-    </ToastProvider>
-  );
-}
-
-function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
   const t = useTranslations('dawah');
   const ta = useTranslations('admin.dawah');
   const { locale } = useParams<{ locale: string }>();
+  const lang = locale as Locale;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { editing } = useEditMode();
   const { success, error: toastError } = useToast();
 
-  const manage = editing && canManageCourses;
+  const { content, setField } = useEditableContent<CoursesContent>(ContentKeys.courses, COURSES_DEFAULT);
+  const { editMode, hasPermission } = useEditMode();
+  const manage = editMode && hasPermission(Permission.DAWAH_MANAGE);
 
   const category = searchParams.get('category') ?? '';
   const level = searchParams.get('level') ?? '';
@@ -106,28 +77,22 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [busyCourseId, setBusyCourseId] = useState<string | null>(null);
 
-  // Typed-but-not-yet-committed search text. Mirrors the URL when the URL
-  // changes underneath us (back button, a shared link, Clear filters).
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => setSearchInput(search), [search]);
 
-  /** Write filters to the URL. A filter change always resets to page 1 — page 3
-   *  of the old result set is meaningless against a new one. */
   const setParams = useCallback(
     (next: Record<string, string | number | null>) => {
       const params = new URLSearchParams(searchParams.toString());
       for (const [key, value] of Object.entries(next)) {
-        if (value === null || value === '' ) params.delete(key);
+        if (value === null || value === '') params.delete(key);
         else params.set(key, String(value));
       }
       const qs = params.toString();
-      // replace, not push: twenty keystrokes should not be twenty back-button steps.
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [pathname, router, searchParams],
   );
 
-  // Debounce the search box ~300ms — one request per pause, not per keystroke.
   useEffect(() => {
     if (searchInput === search) return;
     const id = setTimeout(() => setParams({ search: searchInput || null, page: null }), 300);
@@ -138,7 +103,6 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
     dawahApi.categories().then(setCategories).catch(() => setCategories([]));
   }, []);
 
-  // Refetch whenever any filter or the page changes — i.e. whenever the URL does.
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -152,8 +116,6 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
         limit: PAGE_SIZE,
       })
       .then((result) => {
-        // A slow response for filters the user has already moved on from must
-        // not overwrite the current one.
         if (cancelled) return;
         setData(result);
         setFailed(false);
@@ -171,9 +133,8 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
 
   const reloadCourses = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  // The public listing may strip the rich `description` for payload size; fetch
-  // the admin projection before opening the editor so the form has every field
-  // it needs to re-save (mirrors the Library's book editor).
+  // The public listing may strip the rich `description`; fetch the admin
+  // projection before opening the editor so the form can re-save every field.
   const openEdit = useCallback(
     async (course: DawahCourse) => {
       setBusyCourseId(course.id);
@@ -223,16 +184,12 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
 
   return (
     <div className="min-h-screen">
-      {/* Solid navbar: with the image hero gone, a transparent bar would put
-          white links on the light section below and read as invisible. */}
       <Navbar solid />
       <main>
         <section className="relative bg-gray-50/60 pb-10 pt-24 md:pb-14 md:pt-28">
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {/* ── Compact header — back link + title + subtitle. Replaces the
-                image hero; pt clears the fixed navbar. Kept in step with the
-                Library listing — change both or neither. ── */}
+            {/* ── Compact header — back link + title + subtitle. ── */}
             <div className="mb-6">
               <Link
                 href={`/${locale}/dawah`}
@@ -241,16 +198,19 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
                 <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                 {t('backToDawah')}
               </Link>
-              <EditableText
+              <InlineText
                 as="h1"
-                path="header.title"
+                lang={locale}
+                value={pick(content.header.title, locale) || t('courses.title')}
+                onCommit={(v) => setField((d) => { d.header.title[lang] = v; })}
                 placeholder={t('courses.title')}
                 className="mt-4 block text-2xl font-bold text-rmc-green-deep md:text-3xl"
               />
-              <EditableText
+              <InlineText
                 as="p"
-                path="header.subtitle"
-                multiline
+                lang={locale}
+                value={pick(content.header.subtitle, locale) || t('courses.subtitle')}
+                onCommit={(v) => setField((d) => { d.header.subtitle[lang] = v; })}
                 placeholder={t('courses.subtitle')}
                 className="mt-1.5 block text-sm text-gray-500 md:text-base"
               />
@@ -261,8 +221,6 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                   <div className="relative">
-                    {/* start-3 + ps-9, not left-3/pl-9 — the icon has to swap
-                        sides in Arabic or it sits on top of the text. */}
                     <Search
                       className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
                       aria-hidden
@@ -273,7 +231,7 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
                       onChange={(e) => setSearchInput(e.target.value)}
                       placeholder={t('courses.searchPlaceholder')}
                       aria-label={t('courses.searchPlaceholder')}
-                      className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
+                      className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
                     />
                   </div>
 
@@ -325,7 +283,29 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
 
             {/* ── Results ────────────────────────────────────────────────── */}
             {failed ? (
-              <ErrorState retry={t('courses.error.retry')} onRetry={() => router.refresh()} />
+              <div className="mx-auto mt-12 max-w-md rounded-3xl border border-dashed border-red-200 bg-white p-10 text-center">
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pick(content.error.title, locale)}
+                  onCommit={(v) => setField((d) => { d.error.title[lang] = v; })}
+                  className="block font-semibold text-gray-900"
+                />
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pick(content.error.body, locale)}
+                  onCommit={(v) => setField((d) => { d.error.body[lang] = v; })}
+                  className="mt-1.5 block text-sm text-gray-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => router.refresh()}
+                  className="mt-4 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+                >
+                  {t('courses.error.retry')}
+                </button>
+              </div>
             ) : loading && !data ? (
               <div className="mt-8 grid gap-4 lg:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -337,19 +317,19 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rmc-green-light text-rmc-green">
                   <BookOpen className="h-6 w-6" aria-hidden />
                 </span>
-                {/* `empty` (with its "clear your filters" advice) is the right copy
-                    HERE — this page has filters. The landing page uses
-                    `outlineEmpty` instead, because it has none. */}
-                <EditableText
+                <InlineText
                   as="p"
-                  path="empty.title"
+                  lang={locale}
+                  value={pick(content.empty.title, locale)}
+                  onCommit={(v) => setField((d) => { d.empty.title[lang] = v; })}
                   placeholder={t('courses.empty.title')}
                   className="mt-4 block font-semibold text-gray-900"
                 />
-                <EditableText
+                <InlineText
                   as="p"
-                  path="empty.body"
-                  multiline
+                  lang={locale}
+                  value={pick(content.empty.body, locale)}
+                  onCommit={(v) => setField((d) => { d.empty.body[lang] = v; })}
                   placeholder={t('courses.empty.body')}
                   className="mt-1.5 block text-sm text-gray-500"
                 />
@@ -418,9 +398,8 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
                         type="button"
                         disabled={page <= 1}
                         onClick={() => setParams({ page: page - 1 })}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
                       >
-                        {/* The chevrons are direction, not decoration — they flip. */}
                         <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                         {t('pagination.previous')}
                       </button>
@@ -428,7 +407,7 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
                         type="button"
                         disabled={page >= pages}
                         onClick={() => setParams({ page: page + 1 })}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white"
                       >
                         {t('pagination.next')}
                         <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />
@@ -471,31 +450,6 @@ function CoursesView({ canManageCourses }: { canManageCourses: boolean }) {
         isLoading={deleteBusy}
         className="rounded-lg"
       />
-    </div>
-  );
-}
-
-function ErrorState({ retry, onRetry }: { retry: string; onRetry: () => void }) {
-  return (
-    <div className="mx-auto mt-12 max-w-md rounded-3xl border border-dashed border-red-200 bg-white p-10 text-center">
-      <EditableText
-        as="p"
-        path="error.title"
-        className="block font-semibold text-gray-900"
-      />
-      <EditableText
-        as="p"
-        path="error.body"
-        multiline
-        className="mt-1.5 block text-sm text-gray-500"
-      />
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-4 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
-      >
-        {retry}
-      </button>
     </div>
   );
 }

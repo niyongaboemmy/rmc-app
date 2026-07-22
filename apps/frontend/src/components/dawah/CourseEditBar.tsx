@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Loader2, Pencil } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
-import { ToastProvider } from '@/components/ui/Toast';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { CourseModal } from './CourseModal';
 import { dawahApi, type DawahCategory, type DawahCourse } from '@/lib/dawahApi';
 
@@ -27,35 +26,36 @@ import { dawahApi, type DawahCategory, type DawahCourse } from '@/lib/dawahApi';
  * reads as the same family of control as the Library/Courses catalogue toolbar.
  */
 export function CourseEditBar({ course }: { course: DawahCourse }) {
-  const { hasPermission } = useAuth();
-  const canManage = hasPermission(Permission.DAWAH_MANAGE);
+  const { editMode, hasPermission } = useEditMode();
+  const show = editMode && hasPermission(Permission.DAWAH_MANAGE);
   const t = useTranslations('admin.dawah');
   const router = useRouter();
 
   const [categories, setCategories] = useState<DawahCategory[]>([]);
-  const [editing, setEditing] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [loadingCats, setLoadingCats] = useState(false);
 
   // Categories power the modal's category select. Fetched lazily on first edit —
   // an anonymous page load must not pay for a list it will never show.
   useEffect(() => {
-    if (!editing || categories.length) return;
+    if (!modalOpen || categories.length) return;
     setLoadingCats(true);
     dawahApi
       .categories()
       .then(setCategories)
       .catch(() => setCategories([]))
       .finally(() => setLoadingCats(false));
-  }, [editing, categories.length]);
+  }, [modalOpen, categories.length]);
 
-  if (!canManage) return null;
+  // Only in the site-wide Edit Mode, and only for a dawah:manage holder.
+  if (!show) return null;
 
   return (
-    <ToastProvider>
+    <>
       <div className="fixed top-16 z-[60] flex ltr:right-4 rtl:left-4 print:hidden">
         <button
           type="button"
-          onClick={() => setEditing(true)}
+          onClick={() => setModalOpen(true)}
           disabled={loadingCats}
           className="inline-flex items-center gap-2 rounded-lg border border-rmc-green bg-white px-3 py-1.5 text-sm font-semibold text-rmc-green shadow-lg shadow-rmc-green/10 transition-colors hover:bg-rmc-green-light disabled:opacity-60"
         >
@@ -68,13 +68,13 @@ export function CourseEditBar({ course }: { course: DawahCourse }) {
         </button>
       </div>
 
-      {editing && !loadingCats && (
+      {modalOpen && !loadingCats && (
         <CourseModal
           course={course}
           categories={categories}
-          onClose={() => setEditing(false)}
+          onClose={() => setModalOpen(false)}
           onSaved={() => {
-            setEditing(false);
+            setModalOpen(false);
             // Pull the freshly-saved record (title, cover, meta) back into the
             // server-rendered page. A slug change on a published course is ignored
             // by the API, so the current URL stays valid.
@@ -82,6 +82,6 @@ export function CourseEditBar({ course }: { course: DawahCourse }) {
           }}
         />
       )}
-    </ToastProvider>
+    </>
   );
 }

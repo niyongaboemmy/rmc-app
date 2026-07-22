@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { BookOpen, ListTree } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
 import { Permission } from '@/lib/permissions';
-import { ToastProvider } from '@/components/ui/Toast';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { CourseLessonBrowser, type OutlineLesson } from '@/components/dawah/CourseLessonBrowser';
 import { LessonsManager } from '@/components/dawah/LessonsManager';
 
@@ -34,8 +33,8 @@ export function CourseLessons({
   courseSlug: string;
   courseId: string;
 }) {
-  const { hasPermission } = useAuth();
-  const canManage = hasPermission(Permission.DAWAH_MANAGE);
+  const { editMode, hasPermission } = useEditMode();
+  const canManage = editMode && hasPermission(Permission.DAWAH_MANAGE);
   const t = useTranslations('admin.dawah');
   const router = useRouter();
 
@@ -48,7 +47,8 @@ export function CourseLessons({
     <CourseLessonBrowser lessons={lessons} overviewHtml={overviewHtml} courseSlug={courseSlug} />
   ) : null;
 
-  // Non-admins get the plain reader (or nothing) — byte-for-byte the old page.
+  // Outside edit mode (or without the permission) the region is exactly the
+  // read-only reader — byte-for-byte the old page.
   if (!canManage) return reader;
 
   const stopManaging = () => {
@@ -61,7 +61,7 @@ export function CourseLessons({
   };
 
   return (
-    <ToastProvider>
+    <>
       <div className="mb-3 flex justify-end">
         <button
           type="button"
@@ -95,6 +95,6 @@ export function CourseLessons({
           </div>
         )
       )}
-    </ToastProvider>
+    </>
   );
 }
