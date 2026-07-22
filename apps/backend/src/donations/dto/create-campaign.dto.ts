@@ -1,5 +1,8 @@
 import {
+  IsArray,
+  IsBoolean,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -67,6 +70,28 @@ export class CreateCampaignDto {
   @IsString()
   @MaxLength(500)
   heroImageUrl?: string | null;
+
+  @ApiPropertyOptional({ type: [String], description: 'Gallery image keys/URLs for the detail page' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImages?: string[];
+
+  @ApiPropertyOptional({ description: 'Show this campaign in the featured hero block' })
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
+
+  @ApiPropertyOptional({ description: 'Ordering weight for the grid (lower = earlier)' })
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
+
+  @ApiPropertyOptional({ description: 'Custom donate-button label', maxLength: 60 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  ctaText?: string | null;
 
   @ApiPropertyOptional({ enum: CampaignStatus, default: CampaignStatus.ACTIVE })
   @IsOptional()

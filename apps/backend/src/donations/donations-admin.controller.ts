@@ -17,6 +17,10 @@ import { sendXlsx } from '../common/utils/xlsx';
 // import { UpdateDonationDto } from './dto/update-donation.dto'; // donation editing disabled
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
+import {
+  CreateCampaignUpdateDto,
+  UpdateCampaignUpdateDto,
+} from './dto/campaign-update.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/types/permissions.enum';
@@ -177,5 +181,45 @@ export class DonationsAdminController {
   @ApiOperation({ summary: 'Restore an archived (soft-deleted) donation program' })
   restoreCampaign(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.restoreCampaign(id);
+  }
+
+  @Post('campaigns/:id/duplicate')
+  @Permissions(Permission.DONATIONS_MANAGE)
+  @ApiOperation({ summary: 'Duplicate a program as a fresh draft (totals reset)' })
+  duplicateCampaign(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+    return this.service.duplicateCampaign(id, userId);
+  }
+
+  // ── Campaign updates (news feed) ────────────────────────────────────────────
+
+  @Get('campaigns/:id/updates')
+  @Permissions(Permission.DONATIONS_VIEW)
+  @ApiOperation({ summary: 'List a campaign’s news/progress updates' })
+  listCampaignUpdates(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.listCampaignUpdates(id);
+  }
+
+  @Post('campaigns/:id/updates')
+  @Permissions(Permission.DONATIONS_MANAGE)
+  @ApiOperation({ summary: 'Post a news/progress update on a campaign' })
+  createCampaignUpdate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CreateCampaignUpdateDto) {
+    return this.service.createCampaignUpdate(id, dto);
+  }
+
+  @Patch('campaigns/updates/:updateId')
+  @Permissions(Permission.DONATIONS_MANAGE)
+  @ApiOperation({ summary: 'Edit a campaign update' })
+  updateCampaignUpdate(
+    @Param('updateId', ParseUUIDPipe) updateId: string,
+    @Body() dto: UpdateCampaignUpdateDto,
+  ) {
+    return this.service.updateCampaignUpdate(updateId, dto);
+  }
+
+  @Delete('campaigns/updates/:updateId')
+  @Permissions(Permission.DONATIONS_MANAGE)
+  @ApiOperation({ summary: 'Delete a campaign update' })
+  deleteCampaignUpdate(@Param('updateId', ParseUUIDPipe) updateId: string) {
+    return this.service.deleteCampaignUpdate(updateId);
   }
 }

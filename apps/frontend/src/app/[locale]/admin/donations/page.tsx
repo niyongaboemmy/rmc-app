@@ -1561,14 +1561,20 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored
 function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
   const t = useTranslations('admin.donations');
   const map: Record<CampaignStatus, string> = {
+    draft: 'bg-gray-100 text-gray-500',
     active: 'bg-green-100 text-green-700',
     paused: 'bg-yellow-100 text-yellow-700',
+    completed: 'bg-emerald-100 text-emerald-700',
     closed: 'bg-gray-100 text-gray-600',
+    archived: 'bg-gray-100 text-gray-400',
   };
   const labels: Record<CampaignStatus, string> = {
+    draft: 'Draft',
     active: t('programs.statusActive'),
     paused: t('programs.statusPaused'),
+    completed: 'Completed',
     closed: t('programs.statusClosed'),
+    archived: 'Archived',
   };
   return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold', map[status])}>{labels[status]}</span>;
 }
@@ -1693,9 +1699,12 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
   const [fieldErr, setFieldErr] = useState<{ title?: string; targetAmount?: string; heroImage?: string; subFund?: string }>({});
 
   const statusLabels: Record<CampaignStatus, string> = {
+    draft: 'Draft',
     active: t('programs.statusActive'),
     paused: t('programs.statusPaused'),
+    completed: 'Completed',
     closed: t('programs.statusClosed'),
+    archived: 'Archived',
   };
 
   // Category options — admin-managed categories (dynamic from the API), plus the
