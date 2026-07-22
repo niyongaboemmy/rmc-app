@@ -5,8 +5,10 @@ import { useTranslations } from 'next-intl';
 import { ArrowRight, Search, ExternalLink, CheckCircle2, Plus, X } from 'lucide-react';
 import { Modal, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { ACCENTS, type ServiceDef } from '@/lib/services/serviceCatalog';
-import { EditableText } from '@/components/cms/EditableText';
-import { useEditMode } from '@/contexts/EditModeContext';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
+import { ContentKeys, SERVICES_DEFAULT, pick, type ServicesContent, type Locale } from '@/lib/content-api';
 
 /** A fresh, empty tri-lingual value for a newly-added requirement/step. */
 const emptyTri = () => ({ en: '', rw: '', ar: '' });
@@ -14,14 +16,15 @@ const emptyTri = () => ({ en: '', rw: '', ar: '' });
 /**
  * The concise per-service overview shown on the Services landing page: summary →
  * requirements → steps → notes → actions (+ a "full details" link). The words come
- * from the `services` content store (seeded from i18n), addressed by the same keys.
+ * from the `services` content section (seeded from i18n), keyed by service.
  *
- * In edit mode (`content:edit`) every field is editable in place, and the
- * requirement/step lists gain inline add (＋) and per-item remove (✕) controls —
- * the lists are stored as arrays, and their LENGTH now comes from the store, so a
- * catalog no longer fixes how many rows render. The row's card description (which
- * shows on the list, not here) is exposed as an edit-only field so it can be
- * edited too.
+ * In the site-wide Edit Mode (`content:edit`) every field is editable in place via
+ * InlineText, and the requirement/step lists gain inline add (＋) / remove (✕) —
+ * their length comes from the stored arrays, so the catalog no longer fixes how
+ * many rows render. `setField` mutates the shared preview-store draft; `bumpSeed`
+ * re-seeds the index-keyed InlineText nodes after a structural change so shifted
+ * items don't show stale text. The row's card description (shown on the list, not
+ * here) is exposed as an edit-only field.
  */
 export function ServiceModal({
   service,
@@ -33,22 +36,24 @@ export function ServiceModal({
   onClose: () => void;
 }) {
   const t = useTranslations('services');
-  const { editing, canSave, getValue, setValue, removeAt } = useEditMode();
+  const lang = locale as Locale;
+  const { content, editing, setField } = useEditableContent<ServicesContent>(ContentKeys.services, SERVICES_DEFAULT);
+  const { bumpSeed } = useEditMode();
   const accent = ACCENTS[service.accent];
   const { modal, actions = [] } = service;
   if (!modal) return null;
 
-  // May this user restructure the lists (add/remove items)? Same gate as editing copy.
-  const managing = editing && canSave;
+  const managing = editing;
+  const copy = content[service.key];
+  const req = copy?.modal?.req ?? [];
+  const step = copy?.modal?.step ?? [];
 
-  const reqPath = `${service.key}.modal.req`;
-  const stepPath = `${service.key}.modal.step`;
-  const reqLen = ((getValue(reqPath) as unknown[]) ?? []).length;
-  const stepLen = ((getValue(stepPath) as unknown[]) ?? []).length;
-
-  const add = (path: string) => {
-    const arr = (getValue(path) as unknown[]) ?? [];
-    setValue(path, [...arr, emptyTri()]);
+  const addItem = (kind: 'req' | 'step') => {
+    setField((d) => { d[service.key].modal![kind].push(emptyTri()); });
+  };
+  const removeItem = (kind: 'req' | 'step', i: number) => {
+    setField((d) => { d[service.key].modal![kind].splice(i, 1); });
+    bumpSeed();
   };
 
   return (
@@ -59,15 +64,18 @@ export function ServiceModal({
           <service.Icon className="h-6 w-6" />
         </span>
         <div className="min-w-0 pe-8">
-          <EditableText
+          <InlineText
             as="h2"
-            path={`${service.key}.title`}
+            lang={locale}
+            value={pick(copy?.title, locale)}
+            onCommit={(v) => setField((d) => { d[service.key].title[lang] = v; })}
             className="block text-lg font-bold leading-tight text-gray-900"
           />
-          <EditableText
+          <InlineText
             as="p"
-            path={`${service.key}.modal.summary`}
-            multiline
+            lang={locale}
+            value={pick(copy?.modal?.summary, locale)}
+            onCommit={(v) => setField((d) => { d[service.key].modal!.summary[lang] = v; })}
             className="mt-1 block text-sm leading-relaxed text-gray-500"
           />
           {/* The list-row description — shown here ONLY in edit mode, since it
@@ -77,10 +85,11 @@ export function ServiceModal({
               <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
                 {t('explore.cardDescription')}
               </span>
-              <EditableText
+              <InlineText
                 as="p"
-                path={`${service.key}.desc`}
-                multiline
+                lang={locale}
+                value={pick(copy?.desc, locale)}
+                onCommit={(v) => setField((d) => { d[service.key].desc[lang] = v; })}
                 className="block text-sm leading-relaxed text-gray-500"
               />
             </div>
@@ -96,14 +105,20 @@ export function ServiceModal({
               {t('explore.requirements')}
             </h3>
             <ul className="space-y-2">
-              {Array.from({ length: reqLen }, (_, i) => (
+              {req.map((item, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
                   <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${accent.text}`} aria-hidden />
-                  <EditableText as="span" multiline path={`${reqPath}.${i}`} className="block flex-1" />
+                  <InlineText
+                    as="span"
+                    lang={locale}
+                    value={pick(item, locale)}
+                    onCommit={(v) => setField((d) => { d[service.key].modal!.req[i][lang] = v; })}
+                    className="block flex-1"
+                  />
                   {managing && (
                     <button
                       type="button"
-                      onClick={() => removeAt(`${reqPath}.${i}`)}
+                      onClick={() => removeItem('req', i)}
                       aria-label={t('explore.removeItem')}
                       title={t('explore.removeItem')}
                       className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded text-gray-300 transition-colors hover:bg-red-50 hover:text-red-600"
@@ -117,7 +132,7 @@ export function ServiceModal({
             {managing && (
               <button
                 type="button"
-                onClick={() => add(reqPath)}
+                onClick={() => addItem('req')}
                 className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-500 transition-colors hover:border-rmc-green/50 hover:text-rmc-green"
               >
                 <Plus className="h-3.5 w-3.5" /> {t('explore.addRequirement')}
@@ -131,16 +146,22 @@ export function ServiceModal({
               {t('explore.steps')}
             </h3>
             <ol className="space-y-2">
-              {Array.from({ length: stepLen }, (_, i) => (
+              {step.map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
                   <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${accent.soft} ${accent.text}`}>
                     {i + 1}
                   </span>
-                  <EditableText as="span" multiline path={`${stepPath}.${i}`} className="block flex-1 pt-px" />
+                  <InlineText
+                    as="span"
+                    lang={locale}
+                    value={pick(item, locale)}
+                    onCommit={(v) => setField((d) => { d[service.key].modal!.step[i][lang] = v; })}
+                    className="block flex-1 pt-px"
+                  />
                   {managing && (
                     <button
                       type="button"
-                      onClick={() => removeAt(`${stepPath}.${i}`)}
+                      onClick={() => removeItem('step', i)}
                       aria-label={t('explore.removeItem')}
                       title={t('explore.removeItem')}
                       className="grid h-5 w-5 shrink-0 place-items-center rounded text-gray-300 transition-colors hover:bg-red-50 hover:text-red-600"
@@ -154,7 +175,7 @@ export function ServiceModal({
             {managing && (
               <button
                 type="button"
-                onClick={() => add(stepPath)}
+                onClick={() => addItem('step')}
                 className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-500 transition-colors hover:border-rmc-green/50 hover:text-rmc-green"
               >
                 <Plus className="h-3.5 w-3.5" /> {t('explore.addStep')}
@@ -168,10 +189,11 @@ export function ServiceModal({
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
                 {t('explore.notes')}
               </h3>
-              <EditableText
+              <InlineText
                 as="p"
-                path={`${service.key}.modal.notes`}
-                multiline
+                lang={locale}
+                value={pick(copy?.modal?.notes, locale)}
+                onCommit={(v) => setField((d) => { (d[service.key].modal!.notes ??= emptyTri())[lang] = v; })}
                 className="block rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm leading-relaxed text-gray-600"
               />
             </section>

@@ -5,11 +5,8 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { SERVICES, ACCENTS, type ServiceDef } from '@/lib/services/serviceCatalog';
 import { ServiceModal } from './ServiceModal';
-import { useAuth } from '@/hooks/useAuth';
-import { Permission } from '@/lib/permissions';
-import { EditModeProvider, useEditMode } from '@/contexts/EditModeContext';
-import { EditToolbar } from '@/components/cms/EditToolbar';
-import { ContentKeys, SERVICES_DEFAULT } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { ContentKeys, SERVICES_DEFAULT, pick, type ServicesContent } from '@/lib/content-api';
 
 /**
  * The Services landing list — minimalist, scannable rows. A service with a
@@ -18,32 +15,15 @@ import { ContentKeys, SERVICES_DEFAULT } from '@/lib/content-api';
  * paint (this is a client component but Next still SSRs it), so it stays
  * indexable while the modal interaction lives on the client.
  *
- * For a `content:edit` admin the page doubles as its own CMS: `EditModeProvider`
- * wraps the list so the per-service copy — row title/description, and the modal's
- * summary / requirements / steps / notes — becomes editable in place (persisted to
- * the `services` content section). Rows display from the store; the editing itself
- * happens inside each service's modal. Everyone else sees exactly the page they
+ * The page doubles as its own CMS via the site-wide Edit Mode (`lib/edit-mode`):
+ * the rows read their title/description from the `services` content section (so an
+ * in-progress edit shows live), and the editing itself — row copy plus the modal's
+ * summary / requirements / steps / notes — happens inside each service's modal
+ * (see `ServiceModal`, gated on content:edit). Everyone else sees the page they
  * always did.
  */
 export function ServicesExplorer({ locale }: { locale: string }) {
-  const { hasPermission } = useAuth();
-  const canEdit = hasPermission(Permission.CONTENT_EDIT);
-
-  return (
-    <EditModeProvider
-      sectionKey={ContentKeys.services}
-      defaults={SERVICES_DEFAULT}
-      canEdit={canEdit}
-      canSave={canEdit}
-    >
-      <ExplorerList locale={locale} />
-      <EditToolbar />
-    </EditModeProvider>
-  );
-}
-
-function ExplorerList({ locale }: { locale: string }) {
-  const { getText } = useEditMode();
+  const { content } = useEditableContent<ServicesContent>(ContentKeys.services, SERVICES_DEFAULT);
   const [open, setOpen] = useState<ServiceDef | null>(null);
 
   return (
@@ -51,8 +31,9 @@ function ExplorerList({ locale }: { locale: string }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {SERVICES.map((service) => {
           const accent = ACCENTS[service.accent];
-          const title = getText(`${service.key}.title`, locale);
-          const desc = getText(`${service.key}.desc`, locale);
+          const copy = content[service.key];
+          const title = pick(copy?.title, locale);
+          const desc = pick(copy?.desc, locale);
 
           const inner = (
             <>
