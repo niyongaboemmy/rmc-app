@@ -40,6 +40,7 @@ export const ContentKeys = {
   stats: 'community-impact',
   partners: 'partners',
   activities: 'activities-events',
+  projects: 'projects',
   updates: 'updates-programs',
   announcements: 'announcements',
   social: 'social-media',

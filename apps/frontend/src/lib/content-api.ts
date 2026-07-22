@@ -19,6 +19,7 @@ export * from './content/stats';
 export * from './content/partners';
 export * from './content/updates';
 export * from './content/activities';
+export * from './content/projects';
 export * from './content/announcements';
 export * from './content/social';
 export * from './content/hero';
