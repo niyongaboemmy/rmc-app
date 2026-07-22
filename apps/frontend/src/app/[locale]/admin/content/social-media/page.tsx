@@ -59,7 +59,7 @@ export default function SocialMediaPage() {
   );
 }
 
-function SocialMediaManager() {
+function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
@@ -147,18 +147,20 @@ function SocialMediaManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
-            <Share2 className="w-5 h-5 text-sky-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
+              <Share2 className="w-5 h-5 text-sky-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Social Media</h1>
+              <p className="text-xs text-gray-400">Update homepage social feed &amp; channels</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Social Media</h1>
-            <p className="text-xs text-gray-400">Update homepage social feed &amp; channels</p>
-          </div>
-        </div>
+        )}
         <button onClick={handleSave} disabled={saving || loading}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-sky-600/20 transition-colors">
           {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}

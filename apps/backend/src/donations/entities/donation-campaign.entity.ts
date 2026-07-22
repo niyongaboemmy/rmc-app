@@ -9,10 +9,17 @@ import {
 } from 'typeorm';
 
 export enum CampaignStatus {
+  DRAFT = 'draft',
   ACTIVE = 'active',
   PAUSED = 'paused',
+  COMPLETED = 'completed',
   CLOSED = 'closed',
+  ARCHIVED = 'archived',
 }
+
+/** Statuses whose campaigns are reachable on the public site (grid = ACTIVE only;
+ *  a detail page also renders COMPLETED so a finished campaign's link still works). */
+export const PUBLIC_VISIBLE_STATUSES = [CampaignStatus.ACTIVE, CampaignStatus.COMPLETED];
 
 /** A donation program / cause shown on the public donate page. */
 @Entity('donation_campaigns')
@@ -56,6 +63,23 @@ export class DonationCampaign {
 
   @Column({ name: 'hero_image_url', type: 'varchar', length: 500, nullable: true })
   heroImageUrl: string | null;
+
+  /** File-server keys / URLs for the campaign detail-page gallery. */
+  @Column({ name: 'gallery_images', type: 'jsonb', default: () => "'[]'" })
+  galleryImages: string[];
+
+  /** Whether this campaign fills the featured hero block on the donate page. */
+  @Index('IDX_donation_campaigns_featured')
+  @Column({ name: 'is_featured', type: 'boolean', default: false })
+  isFeatured: boolean;
+
+  /** Manual ordering weight for the grid (lower = earlier). */
+  @Column({ name: 'sort_order', type: 'integer', default: 0 })
+  sortOrder: number;
+
+  /** Override for the donate button label (e.g. "Give Zakat"); null = default. */
+  @Column({ name: 'cta_text', type: 'varchar', length: 60, nullable: true })
+  ctaText: string | null;
 
   @Index('IDX_donation_campaigns_status')
   @Column({ type: 'varchar', length: 20, default: CampaignStatus.ACTIVE })

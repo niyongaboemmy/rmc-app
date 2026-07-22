@@ -16,6 +16,7 @@ import {
   type StatItem,
   type Tri,
 } from '@/lib/content-api';
+import { usePreviewStore } from '@/lib/content/preview-store';
 import { BarChart3, ArrowLeft, Save, Plus, Trash2, TrendingUp } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -39,9 +40,10 @@ export default function CommunityImpactPage() {
   );
 }
 
-function CommunityImpactManager() {
+function CommunityImpactManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
+  const store = usePreviewStore();
   const [lang, setLang] = useState<Lang>('en');
   const [form, setForm] = useState<StatsContent>(INITIAL);
   const [saving, setSaving] = useState(false);
@@ -64,6 +66,18 @@ function CommunityImpactManager() {
       active = false;
     };
   }, []);
+
+  // Live-preview bridge: while embedded, mirror the in-progress form to the
+  // preview store so the real section updates as the admin types; clear it when
+  // the drawer closes so the section falls back to persisted content.
+  useEffect(() => {
+    if (!store || loading) return;
+    store.setOverride(ContentKeys.stats, form);
+  }, [store, loading, form]);
+  useEffect(() => {
+    if (!store) return;
+    return () => store.clearOverride(ContentKeys.stats);
+  }, [store]);
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
@@ -118,38 +132,41 @@ function CommunityImpactManager() {
     try {
       const saved = await saveSiteContent(ContentKeys.stats, form);
       setForm((prev) => ({ ...prev, ...saved }));
+      store?.bumpRefresh();
       success('Community impact stats saved successfully.');
     } catch {
       error('Could not save community impact stats. Please try again.');
     } finally {
       setSaving(false);
     }
-  }, [form, success, error]);
+  }, [form, success, error, store]);
 
   const triValue = (t: Tri) => t[lang] ?? '';
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-indigo-600" />
+      {/* Header — hidden when embedded in the Live Editor drawer (which supplies its own chrome) */}
+      {!embedded && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Community Impact</h1>
+              <p className="text-xs text-gray-400">Update homepage statistics</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Community Impact</h1>
-            <p className="text-xs text-gray-400">Update homepage statistics</p>
-          </div>
+          <button onClick={handleSave} disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-indigo-600/20 transition-colors">
+            {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? 'Loading…' : 'Save Changes'}
+          </button>
         </div>
-        <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-indigo-600/20 transition-colors">
-          {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-          {loading ? 'Loading…' : 'Save Changes'}
-        </button>
-      </div>
+      )}
 
       {/* Stats preview (dark section like homepage) */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rmc-green-deep to-rmc-green p-6">
@@ -180,50 +197,50 @@ function CommunityImpactManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Header text — per-language */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Section Header — {LANGS.find((l) => l.key === lang)?.label}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Eyebrow</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Eyebrow</label>
             <input
               dir={dir}
               value={triValue(form.eyebrow)}
               onChange={(e) => setTri('eyebrow', e.target.value)}
-              className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Subtitle</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Subtitle</label>
             <input
               dir={dir}
               value={triValue(form.subtitle)}
               onChange={(e) => setTri('subtitle', e.target.value)}
-              className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Title</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
             <input
               dir={dir}
               value={triValue(form.title)}
               onChange={(e) => setTri('title', e.target.value)}
-              className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Title Accent</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title Accent</label>
             <input
               dir={dir}
               value={triValue(form.titleAccent)}
               onChange={(e) => setTri('titleAccent', e.target.value)}
-              className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
+              className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fontClass}`}
             />
           </div>
         </div>
       </div>
 
       {/* Stat items list editor */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700">Statistics</h2>
           <button onClick={addItem}
@@ -236,29 +253,29 @@ function CommunityImpactManager() {
           <div key={i} className="bg-gray-50 rounded-xl border border-gray-100 p-4">
             <div className="flex flex-wrap items-end gap-3">
               <div className="w-28">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Value</label>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Value</label>
                 <input
                   type="number"
                   min="0"
                   value={item.value}
                   onChange={(e) => setItem(i, { value: Number(e.target.value) })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-bold text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 />
               </div>
               <div className="w-20">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Suffix</label>
                 <input
                   value={item.suffix}
                   onChange={(e) => setItem(i, { suffix: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 />
               </div>
               <div className="w-40">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Icon</label>
                 <select
                   value={item.icon}
                   onChange={(e) => setItem(i, { icon: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 >
                   {ICON_OPTIONS.map((name) => (
                     <option key={name} value={name}>{name}</option>
@@ -266,14 +283,14 @@ function CommunityImpactManager() {
                 </select>
               </div>
               <div className="flex-1 min-w-[12rem]">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
                   Label — {LANGS.find((l) => l.key === lang)?.label}
                 </label>
                 <input
                   dir={dir}
                   value={triValue(item.label)}
                   onChange={(e) => setItemLabel(i, e.target.value)}
-                  className={`w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
+                  className={`w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent ${fontClass}`}
                 />
               </div>
               <button onClick={() => removeItem(i)}
@@ -289,6 +306,17 @@ function CommunityImpactManager() {
         <BarChart3 className="w-4 h-4 shrink-0 mt-0.5" />
         <p>These statistics are displayed with an animated count-up effect on the homepage. Values are shown with the configured suffix (e.g. <strong>+</strong>) where applicable.</p>
       </div>
+
+      {/* Embedded save bar — sticky footer inside the Live Editor drawer */}
+      {embedded && (
+        <div className="sticky bottom-0 -mx-1 mt-2 flex items-center justify-end gap-2 bg-white/90 backdrop-blur border-t border-gray-100 px-1 py-3">
+          <button onClick={handleSave} disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+            {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? 'Loading…' : 'Save Changes'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

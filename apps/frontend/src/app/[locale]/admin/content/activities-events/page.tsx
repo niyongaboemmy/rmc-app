@@ -91,7 +91,7 @@ export default function ActivitiesEventsPage() {
   );
 }
 
-function ActivitiesEventsManager() {
+function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
@@ -306,18 +306,20 @@ function ActivitiesEventsManager() {
     <div className="space-y-6">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-teal-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+              <CalendarDays className="w-5 h-5 text-teal-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Activities & Events</h1>
+              <p className="text-xs text-gray-400">{activities.length} activities · {events.length} events</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Activities & Events</h1>
-            <p className="text-xs text-gray-400">{activities.length} activities · {events.length} events</p>
-          </div>
-        </div>
+        )}
         <div className="flex items-center gap-2">
           <button onClick={() => openCreate('activity')} disabled={loading} className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors">
             <Plus className="w-4 h-4" /> Activity

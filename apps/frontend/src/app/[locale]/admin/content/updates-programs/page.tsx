@@ -76,7 +76,7 @@ export default function UpdatesProgramsPage() {
   );
 }
 
-function UpdatesProgramsManager() {
+function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
@@ -206,21 +206,23 @@ function UpdatesProgramsManager() {
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/${locale}/admin/content`}
-            className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <Megaphone className="w-5 h-5 text-blue-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/${locale}/admin/content`}
+              className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Megaphone className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Updates & Programs</h1>
+              <p className="text-xs text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Updates & Programs</h1>
-            <p className="text-xs text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
-          </div>
-        </div>
+        )}
         <button
           onClick={openCreate}
           disabled={loading}

@@ -16,6 +16,9 @@ import { apiClient } from '../api';
 
 const publicHttp = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
+  // Bound reads so a slow/unreachable backend fails fast to the section's
+  // built-in defaults instead of hanging server-rendered pages.
+  timeout: 8000,
 });
 
 /** Public read of a section's content. Returns null when the section is unset. */

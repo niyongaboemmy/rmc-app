@@ -7,12 +7,13 @@ import { useScrollReveal } from '@/hooks/useScrollReveal';
 import {
   ContentKeys,
   STATS_DEFAULT,
-  getSiteContent,
-  mergeContent,
   pick,
   isRtl,
   type StatsContent,
+  type Locale,
 } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 /** Lucide icons available to stat items, resolved by name from content. */
 const ICONS: Record<string, LucideIcon> = { Users, GraduationCap, Building2 };
@@ -28,7 +29,7 @@ interface Stat {
 
 /** Per-position visual accents (preserved from the original design). */
 const ACCENTS = [
-  { ringColor: 'border-rmc-green text-rmc-green', glowColor: 'rgba(52,211,153,0.07)' },
+  { ringColor: 'border-emerald-400 text-emerald-400', glowColor: 'rgba(52,211,153,0.07)' },
   { ringColor: 'border-amber-400 text-amber-400', glowColor: 'rgba(251,191,36,0.07)' },
   { ringColor: 'border-sky-400 text-sky-400', glowColor: 'rgba(56,189,248,0.07)' },
 ];
@@ -119,21 +120,11 @@ export function StatsSection() {
   const rtl = isRtl(locale);
 
   // Content managed from Admin → Content → Community Impact. Falls back to the
-  // built-in defaults until something is saved (or if the fetch fails).
-  const [content, setContent] = useState<StatsContent>(STATS_DEFAULT);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<Partial<StatsContent>>(ContentKeys.stats)
-      .then((d) => {
-        if (active && d) setContent(mergeContent(STATS_DEFAULT, d));
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // built-in defaults until something is saved. In super-admin Edit Mode the
+  // heading copy below is click-to-edit; the animated counters are managed from
+  // the admin panel (a counting number isn't a type-in-place field).
+  const { content, setField } = useEditableContent<StatsContent>(ContentKeys.stats, STATS_DEFAULT);
+  const lang = locale as Locale;
 
   const stats: Stat[] = content.items.map((item, i) => ({
     value: item.value,
@@ -160,13 +151,33 @@ export function StatsSection() {
           }`}
         >
           <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-white ${rtl ? 'font-arabic' : ''}`}>
-            {pick(content.title, locale)}{' '}
-            <span className="text-rmc-green">{pick(content.titleAccent, locale)}</span>
+            <InlineText
+              as="span"
+              lang={locale}
+              value={pick(content.title, locale)}
+              onCommit={(v) => setField((d) => { d.title[lang] = v; })}
+              placeholder="Title"
+            />{' '}
+            <InlineText
+              as="span"
+              lang={locale}
+              value={pick(content.titleAccent, locale)}
+              onCommit={(v) => setField((d) => { d.titleAccent[lang] = v; })}
+              className="text-emerald-400"
+              placeholder="Accent"
+            />
           </h2>
           <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
           </div>
-          <p className={`text-white/40 text-sm ${rtl ? 'font-arabic' : ''}`}>{pick(content.subtitle, locale)}</p>
+          <InlineText
+            as="p"
+            lang={locale}
+            value={pick(content.subtitle, locale)}
+            onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
+            className={`text-white/40 text-sm ${rtl ? 'font-arabic' : ''}`}
+            placeholder="Subtitle"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">

@@ -378,12 +378,13 @@ export default function ManageContentPage() {
           <div className="w-9 h-9 rounded-xl bg-rmc-green/10 flex items-center justify-center shrink-0">
             <Layers className="w-[18px] h-[18px] text-rmc-green" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-[17px] font-bold text-gray-900 leading-tight">Manage Content</h1>
             <p className="text-xs text-gray-400">
               {SECTIONS.length} sections &middot; {SECTIONS.filter((s) => s.type === 'crud').length} full CRUD &middot; {SECTIONS.filter((s) => s.type === 'edit').length} edit-only &middot; 3 languages
             </p>
           </div>
+          <div className="flex-1" />
         </div>
 
         {/* ── Tab switcher ── */}

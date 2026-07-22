@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
@@ -15,6 +15,8 @@ import { Alert } from '@/components/ui/Alert';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { OtpInput } from '@/components/ui/OtpInput';
 import { useAuth } from '@/hooks/useAuth';
+import type { AuthUser } from '@/contexts/AuthContext';
+import { resolvePostLoginPath, getRedirectParam } from '@/lib/authRedirect';
 
 // ── Schemas ────────────────────────────────────────────────────────────────────
 
@@ -85,7 +87,7 @@ function useCountdown(seconds: number) {
 interface TwoFactorStepProps {
   maskedPhone: string;
   tempToken: string;
-  onSuccess: () => void;
+  onSuccess: (user?: AuthUser) => void;
   onBack: () => void;
 }
 
@@ -102,8 +104,8 @@ function TwoFactorStep({ maskedPhone, tempToken, onSuccess, onBack }: TwoFactorS
     setError(null);
     setLoading(true);
     try {
-      await verify2fa(tempToken, otp);
-      onSuccess();
+      const result = await verify2fa(tempToken, otp);
+      onSuccess(result.user);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message || 'Invalid code. Please try again.');
@@ -203,21 +205,8 @@ export function LoginForm() {
   const nav = useTranslations('nav');
   const { locale }                   = useParams<{ locale: string }>();
   const router                       = useRouter();
-  const searchParams                 = useSearchParams();
   const { login }                    = useAuth();
 
-  /**
-   * Where to land after a successful sign-in. Defaults home, but honours a
-   * `?redirect=` param so "Sign in to read this book" returns the reader to the
-   * book they wanted. Only same-origin ABSOLUTE paths are accepted: a value not
-   * starting with a single `/` (protocol-relative `//evil.com`, or a full URL)
-   * is discarded, so this cannot be turned into an open-redirect.
-   */
-  const redirectAfterLogin = (() => {
-    const raw = searchParams.get('redirect');
-    if (raw && /^\/(?!\/)/.test(raw)) return raw;
-    return `/${locale}`;
-  })();
   const [step, setStep]              = useState<Step>('credentials');
   const [submitting, setSubmitting]  = useState(false);
   const [apiError, setApiError]      = useState<string | null>(null);
@@ -241,7 +230,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push(redirectAfterLogin);
+      router.push(resolvePostLoginPath(result.user ?? null, getRedirectParam(), locale));
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setApiError(e?.response?.data?.error?.message || 'Login failed');
@@ -275,7 +264,7 @@ export function LoginForm() {
           <TwoFactorStep
             maskedPhone={twoFactorState.maskedPhone}
             tempToken={twoFactorState.tempToken}
-            onSuccess={() => router.push(redirectAfterLogin)}
+            onSuccess={(user) => router.push(resolvePostLoginPath(user ?? null, getRedirectParam(), locale))}
             onBack={handleBack}
           />
         )}

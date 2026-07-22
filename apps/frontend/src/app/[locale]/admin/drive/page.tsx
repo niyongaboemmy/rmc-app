@@ -19,6 +19,8 @@ import { MoveModal } from '@/components/drive/MoveModal';
 import { UploadZone, type UploadZoneHandle } from '@/components/drive/UploadZone';
 import { apiClient } from '@/lib/api';
 import { ModalPortal } from '@/components/ui/Modal';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { Permission } from '@/lib/permissions';
 
 interface UserResult {
   id: string;
@@ -30,6 +32,14 @@ interface UserResult {
 }
 
 export default function AdminDrivePage() {
+  return (
+    <ProtectedRoute permissions={[Permission.DRIVE_ADMIN]}>
+      <AdminDriveManager />
+    </ProtectedRoute>
+  );
+}
+
+function AdminDriveManager() {
   const [mode, setMode] = useState<'all' | 'user'>('all');
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<DriveItem[]>([]);

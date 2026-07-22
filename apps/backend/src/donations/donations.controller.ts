@@ -17,6 +17,13 @@ export class DonationsController {
     return this.service.listPublicCampaigns();
   }
 
+  @Get('campaigns/:slug')
+  @Public()
+  @ApiOperation({ summary: 'Get one campaign (with updates) for its public detail page' })
+  getCampaign(@Param('slug') slug: string) {
+    return this.service.getPublicCampaignBySlug(slug);
+  }
+
   @Post()
   @Public()
   @ApiOperation({ summary: 'Record a donation made from the public donate page' })

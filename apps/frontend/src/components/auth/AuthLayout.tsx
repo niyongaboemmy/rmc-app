@@ -85,6 +85,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             src={config.src}
             alt="Islamic architecture"
             fill
+            // Panel is hidden below lg, then a fixed 460px (xl: 520px) column.
+            sizes="(min-width: 1280px) 520px, (min-width: 1024px) 460px, 0px"
             className="object-cover object-center scale-[1.02] transition-transform duration-[10s] ease-out"
             priority
           />
