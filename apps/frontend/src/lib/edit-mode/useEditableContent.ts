@@ -15,6 +15,7 @@
  */
 
 import { useCallback } from 'react';
+import { Permission } from '@/lib/permissions';
 import { usePreviewableContent, usePreviewStore } from '@/lib/content/preview-store';
 import { useEditMode } from './EditModeProvider';
 
@@ -35,12 +36,18 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-export function useEditableContent<T>(key: string, defaults: T): EditableContent<T> {
+export function useEditableContent<T>(
+  key: string,
+  defaults: T,
+  /** The permission this section's copy requires. Defaults to content:edit; pass a
+   *  different one (e.g. dawah:manage) for section content gated on another role. */
+  permission: Permission = Permission.CONTENT_EDIT,
+): EditableContent<T> {
   const content = usePreviewableContent<T>(key, defaults);
   const store = usePreviewStore();
-  const { editMode, canEdit, registerDirty } = useEditMode();
+  const { editMode, hasPermission, registerDirty } = useEditMode();
 
-  const editing = editMode && canEdit && !!store;
+  const editing = editMode && hasPermission(permission) && !!store;
 
   const setField = useCallback(
     (mutator: (draft: T) => void) => {
