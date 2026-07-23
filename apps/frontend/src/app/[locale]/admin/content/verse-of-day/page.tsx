@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -10,6 +10,7 @@ import {
   ModalTitle, ModalDescription, ConfirmModal,
 } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
+import { getSiteContent, saveSiteContent } from '@/lib/content-api';
 import {
   BookOpen, ArrowLeft, Plus, Edit2, Trash2,
   ToggleLeft, ToggleRight, Quote,
@@ -42,41 +43,15 @@ const EMPTY_VERSE: Omit<Verse, 'id'> = {
   isActive: true,
 };
 
-const MOCK_VERSES: Verse[] = [
-  {
-    id: '1',
-    arabicText: 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا',
-    translationEn: 'Indeed, with hardship [will be] ease.',
-    translationRw: 'Birumvikana ko n\'ingutu hazaza ubwo bworoshye.',
-    translationAr: 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا',
-    referenceEn: 'Ash-Sharh 94:6',
-    referenceRw: 'Ash-Sharh 94:6',
-    referenceAr: 'الشرح ٩٤:٦',
-    isActive: true,
-  },
-  {
-    id: '2',
-    arabicText: 'لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
-    translationEn: 'Allah does not burden a soul beyond that it can bear.',
-    translationRw: 'Imana ntirengurura umuntu uburemere burenzeho imbaraga ze.',
-    translationAr: 'لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
-    referenceEn: 'Al-Baqarah 2:286',
-    referenceRw: 'Al-Baqarah 2:286',
-    referenceAr: 'البقرة ٢:٢٨٦',
-    isActive: true,
-  },
-  {
-    id: '3',
-    arabicText: 'وَعَسَىٰ أَن تَكْرَهُوا شَيْئًا وَهُوَ خَيْرٌ لَّكُمْ',
-    translationEn: 'But perhaps you hate a thing and it is good for you.',
-    translationRw: 'Ariko ushobora gukunda ikintu kandi ari kibi kuri wewe.',
-    translationAr: 'وَعَسَىٰ أَن تَكْرَهُوا شَيْئًا وَهُوَ خَيْرٌ لَّكُمْ',
-    referenceEn: 'Al-Baqarah 2:216',
-    referenceRw: 'Al-Baqarah 2:216',
-    referenceAr: 'البقرة ٢:٢١٦',
-    isActive: false,
-  },
-];
+// Verses persist in the shared site-content store under this key — the same
+// mechanism every other admin content page uses. No fake sample data.
+const CONTENT_KEY = 'verse-of-day';
+
+function newId(): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Date.now().toString();
+}
 
 // ─── Language config ──────────────────────────────────────────────────────────
 
@@ -104,13 +79,30 @@ function VerseOfDayManager() {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
-  const [verses, setVerses] = useState<Verse[]>(MOCK_VERSES);
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<Lang>('en');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVerse, setEditingVerse] = useState<Verse | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<Omit<Verse, 'id'>>(EMPTY_VERSE);
+
+  // Load saved verses from the content store on mount.
+  useEffect(() => {
+    let active = true;
+    getSiteContent<{ verses?: Verse[] }>(CONTENT_KEY)
+      .then((data) => { if (active && data?.verses) setVerses(data.verses); })
+      .catch(() => {/* start with an empty list */})
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  // Persist the whole verse list, then reflect it locally.
+  const persist = useCallback(async (next: Verse[]) => {
+    await saveSiteContent(CONTENT_KEY, { verses: next });
+    setVerses(next);
+  }, []);
 
   const openCreate = useCallback(() => {
     setEditingVerse(null);
@@ -130,31 +122,48 @@ function VerseOfDayManager() {
       return;
     }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    if (editingVerse) {
-      setVerses((prev) => prev.map((v) => v.id === editingVerse.id ? { ...formData, id: v.id } : v));
-      success('Verse updated successfully.');
-    } else {
-      setVerses((prev) => [...prev, { ...formData, id: Date.now().toString() }]);
-      success('Verse added successfully.');
+    try {
+      const next = editingVerse
+        ? verses.map((v) => (v.id === editingVerse.id ? { ...formData, id: v.id } : v))
+        : [...verses, { ...formData, id: newId() }];
+      await persist(next);
+      success(editingVerse ? 'Verse updated successfully.' : 'Verse added successfully.');
+      setIsModalOpen(false);
+    } catch {
+      error('Could not save. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setIsModalOpen(false);
-  }, [formData, editingVerse, success, error]);
+  }, [formData, editingVerse, verses, persist, success, error]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setVerses((prev) => prev.filter((v) => v.id !== deleteId));
-    success('Verse deleted.');
-    setSaving(false);
-    setDeleteId(null);
-  }, [deleteId, success]);
+    try {
+      await persist(verses.filter((v) => v.id !== deleteId));
+      success('Verse deleted.');
+      setDeleteId(null);
+    } catch {
+      error('Could not delete. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [deleteId, verses, persist, success, error]);
 
-  const toggleActive = useCallback((id: string) => {
-    setVerses((prev) => prev.map((v) => v.id === id ? { ...v, isActive: !v.isActive } : v));
-  }, []);
+  const toggleActive = useCallback(
+    async (id: string) => {
+      const previous = verses;
+      const next = verses.map((v) => (v.id === id ? { ...v, isActive: !v.isActive } : v));
+      setVerses(next); // optimistic
+      try {
+        await saveSiteContent(CONTENT_KEY, { verses: next });
+      } catch {
+        setVerses(previous); // revert on failure
+        error('Could not update. Please try again.');
+      }
+    },
+    [verses, error],
+  );
 
   const setField = useCallback((field: keyof typeof formData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -196,22 +205,28 @@ function VerseOfDayManager() {
 
       {/* ── Verse list ── */}
       <div className="space-y-3">
-        {verses.length === 0 && (
+        {loading ? (
+          <div className="text-center py-16 text-gray-300">
+            <span className="inline-block w-6 h-6 border-2 border-gray-200 border-t-emerald-500 rounded-full animate-spin" />
+            <p className="text-sm mt-3">Loading verses…</p>
+          </div>
+        ) : verses.length === 0 ? (
           <div className="text-center py-16 text-gray-300">
             <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">No verses yet. Add one above.</p>
           </div>
+        ) : (
+          verses.map((verse) => (
+            <VerseCard
+              key={verse.id}
+              verse={verse}
+              lang={lang}
+              onEdit={() => openEdit(verse)}
+              onDelete={() => setDeleteId(verse.id)}
+              onToggle={() => toggleActive(verse.id)}
+            />
+          ))
         )}
-        {verses.map((verse) => (
-          <VerseCard
-            key={verse.id}
-            verse={verse}
-            lang={lang}
-            onEdit={() => openEdit(verse)}
-            onDelete={() => setDeleteId(verse.id)}
-            onToggle={() => toggleActive(verse.id)}
-          />
-        ))}
       </div>
 
       {/* ── Create/Edit modal ── */}
