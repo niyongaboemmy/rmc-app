@@ -7,7 +7,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { GalleryManagement } from '@/components/admin/GalleryManagement';
 import {
-  BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
+  BookOpen, Megaphone, Info, Globe, CalendarDays,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
@@ -102,19 +102,6 @@ const SECTIONS: SectionConfig[] = [
     bg: 'bg-violet-50', iconColor: 'text-violet-600', border: 'border-violet-100',
     badge: 'bg-violet-100 text-violet-700',
     accentBar: 'bg-violet-400',
-  },
-  {
-    id: 'prayer-times',
-    icon: Clock,
-    title: 'Prayer Times',
-    description: 'Daily Fajr–Isha schedule displayed in the prayer widget.',
-    type: 'edit', itemLabel: null,
-    page: 'Homepage', positionOrder: 4,
-    locationLabel: 'Homepage · Prayer Widget',
-    keywords: ['salah', 'prayer', 'fajr', 'dhuhr', 'asr', 'maghrib', 'isha', 'sunrise', 'schedule', 'kigali', 'times', 'adhan', 'namaz', 'widget'],
-    bg: 'bg-sky-50', iconColor: 'text-sky-600', border: 'border-sky-100',
-    badge: 'bg-sky-100 text-sky-700',
-    accentBar: 'bg-sky-400',
   },
   {
     id: 'areas',
@@ -405,7 +392,7 @@ export default function ManageContentPage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder='Search by name, keyword, or location… e.g. "prayer", "dawa", "carousel", "stats"'
-                    className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
+                    className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rmc-green/40 focus:bg-white transition-all"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     {query && (
