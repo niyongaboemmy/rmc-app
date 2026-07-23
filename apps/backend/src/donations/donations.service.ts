@@ -3,20 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Not, IsNull } from 'typeorm';
 import { Donation, DonationStatus, DonationFrequency } from './entities/donation.entity';
-import {
-  DonationCampaign,
-  CampaignStatus,
-  PUBLIC_VISIBLE_STATUSES,
-} from './entities/donation-campaign.entity';
-import { CampaignUpdate } from './entities/campaign-update.entity';
+import { DonationCampaign, CampaignStatus } from './entities/donation-campaign.entity';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { UpdateDonationDto } from './dto/update-donation.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
-import {
-  CreateCampaignUpdateDto,
-  UpdateCampaignUpdateDto,
-} from './dto/campaign-update.dto';
 import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
 import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
@@ -95,8 +86,6 @@ export class DonationsService {
     private readonly donations: Repository<Donation>,
     @InjectRepository(DonationCampaign)
     private readonly campaigns: Repository<DonationCampaign>,
-    @InjectRepository(CampaignUpdate)
-    private readonly campaignUpdates: Repository<CampaignUpdate>,
     private readonly intouchPay: IntouchPayService,
     private readonly paymentSettings: PaymentSettingsService,
     private readonly smsService: SmsService,
@@ -110,57 +99,26 @@ export class DonationsService {
    * live raised total (sum of completed donation transactions in the program's
    * currency) — the same figure the admin Programs tab shows.
    */
-  /** The public-facing shape of a campaign — the computed `receivedAmount`
-   *  (completed donations, per currency) is the source of truth for progress. */
-  private toPublicCampaign(
-    c: DonationCampaign,
-    received: Map<string, number>,
-    counts: Map<string, number>,
-  ) {
-    return {
+  async listPublicCampaigns() {
+    const campaigns = await this.campaigns.find({
+      where: { status: CampaignStatus.ACTIVE },
+      order: { startDate: 'ASC' },
+    });
+    const { received } = await this.getReceivedMap();
+    return campaigns.map((c) => ({
       id: c.id,
       slug: c.slug,
       title: c.title,
       description: c.description,
       targetAmount: Number(c.targetAmount),
       receivedAmount: received.get(`${c.id}|${c.currency}`) ?? 0,
-      donationCount: counts.get(c.id) ?? 0,
       currency: c.currency,
       fundType: c.fundType,
       subFundId: c.subFundId,
       heroImageUrl: c.heroImageUrl,
-      galleryImages: c.galleryImages ?? [],
-      isFeatured: c.isFeatured,
-      ctaText: c.ctaText,
-      status: c.status,
       startDate: c.startDate,
       endDate: c.endDate,
-    };
-  }
-
-  async listPublicCampaigns() {
-    const campaigns = await this.campaigns.find({
-      where: { status: CampaignStatus.ACTIVE },
-      // Featured first, then the admin's manual order, then soonest start.
-      order: { isFeatured: 'DESC', sortOrder: 'ASC', startDate: 'ASC' },
-    });
-    const { received, counts } = await this.getReceivedMap();
-    return campaigns.map((c) => this.toPublicCampaign(c, received, counts));
-  }
-
-  /**
-   * A single campaign for its public detail page (`/donate/[slug]`), enriched
-   * with its live received total, donor count, and published updates. Visible
-   * only for public statuses (active/completed); anything else is a 404.
-   */
-  async getPublicCampaignBySlug(slug: string) {
-    const campaign = await this.campaigns.findOne({ where: { slug } });
-    if (!campaign || !PUBLIC_VISIBLE_STATUSES.includes(campaign.status)) {
-      throw new NotFoundException('Campaign not found');
-    }
-    const { received, counts } = await this.getReceivedMap();
-    const updates = await this.listCampaignUpdates(campaign.id, true);
-    return { ...this.toPublicCampaign(campaign, received, counts), updates };
+    }));
   }
 
   /**
@@ -416,17 +374,23 @@ export class DonationsService {
     start.setDate(start.getDate() - (span - 1));
     const startKey = start.toISOString().slice(0, 10);
 
+    // NOTE: these three expressions carry a `::date` cast, and TypeORM only
+    // rewrites `alias.property` when it is followed by a space, `=`, `)` or `,`.
+    // The trailing `:` defeats that, so the property name would reach Postgres
+    // raw and fail as the lower-cased `donation.donatedat`. Spell the real
+    // column out instead — `donatedAt` is the only field here whose column name
+    // differs from its property.
     const rows = await this.donations
       .createQueryBuilder('donation')
-      .select("TO_CHAR(donation.donatedAt::date, 'YYYY-MM-DD')", 'date')
+      .select(`TO_CHAR("donation"."donated_at"::date, 'YYYY-MM-DD')`, 'date')
       .addSelect(
         `COALESCE(SUM(donation.amount) FILTER (WHERE donation.status = 'completed'), 0)`,
         'received',
       )
       .addSelect(`COUNT(*) FILTER (WHERE donation.status = 'completed')`, 'count')
       .where('donation.currency = :currency', { currency })
-      .andWhere('donation.donatedAt::date >= :start', { start: startKey })
-      .groupBy('donation.donatedAt::date')
+      .andWhere(`"donation"."donated_at"::date >= :start`, { start: startKey })
+      .groupBy(`"donation"."donated_at"::date`)
       .getRawMany<{ date: string; received: string; count: string }>();
 
     const byDate = new Map(rows.map((r) => [r.date, r]));
@@ -662,10 +626,6 @@ export class DonationsService {
       startDate: dto.startDate ?? new Date().toISOString().slice(0, 10),
       endDate: dto.endDate ?? null,
       heroImageUrl: dto.heroImageUrl ?? null,
-      galleryImages: dto.galleryImages ?? [],
-      isFeatured: dto.isFeatured ?? false,
-      sortOrder: dto.sortOrder ?? 0,
-      ctaText: dto.ctaText ?? null,
       status: dto.status ?? CampaignStatus.ACTIVE,
       createdBy: userId,
     });
@@ -693,10 +653,6 @@ export class DonationsService {
       startDate: dto.startDate ?? campaign.startDate,
       endDate: dto.endDate !== undefined ? dto.endDate : campaign.endDate,
       heroImageUrl: dto.heroImageUrl !== undefined ? dto.heroImageUrl : campaign.heroImageUrl,
-      galleryImages: dto.galleryImages ?? campaign.galleryImages,
-      isFeatured: dto.isFeatured ?? campaign.isFeatured,
-      sortOrder: dto.sortOrder ?? campaign.sortOrder,
-      ctaText: dto.ctaText !== undefined ? dto.ctaText : campaign.ctaText,
       status: dto.status ?? campaign.status,
     });
     return this.campaigns.save(campaign);
@@ -707,84 +663,5 @@ export class DonationsService {
     if (!campaign) throw new NotFoundException('Campaign not found');
     await this.campaigns.softRemove(campaign);
     return { id };
-  }
-
-  /**
-   * Duplicate a campaign as a fresh DRAFT — copies content (incl. gallery) but
-   * NOT the live totals: `raisedAmount` resets and, being a new campaign row,
-   * its computed `receivedAmount` starts at 0. Gets a unique "… (copy)" slug.
-   */
-  async duplicateCampaign(id: string, userId: string): Promise<DonationCampaign> {
-    const src = await this.campaigns.findOne({ where: { id } });
-    if (!src) throw new NotFoundException('Campaign not found');
-
-    const title = `${src.title} (copy)`;
-    const slug = await this.uniqueSlug(this.slugify(title) || 'campaign');
-
-    const copy = this.campaigns.create({
-      title,
-      slug,
-      description: src.description,
-      targetAmount: src.targetAmount,
-      raisedAmount: 0,
-      currency: src.currency,
-      fundType: src.fundType,
-      subFundId: src.subFundId,
-      startDate: src.startDate,
-      endDate: src.endDate,
-      heroImageUrl: src.heroImageUrl,
-      galleryImages: [...(src.galleryImages ?? [])],
-      isFeatured: false,
-      sortOrder: src.sortOrder,
-      ctaText: src.ctaText,
-      status: CampaignStatus.DRAFT,
-      createdBy: userId,
-    });
-    return this.campaigns.save(copy);
-  }
-
-  // ── Campaign updates (news feed) ──────────────────────────────────────────
-
-  /** Updates for a campaign, newest first. `publicOnly` is future-proofing —
-   *  all current updates are public once their campaign is. */
-  async listCampaignUpdates(campaignId: string, _publicOnly = false): Promise<CampaignUpdate[]> {
-    return this.campaignUpdates.find({
-      where: { campaignId },
-      order: { publishedAt: 'DESC', createdAt: 'DESC' },
-    });
-  }
-
-  async createCampaignUpdate(
-    campaignId: string,
-    dto: CreateCampaignUpdateDto,
-  ): Promise<CampaignUpdate> {
-    const campaign = await this.campaigns.findOne({ where: { id: campaignId } });
-    if (!campaign) throw new NotFoundException('Campaign not found');
-    const update = this.campaignUpdates.create({
-      campaignId,
-      title: dto.title,
-      body: dto.body,
-      publishedAt: dto.publishedAt ? new Date(dto.publishedAt) : new Date(),
-    });
-    return this.campaignUpdates.save(update);
-  }
-
-  async updateCampaignUpdate(
-    updateId: string,
-    dto: UpdateCampaignUpdateDto,
-  ): Promise<CampaignUpdate> {
-    const update = await this.campaignUpdates.findOne({ where: { id: updateId } });
-    if (!update) throw new NotFoundException('Update not found');
-    if (dto.title !== undefined) update.title = dto.title;
-    if (dto.body !== undefined) update.body = dto.body;
-    if (dto.publishedAt !== undefined) update.publishedAt = new Date(dto.publishedAt);
-    return this.campaignUpdates.save(update);
-  }
-
-  async deleteCampaignUpdate(updateId: string): Promise<{ id: string }> {
-    const update = await this.campaignUpdates.findOne({ where: { id: updateId } });
-    if (!update) throw new NotFoundException('Update not found');
-    await this.campaignUpdates.softRemove(update);
-    return { id: updateId };
   }
 }

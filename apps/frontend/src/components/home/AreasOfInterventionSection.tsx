@@ -24,6 +24,15 @@ import { CardEditToolbar } from '@/components/edit-mode/CardEditToolbar';
 /** Lucide icon name → component. Falls back to Globe for unknown names. */
 const ICONS: Record<string, LucideIcon> = { BookOpen, Heart, GraduationCap, Globe };
 
+/**
+ * Where a pillar card links. Dawah is consolidated with the full Dawah section:
+ * its pillar leads straight to `/dawah` (courses, library, discussions) instead
+ * of the generic `/areas/dawah` page (which now redirects there too).
+ */
+function areaHref(locale: string, slug: string): string {
+  return slug === 'dawah' ? `/${locale}/dawah` : `/${locale}/areas/${slug}`;
+}
+
 /** Icon choices offered in edit mode (must be keys of ICONS). */
 const ICON_OPTIONS: InlineSelectOption[] = [
   { value: 'BookOpen', label: 'Book', icon: BookOpen },
@@ -164,7 +173,7 @@ function PillarCard({
           {/* This card links to a detail page; its slug + rich content are edited
               from the card's full editor (coming next), not inline here. */}
           <p className="relative mt-5 text-[11px] font-medium text-gray-400" dir="ltr">
-            Links to /{locale}/areas/{item.slug || '…'}
+            Links to {item.slug ? areaHref(locale, item.slug) : `/${locale}/areas/…`}
           </p>
         </div>
       </div>
@@ -175,7 +184,7 @@ function PillarCard({
   return (
     <div ref={ref} style={{ transitionDelay: `${delay}ms` }} className={wrapperClass}>
       <Link
-        href={`/${locale}/areas/${item.slug}`}
+        href={areaHref(locale, item.slug)}
         dir={rtl ? 'rtl' : 'ltr'}
         className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-gray-200/70 bg-white p-7 lg:p-8 transition-all duration-300 hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_12px_28px_-16px_rgba(26,122,74,0.2)] cursor-pointer"
       >

@@ -1,11 +1,9 @@
 /* ──────────────────────────────────────────────────────────────
-   Shared data + helpers for the Activities & Events experience.
-   Single source of truth for the home-page preview
-   (ActivitiesEventsSection) and the full /activities page.
+   Shared presentation helpers — badges, dates, and money formatting.
 
-   Every RMC activity is a charity, so each item carries impact
-   figures (people helped, budget used) and every upcoming event is
-   a fundraising campaign with a goal (needed) and raised (current).
+   The home "Latest & Upcoming Programs" section and the admin Donate
+   dashboard reuse these (e.g. `formatMoney`, `fundedPercent`, `MONTHS`),
+   so they live in one place rather than being duplicated per feature.
    ────────────────────────────────────────────────────────────── */
 
 /* Cohesive, on-brand badge family — lean green / gold / neutral,
@@ -23,12 +21,8 @@ export function badgeClass(tone: BadgeTone) {
   return `inline-flex items-center rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ring-1 ring-inset ${BADGE_STYLES[tone]}`;
 }
 
-/* Full-resolution Unsplash URL for the gallery viewer */
-const hi = (id: string) => `https://images.unsplash.com/${id}?q=80&w=1280&auto=format&fit=crop`;
-const IMG_EDU = 'photo-1541339907198-e08756dedf3f';
-const IMG_AID = 'photo-1532629345422-7515f3d16bb6';
-const IMG_CONF = 'photo-1521791136064-7986c2920216';
-
+/** A latest activity, with Tri fields already resolved to plain strings for
+ *  the current locale — the shape the gallery lightbox (GalleryModal) renders. */
 export interface Activity {
   id: string;
   category: string;
@@ -42,127 +36,7 @@ export interface Activity {
   budgetUsed: number; // charity impact — funds spent (RWF)
 }
 
-export interface RmcEvent {
-  id: string;
-  title: string;
-  date: string; // ISO "YYYY-MM-DD" — drives the tile, ordering and countdown
-  time: string;
-  location: string;
-  type: string;
-  tone: BadgeTone;
-  goalAmount: number; // fundraising target — money needed (RWF)
-  raisedAmount: number; // fundraising progress — money raised so far (RWF)
-}
-
-/* ──────────────────────────────────────────────────────────────
-   DATA — coherent for TODAY = 12 June 2026
-   LATEST   → recent past (mid-Apr → early-Jun 2026)
-   UPCOMING → future, chronological (20 Jun → Nov 2026)
-   ────────────────────────────────────────────────────────────── */
-export const ACTIVITIES: Activity[] = [
-  {
-    id: 'a1',
-    category: 'Education',
-    tone: 'green',
-    title: 'RMC Launches Digital Madrassa Across All Provinces',
-    excerpt:
-      'A new online platform for Islamic education is now live nationwide, bringing structured Qur’an and Arabic lessons to over 2,000 children in its first month.',
-    date: 'June 4, 2026',
-    image:
-      'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=200&auto=format&fit=crop',
-    gallery: [hi(IMG_EDU), hi(IMG_CONF), hi(IMG_AID)],
-    peopleHelped: 2000,
-    budgetUsed: 18_000_000,
-  },
-  {
-    id: 'a2',
-    category: 'Community',
-    tone: 'gold',
-    title: 'Ramadan Food Distribution Reaches 5,000 Families',
-    excerpt:
-      'In partnership with local NGOs, RMC delivered food packages to 5,000 vulnerable families across Rwanda throughout the blessed month of Ramadan.',
-    date: 'May 12, 2026',
-    image:
-      'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=200&auto=format&fit=crop',
-    gallery: [hi(IMG_AID), hi(IMG_EDU), hi(IMG_CONF)],
-    peopleHelped: 5000,
-    budgetUsed: 45_000_000,
-  },
-  {
-    id: 'a3',
-    category: 'Leadership',
-    tone: 'neutral',
-    title: 'Annual Imam Training Conference Held in Musanze',
-    excerpt:
-      '120 imams from across Rwanda gathered for a three-day programme on community leadership, digital outreach, and pastoral care.',
-    date: 'April 18, 2026',
-    image:
-      'https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=200&auto=format&fit=crop',
-    gallery: [hi(IMG_CONF), hi(IMG_AID), hi(IMG_EDU)],
-    peopleHelped: 120,
-    budgetUsed: 8_500_000,
-  },
-];
-
-export const EVENTS: RmcEvent[] = [
-  {
-    id: 'e1',
-    title: 'Eid al-Adha National Celebration',
-    date: '2026-06-20',
-    time: '08:00 AM',
-    location: 'Amahoro National Stadium, Kigali',
-    type: 'Religious',
-    tone: 'green',
-    goalAmount: 30_000_000,
-    raisedAmount: 22_000_000,
-  },
-  {
-    id: 'e2',
-    title: 'RMC Annual Scholarship Awards Ceremony',
-    date: '2026-07-11',
-    time: '10:00 AM',
-    location: 'Kigali Convention Centre',
-    type: 'Education',
-    tone: 'green',
-    goalAmount: 50_000_000,
-    raisedAmount: 38_000_000,
-  },
-  {
-    id: 'e3',
-    title: 'Muslim Women Leadership Summit',
-    date: '2026-08-08',
-    time: '09:00 AM',
-    location: 'Serena Hotel, Kigali',
-    type: 'Community',
-    tone: 'gold',
-    goalAmount: 15_000_000,
-    raisedAmount: 9_000_000,
-  },
-  {
-    id: 'e4',
-    title: 'Qur’an Recitation Competition — National Finals',
-    date: '2026-09-26',
-    time: '02:00 PM',
-    location: 'Grand Mosque of Kigali',
-    type: 'Da’wah',
-    tone: 'gold',
-    goalAmount: 12_000_000,
-    raisedAmount: 7_500_000,
-  },
-  {
-    id: 'e5',
-    title: 'RMC General Assembly Meeting',
-    date: '2026-11-14',
-    time: '09:00 AM',
-    location: 'RMC Headquarters, Rebero',
-    type: 'Governance',
-    tone: 'neutral',
-    goalAmount: 8_000_000,
-    raisedAmount: 8_000_000,
-  },
-];
-
-/* ── Date helpers (parsed from ISO; TODAY is 12 June 2026) ── */
+/* ── Date helpers (ISO dates; "upcoming" is measured from the real today) ── */
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 export function parseISO(iso: string) {
@@ -234,12 +108,3 @@ export function fundedPercent(raised: number, goal: number): number {
   if (goal <= 0) return 0;
   return Math.min(100, Math.round((raised / goal) * 100));
 }
-
-/* ── Aggregate impact totals (derived once from the data above) ── */
-export const IMPACT = {
-  peopleHelped: ACTIVITIES.reduce((sum, a) => sum + a.peopleHelped, 0),
-  budgetUsed: ACTIVITIES.reduce((sum, a) => sum + a.budgetUsed, 0),
-  campaigns: EVENTS.length,
-  raised: EVENTS.reduce((sum, e) => sum + e.raisedAmount, 0),
-  goal: EVENTS.reduce((sum, e) => sum + e.goalAmount, 0),
-};

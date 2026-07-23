@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -23,9 +23,13 @@ import {
   type ActivitiesContent,
   type BadgeTone,
 } from '@/lib/content-api';
+import { uploadAreaImage } from '@/lib/galleryApi';
+import { assetUrl } from '@/lib/api';
+import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
 import {
   CalendarDays, ArrowLeft, Plus, Edit2, Trash2,
   Newspaper, Calendar, Clock, MapPin, Tag, Save, Users, Wallet, Target,
+  Upload, X, ImageIcon, Loader2, Link2,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -66,8 +70,6 @@ const EMPTY_EVENT: EventItem = {
   location: '',
   type: tri(''),
   tone: 'green',
-  goalAmount: 0,
-  raisedAmount: 0,
 };
 
 let rowSeq = 0;
@@ -96,7 +98,6 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
   const { success, error } = useToast();
 
   // Header Tri fields.
-  const [eyebrow, setEyebrow] = useState<Tri>(ACTIVITIES_DEFAULT.eyebrow);
   const [title, setTitle] = useState<Tri>(ACTIVITIES_DEFAULT.title);
   const [lede, setLede] = useState<Tri>(ACTIVITIES_DEFAULT.lede);
   const [activitiesHeading, setActivitiesHeading] = useState<Tri>(ACTIVITIES_DEFAULT.activitiesHeading);
@@ -118,7 +119,27 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
 
   const [activityForm, setActivityForm] = useState<ActivityItem>(EMPTY_ACTIVITY);
   const [eventForm, setEventForm] = useState<EventItem>(EMPTY_EVENT);
-  const [galleryText, setGalleryText] = useState(''); // newline-separated URLs
+  // Newline-separated gallery entries. Each line is either a pasted URL or a
+  // file-server key returned by an upload — `assetUrl` resolves both on render.
+  const [galleryText, setGalleryText] = useState('');
+
+  // Campaigns an event can optionally be linked to (the picker's options).
+  const [campaigns, setCampaigns] = useState<PublicCampaign[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
+
+  // Image uploads (thumbnail + gallery). Uploaded files land in the file-server
+  // and are stored as bare keys, so URLs and uploads can be mixed freely.
+  const [thumbUploading, setThumbUploading] = useState(false);
+  const [thumbProgress, setThumbProgress] = useState(0);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const thumbInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  /** Gallery entries parsed out of the textarea — the single source of truth. */
+  const galleryList = useMemo(
+    () => galleryText.split('\n').map((s) => s.trim()).filter(Boolean),
+    [galleryText],
+  );
 
   // Load any previously saved content; fall back to defaults if none exists.
   useEffect(() => {
@@ -127,7 +148,6 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
       .then((data) => {
         if (active && data) {
           const merged = { ...ACTIVITIES_DEFAULT, ...data };
-          setEyebrow(merged.eyebrow);
           setTitle(merged.title);
           setLede(merged.lede);
           setActivitiesHeading(merged.activitiesHeading);
@@ -147,12 +167,30 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
     };
   }, []);
 
+  // Campaign options for the event form's optional fundraising link.
+  useEffect(() => {
+    let active = true;
+    donationsApi
+      .listCampaigns()
+      .then((data) => {
+        if (active) setCampaigns(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        /* leave empty — the picker then only offers "None" */
+      })
+      .finally(() => {
+        if (active) setCampaignsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   /** Persist the whole ActivitiesContent to the store. Accepts overrides so a
    *  freshly-computed list can be saved before React state has settled. */
   const persist = useCallback(
     async (override?: Partial<{ activities: ActivityRow[]; events: EventRow[] }>) => {
       const full: ActivitiesContent = {
-        eyebrow,
         title,
         lede,
         activitiesHeading,
@@ -162,7 +200,7 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
       };
       await saveSiteContent(ContentKeys.activities, full);
     },
-    [eyebrow, title, lede, activitiesHeading, eventsHeading, activities, events],
+    [title, lede, activitiesHeading, eventsHeading, activities, events],
   );
 
   // ── Modal open/close ──────────────────────────────────────────────────────
@@ -212,6 +250,52 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
   const setETri = useCallback((field: 'title' | 'type', value: string) => {
     setEventForm((prev) => ({ ...prev, [field]: { ...prev[field], [triKey[modalLang]]: value } }));
   }, [modalLang]);
+
+  // ── Image uploads ─────────────────────────────────────────────────────────
+
+  /** Upload a thumbnail and store its key in place of the URL. */
+  const handleThumbFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ''; // allow re-picking the same file
+    setThumbUploading(true);
+    setThumbProgress(0);
+    try {
+      const key = await uploadAreaImage(file, 'activities', setThumbProgress);
+      setActivityForm((prev) => ({ ...prev, image: key }));
+      success('Thumbnail uploaded.');
+    } catch {
+      error('Thumbnail upload failed. Please try again.');
+    } finally {
+      setThumbUploading(false);
+    }
+  }, [success, error]);
+
+  /** Upload one or more gallery images, appending each key as a new line. */
+  const handleGalleryFiles = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    e.target.value = '';
+    setGalleryUploading(true);
+    try {
+      for (const file of files) {
+        const key = await uploadAreaImage(file, 'activities-gallery');
+        setGalleryText((prev) => (prev.trim() ? `${prev.replace(/\n+$/, '')}\n${key}` : key));
+      }
+      success(files.length === 1 ? 'Gallery image added.' : `${files.length} images added.`);
+    } catch {
+      error('Gallery upload failed. Please try again.');
+    } finally {
+      setGalleryUploading(false);
+    }
+  }, [success, error]);
+
+  /** Drop one gallery entry, rewriting the textarea from the parsed list. */
+  const removeGalleryImage = useCallback((idx: number) => {
+    setGalleryText((prev) =>
+      prev.split('\n').map((s) => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join('\n'),
+    );
+  }, []);
 
   // ── Save (create / update) ────────────────────────────────────────────────
 
@@ -342,9 +426,6 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
         </div>
         <LanguageTabs lang={lang} onChange={setLang} />
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label={`Eyebrow (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
-            <input dir={dir} type="text" value={eyebrow[triKey[lang]]} onChange={(e) => setEyebrow((p) => ({ ...p, [triKey[lang]]: e.target.value }))} placeholder="Activities & Events" className={`${INPUT_CLS} ${fc}`} />
-          </FormField>
           <FormField label={`Title (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
             <input dir={dir} type="text" value={title[triKey[lang]]} onChange={(e) => setTitle((p) => ({ ...p, [triKey[lang]]: e.target.value }))} placeholder="Latest & Upcoming" className={`${INPUT_CLS} ${fc}`} />
           </FormField>
@@ -438,9 +519,11 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
                   {item.location && <><MapPin className="w-3 h-3" />{item.location}</>}
                   {item.time && <><Clock className="w-3 h-3 ml-2" />{item.time}</>}
                 </p>
-                <p className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-                  <Target className="w-3 h-3" />{item.raisedAmount.toLocaleString()} / {item.goalAmount.toLocaleString()} raised
-                </p>
+                {item.campaignSlug && (
+                  <p className="flex items-center gap-1 text-xs text-rmc-green mt-1">
+                    <Target className="w-3 h-3" />Fundraising · {item.campaignSlug}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button onClick={() => openEditEvent(item)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
@@ -450,6 +533,10 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
           );
         })}
       </div>
+
+      {/* Hidden pickers driving the thumbnail / gallery upload buttons */}
+      <input ref={thumbInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleThumbFile} />
+      <input ref={galleryInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleGalleryFiles} />
 
       {/* ── Modal ── */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
@@ -476,15 +563,114 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
                 <FormField label="Budget Used (RWF)">
                   <input type="number" value={activityForm.budgetUsed} onChange={(e) => setAField('budgetUsed', Number(e.target.value))} className={INPUT_CLS} />
                 </FormField>
-                <div className="sm:col-span-2">
-                  <FormField label="Thumbnail Image URL">
-                    <input type="url" value={activityForm.image} onChange={(e) => setAField('image', e.target.value)} placeholder="https://images.unsplash.com/..." className={INPUT_CLS} />
-                  </FormField>
+              </div>
+
+              {/* Thumbnail — upload a file or paste a URL (both land in `image`) */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">Thumbnail Image</label>
+                {activityForm.image ? (
+                  <div className="relative w-full h-40 rounded-2xl overflow-hidden border border-gray-200 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={assetUrl(activityForm.image)} alt="Thumbnail" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => thumbInputRef.current?.click()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-700 text-xs font-semibold rounded-lg shadow hover:bg-gray-50 transition-colors"
+                      >
+                        <Upload className="w-3.5 h-3.5" /> Replace
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAField('image', '')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg shadow hover:bg-red-700 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" /> Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => thumbInputRef.current?.click()}
+                    disabled={thumbUploading}
+                    className="w-full h-32 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-teal-400 hover:text-teal-500 transition-colors disabled:opacity-60"
+                  >
+                    {thumbUploading ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="text-xs font-semibold">{thumbProgress}%</span>
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="w-6 h-6" />
+                        <span className="text-xs font-semibold">Click to upload a thumbnail</span>
+                        <span className="text-[10px]">JPEG · PNG · WebP</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <div className="mt-2 flex items-center gap-2">
+                  <Link2 className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                  <input
+                    type="text"
+                    value={activityForm.image}
+                    onChange={(e) => setAField('image', e.target.value)}
+                    placeholder="…or paste an image URL"
+                    className={`${INPUT_CLS} font-mono text-xs`}
+                  />
                 </div>
               </div>
-              <FormField label="Gallery Image URLs (one per line)">
-                <textarea rows={3} value={galleryText} onChange={(e) => setGalleryText(e.target.value)} placeholder={"https://images.unsplash.com/...\nhttps://images.unsplash.com/..."} className={`${INPUT_CLS} resize-none font-mono text-xs`} />
-              </FormField>
+
+              {/* Gallery — uploads append to the same newline-separated list */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Gallery Images
+                    <span className="ml-1 font-normal text-gray-400">
+                      ({galleryList.length} image{galleryList.length !== 1 ? 's' : ''})
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    disabled={galleryUploading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-teal-600 border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors disabled:opacity-60"
+                  >
+                    {galleryUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {galleryUploading ? 'Uploading…' : 'Add Images'}
+                  </button>
+                </div>
+                {(galleryList.length > 0 || galleryUploading) && (
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {galleryList.map((src, idx) => (
+                      <div key={src + idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={assetUrl(src)} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryImage(idx)}
+                          className="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 shadow"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {galleryUploading && (
+                      <div className="aspect-square rounded-xl border-2 border-dashed border-teal-300 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-teal-400 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                <textarea
+                  rows={3}
+                  value={galleryText}
+                  onChange={(e) => setGalleryText(e.target.value)}
+                  placeholder={"Uploaded images appear here.\nYou can also paste image URLs — one per line."}
+                  className={`${INPUT_CLS} resize-none font-mono text-xs`}
+                />
+              </div>
 
               {/* Language tabs */}
               <div className="border rounded-2xl border-gray-100 overflow-hidden">
@@ -522,12 +708,37 @@ function ActivitiesEventsManager({ embedded = false }: { embedded?: boolean } = 
                     <input type="text" value={eventForm.location} onChange={(e) => setEField('location', e.target.value)} placeholder="Amahoro National Stadium, Kigali" className={INPUT_CLS} />
                   </FormField>
                 </div>
-                <FormField label="Goal Amount (RWF)">
-                  <input type="number" value={eventForm.goalAmount} onChange={(e) => setEField('goalAmount', Number(e.target.value))} className={INPUT_CLS} />
-                </FormField>
-                <FormField label="Raised Amount (RWF)">
-                  <input type="number" value={eventForm.raisedAmount} onChange={(e) => setEField('raisedAmount', Number(e.target.value))} className={INPUT_CLS} />
-                </FormField>
+                <div className="sm:col-span-3">
+                  <FormField label="Donation Campaign (optional)">
+                    <select
+                      value={eventForm.campaignSlug ?? ''}
+                      onChange={(e) => setEField('campaignSlug', e.target.value || undefined)}
+                      className={SELECT_CLS}
+                      disabled={campaignsLoading}
+                    >
+                      <option value="">
+                        {campaignsLoading ? 'Loading campaigns…' : 'None — calendar entry only'}
+                      </option>
+                      {campaigns.map((c) => (
+                        <option key={c.slug} value={c.slug}>{c.title}</option>
+                      ))}
+                      {/* Keep an unresolvable slug visible instead of silently clearing it. */}
+                      {!campaignsLoading &&
+                        eventForm.campaignSlug &&
+                        !campaigns.some((c) => c.slug === eventForm.campaignSlug) && (
+                          <option value={eventForm.campaignSlug}>
+                            {eventForm.campaignSlug} (campaign not found)
+                          </option>
+                        )}
+                    </select>
+                  </FormField>
+                  <p className="mt-1.5 text-[11px] text-gray-400">
+                    Most events are plain calendar entries. Link a campaign only when the event
+                    raises funds — the card then shows that campaign&apos;s live progress and a
+                    Donate button. Raised/goal figures come from real donations, so they are
+                    never entered here.
+                  </p>
+                </div>
               </div>
 
               {/* Language tabs */}

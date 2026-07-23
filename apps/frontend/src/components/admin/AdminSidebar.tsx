@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
-  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Flag, Briefcase, Award, ClipboardList,
+  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Flag, Briefcase, Award, ClipboardList, Building2,
 } from 'lucide-react';
 
 interface NavItem {
@@ -31,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'goodConduct', href: '/admin/good-conduct', icon: ShieldCheck,   labelKey: 'sidebar.goodConduct', group: 'main', permission: Permission.GOOD_CONDUCT_VIEW },
   { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW       },
   { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW },
+  { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
   { key: 'jobs',      href: '/admin/jobs',         icon: Briefcase,       labelKey: 'sidebar.jobs',      group: 'main',   permission: Permission.JOB_APPLICATIONS_VIEW },
   { key: 'jobPostings', href: '/admin/job-postings', icon: ClipboardList, labelKey: 'sidebar.jobPostings', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
   { key: 'mosques',   href: '/admin/mosques',      icon: Landmark,        labelKey: 'sidebar.mosques',   group: 'main',   permission: Permission.MOSQUES_VIEW      },

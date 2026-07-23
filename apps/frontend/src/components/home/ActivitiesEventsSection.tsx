@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
@@ -29,10 +29,19 @@ import {
   pick,
   isRtl,
   type ActivitiesContent,
+  type ActivityItem,
+  type EventItem,
   type Locale,
 } from '@/lib/content-api';
+import { assetUrl } from '@/lib/api';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { InlineText } from '@/components/edit-mode/InlineText';
+import { InlineImage } from '@/components/edit-mode/InlineImage';
+import { CardEditToolbar } from '@/components/edit-mode/CardEditToolbar';
+import { ActivityEventDetailModal } from './ActivityEventDetailModal';
+import { EventCampaignProgress } from './EventCampaignProgress';
+import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
 
 // Activity dates are free-form display strings (e.g. "June 4, 2026"); parse to a
 // timestamp for recency sorting, falling back to 0 when unparseable.
@@ -54,8 +63,12 @@ export function ActivitiesEventsSection() {
   );
   const lang = locale as Locale;
 
+  const { bumpSeed } = useEditMode();
+
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [imgIndex, setImgIndex] = useState(0);
+  // Which card's "details" sheet is open, addressed by stored-array index.
+  const [detail, setDetail] = useState<{ kind: 'activity' | 'event'; index: number } | null>(null);
 
   // The home page surfaces only 3 rows per column — the full lists live on the
   // /activities page ("View all").
@@ -64,28 +77,71 @@ export function ActivitiesEventsSection() {
   // today: past events drop off automatically, the remainder is ordered
   // soonest-first, and the very next one is featured. Recomputes whenever the
   // content changes so the section always reflects the current date.
+  // Live campaign data, fetched only when at least one event is actually linked
+  // to one — most events are plain calendar entries, and the public site should
+  // not pay for a donations request it has no use for.
+  const [campaigns, setCampaigns] = useState<PublicCampaign[]>([]);
+  const needsCampaigns = useMemo(
+    () => content.events.some((e) => !!e.campaignSlug),
+    [content.events],
+  );
+
+  useEffect(() => {
+    if (!needsCampaigns) return;
+    let active = true;
+    donationsApi
+      .listCampaigns()
+      .then((data) => {
+        if (active) setCampaigns(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        /* leave empty — cards fall back to plain calendar entries */
+      });
+    return () => {
+      active = false;
+    };
+  }, [needsCampaigns]);
+
+  /** slug → campaign, so a linked event resolves its live totals in O(1). */
+  const campaignBySlug = useMemo(
+    () => new Map(campaigns.map((c) => [c.slug, c])),
+    [campaigns],
+  );
+
+  // Each derived entry keeps the event's index in `content.events` so an inline
+  // edit can write back to the right item after filtering/sorting.
+  const eventEntries = useMemo(
+    () => content.events.map((event, eventIndex) => ({ event, eventIndex })),
+    [content.events],
+  );
+
   const upcomingEvents = useMemo(
     () =>
-      [...content.events]
-        .filter((e) => isUpcoming(e.date))
-        .sort((a, b) => parseISO(a.date).dateObj.getTime() - parseISO(b.date).dateObj.getTime())
+      eventEntries
+        .filter(({ event }) => isUpcoming(event.date))
+        .sort((a, b) => parseISO(a.event.date).dateObj.getTime() - parseISO(b.event.date).dateObj.getTime())
         .slice(0, 3),
-    [content.events],
+    [eventEntries],
   );
 
   // Completed events (date already passed) are NOT dropped — they roll into the
   // "Latest" column, most-recent-first, so nothing the community did disappears.
   const pastEvents = useMemo(
     () =>
-      [...content.events]
-        .filter((e) => !isUpcoming(e.date))
-        .sort((a, b) => parseISO(b.date).dateObj.getTime() - parseISO(a.date).dateObj.getTime())
+      eventEntries
+        .filter(({ event }) => !isUpcoming(event.date))
+        .sort((a, b) => parseISO(b.event.date).dateObj.getTime() - parseISO(a.event.date).dateObj.getTime())
         .slice(0, 3),
-    [content.events],
+    [eventEntries],
   );
 
-  const [featured, ...rest] = upcomingEvents;
+  const [featuredEntry, ...rest] = upcomingEvents;
+  const featured = featuredEntry?.event ?? null;
+  const featuredIndex = featuredEntry?.eventIndex ?? -1;
   const fDate = featured ? parseISO(featured.date) : null;
+  const featuredCampaign = featured?.campaignSlug
+    ? campaignBySlug.get(featured.campaignSlug)
+    : undefined;
 
   // "Latest" = activity news + completed events, merged most-recent-first and
   // capped at 3 rows. Activity rows carry their original index so the gallery
@@ -97,10 +153,11 @@ export function ActivitiesEventsSection() {
       activity,
       activityIndex,
     }));
-    const past = pastEvents.map((event) => ({
+    const past = pastEvents.map(({ event, eventIndex }) => ({
       kind: 'event' as const,
       ts: parseISO(event.date).dateObj.getTime(),
       event,
+      eventIndex,
     }));
     return [...acts, ...past].sort((a, b) => b.ts - a.ts).slice(0, 3);
   }, [content.activities, pastEvents]);
@@ -126,6 +183,34 @@ export function ActivitiesEventsSection() {
   const openGallery = (i: number) => {
     setImgIndex(0);
     setOpenIndex(i);
+  };
+
+  // ── Edit Mode writes ───────────────────────────────────────────────────────
+  // Cards are rendered from derived lists, so every mutation addresses the item
+  // by its index in the stored array rather than its on-screen position.
+
+  const setActivityTri = (i: number, field: 'title' | 'excerpt' | 'category', v: string) =>
+    setField((d) => { d.activities[i][field][lang] = v; });
+
+  const setActivityField = <K extends keyof ActivityItem>(i: number, field: K, value: ActivityItem[K]) =>
+    setField((d) => { d.activities[i][field] = value; });
+
+  const setEventTri = (i: number, field: 'title' | 'type', v: string) =>
+    setField((d) => { d.events[i][field][lang] = v; });
+
+  const setEventField = <K extends keyof EventItem>(i: number, field: K, value: EventItem[K]) =>
+    setField((d) => { d.events[i][field] = value; });
+
+  const deleteActivity = (i: number) => {
+    setField((d) => { d.activities.splice(i, 1); });
+    setDetail(null);
+    bumpSeed(); // re-seed the index-keyed editables onto their new positions
+  };
+
+  const deleteEvent = (i: number) => {
+    setField((d) => { d.events.splice(i, 1); });
+    setDetail(null);
+    bumpSeed();
   };
 
   return (
@@ -232,6 +317,64 @@ export function ActivitiesEventsSection() {
                   const title = pick(activity.title, locale);
                   const excerpt = pick(activity.excerpt, locale);
                   const category = pick(activity.category, locale);
+
+                  // Edit Mode: same card, but non-navigating and click-to-edit.
+                  if (editing) {
+                    return (
+                      <div key={`act-edit-${activityIndex}`} className="relative flex gap-4 p-4 sm:p-5">
+                        <CardEditToolbar
+                          onEdit={() => setDetail({ kind: 'activity', index: activityIndex })}
+                          onDelete={() => deleteActivity(activityIndex)}
+                        />
+
+                        <InlineImage
+                          value={activity.image}
+                          onChange={(key) => setActivityField(activityIndex, 'image', key)}
+                          folder="activities"
+                          alt={title}
+                          className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl"
+                          imgClassName="object-cover"
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`${badgeClass(activity.tone)} ${arFont}`}>
+                              <InlineText
+                                lang={locale}
+                                value={category}
+                                onCommit={(v) => setActivityTri(activityIndex, 'category', v)}
+                                dir={rtl ? 'rtl' : 'ltr'}
+                                placeholder="Category"
+                              />
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                              <Calendar className="w-3 h-3 shrink-0" />
+                              {activity.date || '—'}
+                            </span>
+                          </div>
+                          <InlineText
+                            as="h4"
+                            lang={locale}
+                            value={title}
+                            onCommit={(v) => setActivityTri(activityIndex, 'title', v)}
+                            className={`text-sm sm:text-[15px] font-bold text-gray-900 leading-snug mb-1.5 ${arFont}`}
+                            dir={rtl ? 'rtl' : 'ltr'}
+                            placeholder="Activity title"
+                          />
+                          <InlineText
+                            as="p"
+                            lang={locale}
+                            value={excerpt}
+                            onCommit={(v) => setActivityTri(activityIndex, 'excerpt', v)}
+                            className={`text-xs sm:text-[13px] text-gray-500 leading-relaxed ${arFont}`}
+                            dir={rtl ? 'rtl' : 'ltr'}
+                            placeholder="Short excerpt"
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <button
                       key={`act-${activityIndex}`}
@@ -245,7 +388,7 @@ export function ActivitiesEventsSection() {
                       <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 ring-1 ring-black/5">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={activity.image}
+                          src={assetUrl(activity.image)}
                           alt={title}
                           loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-105"
@@ -292,8 +435,66 @@ export function ActivitiesEventsSection() {
                 }
 
                 // Completed event row — rolled into Latest once its date passed.
-                const { event } = item;
+                const { event, eventIndex } = item;
                 const d = parseISO(event.date);
+
+                // Edit Mode: same completed-event row, click-to-edit.
+                if (editing) {
+                  return (
+                    <div key={`past-edit-${eventIndex}`} className="relative flex gap-4 p-4 sm:p-5">
+                      <CardEditToolbar
+                        onEdit={() => setDetail({ kind: 'event', index: eventIndex })}
+                        onDelete={() => deleteEvent(eventIndex)}
+                      />
+
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-gray-100 ring-1 ring-black/5 flex flex-col items-center justify-center">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400 leading-none">
+                          {MONTHS[d.m]}
+                        </span>
+                        <span className="text-2xl font-bold text-gray-500 tabular-nums leading-tight">{d.d}</span>
+                        <span className="text-[9px] text-gray-400 leading-none">{d.y}</span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`${badgeClass(event.tone)} ${arFont}`}>
+                            <InlineText
+                              lang={locale}
+                              value={pick(event.type, locale)}
+                              onCommit={(v) => setEventTri(eventIndex, 'type', v)}
+                              dir={rtl ? 'rtl' : 'ltr'}
+                              placeholder="Type"
+                            />
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
+                            {pick({ en: 'Completed', rw: 'Byarangiye', ar: 'منتهية' }, locale)}
+                          </span>
+                        </div>
+                        <InlineText
+                          as="h4"
+                          lang={locale}
+                          value={pick(event.title, locale)}
+                          onCommit={(v) => setEventTri(eventIndex, 'title', v)}
+                          className={`text-sm sm:text-[15px] font-bold text-gray-900 leading-snug mb-1.5 ${arFont}`}
+                          dir={rtl ? 'rtl' : 'ltr'}
+                          placeholder="Event title"
+                        />
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            {event.time || '—'}
+                          </span>
+                          <span className="flex items-center gap-1 min-w-0">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{event.location?.split(',')[0] || '—'}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
                     key={`past-${i}`}
@@ -396,8 +597,65 @@ export function ActivitiesEventsSection() {
               </div>
             )}
 
+            {/* Featured (Edit Mode) — same treatment, click-to-edit */}
+            {editing && featured && fDate && (
+              <div className="relative block rounded-lg bg-rmc-green-deep text-white p-5 overflow-hidden">
+                <div className="absolute inset-0 pattern-islamic opacity-10 pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/60 to-transparent pointer-events-none" />
+
+                <CardEditToolbar
+                  onEdit={() => setDetail({ kind: 'event', index: featuredIndex })}
+                  onDelete={() => deleteEvent(featuredIndex)}
+                />
+
+                <div className="relative flex items-start gap-4">
+                  <div className="w-16 shrink-0 text-center rounded-lg bg-white/10 ring-1 ring-white/15 py-2.5 backdrop-blur-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/70 leading-none">
+                      {MONTHS[fDate.m]}
+                    </p>
+                    <p className="text-3xl font-bold leading-tight text-rmc-gold-light tabular-nums">{fDate.d}</p>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-rmc-gold-light">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
+                        {pick({ en: 'Next up', rw: 'Ibikurikira', ar: 'التالي' }, locale)}
+                      </span>
+                      <span className="text-[11px] font-semibold text-white/60">{countdownLabel(featured.date)}</span>
+                    </div>
+
+                    <InlineText
+                      as="h4"
+                      lang={locale}
+                      value={pick(featured.title, locale)}
+                      onCommit={(v) => setEventTri(featuredIndex, 'title', v)}
+                      className={`text-[15px] sm:text-base font-bold leading-snug mb-2 ${arFont}`}
+                      dir={rtl ? 'rtl' : 'ltr'}
+                      placeholder="Event title"
+                    />
+
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/70">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-rmc-gold-light shrink-0" />
+                        {formatLong(featured.date)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-rmc-gold-light shrink-0" />
+                        {featured.time || '—'}
+                      </span>
+                      <span className="flex items-center gap-1 min-w-0">
+                        <MapPin className="w-3 h-3 text-rmc-gold-light shrink-0" />
+                        <span className="truncate">{featured.location?.split(',')[0] || '—'}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Featured — the soonest event, elevated */}
-            {featured && fDate && (
+            {!editing && featured && fDate && (
               <Link
                 href={`/${locale}/activities`}
                 className="group relative block rounded-lg bg-rmc-green-deep text-white p-5 overflow-hidden motion-safe:hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 animate-fade-up"
@@ -449,6 +707,11 @@ export function ActivitiesEventsSection() {
                         <span className="truncate">{featured.location.split(',')[0]}</span>
                       </span>
                     </div>
+
+                    {/* Only when this event is tied to a live campaign */}
+                    {featuredCampaign && (
+                      <EventCampaignProgress campaign={featuredCampaign} locale={locale} dark />
+                    )}
                   </div>
                 </div>
               </Link>
@@ -456,8 +719,63 @@ export function ActivitiesEventsSection() {
 
             {/* Remaining events */}
             <div className="mt-3 space-y-3 flex-1">
-              {rest.map((event, i) => {
+              {rest.map(({ event, eventIndex }, i) => {
                 const d = parseISO(event.date);
+                const rowCampaign = event.campaignSlug ? campaignBySlug.get(event.campaignSlug) : undefined;
+
+                // Edit Mode: same row, click-to-edit.
+                if (editing) {
+                  return (
+                    <div
+                      key={`up-edit-${eventIndex}`}
+                      className="relative flex items-start gap-3 p-4 rounded-lg border border-gray-200/70 bg-white"
+                    >
+                      <CardEditToolbar
+                        onEdit={() => setDetail({ kind: 'event', index: eventIndex })}
+                        onDelete={() => deleteEvent(eventIndex)}
+                      />
+
+                      <div className="w-12 shrink-0 text-center rounded-lg bg-rmc-green-deep py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/70 leading-none">
+                          {MONTHS[d.m]}
+                        </p>
+                        <p className="text-xl font-bold leading-tight text-rmc-gold-light tabular-nums">{d.d}</p>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <span className={`${badgeClass(event.tone)} ${arFont}`}>
+                          <InlineText
+                            lang={locale}
+                            value={pick(event.type, locale)}
+                            onCommit={(v) => setEventTri(eventIndex, 'type', v)}
+                            dir={rtl ? 'rtl' : 'ltr'}
+                            placeholder="Type"
+                          />
+                        </span>
+                        <InlineText
+                          as="h4"
+                          lang={locale}
+                          value={pick(event.title, locale)}
+                          onCommit={(v) => setEventTri(eventIndex, 'title', v)}
+                          className={`mt-1.5 text-sm font-bold text-gray-900 leading-snug ${arFont}`}
+                          dir={rtl ? 'rtl' : 'ltr'}
+                          placeholder="Event title"
+                        />
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-gray-400">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            {event.time || '—'}
+                          </span>
+                          <span className="flex items-center gap-1 min-w-0">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{event.location?.split(',')[0] || '—'}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
                     key={i}
@@ -495,6 +813,9 @@ export function ActivitiesEventsSection() {
                           <span className="truncate">{event.location.split(',')[0]}</span>
                         </span>
                       </div>
+
+                      {/* Only when this event is tied to a live campaign */}
+                      {rowCampaign && <EventCampaignProgress campaign={rowCampaign} locale={locale} />}
                     </div>
                   </Link>
                 );
@@ -531,6 +852,19 @@ export function ActivitiesEventsSection() {
           </div>
         </div>
       </div>
+
+      {/* Edit Mode: the fields that don't edit well inline (dates, tone, amounts,
+          an activity's gallery) — opened from a card's pencil. */}
+      {editing && detail && (
+        <ActivityEventDetailModal
+          kind={detail.kind}
+          activity={detail.kind === 'activity' ? content.activities[detail.index] : undefined}
+          event={detail.kind === 'event' ? content.events[detail.index] : undefined}
+          onSetActivity={(field, value) => setActivityField(detail.index, field, value)}
+          onSetEvent={(field, value) => setEventField(detail.index, field, value)}
+          onClose={() => setDetail(null)}
+        />
+      )}
 
       {/* Image gallery lightbox */}
       {activeActivity && (

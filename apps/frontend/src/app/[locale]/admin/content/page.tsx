@@ -7,11 +7,11 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { GalleryManagement } from '@/components/admin/GalleryManagement';
 import {
-  BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
+  BookOpen, Megaphone, Info, Clock, Globe,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
-  Compass, ListChecks,
+  Compass, ListChecks, CalendarDays,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────

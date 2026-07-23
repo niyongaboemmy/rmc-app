@@ -12,10 +12,12 @@ import React from 'react';
 import { ArrowUp, ArrowDown, Trash2, Pencil } from 'lucide-react';
 
 interface CardEditToolbarProps {
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  /** Omit both move handlers to hide the arrows entirely — right for lists whose
+   *  order is derived (e.g. sorted by date) rather than author-controlled. */
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   onDelete: () => void;
   /** When provided, shows a pencil that opens the item's full editor. */
   onEdit?: () => void;
@@ -50,26 +52,30 @@ export function CardEditToolbar({
           <Pencil className="h-3.5 w-3.5" />
         </button>
       )}
-      <button
-        type="button"
-        onClick={stop(onMoveUp)}
-        disabled={!canMoveUp}
-        className={btn}
-        title="Move up"
-        aria-label="Move up"
-      >
-        <ArrowUp className="h-3.5 w-3.5" />
-      </button>
-      <button
-        type="button"
-        onClick={stop(onMoveDown)}
-        disabled={!canMoveDown}
-        className={btn}
-        title="Move down"
-        aria-label="Move down"
-      >
-        <ArrowDown className="h-3.5 w-3.5" />
-      </button>
+      {onMoveUp && (
+        <button
+          type="button"
+          onClick={stop(onMoveUp)}
+          disabled={!canMoveUp}
+          className={btn}
+          title="Move up"
+          aria-label="Move up"
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onMoveDown && (
+        <button
+          type="button"
+          onClick={stop(onMoveDown)}
+          disabled={!canMoveDown}
+          className={btn}
+          title="Move down"
+          aria-label="Move down"
+        >
+          <ArrowDown className="h-3.5 w-3.5" />
+        </button>
+      )}
       <button
         type="button"
         onClick={stop(onDelete)}

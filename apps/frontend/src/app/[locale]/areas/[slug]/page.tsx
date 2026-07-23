@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, BookOpen, Heart, GraduationCap, Globe, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -33,6 +33,10 @@ export default async function AreaDetailPage({
   params: { locale: string; slug: string };
 }) {
   const { locale, slug } = params;
+
+  // Dawah is consolidated with the full Dawah section — old /areas/dawah links
+  // (and prev/next / other-pillar nav) lead to the real dawah pages.
+  if (slug === 'dawah') redirect(`/${locale}/dawah`);
 
   const raw = await getSiteContent<AreasContent>(ContentKeys.areas).catch(() => null);
   const content: AreasContent = raw ? mergeContent(AREAS_DEFAULT, raw) : AREAS_DEFAULT;

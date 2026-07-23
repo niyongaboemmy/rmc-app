@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Calendar, ArrowRight, Images, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { assetUrl } from '@/lib/api';
 import { type Activity, badgeClass } from './data';
 
 /* ──────────────────────────────────────────────────────────────
@@ -90,7 +91,7 @@ export function GalleryModal({
         <div className="relative shrink-0 flex items-center justify-center bg-rmc-green-deep">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={images[index]}
+            src={assetUrl(images[index])}
             alt={`${activity.title} — image ${index + 1} of ${total}`}
             className="w-full max-h-[58vh] object-contain"
           />
@@ -143,7 +144,7 @@ export function GalleryModal({
                   }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <img src={assetUrl(src)} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
