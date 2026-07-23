@@ -9,12 +9,13 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight, ArrowLeft, User, GraduationCap, Users, Check,
-  CheckCircle2, Copy, Search, Upload, FileText, X, MessageSquareText, ShieldCheck,
+  CheckCircle2, Copy, Search, Upload, FileText, X, MessageSquareText, ShieldCheck, Eye,
 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/lib/mediaUpload';
 import {
@@ -468,18 +469,26 @@ function UploadSlot({
       >
         {file ? (
           <div className="flex items-center gap-2.5 px-3 py-3">
-            {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview} alt="preview" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100" />
-            ) : (
-              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-green-600" />
-              </div>
-            )}
+            <FilePreviewTrigger file={file} className="rounded-lg hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400">
+              {preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={preview} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100 cursor-zoom-in" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0 cursor-zoom-in">
+                  <FileText className="w-5 h-5 text-green-600" />
+                </div>
+              )}
+            </FilePreviewTrigger>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate leading-snug">{file.name}</p>
               <p className="text-[10px] text-gray-400">{fmtSize(file.size)}</p>
             </div>
+            <FilePreviewTrigger
+              file={file}
+              className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-rmc-green hover:border-gray-300 shrink-0"
+            >
+              <Eye className="w-3 h-3" />
+            </FilePreviewTrigger>
             <button
               type="button"
               onClick={() => onChange(null)}

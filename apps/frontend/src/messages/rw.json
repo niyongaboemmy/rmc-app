@@ -32,7 +32,17 @@
     "learnMore": "Menya Birenzeho",
     "readMore": "Soma Birenzeho",
     "viewAll": "Reba Byose",
-    "download": "Pakurura"
+    "download": "Pakurura",
+    "filePreview": {
+      "preview": "Reba",
+      "close": "Funga (Esc)",
+      "download": "Pakurura",
+      "openInNewTab": "Fungura mu idirishya rishya",
+      "zoomIn": "Kwegereza",
+      "zoomOut": "Kure",
+      "rotate": "Hindura icyerekezo",
+      "unsupported": "Ubu bwoko bwa dosiye ntibushobora kwerekanwa hano. Yipakurure uyisuzume mbere yo kohereza."
+    }
   },
   "auth": {
     "backToHome": "Subira Ahabanza",
@@ -3394,6 +3404,7 @@
       "about": "Ibyerekeye RMC",
       "services": "Serivisi Zacu",
       "schools": "Shaka Amashuri",
+      "newMuslim": "Kuba Umuyisilamu",
       "projects": "Imishinga",
       "announcements": "Amatangazo",
       "blog": "Amakuru",

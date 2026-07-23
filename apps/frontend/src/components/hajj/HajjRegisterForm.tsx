@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   UserRound, MapPin, BookUser, Receipt, Banknote, Upload,
-  Check, CheckCircle2, Loader2, X, FileCheck2, ArrowLeft, ArrowRight,
+  Check, CheckCircle2, Loader2, X, FileCheck2, ArrowLeft, ArrowRight, Eye,
 } from 'lucide-react';
 import {
   hajjApi,
@@ -22,6 +22,7 @@ import { publicApi } from '@/lib/public-api';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import { cn } from '@/lib/utils';
 
 /**
@@ -623,6 +624,17 @@ function ProofField({
   const [pct, setPct] = useState(0);
   const [uploadError, setUploadError] = useState('');
 
+  // The receipt is uploaded the moment it is picked, and stored receipts are not
+  // publicly readable — so the local File is the only copy we can show back to
+  // the applicant. Held here purely for the preview; it is never submitted.
+  const [localFile, setLocalFile] = useState<File | null>(null);
+
+  // Covers the parent clearing the proof (a failed submit reset, "Apply again"),
+  // which would otherwise leave a preview pointing at a receipt no longer held.
+  useEffect(() => {
+    if (!uploaded) setLocalFile(null);
+  }, [uploaded]);
+
   const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
 
   const pick = async (file: File | undefined) => {
@@ -643,9 +655,11 @@ function ProofField({
     setPct(0);
     try {
       onUploaded(await hajjApi.uploadProof(file, setPct));
+      setLocalFile(file);
     } catch {
       setUploadError(t('validation.proofUploadFailed'));
       onUploaded(null);
+      setLocalFile(null);
     } finally {
       setBusy(false);
     }
@@ -669,6 +683,12 @@ function ProofField({
             <span className="block truncate font-medium text-gray-900">{uploaded.fileName}</span>
             <span className="block text-[11.5px] text-gray-500">{prettySize(uploaded.fileSize)} · {t('fields.proofUploaded')}</span>
           </span>
+          <FilePreviewTrigger
+            file={localFile}
+            className="shrink-0 rounded-lg p-1 text-gray-400 hover:bg-white hover:text-rmc-green"
+          >
+            <Eye className="h-4 w-4" aria-hidden="true" />
+          </FilePreviewTrigger>
           <button
             type="button"
             onClick={() => onUploaded(null)}

@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowLeft, ArrowRight, Check, CheckCircle2, FileCheck2, Loader2, Upload, X,
+  ArrowLeft, ArrowRight, Check, CheckCircle2, Eye, FileCheck2, Loader2, Upload, X,
 } from 'lucide-react';
 import {
   funeralApi,
@@ -18,6 +18,7 @@ import {
 import { mosqueApi } from '@/lib/mosqueApi';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Button } from '@/components/ui/Button';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import type { Cemetery } from './types';
 
 // Rwandan phone: 10 digits starting 07 (e.g. 0788123456). National ID: 16 digits.
@@ -114,6 +115,9 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
   // Holds the STORED certificate (key + metadata) so the admin can open the real
   // file — previously only the filename was kept and the file was thrown away.
   const [certificate, setCertificate] = useState<UploadedFuneralDocument | null>(null);
+  // Kept only so the family can re-open the certificate they just attached —
+  // the stored copy needs an admin token, the local File does not.
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certUploading, setCertUploading] = useState(false);
   const [certPct, setCertPct] = useState(0);
   const [certError, setCertError] = useState('');
@@ -199,6 +203,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
     setCertError('');
     if (!file) {
       setCertificate(null);
+      setCertificateFile(null);
       setValue('deceased.deathCertificate', '');
       return;
     }
@@ -216,10 +221,12 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
     try {
       const doc = await funeralApi.uploadDocument(file, setCertPct);
       setCertificate(doc);
+      setCertificateFile(file);
       setValue('deceased.deathCertificate', doc.fileKey);
     } catch {
       setCertError(t('deceased.certificateUploadFailed'));
       setCertificate(null);
+      setCertificateFile(null);
       setValue('deceased.deathCertificate', '');
     } finally {
       setCertUploading(false);
@@ -339,6 +346,12 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
                         {Math.max(1, Math.round(certificate.fileSize / 1024))} KB · {t('deceased.certificateUploaded')}
                       </span>
                     </span>
+                    <FilePreviewTrigger
+                      file={certificateFile}
+                      className="shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-white hover:text-rmc-green"
+                    >
+                      <Eye className="h-4 w-4" aria-hidden="true" />
+                    </FilePreviewTrigger>
                     <button
                       type="button"
                       onClick={() => void onPickFile(null)}
