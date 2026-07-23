@@ -23,6 +23,11 @@ export const SmsTemplates = {
     return `RMC Good Conduct | Request ${ref}: Payment of ${amount} RWF received. Now being processed.`;
   },
 
+  /** Reminder that a created request is still awaiting payment. */
+  paymentReminder(ref: string, amount: string): string {
+    return `RMC Good Conduct | Request ${ref}: Payment of ${amount} RWF is still pending. Complete it to continue at rwandamuslim.org`;
+  },
+
   /** Sent when the request moves to "under review". */
   underReview(ref: string): string {
     return `RMC Good Conduct | Request ${ref}: Now under review. We will notify you of any update.`;

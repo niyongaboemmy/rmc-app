@@ -172,8 +172,13 @@ export function GoodConductWizard({ editRequest }: Props) {
         motifDetail: data.motifDetail || undefined,
       };
 
-      const saved = editRequest
-        ? await goodConductApi.updateDraft(editRequest.id, payload)
+      // Use the draft we already have (either an edited request, or one created
+      // earlier in THIS session) instead of creating a second one. Without this,
+      // going back from Payment to this step and re-submitting calls createDraft
+      // again and trips the "one active request per applicant" rule.
+      const existing = editRequest ?? request;
+      const saved = existing
+        ? await goodConductApi.updateDraft(existing.id, payload)
         : await goodConductApi.createDraft(payload);
 
       setRequest(saved);
@@ -488,8 +493,14 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
 
   const [request, setRequest] = useState(initialRequest);
   const [phone, setPhone] = useState(toLocalPhone(initialRequest.phone) || '');
-  const [phase, setPhase] = useState<'idle' | 'waiting' | 'confirmed' | 'failed'>('idle');
+  // 'slow' = provider timed out / is unresponsive; the charge may still be in
+  // flight, so we show a friendly "try again shortly" state rather than a failure.
+  const [phase, setPhase] = useState<'idle' | 'waiting' | 'confirmed' | 'failed' | 'slow'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const pollCountRef = useRef(0);
+  // ~45 seconds of polling at 5s before we surface the "taking longer" screen.
+  const MAX_POLLS = 9;
   const [showBank, setShowBank] = useState(false);
   const [bankNoticeSent, setBankNoticeSent] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -506,19 +517,35 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
 
   const startPolling = useCallback(() => {
     stopPolling();
+    pollCountRef.current = 0;
     pollRef.current = setInterval(async () => {
+      pollCountRef.current += 1;
       try {
         const result = await goodConductApi.checkPaymentStatus(request.id);
         if (result.paymentStatus === 'paid' || result.gatewayStatus === 'SUCCESSFUL') {
           stopPolling();
           setPhase('confirmed');
-        } else if (result.paymentStatus === 'failed' || result.gatewayStatus === 'FAILED') {
+          return;
+        }
+        if (result.paymentStatus === 'failed' || result.gatewayStatus === 'FAILED') {
           stopPolling();
           setPhase('failed');
           setError(t('paymentDeclined'));
+          return;
+        }
+        // Still pending — if we've waited long enough (provider slow/unreachable),
+        // stop the spinner and show the friendly "taking longer" screen. The
+        // background reconciler will still settle the payment automatically.
+        if (pollCountRef.current >= MAX_POLLS) {
+          stopPolling();
+          setPhase('slow');
         }
       } catch {
-        // transient error — keep polling
+        // transient error — keep polling until the max window elapses
+        if (pollCountRef.current >= MAX_POLLS) {
+          stopPolling();
+          setPhase('slow');
+        }
       }
     }, 5000);
   }, [request.id, stopPolling, t]);
@@ -536,6 +563,7 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
       return;
     }
     setError(null);
+    setNotice(null);
     setPhase('waiting');
     try {
       const result = await goodConductApi.initiateMomoPayment(request.id, toE164Phone(phone));
@@ -543,6 +571,11 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
       if (result.request.paymentStatus === 'paid') {
         setPhase('confirmed');
       } else {
+        // Provider was slow/unreachable at charge time — the charge may still be
+        // in flight, so keep waiting but tell the user it's taking longer.
+        if (result.responseCode === 'TIMEOUT' || result.responseCode === 'NETWORK_ERROR') {
+          setNotice(t('paymentSlowNotice'));
+        }
         startPolling();
       }
     } catch (err: unknown) {
@@ -607,6 +640,32 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
     );
   }
 
+  // Provider slow/unresponsive: not a failure — the charge may still clear and
+  // the background reconciler will confirm it. Offer a safe retry (the backend
+  // re-checks any in-flight charge before starting a new one, so no double bill).
+  if (phase === 'slow') {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
+        <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 flex items-center justify-center">
+          <Info className="w-8 h-8 text-amber-600" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900">{t('paymentSlowTitle')}</h2>
+        <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">{t('paymentSlowText')}</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Button
+            variant="outline"
+            onClick={() => { setError(null); setNotice(null); setPhase('idle'); }}
+          >
+            {t('tryAgain')}
+          </Button>
+          <Button onClick={() => router.push(`/${locale}/services/good-conduct/status`)}>
+            {t('checkStatusBtn')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6">
       <h2 className="font-bold text-gray-900">{t('paymentSection')}</h2>
@@ -626,6 +685,11 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
         <div className="text-center py-6 space-y-3">
           <Loader2 className="w-8 h-8 mx-auto text-rmc-green animate-spin" />
           <p className="text-sm text-gray-600">{t('waitingForPayment')}</p>
+          {notice && (
+            <div className="mx-auto max-w-sm rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2.5 flex items-start gap-2">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" /> <span>{notice}</span>
+            </div>
+          )}
           <Button variant="outline" size="sm" onClick={() => { stopPolling(); setPhase('idle'); }}>
             {t('cancelPayment')}
           </Button>

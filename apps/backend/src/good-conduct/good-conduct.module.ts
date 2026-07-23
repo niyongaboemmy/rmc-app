@@ -4,6 +4,7 @@ import { GoodConductRequest } from './entities/good-conduct-request.entity';
 import { GoodConductStatusHistory } from './entities/good-conduct-status-history.entity';
 import { GoodConductTransaction } from './entities/good-conduct-transaction.entity';
 import { GoodConductService } from './good-conduct.service';
+import { GoodConductReconciliationService } from './good-conduct-reconciliation.service';
 import { GoodConductController } from './good-conduct.controller';
 import { GoodConductAdminController } from './good-conduct-admin.controller';
 import { User } from '../users/entities/user.entity';
@@ -31,7 +32,7 @@ import { LocationsModule } from '../locations/locations.module';
       User,
     ]),
   ],
-  providers: [GoodConductService],
+  providers: [GoodConductService, GoodConductReconciliationService],
   controllers: [GoodConductController, GoodConductAdminController],
   exports: [GoodConductService],
 })
