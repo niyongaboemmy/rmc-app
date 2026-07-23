@@ -32,7 +32,17 @@
     "learnMore": "Learn More",
     "readMore": "Read More",
     "viewAll": "View All",
-    "download": "Download"
+    "download": "Download",
+    "filePreview": {
+      "preview": "Preview",
+      "close": "Close (Esc)",
+      "download": "Download",
+      "openInNewTab": "Open in new tab",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "rotate": "Rotate",
+      "unsupported": "This file type can't be shown here. Download it to check it before you submit."
+    }
   },
   "auth": {
     "backToHome": "Back to home",

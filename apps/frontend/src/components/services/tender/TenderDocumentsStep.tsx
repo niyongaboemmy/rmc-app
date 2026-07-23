@@ -11,8 +11,10 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import { cn } from '@/lib/utils';
 import {
   uploadBidDocument,
@@ -80,8 +82,19 @@ export function TenderDocumentsStep({
   });
   const [formError, setFormError] = useState<string | null>(null);
 
+  // The files as picked in this session, kept alongside the upload payloads so
+  // the bidder can re-open what they attached. A bid being EDITED seeds its
+  // slots from documents already on the server, which we hold no File for —
+  // those simply offer no preview rather than a broken one.
+  const [picked, setPicked] = useState<Partial<Record<TenderDocumentType, File>>>({});
+
   const setSlot = (docType: TenderDocumentType, state: SlotState) =>
     setSlots((prev) => ({ ...prev, [docType]: state }));
+
+  const clearSlot = (docType: TenderDocumentType) => {
+    setSlot(docType, { phase: 'empty' });
+    setPicked((prev) => ({ ...prev, [docType]: undefined }));
+  };
 
   const handleFile = async (docType: TenderDocumentType, file: File) => {
     if (!ACCEPTED_DOCUMENT_MIMES.includes(file.type)) {
@@ -102,9 +115,11 @@ export function TenderDocumentsStep({
         setSlot(docType, { phase: 'uploading', fileName: file.name, pct }),
       );
       setSlot(docType, { phase: 'done', payload });
+      setPicked((prev) => ({ ...prev, [docType]: file }));
       setFormError(null);
     } catch {
       setSlot(docType, { phase: 'error', message: t('docs.errorUpload') });
+      setPicked((prev) => ({ ...prev, [docType]: undefined }));
     }
   };
 
@@ -142,8 +157,9 @@ export function TenderDocumentsStep({
             key={docType}
             docType={docType}
             state={slots[docType]}
+            pickedFile={picked[docType] ?? null}
             onFile={(file) => handleFile(docType, file)}
-            onClear={() => setSlot(docType, { phase: 'empty' })}
+            onClear={() => clearSlot(docType)}
           />
         ))}
       </div>
@@ -182,11 +198,14 @@ export function TenderDocumentsStep({
 function DocumentSlot({
   docType,
   state,
+  pickedFile,
   onFile,
   onClear,
 }: {
   docType: TenderDocumentType;
   state: SlotState;
+  /** The File as picked this session; null for a slot seeded from a saved bid. */
+  pickedFile: File | null;
   onFile: (file: File) => void;
   onClear: () => void;
 }) {
@@ -254,15 +273,28 @@ function DocumentSlot({
 
         {state.phase === 'done' && (
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5 text-green-600" />
-            </div>
+            <FilePreviewTrigger file={pickedFile} className="rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400">
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0 cursor-zoom-in hover:bg-green-200 transition-colors">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
+            </FilePreviewTrigger>
+            {!pickedFile && (
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate leading-snug">
                 {state.payload.fileName}
               </p>
               <p className="text-[10px] text-gray-400">{fmtSize(state.payload.fileSize)}</p>
             </div>
+            <FilePreviewTrigger
+              file={pickedFile}
+              className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-rmc-green hover:border-gray-300 shrink-0"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </FilePreviewTrigger>
             <button
               type="button"
               onClick={onClear}

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import {
-  FileText, Upload, X, CheckCircle2, ArrowRight, ArrowLeft, Image as ImageIcon, Camera,
+  FileText, Upload, X, CheckCircle2, ArrowRight, ArrowLeft, Image as ImageIcon, Camera, Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import { cn } from '@/lib/utils';
 import { WizardFormData } from '../MarriageWizard';
 
@@ -105,18 +106,30 @@ function PhotoDropZone({ slot, file, onChange }: DropZoneProps) {
       >
         {file && preview ? (
           <>
-            <div className="h-56 w-full bg-gray-100 flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt={slot.label} className="max-h-full max-w-full object-contain" />
+            {/* Click the photo to inspect it full-screen — a passport-style shot
+                that ends up on the certificate is worth checking before submit. */}
+            <FilePreviewTrigger file={file} className="block w-full">
+              <div className="h-56 w-full bg-gray-100 flex items-center justify-center cursor-zoom-in">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={preview} alt={slot.label} className="max-h-full max-w-full object-contain" />
+              </div>
+            </FilePreviewTrigger>
+            <div className="absolute top-2 right-2 flex items-center gap-1.5">
+              <FilePreviewTrigger
+                file={file}
+                className="w-7 h-7 rounded-full bg-white/90 backdrop-blur border border-gray-200 flex items-center justify-center text-gray-600 hover:text-rmc-green hover:border-rmc-green/40 shadow-sm"
+              >
+                <Eye className="w-3.5 h-3.5" />
+              </FilePreviewTrigger>
+              <button
+                type="button"
+                onClick={() => onChange(null)}
+                aria-label="Remove photo"
+                className="w-7 h-7 rounded-full bg-white/90 backdrop-blur border border-gray-200 flex items-center justify-center text-gray-600 hover:text-red-500 hover:border-red-300 shadow-sm transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => onChange(null)}
-              aria-label="Remove photo"
-              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur border border-gray-200 flex items-center justify-center text-gray-600 hover:text-red-500 hover:border-red-300 shadow-sm transition-colors"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
             <label className="flex items-center gap-2 px-3 py-2 bg-white border-t border-green-100 cursor-pointer">
               <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
               <span className="text-xs font-medium text-gray-900 truncate flex-1">{file.name}</span>
@@ -173,18 +186,26 @@ function FileDropZone({ slot, file, onChange }: DropZoneProps) {
       >
         {file ? (
           <div className="flex items-center gap-2.5 px-3 py-3">
-            {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview} alt="preview" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100" />
-            ) : (
-              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-green-600" />
-              </div>
-            )}
+            <FilePreviewTrigger file={file} className="rounded-lg hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400">
+              {preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={preview} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100 cursor-zoom-in" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0 cursor-zoom-in">
+                  <FileText className="w-5 h-5 text-green-600" />
+                </div>
+              )}
+            </FilePreviewTrigger>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate leading-snug">{file.name}</p>
               <p className="text-[10px] text-gray-400">{fmtSize(file.size)}</p>
             </div>
+            <FilePreviewTrigger
+              file={file}
+              className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-rmc-green hover:border-gray-300 shrink-0"
+            >
+              <Eye className="w-3 h-3" />
+            </FilePreviewTrigger>
             <button
               type="button"
               onClick={() => onChange(null)}

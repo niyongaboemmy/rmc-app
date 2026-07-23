@@ -32,7 +32,17 @@
     "learnMore": "اعرف المزيد",
     "readMore": "اقرأ المزيد",
     "viewAll": "عرض الكل",
-    "download": "تنزيل"
+    "download": "تنزيل",
+    "filePreview": {
+      "preview": "معاينة",
+      "close": "إغلاق (Esc)",
+      "download": "تنزيل",
+      "openInNewTab": "فتح في تبويب جديد",
+      "zoomIn": "تكبير",
+      "zoomOut": "تصغير",
+      "rotate": "تدوير",
+      "unsupported": "لا يمكن عرض هذا النوع من الملفات هنا. نزّله للتحقق منه قبل الإرسال."
+    }
   },
   "auth": {
     "backToHome": "العودة إلى الرئيسية",
