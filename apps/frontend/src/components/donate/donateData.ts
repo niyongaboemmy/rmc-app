@@ -9,6 +9,11 @@
 import { Smartphone, CreditCard, Landmark, Wallet } from 'lucide-react';
 
 export type IconType = React.ComponentType<{ className?: string }>;
+export type Tone = 'green' | 'gold';
+
+/** Unsplash thumbnail URL (verified IDs only). */
+export const uimg = (id: string, w = 600) =>
+  `https://images.unsplash.com/photo-${id}?q=80&w=${w}&auto=format&fit=crop`;
 
 /* ── Niyyah (intention) — keys + the Arabic calligraphy (constant across locales) ── */
 export interface Niyyah {
@@ -59,6 +64,16 @@ export interface CartItem {
   amount: number;
 }
 
-/** Decorative hero background for the donate page (not campaign content). */
-export const HERO_IMG =
-  'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?q=80&w=1600&auto=format&fit=crop';
+export const HERO_IMG = uimg('1564769662533-4f00a87b4056', 1600);
+
+/** Tone → icon-chip classes (active vs idle). One green/gold system. */
+export function toneChip(tone: Tone, active: boolean): string {
+  if (tone === 'gold') {
+    return active
+      ? 'bg-rmc-gold text-white ring-rmc-gold/30'
+      : 'bg-rmc-gold/10 text-[#8A6A0F] ring-rmc-gold/20';
+  }
+  return active
+    ? 'bg-rmc-green text-white ring-rmc-green/30'
+    : 'bg-rmc-green-light text-rmc-green ring-rmc-green/10';
+}

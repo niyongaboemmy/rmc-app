@@ -2130,6 +2130,7 @@
       "donations": "Inkunga",
       "finance": "Imari",
       "inbox": "Ubutumwa",
+      "projects": "Imishinga",
       "content": "Gucunga Ibikubiye",
       "subscribers": "Abiyandikishije",
       "users": "Abakoresha",
@@ -2147,10 +2148,10 @@
       "goodConduct": "Imyitwarire Myiza",
       "scholarship": "Buruse",
       "funeral": "Ishyingura",
-      "hajj": "Hajj",
-      "dawah": "Dawah",
-      "discussionsMod": "Discussion reports",
-      "discussionsReview": "Answers to review",
+      "hajj": "Hija",
+      "dawah": "Idawa",
+      "discussionsMod": "Ibirego by'ibiganiro",
+      "discussionsReview": "Ibisubizo byo gusuzuma",
       "discussionsAll": "Ibibazo byose",
       "tenders": "Amatumba",
       "jobs": "Amasaba y'Akazi",
@@ -2583,10 +2584,10 @@
     "dawah": {
       "title": "Dawah Learning",
       "tabs": {
-        "courses": "Courses",
-        "library": "Library",
-        "categories": "Categories",
-        "content": "Landing page"
+        "courses": "Amasomo",
+        "library": "Isomero",
+        "categories": "Ibyiciro",
+        "content": "Urupapuro rw'itangiriro"
       },
       "status": {
         "draft": "Draft",

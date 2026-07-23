@@ -29,8 +29,8 @@ export const HERO_DEFAULT: HeroContent = {
   ),
   primaryCta: tri('Request a Service', 'Saba serivisi', 'اطلب خدمة'),
   primaryHref: '/services',
-  secondaryCta: tri('Trends', 'Ibikorwa', 'آخر الأنشطة'),
-  secondaryHref: '/activities',
+  secondaryCta: tri('Our Programs', 'Gahunda Zacu', 'برامجنا'),
+  secondaryHref: '/donate',
   slides: [
     'https://pbs.twimg.com/media/HEQLxPtaUAADjH2?format=jpg&name=large',
     'https://pbs.twimg.com/media/HESeGQZWAAAvdtq?format=jpg&name=large',

@@ -36,6 +36,7 @@ const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = 
 const EMPTY: PartnerItem = {
   name: '',
   sector: tri(''),
+  description: tri(''),
   logo: '',
   website: '',
 };
@@ -86,9 +87,10 @@ function PartnersManager({ embedded = false }: { embedded?: boolean } = {}) {
   }, []);
 
   const openCreate = () => { setEditingIndex(null); setForm(EMPTY); setModalLang('en'); setIsModalOpen(true); };
-  const openEdit = (index: number) => { setEditingIndex(index); setForm({ ...items[index], sector: { ...items[index].sector } }); setModalLang('en'); setIsModalOpen(true); };
+  const openEdit = (index: number) => { setEditingIndex(index); setForm({ ...items[index], sector: { ...items[index].sector }, description: items[index].description ? { ...items[index].description } : tri('') }); setModalLang('en'); setIsModalOpen(true); };
   const set = <K extends keyof PartnerItem>(field: K, value: PartnerItem[K]) => setForm((p) => ({ ...p, [field]: value }));
   const setSector = (l: Lang, value: string) => setForm((p) => ({ ...p, sector: { ...p.sector, [l]: value } }));
+  const setDescription = (l: Lang, value: string) => setForm((p) => ({ ...p, description: { ...(p.description ?? tri('')), [l]: value } }));
 
   // Persist the whole PartnersContent blob.
   const persist = useCallback(async (next: PartnersContent) => {
@@ -119,6 +121,7 @@ function PartnersManager({ embedded = false }: { embedded?: boolean } = {}) {
     const cleaned: PartnerItem = {
       name: form.name.trim(),
       sector: form.sector,
+      description: form.description ?? tri(''),
       logo: form.logo.trim(),
       ...(form.website && form.website.trim() ? { website: form.website.trim() } : {}),
     };
@@ -320,10 +323,17 @@ function PartnersManager({ embedded = false }: { embedded?: boolean } = {}) {
                 if (l !== modalLang) return null;
                 const fc = l === 'ar' ? 'font-arabic' : '';
                 return (
-                  <div key={l}>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Sector {l === 'en' && <span className="text-red-500">*</span>}</label>
-                    <input dir={dir} type="text" value={form.sector[l]} onChange={(e) => setSector(l, e.target.value)} placeholder="Education Foundation"
-                      className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${fc}`} />
+                  <div key={l} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Sector {l === 'en' && <span className="text-red-500">*</span>}</label>
+                      <input dir={dir} type="text" value={form.sector[l]} onChange={(e) => setSector(l, e.target.value)} placeholder="Education Foundation"
+                        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${fc}`} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description <span className="text-gray-400 font-normal">(shown in the partner modal)</span></label>
+                      <textarea dir={dir} rows={3} value={form.description?.[l] ?? ''} onChange={(e) => setDescription(l, e.target.value)} placeholder="A short note about this partner…"
+                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none ${fc}`} />
+                    </div>
                   </div>
                 );
               })}
