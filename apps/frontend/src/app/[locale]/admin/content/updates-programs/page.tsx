@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -90,6 +90,15 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<UpdateSlide>(EMPTY_SLIDE);
 
+  // The visible carousel header (`headingTitle`/`headingAccent`) is edited on the
+  // landing page itself, not here. This editor still owns the whole `updates`
+  // record, so it must carry those fields through a save or they would be reset
+  // to the defaults on every slide edit.
+  const sectionHeader = useRef({
+    headingTitle: UPDATES_DEFAULT.headingTitle,
+    headingAccent: UPDATES_DEFAULT.headingAccent,
+  });
+
   // Load any previously saved content; fall back to defaults if none exists.
   useEffect(() => {
     let active = true;
@@ -99,6 +108,10 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
           const merged = { ...UPDATES_DEFAULT, ...data };
           setHeading(merged.heading);
           setItems(withIds(merged.items));
+          sectionHeader.current = {
+            headingTitle: merged.headingTitle,
+            headingAccent: merged.headingAccent,
+          };
         }
       })
       .catch(() => {
@@ -117,6 +130,7 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
     async (nextHeading: Tri, nextItems: SlideRow[]) => {
       const full: UpdatesContent = {
         heading: nextHeading,
+        ...sectionHeader.current,
         items: nextItems.map(stripId),
       };
       await saveSiteContent(ContentKeys.updates, full);
