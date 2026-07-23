@@ -1,4 +1,17 @@
 {
+  "cms": {
+    "editPage": "Hindura urupapuro",
+    "editingIn": "Urimo guhindura {lang}",
+    "saved": "Byabitswe",
+    "discard": "Reka impinduka",
+    "save": "Bika impinduka",
+    "done": "Byarangiye",
+    "lang": {
+      "en": "Icyongereza",
+      "rw": "Ikinyarwanda",
+      "ar": "Icyarabu"
+    }
+  },
   "notFoundPage": {
     "code": "404",
     "eyebrow": "Ikosa 404",
@@ -358,7 +371,44 @@
       "contactUs": "Twandikire",
       "viewOtherServices": "Reba Izindi Serivisi"
     },
+    "explore": {
+      "hint": "Reba birambuye",
+      "requirements": "Ibyo ukeneye",
+      "steps": "Uko bigenda",
+      "notes": "Ibyiza kumenya",
+      "apply": "Saba",
+      "status": "Reba aho bigeze",
+      "register": "Iyandikishe",
+      "report": "Menyesha urupfu",
+      "cemeteries": "Amarimbi",
+      "viewDetails": "Reba birambuye byose",
+      "cardDescription": "Ibisobanuro by'ikarita (bigaragara ku rutonde)",
+      "addRequirement": "Ongeraho icyo ukeneye",
+      "addStep": "Ongeraho intambwe",
+      "removeItem": "Kuraho"
+    },
     "marriage": {
+      "modal": {
+        "summary": "Kuva ku nama zibanziriza ubukwe kugeza kuri Nikah n'icyemezo cy'ubukwe cyemewe — byose bikorwa neza.",
+        "req": {
+          "1": "Irangamuntu cyangwa pasiporo ku bashyingiranwa bombi",
+          "2": "Uruhushya rwa wali (umurinzi) n'irangamuntu",
+          "3": "Abatangabuhamya babiri b'Abayisilamu bakuru",
+          "4": "Ubunyamuryango bwa RMC ku bashyingiranwa bombi",
+          "5": "Amakuru ya mahr (inkwano) yumvikanyweho",
+          "6": "Amafoto angana na pasiporo"
+        },
+        "step": {
+          "1": "Andika amakuru y'abashyingiranwa nk'uko agaragara ku ndangamuntu",
+          "2": "Hitamo aho n'igihe by'ibirori bya Nikah",
+          "3": "Ongeraho abatangabuhamya babiri n'wali w'umugeni",
+          "4": "Shyiraho mahr mwumvikanyeho na imamu wifuza",
+          "5": "Ohereza inyandiko zisabwa",
+          "6": "Hitamo igiciro, wishyure, wohereze",
+          "7": "RMC irasuzuma, Nikah igakorwa, icyemezo kikagutangwa"
+        },
+        "notes": "Abashyingiranwa bombi bagomba kuba abanyamuryango ba RMC. Ubusabe bubikwa nk'agateganyo, ushobora kuburangiza nyuma."
+      },
       "title": "Serivisi y'Ubukwe",
       "desc": "Ibirori by'ubukwe bw'Islamimu, impapuro, n'inyandiko kuri abakobwa n'abasore mu muryango.",
       "detail": {
@@ -643,6 +693,26 @@
       }
     },
     "funeral": {
+      "modal": {
+        "summary": "Kuva ku kumenyekanisha urupfu kugeza ku ishyingura, RMC iri kumwe namwe muri buri ntambwe, mu cyubahiro.",
+        "req": {
+          "1": "Amazina yombi, igitsina, itariki y’amavuko n’iy’urupfu by’uwitabye Imana",
+          "2": "Indangamuntu n’icyemezo cy’urupfu, niba bihari",
+          "3": "Aho uwitabye Imana yapfiriye (umujyi cyangwa ikigo)",
+          "4": "Amazina na nimero ya telefone y’umuvandimwe wa hafi",
+          "5": "Umusigiti n’irimbi wahisemo",
+          "6": "Itariki yo gushyingura n’uko gutwara umurambo bikenewe"
+        },
+        "step": {
+          "1": "Menyekanisha urupfu kuri RMC utangire gutunganya",
+          "2": "Amakuru aragenzurwa umuryango ukamenyeshwa",
+          "3": "Ghusl ikorwa na kafan igategurwa",
+          "4": "Isengesho rya Janaza riteganywa",
+          "5": "Umurambo utwarwa ujyanwa mu irimbi",
+          "6": "Ishyingura rirarangira mu cyubahiro"
+        },
+        "notes": "RMC iboneka igihe icyo ari cyo cyose kandi ifasha imiryango ikennye: ubujyanama, ibiribwa n’amafaranga."
+      },
       "title": "Serivisi y'Umuryango w'Abapfuye",
       "desc": "Gutegura gushyingura mu Islamimu, guha Imam, no gufasha imiryango.",
       "landing": {
@@ -865,6 +935,26 @@
       }
     },
     "conduct": {
+      "modal": {
+        "summary": "Icyemezo cy'imyitwarire myiza ku banyamuryango, kigenerwa inzego zinyuranye.",
+        "req": {
+          "1": "Konti ya RMC (winjire kugira usabe)",
+          "2": "Amazina yawe yombi, aya So n'aya Nyoko",
+          "3": "Aho utuye: akarere, umurenge, akagari, umudugudu",
+          "4": "Imeyili na nimero ya telefoni (07XXXXXXXX)",
+          "5": "Umusigiti wawe (amazina y'Imamu yuzuzwa yikoresha)",
+          "6": "Impamvu: akazi, viza, kwiga, cyangwa ikindi"
+        },
+        "step": {
+          "1": "Injira ufungure ifishi y'icyifuzo",
+          "2": "Uzuza amakuru y'umwirondoro n'aho twagusanga",
+          "3": "Hitamo umusigiti n'impamvu y'icyifuzo",
+          "4": "Ishyura amafaranga: Mobile Money cyangwa banki",
+          "5": "Umugenzuzi agenzura amakuru yawe akayemeza",
+          "6": "Kuramo icyemezo cyawe cy'Imyitwarire cyatanzwe"
+        },
+        "notes": "Ishyura amafaranga ukoresheje Mobile Money cyangwa banki."
+      },
       "title": "Icyemezo cy'Imyitwarire Myiza",
       "desc": "Impapuro zigenwa neza z'imyitwarire myiza kuri abanyamuryango - bizagenerwa inzego zinyuranye.",
       "apply": {
@@ -921,6 +1011,10 @@
         "waitingForPayment": "Tegereza kwemeza kwishyura…",
         "cancelPayment": "Hagarika",
         "paymentDeclined": "Kwishyura kwanzwe. Ongera ugerageze.",
+        "paymentSlowNotice": "Kwishyura biratwara igihe kirekire kuruta uko byari byitezwe. Emeza ubutumwa kuri telefone yawe — tuzabyemeza mu buryo bwikora.",
+        "paymentSlowTitle": "Kwishyura biratwara igihe kirekire",
+        "paymentSlowText": "Serivisi ya Mobile Money iri gukora buhoro cyangwa irahuze ubu. Niba wemeje ubutumwa kuri telefone yawe, kwishyura kwawe kuzemezwa mu buryo bwikora — ntukishyure ukundi. Ushobora kureba aho bigeze vuba, cyangwa ukongera ugerageze.",
+        "tryAgain": "Ongera ugerageze",
         "successTitle": "Icyifuzo Cyoherejwe!",
         "successText": "Icyifuzo cyawe cy'Imyitwarire Myiza cyakiriwe kandi kirimo gutunganywa.",
         "checkStatusBtn": "Reba Aho Bigeze",
@@ -1032,6 +1126,23 @@
       }
     },
     "scholarship": {
+      "modal": {
+        "summary": "Inkunga y'amafaranga kuri abanyeshuri b'Abasilamu bavoma uburezi mu mashuri yose.",
+        "req": {
+          "1": "Amazina yombi, itariki y'amavuko, na nimero ya telefoni",
+          "2": "Akarere n'umurenge ubamo",
+          "3": "Ishuri urimo, urwego rw'uburezi, n'umwaka cyangwa icyiciro",
+          "4": "Amazina, nimero ya telefoni, n'isano y'umurera wawe",
+          "5": "Sobanura mu magambo make impamvu ukeneye iyi buruse"
+        },
+        "step": {
+          "1": "Injira kuri konti yawe ya RMC, cyangwa ufungure imwe",
+          "2": "Uzuza ifishi ngufi y'intambwe eshatu: amakuru bwite, uburezi, n'umurera",
+          "3": "Ohereza wakire nomero yo gukurikirana ubusabe",
+          "4": "Koresha nomero yo gukurikirana urebe aho bugeze igihe cyose"
+        },
+        "notes": "Gusaba ni ubuntu. Isuzuma rimara iminsi 5–10 y'akazi."
+      },
       "title": "Buruse",
       "desc": "Inkunga y'amafaranga kuri abanyeshuri b'Abasilamu bavoma uburezi mu mashuri yose.",
       "levels": {
@@ -1232,6 +1343,23 @@
       }
     },
     "tender": {
+      "modal": {
+        "summary": "Tanga ipiganwa ku itumba rikinguye rya RMC, urikurikirane kuva ku isuzuma kugeza ku mwanzuro.",
+        "req": {
+          "1": "Icyemezo cy'iyandikwa ry'ikigo (RDB) gitangwa na Rwanda Development Board",
+          "2": "Icyemezo cyemewe cy'imisoro (RRA) gitangwa na Rwanda Revenue Authority",
+          "3": "Igitekerezo cya tekiniki n'imari, hamwe n'ibiciro",
+          "4": "Izina ry'ikigo cyanditse, nomero ya TIN y'imibare 9, n'umuhuza",
+          "5": "Tanga ipiganwa mbere y'igihe ntarengwa; ntirihindurwa cyararenze"
+        },
+        "step": {
+          "1": "Reba amatumba akinguye usome amabwiriza n'igihe ntarengwa",
+          "2": "Uzuza ifishi: amakuru y'ikigo, umuhuza, aderesi, igiciro",
+          "3": "Ohereza inyandiko eshatu zisabwa (PDF, JPG cyangwa PNG, ntizirenge 10 MB)",
+          "4": "Uzahabwa nomero, ukurikirane ipiganwa kugeza ku mwanzuro"
+        },
+        "notes": "Ukeneye konti ya RMC kugira ngo utange unakurikirane ipiganwa."
+      },
       "title": "Itumba",
       "desc": "Amahirwe y'ubucuruzi ashyirwa ahagaragara na RMC ku mashirika n'abakozi bafite ubushobozi.",
       "landing": {
@@ -1430,6 +1558,25 @@
       }
     },
     "jobs": {
+      "modal": {
+        "summary": "Saba imyanya ifunguye muri RMC n'imiryango ishamikiyeho, ukurikirane aho isaba ryawe rigeze.",
+        "req": {
+          "1": "Ibaruwa isaba",
+          "2": "CV",
+          "3": "Indangamuntu",
+          "4": "Icyemezo cy'imyifatire",
+          "5": "Impamyabumenyi (dipolome / impamyabumenyi)",
+          "6": "Icyemezo cy'imyifatire myiza — nimero yo kugenzura, cyangwa dosiye yo kohereza"
+        },
+        "step": {
+          "1": "Injira kuri konti yawe ya RMC, cyangwa wiyandikishe niba uri mushya",
+          "2": "Andika amakuru yawe bwite n'umwanya usaba",
+          "3": "Ohereza ibaruwa isaba, CV, Indangamuntu, icyemezo cy'imyifatire n'impamyabumenyi",
+          "4": "Genzura nimero y'icyemezo cy'imyifatire, cyangwa uohereze icyemezo",
+          "5": "Ohereza ubike nimero yo gukurikirana kugira ngo urebe aho isaba rigeze"
+        },
+        "notes": "Kwinjira birasabwa. Ushobora kohereza PDF, Word cyangwa amafoto; icyemezo cy'umukoresha si itegeko."
+      },
       "title": "Amahirwe y'Akazi",
       "desc": "Imirimo ihagaze muri RMC n'imiryango ishamikiyeho muri Rwanda.",
       "openings": {
@@ -1725,6 +1872,25 @@
       }
     },
     "hajj": {
+      "modal": {
+        "summary": "Ubuyobozi, kwiyandikisha, no gufasha abagenzi — kuva mu myiteguro kugeza ku kugenda, ukurikirana aho ubusabe bugeze.",
+        "req": {
+          "1": "Pasiporo ifite nibura amezi 6 nyuma y’urugendo",
+          "2": "Amafaranga yo kwiyandikisha — 40,000 RWF, adasubizwa",
+          "3": "Ubwishyu bwa mbere — 400,000 RWF bwo kubika umwanya",
+          "4": "Ubushobozi bwo kwishyura igice gisigaye cy’urugendo",
+          "5": "Inyandiko zafotowe ziteguye mbere yo kwiyandikisha",
+          "6": "Icyemezo cy’ubwishyu cyo kohereza mu busabe bwawe"
+        },
+        "step": {
+          "1": "Iyandikishe kuri interineti utanga amakuru yawe na pasiporo",
+          "2": "Ishyura amafaranga kuri konti ya banki, wohereze ibimenyetso",
+          "3": "Komite isuzuma inyandiko n’ibimenyetso by’ubwishyu bwawe",
+          "4": "Wemerwa, dutunganya viza ya Hija n’inyandiko z’urugendo",
+          "5": "Genda n’itsinda ukore Hija, uyobowe mu rugendo rwose"
+        },
+        "notes": "Ishyura amafaranga ya Hija kuri konti ya banki yemewe, wohereze inyemezabwishyu wiyandikisha."
+      },
       "title": "Serivisi za Hija",
       "desc": "Ubuyobozi, kwiyandikisha, no gufasha abagenzi — kuva mu myiteguro kugeza ku kugenda.",
       "requirements": {
@@ -1736,6 +1902,7 @@
         "title": "Iyandikishe kuri Hija",
         "subtitle": "Uzuza ifishi ikurikira kugira ngo utangire kwiyandikisha kuri Hija. Ibisabwa bifite * birakenewe.",
         "back": "Subira kuri Serivisi za Hija",
+        "nav": { "back": "Subira inyuma", "next": "Komeza" },
         "submit": "Ohereza iyandikwa",
         "submitting": "Kohereza…",
         "sections": {
@@ -1869,6 +2036,7 @@
     "imam": "Imamu",
     "nearest": "Hafi yawe",
     "noMosques": "Nta misigiti yabonetse muri aka gace.",
+    "noMosquesYet": "Nta misigiti yongewe.",
     "communicationTitle": "Twandikire",
     "communicationSubtitle": "Twandikire mu buryo butaziguye cyangwa wohereze ubutumwa — tuzakwitaba vuba bishoboka.",
     "socialTitle": "Dukurikire",
@@ -2509,7 +2677,6 @@
           "summary": "Summary",
           "body": "Lesson content",
           "duration": "Duration (minutes)",
-          "isPreview": "Free preview",
           "mediaUrl": "Video URL (YouTube / Vimeo)",
           "audioFile": "Audio file",
           "pdfFile": "PDF file",
@@ -2520,6 +2687,7 @@
         "empty": "This course has no lessons yet.",
         "subtitle": "Build and order the lesson outline for this course.",
         "backToCourses": "Back to courses",
+        "donePreview": "Back to preview",
         "refresh": "Refresh",
         "add": "Add lesson",
         "saving": "Saving…",
@@ -2574,22 +2742,15 @@
           "language": "Language",
           "cover": "Cover image",
           "file": "Book PDF",
-          "previewFile": "Preview excerpt (optional)",
           "pageCount": "Pages",
-          "visibility": "Visibility",
           "allowDownload": "Allow download",
           "featured": "Feature on the landing page",
           "sortOrder": "Sort order"
-        },
-        "visibility": {
-          "public": "Anyone can read",
-          "members": "Signed-in members only"
         },
         "uploadHint": "PDF only, up to 25 MB.",
         "uploading": "Uploading…",
         "uploadFailed": "Upload failed. Please try again.",
         "downloadWarning": "Turning downloads off hides the button and blocks the download link. It is a deterrent, not copy protection — anyone who can read a PDF can save it.",
-        "previewHint": "When an excerpt is set, visitors who are not signed in preview the excerpt instead of the full book.",
         "openFile": "Open file",
         "confirmDelete": "Delete this book?",
         "empty": "No books yet. Upload the first one.",
@@ -2617,7 +2778,6 @@
           "title": "Book",
           "category": "Category",
           "language": "Language",
-          "visibility": "Visibility",
           "download": "Download",
           "status": "Status",
           "updated": "Updated",
@@ -2638,13 +2798,8 @@
           "on": "Allowed",
           "off": "Read-only"
         },
-        "visibilityHelp": {
-          "public": "Anyone can open and read this book — no account needed.",
-          "members": "Only signed-in members can read the full book. Signed-out visitors see the preview excerpt (if you add one below) or a sign-in prompt."
-        },
         "allowDownloadHelp": "When off, the Download button is hidden and the download link is blocked — visitors read in the browser only.",
         "downloadDeterrent": "This is a deterrent, not protection. Anyone who can read a PDF in their browser can still save the file — it stops casual sharing, but it is not DRM.",
-        "previewFileHelp": "Optional short excerpt (a separate PDF). When the book is members-only, signed-out visitors see THIS instead of the full book — a way to show a taste without giving the whole thing away.",
         "stats": {
           "reads": "reads",
           "downloads": "downloads",
@@ -2681,7 +2836,9 @@
         "nameRequired": "An English name is required.",
         "active": "Active",
         "inactive": "Inactive",
-        "iconHint": "A lucide-react icon name, e.g. BookOpen.",
+        "iconHint": "Hitamo agashusho, cyangwa ushakishe mu mazina.",
+        "iconSearch": "Shakisha udushusho…",
+        "iconNone": "Nta gashusho gatoranyijwe",
         "col": {
           "icon": "Icon",
           "slug": "Slug",
@@ -3304,6 +3461,18 @@
       "allLanguages": "All languages",
       "resultCount": "{count, plural, =0 {No courses} one {# course} other {# courses}}",
       "lessonCount": "{count, plural, =0 {No lessons} one {# lesson} other {# lessons}}",
+      "learners": "{count, plural, =0 {Nta biga baraboneka} one {Umunyeshuri #} other {Abanyeshuri #}}",
+      "enrolled": "{count, plural, =0 {Nta biga baraboneka} one {Umunyeshuri # wiyandikishije} other {Abanyeshuri # biyandikishije}}",
+      "progress": {
+        "heading": "Aho ugeze",
+        "lessonsDone": "Amasomo {completed} kuri {total}",
+        "percentComplete": "{percent}% byarangiye",
+        "completed": "Byarangiye",
+        "courseComplete": "Warangije iri somo",
+        "signInPrompt": "Injira kugira ngo ukurikirane aho ugeze muri iri somo.",
+        "signIn": "Injira",
+        "error": "Ntibyabashije kubikwa. Ongera ugerageze."
+      },
       "duration": "{minutes} min",
       "instructor": "Instructor",
       "level": {
@@ -3324,7 +3493,6 @@
       },
       "view": "View course",
       "outline": "Course outline",
-      "freePreview": "Free preview",
       "related": "Related courses",
       "loading": "Loading courses…",
       "empty": {
@@ -3376,10 +3544,6 @@
       "read": "Read",
       "download": "Download",
       "downloadDisabled": "This book cannot be downloaded",
-      "membersOnly": "Members only",
-      "signInToRead": "Sign in to read this book",
-      "signIn": "Sign in",
-      "excerptNotice": "This is a preview excerpt. Sign in to read the full book.",
       "close": "Close",
       "loading": "Loading library…",
       "empty": {
@@ -3392,7 +3556,6 @@
         "retry": "Retry"
       },
       "loadingBook": "Loading book…",
-      "signInBody": "This book is available to members. Sign in to read it in full.",
       "previewUnavailable": {
         "title": "Could not load this book",
         "body": "The file could not be loaded. Please try again, or open it in a new tab."
@@ -3490,6 +3653,7 @@
         "empty": "Nta kintu gitegereje isuzuma.",
         "release": "Rekura",
         "verify": "Emeza",
+        "unverify": "Kuraho iyemeza",
         "releaseHelp": "Tangaza utabyemeje — \"bishobora kubonwa\".",
         "verifyHelp": "Tangaza kandi ushyireho \"Byemejwe na RMC\" — \"ibi ni ukuri\".",
         "inCategory": "muri",

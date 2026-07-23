@@ -1,13 +1,18 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import {
-  ArrowLeft, ArrowRight, Clock, FileText, Headphones, Info, Link2, PlayCircle, Video,
+  ArrowLeft, ArrowRight, Check, CheckCircle2, Clock, FileText, Headphones,
+  Info, Link2, Video,
 } from 'lucide-react';
 import { LessonVideo } from './LessonVideo';
 import { LessonAudio } from './LessonAudio';
 import { LessonResource } from './LessonResource';
+import { useAuth } from '@/hooks/useAuth';
+import { dawahApi } from '@/lib/dawahApi';
 
 /**
  * One lesson, already resolved to a single locale and already SANITISED.
@@ -26,7 +31,6 @@ export interface OutlineLesson {
   /** Sanitised HTML. Empty string when the lesson has no body. */
   bodyHtml: string;
   durationMinutes: number | null;
-  isPreview: boolean;
   contentType: 'text' | 'video' | 'audio' | 'pdf' | 'link';
   /** Video: the external YouTube/Vimeo URL. Link: the external resource URL. */
   mediaUrl: string | null;
@@ -74,22 +78,104 @@ const proseClass =
 export function CourseLessonBrowser({
   lessons,
   overviewHtml = '',
+  courseSlug,
 }: {
   lessons: OutlineLesson[];
   /** Sanitised course description. Omitted/empty → no overview entry. */
   overviewHtml?: string;
+  /** The course slug — needed to read and write the member's progress. */
+  courseSlug: string;
 }) {
   const t = useTranslations('dawah');
+  const { locale } = useParams<{ locale: string }>();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const hasOverview = Boolean(overviewHtml.trim());
   const ids = [...(hasOverview ? [OVERVIEW] : []), ...lessons.map((l) => l.id)];
   const [activeId, setActiveId] = useState(ids[0] ?? '');
   const paneRef = useRef<HTMLDivElement>(null);
 
-  if (!ids.length) return null;
+  // ── Progress ───────────────────────────────────────────────────────────────
+  // The set of completed lesson ids, mirrored from the server. A lesson auto-
+  // completes the moment it is opened (no manual step), so there is no toggle —
+  // only a one-way "ensure complete".
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
+  // True once the member's existing progress has loaded, so auto-complete does
+  // not fire against an empty set and re-POST lessons that are already done.
+  const [progressLoaded, setProgressLoaded] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  // Lessons with an auto-complete write in flight — stops a re-render or a
+  // re-select from firing a second write for the same lesson.
+  const inFlight = useRef<Set<string>>(new Set());
 
+  // The currently open entry — computed here (before the effects) so the auto-
+  // complete effect can key on it. ids can be empty; the guards below handle it.
   const index = Math.max(0, ids.indexOf(activeId));
   const currentId = ids[index];
   const isOverview = currentId === OVERVIEW;
+
+  // Load the member's progress once they are known to be signed in. Anonymous
+  // visitors never hit the authed endpoint (it would 401). Guarded against a
+  // slug/auth change mid-flight so a stale response can't overwrite fresh state.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCompleted(new Set());
+      setProgressLoaded(false);
+      return;
+    }
+    let cancelled = false;
+    setProgressLoaded(false);
+    dawahApi.courses
+      .progress(courseSlug)
+      .then((p) => {
+        if (!cancelled) setCompleted(new Set(p.completedLessonIds));
+      })
+      .catch(() => {
+        // A failed progress read must not break the page — the reader just sees
+        // no ticks, and opening a lesson will still record it.
+        if (!cancelled) setCompleted(new Set());
+      })
+      .finally(() => {
+        if (!cancelled) setProgressLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, courseSlug]);
+
+  // Auto-complete the open lesson. Fires when a real lesson is opened (the
+  // overview is not a lesson) once progress has loaded and only if it is not
+  // already done or being written. Optimistic tick, reconciled with the server;
+  // a failed write rolls the tick back so nothing looks done that isn't.
+  useEffect(() => {
+    if (!isAuthenticated || !progressLoaded) return;
+    if (!currentId || currentId === OVERVIEW) return;
+    if (completed.has(currentId) || inFlight.current.has(currentId)) return;
+
+    const lessonId = currentId;
+    inFlight.current.add(lessonId);
+    setSaveError(false);
+    setCompleted((prev) => new Set(prev).add(lessonId));
+    dawahApi.courses
+      .completeLesson(courseSlug, lessonId)
+      .then((p) => setCompleted(new Set(p.completedLessonIds)))
+      .catch(() => {
+        setCompleted((prev) => {
+          const next = new Set(prev);
+          next.delete(lessonId);
+          return next;
+        });
+        setSaveError(true);
+      })
+      .finally(() => {
+        inFlight.current.delete(lessonId);
+      });
+  }, [currentId, isAuthenticated, progressLoaded, completed, courseSlug]);
+
+  const totalLessons = lessons.length;
+  const doneLessons = lessons.reduce((n, l) => n + (completed.has(l.id) ? 1 : 0), 0);
+  const percent = totalLessons > 0 ? Math.round((doneLessons / totalLessons) * 100) : 0;
+
+  if (!ids.length) return null;
   const active = isOverview ? null : lessons.find((l) => l.id === currentId) ?? null;
 
   const select = (id: string) => {
@@ -100,7 +186,58 @@ export function CourseLessonBrowser({
   };
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
+    <div className="space-y-5">
+      {/* ── Progress / sign-in nudge ────────────────────────────────────── */}
+      {totalLessons > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          {isAuthenticated ? (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rmc-green">
+                  {t('courses.progress.heading')}
+                </p>
+                <p className="text-xs font-semibold text-gray-600">
+                  {percent === 100
+                    ? t('courses.progress.courseComplete')
+                    : t('courses.progress.lessonsDone', {
+                        completed: doneLessons,
+                        total: totalLessons,
+                      })}
+                </p>
+              </div>
+              <div
+                className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200"
+                role="progressbar"
+                aria-valuenow={percent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-rmc-green to-rmc-green-dark transition-all duration-500"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              {saveError && (
+                <p className="mt-2 text-xs text-rose-600">{t('courses.progress.error')}</p>
+              )}
+            </>
+          ) : authLoading ? null : (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-gray-600">{t('courses.progress.signInPrompt')}</p>
+              <Link
+                href={`/${locale}/login?redirect=${encodeURIComponent(
+                  `/${locale}/dawah/courses/${courseSlug}`,
+                )}`}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-rmc-green px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+              >
+                {t('courses.progress.signIn')}
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
       {/* ── Left: navigation ────────────────────────────────────────────── */}
       {/* Pinned beside the lesson while the lesson scrolls with the page.
           Bounded to the viewport so a long outline scrolls inside itself rather
@@ -117,11 +254,13 @@ export function CourseLessonBrowser({
           <select
             value={currentId}
             onChange={(e) => select(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           >
             {hasOverview && <option value={OVERVIEW}>{t('courses.aboutCourse')}</option>}
             {lessons.map((l, i) => (
-              <option key={l.id} value={l.id}>{i + 1}. {l.title}</option>
+              <option key={l.id} value={l.id}>
+                {completed.has(l.id) ? '✓ ' : ''}{i + 1}. {l.title}
+              </option>
             ))}
           </select>
         </label>
@@ -138,7 +277,7 @@ export function CourseLessonBrowser({
                   type="button"
                   onClick={() => select(OVERVIEW)}
                   aria-current={isOverview ? 'true' : undefined}
-                  className={`flex w-full items-center gap-2.5 rounded-xl p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
+                  className={`flex w-full items-center gap-2.5 rounded-lg p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
                     isOverview ? 'bg-rmc-green-light' : 'hover:bg-gray-50'
                   }`}
                 >
@@ -164,16 +303,20 @@ export function CourseLessonBrowser({
                     type="button"
                     onClick={() => select(l.id)}
                     aria-current={isActive ? 'true' : undefined}
-                    className={`flex w-full items-start gap-2.5 rounded-xl p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
+                    className={`flex w-full items-start gap-2.5 rounded-lg p-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green ${
                       isActive ? 'bg-rmc-green-light' : 'hover:bg-gray-50'
                     }`}
                   >
                     <span
                       className={`grid h-6 w-6 shrink-0 place-items-center rounded-md text-[11px] font-bold ${
-                        isActive ? 'bg-rmc-green text-white' : 'bg-gray-100 text-gray-500'
+                        completed.has(l.id)
+                          ? 'bg-emerald-600 text-white'
+                          : isActive
+                            ? 'bg-rmc-green text-white'
+                            : 'bg-gray-100 text-gray-500'
                       }`}
                     >
-                      {i + 1}
+                      {completed.has(l.id) ? <Check className="h-3.5 w-3.5" aria-hidden /> : i + 1}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className={`block text-[13px] font-semibold leading-snug ${isActive ? 'text-rmc-green-deep' : 'text-gray-700'}`}>
@@ -190,12 +333,6 @@ export function CourseLessonBrowser({
                             {t('courses.duration', { minutes: l.durationMinutes })}
                           </span>
                         ) : null}
-                        {l.isPreview && (
-                          <span className="inline-flex items-center gap-1 font-semibold text-rmc-green">
-                            <PlayCircle className="h-3 w-3" aria-hidden />
-                            {t('courses.freePreview')}
-                          </span>
-                        )}
                       </span>
                     </span>
                   </button>
@@ -266,6 +403,15 @@ export function CourseLessonBrowser({
               {active.bodyHtml && (
                 <div className={`${proseClass} mt-5`} dangerouslySetInnerHTML={{ __html: active.bodyHtml }} />
               )}
+
+              {/* Lessons auto-complete on open, so there is no button — just a
+                  passive confirmation once the write has landed. Signed-in only. */}
+              {isAuthenticated && completed.has(active.id) && (
+                <div className="mt-6 flex items-center gap-2 border-t border-gray-100 pt-4 text-sm font-semibold text-emerald-600">
+                  <CheckCircle2 className="h-4 w-4" aria-hidden />
+                  {t('courses.progress.completed')}
+                </div>
+              )}
             </>
           ) : null}
         </div>
@@ -278,7 +424,7 @@ export function CourseLessonBrowser({
               type="button"
               disabled={index === 0}
               onClick={() => select(ids[index - 1])}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
             >
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
               {t('pagination.previous')}
@@ -287,13 +433,14 @@ export function CourseLessonBrowser({
               type="button"
               disabled={index === ids.length - 1}
               onClick={() => select(ids[index + 1])}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:pointer-events-none disabled:opacity-40"
             >
               {t('pagination.next')}
               <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

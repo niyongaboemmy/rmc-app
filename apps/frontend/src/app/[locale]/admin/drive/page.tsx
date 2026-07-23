@@ -344,7 +344,7 @@ function AdminDriveManager() {
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
               placeholder="Search user by name, email or phone…"
-              className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green bg-white shadow-sm"
+              className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green bg-white shadow-sm"
             />
             {userResults.length > 0 && (
               <div className="absolute top-full mt-1 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 py-1.5 overflow-hidden">
@@ -478,7 +478,7 @@ function AdminDriveManager() {
                 if (e.key === 'Escape') { setNewFolderOpen(false); setNewFolderName(''); }
               }}
               placeholder="Untitled folder"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
+              className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
             />
             <div className="flex justify-end gap-2 mt-4">
               <button
@@ -490,7 +490,7 @@ function AdminDriveManager() {
               <button
                 onClick={handleCreateFolder}
                 disabled={!newFolderName.trim() || newFolderLoading}
-                className="px-4 py-2 text-sm bg-rmc-green text-white rounded-xl hover:bg-rmc-green/90 disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 text-sm bg-rmc-green text-white rounded-lg hover:bg-rmc-green/90 disabled:opacity-50 flex items-center gap-1.5"
               >
                 {newFolderLoading
                   ? <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Creating…</>
@@ -516,7 +516,7 @@ function AdminDriveManager() {
                 value={renaming.value}
                 onChange={(e) => setRenaming({ ...renaming, value: e.target.value })}
                 onKeyDown={(e) => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') setRenaming(null); }}
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
+                className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green"
               />
               <div className="flex justify-end gap-2 mt-4">
                 <button onClick={() => setRenaming(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>

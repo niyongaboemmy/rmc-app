@@ -16,7 +16,7 @@ export interface ActivityItem {
   budgetUsed: number;
 }
 
-/** An upcoming event (with fundraising progress). */
+/** A community event. Fundraising is optional — see `campaignSlug`. */
 export interface EventItem {
   title: Tri;
   /** ISO date "YYYY-MM-DD". */
@@ -25,12 +25,19 @@ export interface EventItem {
   location: string;
   type: Tri;
   tone: BadgeTone;
-  goalAmount: number;
-  raisedAmount: number;
+  /**
+   * Optional link to a donation campaign (`donation_campaigns.slug`). Most
+   * events are plain calendar entries and leave this empty; when it IS set, the
+   * card shows that campaign's LIVE progress and a Donate action.
+   *
+   * The amounts deliberately do not live here: this store is hand-edited copy,
+   * while raised totals are derived from real donation records. Duplicating them
+   * would guarantee the two drift apart.
+   */
+  campaignSlug?: string;
 }
 
 export interface ActivitiesContent {
-  eyebrow: Tri;
   title: Tri;
   lede: Tri;
   activitiesHeading: Tri;
@@ -47,7 +54,6 @@ export interface ActivitiesContent {
  * admin adds real content.
  */
 export const ACTIVITIES_DEFAULT: ActivitiesContent = {
-  eyebrow: tri('Activities & Events', 'Ibikorwa n’Ibirori', 'الأنشطة والفعاليات'),
   title: tri('Latest & Upcoming', 'Ibiheruka n’Ibizaza', 'الأحدث والقادم'),
   lede: tri(
     "Follow RMC's most recent activities and mark your calendar for the community events ahead.",

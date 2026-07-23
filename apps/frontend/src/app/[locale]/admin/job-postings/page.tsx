@@ -91,8 +91,8 @@ function AdminPostingsContent() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-          <Briefcase className="w-5 h-5 text-emerald-700" />
+        <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+          <Briefcase className="w-5 h-5 text-rmc-green-dark" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Job Postings</h1>
@@ -100,7 +100,7 @@ function AdminPostingsContent() {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+            className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green">
             <option value="">All statuses</option>
             <option value="draft">Draft</option>
             <option value="open">Open</option>
@@ -108,7 +108,7 @@ function AdminPostingsContent() {
           </select>
           {canManage && (
             <button onClick={() => setEditing('new')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold transition-colors">
               <Plus className="w-4 h-4" /> New posting
             </button>
           )}
@@ -119,13 +119,13 @@ function AdminPostingsContent() {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" /></div>
+          <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 text-rmc-green animate-spin" /></div>
         ) : items.length === 0 ? (
           <div className="text-center py-20">
             <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-sm text-gray-500 mb-4">No job postings yet.</p>
             {canManage && (
-              <button onClick={() => setEditing('new')} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+              <button onClick={() => setEditing('new')} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold">
                 <Plus className="w-4 h-4" /> Create your first posting
               </button>
             )}
@@ -164,12 +164,12 @@ function AdminPostingsContent() {
                       {canManage && (
                         <div className="inline-flex items-center gap-1.5 justify-end">
                           <button onClick={() => setEditing(p)} title="Edit"
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors">
+                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button onClick={() => toggleStatus(p)} disabled={busyId === p.id}
                             title={p.status === 'open' ? 'Close (stop accepting)' : 'Publish (open)'}
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors disabled:opacity-50">
+                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors disabled:opacity-50">
                             {busyId === p.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : p.status === 'open' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                           <button onClick={() => { setDeleteTarget(p); setError(null); }} title="Delete"
@@ -209,7 +209,7 @@ function AdminPostingsContent() {
             {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
             <div className="flex gap-3">
               <button onClick={() => setDeleteTarget(null)} disabled={busyId !== null} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-              <button onClick={confirmDelete} disabled={busyId !== null} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50">
+              <button onClick={confirmDelete} disabled={busyId !== null} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50">
                 {busyId ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Delete
               </button>
             </div>
@@ -267,8 +267,8 @@ function PostingFormModal({ posting, onClose, onSaved }: { posting: JobPosting |
     }
   };
 
-  const input = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30';
-  const lbl = 'block text-xs font-semibold text-gray-600 mb-1.5';
+  const input = 'w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green';
+  const lbl = 'block text-sm font-medium text-gray-700 mb-1.5';
 
   if (typeof document === 'undefined') return null;
   return createPortal(
@@ -325,8 +325,8 @@ function PostingFormModal({ posting, onClose, onSaved }: { posting: JobPosting |
         </div>
 
         <div className="flex gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
-          <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-          <button onClick={submit} disabled={saving} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50">
+          <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+          <button onClick={submit} disabled={saving} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50">
             {saving && <RefreshCw className="w-4 h-4 animate-spin" />} {isEdit ? 'Save changes' : 'Create posting'}
           </button>
         </div>

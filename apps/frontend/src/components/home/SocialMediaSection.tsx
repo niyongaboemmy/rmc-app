@@ -9,8 +9,6 @@ import { TweetColumn } from './TweetColumn';
 import {
   ContentKeys,
   SOCIAL_DEFAULT,
-  getSiteContent,
-  mergeContent,
   getSocialFeed,
   toRenderPost,
   formatCount,
@@ -19,7 +17,10 @@ import {
   type SocialContent,
   type SocialChannel,
   type SocialPost,
+  type Locale,
 } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 // Channel key → icon/background. Owned by the landing (not the content store).
 const CHANNEL_CONFIG: Record<SocialChannel['key'], { Icon: React.ComponentType<{ className?: string }>; bg: string }> = {
@@ -33,9 +34,13 @@ export function SocialMediaSection() {
   const { locale } = useParams<{ locale: string }>();
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
 
-  // Content managed from Admin → Content → Social Media. Falls back to the
-  // built-in defaults until something is saved (or if the fetch fails).
-  const [content, setContent] = useState<SocialContent>(SOCIAL_DEFAULT);
+  // Content managed from Admin → Content → Social Media, and inline in Edit
+  // Mode. Falls back to the built-in defaults until something is saved.
+  const { content, editing, setField } = useEditableContent<SocialContent>(
+    ContentKeys.social,
+    SOCIAL_DEFAULT,
+  );
+  const lang = locale as Locale;
   // Live posts pulled from the real RMC accounts by the backend (cached + polled).
   const [livePosts, setLivePosts] = useState<SocialPost[] | null>(null);
   const [liveFollowers, setLiveFollowers] = useState<Record<string, string>>({});
@@ -44,14 +49,6 @@ export function SocialMediaSection() {
 
   useEffect(() => {
     let active = true;
-    getSiteContent<SocialContent>(ContentKeys.social)
-      .then((data) => {
-        if (active && data) setContent(mergeContent(SOCIAL_DEFAULT, data));
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-
     getSocialFeed()
       .then((feed) => {
         if (!active || !feed) return;
@@ -110,21 +107,45 @@ export function SocialMediaSection() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <h2
-            className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
-            dir={rtl ? 'rtl' : 'ltr'}
-          >
-            {title}
-          </h2>
+          {editing ? (
+            <InlineText
+              as="h2"
+              lang={locale}
+              value={title}
+              onCommit={(v) => setField((d) => { d.title[lang] = v; })}
+              className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+              placeholder="Section title"
+            />
+          ) : (
+            <h2
+              className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+            >
+              {title}
+            </h2>
+          )}
           <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
           </div>
-          <p
-            className={`text-gray-400 max-w-xl mx-auto text-sm md:text-base ${rtl ? 'font-arabic' : ''}`}
-            dir={rtl ? 'rtl' : 'ltr'}
-          >
-            {subtitle}
-          </p>
+          {editing ? (
+            <InlineText
+              as="p"
+              lang={locale}
+              value={subtitle}
+              onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
+              className={`text-gray-400 max-w-xl mx-auto text-sm md:text-base ${rtl ? 'font-arabic' : ''}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+              placeholder="Section subtitle"
+            />
+          ) : (
+            <p
+              className={`text-gray-400 max-w-xl mx-auto text-sm md:text-base ${rtl ? 'font-arabic' : ''}`}
+              dir={rtl ? 'rtl' : 'ltr'}
+            >
+              {subtitle}
+            </p>
+          )}
         </div>
 
         {/* Featured: latest video + latest tweets. Both columns always render

@@ -41,7 +41,6 @@ function unwrap<T>(promise: Promise<{ data: { data?: T } | T }>): Promise<T> {
 export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
 export type CourseFormat = 'self_paced' | 'in_person' | 'hybrid';
 export type ContentStatus = 'draft' | 'published' | 'archived';
-export type BookVisibility = 'public' | 'members';
 
 /** Language a course is TAUGHT in / a book is WRITTEN in — not the UI locale. */
 export type CourseLanguage = 'en' | 'rw' | 'ar' | 'multi';
@@ -89,7 +88,6 @@ export interface DawahCourseLesson {
   mediaUrl: string | null;
   durationMinutes: number | null;
   sortOrder: number;
-  isPreview: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +118,8 @@ export interface DawahCourse {
   durationMinutes: number | null;
   /** Denormalised; the backend maintains it. Read-only. */
   lessonCount: number;
+  /** Denormalised count of enrolled learners — the "N learners" stat. Read-only. */
+  enrollmentCount: number;
   isFeatured: boolean;
   status: ContentStatus;
   sortOrder: number;
@@ -131,12 +131,26 @@ export interface DawahCourse {
 }
 
 /**
+ * The signed-in member's progress in one course. Returned by the progress read
+ * and by every mark/un-mark call. `enrolled` is false until the first lesson is
+ * completed (there is no explicit enrol step — the first completion enrols).
+ */
+export interface CourseProgress {
+  enrolled: boolean;
+  completedLessons: number;
+  totalLessons: number;
+  progressPercent: number;
+  completedAt: string | null;
+  /** Lesson ids the member has completed — drives the per-lesson ticks. */
+  completedLessonIds: string[];
+}
+
+/**
  * A book as the PUBLIC routes return it.
  *
- * There is no fileKey and no previewFileKey — the backend strips them. Use
- * `hasPreview` to know whether an excerpt exists, and previewUrl()/downloadUrl()
+ * There is no fileKey — the backend strips it. Use previewUrl()/downloadUrl()
  * to read the bytes. The admin routes return DawahBookAdmin, which does carry
- * the keys.
+ * the key. Every book is public.
  */
 export interface DawahBook {
   id: string;
@@ -157,10 +171,7 @@ export interface DawahBook {
   fileSize: number;
   mimeType: string;
   pageCount: number | null;
-  /** True when an excerpt exists — an anonymous reader previews THAT. */
-  hasPreview: boolean;
   allowDownload: boolean;
-  visibility: BookVisibility;
   viewCount: number;
   downloadCount: number;
   isFeatured: boolean;
@@ -169,10 +180,9 @@ export interface DawahBook {
   updatedAt: string;
 }
 
-/** The admin projection: same book, plus the protected storage keys. */
+/** The admin projection: same book, plus the protected storage key. */
 export interface DawahBookAdmin extends DawahBook {
   fileKey: string;
-  previewFileKey: string | null;
   status: ContentStatus;
   sortOrder: number;
 }
@@ -259,7 +269,6 @@ export interface LessonPayload {
   mediaUrl?: string | null;
   durationMinutes?: number | null;
   sortOrder?: number;
-  isPreview?: boolean;
 }
 
 export interface BookPayload {
@@ -280,8 +289,6 @@ export interface BookPayload {
   fileSize: number;
   mimeType?: string;
   pageCount?: number | null;
-  previewFileKey?: string | null;
-  visibility?: BookVisibility;
   allowDownload?: boolean;
   isFeatured?: boolean;
   status?: ContentStatus;
@@ -612,6 +619,21 @@ export const dawahApi = {
     /** The course plus its ordered lessons. 404s on an unpublished slug. */
     bySlug: (slug: string): Promise<DawahCourse> =>
       unwrap(publicHttp.get(`/dawah/courses/${slug}`)),
+
+    /**
+     * The signed-in member's progress. AUTHED (apiClient) — call only when a
+     * member is present; anonymous callers get a 401.
+     */
+    progress: (slug: string): Promise<CourseProgress> =>
+      unwrap(apiClient.get(`/dawah/courses/${slug}/progress`)),
+
+    /** Mark a lesson complete; auto-enrols on the first completion. Returns fresh progress. */
+    completeLesson: (slug: string, lessonId: string): Promise<CourseProgress> =>
+      unwrap(apiClient.post(`/dawah/courses/${slug}/lessons/${lessonId}/complete`)),
+
+    /** Un-mark a lesson complete. Enrolment stays; progress drops. Returns fresh progress. */
+    uncompleteLesson: (slug: string, lessonId: string): Promise<CourseProgress> =>
+      unwrap(apiClient.delete(`/dawah/courses/${slug}/lessons/${lessonId}/complete`)),
   },
 
   books: {
@@ -682,9 +704,14 @@ export const dawahApi = {
       release: (answerId: string): Promise<{ id: string; verified: boolean }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/release`, {})),
 
-      /** Verify: publish + badge + pin ("RMC says this is correct"). */
+      /** Verify: publish + badge + pin ("RMC says this is correct"). One per question —
+       *  409s if another answer is already verified (un-verify it first). */
       verify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/verify`, {})),
+
+      /** Un-verify: drops the badge/pin. The answer stays published. */
+      unverify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
+        unwrap(apiClient.delete(`/admin/dawah/discussions/answers/${answerId}/verify`)),
 
       /** Category answer_policy — read + set. Setting is NOT retroactive. */
       categoryPolicies: (): Promise<CategoryPolicy[]> =>

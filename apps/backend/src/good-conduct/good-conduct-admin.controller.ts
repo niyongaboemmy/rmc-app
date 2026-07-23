@@ -106,6 +106,13 @@ export class GoodConductAdminController {
     return this.service.adminIssueCertificate(id, user.id);
   }
 
+  @Post('payment-reminders/run')
+  @Permissions(Permission.GOOD_CONDUCT_MANAGE)
+  @ApiOperation({ summary: 'Send payment reminders for unpaid requests that are now due' })
+  runPaymentReminders() {
+    return this.service.sendDuePaymentReminders();
+  }
+
   @Get('reports')
   @Permissions(Permission.GOOD_CONDUCT_REPORTS)
   @ApiOperation({ summary: 'Get Good Conduct service statistics' })

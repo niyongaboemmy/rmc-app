@@ -145,6 +145,10 @@ export class GoodConductRequest {
   @Column({ name: 'submitted_at', type: 'timestamptz', nullable: true })
   submittedAt: Date | null;
 
+  /** Set once a "please complete payment" reminder has been sent, so we never send twice. */
+  @Column({ name: 'payment_reminder_sent_at', type: 'timestamptz', nullable: true })
+  paymentReminderSentAt: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

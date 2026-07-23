@@ -52,6 +52,18 @@ export const ContentKeys = {
   funeral: 'funeral',
   hajj: 'hajj',
   dawah: 'dawah',
+  library: 'library',
+  courses: 'courses',
+  discussions: 'discussions',
+  services: 'services',
+  historyHeader: 'about-history',
+  galleryHero: 'gallery-hero',
+  tendersHero: 'tenders-hero',
+  registerHero: 'register-hero',
+  newMuslimHero: 'new-muslim-hero',
+  servicesHero: 'services-hero',
+  contactHero: 'contact-hero',
+  tendersHome: 'tenders-home',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

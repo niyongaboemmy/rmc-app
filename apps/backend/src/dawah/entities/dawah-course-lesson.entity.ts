@@ -98,10 +98,6 @@ export class DawahCourseLesson {
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder: number;
 
-  /** Readable by anyone, as a taster, even once the course is gated. */
-  @Column({ name: 'is_preview', type: 'boolean', default: false })
-  isPreview: boolean;
-
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

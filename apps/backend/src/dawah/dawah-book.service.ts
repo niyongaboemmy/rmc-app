@@ -1,11 +1,11 @@
 import {
   BadRequestException, ForbiddenException, Injectable, Logger,
-  NotFoundException, UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 
-import { DawahBook, BookVisibility } from './entities/dawah-book.entity';
+import { DawahBook } from './entities/dawah-book.entity';
 import { ContentStatus } from './entities/dawah-course.entity';
 import { CreateDawahBookDto } from './dto/create-dawah-book.dto';
 import { UpdateDawahBookDto } from './dto/update-dawah-book.dto';
@@ -59,18 +59,18 @@ export class DawahBookService {
   ) {}
 
   /**
-   * The public projection of a book. `fileKey` and `previewFileKey` are
-   * deliberately absent, and this is the single most important line of code in
-   * the file: both point into the file-server's PROTECTED `dawah-library/`
-   * prefix. The protection means an anonymous request for the raw key is
+   * The public projection of a book. `fileKey` is deliberately absent, and this
+   * is the single most important line of code in the file: it points into the
+   * file-server's PROTECTED `dawah-library/` prefix. The protection means an
+   * anonymous request for the raw key is
    * refused — but handing the key out anyway tells an attacker precisely what
    * to request, and turns any future misconfiguration of that prefix (see the
    * plan's §6 warning about PROTECTED_KEY_PREFIXES being an override, not an
    * append) from "harmless" into "every book is downloadable".
    *
-   * `hasPreview` is the boolean the UI actually needs; `coverImageKey` IS
-   * exposed, because covers live under the public `dawah-covers/` prefix and
-   * the frontend renders them straight from an <img src>.
+   * `coverImageKey` IS exposed, because covers live under the public
+   * `dawah-covers/` prefix and the frontend renders them straight from an
+   * <img src>.
    *
    * Returning entities directly (as the course routes do) is fine where no
    * column is secret. Here one is, so the narrowing is explicit and central —
@@ -97,9 +97,7 @@ export class DawahBookService {
       fileSize: book.fileSize,
       mimeType: book.mimeType,
       pageCount: book.pageCount,
-      hasPreview: Boolean(book.previewFileKey),
       allowDownload: book.allowDownload,
-      visibility: book.visibility,
       viewCount: book.viewCount,
       downloadCount: book.downloadCount,
       isFeatured: book.isFeatured,
@@ -244,8 +242,6 @@ export class DawahBookService {
       fileSize: dto.fileSize,
       mimeType: dto.mimeType ?? undefined,
       pageCount: dto.pageCount ?? null,
-      previewFileKey: dto.previewFileKey ?? null,
-      visibility: dto.visibility ?? undefined,
       allowDownload: dto.allowDownload ?? true,
       isFeatured: dto.isFeatured ?? false,
       status,
@@ -288,9 +284,6 @@ export class DawahBookService {
       fileSize: dto.fileSize ?? book.fileSize,
       mimeType: dto.mimeType ?? book.mimeType,
       pageCount: dto.pageCount !== undefined ? dto.pageCount : book.pageCount,
-      previewFileKey:
-        dto.previewFileKey !== undefined ? dto.previewFileKey : book.previewFileKey,
-      visibility: dto.visibility ?? book.visibility,
       allowDownload: dto.allowDownload ?? book.allowDownload,
       isFeatured: dto.isFeatured ?? book.isFeatured,
       sortOrder: dto.sortOrder ?? book.sortOrder,
@@ -365,62 +358,27 @@ export class DawahBookService {
   }
 
   /**
-   * Resolve what an anonymous-or-authenticated caller may READ, per plan §6:
-   *
-   *   1. not found / not published            → 404
-   *   2. preview_file_key is set              → stream the excerpt (anonymous OK)
-   *   3. visibility = 'public'                → stream the full file
-   *   4. visibility = 'members' AND authed    → stream the full file
-   *   5. otherwise                            → 401
-   *
-   * Step 2 sits ABOVE the visibility check on purpose: the excerpt exists
-   * precisely so a members-only book can still show the public something. If
-   * the visibility check came first, a members book with an excerpt would 401 an
-   * anonymous reader and the excerpt would never be reachable — which is the
-   * whole feature.
+   * Read a published book inline. Every book is public, so this is simply:
+   * published-or-404, bump the view counter, stream the full PDF. The bytes
+   * still flow through here (not a direct file-server URL) because
+   * `dawah-library/` is a protected prefix and this is where the counter lives.
    */
-  async getPreviewFile(slug: string, isAuthenticated: boolean): Promise<BookFile> {
+  async getPreviewFile(slug: string): Promise<BookFile> {
     const book = await this.getPublishedBook(slug);
-
-    if (book.previewFileKey) {
-      this.bumpCounter(book.id, 'view_count');
-      const file = await this.fetchKey(book, book.previewFileKey);
-      // The excerpt is a different file from the book; name it as one so a
-      // reader who saves it does not think they have the whole thing.
-      return { ...file, fileName: `preview-${book.fileName}` };
-    }
-
-    const mayReadFull =
-      book.visibility === BookVisibility.PUBLIC ||
-      (book.visibility === BookVisibility.MEMBERS && isAuthenticated);
-
-    if (!mayReadFull) {
-      throw new UnauthorizedException('Sign in to read this book');
-    }
-
     this.bumpCounter(book.id, 'view_count');
     return this.fetchKey(book, book.fileKey);
   }
 
   /**
-   * Downloading is stricter than reading: it always hands over the FULL file,
-   * so the excerpt escape hatch does not apply here. A members-only book with a
-   * public excerpt is previewable by anyone and downloadable by nobody who is
-   * not signed in — which is the point.
-   *
-   * allow_download=false is a deterrent, NOT DRM. Anyone who can render a PDF
-   * can save the bytes. It stops casual redistribution and nothing more; say so
-   * plainly to anyone who assumes otherwise.
+   * Download the full book. The only gate left is `allow_download`, which hides
+   * the button and 403s the route — a deterrent, NOT DRM: anyone who can render
+   * a PDF can save the bytes. Say so plainly to anyone who assumes otherwise.
    */
-  async getDownloadFile(slug: string, isAuthenticated: boolean): Promise<BookFile> {
+  async getDownloadFile(slug: string): Promise<BookFile> {
     const book = await this.getPublishedBook(slug);
 
     if (!book.allowDownload) {
       throw new ForbiddenException('This book is not available for download');
-    }
-
-    if (book.visibility === BookVisibility.MEMBERS && !isAuthenticated) {
-      throw new UnauthorizedException('Sign in to download this book');
     }
 
     this.bumpCounter(book.id, 'download_count');

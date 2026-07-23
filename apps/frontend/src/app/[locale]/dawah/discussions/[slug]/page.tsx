@@ -10,6 +10,8 @@ import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
 import { dawahApi, type DiscussionThread, type PostLanguage } from '@/lib/dawahApi';
 import { AnswerComposer } from '@/components/dawah/AnswerComposer';
+import { VerifyAnswerControl } from '@/components/dawah/VerifyAnswerControl';
+import { ThreadPendingAnswers } from '@/components/dawah/ThreadPendingAnswers';
 
 export const dynamic = 'force-dynamic';
 
@@ -172,6 +174,9 @@ export default async function DiscussionThreadPage({
                   <p className="mt-3 text-[11px] text-gray-500">
                     {verified.author ? verified.author.name : t('discussions.anonymousAnswer')}
                   </p>
+                  {/* Scholar-only: drop the verification. Renders nothing for anyone
+                      without discussions:verify. */}
+                  <VerifyAnswerControl answerId={verified.id} verified />
                 </div>
               </Reveal>
             )}
@@ -215,12 +220,22 @@ export default async function DiscussionThreadPage({
                             <span className="italic text-gray-400">{t('discussions.anonymousAnswer')}</span>
                           )}
                         </div>
+                        {/* Scholar-only: promote this to the verified answer. Offered
+                            only while the question has none yet — the API allows one
+                            per question (un-verify the current one to switch). */}
+                        {!verified && <VerifyAnswerControl answerId={a.id} />}
                       </div>
                     ))}
                   </div>
                 )}
               </div>
             </Reveal>
+
+            {/* Scholar-only: this question's answers still held for review, with
+                Release / Verify actions. Renders nothing for anyone without
+                discussions:verify, and nothing when the queue for this thread is
+                empty. */}
+            <ThreadPendingAnswers slug={question.slug} />
 
             {/* Compose. A client island in this server page. It knows whether the
                 category holds answers for review, so it can warn before submit. */}

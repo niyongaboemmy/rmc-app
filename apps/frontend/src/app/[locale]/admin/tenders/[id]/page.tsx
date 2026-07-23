@@ -148,7 +148,7 @@ function AdminTenderDetailContent() {
       </Link>
 
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
             <Briefcase className="w-5 h-5 text-teal-600" />
@@ -176,7 +176,7 @@ function AdminTenderDetailContent() {
       </div>
 
       {/* Applicant + bid details */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="font-bold text-gray-900 mb-4 text-sm">Bid details</h2>
         <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
           <Field label="Contact person" value={application.contactName} />
@@ -218,7 +218,7 @@ function AdminTenderDetailContent() {
       </div>
 
       {/* Documents */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-gray-900 text-sm">Documents</h2>
           {allDocsVerified && (
@@ -274,13 +274,13 @@ function AdminTenderDetailContent() {
 
       {/* Evaluation actions */}
       {canEvaluate && !isClosed && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
           <h2 className="font-bold text-gray-900 text-sm">Evaluation</h2>
 
           {error && (
             <div
               role="alert"
-              className="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-2.5"
+              className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-2.5"
             >
               {error}
             </div>
@@ -356,7 +356,7 @@ function AdminTenderDetailContent() {
 
       {/* History */}
       {application.statusHistory.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <h2 className="font-bold text-gray-900 text-sm mb-4 flex items-center gap-2">
             <History className="w-4 h-4 text-gray-400" /> History
           </h2>

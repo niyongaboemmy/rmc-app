@@ -59,7 +59,7 @@ export default function GoodConductVerifyPage() {
 
         {!loading && result && (
           <div className="bg-white rounded-2xl border-2 border-green-200 shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-br from-green-600 to-emerald-700 text-white p-6 text-center">
+            <div className="bg-gradient-to-br from-green-600 to-rmc-green-dark text-white p-6 text-center">
               <ShieldCheck className="w-10 h-10 mx-auto mb-2" />
               <p className="font-bold text-lg">{t('validTitle')}</p>
               <p className="text-white/80 text-xs font-mono mt-1">{result.certificateNumber}</p>

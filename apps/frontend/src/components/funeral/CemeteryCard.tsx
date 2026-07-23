@@ -63,7 +63,7 @@ export function CemeteryCard({
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
           <div
-            className={`h-full rounded-full transition-all duration-700 ${nearFull ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rmc-green to-rmc-green-dark'}`}
+            className={`h-full rounded-full transition-all duration-700 ${nearFull ? 'bg-gradient-to-r from-rmc-green to-rmc-green-dark' : 'bg-gradient-to-r from-rmc-green to-rmc-green-dark'}`}
             style={{ width: `${pct}%` }}
           />
         </div>

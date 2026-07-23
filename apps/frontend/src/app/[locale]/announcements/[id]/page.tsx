@@ -204,7 +204,7 @@ export default function AnnouncementDetailPage() {
                   <p className="text-xs text-gray-400 mb-5">{t('detail.cta.subtitle')}</p>
                   <Link
                     href={`/${locale}/contact`}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-rmc-green/20"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-rmc-green/20"
                   >
                     {t('detail.cta.button')}
                   </Link>

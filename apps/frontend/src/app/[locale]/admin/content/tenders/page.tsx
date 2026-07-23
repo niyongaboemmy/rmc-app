@@ -300,7 +300,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
           <button
             onClick={openCreate}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-amber-500/20 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-amber-500/20 transition-colors"
           >
             <Plus className="w-4 h-4" /> New Tender
           </button>
@@ -425,7 +425,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
           {/* Priority + Publish date + Deadline */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Priority</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Priority</label>
               <div className="flex gap-1">
                 {(['normal', 'high', 'urgent'] as const).map((p) => (
                   <button
@@ -444,23 +444,23 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Publish Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Publish Date</label>
               <input
                 type="date"
                 value={toDateInput(form.publishAt)}
                 onChange={(e) => set('publishAt', fromDateInput(e.target.value))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Deadline <span className="text-amber-500 font-normal">(optional)</span>
               </label>
               <input
                 type="date"
                 value={form.expiresAt ? toDateInput(form.expiresAt) : ''}
                 onChange={(e) => set('expiresAt', e.target.value ? fromDateInput(e.target.value) : null)}
-                className="w-full rounded-xl border border-amber-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                className="w-full rounded-lg border border-amber-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
               />
             </div>
           </div>
@@ -515,7 +515,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
                 return (
                   <div key={l} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Title {required && <span className="text-red-500">*</span>}
                       </label>
                       <input
@@ -524,11 +524,11 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
                         value={form.titleI18n[l]}
                         onChange={(e) => set('titleI18n', setLang(form.titleI18n, l, e.target.value))}
                         placeholder={l === 'en' ? 'e.g. Construction of Mosque in Huye' : l === 'rw' ? 'Injiza umutwe…' : 'أدخل العنوان…'}
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent ${fc}`}
+                        className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fc}`}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Description {required && <span className="text-red-500">*</span>}
                       </label>
                       <textarea
@@ -537,7 +537,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
                         value={form.contentI18n[l]}
                         onChange={(e) => set('contentI18n', setLang(form.contentI18n, l, e.target.value))}
                         placeholder={l === 'en' ? 'Describe the scope of work, requirements and how to submit bids…' : l === 'rw' ? 'Sobanura akazi…' : 'صِف نطاق العمل…'}
-                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none ${fc}`}
+                        className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fc}`}
                       />
                     </div>
                   </div>
@@ -548,7 +548,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
 
           {/* ── Attachments ── */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Attachments <span className="text-gray-400 font-normal">(PDF, images — max 10 MB each)</span>
             </label>
 
@@ -609,7 +609,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             {saving
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
@@ -704,7 +704,7 @@ function UploadRow({ item, onRemove }: { item: UploadItem; onRemove: () => void 
             <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${item.pct}%` }} />
           </div>
         )}
-        {item.status === 'error'   && <p className="text-[10px] text-red-500">{item.errorMsg}</p>}
+        {item.status === 'error'   && <p className="text-xs text-red-600">{item.errorMsg}</p>}
         {item.status === 'done'    && <p className="text-[10px] text-green-600">Uploaded</p>}
         {item.status === 'pending' && <p className="text-[10px] text-gray-400">{formatSize(item.file.size)} — will upload on save</p>}
       </div>

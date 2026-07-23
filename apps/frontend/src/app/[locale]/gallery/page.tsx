@@ -3,7 +3,7 @@ import { ImageIcon } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
-import { PageHero } from '@/components/layout/PageHero';
+import { GalleryHero } from '@/components/gallery/GalleryHero';
 import { GalleryCategories } from '@/components/gallery/GalleryCategories';
 import { GallerySwitch } from '@/components/gallery/GallerySwitch';
 import { publicApi } from '@/lib/public-api';
@@ -88,13 +88,8 @@ export default async function GalleryPage() {
     <div className="min-h-screen">
       <Navbar />
       <main>
-        {/* Hero header */}
-        <PageHero
-          title={t('title')}
-          subtitle={t('subtitle')}
-          minHeightClassName="min-h-[40vh]"
-          paddingClassName="pt-28 pb-10"
-        />
+        {/* Hero header — heading/subtitle are admin-editable inline (Edit Mode). */}
+        <GalleryHero />
 
         {/* Public view below. For a super-admin in Edit Mode, GallerySwitch swaps
             it for the in-context editable board (category tabs + add tiles). */}

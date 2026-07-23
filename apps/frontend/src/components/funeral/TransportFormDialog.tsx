@@ -77,14 +77,14 @@ export function TransportFormDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
           >
             {t('cancel')}
           </button>
           <button
             type="button"
             onClick={submit}
-            className="inline-flex items-center gap-1.5 rounded-full bg-rmc-green px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rmc-green-dark"
           >
             <Check className="h-4 w-4" aria-hidden="true" /> {t('save')}
           </button>
@@ -114,7 +114,7 @@ export function TransportFormDialog({
             triggerClassName="px-3"
           />
           {touched && !mosqueId
-            ? <span className="mt-1 block text-[11px] text-red-500">{t('required')}</span>
+            ? <span className="mt-1 block text-xs text-red-600">{t('required')}</span>
             : <span className="mt-1 block text-[11px] text-gray-400">{t('mosqueHint')}</span>}
         </label>
 

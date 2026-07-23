@@ -32,27 +32,6 @@ interface ApiMosque {
 }
 interface Province { id: string; name: string; code: string; }
 
-/* -------------------------------------------------------------------------
- * TEMPORARY PLACEHOLDER DATA — FOR TESTING ONLY.
- * The mosques table is currently empty, so these sample mosques (with real
- * Rwanda coordinates across all five provinces) let us exercise the markers,
- * name search and province-click filtering on the map. They are only used as
- * a fallback when the API returns no mosques.
- * TODO: remove this once real mosque data is seeded in the backend.
- * ----------------------------------------------------------------------- */
-const PLACEHOLDER_MOSQUES: MapMosque[] = [
-  { id: 'tmp-kig-1', name: 'Nyamirambo Grand Mosque', address: 'Nyamirambo, Kigali', imamName: 'Sheikh Abdul Karim Harelimana', imamPhone: '+250 788 300 101', imamPhoto: 'https://i.pravatar.cc/120?img=12', capacity: 3000, fridayPrayerTime: '12:30', phone: '+250 788 300 100', email: 'info@nyamirambomosque.rw', gpsLat: -1.9806, gpsLng: 30.0469, provinceCode: 'KIG' },
-  { id: 'tmp-kig-2', name: 'Kigali Islamic Centre', address: 'Nyarugenge, Kigali', imamName: 'Sheikh Musa Sindayigaya', imamPhone: '+250 788 300 111', imamPhoto: null, capacity: 1500, fridayPrayerTime: '12:30', phone: '+250 788 300 110', email: null, gpsLat: -1.9495, gpsLng: 30.0588, provinceCode: 'KIG' },
-  { id: 'tmp-nor-1', name: 'Musanze Central Mosque', address: 'Musanze, Northern Province', imamName: 'Sheikh Yusuf Niyonzima', imamPhone: '+250 788 300 121', imamPhoto: null, capacity: 1200, fridayPrayerTime: '12:45', phone: '+250 788 300 120', email: null, gpsLat: -1.4998, gpsLng: 29.6340, provinceCode: 'NOR' },
-  { id: 'tmp-nor-2', name: 'Byumba Friday Mosque', address: 'Gicumbi, Northern Province', imamName: 'Sheikh Idris Habimana', imamPhone: null, imamPhoto: null, capacity: 800, fridayPrayerTime: '12:45', phone: null, email: null, gpsLat: -1.5763, gpsLng: 30.0675, provinceCode: 'NOR' },
-  { id: 'tmp-sou-1', name: 'Huye Jamia Mosque', address: 'Huye, Southern Province', imamName: 'Sheikh Ramadhan Munyaneza', imamPhone: '+250 788 300 141', imamPhoto: 'https://i.pravatar.cc/120?img=33', capacity: 2000, fridayPrayerTime: '12:30', phone: '+250 788 300 140', email: 'huye.jamia@rmc.rw', gpsLat: -2.5967, gpsLng: 29.7390, provinceCode: 'SOU' },
-  { id: 'tmp-sou-2', name: 'Muhanga Central Mosque', address: 'Muhanga, Southern Province', imamName: 'Sheikh Salim Bizimana', imamPhone: null, imamPhoto: null, capacity: 900, fridayPrayerTime: '12:45', phone: null, email: null, gpsLat: -2.0780, gpsLng: 29.7560, provinceCode: 'SOU' },
-  { id: 'tmp-eas-1', name: 'Rwamagana Main Mosque', address: 'Rwamagana, Eastern Province', imamName: 'Sheikh Hamza Nkurunziza', imamPhone: '+250 788 300 161', imamPhoto: null, capacity: 1100, fridayPrayerTime: '12:30', phone: '+250 788 300 160', email: null, gpsLat: -1.9487, gpsLng: 30.4347, provinceCode: 'EAS' },
-  { id: 'tmp-eas-2', name: 'Nyagatare Friday Mosque', address: 'Nyagatare, Eastern Province', imamName: 'Sheikh Omar Uwimana', imamPhone: null, imamPhoto: null, capacity: 700, fridayPrayerTime: '12:45', phone: null, email: null, gpsLat: -1.2920, gpsLng: 30.3258, provinceCode: 'EAS' },
-  { id: 'tmp-wes-1', name: 'Rubavu Central Mosque', address: 'Rubavu, Western Province', imamName: 'Sheikh Bilal Ntaganda', imamPhone: '+250 788 300 181', imamPhoto: null, capacity: 1300, fridayPrayerTime: '12:30', phone: '+250 788 300 180', email: null, gpsLat: -1.6777, gpsLng: 29.2580, provinceCode: 'WES' },
-  { id: 'tmp-wes-2', name: 'Karongi Lakeside Mosque', address: 'Karongi, Western Province', imamName: 'Sheikh Ismail Hakizimana', imamPhone: null, imamPhoto: null, capacity: 600, fridayPrayerTime: '12:45', phone: null, email: null, gpsLat: -2.0000, gpsLng: 29.3833, provinceCode: 'WES' },
-];
-
 export function MosqueFinder() {
   const t = useTranslations('contact');
 
@@ -99,8 +78,12 @@ export function MosqueFinder() {
           gpsLng: m.gpsLng,
           provinceCode: m.districtId ? provinceCodeByDistrict.get(m.districtId) ?? null : null,
         }));
-        // TEMP: fall back to placeholder mosques while the table is empty (testing only).
-        setMosques(mapped.length ? mapped : PLACEHOLDER_MOSQUES);
+        setMosques(mapped);
+      })
+      .catch(() => {
+        // On failure, show a genuine empty state rather than fabricated data.
+        setProvinces([]);
+        setMosques([]);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -153,7 +136,7 @@ export function MosqueFinder() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full pl-8 pr-8 py-2 text-sm rounded-lg border border-gray-200 bg-white/70 placeholder:text-gray-400 focus:ring-2 focus:ring-rmc-green/60 focus:border-transparent outline-none transition"
+              className="w-full pl-8 pr-8 py-2 text-sm rounded-lg border border-gray-300 bg-white/70 placeholder:text-gray-400 focus:ring-2 focus:ring-rmc-green/60 focus:border-transparent outline-none transition"
             />
             {query && (
               <button
@@ -256,7 +239,9 @@ export function MosqueFinder() {
               })}
             </div>
           ) : (
-            <p className="text-gray-400 text-xs text-center py-3">{t('noMosques')}</p>
+            <p className="text-gray-400 text-xs text-center py-3">
+              {mosques.length === 0 ? t('noMosquesYet') : t('noMosques')}
+            </p>
           )}
         </div>
       </div>

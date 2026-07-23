@@ -34,6 +34,7 @@ import React, {
   useState,
 } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Permission } from '@/lib/permissions';
 import { saveSiteContent } from '@/lib/content-api';
 import {
   PreviewProvider,
@@ -43,9 +44,25 @@ import {
 
 const STORAGE_KEY = 'rmc_edit_mode';
 
+/**
+ * Any one of these lets a user OPEN edit mode. What they can actually edit inside
+ * it is decided per-primitive by the specific permission (copy → content:edit,
+ * course/book CRUD → dawah:manage, moderation → discussions:moderate, answer
+ * verification → discussions:verify). A super-admin holds them all via '*'.
+ */
+const EDIT_PERMISSIONS: Permission[] = [
+  Permission.CONTENT_EDIT,
+  Permission.DAWAH_MANAGE,
+  Permission.DISCUSSIONS_MODERATE,
+  Permission.DISCUSSIONS_VERIFY,
+];
+
 interface EditModeContextValue {
-  /** True only for a super-admin — the sole gate for the whole feature. */
+  /** True for a super-admin OR any holder of an edit permission — the gate to
+   *  OPEN edit mode. Per-field editability is gated further by `hasPermission`. */
   canEdit: boolean;
+  /** Fine-grained permission check, so each editable gates on its own permission. */
+  hasPermission: (permission: Permission) => boolean;
   /** Whether in-context editing affordances are currently active. */
   editMode: boolean;
   setEditMode: (on: boolean) => void;
@@ -71,6 +88,7 @@ interface EditModeContextValue {
 const noop = () => {};
 const DEFAULT: EditModeContextValue = {
   canEdit: false,
+  hasPermission: () => false,
   editMode: false,
   setEditMode: noop,
   toggleEditMode: noop,
@@ -87,7 +105,7 @@ const DEFAULT: EditModeContextValue = {
 const EditModeContext = createContext<EditModeContextValue>(DEFAULT);
 
 export function EditModeProvider({ children }: { children: React.ReactNode }) {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, hasPermission } = useAuth();
   const storeRef = useRef<PreviewStore | null>(null);
   if (storeRef.current === null) storeRef.current = createPreviewStore();
   const store = storeRef.current;
@@ -97,7 +115,7 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
   const [seedVersion, setSeedVersion] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  const canEdit = isSuperAdmin;
+  const canEdit = isSuperAdmin || EDIT_PERMISSIONS.some((p) => hasPermission(p));
 
   // Restore the last edit-mode preference for this session (super-admin only).
   useEffect(() => {
@@ -166,6 +184,7 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<EditModeContextValue>(
     () => ({
       canEdit,
+      hasPermission,
       editMode: editMode && canEdit,
       setEditMode,
       toggleEditMode,
@@ -178,7 +197,7 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
       saveAll,
       discardAll,
     }),
-    [canEdit, editMode, setEditMode, toggleEditMode, store, dirty, registerDirty, seedVersion, bumpSeed, saving, saveAll, discardAll],
+    [canEdit, hasPermission, editMode, setEditMode, toggleEditMode, store, dirty, registerDirty, seedVersion, bumpSeed, saving, saveAll, discardAll],
   );
 
   return (

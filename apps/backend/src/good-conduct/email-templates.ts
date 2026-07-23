@@ -85,6 +85,24 @@ export const EmailTemplates = {
     };
   },
 
+  paymentReminder(
+    fullNames: string,
+    ref: string,
+    amount: string,
+  ): { subject: string; html: string } {
+    return {
+      subject: `Complete your Good Conduct payment — ${ref}`,
+      html: wrap(
+        'Payment Pending',
+        p(`Dear ${fullNames},`) +
+          p(
+            `Your Good Conduct Certificate request is still awaiting payment of <strong>${amount} RWF</strong>. Please complete the payment to have your request processed.`,
+          ) +
+          refLine(ref),
+      ),
+    };
+  },
+
   underReview(fullNames: string, ref: string): { subject: string; html: string } {
     return {
       subject: `Request under review — ${ref}`,

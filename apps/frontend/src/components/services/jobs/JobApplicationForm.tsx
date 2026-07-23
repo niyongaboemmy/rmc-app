@@ -298,8 +298,8 @@ export function JobApplicationForm() {
     };
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
-          <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+        <div className="w-16 h-16 mx-auto rounded-full bg-rmc-green-light flex items-center justify-center">
+          <CheckCircle2 className="w-8 h-8 text-rmc-green" />
         </div>
         <h2 className="text-xl font-bold text-gray-900">{t('successTitle')}</h2>
         <p className="text-gray-500 text-sm max-w-md mx-auto">{t('successText')}</p>
@@ -308,13 +308,13 @@ export function JobApplicationForm() {
           <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
             <code className="text-sm font-mono text-gray-700">{result.trackingCode}</code>
             <button onClick={copy} aria-label={t('trackingNumber')} className="text-gray-400 hover:text-gray-600">
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-rmc-green" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>
         </div>
         <div className="flex items-center justify-center gap-3 pt-2">
           <Button
-            className="!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500"
+            className="!bg-rmc-green hover:!bg-rmc-green-dark focus:!ring-rmc-green"
             onClick={() => router.push(`/${locale}/services/jobs/status`)}
           >
             {t('checkStatusBtn')}
@@ -361,21 +361,21 @@ export function JobApplicationForm() {
                 >
                   <span className={cn(
                     'w-9 h-9 shrink-0 rounded-full flex items-center justify-center ring-1 transition-colors',
-                    done && 'bg-emerald-600 text-white ring-emerald-600',
-                    active && 'bg-emerald-50 text-emerald-700 ring-emerald-500',
+                    done && 'bg-rmc-green text-white ring-rmc-green',
+                    active && 'bg-rmc-green-light text-rmc-green-dark ring-rmc-green',
                     !done && !active && 'bg-gray-50 text-gray-300 ring-gray-200',
                   )}>
                     {done ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                   </span>
                   <span className={cn(
                     'text-xs font-semibold hidden sm:block truncate',
-                    active ? 'text-emerald-700' : done ? 'text-gray-700' : 'text-gray-400',
+                    active ? 'text-rmc-green-dark' : done ? 'text-gray-700' : 'text-gray-400',
                   )}>
                     {stepLabels[s]}
                   </span>
                 </button>
                 {i < STEPS.length - 1 && (
-                  <span className={cn('flex-1 h-px mx-2 sm:mx-3', i < step ? 'bg-emerald-500' : 'bg-gray-200')} />
+                  <span className={cn('flex-1 h-px mx-2 sm:mx-3', i < step ? 'bg-rmc-green' : 'bg-gray-200')} />
                 )}
               </li>
             );
@@ -389,7 +389,7 @@ export function JobApplicationForm() {
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
           <div>
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
-              <User className="w-4 h-4 text-emerald-500" /> {t('sectionApplicant')}
+              <User className="w-4 h-4 text-rmc-green" /> {t('sectionApplicant')}
             </h2>
             <p className="text-xs text-gray-400 mt-1">{t('sectionApplicantSub')}</p>
           </div>
@@ -423,7 +423,7 @@ export function JobApplicationForm() {
             {!loadingPostings && postings.length === 0 && (
               <p className="mt-2 text-xs text-gray-500">
                 {t('jobNoneHint')}{' '}
-                <Link href={`/${locale}/services/jobs`} className="text-emerald-600 hover:underline font-medium">
+                <Link href={`/${locale}/services/jobs`} className="text-rmc-green hover:underline font-medium">
                   {t('jobBrowse')}
                 </Link>
               </p>
@@ -436,7 +436,7 @@ export function JobApplicationForm() {
       {currentStep === 'residence' && (
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
           <h2 className="font-bold text-gray-900 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-emerald-500" /> {t('sectionResidence')}
+            <MapPin className="w-4 h-4 text-rmc-green" /> {t('sectionResidence')}
           </h2>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -467,7 +467,7 @@ export function JobApplicationForm() {
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6">
           <div>
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-emerald-500" /> {t('sectionDocuments')}
+              <FileText className="w-4 h-4 text-rmc-green" /> {t('sectionDocuments')}
             </h2>
             <p className="text-xs text-gray-400 mt-1">{t('sectionDocumentsSub')}</p>
           </div>
@@ -518,7 +518,7 @@ export function JobApplicationForm() {
             <button
               type="button"
               onClick={addPaper}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark"
             >
               <Plus className="w-4 h-4" /> {t('addAcademicPaper')}
             </button>
@@ -528,7 +528,7 @@ export function JobApplicationForm() {
           <div className="border-t border-dashed border-gray-200 pt-5 space-y-3">
             <div>
               <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <ShieldCheck className="w-4 h-4 text-rmc-green" />
                 {t('goodConduct')}<span className="text-red-500 ml-0.5">*</span>
               </p>
               <p className="text-[11px] text-gray-400">{t('goodConductSub')}</p>
@@ -539,11 +539,11 @@ export function JobApplicationForm() {
                 <label
                   key={mode}
                   className={`flex items-center gap-2.5 rounded-xl border-2 px-4 py-3 cursor-pointer transition-colors ${
-                    gcMode === mode ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'
+                    gcMode === mode ? 'border-rmc-green bg-rmc-green-light' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <input type="radio" name="gcMode" value={mode} checked={gcMode === mode} onChange={() => setGcMode(mode)} className="sr-only" />
-                  <span className={`text-sm font-medium ${gcMode === mode ? 'text-emerald-700' : 'text-gray-600'}`}>
+                  <span className={`text-sm font-medium ${gcMode === mode ? 'text-rmc-green-dark' : 'text-gray-600'}`}>
                     {mode === 'verify' ? t('goodConductVerifyOption') : t('goodConductUploadOption')}
                   </span>
                 </label>
@@ -566,7 +566,7 @@ export function JobApplicationForm() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="!border-emerald-500 !text-emerald-600 hover:!bg-emerald-50 focus:!ring-emerald-500"
+                    className="!border-rmc-green !text-rmc-green hover:!bg-rmc-green-light focus:!ring-rmc-green"
                     onClick={verifyGoodConduct}
                     disabled={!gcNumber.trim() || gcVerifying}
                     isLoading={gcVerifying}
@@ -575,7 +575,7 @@ export function JobApplicationForm() {
                   </Button>
                 </div>
                 {gcVerifiedName && (
-                  <p className="text-xs text-emerald-600 flex items-center gap-1.5">
+                  <p className="text-xs text-rmc-green flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" /> {t('verifiedFor', { name: gcVerifiedName })}
                   </p>
                 )}
@@ -599,7 +599,7 @@ export function JobApplicationForm() {
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
           <div>
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" /> {t('stepReview')}
+              <CheckCircle2 className="w-4 h-4 text-rmc-green" /> {t('stepReview')}
             </h2>
             <p className="text-xs text-gray-400 mt-1">{t('stepReviewSub')}</p>
           </div>
@@ -659,7 +659,7 @@ export function JobApplicationForm() {
             <Button
               type="submit"
               isLoading={submitting}
-              className="!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500"
+              className="!bg-rmc-green hover:!bg-rmc-green-dark focus:!ring-rmc-green"
             >
               {submitting ? t('submitting') : t('submit')}
             </Button>
@@ -667,7 +667,7 @@ export function JobApplicationForm() {
             <Button
               type="button"
               onClick={goNext}
-              className="!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500"
+              className="!bg-rmc-green hover:!bg-rmc-green-dark focus:!ring-rmc-green"
             >
               {t('next')} <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
@@ -693,9 +693,9 @@ function ReviewGroup({
     <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-5">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-          <span className="text-emerald-500">{icon}</span> {title}
+          <span className="text-rmc-green">{icon}</span> {title}
         </p>
-        <button type="button" onClick={onEdit} className="text-xs font-medium text-emerald-600 hover:text-emerald-700">
+        <button type="button" onClick={onEdit} className="text-xs font-medium text-rmc-green hover:text-rmc-green-dark">
           {editLabel}
         </button>
       </div>

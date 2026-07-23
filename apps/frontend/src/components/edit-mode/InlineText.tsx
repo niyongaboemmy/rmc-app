@@ -15,6 +15,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
+import { Permission } from '@/lib/permissions';
 import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 
 type Tag = 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
@@ -30,6 +31,8 @@ interface InlineTextProps {
   /** Distinguishes the seed when the same field is shown per-language. */
   lang?: string;
   placeholder?: string;
+  /** Permission this field requires to be editable. Defaults to content:edit. */
+  permission?: Permission;
 }
 
 function EditableNode({ value, onCommit, as = 'span', className = '', dir = 'ltr', style, placeholder }: InlineTextProps) {
@@ -63,7 +66,7 @@ function EditableNode({ value, onCommit, as = 'span', className = '', dir = 'ltr
 }
 
 export function InlineText(props: InlineTextProps) {
-  const { editing, seedVersion } = useEditingState();
+  const { editing, seedVersion } = useEditingState(props.permission);
   const { value, as = 'span', className = '', dir = 'ltr', style } = props;
 
   if (!editing) {
@@ -80,7 +83,7 @@ export function InlineText(props: InlineTextProps) {
 }
 
 /** Small hook so the render path above reads clean. */
-function useEditingState() {
-  const { editMode, canEdit, seedVersion } = useEditMode();
-  return { editing: editMode && canEdit, seedVersion };
+function useEditingState(permission: Permission = Permission.CONTENT_EDIT) {
+  const { editMode, hasPermission, seedVersion } = useEditMode();
+  return { editing: editMode && hasPermission(permission), seedVersion };
 }

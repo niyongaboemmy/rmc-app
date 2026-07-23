@@ -24,12 +24,12 @@ function FeeTierCard({ label, description, amount, selected, onSelect }: FeeTier
       onClick={onSelect}
       className={cn(
         'rounded-xl border-2 p-4 cursor-pointer transition-all duration-200 flex items-center gap-4',
-        selected ? 'border-rose-500 bg-rose-50/60' : 'border-gray-200 hover:border-gray-300 bg-white',
+        selected ? 'border-rmc-green bg-rmc-green-light/60' : 'border-gray-200 hover:border-gray-300 bg-white',
       )}
     >
       <div className={cn(
         'w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-        selected ? 'border-rose-500 bg-rose-500' : 'border-gray-300',
+        selected ? 'border-rmc-green bg-rmc-green' : 'border-gray-300',
       )}>
         {selected && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
       </div>
@@ -38,7 +38,7 @@ function FeeTierCard({ label, description, amount, selected, onSelect }: FeeTier
         <p className="text-xs text-gray-400">{description}</p>
       </div>
       <div className="text-right shrink-0">
-        <p className={cn('font-bold text-lg', selected ? 'text-rose-600' : 'text-gray-800')}>
+        <p className={cn('font-bold text-lg', selected ? 'text-rmc-green' : 'text-gray-800')}>
           {amount.toLocaleString()}
         </p>
         <p className="text-[10px] text-gray-400 font-medium">RWF</p>
@@ -68,15 +68,15 @@ function PaymentMethodCard({ value, selected, onSelect, icon, title, subtitle, b
         disabled
           ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
           : selected
-            ? 'border-rose-500 cursor-pointer'
+            ? 'border-rmc-green cursor-pointer'
             : 'border-gray-200 hover:border-gray-300 cursor-pointer',
       )}
       onClick={() => { if (!disabled) onSelect(value); }}
     >
-      <div className={cn('flex items-center gap-3 px-4 py-3.5', selected && !disabled && 'bg-rose-50/40')}>
+      <div className={cn('flex items-center gap-3 px-4 py-3.5', selected && !disabled && 'bg-rmc-green-light/40')}>
         <span className={cn(
           'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors',
-          disabled ? 'bg-gray-100 text-gray-300' : selected ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-500',
+          disabled ? 'bg-gray-100 text-gray-300' : selected ? 'bg-rmc-green text-white' : 'bg-gray-100 text-gray-500',
         )}>
           {icon}
         </span>
@@ -98,13 +98,13 @@ function PaymentMethodCard({ value, selected, onSelect, icon, title, subtitle, b
         </div>
         <div className={cn(
           'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0',
-          disabled ? 'border-gray-200' : selected ? 'border-rose-500 bg-rose-500' : 'border-gray-300',
+          disabled ? 'border-gray-200' : selected ? 'border-rmc-green bg-rmc-green' : 'border-gray-300',
         )}>
           {selected && !disabled && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
         </div>
       </div>
       {selected && !disabled && children && (
-        <div className="border-t border-rose-100 px-4 py-3 bg-white" onClick={(e) => e.stopPropagation()}>
+        <div className="border-t border-rmc-green-light px-4 py-3 bg-white" onClick={(e) => e.stopPropagation()}>
           {children}
         </div>
       )}
@@ -245,7 +245,7 @@ export function Step6Payment({ formData, onBack, onSubmit, isSubmitting, fees }:
         {/* Right column: payment method */}
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">
-            Payment Method <span className="text-rose-500">*</span>
+            Payment Method <span className="text-rmc-green">*</span>
           </p>
           <div className="space-y-2">
             <PaymentMethodCard
@@ -269,12 +269,12 @@ export function Step6Payment({ formData, onBack, onSubmit, isSubmitting, fees }:
                     onChange={(e) => { setMobilePhone(e.target.value); setPhoneError(''); }}
                     placeholder="e.g. 0780 313 448"
                     className={cn(
-                      'w-full rounded-lg border pl-9 pr-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-400/50 focus:border-rose-400',
+                      'w-full rounded-lg border pl-9 pr-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent',
                       phoneError ? 'border-red-400' : 'border-gray-200',
                     )}
                   />
                 </div>
-                {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
+                {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
                 <p className="text-[10px] text-gray-400">
                   Amount: <strong>{feeFormatted}</strong> · Rwandan numbers only
                 </p>
@@ -310,7 +310,7 @@ export function Step6Payment({ formData, onBack, onSubmit, isSubmitting, fees }:
 
           {payment === 'momo' && (
             <div className="mt-3 rounded-xl bg-blue-50 border border-blue-200 px-3 py-2.5 text-xs text-blue-800">
-              After clicking "Pay Now", accept the MoMo prompt on your phone. Your application is submitted automatically once payment is confirmed.
+              After clicking &quot;Pay Now&quot;, accept the MoMo prompt on your phone. Your application is submitted automatically once payment is confirmed.
             </div>
           )}
         </div>
@@ -331,7 +331,7 @@ export function Step6Payment({ formData, onBack, onSubmit, isSubmitting, fees }:
           disabled={!canSubmit || isSubmitting}
           isLoading={isSubmitting}
           rightIcon={isMomo ? <Smartphone className="w-4 h-4" /> : undefined}
-          className="!bg-rose-600 hover:!bg-rose-700 !text-white !shadow-none disabled:opacity-40"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark !text-white !shadow-none disabled:opacity-40"
         >
           {isMomo ? `Pay ${feeFormatted}` : 'Submit Application'}
         </Button>

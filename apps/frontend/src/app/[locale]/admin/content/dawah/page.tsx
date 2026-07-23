@@ -150,7 +150,7 @@ function DawahContentManager() {
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
-  const inputClass = `w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/40 focus:border-transparent ${fontClass}`;
+  const inputClass = `w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`;
 
   const SectionIcon = ({ icon }: { icon: SectionDef['icon'] }) =>
     icon === 'hero' ? <Sparkles className="h-4 w-4 text-rmc-green" />
@@ -174,7 +174,7 @@ function DawahContentManager() {
           </div>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
+          className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save Changes
         </button>
@@ -203,7 +203,7 @@ function DawahContentManager() {
             const value = (getAtPath(form, f.path) as Tri)[lang];
             return (
               <div key={f.path}>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-700">{f.label}</label>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{f.label}</label>
                 {f.rich ? (
                   // Remounted per language: the editor only seeds its content once,
                   // so without a key the English body would leak into rw/ar.

@@ -29,13 +29,13 @@ export default function JobsStatusPage() {
           className="object-cover object-center"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-emerald-950/65 to-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/65 to-black/45" />
         <div className="absolute inset-0 pattern-islamic opacity-25" />
 
         <div className="relative flex-1 flex items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-8 pb-4">
           <div className="max-w-2xl mx-auto">
             <div className="flex justify-center mb-4 pt-24">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center shadow-xl shadow-emerald-900/50 ring-1 ring-white/20">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark flex items-center justify-center shadow-xl shadow-rmc-green-dark/50 ring-1 ring-white/20">
                 <Briefcase className="w-7 h-7 text-white" strokeWidth={2.25} />
               </div>
             </div>
@@ -46,7 +46,7 @@ export default function JobsStatusPage() {
         <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
           <Link
             href={`/${locale}/services/jobs`}
-            className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/25 hover:border-white/50 shadow-sm"
+            className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/25 hover:border-white/50 shadow-sm"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> {t('backToService')}
           </Link>

@@ -200,7 +200,7 @@ function LinkCard({
         style={{ transitionDelay: `${index * 100}ms` }}
       >
         <div className="shrink-0">
-          <div className="relative w-12 h-12 rounded-xl bg-rmc-green-light flex items-center justify-center text-rmc-green group-hover:bg-rmc-green group-hover:text-white transition-colors">
+          <div className="relative w-12 h-12 rounded-lg bg-rmc-green-light flex items-center justify-center text-rmc-green group-hover:bg-rmc-green group-hover:text-white transition-colors">
             <Icon className="w-5 h-5" />
           </div>
         </div>

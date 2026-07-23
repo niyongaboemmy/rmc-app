@@ -162,7 +162,7 @@ function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
           </div>
         )}
         <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-sky-600/20 transition-colors">
           {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           {loading ? 'Loading…' : 'Save Changes'}
         </button>
@@ -172,43 +172,43 @@ function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Header text content */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Section Header — {langLabel}</h2>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Eyebrow</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Eyebrow</label>
           <input
             dir={dir}
             type="text"
             value={form.eyebrow[lang]}
             onChange={(e) => setHeaderTri('eyebrow', e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Title</label>
           <input
             dir={dir}
             type="text"
             value={form.title[lang]}
             onChange={(e) => setHeaderTri('title', e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Subtitle</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Subtitle</label>
           <textarea
             dir={dir}
             rows={2}
             value={form.subtitle[lang]}
             onChange={(e) => setHeaderTri('subtitle', e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`}
           />
         </div>
       </div>
 
       {/* Posts list editor */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-sky-600" />
@@ -237,68 +237,68 @@ function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Platform</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Platform</label>
                   <select
                     value={post.platform}
                     onChange={(e) => setPostField(idx, 'platform', e.target.value as SocialPost['platform'])}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent capitalize">
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent capitalize">
                     {POST_PLATFORMS.map((p) => (
                       <option key={p} value={p}>{p}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Handle</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Handle</label>
                   <input type="text" value={post.handle}
                     onChange={(e) => setPostField(idx, 'handle', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Content — {langLabel}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Content — {langLabel}</label>
                 <textarea
                   dir={dir}
                   rows={3}
                   value={(post.content as Tri)[lang]}
                   onChange={(e) => setPostContent(idx, e.target.value)}
-                  className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none ${fontClass}`}
+                  className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`}
                 />
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Likes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Likes</label>
                   <input type="text" value={post.likes}
                     onChange={(e) => setPostField(idx, 'likes', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Comments</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Comments</label>
                   <input type="text" value={post.comments}
                     onChange={(e) => setPostField(idx, 'comments', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
                   <input type="text" value={post.date} placeholder="2h ago"
                     onChange={(e) => setPostField(idx, 'date', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Post link <span className="text-gray-400 font-normal">(optional — opens on click)</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Post link <span className="text-gray-400 font-normal">(optional — opens on click)</span></label>
                   <input type="url" value={post.url ?? ''} placeholder="https://x.com/islamrwanda/status/…"
                     onChange={(e) => setPostField(idx, 'url', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Image URL <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Image URL <span className="text-gray-400 font-normal">(optional)</span></label>
                   <input type="url" value={post.image ?? ''} placeholder="https://…"
                     onChange={(e) => setPostField(idx, 'image', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
               </div>
             </div>
@@ -307,7 +307,7 @@ function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
       </div>
 
       {/* Channels list editor */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
             <Users className="w-4 h-4 text-sky-600" />
@@ -334,33 +334,33 @@ function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
             <div key={idx} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-4">
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:items-end">
                 <div className="sm:col-span-3">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Channel</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Channel</label>
                   <select
                     value={channel.key}
                     onChange={(e) => setChannelField(idx, 'key', e.target.value as SocialChannel['key'])}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent capitalize">
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent capitalize">
                     {CHANNEL_KEYS.map((k) => (
                       <option key={k} value={k}>{k}</option>
                     ))}
                   </select>
                 </div>
                 <div className="sm:col-span-3">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Label</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Label</label>
                   <input type="text" value={channel.label}
                     onChange={(e) => setChannelField(idx, 'label', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Followers</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Followers</label>
                   <input type="text" value={channel.followers} placeholder="auto (live)"
                     onChange={(e) => setChannelField(idx, 'followers', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div className="sm:col-span-3">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Link (href)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Link (href)</label>
                   <input type="text" value={channel.href}
                     onChange={(e) => setChannelField(idx, 'href', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div className="sm:col-span-1 flex sm:justify-end">
                   <button onClick={() => removeChannel(idx)}
