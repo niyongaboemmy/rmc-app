@@ -26,13 +26,19 @@ import { submitContactMessage } from '@/lib/contactApi';
 import {
   ContentKeys,
   SOCIAL_DEFAULT,
-  CONTACT_DEFAULT,
   getSiteContent,
   mergeContent,
   pick,
   type SocialChannel,
-  type ContactContent,
 } from '@/lib/content-api';
+import {
+  ContactInlineProvider,
+  useContactContent,
+  EditableTri,
+  EditablePlain,
+  ContactEditToolbar,
+  type PlainField,
+} from '@/components/contact/ContactInlineEdit';
 
 // Channel key → icon/background, mirroring the home Social Media section so both
 // surfaces show the same platforms and links (sourced from the social content store).
@@ -54,23 +60,21 @@ const buildContactSchema = (t: (key: string) => string) =>
 type ContactFormData = z.infer<ReturnType<typeof buildContactSchema>>;
 
 export default function ContactPage() {
+  // The provider owns loading + inline-editing state for the page's content.
+  return (
+    <ContactInlineProvider>
+      <ContactPageInner />
+      <ContactEditToolbar />
+    </ContactInlineProvider>
+  );
+}
+
+function ContactPageInner() {
   const t = useTranslations('contact');
   const locale = useLocale();
+  const { content, editing } = useContactContent();
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
-
-  // Admin-managed Contact page content (Content → Contact Page). Falls back to
-  // the seeded defaults until loaded, and English when a translation is blank.
-  const [content, setContent] = useState<ContactContent>(CONTACT_DEFAULT);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<Record<string, unknown>>(ContentKeys.contact)
-      .then((data) => {
-        if (active && data) setContent(mergeContent(CONTACT_DEFAULT, data));
-      })
-      .catch(() => {/* keep defaults */});
-    return () => { active = false; };
-  }, []);
 
   // Same social channels (and links) the home Social Media section shows — admin
   // managed in Content → Social Media, so the two surfaces stay in sync.
@@ -81,8 +85,12 @@ export default function ContactPage() {
       .then((data) => {
         if (active && data) setChannels(mergeContent(SOCIAL_DEFAULT, data).channels);
       })
-      .catch(() => {/* keep defaults */});
-    return () => { active = false; };
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const {
@@ -101,13 +109,23 @@ export default function ContactPage() {
     }
   };
 
-  const contactInfo = [
-    { id: 'address', label: t('address'), value: pick(content.address, locale), icon: MapPin },
-    { id: 'phone', label: t('phone'), value: content.phone, icon: Phone, href: content.phoneHref || undefined },
-    { id: 'email', label: t('email'), value: content.email, icon: Mail, href: content.email ? `mailto:${content.email}` : undefined },
-    { id: 'email2', label: t('email2'), value: content.email2, icon: Mail, href: content.email2 ? `mailto:${content.email2}` : undefined },
-    { id: 'hours', label: t('hours'), value: pick(content.hours, locale), icon: Clock },
-  ].filter((item) => item.value);
+  // The contact-detail rows. `tri` rows are translated; `plain` rows are shared
+  // strings. In view mode empty rows are hidden; while editing every row shows so
+  // an admin can fill blanks.
+  type Row =
+    | { id: string; kind: 'tri'; field: 'address' | 'hours'; label: string; icon: typeof MapPin; multiline: boolean; href?: string }
+    | { id: string; kind: 'plain'; field: PlainField; label: string; icon: typeof MapPin; href?: string };
+
+  const rows: Row[] = [
+    { id: 'address', kind: 'tri', field: 'address', label: t('address'), icon: MapPin, multiline: true },
+    { id: 'phone', kind: 'plain', field: 'phone', label: t('phone'), icon: Phone, href: content.phoneHref || undefined },
+    { id: 'email', kind: 'plain', field: 'email', label: t('email'), icon: Mail, href: content.email ? `mailto:${content.email}` : undefined },
+    { id: 'email2', kind: 'plain', field: 'email2', label: t('email2'), icon: Mail, href: content.email2 ? `mailto:${content.email2}` : undefined },
+    { id: 'hours', kind: 'tri', field: 'hours', label: t('hours'), icon: Clock, multiline: true },
+  ];
+
+  const hasValue = (r: Row) => (r.kind === 'tri' ? !!pick(content[r.field], locale) : !!content[r.field]);
+  const visibleRows = editing ? rows : rows.filter(hasValue);
 
   return (
     <div className="min-h-screen">
@@ -116,8 +134,8 @@ export default function ContactPage() {
         {/* Header */}
         <PageHero
           eyebrow="RMC"
-          title={pick(content.title, locale)}
-          subtitle={pick(content.subtitle, locale)}
+          title={<EditableTri field="title" bare />}
+          subtitle={<EditableTri field="subtitle" bare multiline />}
           ornament
           minHeightClassName="min-h-[25vh]"
           paddingClassName="pt-36 pb-8"
@@ -132,44 +150,65 @@ export default function ContactPage() {
               <div className="grid lg:grid-cols-2">
                 {/* Contact info */}
                 <div className="p-7 sm:p-10 bg-rmc-green/[0.05]">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    {pick(content.communicationTitle, locale)}
-                  </h2>
-                  <p className="mt-2 text-gray-500">{pick(content.communicationSubtitle, locale)}</p>
+                  <EditableTri
+                    field="communicationTitle"
+                    as="h2"
+                    className="text-2xl md:text-3xl font-bold text-gray-900"
+                  />
+                  <EditableTri
+                    field="communicationSubtitle"
+                    as="p"
+                    className="mt-2 text-gray-500"
+                    multiline
+                  />
 
                   <div className="mt-8 space-y-5">
-                    {contactInfo.map((item) => {
-                      const ItemIcon = item.icon;
+                    {visibleRows.map((row) => {
+                      const ItemIcon = row.icon;
                       const inner = (
                         <div className="flex items-start gap-3.5">
                           <span className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
                             <ItemIcon className="w-5 h-5 text-rmc-green" />
                           </span>
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-gray-500">{item.label}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-gray-500">{row.label}</div>
                             <div className="text-gray-900 font-medium break-words">
-                              {item.value}
+                              {row.kind === 'tri' ? (
+                                <EditableTri field={row.field} as="div" multiline={row.multiline} />
+                              ) : (
+                                <EditablePlain field={row.field} />
+                              )}
                             </div>
+                            {/* The dial link behind the phone row — only shown while editing. */}
+                            {editing && row.id === 'phone' && (
+                              <div className="mt-1.5">
+                                <label className="block text-[11px] font-medium text-gray-400">
+                                  Phone link (tel:)
+                                </label>
+                                <EditablePlain field="phoneHref" placeholder="tel:+250788308436" />
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
-                      return item.href ? (
+                      // While editing, never wrap the row in a link — the inputs must stay clickable.
+                      return row.href && !editing ? (
                         <a
-                          key={item.id}
-                          href={item.href}
+                          key={row.id}
+                          href={row.href}
                           className="block -m-2 rounded-xl p-2 transition-colors hover:bg-gray-50"
                         >
                           {inner}
                         </a>
                       ) : (
-                        <div key={item.id}>{inner}</div>
+                        <div key={row.id}>{inner}</div>
                       );
                     })}
                   </div>
 
                   {/* Social links */}
                   <div className="mt-8 pt-6 border-t border-rmc-green/10">
-                    <p className="text-sm font-semibold text-gray-900">{pick(content.socialTitle, locale)}</p>
+                    <EditableTri field="socialTitle" as="p" className="text-sm font-semibold text-gray-900" />
                     <div className="mt-3 flex flex-wrap gap-2.5">
                       {channels.map((channel) => {
                         const cfg = CHANNEL_CONFIG[channel.key];
@@ -189,6 +228,11 @@ export default function ContactPage() {
                         );
                       })}
                     </div>
+                    {editing && (
+                      <p className="mt-3 text-[11px] text-gray-400">
+                        Social links are managed in Admin → Content → Social Media.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -271,8 +315,17 @@ export default function ContactPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Reveal>
               <div className="max-w-2xl mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{pick(content.findMosqueTitle, locale)}</h2>
-                <p className="mt-2 text-gray-500">{pick(content.findMosqueSubtitle, locale)}</p>
+                <EditableTri
+                  field="findMosqueTitle"
+                  as="h2"
+                  className="text-2xl md:text-3xl font-bold text-gray-900"
+                />
+                <EditableTri
+                  field="findMosqueSubtitle"
+                  as="p"
+                  className="mt-2 text-gray-500"
+                  multiline
+                />
               </div>
             </Reveal>
             <Reveal delay={120}>

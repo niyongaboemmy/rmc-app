@@ -20,7 +20,7 @@ const BADGE_STYLES: Record<BadgeTone, string> = {
 };
 
 export function badgeClass(tone: BadgeTone) {
-  return `inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ring-1 ring-inset ${BADGE_STYLES[tone]}`;
+  return `inline-flex items-center rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ring-1 ring-inset ${BADGE_STYLES[tone]}`;
 }
 
 /* Full-resolution Unsplash URL for the gallery viewer */

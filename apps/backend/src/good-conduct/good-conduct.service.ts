@@ -1,13 +1,12 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
   BadRequestException,
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, In, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull, And, LessThan, MoreThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
   GoodConductRequest,
@@ -41,15 +40,6 @@ import { Sector } from '../locations/entities/sector.entity';
 
 // Fallback amount — used if no active PaymentTypeRate is configured yet
 const GOOD_CONDUCT_FEE_FALLBACK = 2000;
-
-// A request in any of these statuses counts as "active" for duplicate detection
-const ACTIVE_STATUSES: GoodConductStatus[] = [
-  GoodConductStatus.DRAFT,
-  GoodConductStatus.SUBMITTED,
-  GoodConductStatus.UNDER_REVIEW,
-  GoodConductStatus.MORE_INFO_REQUESTED,
-  GoodConductStatus.APPROVED,
-];
 
 @Injectable()
 export class GoodConductService {
@@ -121,19 +111,9 @@ export class GoodConductService {
     applicantId: string,
     dto: CreateGoodConductRequestDto,
   ): Promise<GoodConductRequest> {
-    // Duplicate-request detection: block a new draft if the applicant already
-    // has an active request in flight. This is the friendlier UX per plan §9
-    // point 3 — a rejected/cancelled/closed request never blocks a new one
-    // (closed = reissue case), so only truly "in progress" requests count.
-    const existing = await this.requestRepo.findOne({
-      where: { applicantId, status: In(ACTIVE_STATUSES) },
-    });
-    if (existing) {
-      throw new ConflictException(
-        `You already have an active Good Conduct request (status: ${existing.status})`,
-      );
-    }
-
+    // Multiple concurrent requests per account are allowed — one applicant/
+    // officer can submit for several people. Each submission is its own request;
+    // there is intentionally no "one active request per applicant" block here.
     const amountDue = await this.resolveFee();
 
     const request = this.requestRepo.create({
@@ -245,6 +225,35 @@ export class GoodConductService {
       throw new BadRequestException('MoMo (IntouchPay) credentials are not configured');
     }
 
+    // ── Duplicate-charge guard ────────────────────────────────────────────────
+    // If a MoMo charge is already in flight for this request, re-check it with
+    // the provider instead of sending a SECOND charge. A user hammering "Pay"
+    // (or retrying after a timeout) must never be double-charged.
+    const inflight = await this.transactionRepo.findOne({
+      where: { requestId: request.id, method: 'momo', status: 'pending' },
+      order: { initiatedAt: 'DESC' },
+    });
+    if (inflight) {
+      const check = await this.checkMomoPaymentStatus(id, applicantId);
+      const refreshed = await this.findOwn(id, applicantId);
+      // Anything other than a definitive failure means a charge is (or may be)
+      // live — return the existing transaction and do NOT create a new one.
+      if (check.paymentStatus !== 'failed' && check.gatewayStatus !== 'FAILED') {
+        return {
+          request: refreshed,
+          transaction: inflight,
+          gatewayRef: inflight.providerRef ?? null,
+          responseCode: check.responseCode || '1000',
+          message:
+            check.paymentStatus === 'paid'
+              ? 'Payment already completed for this request.'
+              : 'A payment is already being processed for this request. Please wait a moment, then check your status.',
+        };
+      }
+      // The prior charge definitively failed → safe to start a fresh one.
+      Object.assign(request, refreshed);
+    }
+
     const requestTxnId = `GC-${request.id}-${Date.now()}`;
     const fallbackCallback = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
 
@@ -334,7 +343,32 @@ export class GoodConductService {
     message: string;
   }> {
     const request = await this.findOwn(id, applicantId);
+    return this.pollAndFinalizeMomo(request);
+  }
 
+  /**
+   * System-level reconciliation for a request stuck in PROCESSING — same poll +
+   * finalize logic as the applicant's status check, but WITHOUT ownership
+   * scoping. Used by the background reconciler when the provider was slow/down
+   * at charge time and the payment needs settling later.
+   */
+  async reconcilePendingMomo(requestId: string): Promise<string> {
+    const request = await this.requestRepo.findOne({
+      where: { id: requestId },
+      relations: ['statusHistory', 'transactions'],
+    });
+    if (!request) return 'not_found';
+    const result = await this.pollAndFinalizeMomo(request);
+    return result.paymentStatus;
+  }
+
+  private async pollAndFinalizeMomo(request: GoodConductRequest): Promise<{
+    paymentStatus: string;
+    gatewayStatus: string;
+    responseCode: string;
+    message: string;
+  }> {
+    const id = request.id;
     if (request.paymentStatus === PaymentStatus.PAID) {
       return {
         paymentStatus: 'paid',
@@ -963,6 +997,54 @@ export class GoodConductService {
         EmailTemplates.paymentConfirmed(request.fullNames, ref, amount),
       );
     }
+  }
+
+  private sendPaymentReminderNotice(request: GoodConductRequest): void {
+    const ref = this.shortRef(request);
+    const amount = Number(request.amountDue).toLocaleString('en-RW');
+    if (this.notifSettings.isSmsEnabled('goodConduct.payment_reminder')) {
+      this.dispatchSms(request.phone, SmsTemplates.paymentReminder(ref, amount));
+    }
+    if (this.notifSettings.isEmailEnabled('goodConduct.payment_reminder')) {
+      this.dispatchEmail(
+        request.email,
+        EmailTemplates.paymentReminder(request.fullNames, ref, amount),
+      );
+    }
+  }
+
+  /**
+   * Sends a one-time "please complete payment" reminder for requests that were
+   * created but left unpaid past the reminder threshold. Each request is
+   * reminded at most once (stamped via payment_reminder_sent_at). Called on a
+   * schedule by the reconciliation job and on demand from the admin controller.
+   *
+   * Threshold is env-tunable: GC_PAYMENT_REMINDER_AFTER_MINUTES (default 60).
+   */
+  async sendDuePaymentReminders(): Promise<{ sent: number }> {
+    const afterMinutes = Number(process.env.GC_PAYMENT_REMINDER_AFTER_MINUTES);
+    const minAgeMs = (Number.isFinite(afterMinutes) ? Math.max(0, afterMinutes) : 60) * 60_000;
+    const olderThan = new Date(Date.now() - minAgeMs);
+    const notTooOld = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // ignore drafts > 7 days old
+
+    const due = await this.requestRepo.find({
+      where: {
+        status: GoodConductStatus.DRAFT,
+        paymentStatus: PaymentStatus.UNPAID,
+        paymentReminderSentAt: IsNull(),
+        createdAt: And(LessThan(olderThan), MoreThan(notTooOld)),
+      },
+      take: 100,
+    });
+
+    let sent = 0;
+    for (const request of due) {
+      this.sendPaymentReminderNotice(request);
+      await this.requestRepo.update(request.id, { paymentReminderSentAt: new Date() });
+      sent++;
+    }
+    if (sent) this.logger.log(`[GoodConduct] Sent ${sent} payment reminder(s)`);
+    return { sent };
   }
 
   private sendUnderReviewSms(request: GoodConductRequest): void {

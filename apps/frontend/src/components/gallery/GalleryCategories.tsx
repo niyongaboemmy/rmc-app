@@ -39,7 +39,7 @@ export function GalleryCategories({ categories, items, periods, viewAllLabel }: 
           <section
             key={cat.key}
             id={cat.key}
-            className={`scroll-mt-24 py-8 md:py-10 ${tinted ? 'bg-rmc-green/[0.03] border-y border-rmc-green/10' : 'bg-transparent'}`}
+            className={`scroll-mt-24 py-6 md:py-8 ${tinted ? 'bg-rmc-green/[0.03] border-y border-rmc-green/10' : 'bg-transparent'}`}
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {/* Category label */}
@@ -63,7 +63,7 @@ export function GalleryCategories({ categories, items, periods, viewAllLabel }: 
                     <div key={period.key}>
                       {/* Month sub-header */}
                       <div className="flex items-center gap-4 mb-4">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-rmc-green/15 bg-rmc-green-light/50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green-dark">
+                        <span className="inline-flex items-center gap-2 rounded-lg border border-rmc-green/15 bg-rmc-green-light/50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green-dark">
                           <CalendarDays className="w-3.5 h-3.5 text-rmc-gold" />
                           {period.label}
                         </span>

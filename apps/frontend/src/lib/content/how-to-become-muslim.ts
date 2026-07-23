@@ -66,11 +66,13 @@ export const HOW_TO_BECOME_MUSLIM_DEFAULT: HowToBecomeMuslimContent = {
       icon: 'BookOpen',
       title: tri('Learn about Islam', 'Iga ku Isilamu', 'تعلّم عن الإسلام'),
       description: tri(
-        'Explore the faith at your own pace with Ijwi Islam — free lessons, answers to common questions, and guidance for new Muslims.',
-        "Menya idini ku buryo bwawe ukoresheje Ijwi Islam — amasomo y'ubuntu, ibisubizo ku bibazo bisanzwe, n'ubuyobozi ku Bayisilamu bashya.",
-        'استكشف الدين على مهلك مع «إجوي إسلام» — دروس مجانية، وإجابات عن الأسئلة الشائعة، وإرشاد للمسلمين الجدد.',
+        'Explore the faith at your own pace — free courses and a library of Islamic books you can read online.',
+        "Menya idini ku buryo bwawe — amasomo y'ubuntu n'isomero ry'ibitabo by'Islamu ushobora gusoma kuri interineti.",
+        'استكشف الدين على مهلك — دورات مجانية ومكتبة من الكتب الإسلامية يمكنك قراءتها عبر الإنترنت.',
       ),
-      href: 'https://ijwi-islam.org/',
+      // In-app path: the section prepends the locale, so this resolves to
+      // /en/dawah, /rw/dawah, /ar/dawah. Absolute URLs would open in a new tab.
+      href: '/dawah',
     },
     {
       icon: 'GraduationCap',

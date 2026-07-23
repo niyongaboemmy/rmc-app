@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
@@ -203,7 +203,21 @@ export function LoginForm() {
   const nav = useTranslations('nav');
   const { locale }                   = useParams<{ locale: string }>();
   const router                       = useRouter();
+  const searchParams                 = useSearchParams();
   const { login }                    = useAuth();
+
+  /**
+   * Where to land after a successful sign-in. Defaults home, but honours a
+   * `?redirect=` param so "Sign in to read this book" returns the reader to the
+   * book they wanted. Only same-origin ABSOLUTE paths are accepted: a value not
+   * starting with a single `/` (protocol-relative `//evil.com`, or a full URL)
+   * is discarded, so this cannot be turned into an open-redirect.
+   */
+  const redirectAfterLogin = (() => {
+    const raw = searchParams.get('redirect');
+    if (raw && /^\/(?!\/)/.test(raw)) return raw;
+    return `/${locale}`;
+  })();
   const [step, setStep]              = useState<Step>('credentials');
   const [submitting, setSubmitting]  = useState(false);
   const [apiError, setApiError]      = useState<string | null>(null);
@@ -227,7 +241,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push(`/${locale}`);
+      router.push(redirectAfterLogin);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setApiError(e?.response?.data?.error?.message || 'Login failed');
@@ -261,7 +275,7 @@ export function LoginForm() {
           <TwoFactorStep
             maskedPhone={twoFactorState.maskedPhone}
             tempToken={twoFactorState.tempToken}
-            onSuccess={() => router.push(`/${locale}`)}
+            onSuccess={() => router.push(redirectAfterLogin)}
             onBack={handleBack}
           />
         )}

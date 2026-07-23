@@ -143,7 +143,7 @@ const services = [
     cardHover: 'hover:shadow-amber-100',
   },
   {
-    key: 'tender', slug: 'tender', href: '/tenders',
+    key: 'tender', slug: 'tender', href: '/services/tender',
     Icon: TenderIcon,
     bar: 'bg-teal-500',
     iconIdle: 'text-gray-300',

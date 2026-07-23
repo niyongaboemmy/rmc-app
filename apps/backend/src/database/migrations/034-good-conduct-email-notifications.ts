@@ -6,8 +6,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * one — email is optional on the request form), so these 7 events become
  * email-applicable too, enabled by default like their SMS counterparts.
  */
-export class GoodConductEmailNotifications1700000000034 implements MigrationInterface {
-  name = 'GoodConductEmailNotifications1700000000034';
+export class GoodConductEmailNotifications1786100000034 implements MigrationInterface {
+  name = 'GoodConductEmailNotifications1786100000034';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`

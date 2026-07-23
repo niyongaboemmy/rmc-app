@@ -47,6 +47,12 @@ export enum Permission {
   HAJJ_MANAGE = 'hajj:manage',
   HAJJ_APPROVE = 'hajj:approve',
 
+  // ── Dawah Learning ────────────────────────────────────────────
+  DAWAH_VIEW = 'dawah:view',
+  DAWAH_MANAGE = 'dawah:manage',
+  DISCUSSIONS_MODERATE = 'discussions:moderate',
+  DISCUSSIONS_VERIFY = 'discussions:verify',
+
   CONTACT_MESSAGES_VIEW = 'contact_messages:view',
   CONTACT_MESSAGES_MANAGE = 'contact_messages:manage',
 
@@ -66,6 +72,14 @@ export enum Permission {
   GOOD_CONDUCT_CERTIFICATE = 'good_conduct:certificate',
   GOOD_CONDUCT_REPORTS = 'good_conduct:reports',
 
+  TENDER_VIEW = 'tender:view',
+  TENDER_MANAGE = 'tender:manage',
+  TENDER_EVALUATE = 'tender:evaluate',
+  TENDER_REPORTS = 'tender:reports',
+  SCHOLARSHIP_VIEW = 'scholarship:view',
+  SCHOLARSHIP_MANAGE = 'scholarship:manage',
+  SCHOLARSHIP_APPROVE = 'scholarship:approve',
+  SCHOLARSHIP_REPORTS = 'scholarship:reports',
   JOB_APPLICATIONS_VIEW = 'job_applications:view',
   JOB_APPLICATIONS_MANAGE = 'job_applications:manage',
 

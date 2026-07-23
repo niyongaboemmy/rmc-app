@@ -59,8 +59,8 @@ export function FuneralTransportsSection() {
   if (!loaded || transports.length === 0) return null;
 
   return (
-    <section className="relative bg-transparent pb-14">
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative bg-transparent py-16 md:py-20">
+      <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="mb-6 max-w-2xl">
           <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
             <Truck className="h-6 w-6 text-rmc-green" aria-hidden="true" /> {t('title')}
