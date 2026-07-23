@@ -90,8 +90,8 @@ function buildSchema(tr: (k: string) => string) {
 type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30';
-const inputError = 'border-red-300 focus:border-red-400 focus:ring-red-400/30';
+  'w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors duration-200 hover:border-gray-400 placeholder:text-gray-400 outline-none focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed';
+const inputError = 'border-red-400 bg-red-50 focus:border-transparent focus:ring-red-400';
 
 const STEP_KEYS = ['deceased', 'family', 'arrangements', 'review'] as const;
 
@@ -239,13 +239,13 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
             <button
               type="button"
               onClick={() => { reset(); setSubmitted(false); setCertificate(null); setStep(0); }}
-              className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               {t('success.again')}
             </button>
             <Link
               href={`/${locale}/services/funeral`}
-              className="inline-flex items-center justify-center rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="inline-flex items-center justify-center rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               {t('success.home')}
             </Link>
@@ -301,7 +301,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               <Field label={t('deceased.gender')} required error={errors.deceased?.gender?.message}>
                 <div className="flex gap-2">
                   {(['male', 'female'] as const).map((g) => (
-                    <label key={g} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/50 has-[:checked]:text-rmc-green-dark">
+                    <label key={g} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/50 has-[:checked]:text-rmc-green-dark">
                       <input type="radio" value={g} className="accent-rmc-green" {...register('deceased.gender')} />
                       {t(`deceased.${g}`)}
                     </label>
@@ -443,7 +443,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               <legend className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">
                 {t('arrangements.servicesLabel')}
               </legend>
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40">
+              <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40">
                 <input type="checkbox" className="h-4 w-4 rounded border-gray-300 accent-rmc-green" {...register('arrangements.transportationRequired')} />
                 {t('arrangements.transport')}
               </label>
@@ -507,7 +507,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
             <button
               type="button"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /> {t('prev')}
             </button>

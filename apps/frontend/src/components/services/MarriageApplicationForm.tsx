@@ -367,7 +367,7 @@ export function MarriageApplicationForm() {
         {errors.venue && <p className="mt-2 text-xs text-red-600">{errors.venue.message}</p>}
 
         {/* Amount due */}
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+        <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 border border-gray-300 px-4 py-3">
           <span className="text-sm font-medium text-gray-600">{t('amountDue')}</span>
           <span className={cn('text-lg font-bold', feeLabel ? 'text-rose-700' : 'text-gray-400')}>
             {feeLabel ?? t('amountSelectVenue')}

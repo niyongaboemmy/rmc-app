@@ -99,7 +99,7 @@ function WhoWeAreManager() {
           </div>
         </div>
         <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-violet-600/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-violet-600/20 transition-colors">
           {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           {loading ? 'Loading…' : 'Save Changes'}
         </button>
@@ -128,7 +128,7 @@ function WhoWeAreManager() {
                   type="number"
                   value={form[field]}
                   onChange={(e) => set(field, e.target.value)}
-                  className={`w-full text-xl font-bold ${color} bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-violet-400 rounded-lg p-1`}
+                  className={`w-full text-xl font-bold ${color} bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-rmc-green rounded-lg p-1`}
                 />
                 <span className={`text-lg font-bold ${color}`}>{suffix}</span>
               </div>
@@ -145,33 +145,33 @@ function WhoWeAreManager() {
         <h2 className="text-sm font-bold text-gray-700">Content — {LANGS.find((l) => l.key === lang)?.label}</h2>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Overview Description</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Overview Description</label>
           <textarea
             dir={dir}
             rows={4}
             value={lang === 'en' ? form.descriptionEn : lang === 'rw' ? form.descriptionRw : form.descriptionAr}
             onChange={(e) => set(lang === 'en' ? 'descriptionEn' : lang === 'rw' ? 'descriptionRw' : 'descriptionAr', e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Mission Statement</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Mission Statement</label>
           <textarea
             dir={dir}
             rows={2}
             value={lang === 'en' ? form.missionEn : lang === 'rw' ? form.missionRw : form.missionAr}
             onChange={(e) => set(lang === 'en' ? 'missionEn' : lang === 'rw' ? 'missionRw' : 'missionAr', e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Vision Statement</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Vision Statement</label>
           <textarea
             dir={dir}
             rows={2}
             value={lang === 'en' ? form.visionEn : lang === 'rw' ? form.visionRw : form.visionAr}
             onChange={(e) => set(lang === 'en' ? 'visionEn' : lang === 'rw' ? 'visionRw' : 'visionAr', e.target.value)}
-            className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none ${fontClass}`}
+            className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fontClass}`}
           />
         </div>
 
@@ -185,13 +185,13 @@ function WhoWeAreManager() {
           const key = `${base}${sfx}` as keyof WhoWeAreContent;
           return (
             <div key={base}>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">{label}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
               <input
                 dir={dir}
                 type="text"
                 value={form[key]}
                 onChange={(e) => set(key, e.target.value)}
-                className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent ${fontClass}`}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`}
               />
             </div>
           );

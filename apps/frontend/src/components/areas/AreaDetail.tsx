@@ -75,7 +75,7 @@ export function AreaDetail({ item, locale, pillarIndex }: Props) {
                   key={idx}
                   type="button"
                   onClick={() => setLightboxIndex(idx)}
-                  className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/40"
+                  className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={fileUrl(key)} alt={`${title} — photo ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />

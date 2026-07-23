@@ -69,7 +69,7 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
   return (
     <form onSubmit={handleSubmit(handleNext)} className="space-y-6">
       {/* Islamic context note */}
-      <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-xs text-gray-500">
+      <div className="rounded-xl bg-gray-50 border border-gray-300 px-4 py-3 text-xs text-gray-500">
         Both witnesses (Shahidain) must be adult Muslim males. Their identities are verified during the ceremony.
       </div>
 

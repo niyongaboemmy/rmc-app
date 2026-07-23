@@ -97,7 +97,7 @@ function NewsletterSignup() {
             onChange={(e) => { setEmail(e.target.value); if (status === 'error') setStatus('idle'); }}
             placeholder={t('newsletterPlaceholder')}
             aria-label={t('newsletterPlaceholder')}
-            className="min-w-0 flex-1 rounded-full bg-white/[0.07] border border-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-rmc-green focus:ring-2 focus:ring-rmc-green/40"
+            className="min-w-0 flex-1 rounded-full bg-white/[0.07] border border-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-rmc-green focus:ring-2 focus:ring-rmc-green"
           />
           <button
             type="submit"

@@ -209,7 +209,7 @@ export function SuccessState({
                 onChange={(e) => setDua(e.target.value)}
                 rows={3}
                 placeholder={t('success.duaPlaceholder')}
-                className="w-full resize-none rounded-xl border border-rmc-green/20 bg-white px-3.5 py-2.5 text-[13px] text-gray-800 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                className="w-full resize-none rounded-xl border border-rmc-green/20 bg-white px-3.5 py-2.5 text-[13px] text-gray-800 outline-none transition-colors focus:border-rmc-green focus:ring-2 focus:ring-rmc-green"
               />
               {dua.trim() && (
                 <p className="mt-2 text-[12px] italic text-rmc-green-dark">{t('success.duaAmin')}</p>

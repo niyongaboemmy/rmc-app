@@ -153,7 +153,7 @@ export function MosqueFinder() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full pl-8 pr-8 py-2 text-sm rounded-lg border border-gray-200 bg-white/70 placeholder:text-gray-400 focus:ring-2 focus:ring-rmc-green/60 focus:border-transparent outline-none transition"
+              className="w-full pl-8 pr-8 py-2 text-sm rounded-lg border border-gray-200 bg-white/70 placeholder:text-gray-400 focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none transition"
             />
             {query && (
               <button

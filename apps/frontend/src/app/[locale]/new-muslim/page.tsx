@@ -226,7 +226,7 @@ function RegisterForm({ locale, isAr }: { locale: string; isAr: boolean }) {
   };
 
   const inputCls =
-    'w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
+    'w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
 
   if (status === 'done') {
     return (

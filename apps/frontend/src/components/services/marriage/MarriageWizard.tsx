@@ -179,7 +179,7 @@ function PartyPhonesForm({ applicationId }: { applicationId: string }) {
               <label className="block text-[11px] font-semibold text-gray-600 mb-1">{label}</label>
               <input type="tel" value={phones[role]} onChange={(e) => setPhones((p) => ({ ...p, [role]: e.target.value }))}
                 placeholder={placeholder}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-400/50 focus:border-rose-400" />
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-400/50 focus:border-rose-400" />
             </div>
           ))}
           {err && <p className="text-xs text-red-600">{err}</p>}
@@ -215,7 +215,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
         <p className="text-sm text-gray-400 max-w-sm mx-auto mb-8">
           Our team will review your application within 1–3 business days. You will be notified by SMS on every status change.
         </p>
-        <div className="max-w-xs mx-auto mb-8 rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+        <div className="max-w-xs mx-auto mb-8 rounded-xl bg-gray-50 border border-gray-300 px-5 py-4">
           <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Your tracking code</p>
           <div className="flex items-center justify-center gap-2.5">
             <span className="font-mono text-lg font-bold text-gray-900">{app.trackingCode}</span>
@@ -287,7 +287,7 @@ function PaymentWaitingScreen({
         </p>
       </div>
 
-      <div className="rounded-xl bg-gray-50 border border-gray-200 px-6 py-4 text-sm text-gray-700 space-y-1 text-left min-w-[260px]">
+      <div className="rounded-xl bg-gray-50 border border-gray-300 px-6 py-4 text-sm text-gray-700 space-y-1 text-left min-w-[260px]">
         <div className="flex justify-between gap-6">
           <span className="text-gray-400">Application</span>
           <span className="font-mono font-semibold">{applicationNumber}</span>

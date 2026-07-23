@@ -14,6 +14,7 @@ import {
 } from '@/lib/donationCategoriesApi';
 import { ICON_NAMES, resolveIcon } from '@/components/donate/categoryIcons';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
 const LANGS = [
@@ -23,9 +24,11 @@ const LANGS = [
 ] as const;
 type LangKey = (typeof LANGS)[number]['key'];
 
+// Canonical control + label styling — identical to the shared <Input> primitive
+// so every control on this screen matches the app-wide form design system.
 const inputCls =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
-const labelCls = 'mb-1.5 block text-xs font-medium text-gray-500';
+  'w-full border border-gray-300 bg-white rounded-lg px-4 py-2.5 text-sm transition-colors duration-200 hover:border-gray-400 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed';
+const labelCls = 'mb-1.5 block text-sm font-medium text-gray-700 select-none';
 
 export function CategoriesTab({
   categories,
@@ -98,12 +101,9 @@ export function CategoriesTab({
           Categories &amp; sub-funds shown on the public donate page.
         </p>
         {canManage && (
-          <button
-            onClick={() => setCatModal({ open: true, category: null })}
-            className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
-          >
-            <Plus className="h-4 w-4" /> New category
-          </button>
+          <Button onClick={() => setCatModal({ open: true, category: null })} leftIcon={<Plus className="h-4 w-4" />} className="shrink-0 whitespace-nowrap">
+            New category
+          </Button>
         )}
       </div>
 
@@ -421,10 +421,8 @@ function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-        <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
-          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
-        </button>
+        <Button variant="outline" onClick={onClose} className="!border-gray-300 !text-gray-600 hover:!bg-gray-50">Cancel</Button>
+        <Button onClick={save} isLoading={saving}>{isEdit ? 'Save changes' : 'Create'}</Button>
       </ModalFooter>
     </Modal>
   );
@@ -535,10 +533,8 @@ function SubFundModal({ categoryId, subfund, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-        <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
-          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
-        </button>
+        <Button variant="outline" onClick={onClose} className="!border-gray-300 !text-gray-600 hover:!bg-gray-50">Cancel</Button>
+        <Button onClick={save} isLoading={saving}>{isEdit ? 'Save changes' : 'Create'}</Button>
       </ModalFooter>
     </Modal>
   );

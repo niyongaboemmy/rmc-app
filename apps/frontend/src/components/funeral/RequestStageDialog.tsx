@@ -35,7 +35,7 @@ export function RequestStageDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+            className="rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
           >
             {t('cancel')}
           </button>
@@ -58,7 +58,7 @@ export function RequestStageDialog({
           return (
             <label
               key={s.key}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40 has-[:checked]:font-semibold has-[:checked]:text-rmc-green-dark"
+              className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-300 px-3 py-2.5 text-[13px] text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40 has-[:checked]:font-semibold has-[:checked]:text-rmc-green-dark"
             >
               <input
                 type="radio"

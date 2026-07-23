@@ -343,7 +343,7 @@ function GalleryManagerInner() {
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
             placeholder='Search by title, category…'
-            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
+            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rmc-green/40 focus:bg-white transition-all"
           />
         </div>
         {/* Actions */}
@@ -1099,7 +1099,7 @@ function EditModal({
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="No title"
-                  className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all"
+                  className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rmc-green/40 transition-all"
                 />
               </div>
               <div>
@@ -1109,7 +1109,7 @@ function EditModal({
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="No description"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 transition-all resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rmc-green/40 transition-all resize-none"
                 />
               </div>
             </div>

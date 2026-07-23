@@ -142,7 +142,7 @@ export function SchoolFinder() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full rounded-lg border border-gray-200 bg-white/70 py-2 pl-8 pr-8 text-sm outline-none transition placeholder:text-gray-400 focus:border-transparent focus:ring-2 focus:ring-rmc-green/60"
+              className="w-full rounded-lg border border-gray-200 bg-white/70 py-2 pl-8 pr-8 text-sm outline-none transition placeholder:text-gray-400 focus:border-transparent focus:ring-2 focus:ring-rmc-green"
             />
             {query && (
               <button

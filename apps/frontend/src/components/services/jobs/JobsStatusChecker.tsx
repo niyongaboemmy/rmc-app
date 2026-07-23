@@ -372,7 +372,7 @@ function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; on
         onChange={(e) => { setMessage(e.target.value); setError(null); }}
         placeholder={t('respondPlaceholder')}
         maxLength={2000}
-        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
       />
 
       {docs.length > 0 && (

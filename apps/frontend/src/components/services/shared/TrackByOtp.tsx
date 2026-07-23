@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 const RESEND_SECONDS = 60;
 
 const ACCENTS = {
-  green: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green/30 focus:border-rmc-green', text: 'text-rmc-green', soft: 'bg-rmc-green-light/60 border-rmc-green/20 text-rmc-green-dark' },
+  green: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green focus:border-rmc-green', text: 'text-rmc-green', soft: 'bg-rmc-green-light/60 border-rmc-green/20 text-rmc-green-dark' },
   emerald: { btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500', ring: 'focus:ring-emerald-500/30', text: 'text-emerald-600', soft: 'bg-emerald-50 border-emerald-100 text-emerald-800' },
   rose: { btn: 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500', ring: 'focus:ring-rose-500/30', text: 'text-rose-600', soft: 'bg-rose-50 border-rose-100 text-rose-800' },
 } as const;
@@ -94,7 +94,7 @@ export function TrackByOtp<T>({ basePath, accent = 'green', children }: Props<T>
 
   const reset = () => { setPhase('enter'); setOtp(''); setResult(null); setError(null); setResendIn(0); setPhoneHint(''); };
 
-  const inputCls = cn('w-full rounded-xl border border-gray-200 bg-white py-2.5 px-4 text-sm text-gray-900 outline-none transition-colors', a.ring);
+  const inputCls = cn('w-full rounded-lg border border-gray-300 bg-white py-2.5 px-4 text-sm text-gray-900 outline-none transition-colors', a.ring);
 
   if (phase === 'result' && result) {
     return (

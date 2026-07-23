@@ -47,7 +47,7 @@ export default function UnsubscribePage() {
               <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h1 className="text-xl font-bold text-gray-900 mb-2">Invalid or expired link</h1>
               <p className="text-gray-500 text-sm mb-6">This unsubscribe link is not valid. If you keep receiving emails, contact us.</p>
-              <Link href={`/${locale}`} className="inline-flex items-center justify-center rounded-full border border-gray-200 px-6 py-2.5 text-sm font-semibold text-gray-600 hover:border-rmc-green hover:text-rmc-green transition-colors">
+              <Link href={`/${locale}`} className="inline-flex items-center justify-center rounded-full border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-600 hover:border-rmc-green hover:text-rmc-green transition-colors">
                 Back to home
               </Link>
             </>

@@ -129,7 +129,7 @@ function HajjAdmin() {
           <button
             onClick={() => void exportReport()}
             disabled={exporting}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:cursor-not-allowed disabled:opacity-60"
           >
             {exporting ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -140,7 +140,7 @@ function HajjAdmin() {
           </button>
           <button
             onClick={() => void load()}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} aria-hidden="true" /> Refresh
           </button>
@@ -164,7 +164,7 @@ function HajjAdmin() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by number, name, phone or passport…"
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
           />
         </div>
         <SearchableSelect
@@ -226,7 +226,7 @@ function HajjAdmin() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setSelected(a)}
-                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
                       >
                         Review
                       </button>
@@ -414,7 +414,7 @@ function ReviewDrawer({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
-                  className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                  className="w-full resize-none rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
                   placeholder="e.g. Passport verified against the payment receipt"
                 />
               </label>
@@ -469,7 +469,7 @@ function ReviewDrawer({
                     </ActionButton>
                     <button
                       onClick={() => { setRejecting(false); setReason(''); }}
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-white"
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-white"
                     >
                       Cancel
                     </button>
@@ -622,7 +622,7 @@ function DocumentCard({
         <div className="flex items-center gap-1.5 pt-1">
           <button
             onClick={onOpen}
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
           >
             <Eye className="h-3 w-3" aria-hidden="true" /> Inspect
           </button>

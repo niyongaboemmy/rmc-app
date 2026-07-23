@@ -184,7 +184,7 @@ function VerseOfDayManager() {
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-600/20 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-600/20 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Verse
@@ -223,7 +223,7 @@ function VerseOfDayManager() {
         <ModalBody className="space-y-5">
           {/* Arabic text — shared across all languages */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Arabic Text <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -232,7 +232,7 @@ function VerseOfDayManager() {
               value={formData.arabicText}
               onChange={(e) => setField('arabicText', e.target.value)}
               placeholder="أدخل الآية الكريمة..."
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-xl font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-xl font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
             />
           </div>
 
@@ -262,7 +262,7 @@ function VerseOfDayManager() {
                       value={formData.translationEn}
                       onChange={(e) => setField('translationEn', e.target.value)}
                       placeholder="English translation..."
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
                     />
                   </FormField>
                   <FormField label="Reference (e.g. Al-Baqarah 2:286)">
@@ -271,7 +271,7 @@ function VerseOfDayManager() {
                       value={formData.referenceEn}
                       onChange={(e) => setField('referenceEn', e.target.value)}
                       placeholder="Surah Name 1:1"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </FormField>
                 </>
@@ -284,7 +284,7 @@ function VerseOfDayManager() {
                       value={formData.translationRw}
                       onChange={(e) => setField('translationRw', e.target.value)}
                       placeholder="Ubusobanuro mu Kinyarwanda..."
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
                     />
                   </FormField>
                   <FormField label="Reference (Kinyarwanda)">
@@ -293,7 +293,7 @@ function VerseOfDayManager() {
                       value={formData.referenceRw}
                       onChange={(e) => setField('referenceRw', e.target.value)}
                       placeholder="Ash-Sharh 94:6"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </FormField>
                 </>
@@ -307,7 +307,7 @@ function VerseOfDayManager() {
                       value={formData.translationAr}
                       onChange={(e) => setField('translationAr', e.target.value)}
                       placeholder="التفسير بالعربية..."
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
                     />
                   </FormField>
                   <FormField label="Reference (Arabic)">
@@ -317,7 +317,7 @@ function VerseOfDayManager() {
                       value={formData.referenceAr}
                       onChange={(e) => setField('referenceAr', e.target.value)}
                       placeholder="الشرح ٩٤:٦"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </FormField>
                 </>
@@ -354,7 +354,7 @@ function VerseOfDayManager() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
           >
             {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {editingVerse ? 'Save Changes' : 'Add Verse'}
@@ -464,7 +464,7 @@ function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => v
 function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}

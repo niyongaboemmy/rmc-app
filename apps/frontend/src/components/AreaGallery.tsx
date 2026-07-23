@@ -34,7 +34,7 @@ export function AreaGallery({ images, title }: Props) {
               key={idx}
               type="button"
               onClick={() => setLightboxIndex(idx)}
-              className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-rmc-green/40"
+              className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

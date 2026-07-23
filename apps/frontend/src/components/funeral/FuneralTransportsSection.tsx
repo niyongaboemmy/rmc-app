@@ -76,7 +76,7 @@ export function FuneralTransportsSection() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 rtl:pl-4 rtl:pr-9"
+              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-2 focus:ring-rmc-green rtl:pl-4 rtl:pr-9"
             />
           </div>
           <div className="sm:w-64">
