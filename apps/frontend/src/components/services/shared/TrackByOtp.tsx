@@ -11,7 +11,7 @@ const RESEND_SECONDS = 60;
 const ACCENTS = {
   green: { btn: 'bg-rmc-green hover:bg-rmc-green-dark focus:ring-rmc-green', ring: 'focus:ring-rmc-green focus:border-rmc-green', text: 'text-rmc-green', soft: 'bg-rmc-green-light/60 border-rmc-green/20 text-rmc-green-dark' },
   emerald: { btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500', ring: 'focus:ring-emerald-500/30', text: 'text-emerald-600', soft: 'bg-emerald-50 border-emerald-100 text-emerald-800' },
-  rose: { btn: 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500', ring: 'focus:ring-rose-500/30', text: 'text-rose-600', soft: 'bg-rose-50 border-rose-100 text-rose-800' },
+  rose: { btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500', ring: 'focus:ring-emerald-500/30', text: 'text-emerald-600', soft: 'bg-emerald-50 border-emerald-100 text-emerald-800' },
 } as const;
 
 function apiError(err: unknown): { code?: string; message?: string } {

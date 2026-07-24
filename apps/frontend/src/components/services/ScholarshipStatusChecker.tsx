@@ -120,7 +120,7 @@ export function ScholarshipStatusChecker() {
             size="lg"
             disabled={id.trim().length === 0 || loading}
             leftIcon={loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            className="!bg-gradient-to-br !from-violet-600 !to-violet-800 !text-white hover:!shadow-lg hover:!shadow-violet-900/30 focus:!ring-violet-500 sm:w-auto"
+            className="!bg-gradient-to-br !from-emerald-600 !to-emerald-800 !text-white hover:!shadow-lg hover:!shadow-emerald-900/30 focus:!ring-emerald-500 sm:w-auto"
           >
             {loading ? t('status.checking') : t('status.checkButton')}
           </Button>
@@ -178,7 +178,7 @@ function StatusResult({ app, locale }: { app: ScholarshipApplication; locale: st
       )}
 
       {/* Header card */}
-      <div className="rounded-2xl bg-violet-950 text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
+      <div className="rounded-2xl bg-emerald-950 text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/25">
             <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.25} />
@@ -214,15 +214,15 @@ function StatusResult({ app, locale }: { app: ScholarshipApplication; locale: st
                   <span
                     className={cn(
                       'relative z-10 w-8 h-8 shrink-0 rounded-full flex items-center justify-center ring-4 ring-white',
-                      done && 'bg-violet-600 text-white',
-                      active && 'bg-gradient-to-br from-violet-600 to-violet-800 text-white shadow-md shadow-violet-900/30',
+                      done && 'bg-emerald-600 text-white',
+                      active && 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md shadow-emerald-900/30',
                       !done && !active && 'bg-gray-100 text-gray-400',
                     )}
                   >
                     {done ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-xs font-bold">{i + 1}</span>}
                   </span>
                   <div className={cn('pt-1', !done && !active && 'opacity-50')}>
-                    <p className={cn('font-semibold', active ? 'text-violet-700' : 'text-gray-900')}>
+                    <p className={cn('font-semibold', active ? 'text-emerald-700' : 'text-gray-900')}>
                       {t(`status.stages.${stage}`)}
                     </p>
                     <p className="text-gray-500 text-sm mt-0.5">{t(`status.stageDesc.${stage}`)}</p>

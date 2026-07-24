@@ -55,13 +55,13 @@ export default async function TenderServicePage({
             className="object-cover object-center"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-teal-950/65 to-black/45" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-emerald-950/65 to-black/45" />
           <div className="absolute inset-0 pattern-islamic opacity-25" />
 
           <div className="relative flex-1 flex items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-8 pb-4">
             <div className="max-w-2xl mx-auto">
               <div className="flex justify-center mb-4 pt-24">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-800 flex items-center justify-center shadow-xl shadow-teal-900/50 ring-1 ring-white/20">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center shadow-xl shadow-emerald-900/50 ring-1 ring-white/20">
                   <Briefcase className="w-7 h-7 text-white" strokeWidth={2.25} />
                 </div>
               </div>
@@ -90,12 +90,12 @@ export default async function TenderServicePage({
                 href={`/${locale}/services/tender/apply`}
                 className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
               >
-                <div className="w-11 h-11 rounded-xl bg-teal-100 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-teal-700" />
+                <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-emerald-700" />
                 </div>
                 <p className="font-bold text-gray-900">{t('landing.applyTitle')}</p>
                 <p className="text-sm text-gray-500 flex-1">{t('landing.applyText')}</p>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-600 group-hover:gap-2.5 transition-all">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 group-hover:gap-2.5 transition-all">
                   {t('landing.applyCta')} <ArrowRight className="w-4 h-4" />
                 </span>
               </Link>
@@ -104,12 +104,12 @@ export default async function TenderServicePage({
                 href={`/${locale}/services/tender/status`}
                 className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
               >
-                <div className="w-11 h-11 rounded-xl bg-teal-100 flex items-center justify-center">
-                  <Search className="w-5 h-5 text-teal-700" />
+                <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <Search className="w-5 h-5 text-emerald-700" />
                 </div>
                 <p className="font-bold text-gray-900">{t('landing.statusTitle')}</p>
                 <p className="text-sm text-gray-500 flex-1">{t('landing.statusText')}</p>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-600 group-hover:gap-2.5 transition-all">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 group-hover:gap-2.5 transition-all">
                   {t('landing.statusCta')} <ArrowRight className="w-4 h-4" />
                 </span>
               </Link>
@@ -118,7 +118,7 @@ export default async function TenderServicePage({
             {/* How to apply — the four steps, in wizard order */}
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <ListOrdered className="w-5 h-5 text-teal-600" />
+                <ListOrdered className="w-5 h-5 text-emerald-600" />
                 <h2 className="font-bold text-gray-900">{t('landing.stepsTitle')}</h2>
               </div>
               <p className="text-sm text-gray-500 mb-6">{t('landing.stepsSubtitle')}</p>
@@ -129,7 +129,7 @@ export default async function TenderServicePage({
                     key={key}
                     className="relative rounded-2xl bg-white border border-gray-100 shadow-sm p-5 flex flex-col gap-2"
                   >
-                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-teal-800 text-white text-sm font-bold flex items-center justify-center shadow-md shadow-teal-900/10">
+                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white text-sm font-bold flex items-center justify-center shadow-md shadow-emerald-900/10">
                       {i + 1}
                     </span>
                     <p className="font-semibold text-gray-900 text-sm">
@@ -146,7 +146,7 @@ export default async function TenderServicePage({
             {/* Requirements checklist — static copy, deliberately not fetched */}
             <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6 sm:p-8">
               <div className="flex items-center gap-2.5 mb-1">
-                <ListChecks className="w-5 h-5 text-teal-600" />
+                <ListChecks className="w-5 h-5 text-emerald-600" />
                 <h2 className="font-bold text-gray-900">{t('landing.requirementsTitle')}</h2>
               </div>
               <p className="text-sm text-gray-500 mb-6">{t('landing.requirementsSubtitle')}</p>
@@ -154,7 +154,7 @@ export default async function TenderServicePage({
               <ul className="space-y-4">
                 {REQUIREMENT_KEYS.map((key) => (
                   <li key={key} className="flex gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-semibold text-gray-900">
                         {t(`landing.requirements.${key}.title`)}
@@ -169,7 +169,7 @@ export default async function TenderServicePage({
             </div>
 
             {/* Link out to the existing tenders board */}
-            <div className="rounded-2xl bg-teal-950 text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-5 shadow-lg ring-1 ring-white/10">
+            <div className="rounded-2xl bg-emerald-950 text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-5 shadow-lg ring-1 ring-white/10">
               <div className="flex-1">
                 <p className="font-bold text-lg">{t('landing.boardTitle')}</p>
                 <p className="text-white/70 text-sm mt-1 leading-relaxed">
@@ -178,7 +178,7 @@ export default async function TenderServicePage({
               </div>
               <Link
                 href={`/${locale}/tenders`}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50 transition-colors shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-emerald-800 text-sm font-semibold hover:bg-emerald-50 transition-colors shrink-0"
               >
                 {t('landing.boardCta')} <ArrowRight className="w-4 h-4" />
               </Link>

@@ -77,15 +77,15 @@ function OptionCard({
       className={cn(
         'relative flex items-center gap-3 rounded-xl border-2 p-4 cursor-pointer transition-all duration-200',
         checked
-          ? 'border-rose-500 bg-rose-50 shadow-sm'
-          : 'border-gray-200 bg-white hover:border-rose-300',
+          ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+          : 'border-gray-200 bg-white hover:border-emerald-300',
       )}
     >
       <input type="radio" value={value} className="sr-only" {...registration} />
       <span
         className={cn(
           'w-10 h-10 shrink-0 rounded-lg flex items-center justify-center transition-colors',
-          checked ? 'bg-gradient-to-br from-rose-600 to-rose-800 text-white' : 'bg-gray-100 text-gray-500',
+          checked ? 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white' : 'bg-gray-100 text-gray-500',
         )}
       >
         {icon}
@@ -94,7 +94,7 @@ function OptionCard({
         <span className="block text-sm font-semibold text-gray-900">{title}</span>
         <span className="block text-xs text-gray-500 truncate">{subtitle}</span>
       </span>
-      {checked && <CheckCircle2 className="w-5 h-5 text-rose-600 ms-auto shrink-0" />}
+      {checked && <CheckCircle2 className="w-5 h-5 text-emerald-600 ms-auto shrink-0" />}
     </label>
   );
 }
@@ -194,21 +194,21 @@ export function MarriageApplicationForm() {
   if (success) {
     return (
       <div className="animate-scale-in text-center py-6">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-rose-50 flex items-center justify-center">
-          <CheckCircle2 className="w-9 h-9 text-rose-600" />
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-50 flex items-center justify-center">
+          <CheckCircle2 className="w-9 h-9 text-emerald-600" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-3">{t('successTitle')}</h2>
         <p className="text-gray-500 text-sm leading-relaxed max-w-md mx-auto mb-6">{t('successText')}</p>
 
         {/* Application ID */}
-        <div className="max-w-sm mx-auto mb-6 rounded-2xl border-2 border-rose-200 bg-rose-50/60 p-5">
+        <div className="max-w-sm mx-auto mb-6 rounded-2xl border-2 border-emerald-200 bg-emerald-50/60 p-5">
           <p className="text-xs font-medium text-gray-500 mb-2">{t('applicationIdLabel')}</p>
           <div className="flex items-center justify-center gap-3">
-            <span className="text-2xl font-bold tracking-wider text-rose-700">{appId}</span>
+            <span className="text-2xl font-bold tracking-wider text-emerald-700">{appId}</span>
             <button
               type="button"
               onClick={copyId}
-              className="w-9 h-9 rounded-lg bg-white border border-rose-200 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-colors"
+              className="w-9 h-9 rounded-lg bg-white border border-emerald-200 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors"
               aria-label={t('copyId')}
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -220,7 +220,7 @@ export function MarriageApplicationForm() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href={`/${locale}/services/marriage/status?id=${appId}`}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-br from-rose-600 to-rose-800 text-white font-semibold text-sm hover:shadow-lg hover:shadow-rose-900/30 transition-all duration-200"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-semibold text-sm hover:shadow-lg hover:shadow-emerald-900/30 transition-all duration-200"
           >
             <Search className="w-4 h-4" /> {t('checkStatusBtn')}
           </Link>
@@ -369,7 +369,7 @@ export function MarriageApplicationForm() {
         {/* Amount due */}
         <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 border border-gray-300 px-4 py-3">
           <span className="text-sm font-medium text-gray-600">{t('amountDue')}</span>
-          <span className={cn('text-lg font-bold', feeLabel ? 'text-rose-700' : 'text-gray-400')}>
+          <span className={cn('text-lg font-bold', feeLabel ? 'text-emerald-700' : 'text-gray-400')}>
             {feeLabel ?? t('amountSelectVenue')}
           </span>
         </div>
@@ -412,7 +412,7 @@ export function MarriageApplicationForm() {
           {t('photo')}<span className="text-red-500 ml-0.5">*</span>
         </label>
         <div className="flex items-center gap-4">
-          <div className="w-24 h-28 shrink-0 rounded-xl border-2 border-dashed border-rose-200 bg-rose-50/40 overflow-hidden flex items-center justify-center relative">
+          <div className="w-24 h-28 shrink-0 rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 overflow-hidden flex items-center justify-center relative">
             {photoPreview ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -427,11 +427,11 @@ export function MarriageApplicationForm() {
                 </button>
               </>
             ) : (
-              <ImageUp className="w-7 h-7 text-rose-300" />
+              <ImageUp className="w-7 h-7 text-emerald-300" />
             )}
           </div>
           <div className="flex-1">
-            <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 cursor-pointer hover:border-rose-300 hover:text-rose-700 transition-colors">
+            <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 cursor-pointer hover:border-emerald-300 hover:text-emerald-700 transition-colors">
               <ImageUp className="w-4 h-4" />
               {photo ? t('photoChange') : t('photoChoose')}
               <input
@@ -460,7 +460,7 @@ export function MarriageApplicationForm() {
         fullWidth
         isLoading={isLoading}
         rightIcon={<ArrowRight className="w-4 h-4" />}
-        className="!bg-gradient-to-br !from-rose-600 !to-rose-800 !text-white hover:!shadow-lg hover:!shadow-rose-900/30 focus:!ring-rose-500"
+        className="!bg-gradient-to-br !from-emerald-600 !to-emerald-800 !text-white hover:!shadow-lg hover:!shadow-emerald-900/30 focus:!ring-emerald-500"
       >
         {t('submit')}
       </Button>

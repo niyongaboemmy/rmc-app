@@ -31,8 +31,8 @@ export type UploadAccent = 'emerald' | 'violet' | 'teal';
 
 const ACCENTS: Record<UploadAccent, { border: string; bg: string; text: string; ring: string }> = {
   emerald: { border: 'border-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600', ring: 'hover:border-emerald-300 hover:bg-emerald-50/20' },
-  violet: { border: 'border-violet-400', bg: 'bg-violet-50', text: 'text-violet-600', ring: 'hover:border-violet-300 hover:bg-violet-50/20' },
-  teal: { border: 'border-teal-400', bg: 'bg-teal-50', text: 'text-teal-600', ring: 'hover:border-teal-300 hover:bg-teal-50/20' },
+  violet: { border: 'border-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600', ring: 'hover:border-emerald-300 hover:bg-emerald-50/20' },
+  teal: { border: 'border-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600', ring: 'hover:border-emerald-300 hover:bg-emerald-50/20' },
 };
 
 export function fmtSize(bytes: number): string {

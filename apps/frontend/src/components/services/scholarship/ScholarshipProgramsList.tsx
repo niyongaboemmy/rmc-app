@@ -57,8 +57,8 @@ export function ScholarshipProgramsList() {
   if (programs.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-50 mb-5">
-          <GraduationCap className="w-7 h-7 text-violet-300" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-50 mb-5">
+          <GraduationCap className="w-7 h-7 text-emerald-300" />
         </div>
         <p className="text-base font-semibold text-gray-400">{t('landing.programsEmptyTitle')}</p>
         <p className="text-sm text-gray-300 mt-1">{t('landing.programsEmptyText')}</p>
@@ -78,20 +78,20 @@ export function ScholarshipProgramsList() {
           >
             <span
               className={`pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 rounded-t-2xl transition-transform duration-500 ease-out group-hover:scale-x-100 ${
-                closing ? 'bg-amber-500' : 'bg-violet-500'
+                closing ? 'bg-amber-500' : 'bg-emerald-500'
               }`}
             />
 
             <div className="flex items-start justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-                <GraduationCap className="w-5 h-5 text-violet-700" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-5 h-5 text-emerald-700" />
               </div>
               <span className="font-mono text-[11px] tracking-widest text-gray-200 group-hover:text-gray-300 transition-colors">
                 {String(i + 1).padStart(2, '0')}
               </span>
             </div>
 
-            <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-2 group-hover:text-violet-600 transition-colors duration-300">
+            <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors duration-300">
               {program.title}
             </h3>
 
@@ -102,7 +102,7 @@ export function ScholarshipProgramsList() {
             <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 flex-wrap">
                 {program.level && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-100">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
                     {tLevels(program.level)}
                   </span>
                 )}
@@ -124,7 +124,7 @@ export function ScholarshipProgramsList() {
               )}
             </div>
 
-            <span className="mt-3 inline-flex items-center gap-0.5 text-[10px] font-semibold text-gray-300 group-hover:text-violet-600 transition-colors self-start">
+            <span className="mt-3 inline-flex items-center gap-0.5 text-[10px] font-semibold text-gray-300 group-hover:text-emerald-600 transition-colors self-start">
               {t('landing.viewAndApply')} <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </span>
           </Link>
