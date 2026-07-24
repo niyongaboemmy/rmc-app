@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   Briefcase, MapPin, CalendarClock, CalendarDays, Users, Wallet,
-  ArrowLeft, ArrowRight, Loader2, AlertTriangle, Clock, ClipboardList,
+  ArrowLeft, ArrowRight, Loader2, AlertTriangle, Clock,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -113,24 +113,6 @@ export default function JobOpeningDetailPage() {
               <Section title={t('about')} body={posting.description} />
               {posting.responsibilities && <Section title={t('responsibilities')} body={posting.responsibilities} />}
               {posting.requirements && <Section title={t('requirements')} body={posting.requirements} />}
-
-              {/* Inline apply CTA (mobile-friendly, always visible in flow) */}
-              {applyable && (
-                <div className="rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white p-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <ClipboardList className="w-6 h-6 text-white/90 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold">{t('applyNow')}</p>
-                      {posting.applicationDeadline && (
-                        <p className="text-white/75 text-sm mt-0.5">{t('deadline')} {formatDate(posting.applicationDeadline, locale)}</p>
-                      )}
-                    </div>
-                  </div>
-                  <Link href={applyHref} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-rmc-green-dark text-sm font-bold hover:bg-white/90 transition-colors shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70">
-                    {t('applyNow')} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
-                  </Link>
-                </div>
-              )}
             </div>
 
             {/* Sticky sidebar */}
