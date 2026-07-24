@@ -262,7 +262,7 @@ export default async function MarriageServicePage({
               </div>
               {/* Outside */}
               <div className="relative bg-white border border-gray-100 rounded-2xl p-5 shadow-sm overflow-hidden">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shadow-sm ring-1 ring-white/20 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rmc-green to-rmc-green-dark flex items-center justify-center shadow-sm ring-1 ring-white/20 mb-4">
                   <MapPin className="w-5 h-5 text-white" strokeWidth={2.25} />
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{t('detail.fees.outsideAmount')}</p>

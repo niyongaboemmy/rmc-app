@@ -56,7 +56,7 @@ export default async function FuneralServicesPage({
             priority
           />
           {/* Darkening wash so the ayah and title stay legible over the photo. */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-emerald-950/70 to-black/45" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/70 to-black/45" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-25" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/50 to-transparent" aria-hidden="true" />
 

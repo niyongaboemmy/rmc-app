@@ -22,7 +22,7 @@ export function FuneralActionCard({
     tone === 'gold'
       ? 'bg-gradient-to-br from-rmc-gold to-rmc-gold-light text-rmc-green-deep'
       : tone === 'slate'
-        ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white'
+        ? 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white'
         : 'bg-gradient-to-br from-rmc-green to-rmc-green-deep text-white';
 
   return (

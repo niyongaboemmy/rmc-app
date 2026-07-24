@@ -17,7 +17,7 @@ export function FuneralStatCard({
   const tile: Record<string, string> = {
     green: 'bg-rmc-green-light text-rmc-green',
     gold: 'bg-rmc-gold/10 text-[#8A6A0F]',
-    slate: 'bg-emerald-100 text-emerald-600',
+    slate: 'bg-rmc-green-light text-rmc-green',
     amber: 'bg-amber-50 text-amber-600',
   };
 
