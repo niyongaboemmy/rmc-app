@@ -17,14 +17,6 @@ import { cn } from '@/lib/utils';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
-import { Button } from '@/components/ui/Button';
-import { FormActions } from '@/components/ui/FormActions';
-
-// Jobs uses an emerald service accent; apply it to primary actions on this screen.
-const EMERALD_BTN = '!bg-emerald-600 hover:!bg-emerald-700 focus:!ring-emerald-500';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600',
@@ -99,24 +91,26 @@ function AdminPostingsContent() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-          <Briefcase className="w-5 h-5 text-emerald-700" />
+        <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+          <Briefcase className="w-5 h-5 text-rmc-green-dark" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Job Postings</h1>
           <p className="text-xs text-gray-400">{items.length} posting{items.length === 1 ? '' : 's'}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="!py-2">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green">
             <option value="">All statuses</option>
             <option value="draft">Draft</option>
             <option value="open">Open</option>
             <option value="closed">Closed</option>
-          </Select>
+          </select>
           {canManage && (
-            <Button onClick={() => setEditing('new')} leftIcon={<Plus className="w-4 h-4" />} className={cn('shrink-0 whitespace-nowrap', EMERALD_BTN)}>
-              New posting
-            </Button>
+            <button onClick={() => setEditing('new')}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold transition-colors">
+              <Plus className="w-4 h-4" /> New posting
+            </button>
           )}
         </div>
       </div>
@@ -125,15 +119,15 @@ function AdminPostingsContent() {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" /></div>
+          <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 text-rmc-green animate-spin" /></div>
         ) : items.length === 0 ? (
           <div className="text-center py-20">
             <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-sm text-gray-500 mb-4">No job postings yet.</p>
             {canManage && (
-              <Button onClick={() => setEditing('new')} leftIcon={<Plus className="w-4 h-4" />} className={EMERALD_BTN}>
-                Create your first posting
-              </Button>
+              <button onClick={() => setEditing('new')} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold">
+                <Plus className="w-4 h-4" /> Create your first posting
+              </button>
             )}
           </div>
         ) : (
@@ -170,12 +164,12 @@ function AdminPostingsContent() {
                       {canManage && (
                         <div className="inline-flex items-center gap-1.5 justify-end">
                           <button onClick={() => setEditing(p)} title="Edit"
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors">
+                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button onClick={() => toggleStatus(p)} disabled={busyId === p.id}
                             title={p.status === 'open' ? 'Close (stop accepting)' : 'Publish (open)'}
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors disabled:opacity-50">
+                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors disabled:opacity-50">
                             {busyId === p.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : p.status === 'open' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                           <button onClick={() => { setDeleteTarget(p); setError(null); }} title="Delete"
@@ -212,11 +206,13 @@ function AdminPostingsContent() {
                 <p className="text-sm text-gray-500 mt-1">This permanently deletes <strong>{deleteTarget.title}</strong>. Postings that already have applications can’t be deleted — close them instead.</p>
               </div>
             </div>
-            {error && <p className="text-xs text-red-600 mb-3" role="alert">{error}</p>}
-            <FormActions stackOnMobile={false}>
-              <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={busyId !== null} className="flex-1 !border-gray-300 !text-gray-600 hover:!bg-gray-50">Cancel</Button>
-              <Button type="button" variant="danger" onClick={confirmDelete} isLoading={busyId !== null} leftIcon={<Trash2 className="w-4 h-4" />} className="flex-1">Delete</Button>
-            </FormActions>
+            {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} disabled={busyId !== null} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+              <button onClick={confirmDelete} disabled={busyId !== null} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50">
+                {busyId ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Delete
+              </button>
+            </div>
           </div>
         </div>,
         document.body,
@@ -271,6 +267,9 @@ function PostingFormModal({ posting, onClose, onSaved }: { posting: JobPosting |
     }
   };
 
+  const input = 'w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green';
+  const lbl = 'block text-sm font-medium text-gray-700 mb-1.5';
+
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div role="dialog" aria-modal="true" onClick={() => !saving && onClose()}
@@ -282,36 +281,55 @@ function PostingFormModal({ posting, onClose, onSaved }: { posting: JobPosting |
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <Input label="Job title" required value={form.title} onChange={(e) => set('title', e.target.value)} maxLength={200} placeholder="e.g. Senior Accountant" />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Department" value={form.department} onChange={(e) => set('department', e.target.value)} placeholder="e.g. Finance" />
-            <Select label="Employment type" value={form.employmentType} onChange={(e) => set('employmentType', e.target.value)}>
-              {EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{EMPLOYMENT_TYPE_LABELS[t]}</option>)}
-            </Select>
+          <div>
+            <label className={lbl}>Job title <span className="text-red-500">*</span></label>
+            <input className={input} value={form.title} onChange={(e) => set('title', e.target.value)} maxLength={200} placeholder="e.g. Senior Accountant" />
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Location" value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="e.g. Kigali" />
-            <Input label="Salary range" value={form.salaryRange} onChange={(e) => set('salaryRange', e.target.value)} placeholder="Optional" />
+            <div><label className={lbl}>Department</label><input className={input} value={form.department} onChange={(e) => set('department', e.target.value)} placeholder="e.g. Finance" /></div>
+            <div><label className={lbl}>Employment type</label>
+              <select className={input} value={form.employmentType} onChange={(e) => set('employmentType', e.target.value)}>
+                {EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{EMPLOYMENT_TYPE_LABELS[t]}</option>)}
+              </select>
+            </div>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Number of positions" type="number" min={1} value={form.numberOfPositions} onChange={(e) => set('numberOfPositions', Number(e.target.value))} />
-            <Input label="Application deadline" type="date" value={form.applicationDeadline} onChange={(e) => set('applicationDeadline', e.target.value)} />
+            <div><label className={lbl}>Location</label><input className={input} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="e.g. Kigali" /></div>
+            <div><label className={lbl}>Salary range</label><input className={input} value={form.salaryRange} onChange={(e) => set('salaryRange', e.target.value)} placeholder="Optional" /></div>
           </div>
-          <Textarea label="Description" required rows={4} resize="none" value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What the role is about…" />
-          <Textarea label="Responsibilities" rows={3} resize="none" value={form.responsibilities} onChange={(e) => set('responsibilities', e.target.value)} placeholder="Optional" />
-          <Textarea label="Requirements" rows={3} resize="none" value={form.requirements} onChange={(e) => set('requirements', e.target.value)} placeholder="Optional" />
-          <Select label="Status" value={form.status} onChange={(e) => set('status', e.target.value)}>
-            <option value="draft">Draft (hidden from applicants)</option>
-            <option value="open">Open (accepting applications)</option>
-            {isEdit && <option value="closed">Closed (not accepting)</option>}
-          </Select>
-          {err && <div role="alert" className="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-2.5">{err}</div>}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div><label className={lbl}>Number of positions</label><input type="number" min={1} className={input} value={form.numberOfPositions} onChange={(e) => set('numberOfPositions', Number(e.target.value))} /></div>
+            <div><label className={lbl}>Application deadline</label><input type="date" className={input} value={form.applicationDeadline} onChange={(e) => set('applicationDeadline', e.target.value)} /></div>
+          </div>
+          <div>
+            <label className={lbl}>Description <span className="text-red-500">*</span></label>
+            <textarea rows={4} className={cn(input, 'resize-none')} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What the role is about…" />
+          </div>
+          <div>
+            <label className={lbl}>Responsibilities</label>
+            <textarea rows={3} className={cn(input, 'resize-none')} value={form.responsibilities} onChange={(e) => set('responsibilities', e.target.value)} placeholder="Optional" />
+          </div>
+          <div>
+            <label className={lbl}>Requirements</label>
+            <textarea rows={3} className={cn(input, 'resize-none')} value={form.requirements} onChange={(e) => set('requirements', e.target.value)} placeholder="Optional" />
+          </div>
+          <div>
+            <label className={lbl}>Status</label>
+            <select className={input} value={form.status} onChange={(e) => set('status', e.target.value)}>
+              <option value="draft">Draft (hidden from applicants)</option>
+              <option value="open">Open (accepting applications)</option>
+              {isEdit && <option value="closed">Closed (not accepting)</option>}
+            </select>
+          </div>
+          {err && <div className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-2.5">{err}</div>}
         </div>
 
-        <FormActions divided={false} className="px-6 py-4 border-t border-gray-100 shrink-0" stackOnMobile={false}>
-          <Button type="button" variant="outline" onClick={onClose} disabled={saving} className="flex-1 !border-gray-300 !text-gray-600 hover:!bg-gray-50">Cancel</Button>
-          <Button type="button" onClick={submit} isLoading={saving} className={cn('flex-1', EMERALD_BTN)}>{isEdit ? 'Save changes' : 'Create posting'}</Button>
-        </FormActions>
+        <div className="flex gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
+          <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+          <button onClick={submit} disabled={saving} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50">
+            {saving && <RefreshCw className="w-4 h-4 animate-spin" />} {isEdit ? 'Save changes' : 'Create posting'}
+          </button>
+        </div>
       </div>
     </div>,
     document.body,

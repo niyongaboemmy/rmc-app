@@ -89,8 +89,8 @@ function AdminJobsContent() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-          <Briefcase className="w-5 h-5 text-emerald-700" />
+        <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+          <Briefcase className="w-5 h-5 text-rmc-green-dark" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Job Applications</h1>
@@ -112,13 +112,13 @@ function AdminJobsContent() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search name, position, phone or tracking number…"
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           />
         </div>
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+          className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
         >
           {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -128,7 +128,7 @@ function AdminJobsContent() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" />
+            <RefreshCw className="w-6 h-6 text-rmc-green animate-spin" />
           </div>
         ) : items.length === 0 ? (
           <div className="text-center py-20">
@@ -164,7 +164,7 @@ function AdminJobsContent() {
                     <td className="px-5 py-3.5 text-right">
                       <Link
                         href={`/${locale}/admin/jobs/${app.id}`}
-                        className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+                        className="inline-flex items-center gap-1 text-rmc-green hover:text-rmc-green-dark text-sm font-medium"
                       >
                         Review <ChevronRight className="w-4 h-4" />
                       </Link>

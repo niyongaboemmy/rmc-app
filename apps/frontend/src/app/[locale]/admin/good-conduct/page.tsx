@@ -226,7 +226,7 @@ function AdminGoodConductContent() {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-xs font-medium disabled:opacity-50 transition-colors"
             >
               <Download className="w-3.5 h-3.5" /> {exporting ? 'Exporting...' : 'Export CSV'}
             </button>
@@ -256,20 +256,20 @@ function AdminGoodConductContent() {
               placeholder="Search by name or phone..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-indigo-400"
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           >
             {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
           <select
             value={paymentFilter}
             onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           >
             <option value="">All payments</option>
             <option value="unpaid">Unpaid</option>
@@ -280,7 +280,7 @@ function AdminGoodConductContent() {
           <select
             value={mosqueFilter}
             onChange={(e) => { setMosqueFilter(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           >
             <option value="">All mosques</option>
             {mosques.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -291,13 +291,13 @@ function AdminGoodConductContent() {
             type="date"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           />
           <input
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+            className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
           />
         </div>
       </div>

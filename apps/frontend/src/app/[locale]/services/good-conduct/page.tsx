@@ -30,13 +30,13 @@ export default async function GoodConductServicePage({
             className="object-cover object-center"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-emerald-950/65 to-black/45" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/65 to-black/45" />
           <div className="absolute inset-0 pattern-islamic opacity-25" />
 
           <div className="relative flex-1 flex items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-8 pb-4">
             <div className="max-w-2xl mx-auto">
               <div className="flex justify-center mb-4 pt-24">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center shadow-xl shadow-emerald-900/50 ring-1 ring-white/20">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark flex items-center justify-center shadow-xl shadow-rmc-green-dark/50 ring-1 ring-white/20">
                   <ShieldCheck className="w-7 h-7 text-white" strokeWidth={2.25} />
                 </div>
               </div>
@@ -55,12 +55,12 @@ export default async function GoodConductServicePage({
               href={`/${locale}/services/good-conduct/apply`}
               className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
             >
-              <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-emerald-700" />
+              <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
+                <FileText className="w-5 h-5 text-rmc-green-dark" />
               </div>
               <p className="font-bold text-gray-900">{t('landing.applyTitle')}</p>
               <p className="text-sm text-gray-500 flex-1">{t('landing.applyText')}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 group-hover:gap-2.5 transition-all">
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
                 {t('landing.applyCta')} <ArrowRight className="w-4 h-4" />
               </span>
             </Link>
@@ -69,12 +69,12 @@ export default async function GoodConductServicePage({
               href={`/${locale}/services/good-conduct/status`}
               className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
             >
-              <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center">
-                <Search className="w-5 h-5 text-emerald-700" />
+              <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
+                <Search className="w-5 h-5 text-rmc-green-dark" />
               </div>
               <p className="font-bold text-gray-900">{t('landing.statusTitle')}</p>
               <p className="text-sm text-gray-500 flex-1">{t('landing.statusText')}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 group-hover:gap-2.5 transition-all">
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
                 {t('landing.statusCta')} <ArrowRight className="w-4 h-4" />
               </span>
             </Link>

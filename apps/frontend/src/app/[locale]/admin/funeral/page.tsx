@@ -318,7 +318,7 @@ function FuneralAdmin() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('requests.searchPlaceholder')}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-rmc-green focus:ring-2 focus:ring-rmc-green rtl:pl-3 rtl:pr-9"
+                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green rtl:pl-3 rtl:pr-9"
               />
             </div>
             <SearchableSelect
@@ -405,7 +405,7 @@ function FuneralAdmin() {
             <div className="flex justify-end">
               <button
                 onClick={() => setCemeteryForm({ open: true })}
-                className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+                className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
               >
                 <Plus className="h-4 w-4" /> {t('cemeteries.add')}
               </button>
@@ -478,7 +478,7 @@ function FuneralAdmin() {
             <div className="flex justify-end">
               <button
                 onClick={() => setTransportForm({ open: true })}
-                className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+                className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
               >
                 <Plus className="h-4 w-4" /> {t('transports.add')}
               </button>

@@ -27,7 +27,7 @@ export default async function ScholarshipStatusPage({
             className="object-cover object-center"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-emerald-950/70 to-black/55" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-rmc-green-deep/70 to-black/55" />
           <div className="absolute inset-0 pattern-islamic opacity-25" />
           <div className="relative max-w-4xl mx-auto text-center w-full">
             <div className="flex justify-center mb-4 pt-24">
@@ -45,7 +45,7 @@ export default async function ScholarshipStatusPage({
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
             <Link
               href={`/${locale}/services/scholarship`}
-              className="inline-flex items-center gap-1.5 bg-emerald-950 text-white px-3.5 py-1.5 rounded-full text-sm font-medium hover:bg-emerald-900 transition-colors mb-8"
+              className="inline-flex items-center gap-1.5 bg-rmc-green-deep text-white px-3.5 py-1.5 rounded-full text-sm font-medium hover:bg-rmc-green-dark transition-colors mb-8"
             >
               <ArrowLeft className="w-4 h-4" /> {t('backToService')}
             </Link>

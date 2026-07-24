@@ -4,7 +4,7 @@ import {
   Matches, Max, MaxLength, Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { BOOK_LANGUAGES, BookVisibility, type BookLanguage } from '../entities/dawah-book.entity';
+import { BOOK_LANGUAGES, type BookLanguage } from '../entities/dawah-book.entity';
 import { ContentStatus } from '../entities/dawah-course.entity';
 
 /**
@@ -115,19 +115,6 @@ export class CreateDawahBookDto {
   @Min(1)
   @Max(100_000)
   pageCount?: number | null;
-
-  @ApiPropertyOptional({
-    description: 'Optional excerpt PDF, also under dawah-library/. When set, anonymous visitors preview THIS even if the full book is members-only.',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  previewFileKey?: string | null;
-
-  @ApiPropertyOptional({ enum: BookVisibility, default: BookVisibility.PUBLIC })
-  @IsOptional()
-  @IsEnum(BookVisibility)
-  visibility?: BookVisibility;
 
   @ApiPropertyOptional({
     default: true,

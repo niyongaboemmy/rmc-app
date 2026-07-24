@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
 import { HistoryTimeline } from '@/components/about/HistoryTimeline';
+import { AboutSwitch } from '@/components/about/AboutSwitch';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { ArrowRight, Eye, Images, Mail, Phone, Target, User } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
@@ -72,6 +73,12 @@ export default async function AboutPage() {
     <div className="min-h-screen">
       <Navbar />
       <main>
+        {/* For a super-admin in Edit Mode, AboutSwitch swaps the whole body for
+            the in-context editable board; everyone else gets this server view. */}
+        <AboutSwitch
+          initial={about}
+          read={
+            <>
 
         {/* ===================================================================
             1. HERO SECTION — animated community-photo background
@@ -298,6 +305,9 @@ export default async function AboutPage() {
             </div>
           </div>
         </section>
+            </>
+          }
+        />
       </main>
 
       {/* Footer (unchanged) */}

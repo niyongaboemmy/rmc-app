@@ -75,48 +75,78 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto): Promise<User> {
-    const [existingEmail, existingPhone] = await Promise.all([
-      this.userRepo.findOne({ where: { email: dto.email.toLowerCase() } }),
-      this.userRepo.findOne({ where: { phone: dto.phone } }),
+    const email = dto.email.toLowerCase();
+
+    // `withDeleted: true` is essential: the DB unique constraints on email/phone
+    // still count soft-deleted rows, so a lookup that hides them (TypeORM's
+    // default) would pass this guard and then blow up on INSERT with a raw 500.
+    const [byEmail, byPhone] = await Promise.all([
+      this.userRepo.findOne({ where: { email }, withDeleted: true }),
+      this.userRepo.findOne({ where: { phone: dto.phone }, withDeleted: true }),
     ]);
-    if (existingEmail) throw new ConflictException('Email already registered');
-    if (existingPhone) throw new ConflictException('Phone already registered');
+
+    // An active account already owns the email/phone → genuine conflict.
+    if (byEmail && !byEmail.deletedAt) throw new ConflictException('Email already registered');
+    if (byPhone && !byPhone.deletedAt) throw new ConflictException('Phone already registered');
+
+    // Otherwise any match is a soft-deleted account. The email is a unique
+    // identity, so it can't be reused for a brand-new row — revive the deleted
+    // account and overwrite it with the new details instead. If email and phone
+    // point at two *different* deleted accounts we can't merge them.
+    if (byEmail && byPhone && byEmail.id !== byPhone.id) {
+      throw new ConflictException('Email and phone belong to two different deleted accounts');
+    }
+    const revive = byEmail ?? byPhone ?? null;
 
     const rounds = this.configService.get<number>('app.bcryptRounds', 12);
     const passwordHash = await bcrypt.hash(dto.password, rounds);
 
-    return this.userRepo.save(
-      this.userRepo.create({
-        email: dto.email.toLowerCase(),
-        phone: dto.phone,
-        passwordHash,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
-        gender: dto.gender ?? null,
-        role: dto.role ?? 'user',
-        roleId: dto.roleId ?? null,
-        status: 'active',
-      }),
-    );
+    const data = {
+      email,
+      phone: dto.phone,
+      passwordHash,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
+      gender: dto.gender ?? null,
+      role: dto.role ?? 'user',
+      roleId: dto.roleId ?? null,
+      status: 'active',
+    };
+
+    try {
+      if (revive) {
+        await this.userRepo.restore(revive.id); // clear deleted_at
+        await this.userRepo.update(revive.id, data);
+        return (await this.userRepo.findOne({ where: { id: revive.id } }))!;
+      }
+      return await this.userRepo.save(this.userRepo.create(data));
+    } catch (err: unknown) {
+      // Safety net for races / any duplicate we didn't pre-catch: Postgres
+      // unique_violation (23505) → clean 409 instead of a 500.
+      if ((err as { code?: string })?.code === '23505') {
+        throw new ConflictException('Email or phone already registered');
+      }
+      throw err;
+    }
   }
 
   async updateProfile(id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
-    // Email uniqueness check
+    // Email uniqueness check (include soft-deleted rows — the DB constraint does)
     if (dto.email && dto.email.toLowerCase() !== user.email.toLowerCase()) {
-      const existing = await this.userRepo.findOne({ where: { email: dto.email.toLowerCase() } });
+      const existing = await this.userRepo.findOne({ where: { email: dto.email.toLowerCase() }, withDeleted: true });
       if (existing) throw new ConflictException('Email already in use by another account');
     }
 
-    // Phone normalization + uniqueness check
+    // Phone normalization + uniqueness check (include soft-deleted rows)
     let normalizedPhone: string | undefined;
     if (dto.phone) {
       normalizedPhone = dto.phone.startsWith('07') ? `+250${dto.phone.slice(1)}` : dto.phone;
       if (normalizedPhone !== user.phone) {
-        const existing = await this.userRepo.findOne({ where: { phone: normalizedPhone } });
+        const existing = await this.userRepo.findOne({ where: { phone: normalizedPhone }, withDeleted: true });
         if (existing) throw new ConflictException('Phone number already in use by another account');
       }
     }

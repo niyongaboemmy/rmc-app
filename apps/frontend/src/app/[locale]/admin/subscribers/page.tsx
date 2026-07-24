@@ -140,7 +140,7 @@ function SubscribersManager() {
 
       {/* Send a test email (verify SMTP) */}
       {canManage && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1">
               <h2 className="text-sm font-bold text-gray-700">Test email delivery</h2>
@@ -168,19 +168,19 @@ function SubscribersManager() {
 
       {/* Compose broadcast */}
       {canManage && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
           <h2 className="text-sm font-bold text-gray-700">Send a newsletter</h2>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Subject</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="e.g. New programs are live"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rmc-green/40"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Message</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
             <RichTextEditor value={body} onChange={setBody} />
           </div>
           <div className="flex items-center justify-end gap-3">
@@ -188,7 +188,7 @@ function SubscribersManager() {
             <button
               onClick={() => setConfirmSend(true)}
               disabled={!subject.trim() || !bodyHasText || active === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50 transition-colors"
             >
               <Send className="w-4 h-4" /> Send broadcast
             </button>
@@ -205,7 +205,7 @@ function SubscribersManager() {
               will be sent to every email found (any column; header rows are ignored).
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <label className="inline-flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:border-rmc-green/40 hover:bg-gray-50 cursor-pointer">
+              <label className="inline-flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:border-rmc-green/40 hover:bg-gray-50 cursor-pointer">
                 <Upload className="w-4 h-4" />
                 {file ? 'Change file' : 'Choose Excel / CSV'}
                 <input
@@ -236,7 +236,7 @@ function SubscribersManager() {
       )}
 
       {/* List */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
           <h2 className="text-sm font-bold text-gray-700">All subscribers ({items.length})</h2>
           <button onClick={load} className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rmc-green">
@@ -305,7 +305,7 @@ function SubscribersManager() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       <div className="flex items-center gap-2 text-gray-400 mb-1.5">{icon}<span className="text-xs font-medium">{label}</span></div>
       <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
     </div>

@@ -51,7 +51,7 @@ export function Step4Mahr({ initialData, onNext, onBack }: Props) {
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
             <textarea
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors resize-none"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent transition-colors resize-none"
               rows={3}
               placeholder="Full mahr agreement — e.g. '500,000 RWF + 1 cow, to be paid upon marriage'"
               {...register('mahrDescription')}
@@ -80,7 +80,7 @@ export function Step4Mahr({ initialData, onNext, onBack }: Props) {
         <Button
           type="submit"
           rightIcon={<ArrowRight className="w-4 h-4" />}
-          className="!bg-emerald-600 hover:!bg-emerald-700 !text-white !shadow-none"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark !text-white !shadow-none"
         >
           Continue
         </Button>

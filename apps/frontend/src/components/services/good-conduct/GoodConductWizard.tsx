@@ -96,9 +96,9 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
               aria-current={active ? 'step' : undefined}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${
                 active
-                  ? 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md'
+                  ? 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md'
                   : done
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-rmc-green text-white'
                     : 'bg-gray-100 text-gray-400'
               }`}
             >
@@ -108,7 +108,7 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
               {label}
             </span>
             {i < steps.length - 1 && (
-              <div className={`flex-1 h-px transition-colors ${done ? 'bg-emerald-300' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-px transition-colors ${done ? 'bg-rmc-green' : 'bg-gray-200'}`} />
             )}
           </div>
         );
@@ -282,7 +282,7 @@ function Step1Identity({
     <form onSubmit={handleSubmit(onNext)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <User className="w-4 h-4 text-emerald-500" /> {t('step1Title')}
+          <User className="w-4 h-4 text-rmc-green" /> {t('step1Title')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('step1Subtitle')}</p>
       </div>
@@ -412,7 +412,7 @@ function Step2Masjid({
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-emerald-500" /> {t('step2Title')}
+          <Building2 className="w-4 h-4 text-rmc-green" /> {t('step2Title')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('step2Subtitle')}</p>
       </div>
@@ -446,12 +446,12 @@ function Step2Masjid({
             <label
               key={value}
               className={`flex items-center gap-2.5 rounded-xl border-2 px-4 py-3 cursor-pointer transition-colors ${
-                motif === value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'
+                motif === value ? 'border-rmc-green bg-rmc-green-light' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <input type="radio" value={value} {...register('motif')} className="sr-only" />
-              <Icon className={`w-4 h-4 ${motif === value ? 'text-emerald-600' : 'text-gray-400'}`} />
-              <span className={`text-sm font-medium ${motif === value ? 'text-emerald-700' : 'text-gray-600'}`}>
+              <Icon className={`w-4 h-4 ${motif === value ? 'text-rmc-green' : 'text-gray-400'}`} />
+              <span className={`text-sm font-medium ${motif === value ? 'text-rmc-green-dark' : 'text-gray-600'}`}>
                 {t(`motifOptions.${value}`)}
               </span>
             </label>
@@ -628,8 +628,8 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
   if (bankNoticeSent) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
-          <Landmark className="w-8 h-8 text-emerald-600" />
+        <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
+          <Landmark className="w-8 h-8 text-blue-600" />
         </div>
         <h2 className="text-xl font-bold text-gray-900">{t('bankNoticeSentTitle')}</h2>
         <p className="text-gray-500 text-sm">{t('bankNoticeSentText')}</p>
@@ -670,9 +670,9 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6">
       <h2 className="font-bold text-gray-900">{t('paymentSection')}</h2>
 
-      <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-5 py-4 flex items-center justify-between">
-        <span className="text-sm text-emerald-900">{t('amountDue')}</span>
-        <span className="text-lg font-bold text-emerald-900 font-mono">
+      <div className="rounded-xl bg-rmc-green-light border border-rmc-green-light px-5 py-4 flex items-center justify-between">
+        <span className="text-sm text-rmc-green-dark">{t('amountDue')}</span>
+        <span className="text-lg font-bold text-rmc-green-dark font-mono">
           {Number(request.amountDue).toLocaleString()} RWF
         </span>
       </div>
@@ -683,7 +683,7 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
 
       {phase === 'waiting' ? (
         <div className="text-center py-6 space-y-3">
-          <Loader2 className="w-8 h-8 mx-auto text-emerald-500 animate-spin" />
+          <Loader2 className="w-8 h-8 mx-auto text-rmc-green animate-spin" />
           <p className="text-sm text-gray-600">{t('waitingForPayment')}</p>
           {notice && (
             <div className="mx-auto max-w-sm rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2.5 flex items-start gap-2">

@@ -555,7 +555,7 @@ function FinanceAdmin() {
       </div>
 
       {exportError && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">{exportError}</p>
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">{exportError}</p>
       )}
 
       {/* Submenu */}
@@ -571,7 +571,7 @@ function FinanceAdmin() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard icon={<Wallet className="w-5 h-5" />} color="text-rmc-green bg-rmc-green/10" label="Total revenue" value={formatCurrency('RWF', combinedRevenue)} sub="Donations + marriage" />
             <StatCard icon={<HandCoins className="w-5 h-5" />} color="text-blue-600 bg-blue-50" label="Donations received" value={formatCurrency('RWF', rwf?.received ?? 0)} sub={`${stats?.count ?? 0} gifts`} />
-            <StatCard icon={<Heart className="w-5 h-5" />} color="text-rose-600 bg-rose-50" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} sub={canViewMarriage ? `${marriageStats?.total ?? 0} applications` : 'No access'} />
+            <StatCard icon={<Heart className="w-5 h-5" />} color="text-rmc-green bg-rmc-green-light" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} sub={canViewMarriage ? `${marriageStats?.total ?? 0} applications` : 'No access'} />
             <StatCard icon={<Clock className="w-5 h-5" />} color="text-yellow-600 bg-yellow-50" label="Donations pending" value={formatCurrency('RWF', rwf?.pending ?? 0)} />
           </div>
 
@@ -713,7 +713,7 @@ function FinanceAdmin() {
                       placeholder={t('searchPlaceholder')}
                       value={filters.search}
                       onChange={(e) => patch({ search: e.target.value })}
-                      className="w-full pl-9 pr-4 rtl:pl-4 rtl:pr-9 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                      className="w-full pl-9 pr-4 rtl:pl-4 rtl:pr-9 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </div>
                   <SearchableSelect
@@ -737,9 +737,9 @@ function FinanceAdmin() {
                     triggerClassName="px-3 py-2.5 rounded-xl text-sm"
                   />
                   <div className="flex items-center gap-2">
-                    <input type="date" value={filters.dateFrom} onChange={(e) => patch({ dateFrom: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label={t('fromDate')} />
+                    <input type="date" value={filters.dateFrom} onChange={(e) => patch({ dateFrom: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label={t('fromDate')} />
                     <span className="text-gray-300 text-xs">→</span>
-                    <input type="date" value={filters.dateTo} onChange={(e) => patch({ dateTo: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label={t('toDate')} />
+                    <input type="date" value={filters.dateTo} onChange={(e) => patch({ dateTo: e.target.value })} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label={t('toDate')} />
                   </div>
                 </div>
                 {/* Cause / intention / method (client-side) */}
@@ -937,7 +937,7 @@ function FinanceAdmin() {
       {section === 'marriage' && canViewMarriage && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={<Wallet className="w-5 h-5" />} color="text-rose-600 bg-rose-50" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} />
+            <StatCard icon={<Wallet className="w-5 h-5" />} color="text-rmc-green bg-rmc-green-light" label="Marriage revenue" value={formatCurrency('RWF', marriageRevenue)} />
             <StatCard icon={<Heart className="w-5 h-5" />} color="text-blue-600 bg-blue-50" label="Applications" value={String(marriageStats?.total ?? 0)} />
             <StatCard icon={<CheckCircle2 className="w-5 h-5" />} color="text-green-600 bg-green-50" label="Approved" value={marriageStats?.byStatus.find((s) => s.status === 'approved')?.count ?? '0'} />
             <StatCard icon={<Clock className="w-5 h-5" />} color="text-yellow-600 bg-yellow-50" label="Awaiting review" value={marriageStats?.byStatus.find((s) => s.status === 'submitted')?.count ?? '0'} />
@@ -953,7 +953,7 @@ function FinanceAdmin() {
                   placeholder="Search by couple or application number..."
                   value={marrSearch}
                   onChange={(e) => { setMarrSearch(e.target.value); setMarrPage(1); }}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rose-400"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                 />
               </div>
               <SearchableSelect
@@ -969,7 +969,7 @@ function FinanceAdmin() {
                   { value: 'cancelled', label: 'Cancelled' },
                   { value: 'closed', label: 'Closed' },
                 ]}
-                triggerClassName="px-3 py-2.5 rounded-xl text-sm focus:ring-rmc-green"
+                triggerClassName="px-4 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
               />
               <SearchableSelect
                 value={marrPay}
@@ -982,18 +982,18 @@ function FinanceAdmin() {
                   { value: 'paid', label: 'Paid' },
                   { value: 'refunded', label: 'Refunded' },
                 ]}
-                triggerClassName="px-3 py-2.5 rounded-xl text-sm focus:ring-rmc-green"
+                triggerClassName="px-4 py-2.5 rounded-lg text-sm focus:ring-rmc-green"
               />
               <div className="flex items-center gap-2">
-                <input type="date" value={marrFrom} onChange={(e) => { setMarrFrom(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label="From date" />
+                <input type="date" value={marrFrom} onChange={(e) => { setMarrFrom(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label="From date" />
                 <span className="text-gray-300 text-xs">→</span>
-                <input type="date" value={marrTo} onChange={(e) => { setMarrTo(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label="To date" />
+                <input type="date" value={marrTo} onChange={(e) => { setMarrTo(e.target.value); setMarrPage(1); }} className="w-full min-w-0 px-2.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green text-gray-600" aria-label="To date" />
               </div>
             </div>
             {(marrSearch || marrStatus || marrPay || marrFrom || marrTo) && (
               <button
                 onClick={() => { setMarrSearch(''); setMarrStatus(''); setMarrPay(''); setMarrFrom(''); setMarrTo(''); setMarrPage(1); }}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rose-600 transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rmc-green transition-colors"
               >
                 <X className="w-3.5 h-3.5" /> Clear filters
               </button>
@@ -1004,7 +1004,7 @@ function FinanceAdmin() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {marrLoading ? (
               <div className="flex items-center justify-center py-20">
-                <RefreshCw className="w-6 h-6 text-rose-500 animate-spin" />
+                <RefreshCw className="w-6 h-6 text-rmc-green animate-spin" />
                 <span className="ml-2 text-gray-500">Loading applications...</span>
               </div>
             ) : marrApps.length === 0 ? (
@@ -1029,9 +1029,9 @@ function FinanceAdmin() {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {marrApps.map((app) => (
-                        <tr key={app.id} className="hover:bg-rose-50/20 transition-colors align-top">
+                        <tr key={app.id} className="hover:bg-rmc-green-light/20 transition-colors align-top">
                           <td className="px-5 py-4">
-                            <p className="font-mono text-xs font-semibold text-rose-700">{app.applicationNumber}</p>
+                            <p className="font-mono text-xs font-semibold text-rmc-green-dark">{app.applicationNumber}</p>
                             <p className="text-xs text-gray-400 mt-0.5">{new Date(app.createdAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                           </td>
                           <td className="px-4 py-4">
@@ -1058,7 +1058,7 @@ function FinanceAdmin() {
                           <td className="px-4 py-4 text-right">
                             <Link
                               href={`/${locale}/admin/marriage/${app.id}`}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-800 transition-colors"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-rmc-green hover:text-rmc-green-dark transition-colors"
                             >
                               Review <ChevronRight className="w-3.5 h-3.5" />
                             </Link>
@@ -1075,8 +1075,8 @@ function FinanceAdmin() {
                       Showing {(marrPage - 1) * 20 + 1}–{Math.min(marrPage * 20, marrTotal)} of {marrTotal} applications
                     </p>
                     <div className="flex gap-2">
-                      <button onClick={() => setMarrPage((p) => Math.max(p - 1, 1))} disabled={marrPage === 1} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rose-300 transition-colors">Previous</button>
-                      <button onClick={() => setMarrPage((p) => Math.min(p + 1, marrPages))} disabled={marrPage === marrPages} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rose-300 transition-colors">Next</button>
+                      <button onClick={() => setMarrPage((p) => Math.max(p - 1, 1))} disabled={marrPage === 1} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green transition-colors">Previous</button>
+                      <button onClick={() => setMarrPage((p) => Math.min(p + 1, marrPages))} disabled={marrPage === marrPages} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium disabled:opacity-40 hover:border-rmc-green transition-colors">Next</button>
                     </div>
                   </div>
                 )}
@@ -1098,7 +1098,7 @@ function FinanceAdmin() {
                   placeholder="Search by payer, reference or fund..."
                   value={histSearch}
                   onChange={(e) => { setHistSearch(e.target.value); setHistPage(1); }}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                 />
               </div>
               <SearchableSelect
@@ -1154,7 +1154,7 @@ function FinanceAdmin() {
                         <td className="px-4 py-4">
                           <span className={cn(
                             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                            e.source === 'marriage' ? 'bg-rose-50 text-rose-600' : 'bg-rmc-green/10 text-rmc-green',
+                            e.source === 'marriage' ? 'bg-rmc-green-light text-rmc-green' : 'bg-rmc-green/10 text-rmc-green',
                           )}>
                             {e.source === 'marriage' ? <Heart className="w-3 h-3" /> : <HandCoins className="w-3 h-3" />}
                             {e.source === 'marriage' ? 'Marriage' : 'Donation'}
@@ -1451,7 +1451,7 @@ function ProgramsTab({ campaigns, canManage, onNew, onEdit, onDelete, onRestored
     <div className="space-y-4">
       {canManage && (
         <div className="flex justify-end">
-          <button onClick={onNew} className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rmc-green text-white text-sm font-bold shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark transition-all duration-300">
+          <button onClick={onNew} className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-bold shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark transition-all duration-300">
             <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" /> {t('programs.new')}
           </button>
         </div>
@@ -1573,8 +1573,8 @@ function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
   return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold', map[status])}>{labels[status]}</span>;
 }
 
-const inputClass = 'w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
-const labelClass = 'block text-xs font-medium text-gray-500 mb-1.5';
+const inputClass = 'w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
+const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
 
 function slugify(s: string): string {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -1635,7 +1635,7 @@ function Field({ label, hint, error, required, children }: { label: string; hint
         {label}{required && <span className="text-red-500"> *</span>}
       </label>
       {children}
-      {error ? <p className="mt-1 text-[11px] text-red-600">{error}</p> : hint ? <p className="mt-1 text-[11px] text-gray-400">{hint}</p> : null}
+      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : hint ? <p className="mt-1 text-[11px] text-gray-400">{hint}</p> : null}
     </div>
   );
 }
@@ -1816,11 +1816,11 @@ function CampaignModal({ campaign, categories, locale, onClose, onSaved }: {
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium text-gray-400">{t('campaignModal.step', { current: step + 1, total: STEPS.length })}</span>
             {last ? (
-              <button onClick={save} disabled={saving} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
+              <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
                 {saving ? t('campaignModal.saving') : isEdit ? t('campaignModal.save') : t('campaignModal.create')}
               </button>
             ) : (
-              <button onClick={goNext} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark">
+              <button onClick={goNext} className="px-5 py-2 rounded-lg bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark">
                 {t('campaignModal.next')}
               </button>
             )}
@@ -2004,10 +2004,10 @@ function EditDonationModal({ donation, campaigns, onClose, onSaved }: {
       onClose={onClose}
       footer={
         <>
-          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
             {t('editModal.cancel')}
           </button>
-          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-xl bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-rmc-green text-white text-sm font-semibold hover:bg-rmc-green-dark disabled:opacity-50">
             {saving ? t('editModal.saving') : t('editModal.save')}
           </button>
         </>

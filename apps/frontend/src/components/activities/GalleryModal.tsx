@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Calendar, ArrowRight, Images, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { assetUrl } from '@/lib/api';
 import { type Activity, badgeClass } from './data';
 
 /* ──────────────────────────────────────────────────────────────
@@ -90,7 +91,7 @@ export function GalleryModal({
         <div className="relative shrink-0 flex items-center justify-center bg-rmc-green-deep">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={images[index]}
+            src={assetUrl(images[index])}
             alt={`${activity.title} — image ${index + 1} of ${total}`}
             className="w-full max-h-[58vh] object-contain"
           />
@@ -143,7 +144,7 @@ export function GalleryModal({
                   }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <img src={assetUrl(src)} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -157,7 +158,7 @@ export function GalleryModal({
             </span>
             <Link
               href={`/${locale}/activities`}
-              className="group inline-flex items-center gap-1.5 px-4 py-2 shrink-0 bg-rmc-green text-white text-xs font-bold rounded-full shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 motion-safe:hover:scale-105 transition-all duration-300"
+              className="group inline-flex items-center gap-1.5 px-4 py-2 shrink-0 bg-rmc-green text-white text-xs font-bold rounded-lg shadow-md shadow-rmc-green/25 hover:bg-rmc-green-dark hover:shadow-rmc-green/40 motion-safe:hover:scale-105 transition-all duration-300"
             >
               Read full story
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />

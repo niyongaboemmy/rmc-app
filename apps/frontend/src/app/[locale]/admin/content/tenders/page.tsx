@@ -124,7 +124,7 @@ export default function TendersAdminPage() {
 
 // ── Main manager ──────────────────────────────────────────────────────────────
 
-function TendersManager() {
+function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
@@ -272,21 +272,23 @@ function TendersManager() {
     <div className="space-y-6">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/${locale}/admin/content`}
-            className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-            <FileText className="w-5 h-5 text-amber-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/${locale}/admin/content`}
+              className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Tenders</h1>
+              <p className="text-xs text-gray-400">{loading ? 'Loading…' : `${tenders.length} total`}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Tenders</h1>
-            <p className="text-xs text-gray-400">{loading ? 'Loading…' : `${tenders.length} total`}</p>
-          </div>
-        </div>
+        )}
         <div className="flex items-center gap-2">
           <Link
             href={`/${locale}/tenders`}
@@ -298,7 +300,7 @@ function TendersManager() {
           <button
             onClick={openCreate}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-amber-500/20 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-amber-500/20 transition-colors"
           >
             <Plus className="w-4 h-4" /> New Tender
           </button>
@@ -447,7 +449,7 @@ function TendersManager() {
                 type="date"
                 value={toDateInput(form.publishAt)}
                 onChange={(e) => set('publishAt', fromDateInput(e.target.value))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
               />
             </div>
             <div>
@@ -458,7 +460,7 @@ function TendersManager() {
                 type="date"
                 value={form.expiresAt ? toDateInput(form.expiresAt) : ''}
                 onChange={(e) => set('expiresAt', e.target.value ? fromDateInput(e.target.value) : null)}
-                className="w-full rounded-xl border border-amber-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                className="w-full rounded-lg border border-amber-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
               />
             </div>
           </div>
@@ -607,7 +609,7 @@ function TendersManager() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             {saving
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
@@ -702,7 +704,7 @@ function UploadRow({ item, onRemove }: { item: UploadItem; onRemove: () => void 
             <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${item.pct}%` }} />
           </div>
         )}
-        {item.status === 'error'   && <p className="text-[10px] text-red-500">{item.errorMsg}</p>}
+        {item.status === 'error'   && <p className="text-xs text-red-600">{item.errorMsg}</p>}
         {item.status === 'done'    && <p className="text-[10px] text-green-600">Uploaded</p>}
         {item.status === 'pending' && <p className="text-[10px] text-gray-400">{formatSize(item.file.size)} — will upload on save</p>}
       </div>

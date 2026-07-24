@@ -83,7 +83,7 @@ function ModerationQueue() {
         </div>
         <Link
           href={`/${locale}/admin/dawah/discussions/all`}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
         >
           {t('discussions.manage.title')}
         </Link>
@@ -126,7 +126,7 @@ function ModerationQueue() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Link
                   href={`/${locale}/dawah/discussions`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
                 >
                   <ExternalLink className="h-3.5 w-3.5" /> {t('discussions.moderation.view')}
                 </Link>

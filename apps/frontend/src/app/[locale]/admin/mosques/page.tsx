@@ -345,7 +345,7 @@ function MosquesManager() {
         {canCreate && (
           <button
             onClick={openCreate}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl shadow-sm shadow-rmc-green/20 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg shadow-sm shadow-rmc-green/20 transition-colors"
           >
             <Plus className="w-4 h-4" /> Add Mosque
           </button>
@@ -361,7 +361,7 @@ function MosquesManager() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or address…"
-            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
           />
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
@@ -629,10 +629,10 @@ function MosquesManager() {
                     flyToCenter={mapCenter}
                   />
                 </div>
-                {geoErr && <p className="mb-2 text-[11px] text-red-600">{geoErr}</p>}
+                {geoErr && <p className="mb-2 text-xs text-red-600">{geoErr}</p>}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Latitude
                     </label>
                     <input
@@ -647,7 +647,7 @@ function MosquesManager() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Longitude
                     </label>
                     <input
@@ -770,7 +770,7 @@ function MosquesManager() {
                 }
                 setStep((s) => s + 1);
               }}
-              className="px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors"
+              className="px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors"
             >
               Next
             </button>
@@ -779,7 +779,7 @@ function MosquesManager() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
             >
               {saving && (
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -819,7 +819,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}

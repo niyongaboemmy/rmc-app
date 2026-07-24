@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { sanitizeRichHtml } from '@/lib/sanitize';
-import { BookOpen, FileText, Globe, Lock, User } from 'lucide-react';
+import { BookOpen, FileText, Globe, User } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PageHero } from '@/components/layout/PageHero';
@@ -82,7 +82,6 @@ export default async function BookDetailPage({
   const hasDescription = Boolean(
     description.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim(),
   );
-  const isMembers = book.visibility === 'members';
 
   const meta = [
     { icon: User, value: book.author },
@@ -128,8 +127,8 @@ export default async function BookDetailPage({
     image: cover,
     bookFormat: 'https://schema.org/EBook',
     numberOfPages: book.pageCount || undefined,
-    // Public books are readable without an account; members-only ones are not.
-    isAccessibleForFree: book.visibility === 'public',
+    // Every book is freely readable without an account.
+    isAccessibleForFree: true,
     publisher: {
       '@type': 'Organization',
       name: 'Rwanda Muslim Community',
@@ -179,12 +178,6 @@ export default async function BookDetailPage({
                         <div className="absolute inset-0 pattern-islamic opacity-[0.12]" />
                         <BookOpen className="relative h-12 w-12 text-white/70" />
                       </div>
-                    )}
-                    {isMembers && (
-                      <span className="absolute end-3 top-3 inline-flex items-center gap-1 rounded-full border border-rmc-gold/40 bg-black/45 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rmc-gold backdrop-blur-sm">
-                        <Lock className="h-3 w-3" aria-hidden />
-                        {t('library.membersOnly')}
-                      </span>
                     )}
                   </div>
                   <div className="mt-5">

@@ -14,7 +14,6 @@ import {
 } from '@/lib/donationCategoriesApi';
 import { ICON_NAMES, resolveIcon } from '@/components/donate/categoryIcons';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
 const LANGS = [
@@ -24,11 +23,9 @@ const LANGS = [
 ] as const;
 type LangKey = (typeof LANGS)[number]['key'];
 
-// Canonical control + label styling — identical to the shared <Input> primitive
-// so every control on this screen matches the app-wide form design system.
 const inputCls =
-  'w-full border border-gray-300 bg-white rounded-lg px-4 py-2.5 text-sm transition-colors duration-200 hover:border-gray-400 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed';
-const labelCls = 'mb-1.5 block text-sm font-medium text-gray-700 select-none';
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+const labelCls = 'mb-1.5 block text-sm font-medium text-gray-700';
 
 export function CategoriesTab({
   categories,
@@ -101,9 +98,12 @@ export function CategoriesTab({
           Categories &amp; sub-funds shown on the public donate page.
         </p>
         {canManage && (
-          <Button onClick={() => setCatModal({ open: true, category: null })} leftIcon={<Plus className="h-4 w-4" />} className="shrink-0 whitespace-nowrap">
-            New category
-          </Button>
+          <button
+            onClick={() => setCatModal({ open: true, category: null })}
+            className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+          >
+            <Plus className="h-4 w-4" /> New category
+          </button>
         )}
       </div>
 
@@ -283,7 +283,7 @@ function LangTabs({ lang, setLang }: { lang: LangKey; setLang: (l: LangKey) => v
           key={l.key}
           type="button"
           onClick={() => setLang(l.key)}
-          className={cn('rounded-md px-3 py-1 text-xs font-bold transition-colors', lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green')}
+          className={cn('rounded-lg px-3 py-1 text-xs font-bold transition-colors', lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green')}
         >
           {l.label}
         </button>
@@ -421,8 +421,10 @@ function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <Button variant="outline" onClick={onClose} className="!border-gray-300 !text-gray-600 hover:!bg-gray-50">Cancel</Button>
-        <Button onClick={save} isLoading={saving}>{isEdit ? 'Save changes' : 'Create'}</Button>
+        <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        <button onClick={save} disabled={saving} className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
+          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
+        </button>
       </ModalFooter>
     </Modal>
   );
@@ -533,8 +535,10 @@ function SubFundModal({ categoryId, subfund, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <Button variant="outline" onClick={onClose} className="!border-gray-300 !text-gray-600 hover:!bg-gray-50">Cancel</Button>
-        <Button onClick={save} isLoading={saving}>{isEdit ? 'Save changes' : 'Create'}</Button>
+        <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        <button onClick={save} disabled={saving} className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
+          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
+        </button>
       </ModalFooter>
     </Modal>
   );

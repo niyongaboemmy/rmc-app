@@ -110,7 +110,7 @@ export function TenderStatusChecker() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-rmc-green animate-spin" />
       </div>
     );
   }
@@ -225,7 +225,7 @@ function ApplicationDetail({
       </button>
 
       {isAwarded && (
-        <div className="rounded-2xl bg-gradient-to-br from-green-600 to-emerald-700 text-white p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="rounded-2xl bg-gradient-to-br from-green-600 to-rmc-green-dark text-white p-6 flex flex-col sm:flex-row sm:items-center gap-4">
           <Trophy className="w-8 h-8 shrink-0" />
           <div className="flex-1">
             <p className="font-bold">{t('awardedTitle')}</p>
@@ -271,7 +271,7 @@ function ApplicationDetail({
       )}
 
       {/* Summary card */}
-      <div className="rounded-2xl bg-emerald-950 text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
+      <div className="rounded-2xl bg-rmc-green-deep text-white p-6 sm:p-8 shadow-lg ring-1 ring-white/10">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/25">
             <Briefcase className="w-6 h-6 text-white" strokeWidth={2.25} />
@@ -321,8 +321,8 @@ function ApplicationDetail({
                   <span
                     className={cn(
                       'relative z-10 w-8 h-8 shrink-0 rounded-full flex items-center justify-center ring-4 ring-white',
-                      done && 'bg-emerald-600 text-white',
-                      active && 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md',
+                      done && 'bg-rmc-green text-white',
+                      active && 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md',
                       !done && !active && 'bg-gray-100 text-gray-400',
                     )}
                   >
@@ -334,7 +334,7 @@ function ApplicationDetail({
                   </span>
                   <div className={cn('pt-1 flex-1', !done && !active && 'opacity-50')}>
                     <div className="flex items-center justify-between gap-2">
-                      <p className={cn('font-semibold', active ? 'text-emerald-700' : 'text-gray-900')}>
+                      <p className={cn('font-semibold', active ? 'text-rmc-green-dark' : 'text-gray-900')}>
                         {t(`stages.${stage}`)}
                       </p>
                       {date && <span className="text-xs text-gray-400 shrink-0">{date}</span>}
@@ -352,7 +352,7 @@ function ApplicationDetail({
       {application.documents.length > 0 && (
         <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6 sm:p-8">
           <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Paperclip className="w-4 h-4 text-emerald-500" /> {t('documentsTitle')}
+            <Paperclip className="w-4 h-4 text-rmc-green" /> {t('documentsTitle')}
           </h3>
           <ul className="space-y-2">
             {application.documents.map((doc) => (
@@ -360,8 +360,8 @@ function ApplicationDetail({
                 key={doc.id}
                 className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3"
               >
-                <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4 text-emerald-600" />
+                <div className="w-9 h-9 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4 text-rmc-green" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
@@ -378,7 +378,7 @@ function ApplicationDetail({
                   href={fileUrl(doc.fileKey)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs font-semibold text-emerald-600 hover:underline shrink-0"
+                  className="text-xs font-semibold text-rmc-green hover:underline shrink-0"
                 >
                   {t('viewDocument')}
                 </a>

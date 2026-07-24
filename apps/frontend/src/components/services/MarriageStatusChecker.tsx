@@ -90,14 +90,14 @@ function StatusResult({ app, locale }: { app: MarriagePublicStatus; locale: stri
                 <li key={stage} className="relative flex gap-4 pb-8 last:pb-0">
                   <span className={cn(
                     'relative z-10 w-8 h-8 shrink-0 rounded-full flex items-center justify-center ring-4 ring-white',
-                    done && 'bg-emerald-600 text-white',
-                    active && 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md',
+                    done && 'bg-rmc-green text-white',
+                    active && 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md',
                     !done && !active && 'bg-gray-100 text-gray-400',
                   )}>
                     {done ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-xs font-bold">{i + 1}</span>}
                   </span>
                   <div className={cn('pt-1', !done && !active && 'opacity-50')}>
-                    <p className={cn('font-semibold', active ? 'text-emerald-700' : 'text-gray-900')}>{t(`status.stages.${stage}`)}</p>
+                    <p className={cn('font-semibold', active ? 'text-rmc-green-dark' : 'text-gray-900')}>{t(`status.stages.${stage}`)}</p>
                     <p className="text-gray-500 text-sm mt-0.5">{t(`status.stageDesc.${stage}`)}</p>
                   </div>
                 </li>

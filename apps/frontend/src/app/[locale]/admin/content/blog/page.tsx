@@ -59,7 +59,7 @@ export default function BlogAdminPage() {
   );
 }
 
-function BlogManager() {
+function BlogManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
@@ -246,22 +246,24 @@ function BlogManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center">
-            <Newspaper className="w-5 h-5 text-cyan-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center">
+              <Newspaper className="w-5 h-5 text-cyan-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Blog &amp; Posts</h1>
+              <p className="text-xs text-gray-400">
+                {posts.length} post{posts.length !== 1 ? 's' : ''} &middot;{' '}
+                {posts.filter((p) => p.status === 'published').length} published
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Blog &amp; Posts</h1>
-            <p className="text-xs text-gray-400">
-              {posts.length} post{posts.length !== 1 ? 's' : ''} &middot;{' '}
-              {posts.filter((p) => p.status === 'published').length} published
-            </p>
-          </div>
-        </div>
-        <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-cyan-600/20 transition-colors">
+        )}
+        <button onClick={openCreate} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-cyan-600/20 transition-colors">
           <Plus className="w-4 h-4" /> New Post
         </button>
       </div>
@@ -357,7 +359,7 @@ function BlogManager() {
                   ]}
                   noneLabel="Select a category…"
                   searchPlaceholder="Search categories…"
-                  triggerClassName={`rounded-xl px-4 py-2.5 text-sm focus:ring-rmc-green ${modalLang === 'ar' ? 'font-arabic' : ''}`}
+                  triggerClassName={`rounded-xl px-4 py-2.5 text-sm focus:ring-cyan-500 ${modalLang === 'ar' ? 'font-arabic' : ''}`}
                 />
               </Field>
 
@@ -381,19 +383,19 @@ function BlogManager() {
                     <div key="lang-fields" className="p-4 space-y-4">
                       <Field label="Title" required={req}>
                         <input dir={dir} type="text" value={form.title[l]} onChange={(e) => setTri('title', l, e.target.value)} placeholder="Post title"
-                          className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fc}`} />
+                          className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent ${fc}`} />
                       </Field>
                       <Field label="Author">
                         <input dir={dir} type="text" value={form.author[l]} onChange={(e) => setTri('author', l, e.target.value)} placeholder="RMC Communications"
-                          className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fc}`} />
+                          className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent ${fc}`} />
                       </Field>
                       <Field label="Excerpt" hint="Short one-liner for cards">
                       <input dir={dir} type="text" value={form.excerpt[l]} onChange={(e) => setTri('excerpt', l, e.target.value)} placeholder="One-line teaser"
-                        className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fc}`} />
+                        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent ${fc}`} />
                     </Field>
                     <Field label="Summary" required={req} hint="Shown under the title">
                       <textarea dir={dir} rows={2} value={form.summary[l]} onChange={(e) => setTri('summary', l, e.target.value)} placeholder="A short summary of the post"
-                        className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none ${fc}`} />
+                        className={`w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none ${fc}`} />
                     </Field>
                     <Field label="Body" hint="Format with the toolbar — headings, lists, quotes, links">
                       {/* No per-language key — the editor persists and swaps the
@@ -417,19 +419,19 @@ function BlogManager() {
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug <span className="text-gray-400 font-normal">(auto from title if blank)</span></label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Slug <span className="text-gray-400 font-normal">(auto from title if blank)</span></label>
                   <input type="text" value={form.slug} onChange={(e) => setShared('slug', e.target.value)} placeholder="my-post-title"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Date</label>
                   <input type="date" value={form.date} onChange={(e) => setShared('date', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Status</label>
                 <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
                   {(['draft', 'published'] as BlogStatus[]).map((s) => (
                     <button key={s} type="button" onClick={() => setShared('status', s)}
@@ -444,7 +446,7 @@ function BlogManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Featured Image</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Featured Image</label>
                 <div className="flex items-start gap-4">
                   <div className="w-32 h-20 rounded-xl bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
                     {form.image ? (
@@ -463,7 +465,7 @@ function BlogManager() {
                       {uploading ? 'Uploading…' : 'Upload image'}
                     </button>
                     <input type="text" value={form.image} onChange={(e) => setShared('image', e.target.value)} placeholder="…or paste an image URL"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" />
                   </div>
                 </div>
               </div>
@@ -488,11 +490,11 @@ function BlogManager() {
             </button>
           )}
           {step < STEPS.length - 1 ? (
-            <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors">
+            <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold rounded-xl transition-colors">
               Next <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button type="button" onClick={handleSaveItem} disabled={saving || uploading} className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+            <button type="button" onClick={handleSaveItem} disabled={saving || uploading} className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
               {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
               {editingIndex !== null ? 'Save Changes' : 'Create Post'}
             </button>
@@ -508,7 +510,7 @@ function BlogManager() {
 function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
         {hint && <span className="text-gray-400 font-normal"> — {hint}</span>}
       </label>

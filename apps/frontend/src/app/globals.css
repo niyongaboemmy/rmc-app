@@ -748,3 +748,31 @@ img[data-align='right']  { margin-inline-start: auto; margin-inline-end: 0; }
 .flip-page .textLayer ::selection {
   background: rgba(26, 122, 74, 0.3);
 }
+
+/* ── In-context Edit Mode affordances ───────────────────────────────────────
+   Every click-to-edit text node (see InlineText) carries `.ie-editable`. The
+   class is only ever rendered while a super-admin is in Edit Mode, so it has
+   ZERO effect on the public site. A dashed brand-green outline appears on hover
+   and firms up on focus, making "what can I click?" obvious; empty fields show
+   their placeholder via `data-ph`. */
+.ie-editable {
+  border-radius: 4px;
+  outline: 1px dashed transparent;
+  outline-offset: 2px;
+  cursor: text;
+  transition: outline-color 0.15s ease, background-color 0.15s ease;
+}
+.ie-editable:hover {
+  outline-color: rgba(26, 122, 74, 0.5); /* rmc-green */
+  background-color: rgba(26, 122, 74, 0.04);
+}
+.ie-editable:focus {
+  outline: 1.5px solid rgba(26, 122, 74, 0.9);
+  background-color: rgba(26, 122, 74, 0.05);
+}
+.ie-editable:empty::before {
+  content: attr(data-ph);
+  color: #9ca3af;
+  opacity: 0.7;
+  pointer-events: none;
+}

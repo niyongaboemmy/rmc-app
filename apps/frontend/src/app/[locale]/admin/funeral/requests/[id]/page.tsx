@@ -127,7 +127,7 @@ function RequestDetail() {
           <button
             type="button"
             onClick={() => setManaging(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> {t('detail.manage')}
           </button>
@@ -449,7 +449,7 @@ function DeathCertificateCard({
             </div>
             <div className="flex min-h-0 flex-1 items-center justify-center" onClick={(e) => e.stopPropagation()}>
               {failed ? (
-                <p className="rounded-xl bg-white/10 px-5 py-4 text-sm text-white">{t('detail.certificateFailed')}</p>
+                <p className="rounded-lg bg-white/10 px-5 py-4 text-sm text-white">{t('detail.certificateFailed')}</p>
               ) : !url ? (
                 <Loader2 className="h-7 w-7 animate-spin text-white/70" aria-hidden="true" />
               ) : isImage ? (

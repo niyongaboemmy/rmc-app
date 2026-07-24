@@ -8,12 +8,18 @@
  * Import everything from `@/lib/content-api`.
  */
 export * from './content/client';
+// NOTE: `./content/preview-store` is intentionally NOT re-exported here. It is a
+// React/JSX module, and this barrel is also imported by the NestJS backend seed
+// scripts (apps/backend/src/database/seeds/*) to reuse content keys/defaults —
+// pulling JSX into that Node compile breaks it. Import preview-store directly
+// from '@/lib/content/preview-store' in frontend code instead.
 export * from './content/who-we-are';
 export * from './content/areas';
 export * from './content/stats';
 export * from './content/partners';
 export * from './content/updates';
 export * from './content/activities';
+export * from './content/projects';
 export * from './content/announcements';
 export * from './content/social';
 export * from './content/hero';
@@ -23,3 +29,11 @@ export * from './content/contact';
 export * from './content/hajj';
 export * from './content/funeral';
 export * from './content/dawah';
+export * from './content/library';
+export * from './content/courses';
+export * from './content/discussions';
+export * from './content/services';
+export * from './content/history';
+export * from './content/gallery';
+export * from './content/page-heroes';
+export * from './content/tenders-home';

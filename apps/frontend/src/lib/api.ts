@@ -10,6 +10,22 @@ export function fileUrl(key: string): string {
 }
 
 /**
+ * Resolve a stored asset reference to a displayable URL.
+ *
+ * Content can mix two kinds of image references transparently: assets shipped in
+ * the app's `/public` folder (e.g. "/partners/adef.png"), absolute URLs and data
+ * URIs — all returned as-is — and bare file-server keys from admin uploads (e.g.
+ * "partners/uuid.jpg"), which are expanded via {@link fileUrl}. Seed content and
+ * uploaded content therefore render through the same `src` with no special-casing
+ * at each call site.
+ */
+export function assetUrl(value: string): string {
+  if (!value) return value;
+  if (/^(https?:\/\/|\/|data:)/.test(value)) return value;
+  return fileUrl(value);
+}
+
+/**
  * Refresh the access token using the stored refresh token, updating
  * localStorage + cookies. Returns the new access token, or null when there's no
  * refresh token or the refresh fails. Used by raw-XHR callers (file uploads)

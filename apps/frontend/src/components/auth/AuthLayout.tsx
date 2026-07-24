@@ -12,7 +12,7 @@ const PAGE_CONFIG: Record<string, { src: string; quote: string; ref: string; acc
     src: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1200&q=85',
     quote: '"And whoever relies upon Allah — then He is sufficient for him. Indeed, Allah will accomplish His purpose."',
     ref: '— At-Talaq 65:3',
-    accent: 'from-emerald-950/95 via-emerald-900/70 to-black/80',
+    accent: 'from-rmc-green-deep/95 via-rmc-green-dark/70 to-black/80',
   },
   register: {
     src: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85',
@@ -24,13 +24,13 @@ const PAGE_CONFIG: Record<string, { src: string; quote: string; ref: string; acc
     src: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?auto=format&fit=crop&w=1200&q=85',
     quote: '"Verily, with hardship comes ease."',
     ref: '— Ash-Sharh 94:5',
-    accent: 'from-rose-950/95 via-rose-900/60 to-black/80',
+    accent: 'from-rmc-green-deep/95 via-rmc-green-dark/60 to-black/80',
   },
   'reset-password': {
     src: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?auto=format&fit=crop&w=1200&q=85',
     quote: '"Verily, with hardship comes ease."',
     ref: '— Ash-Sharh 94:5',
-    accent: 'from-rose-950/95 via-rose-900/60 to-black/80',
+    accent: 'from-rmc-green-deep/95 via-rmc-green-dark/60 to-black/80',
   },
 };
 
@@ -85,6 +85,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             src={config.src}
             alt="Islamic architecture"
             fill
+            // Panel is hidden below lg, then a fixed 460px (xl: 520px) column.
+            sizes="(min-width: 1280px) 520px, (min-width: 1024px) 460px, 0px"
             className="object-cover object-center scale-[1.02] transition-transform duration-[10s] ease-out"
             priority
           />

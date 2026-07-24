@@ -104,9 +104,9 @@ function WizardProgress({
               aria-current={active ? 'step' : undefined}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${
                 active
-                  ? 'bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md'
+                  ? 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md'
                   : done
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-rmc-green text-white'
                     : 'bg-gray-100 text-gray-400'
               }`}
             >
@@ -121,7 +121,7 @@ function WizardProgress({
             </span>
             {i < steps.length - 1 && (
               <div
-                className={`flex-1 h-px transition-colors ${done ? 'bg-emerald-300' : 'bg-gray-200'}`}
+                className={`flex-1 h-px transition-colors ${done ? 'bg-rmc-green' : 'bg-gray-200'}`}
               />
             )}
           </div>
@@ -311,15 +311,15 @@ function Step1Company({
     >
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-emerald-500" /> {t('step1Title')}
+          <Building2 className="w-4 h-4 text-rmc-green" /> {t('step1Title')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('step1Subtitle')}</p>
       </div>
 
       {lockedTenderId ? (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-          <p className="text-xs text-emerald-700 font-medium">{t('tenderLabel')}</p>
-          <p className="text-sm font-semibold text-emerald-900 mt-0.5">
+        <div className="rounded-xl bg-rmc-green-light border border-rmc-green-light px-4 py-3">
+          <p className="text-xs text-rmc-green-dark font-medium">{t('tenderLabel')}</p>
+          <p className="text-sm font-semibold text-rmc-green-dark mt-0.5">
             {lockedTender
               ? resolveI18n(lockedTender.titleI18n, lockedTender.title, locale)
               : t('tenderLoading')}
@@ -434,7 +434,7 @@ function Step2Contact({
     >
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-emerald-500" /> {t('step2Title')}
+          <MapPin className="w-4 h-4 text-rmc-green" /> {t('step2Title')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('step2Subtitle')}</p>
       </div>
@@ -559,7 +559,7 @@ function SuccessScreen({
       <div>
         <p className="text-xs text-gray-400 mb-1.5">{t('yourReference')}</p>
         <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
-          <code className="text-sm font-mono font-semibold text-emerald-700">
+          <code className="text-sm font-mono font-semibold text-rmc-green-dark">
             {application.applicationNumber}
           </code>
           <button

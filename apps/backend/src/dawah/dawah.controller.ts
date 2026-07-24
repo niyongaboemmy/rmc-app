@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { DawahCategoryService } from './dawah-category.service';
 import { DawahCourseService } from './dawah-course.service';
+import { DawahEnrollmentService } from './dawah-enrollment.service';
 import { DawahBookService, type BookFile } from './dawah-book.service';
 import { DawahDiscussionsService } from './dawah-discussions.service';
 import { OptionalCallerService } from './optional-caller.service';
@@ -32,6 +33,7 @@ export class DawahController {
   constructor(
     private readonly categories: DawahCategoryService,
     private readonly courses: DawahCourseService,
+    private readonly enrollment: DawahEnrollmentService,
     private readonly books: DawahBookService,
     private readonly discussions: DawahDiscussionsService,
     private readonly caller: OptionalCallerService,
@@ -159,9 +161,44 @@ export class DawahController {
 
   @Get('courses/:slug')
   @Public()
-  @ApiOperation({ summary: 'One published course with its lesson outline, in order' })
+  @ApiOperation({
+    summary:
+      'One published course with its lesson outline, in order (includes enrollment_count)',
+  })
   findCourse(@Param('slug') slug: string) {
     return this.courses.findBySlugPublic(slug);
+  }
+
+  /**
+   * The signed-in member's own progress in a course — enrolment state, completed
+   * lesson ids and percent. NOT @Public: progress is per-member and must never be
+   * SSR-cached, so the detail page fetches it client-side once the member is known.
+   */
+  @Get('courses/:slug/progress')
+  @ApiOperation({ summary: "The current member's progress in a course (members only)" })
+  async myCourseProgress(@CurrentUser() user: User, @Param('slug') slug: string) {
+    const course = await this.courses.findBySlugPublic(slug);
+    return this.enrollment.getProgress(user.id, course.id);
+  }
+
+  /**
+   * Mark a lesson complete. Auto-enrols the member on their first completion and
+   * returns the fresh progress. Idempotent. Members only.
+   */
+  @Post('courses/:slug/lessons/:lessonId/complete')
+  @ApiOperation({ summary: 'Mark a lesson complete; auto-enrols the member (members only)' })
+  completeLesson(@CurrentUser() user: User, @Param('lessonId') lessonId: string) {
+    return this.enrollment.markComplete(user.id, lessonId);
+  }
+
+  /**
+   * Un-mark a lesson. The enrolment (and the course's learner count) stay —
+   * only progress drops. Members only.
+   */
+  @Delete('courses/:slug/lessons/:lessonId/complete')
+  @ApiOperation({ summary: 'Un-mark a lesson complete (members only)' })
+  uncompleteLesson(@CurrentUser() user: User, @Param('lessonId') lessonId: string) {
+    return this.enrollment.unmarkComplete(user.id, lessonId);
   }
 
   // ── Library ───────────────────────────────────────────────────────────────
@@ -185,10 +222,10 @@ export class DawahController {
 
   /**
    * Metadata only. The response is narrowed by DawahBookService.toPublic(),
-   * which strips fileKey and previewFileKey — they are keys into the file
-   * server's PROTECTED dawah-library/ prefix, and publishing them would hand an
-   * attacker the exact path to request. The reading routes (preview / download)
-   * are Phase 2B and resolve the key server-side from the slug.
+   * which strips fileKey — it is a key into the file server's PROTECTED
+   * dawah-library/ prefix, and publishing it would hand an attacker the exact
+   * path to request. The reading routes (preview / download) resolve the key
+   * server-side from the slug.
    */
   @Get('books/:slug')
   @Public()
@@ -198,44 +235,31 @@ export class DawahController {
   }
 
   /**
-   * Read a book in the browser. This is the route the whole §6 design exists to
-   * make possible: the PDF lives under the file-server's PROTECTED
-   * `dawah-library/` prefix, so it cannot be fetched directly by any browser —
-   * the bytes can only arrive through here, which is the one place that knows
-   * whether this caller is allowed to see them.
-   *
-   * @Public(), so the global guard never populates a user — the OPTIONAL
-   * identity is resolved by hand (see OptionalCallerService). A missing or
-   * expired token means anonymous, not 401: a public book must still open for a
-   * reader who is not signed in.
-   *
-   * Streams the excerpt when one exists, otherwise the full file, otherwise
-   * 401. Resolution order lives in DawahBookService.getPreviewFile().
+   * Read a book in the browser. The PDF lives under the file-server's PROTECTED
+   * `dawah-library/` prefix, so it cannot be fetched directly — the bytes only
+   * arrive through here, which is also where the view counter lives. Every book
+   * is public, so there is no identity to resolve: @Public() and open to all.
    */
   @Get('books/:slug/preview')
   @Public()
-  @ApiOperation({
-    summary: 'Read a book inline — the excerpt if one exists, else the full PDF if policy allows (401 otherwise)',
-  })
+  @ApiOperation({ summary: 'Read a book inline (full PDF)' })
   async previewBook(
     @Param('slug') slug: string,
-    @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const file = await this.books.getPreviewFile(slug, this.caller.isAuthenticated(req));
+    const file = await this.books.getPreviewFile(slug);
     this.sendPdf(res, file, 'inline');
   }
 
-  /** Always the FULL file — 403 when allow_download is off, 401 when members-only and anonymous. */
+  /** The FULL file — 403 only when allow_download is off. */
   @Get('books/:slug/download')
   @Public()
   @ApiOperation({ summary: 'Download the full book PDF (403 if downloads are disabled)' })
   async downloadBook(
     @Param('slug') slug: string,
-    @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const file = await this.books.getDownloadFile(slug, this.caller.isAuthenticated(req));
+    const file = await this.books.getDownloadFile(slug);
     this.sendPdf(res, file, 'attachment');
   }
 }

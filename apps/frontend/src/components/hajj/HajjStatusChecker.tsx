@@ -96,8 +96,8 @@ function RejectedPanel({ app }: { app: HajjApplicationPublic }) {
         <p className="mt-1 text-xs leading-relaxed text-gray-500">{t('stepHint.rejected')}</p>
         {app.rejectionReason && (
           <div className="mt-3 rounded-lg bg-red-50 px-4 py-3 ring-1 ring-red-100">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-red-500">{t('reason')}</p>
-            <p className="mt-1 text-sm leading-relaxed text-red-800">{app.rejectionReason}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-red-600">{t('reason')}</p>
+            <p className="mt-1 text-sm leading-relaxed text-red-600">{app.rejectionReason}</p>
           </div>
         )}
       </div>

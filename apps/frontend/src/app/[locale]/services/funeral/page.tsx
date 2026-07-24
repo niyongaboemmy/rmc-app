@@ -123,13 +123,13 @@ export default async function FuneralServicesPage({
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href={`${base}/request`}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-black/20 transition-all duration-300 hover:bg-rmc-green-dark"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-black/20 transition-all duration-300 hover:bg-rmc-green-dark"
               >
                 {t('landing.ctaReport')} <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
               </Link>
               <Link
                 href={`/${locale}/contact`}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20"
               >
                 <Phone className="h-4 w-4" aria-hidden="true" /> {t('landing.ctaContact')}
               </Link>

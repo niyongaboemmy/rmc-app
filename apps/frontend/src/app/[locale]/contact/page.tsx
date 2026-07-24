@@ -19,13 +19,14 @@ import {
 import { useTranslations, useLocale } from 'next-intl';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
+import { EditablePageHero } from '@/components/layout/EditablePageHero';
 import { Reveal } from '@/components/Reveal';
 import { MosqueFinder } from '@/components/contact/MosqueFinder';
 import { submitContactMessage } from '@/lib/contactApi';
 import {
   ContentKeys,
   SOCIAL_DEFAULT,
+  CONTACT_HERO_DEFAULT,
   getSiteContent,
   mergeContent,
   pick,
@@ -132,10 +133,10 @@ function ContactPageInner() {
       <Navbar />
       <main>
         {/* Header */}
-        <PageHero
-          eyebrow="RMC"
-          title={<EditableTri field="title" bare />}
-          subtitle={<EditableTri field="subtitle" bare multiline />}
+        <EditablePageHero
+          contentKey={ContentKeys.contactHero}
+          defaults={CONTACT_HERO_DEFAULT}
+          showEyebrow
           ornament
           minHeightClassName="min-h-[25vh]"
           paddingClassName="pt-36 pb-8"
@@ -259,7 +260,7 @@ function ContactPageInner() {
                             type={type}
                             aria-invalid={!!errors[key]}
                             className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:border-transparent outline-none ${
-                              errors[key] ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-rmc-green'
+                              errors[key] ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-rmc-green'
                             }`}
                             {...register(key)}
                           />
@@ -276,7 +277,7 @@ function ContactPageInner() {
                           rows={2}
                           aria-invalid={!!errors.message}
                           className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:border-transparent outline-none resize-none ${
-                            errors.message ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-rmc-green'
+                            errors.message ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-rmc-green'
                           }`}
                           {...register('message')}
                         />

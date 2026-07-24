@@ -124,7 +124,7 @@ export function Step3Witnesses({ initialData, groomNid, brideNid, onNext, onBack
         <Button
           type="submit"
           rightIcon={<ArrowRight className="w-4 h-4" />}
-          className="!bg-emerald-600 hover:!bg-emerald-700 !text-white !shadow-none"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark !text-white !shadow-none"
         >
           Continue
         </Button>

@@ -127,13 +127,13 @@ function ActionModal({ title, onClose, onConfirm, placeholder, required, confirm
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex gap-3 mt-4">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className={cn('flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass ?? 'bg-indigo-600 hover:bg-indigo-700')}
+            className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass ?? 'bg-rmc-green hover:bg-rmc-green-dark')}
           >
             {loading ? 'Processing...' : confirmLabel}
           </button>
@@ -361,7 +361,7 @@ function AdminGoodConductDetailContent() {
                   <button
                     onClick={() => handleStatusUpdate('start_review')}
                     disabled={actionLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
                   >
                     {activeAction === 'start_review' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                     Start Review
@@ -373,7 +373,7 @@ function AdminGoodConductDetailContent() {
                       onClick={() => handleStatusUpdate('approve')}
                       disabled={actionLoading || request.paymentStatus !== 'paid'}
                       title={request.paymentStatus !== 'paid' ? 'Payment must be confirmed before approval' : undefined}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
                     >
                       {activeAction === 'approve' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                       Approve
@@ -381,14 +381,14 @@ function AdminGoodConductDetailContent() {
                     <button
                       onClick={() => setModal('reject')}
                       disabled={actionLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
                     >
                       <XCircle className="w-4 h-4" /> Reject
                     </button>
                     <button
                       onClick={() => setModal('more_info')}
                       disabled={actionLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
                     >
                       <Send className="w-4 h-4" /> Request More Info
                     </button>
@@ -412,7 +412,7 @@ function AdminGoodConductDetailContent() {
                     <select
                       value={selectedImamId}
                       onChange={(e) => setSelectedImamId(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                     >
                       <option value="">— Select a registered imam —</option>
                       {imams.map((imam) => (
@@ -436,7 +436,7 @@ function AdminGoodConductDetailContent() {
                   <button
                     onClick={handleAssignImam}
                     disabled={actionLoading || (!selectedImamId && !imamNote.trim())}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
                   >
                     {activeAction === 'assign-imam' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                     Save
@@ -517,7 +517,7 @@ function AdminGoodConductDetailContent() {
                 <button
                   onClick={handleConfirmPayment}
                   disabled={actionLoading}
-                  className="w-full px-4 py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                 >
                   {activeAction === 'payment' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Banknote className="w-4 h-4" />}
                   {activeAction === 'payment' ? 'Confirming...' : 'Confirm Cash/Bank Payment'}
@@ -543,7 +543,7 @@ function AdminGoodConductDetailContent() {
                 <button
                   onClick={handleIssueCertificate}
                   disabled={actionLoading}
-                  className="w-full px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full px-4 py-2.5 rounded-lg bg-rmc-green text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                 >
                   {activeAction === 'certificate' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
                   {activeAction === 'certificate' ? 'Issuing...' : 'Issue Certificate'}
@@ -575,7 +575,7 @@ function AdminGoodConductDetailContent() {
           placeholder="What information is needed? (required)"
           required
           confirmLabel="Send Request"
-          confirmClass="bg-amber-500 hover:bg-amber-600"
+          confirmClass="bg-rmc-green hover:bg-rmc-green-dark"
         />
       )}
     </div>

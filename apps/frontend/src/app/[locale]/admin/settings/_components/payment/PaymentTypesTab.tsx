@@ -30,7 +30,7 @@ const TYPE_ICONS: Record<PaymentTypeKey, React.ElementType> = {
 };
 
 const TYPE_COLORS: Record<PaymentTypeKey, string> = {
-  DONATION:       'bg-rose-100 text-rose-600',
+  DONATION:       'bg-rmc-green-light text-rmc-green',
   MARRIAGE_FEE:   'bg-pink-100 text-pink-600',
   MEMBERSHIP_FEE: 'bg-blue-100 text-blue-600',
   SCHOOL_FEE:     'bg-amber-100 text-amber-600',
@@ -103,7 +103,7 @@ function InlineEdit({ value, onSave, inputClass, type = 'text', placeholder, pre
         )}
       />
       {suffix && <span className="text-slate-400 text-xs">{suffix}</span>}
-      <button onClick={commit} disabled={loading} className="text-emerald-600 hover:text-emerald-800 transition-colors">
+      <button onClick={commit} disabled={loading} className="text-rmc-green hover:text-rmc-green-dark transition-colors">
         {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
       </button>
       <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -207,7 +207,7 @@ function RateRow({ rate, typeId, canManage, onChange, onDelete }: RateRowProps) 
       {/* Status badge */}
       <span className={cn(
         'shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full',
-        rate.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500',
+        rate.isActive ? 'bg-rmc-green-light text-rmc-green-dark border border-rmc-green' : 'bg-slate-100 text-slate-500',
       )}>
         {rate.isActive ? 'Active' : 'Inactive'}
       </span>
@@ -216,7 +216,7 @@ function RateRow({ rate, typeId, canManage, onChange, onDelete }: RateRowProps) 
         <div className="shrink-0 flex items-center gap-1">
           <button onClick={toggle} className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors">
             {rate.isActive
-              ? <ToggleRight className="w-4 h-4 text-emerald-600" />
+              ? <ToggleRight className="w-4 h-4 text-rmc-green" />
               : <ToggleLeft  className="w-4 h-4" />}
           </button>
           <button
@@ -294,7 +294,7 @@ function AddRateForm({ typeId, onAdded, onCancel }: AddRateFormProps) {
         <button
           onClick={handleSave}
           disabled={!name.trim() || !amount || saving}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold disabled:opacity-50 transition-colors hover:bg-violet-700"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rmc-green text-white text-xs font-semibold disabled:opacity-50 transition-colors hover:bg-violet-700"
         >
           {saving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
           Add Rate
@@ -475,7 +475,7 @@ export function PaymentTypesTab() {
                   <div className="w-28 flex items-center justify-end gap-2 shrink-0">
                     <span className={cn(
                       'text-xs font-medium',
-                      type.isActive ? 'text-emerald-700' : 'text-slate-400',
+                      type.isActive ? 'text-rmc-green-dark' : 'text-slate-400',
                     )}>
                       {type.isActive ? 'Enabled' : 'Disabled'}
                     </span>
@@ -485,7 +485,7 @@ export function PaymentTypesTab() {
                         className="shrink-0 transition-colors"
                       >
                         {type.isActive
-                          ? <ToggleRight className="w-7 h-7 text-emerald-500 hover:text-emerald-600" />
+                          ? <ToggleRight className="w-7 h-7 text-rmc-green hover:text-rmc-green" />
                           : <ToggleLeft  className="w-7 h-7 text-slate-300 hover:text-slate-400" />}
                       </button>
                     )}

@@ -6,16 +6,7 @@
    via useTranslations('donate'). This file holds only the stable
    keys, icons, tones, images and numeric config.
    ────────────────────────────────────────────────────────────── */
-import {
-  GraduationCap,
-  HandHeart,
-  BookOpen,
-  CalendarDays,
-  Smartphone,
-  CreditCard,
-  Landmark,
-  Wallet,
-} from 'lucide-react';
+import { Smartphone, CreditCard, Landmark, Wallet } from 'lucide-react';
 
 export type IconType = React.ComponentType<{ className?: string }>;
 export type Tone = 'green' | 'gold';
@@ -53,52 +44,6 @@ export function money(currency: string, n: number): string {
   const num = Math.round(n).toLocaleString('en-US');
   return currency === 'RWF' ? `RWF ${num}` : `${CURRENCIES[currency]?.symbol ?? ''}${num}`;
 }
-
-/* ── Categories (copy via donate.categories.<key>.*) ── */
-export interface DonateCategory {
-  key: string;
-  Icon: IconType;
-  tone: Tone;
-  image: string;
-}
-export const CATEGORIES: DonateCategory[] = [
-  { key: 'school', Icon: GraduationCap, tone: 'green', image: uimg('1541339907198-e08756dedf3f') },
-  { key: 'charity', Icon: HandHeart, tone: 'green', image: uimg('1532629345422-7515f3d16bb6') },
-  { key: 'religious', Icon: BookOpen, tone: 'gold', image: uimg('1542816417-0983c9c9ad53') },
-  { key: 'events', Icon: CalendarDays, tone: 'gold', image: uimg('1521791136064-7986c2920216') },
-];
-
-/* ── Sub-funds (copy via donate.funds.<category>.<key>.*) ── */
-export interface SubFund {
-  key: string;
-  image: string;
-}
-export const SUBFUNDS: Record<string, SubFund[]> = {
-  school: [
-    { key: 'scholarship', image: uimg('1541339907198-e08756dedf3f') },
-    { key: 'madrassa', image: uimg('1609599006353-e629aaabfeae') },
-    { key: 'teachers', image: uimg('1577896851231-70ef18881754') },
-  ],
-  charity: [
-    { key: 'foodbank', image: uimg('1593113598332-cd288d649433') },
-    { key: 'orphans', image: uimg('1488521787991-ed7bbaae773c') },
-    { key: 'medical', image: uimg('1576091160550-2173dba999ef') },
-  ],
-  religious: [
-    { key: 'masjid', image: uimg('1542816417-0983c9c9ad53') },
-    { key: 'imam', image: uimg('1511632765486-a01980e01a18') },
-    { key: 'quran', image: uimg('1609599006353-e629aaabfeae') },
-  ],
-};
-
-/* ── Per-event imagery (copy via donate.events.<id>.*) ── */
-export const EVENT_IMAGE: Record<string, string> = {
-  e1: uimg('1542816417-0983c9c9ad53'),
-  e2: uimg('1541339907198-e08756dedf3f'),
-  e3: uimg('1511632765486-a01980e01a18'),
-  e4: uimg('1609599006353-e629aaabfeae'),
-  e5: uimg('1521791136064-7986c2920216'),
-};
 
 /* ── Payment methods (copy via donate.methods.<key>.*) ── */
 export const METHODS: { key: string; Icon: IconType }[] = [

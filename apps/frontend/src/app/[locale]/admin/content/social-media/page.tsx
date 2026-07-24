@@ -59,7 +59,7 @@ export default function SocialMediaPage() {
   );
 }
 
-function SocialMediaManager() {
+function SocialMediaManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
@@ -147,20 +147,22 @@ function SocialMediaManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
-            <Share2 className="w-5 h-5 text-sky-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
+              <Share2 className="w-5 h-5 text-sky-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Social Media</h1>
+              <p className="text-xs text-gray-400">Update homepage social feed &amp; channels</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Social Media</h1>
-            <p className="text-xs text-gray-400">Update homepage social feed &amp; channels</p>
-          </div>
-        </div>
+        )}
         <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-sky-600/20 transition-colors">
           {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           {loading ? 'Loading…' : 'Save Changes'}
         </button>
@@ -170,7 +172,7 @@ function SocialMediaManager() {
       <LanguageTabs lang={lang} onChange={setLang} />
 
       {/* Header text content */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <h2 className="text-sm font-bold text-gray-700">Section Header — {langLabel}</h2>
 
         <div>
@@ -206,7 +208,7 @@ function SocialMediaManager() {
       </div>
 
       {/* Posts list editor */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-sky-600" />
@@ -239,7 +241,7 @@ function SocialMediaManager() {
                   <select
                     value={post.platform}
                     onChange={(e) => setPostField(idx, 'platform', e.target.value as SocialPost['platform'])}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent capitalize">
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent capitalize">
                     {POST_PLATFORMS.map((p) => (
                       <option key={p} value={p}>{p}</option>
                     ))}
@@ -249,7 +251,7 @@ function SocialMediaManager() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Handle</label>
                   <input type="text" value={post.handle}
                     onChange={(e) => setPostField(idx, 'handle', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
               </div>
 
@@ -269,19 +271,19 @@ function SocialMediaManager() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Likes</label>
                   <input type="text" value={post.likes}
                     onChange={(e) => setPostField(idx, 'likes', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Comments</label>
                   <input type="text" value={post.comments}
                     onChange={(e) => setPostField(idx, 'comments', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
                   <input type="text" value={post.date} placeholder="2h ago"
                     onChange={(e) => setPostField(idx, 'date', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
               </div>
 
@@ -290,13 +292,13 @@ function SocialMediaManager() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Post link <span className="text-gray-400 font-normal">(optional — opens on click)</span></label>
                   <input type="url" value={post.url ?? ''} placeholder="https://x.com/islamrwanda/status/…"
                     onChange={(e) => setPostField(idx, 'url', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Image URL <span className="text-gray-400 font-normal">(optional)</span></label>
                   <input type="url" value={post.image ?? ''} placeholder="https://…"
                     onChange={(e) => setPostField(idx, 'image', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
               </div>
             </div>
@@ -305,7 +307,7 @@ function SocialMediaManager() {
       </div>
 
       {/* Channels list editor */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
             <Users className="w-4 h-4 text-sky-600" />
@@ -336,7 +338,7 @@ function SocialMediaManager() {
                   <select
                     value={channel.key}
                     onChange={(e) => setChannelField(idx, 'key', e.target.value as SocialChannel['key'])}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent capitalize">
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent capitalize">
                     {CHANNEL_KEYS.map((k) => (
                       <option key={k} value={k}>{k}</option>
                     ))}
@@ -346,19 +348,19 @@ function SocialMediaManager() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Label</label>
                   <input type="text" value={channel.label}
                     onChange={(e) => setChannelField(idx, 'label', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Followers</label>
                   <input type="text" value={channel.followers} placeholder="auto (live)"
                     onChange={(e) => setChannelField(idx, 'followers', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div className="sm:col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Link (href)</label>
                   <input type="text" value={channel.href}
                     onChange={(e) => setChannelField(idx, 'href', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent" />
                 </div>
                 <div className="sm:col-span-1 flex sm:justify-end">
                   <button onClick={() => removeChannel(idx)}
