@@ -56,7 +56,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-        <span className="text-emerald-500">{icon}</span>
+        <span className="text-rmc-green">{icon}</span>
         {title}
       </h3>
       {children}
@@ -97,8 +97,8 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
   return (
     <>
       <div className="flex items-center gap-3 py-2.5 border-b border-gray-100 last:border-0">
-        <span className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-          <FileText className="w-4 h-4 text-emerald-600" />
+        <span className="w-9 h-9 rounded-lg bg-rmc-green-light flex items-center justify-center shrink-0">
+          <FileText className="w-4 h-4 text-rmc-green" />
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-500">{label}</p>
@@ -110,7 +110,7 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
           rel="noopener noreferrer"
           title="Open in new tab"
           aria-label={`Open ${label} in a new tab`}
-          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors shrink-0"
+          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors shrink-0"
         >
           <ExternalLink className="w-4 h-4" />
         </a>
@@ -119,7 +119,7 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
           disabled={downloading}
           title="Download"
           aria-label={`Download ${label}`}
-          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-colors shrink-0 disabled:opacity-50"
+          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors shrink-0 disabled:opacity-50"
         >
           {downloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
         </button>
@@ -170,12 +170,12 @@ function ActionModal({ title, placeholder, confirmLabel, confirmClass, onClose, 
           value={text}
           onChange={(e) => { setText(e.target.value); setError(''); }}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex gap-3 mt-4">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-          <button onClick={handleConfirm} disabled={loading} className={cn('flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass)}>
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
+          <button onClick={handleConfirm} disabled={loading} className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass)}>
             {loading ? 'Processing…' : confirmLabel}
           </button>
         </div>
@@ -238,7 +238,7 @@ function AdminJobDetailContent() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-24"><RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
+    return <div className="flex items-center justify-center py-24"><RefreshCw className="w-6 h-6 text-rmc-green animate-spin" /></div>;
   }
   if (!app) {
     return <div className="text-center py-24"><p className="text-gray-500">Application not found.</p></div>;
@@ -258,8 +258,8 @@ function AdminJobDetailContent() {
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-            <Briefcase className="w-5 h-5 text-emerald-700" />
+          <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+            <Briefcase className="w-5 h-5 text-rmc-green-dark" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{app.fullNames}</h1>
@@ -305,7 +305,7 @@ function AdminJobDetailContent() {
               <ol className="relative space-y-4">
                 {[...app.statusHistory].reverse().map((h) => (
                   <li key={h.id} className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2 shrink-0" />
+                    <div className="w-2 h-2 rounded-full bg-rmc-green mt-2 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {h.fromStatus ? `${STATUS_LABELS[h.fromStatus] ?? h.fromStatus} → ` : ''}
@@ -325,7 +325,7 @@ function AdminJobDetailContent() {
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-              <AlertTriangle className="w-4 h-4 text-emerald-500" /> Review Decision
+              <AlertTriangle className="w-4 h-4 text-rmc-green" /> Review Decision
             </h3>
 
             {!canManage ? (
@@ -336,28 +336,28 @@ function AdminJobDetailContent() {
               <div className="space-y-2.5">
                 {canStartReview && (
                   <button onClick={() => doAction('start_review')} disabled={actionLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
                     {activeAction === 'start_review' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Start Review
                   </button>
                 )}
                 {canShortlist && (
                   <button onClick={() => doAction('shortlist')} disabled={actionLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
                     {activeAction === 'shortlist' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />} Shortlist
                   </button>
                 )}
                 {canDecide && (
                   <>
                     <button onClick={() => setConfirmAccept(true)} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
                       {activeAction === 'accept' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Accept / Approve
                     </button>
                     <button onClick={() => setModal('reject')} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
                       <XCircle className="w-4 h-4" /> Reject
                     </button>
                     <button onClick={() => setModal('more_info')} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
                       <Send className="w-4 h-4" /> Request More Info
                     </button>
                   </>
@@ -390,7 +390,7 @@ function AdminJobDetailContent() {
           title="Request More Information"
           placeholder="What information is needed? (required)"
           confirmLabel="Send Request"
-          confirmClass="bg-amber-500 hover:bg-amber-600"
+          confirmClass="bg-rmc-green hover:bg-rmc-green-dark"
           onClose={() => setModal(null)}
           onConfirm={(notes) => doAction('request_more_info', { notes })}
         />
@@ -422,7 +422,7 @@ function AdminJobDetailContent() {
               <button onClick={() => setConfirmAccept(false)} disabled={actionLoading} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
                 Cancel
               </button>
-              <button onClick={() => { setConfirmAccept(false); doAction('accept'); }} disabled={actionLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
+              <button onClick={() => { setConfirmAccept(false); doAction('accept'); }} disabled={actionLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
                 <CheckCircle2 className="w-4 h-4" /> Approve
               </button>
             </div>

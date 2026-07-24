@@ -4,12 +4,15 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { sanitizeRichHtml } from '@/lib/sanitize';
-import { ArrowLeft, BookOpen, Clock, Globe, GraduationCap, Layers, User } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Globe, GraduationCap, Layers, User, Users } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { CourseCard } from '@/components/dawah/CourseCard';
-import { CourseLessonBrowser, type OutlineLesson } from '@/components/dawah/CourseLessonBrowser';
+import { CourseEditBar } from '@/components/dawah/CourseEditBar';
+import { CourseInlineText } from '@/components/dawah/CourseInlineText';
+import { CourseLessons } from '@/components/dawah/CourseLessons';
+import { type OutlineLesson } from '@/components/dawah/CourseLessonBrowser';
 import { localized } from '@/components/dawah/localize';
 import { dawahApi, type DawahCourse } from '@/lib/dawahApi';
 import { fileUrl } from '@/lib/api';
@@ -101,7 +104,6 @@ export default async function CourseDetailPage({
       summary: localized(lesson, 'summary', locale),
       bodyHtml: sanitizeRichHtml(localized(lesson, 'body', locale)),
       durationMinutes: lesson.durationMinutes,
-      isPreview: lesson.isPreview,
       contentType: lesson.contentType,
       mediaUrl: lesson.mediaUrl,
       // Audio lives under the PUBLIC dawah-media/ prefix — resolve the file-server
@@ -131,6 +133,10 @@ export default async function CourseDetailPage({
     { icon: Layers, value: t('courses.lessonCount', { count: course.lessonCount }) },
     ...(course.durationMinutes
       ? [{ icon: Clock, value: t('courses.duration', { minutes: course.durationMinutes }) }]
+      : []),
+    // Learner count — social proof, shown only once the course has takers.
+    ...(course.enrollmentCount > 0
+      ? [{ icon: Users, value: t('courses.enrolled', { count: course.enrollmentCount }) }]
       : []),
   ];
 
@@ -243,19 +249,33 @@ export default async function CourseDetailPage({
                 document flow — it scrolls away with the page rather than
                 pinning to the top. ── */}
             <Reveal>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
+              <div className="relative rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
+                {/* Admin-only "Edit course" button for the STRUCTURAL fields
+                    (description, cover, instructor, level…); renders nothing
+                    outside edit mode. Title & summary edit inline below. */}
+                <CourseEditBar course={course} />
                 {/* Title block */}
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-green">
                   {category ?? t('title')}
                 </p>
-                <h1 className="mt-1 text-lg font-bold leading-tight text-rmc-green-deep md:text-xl">
-                  {title}
-                </h1>
-                {summary && (
-                  <p className="mt-1.5 max-w-2xl text-sm leading-snug text-gray-500 line-clamp-2">
-                    {summary}
-                  </p>
-                )}
+                <CourseInlineText
+                  as="h1"
+                  courseId={course.id}
+                  field="title"
+                  value={title}
+                  locale={locale}
+                  className="mt-1 block text-lg font-bold leading-tight text-rmc-green-deep md:text-xl"
+                />
+                <CourseInlineText
+                  as="p"
+                  courseId={course.id}
+                  field="summary"
+                  value={summary}
+                  locale={locale}
+                  className="mt-1.5 block max-w-2xl text-sm leading-snug text-gray-500"
+                  readClassName="line-clamp-2"
+                  placeholder={t('courses.subtitle')}
+                />
 
                 {/* Instructor + meta, divided from the title above */}
                 <div className="mt-3 flex flex-col gap-3 border-t border-gray-200 pt-3 md:flex-row md:items-center md:justify-between">
@@ -296,15 +316,19 @@ export default async function CourseDetailPage({
             {/* Deliberately NOT wrapped in <Reveal>: .reveal keeps a transform
                 even once visible, and a transformed ancestor becomes the
                 containing block for the sticky lesson nav inside, which silently
-                breaks its pin. */}
-            {(lessons.length > 0 || hasDescription) && (
-              <div className="mt-6">
-                <CourseLessonBrowser
-                  lessons={lessons}
-                  overviewHtml={hasDescription ? description : ''}
-                />
-              </div>
-            )}
+                breaks its pin.
+
+                CourseLessons is the reader for everyone; for a dawah:manage admin
+                it adds an in-place "Manage lessons" toggle. It renders nothing for
+                a visitor when the course has neither lessons nor a description. */}
+            <div className="mt-6">
+              <CourseLessons
+                lessons={lessons}
+                overviewHtml={hasDescription ? description : ''}
+                courseSlug={course.slug}
+                courseId={course.id}
+              />
+            </div>
 
             {/* ── Related ─────────────────────────────────────────────────── */}
             {related.length > 0 && (

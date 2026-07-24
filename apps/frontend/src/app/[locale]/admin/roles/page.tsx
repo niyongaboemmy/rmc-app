@@ -111,6 +111,14 @@ const PERMISSION_GROUPS: { group: string; color: string; icon: React.ElementType
       'drive:delete', 'drive:share', 'drive:admin',
     ],
   },
+  {
+    group: 'Dawah Learning', color: 'emerald', icon: GraduationCap,
+    perms: ['dawah:view', 'dawah:manage'],
+  },
+  {
+    group: 'Discussions', color: 'indigo', icon: MessageSquare,
+    perms: ['discussions:moderate', 'discussions:verify'],
+  },
 ];
 
 const GROUP_COLORS: Record<string, { bg: string; border: string; header: string; check: string }> = {
@@ -120,13 +128,13 @@ const GROUP_COLORS: Record<string, { bg: string; border: string; header: string;
   teal:    { bg: 'bg-teal-50/60',    border: 'border-teal-100',   header: 'text-teal-700',   check: 'accent-teal-600' },
   amber:   { bg: 'bg-amber-50/60',   border: 'border-amber-100',  header: 'text-amber-700',  check: 'accent-amber-600' },
   orange:  { bg: 'bg-orange-50/60',  border: 'border-orange-100', header: 'text-orange-700', check: 'accent-orange-600' },
-  emerald: { bg: 'bg-emerald-50/60', border: 'border-emerald-100',header: 'text-emerald-700',check: 'accent-emerald-600' },
+  emerald: { bg: 'bg-rmc-green-light/60', border: 'border-rmc-green-light',header: 'text-rmc-green-dark',check: 'accent-rmc-green' },
   cyan:    { bg: 'bg-cyan-50/60',    border: 'border-cyan-100',   header: 'text-cyan-700',   check: 'accent-cyan-600' },
   red:     { bg: 'bg-red-50/60',     border: 'border-red-100',    header: 'text-red-700',    check: 'accent-red-600' },
   indigo:  { bg: 'bg-indigo-50/60',  border: 'border-indigo-100', header: 'text-indigo-700', check: 'accent-indigo-600' },
   yellow:  { bg: 'bg-yellow-50/60',  border: 'border-yellow-100', header: 'text-yellow-700', check: 'accent-yellow-600' },
   pink:    { bg: 'bg-pink-50/60',    border: 'border-pink-100',   header: 'text-pink-700',   check: 'accent-pink-600' },
-  rose:    { bg: 'bg-rose-50/60',    border: 'border-rose-100',   header: 'text-rose-700',   check: 'accent-rose-600' },
+  rose:    { bg: 'bg-rmc-green-light/60',    border: 'border-rmc-green-light',   header: 'text-rmc-green-dark',   check: 'accent-rmc-green' },
   slate:   { bg: 'bg-slate-50/60',   border: 'border-slate-200',  header: 'text-slate-700',  check: 'accent-slate-600' },
 };
 

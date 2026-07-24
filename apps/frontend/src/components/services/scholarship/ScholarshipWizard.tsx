@@ -9,12 +9,13 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight, ArrowLeft, User, GraduationCap, Users, Check,
-  CheckCircle2, Copy, Search, Upload, FileText, X, MessageSquareText, ShieldCheck,
+  CheckCircle2, Copy, Search, Upload, FileText, X, MessageSquareText, ShieldCheck, Eye,
 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/lib/mediaUpload';
 import {
@@ -168,9 +169,9 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
               aria-current={active ? 'step' : undefined}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${
                 active
-                  ? 'bg-gradient-to-br from-violet-600 to-violet-800 text-white shadow-md'
+                  ? 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md'
                   : done
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-rmc-green text-white'
                     : 'bg-gray-100 text-gray-400'
               }`}
             >
@@ -180,7 +181,7 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
               {label}
             </span>
             {i < steps.length - 1 && (
-              <div className={`flex-1 h-px transition-colors ${done ? 'bg-violet-300' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-px transition-colors ${done ? 'bg-rmc-green' : 'bg-gray-200'}`} />
             )}
           </div>
         );
@@ -458,9 +459,9 @@ function UploadSlot({
       <div
         className={cn(
           'rounded-xl border-2 border-dashed transition-all duration-150',
-          dragOver ? 'border-violet-400 bg-violet-50'
+          dragOver ? 'border-rmc-green bg-rmc-green-light'
             : file ? 'border-green-300 bg-green-50/40'
-            : 'border-gray-200 bg-gray-50 hover:border-violet-300 hover:bg-violet-50/20',
+            : 'border-gray-200 bg-gray-50 hover:border-rmc-green hover:bg-rmc-green-light/20',
         )}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -468,18 +469,26 @@ function UploadSlot({
       >
         {file ? (
           <div className="flex items-center gap-2.5 px-3 py-3">
-            {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview} alt="preview" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100" />
-            ) : (
-              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-green-600" />
-              </div>
-            )}
+            <FilePreviewTrigger file={file} className="rounded-lg hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400">
+              {preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={preview} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100 cursor-zoom-in" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0 cursor-zoom-in">
+                  <FileText className="w-5 h-5 text-green-600" />
+                </div>
+              )}
+            </FilePreviewTrigger>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate leading-snug">{file.name}</p>
               <p className="text-[10px] text-gray-400">{fmtSize(file.size)}</p>
             </div>
+            <FilePreviewTrigger
+              file={file}
+              className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-rmc-green hover:border-gray-300 shrink-0"
+            >
+              <Eye className="w-3 h-3" />
+            </FilePreviewTrigger>
             <button
               type="button"
               onClick={() => onChange(null)}
@@ -492,10 +501,10 @@ function UploadSlot({
         ) : (
           <label className="flex flex-col items-center justify-center gap-1.5 py-5 cursor-pointer text-center px-3">
             <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
-              <Upload className="w-3.5 h-3.5 text-violet-500" />
+              <Upload className="w-3.5 h-3.5 text-rmc-green" />
             </div>
             <p className="text-xs text-gray-500 leading-snug">
-              <span className="text-violet-600 font-medium">{t('docUpload')}</span> {t('docOrDrop')}
+              <span className="text-rmc-green font-medium">{t('docUpload')}</span> {t('docOrDrop')}
             </p>
             <p className="text-[10px] text-gray-400">{t('docHint')}</p>
             <input
@@ -507,7 +516,7 @@ function UploadSlot({
           </label>
         )}
       </div>
-      {error && <p className="text-[10px] text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }
@@ -527,7 +536,7 @@ function StepShell({
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <span className="text-violet-500">{icon}</span> {title}
+          <span className="text-rmc-green">{icon}</span> {title}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
       </div>
@@ -909,8 +918,8 @@ function Step4Guardian({
         )}
 
         {/* Declaration */}
-        <div className="rounded-xl bg-violet-50/60 border border-violet-100 px-4 py-3.5 flex items-start gap-2.5">
-          <ShieldCheck className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" />
+        <div className="rounded-xl bg-rmc-green-light/60 border border-rmc-green-light px-4 py-3.5 flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-rmc-green shrink-0 mt-0.5" />
           <Checkbox
             checked={declaration}
             onChange={(e) => setDeclaration(e.target.checked)}
@@ -962,14 +971,14 @@ function SuccessScreen({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="h-1 bg-violet-500" />
+      <div className="h-1 bg-rmc-green" />
       <div className="px-6 sm:px-10 py-10 text-center">
         <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-green-100 flex items-center justify-center">
           <CheckCircle2 className="w-7 h-7 text-green-600" />
         </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">{t('successTitle')}</h2>
         <p className="text-sm text-gray-400 max-w-sm mx-auto mb-8">{t('successText')}</p>
-        <div className="max-w-xs mx-auto mb-8 rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+        <div className="max-w-xs mx-auto mb-8 rounded-xl bg-gray-50 border border-gray-300 px-5 py-4">
           <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">
             {t('applicationIdLabel')}
           </p>
@@ -978,7 +987,7 @@ function SuccessScreen({
             <button
               type="button"
               onClick={copyId}
-              className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 flex items-center justify-center hover:border-violet-300 hover:text-violet-600 transition-colors"
+              className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 flex items-center justify-center hover:border-rmc-green hover:text-rmc-green transition-colors"
               aria-label={t('copyId')}
             >
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -989,7 +998,7 @@ function SuccessScreen({
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
           <Link
             href={`/${locale}/services/scholarship/status?id=${app.applicationNumber}`}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors"
           >
             <Search className="w-4 h-4" /> {t('trackApplication')}
           </Link>

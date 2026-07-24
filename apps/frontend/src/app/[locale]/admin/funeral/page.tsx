@@ -237,13 +237,13 @@ function FuneralAdmin() {
             <button
               onClick={() => void exportRequests()}
               disabled={exporting}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:cursor-not-allowed disabled:opacity-60"
             >
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               {t('export')}
             </button>
           )}
-          <button onClick={() => window.location.reload()} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green">
+          <button onClick={() => window.location.reload()} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green">
             <RefreshCw className="h-4 w-4" /> {t('refresh')}
           </button>
         </div>
@@ -318,7 +318,7 @@ function FuneralAdmin() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('requests.searchPlaceholder')}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 rtl:pl-3 rtl:pr-9"
+                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green rtl:pl-3 rtl:pr-9"
               />
             </div>
             <SearchableSelect
@@ -405,7 +405,7 @@ function FuneralAdmin() {
             <div className="flex justify-end">
               <button
                 onClick={() => setCemeteryForm({ open: true })}
-                className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+                className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
               >
                 <Plus className="h-4 w-4" /> {t('cemeteries.add')}
               </button>
@@ -478,7 +478,7 @@ function FuneralAdmin() {
             <div className="flex justify-end">
               <button
                 onClick={() => setTransportForm({ open: true })}
-                className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+                className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
               >
                 <Plus className="h-4 w-4" /> {t('transports.add')}
               </button>

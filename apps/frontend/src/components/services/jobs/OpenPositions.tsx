@@ -31,7 +31,7 @@ export function OpenPositions() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-7 h-7 text-emerald-500 animate-spin" />
+            <Loader2 className="w-7 h-7 text-rmc-green animate-spin" />
           </div>
         ) : postings.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
@@ -45,17 +45,17 @@ export function OpenPositions() {
               <Link
                 key={p.id}
                 href={`/${locale}/services/jobs/openings/${p.id}`}
-                className="group flex flex-col rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all p-5"
+                className="group flex flex-col rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-rmc-green transition-all p-5"
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <span className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                    <Briefcase className="w-5 h-5 text-emerald-700" />
+                  <span className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+                    <Briefcase className="w-5 h-5 text-rmc-green-dark" />
                   </span>
                   <div className="min-w-0">
                     <p className="font-bold text-gray-900 leading-snug">{p.title}</p>
                     <p className="text-xs text-gray-400">{[p.department].filter(Boolean).join(' · ')}</p>
                   </div>
-                  <span className="ml-auto text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 shrink-0">
+                  <span className="ml-auto text-[11px] font-semibold px-2.5 py-1 rounded-full bg-rmc-green-light text-rmc-green-dark shrink-0">
                     {EMPLOYMENT_TYPE_LABELS[p.employmentType]}
                   </span>
                 </div>
@@ -70,7 +70,7 @@ export function OpenPositions() {
                   )}
                   {p.numberOfPositions > 1 && <span>{p.numberOfPositions} {t('positions')}</span>}
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 group-hover:gap-2.5 transition-all mt-4">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all mt-4">
                   {t('viewApply')} <ArrowRight className="w-4 h-4" />
                 </span>
               </Link>

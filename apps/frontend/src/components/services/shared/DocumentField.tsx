@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileText, Upload, X, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { FileText, Upload, X, CheckCircle2, Image as ImageIcon, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
+// The overlay reads its own labels from `common.filePreview` rather than taking
+// them through `texts` — eight more strings on every caller would not buy the
+// features anything, since they all render inside the same locale provider.
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 
 // ─── Shared document-upload field ────────────────────────────────────────────────
 // A single, self-contained dropzone that holds one File and validates its type
@@ -30,9 +34,9 @@ const DEFAULT_TEXTS: UploadTexts = {
 export type UploadAccent = 'emerald' | 'violet' | 'teal';
 
 const ACCENTS: Record<UploadAccent, { border: string; bg: string; text: string; ring: string }> = {
-  emerald: { border: 'border-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600', ring: 'hover:border-emerald-300 hover:bg-emerald-50/20' },
-  violet: { border: 'border-violet-400', bg: 'bg-violet-50', text: 'text-violet-600', ring: 'hover:border-violet-300 hover:bg-violet-50/20' },
-  teal: { border: 'border-teal-400', bg: 'bg-teal-50', text: 'text-teal-600', ring: 'hover:border-teal-300 hover:bg-teal-50/20' },
+  emerald: { border: 'border-rmc-green', bg: 'bg-rmc-green-light', text: 'text-rmc-green', ring: 'hover:border-rmc-green hover:bg-rmc-green-light/20' },
+  violet: { border: 'border-rmc-green', bg: 'bg-rmc-green-light', text: 'text-rmc-green', ring: 'hover:border-rmc-green hover:bg-rmc-green-light/20' },
+  teal: { border: 'border-rmc-green', bg: 'bg-rmc-green-light', text: 'text-rmc-green', ring: 'hover:border-rmc-green hover:bg-rmc-green-light/20' },
 };
 
 export function fmtSize(bytes: number): string {
@@ -134,18 +138,29 @@ export function DocumentField({
       >
         {file ? (
           <div className="flex items-center gap-2.5 px-3 py-3">
-            {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview} alt="preview" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100" />
-            ) : (
-              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-green-600" />
-              </div>
-            )}
+            {/* The thumbnail is the obvious thing to click, so it opens the full
+                preview; the eye button beside it covers PDFs and documents,
+                where the thumbnail is only a generic icon. */}
+            <FilePreviewTrigger file={file} className="rounded-lg hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400">
+              {preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={preview} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-gray-100 cursor-zoom-in" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center shrink-0 cursor-zoom-in">
+                  <FileText className="w-5 h-5 text-green-600" />
+                </div>
+              )}
+            </FilePreviewTrigger>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate leading-snug">{file.name}</p>
               <p className="text-[10px] text-gray-400">{fmtSize(file.size)}</p>
             </div>
+            <FilePreviewTrigger
+              file={file}
+              className={cn('w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-gray-300 shrink-0', a.text)}
+            >
+              <Eye className="w-3 h-3" />
+            </FilePreviewTrigger>
             <label className={cn('text-[10px] font-semibold shrink-0 cursor-pointer', a.text)}>
               {texts.change}
               <input type="file" accept={accept} className="sr-only"
@@ -175,7 +190,7 @@ export function DocumentField({
         )}
       </div>
 
-      {shownError && <p className="text-[10px] text-red-500">{shownError}</p>}
+      {shownError && <p className="text-xs text-red-600">{shownError}</p>}
     </div>
   );
 }

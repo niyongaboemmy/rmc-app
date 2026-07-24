@@ -7,17 +7,6 @@ import { DawahCategory } from './dawah-category.entity';
 import { ContentStatus } from './dawah-course.entity';
 
 /**
- * Who may read the book. `members` requires a logged-in caller; the backend —
- * not the file-server — enforces it, because `dawah-library/` is a protected
- * prefix and the bytes can only be reached through us. Mirrored by
- * CHK_dawah_book_visibility.
- */
-export enum BookVisibility {
-  PUBLIC = 'public',
-  MEMBERS = 'members',
-}
-
-/**
  * The language the book is *written* in — a separate axis from the tri-lingual
  * catalogue copy. 'other' exists because a library will eventually hold a title
  * in a language the platform does not localise into.
@@ -29,11 +18,8 @@ export type BookLanguage = (typeof BOOK_LANGUAGES)[number];
 /**
  * A book in the digital library.
  *
- * Three fields carry all the licensing policy (plan §4.4):
- *   · `visibility`       — public reads for anyone, members requires a login
- *   · `allowDownload`    — false hides the button AND 403s the download route
- *   · `previewFileKey`   — an optional excerpt, readable even when the full
- *                          book is members-only
+ * Every book is public. The one licensing lever left is `allowDownload`: false
+ * hides the download button AND 403s the download route.
  *
  * Say this out loud when RMC asks: `allowDownload = false` is a **deterrent,
  * not DRM**. Anyone who can render a PDF can save the bytes. It stops casual
@@ -106,17 +92,6 @@ export class DawahBook {
 
   @Column({ name: 'page_count', type: 'int', nullable: true })
   pageCount: number | null;
-
-  /**
-   * Optional excerpt PDF, also under `dawah-library/`. When set, anonymous
-   * visitors preview *this* even if the full book is members-only — it is what
-   * makes "show the book without giving it away" possible.
-   */
-  @Column({ name: 'preview_file_key', type: 'varchar', length: 500, nullable: true })
-  previewFileKey: string | null;
-
-  @Column({ type: 'varchar', length: 20, default: BookVisibility.PUBLIC })
-  visibility: BookVisibility;
 
   /** False → the Download button is hidden and the download route returns 403. */
   @Column({ name: 'allow_download', type: 'boolean', default: true })

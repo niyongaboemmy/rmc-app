@@ -3,17 +3,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, ArrowRight, MessagesSquare, Plus, Search, X } from 'lucide-react';
+import {
+  ArrowLeft, ArrowRight, EyeOff, Loader2, Lock, MessagesSquare, Plus, Search, Trash2, X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ConfirmModal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
+import { Permission } from '@/lib/permissions';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { ContentKeys, DISCUSSIONS_DEFAULT, pick, type DiscussionsContent, type Locale } from '@/lib/content-api';
 import { DiscussionCard } from './DiscussionCard';
 import { localized } from './localize';
 import {
   dawahApi,
+  serverMessage,
   type DawahCategory,
   type DiscussionQuestion,
   type DiscussionSort,
@@ -31,6 +41,12 @@ const PAGE_SIZE = 12;
  * Same discipline as CoursesPageClient: filtering is SERVER-SIDE and the URL is the
  * single source of truth, so a filtered view is shareable and survives the back button.
  *
+ * The page doubles as its own CMS via the site-wide in-context Edit Mode
+ * (`lib/edit-mode`): `useEditableContent` makes the header/empty/error prose editable
+ * (content:edit), and — for a `discussions:moderate` holder in edit mode — each
+ * question card grows hide/lock/delete controls so it can be moderated from the public
+ * listing. Everyone else sees exactly the page they always did.
+ *
  * ── The language default is a product decision, not a detail ─────────────────────────
  *
  * The filter does NOT default to the current locale. It shows everything, and lets a
@@ -42,10 +58,16 @@ const PAGE_SIZE = 12;
 export function DiscussionsPageClient() {
   const t = useTranslations('dawah');
   const { locale } = useParams<{ locale: string }>();
+  const lang = locale as Locale;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const { success, error: toastError } = useToast();
+
+  const { content, setField } = useEditableContent<DiscussionsContent>(ContentKeys.discussions, DISCUSSIONS_DEFAULT);
+  const { editMode, hasPermission } = useEditMode();
+  const moderate = editMode && hasPermission(Permission.DISCUSSIONS_MODERATE);
 
   const category = searchParams.get('category') ?? '';
   const language = searchParams.get('language') ?? '';
@@ -60,6 +82,12 @@ export function DiscussionsPageClient() {
   const [data, setData] = useState<Paginated<DiscussionQuestion> | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+
+  // Moderation (edit mode only). `refreshKey` re-runs the fetch after an action
+  // drops a question from the published list, without disturbing the URL filters.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<DiscussionQuestion | null>(null);
 
   const setParams = useCallback(
     (next: Record<string, string | number | null>) => {
@@ -114,7 +142,26 @@ export function DiscussionsPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [category, language, sort, search, page]);
+  }, [category, language, sort, search, page, refreshKey]);
+
+  // Moderate a question straight from the listing. hide/lock/delete all remove it
+  // from the published list, so we refetch on success. Delete is confirmed first.
+  const act = useCallback(
+    async (q: DiscussionQuestion, action: 'hide' | 'lock' | 'delete') => {
+      setBusyId(q.id);
+      try {
+        await dawahApi.admin.discussions.moderate(q.id, action);
+        success(t('discussions.manage.acted'));
+        setConfirmDelete(null);
+        setRefreshKey((k) => k + 1);
+      } catch (err) {
+        toastError(serverMessage(err) ?? t('discussions.manage.actError'));
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [success, toastError, t],
+  );
 
   const hasFilters = Boolean(category || language || search);
   const total = data?.total ?? 0;
@@ -131,16 +178,12 @@ export function DiscussionsPageClient() {
 
   return (
     <div className="min-h-screen">
-      {/* Solid navbar: with the image hero gone, a transparent bar would put
-          white links on the light section below and read as invisible. */}
       <Navbar solid />
       <main>
         <section className="relative bg-gray-50/60 pb-10 pt-24 md:pb-14 md:pt-28">
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {/* ── Compact header — back link + title + subtitle. Replaces the
-                image hero; pt clears the fixed navbar. Kept in step with the
-                Courses and Library listings — change all or none. ── */}
+            {/* ── Compact header — back link + title + subtitle. ── */}
             <div className="mb-6">
               <Link
                 href={`/${locale}/dawah`}
@@ -149,12 +192,22 @@ export function DiscussionsPageClient() {
                 <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                 {t('backToDawah')}
               </Link>
-              <h1 className="mt-4 text-2xl font-bold text-rmc-green-deep md:text-3xl">
-                {t('discussions.title')}
-              </h1>
-              <p className="mt-1.5 text-sm text-gray-500 md:text-base">
-                {t('discussions.subtitle')}
-              </p>
+              <InlineText
+                as="h1"
+                lang={locale}
+                value={pick(content.header.title, locale) || t('discussions.title')}
+                onCommit={(v) => setField((d) => { d.header.title[lang] = v; })}
+                placeholder={t('discussions.title')}
+                className="mt-4 block text-2xl font-bold text-rmc-green-deep md:text-3xl"
+              />
+              <InlineText
+                as="p"
+                lang={locale}
+                value={pick(content.header.subtitle, locale) || t('discussions.subtitle')}
+                onCommit={(v) => setField((d) => { d.header.subtitle[lang] = v; })}
+                placeholder={t('discussions.subtitle')}
+                className="mt-1.5 block text-sm text-gray-500 md:text-base"
+              />
             </div>
 
             {/* ── Filters ────────────────────────────────────────────────── */}
@@ -162,7 +215,6 @@ export function DiscussionsPageClient() {
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                   <div className="relative">
-                    {/* start-3 + ps-9 (logical) so the icon flips under RTL. */}
                     <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
                     <input
                       type="search"
@@ -243,17 +295,39 @@ export function DiscussionsPageClient() {
 
             {/* ── The list ───────────────────────────────────────────────── */}
             {failed ? (
-              <ErrorCard message={t('discussions.loadError')} />
+              <div className="mx-auto mt-12 max-w-md rounded-lg border border-dashed border-red-200 bg-white p-10 text-center">
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pick(content.error.body, locale) || t('discussions.loadError')}
+                  onCommit={(v) => setField((d) => { d.error.body[lang] = v; })}
+                  placeholder={t('discussions.loadError')}
+                  className="block font-medium text-gray-600"
+                />
+              </div>
             ) : loading && !data ? (
               <div className="mt-8 grid gap-3 lg:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="h-32 rounded-lg skeleton" />
                 ))}
               </div>
-            ) : total === 0 ? (
-              <EmptyCard
-                message={hasFilters ? t('discussions.emptyFiltered') : t('discussions.empty')}
-              />
+            ) : total === 0 && !moderate ? (
+              <div className="mx-auto mt-12 max-w-md rounded-lg border border-dashed border-gray-200 bg-white p-10 text-center">
+                <span className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-rmc-green-light text-rmc-green">
+                  <MessagesSquare className="h-6 w-6" />
+                </span>
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pick(hasFilters ? content.emptyFiltered.body : content.empty.body, locale)}
+                  onCommit={(v) => setField((d) => {
+                    if (hasFilters) d.emptyFiltered.body[lang] = v;
+                    else d.empty.body[lang] = v;
+                  })}
+                  placeholder={hasFilters ? t('discussions.emptyFiltered') : t('discussions.empty')}
+                  className="mt-4 block font-medium text-gray-500"
+                />
+              </div>
             ) : (
               <>
                 <div
@@ -262,9 +336,49 @@ export function DiscussionsPageClient() {
                   }`}
                 >
                   {data?.items.map((q) => (
-                    <DiscussionCard key={q.id} question={q} locale={locale} />
+                    <div key={q.id} className="relative">
+                      <DiscussionCard question={q} locale={locale} />
+                      {moderate && (
+                        <div className="absolute end-2 top-2 z-10 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => act(q, 'hide')}
+                            disabled={busyId === q.id}
+                            aria-label={t('discussions.manage.hide')}
+                            title={t('discussions.manage.hide')}
+                            className="grid h-7 w-7 place-items-center rounded-lg bg-white/90 text-gray-600 shadow-sm backdrop-blur transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50"
+                          >
+                            {busyId === q.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => act(q, 'lock')}
+                            disabled={busyId === q.id}
+                            aria-label={t('discussions.manage.lock')}
+                            title={t('discussions.manage.lock')}
+                            className="grid h-7 w-7 place-items-center rounded-lg bg-white/90 text-gray-600 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-rmc-green disabled:opacity-50"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete(q)}
+                            disabled={busyId === q.id}
+                            aria-label={t('discussions.manage.delete')}
+                            title={t('discussions.manage.delete')}
+                            className="grid h-7 w-7 place-items-center rounded-lg bg-white/90 text-gray-600 shadow-sm backdrop-blur transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
+
+                {total === 0 && moderate && (
+                  <p className="mt-8 text-center text-sm text-gray-400">{t('discussions.empty')}</p>
+                )}
 
                 {pages > 1 && (
                   <div className="mt-8 flex items-center justify-center gap-3">
@@ -295,32 +409,17 @@ export function DiscussionsPageClient() {
         </section>
       </main>
       <Footer />
-    </div>
-  );
-}
 
-/**
- * The empty state. Says what is true and nothing more.
- *
- * Deliberately NOT "be the first to ask!" — that reads as an abandoned room with a
- * cheerful sign in it. And there is no "Ask" button here in Phase A, because asking does
- * not exist yet; offering it would be a lie the reader discovers by clicking.
- */
-function EmptyCard({ message }: { message: string }) {
-  return (
-    <div className="mx-auto mt-12 max-w-md rounded-lg border border-dashed border-gray-200 bg-white p-10 text-center">
-      <span className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-rmc-green-light text-rmc-green">
-        <MessagesSquare className="h-6 w-6" />
-      </span>
-      <p className="mt-4 font-medium text-gray-500">{message}</p>
-    </div>
-  );
-}
-
-function ErrorCard({ message }: { message: string }) {
-  return (
-    <div className="mx-auto mt-12 max-w-md rounded-lg border border-dashed border-red-200 bg-white p-10 text-center">
-      <p className="font-medium text-gray-600">{message}</p>
+      <ConfirmModal
+        open={!!confirmDelete}
+        title={t('discussions.manage.delete')}
+        message={t('discussions.manage.deleteConfirm')}
+        confirmLabel={t('discussions.manage.delete')}
+        variant="danger"
+        isLoading={!!confirmDelete && busyId === confirmDelete.id}
+        onConfirm={() => { if (confirmDelete) void act(confirmDelete, 'delete'); }}
+        onClose={() => (busyId ? undefined : setConfirmDelete(null))}
+      />
     </div>
   );
 }

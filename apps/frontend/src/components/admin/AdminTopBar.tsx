@@ -184,7 +184,7 @@ export function AdminTopBar({ onExpandSidebar, sidebarCollapsed, onMobileMenuOpe
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-[min(288px,calc(100vw-1.5rem))] bg-white rounded-xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-slide-down">
+            <div className="absolute right-0 top-full mt-1.5 w-[min(288px,calc(100vw-1.5rem))] bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-slide-down">
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
                 <span className="text-[13px] font-semibold text-gray-900">Notifications</span>
                 {unread > 0 && (
@@ -249,7 +249,7 @@ export function AdminTopBar({ onExpandSidebar, sidebarCollapsed, onMobileMenuOpe
           </button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-slide-down">
+            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-slide-down">
               {/* User info header */}
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-[13px] font-semibold text-gray-900 truncate">{user?.firstName} {user?.lastName}</p>

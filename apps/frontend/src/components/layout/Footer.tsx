@@ -79,9 +79,10 @@ export function Footer() {
 
   const quickLinks = [
     { href: `/${locale}/blog`, labelKey: 'links.blog' },
+    { href: `/${locale}/schools`, labelKey: 'links.schools' },
+    { href: `/${locale}/new-muslim`, labelKey: 'links.newMuslim' },
     { href: `/${locale}/member/register`, labelKey: 'links.join' },
     { href: `/${locale}/donate`, labelKey: 'links.donate' },
-    { href: `/${locale}/activities`, labelKey: 'links.trends' },
   ] as const;
 
   const services = [

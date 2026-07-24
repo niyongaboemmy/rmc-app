@@ -249,7 +249,7 @@ export default function TenderDetailPage() {
                         ))}
                       </div>
                     </div>
-                  )}
+                )}
                 </div>
 
                 {/* Sidebar — key facts + apply CTA, sticky on desktop, first on mobile */}

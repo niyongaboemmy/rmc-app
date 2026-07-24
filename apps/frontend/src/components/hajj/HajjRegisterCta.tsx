@@ -35,7 +35,7 @@ export async function HajjRegisterCta() {
         </Link>
         <Link
           href={`/${locale}/services/hajj/status`}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-colors hover:border-rmc-green/40 hover:bg-rmc-green-light/40"
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-colors hover:border-rmc-green/40 hover:bg-rmc-green-light/40"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
           {t('status.check')}

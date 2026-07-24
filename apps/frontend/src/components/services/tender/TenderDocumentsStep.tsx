@@ -11,8 +11,10 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import { cn } from '@/lib/utils';
 import {
   uploadBidDocument,
@@ -80,8 +82,19 @@ export function TenderDocumentsStep({
   });
   const [formError, setFormError] = useState<string | null>(null);
 
+  // The files as picked in this session, kept alongside the upload payloads so
+  // the bidder can re-open what they attached. A bid being EDITED seeds its
+  // slots from documents already on the server, which we hold no File for —
+  // those simply offer no preview rather than a broken one.
+  const [picked, setPicked] = useState<Partial<Record<TenderDocumentType, File>>>({});
+
   const setSlot = (docType: TenderDocumentType, state: SlotState) =>
     setSlots((prev) => ({ ...prev, [docType]: state }));
+
+  const clearSlot = (docType: TenderDocumentType) => {
+    setSlot(docType, { phase: 'empty' });
+    setPicked((prev) => ({ ...prev, [docType]: undefined }));
+  };
 
   const handleFile = async (docType: TenderDocumentType, file: File) => {
     if (!ACCEPTED_DOCUMENT_MIMES.includes(file.type)) {
@@ -102,9 +115,11 @@ export function TenderDocumentsStep({
         setSlot(docType, { phase: 'uploading', fileName: file.name, pct }),
       );
       setSlot(docType, { phase: 'done', payload });
+      setPicked((prev) => ({ ...prev, [docType]: file }));
       setFormError(null);
     } catch {
       setSlot(docType, { phase: 'error', message: t('docs.errorUpload') });
+      setPicked((prev) => ({ ...prev, [docType]: undefined }));
     }
   };
 
@@ -131,7 +146,7 @@ export function TenderDocumentsStep({
     >
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-teal-500" /> {t('step3Title')}
+          <FileText className="w-4 h-4 text-rmc-green" /> {t('step3Title')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('step3Subtitle')}</p>
       </div>
@@ -142,8 +157,9 @@ export function TenderDocumentsStep({
             key={docType}
             docType={docType}
             state={slots[docType]}
+            pickedFile={picked[docType] ?? null}
             onFile={(file) => handleFile(docType, file)}
-            onClear={() => setSlot(docType, { phase: 'empty' })}
+            onClear={() => clearSlot(docType)}
           />
         ))}
       </div>
@@ -182,11 +198,14 @@ export function TenderDocumentsStep({
 function DocumentSlot({
   docType,
   state,
+  pickedFile,
   onFile,
   onClear,
 }: {
   docType: TenderDocumentType;
   state: SlotState;
+  /** The File as picked this session; null for a slot seeded from a saved bid. */
+  pickedFile: File | null;
   onFile: (file: File) => void;
   onClear: () => void;
 }) {
@@ -217,12 +236,12 @@ function DocumentSlot({
         className={cn(
           'rounded-xl border-2 border-dashed transition-all duration-150',
           dragOver
-            ? 'border-teal-400 bg-teal-50'
+            ? 'border-rmc-green bg-rmc-green-light'
             : state.phase === 'done'
               ? 'border-green-300 bg-green-50/40'
               : state.phase === 'error'
                 ? 'border-red-300 bg-red-50/40'
-                : 'border-gray-200 bg-gray-50 hover:border-teal-300 hover:bg-teal-50/20',
+                : 'border-gray-200 bg-gray-50 hover:border-rmc-green hover:bg-rmc-green-light/20',
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -238,12 +257,12 @@ function DocumentSlot({
       >
         {state.phase === 'uploading' && (
           <div className="flex items-center gap-3 px-4 py-4">
-            <Loader2 className="w-5 h-5 text-teal-500 animate-spin shrink-0" />
+            <Loader2 className="w-5 h-5 text-rmc-green animate-spin shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate">{state.fileName}</p>
               <div className="mt-1.5 h-1 rounded-full bg-gray-200 overflow-hidden">
                 <div
-                  className="h-full bg-teal-500 transition-all duration-200"
+                  className="h-full bg-rmc-green transition-all duration-200"
                   style={{ width: `${state.pct}%` }}
                 />
               </div>
@@ -254,15 +273,28 @@ function DocumentSlot({
 
         {state.phase === 'done' && (
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5 text-green-600" />
-            </div>
+            <FilePreviewTrigger file={pickedFile} className="rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400">
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0 cursor-zoom-in hover:bg-green-200 transition-colors">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
+            </FilePreviewTrigger>
+            {!pickedFile && (
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate leading-snug">
                 {state.payload.fileName}
               </p>
               <p className="text-[10px] text-gray-400">{fmtSize(state.payload.fileSize)}</p>
             </div>
+            <FilePreviewTrigger
+              file={pickedFile}
+              className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-rmc-green hover:border-gray-300 shrink-0"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </FilePreviewTrigger>
             <button
               type="button"
               onClick={onClear}
@@ -280,7 +312,7 @@ function DocumentSlot({
               <Upload className="w-4 h-4 text-gray-400" />
             </div>
             <p className="text-xs text-gray-500">
-              <span className="text-teal-600 font-semibold">{t('docs.upload')}</span>{' '}
+              <span className="text-rmc-green font-semibold">{t('docs.upload')}</span>{' '}
               {t('docs.orDrop')}
             </p>
             <p className="text-[10px] text-gray-400">
@@ -302,7 +334,7 @@ function DocumentSlot({
       </div>
 
       {state.phase === 'error' && (
-        <p className="text-[11px] text-red-600 flex items-center gap-1">
+        <p className="text-xs text-red-600 flex items-center gap-1">
           <AlertCircle className="w-3 h-3 shrink-0" /> {state.message}
         </p>
       )}

@@ -7,11 +7,11 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { GalleryManagement } from '@/components/admin/GalleryManagement';
 import {
-  BookOpen, Megaphone, Info, Clock, Globe, CalendarDays,
+  BookOpen, Megaphone, Info, Clock, Globe,
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
-  Compass, ListChecks,
+  Compass, ListChecks, CalendarDays,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -47,9 +47,9 @@ const SECTIONS: SectionConfig[] = [
     page: 'Homepage', positionOrder: 0,
     locationLabel: 'Homepage · Top Hero',
     keywords: ['hero', 'headline', 'banner', 'welcome', 'slideshow', 'background', 'cta', 'subtitle', 'salam', 'top', 'intro', 'slides'],
-    bg: 'bg-rose-50', iconColor: 'text-rose-600', border: 'border-rose-100',
-    badge: 'bg-rose-100 text-rose-700',
-    accentBar: 'bg-rose-400',
+    bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
+    badge: 'bg-rmc-green-light text-rmc-green-dark',
+    accentBar: 'bg-rmc-green',
   },
   {
     id: 'verse-of-day',
@@ -60,9 +60,9 @@ const SECTIONS: SectionConfig[] = [
     page: 'Homepage', positionOrder: 1,
     locationLabel: 'Homepage · Hero / Top',
     keywords: ['quran', 'verse', 'ayah', 'arabic', 'daily', 'rotation', 'surah', 'hero', 'islamic', 'scripture', 'translation', 'reference'],
-    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
-    badge: 'bg-emerald-100 text-emerald-700',
-    accentBar: 'bg-emerald-400',
+    bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
+    badge: 'bg-rmc-green-light text-rmc-green-dark',
+    accentBar: 'bg-rmc-green',
   },
   {
     id: 'updates-programs',
@@ -86,9 +86,9 @@ const SECTIONS: SectionConfig[] = [
     page: 'Homepage', positionOrder: 2.5,
     locationLabel: 'Homepage · How to Become a Muslim',
     keywords: ['muslim', 'convert', 'revert', 'shahada', 'become', 'islam', 'video', 'steps', 'embrace', 'new muslim', 'school', 'map', 'ghusl', 'testimony'],
-    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
-    badge: 'bg-emerald-100 text-emerald-700',
-    accentBar: 'bg-emerald-400',
+    bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
+    badge: 'bg-rmc-green-light text-rmc-green-dark',
+    accentBar: 'bg-rmc-green',
   },
   {
     id: 'who-we-are',
@@ -255,9 +255,9 @@ const SECTIONS: SectionConfig[] = [
     page: 'Funeral Service', positionOrder: 0,
     locationLabel: 'Funeral Service · Landing page',
     keywords: ['funeral', 'janazah', 'burial', 'ghusl', 'kafan', 'description', 'rich text', 'hotline', 'phone', 'call', 'emergency', 'timeline', 'heading'],
-    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
-    badge: 'bg-emerald-100 text-emerald-700',
-    accentBar: 'bg-emerald-400',
+    bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
+    badge: 'bg-rmc-green-light text-rmc-green-dark',
+    accentBar: 'bg-rmc-green',
   },
   {
     id: 'funeral-request-steps',
@@ -268,9 +268,9 @@ const SECTIONS: SectionConfig[] = [
     page: 'Funeral Service', positionOrder: 0,
     locationLabel: 'Funeral Service · Status timeline',
     keywords: ['funeral', 'janazah', 'burial', 'ghusl', 'kafan', 'steps', 'stages', 'timeline', 'status', 'lifecycle', 'request', 'deceased', 'reorder', 'color', 'icon'],
-    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
-    badge: 'bg-emerald-100 text-emerald-700',
-    accentBar: 'bg-emerald-400',
+    bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
+    badge: 'bg-rmc-green-light text-rmc-green-dark',
+    accentBar: 'bg-rmc-green',
   },
   {
     id: 'hajj',
@@ -318,7 +318,7 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'About Page', icon: FileText, color: 'text-slate-600', description: 'Content on the /about page' },
   { page: 'Blog Page', icon: Newspaper, color: 'text-cyan-600', description: 'Articles on the public /blog page' },
   { page: 'Contact Page', icon: Mail, color: 'text-teal-600', description: 'Content on the /contact page' },
-  { page: 'Funeral Service', icon: Moon, color: 'text-emerald-600', description: 'Content on the funeral service pages' },
+  { page: 'Funeral Service', icon: Moon, color: 'text-rmc-green', description: 'Content on the funeral service pages' },
   { page: 'Hajj Service', icon: Compass, color: 'text-amber-600', description: 'Content on the Hajj service pages' },
 ];
 
@@ -378,12 +378,13 @@ export default function ManageContentPage() {
           <div className="w-9 h-9 rounded-xl bg-rmc-green/10 flex items-center justify-center shrink-0">
             <Layers className="w-[18px] h-[18px] text-rmc-green" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-[17px] font-bold text-gray-900 leading-tight">Manage Content</h1>
             <p className="text-xs text-gray-400">
               {SECTIONS.length} sections &middot; {SECTIONS.filter((s) => s.type === 'crud').length} full CRUD &middot; {SECTIONS.filter((s) => s.type === 'edit').length} edit-only &middot; 3 languages
             </p>
           </div>
+          <div className="flex-1" />
         </div>
 
         {/* ── Tab switcher ── */}
@@ -418,7 +419,7 @@ export default function ManageContentPage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder='Search by name, keyword, or location… e.g. "prayer", "dawa", "carousel", "stats"'
-                    className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-xl border border-gray-200 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
+                    className="w-full h-10 pl-10 pr-10 sm:pr-24 rounded-lg border border-gray-300 bg-gray-50/80 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/25 focus:border-rmc-green/40 focus:bg-white transition-all"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     {query && (
@@ -730,7 +731,7 @@ function SectionRow({
 
 function EmptyState({ query, onClear }: { query: string; onClear: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-gray-100">
+    <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
       <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
         <Search className="w-5 h-5 text-gray-300" />
       </div>
@@ -747,7 +748,7 @@ function EmptyState({ query, onClear }: { query: string; onClear: () => void }) 
       </p>
       <button
         onClick={onClear}
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-xl transition-colors"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors"
       >
         <X className="w-4 h-4" /> Clear filters
       </button>

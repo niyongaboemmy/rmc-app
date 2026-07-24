@@ -49,7 +49,7 @@ interface Props {
 
 function SectionLabel({ children, color = 'rose' }: { children: string; color?: 'blue' | 'rose' }) {
   return (
-    <p className={`text-[10px] font-bold tracking-widest uppercase mb-4 ${color === 'blue' ? 'text-blue-500' : 'text-rose-500'}`}>
+    <p className={`text-[10px] font-bold tracking-widest uppercase mb-4 ${color === 'blue' ? 'text-blue-500' : 'text-rmc-green'}`}>
       {children}
     </p>
   );
@@ -195,7 +195,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
         <Button
           type="submit"
           rightIcon={<ArrowRight className="w-4 h-4" />}
-          className="!bg-rose-600 hover:!bg-rose-700 !text-white !shadow-none"
+          className="!bg-rmc-green hover:!bg-rmc-green-dark !text-white !shadow-none"
         >
           Continue
         </Button>

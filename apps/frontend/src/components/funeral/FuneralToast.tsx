@@ -15,7 +15,7 @@ export function FuneralToast({ message }: { message: string }) {
   if (!mounted || !message) return null;
 
   return createPortal(
-    <div className="fixed bottom-6 left-1/2 z-[10000] flex -translate-x-1/2 items-center gap-2 rounded-full bg-rmc-green-deep px-4 py-2.5 text-sm font-medium text-white shadow-lg animate-fade-up">
+    <div className="fixed bottom-6 left-1/2 z-[10000] flex -translate-x-1/2 items-center gap-2 rounded-lg bg-rmc-green-deep px-4 py-2.5 text-sm font-medium text-white shadow-lg animate-fade-up">
       <CheckCircle2 className="h-4 w-4 text-rmc-gold-light" aria-hidden="true" /> {message}
     </div>,
     document.body,

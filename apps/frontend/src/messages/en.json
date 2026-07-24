@@ -1,4 +1,17 @@
 {
+  "cms": {
+    "editPage": "Edit page",
+    "editingIn": "Editing {lang}",
+    "saved": "Saved",
+    "discard": "Discard",
+    "save": "Save changes",
+    "done": "Done",
+    "lang": {
+      "en": "English",
+      "rw": "Kinyarwanda",
+      "ar": "Arabic"
+    }
+  },
   "notFoundPage": {
     "code": "404",
     "eyebrow": "Error 404",
@@ -19,7 +32,17 @@
     "learnMore": "Learn More",
     "readMore": "Read More",
     "viewAll": "View All",
-    "download": "Download"
+    "download": "Download",
+    "filePreview": {
+      "preview": "Preview",
+      "close": "Close (Esc)",
+      "download": "Download",
+      "openInNewTab": "Open in new tab",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "rotate": "Rotate",
+      "unsupported": "This file type can't be shown here. Download it to check it before you submit."
+    }
   },
   "auth": {
     "backToHome": "Back to home",
@@ -358,7 +381,44 @@
       "contactUs": "Contact Us",
       "viewOtherServices": "View Other Services"
     },
+    "explore": {
+      "hint": "View details",
+      "requirements": "What you'll need",
+      "steps": "How it works",
+      "notes": "Good to know",
+      "apply": "Apply",
+      "status": "Check status",
+      "register": "Register",
+      "report": "Report a death",
+      "cemeteries": "Cemeteries",
+      "viewDetails": "View full details",
+      "cardDescription": "Card description (shown on the list)",
+      "addRequirement": "Add requirement",
+      "addStep": "Add step",
+      "removeItem": "Remove"
+    },
     "marriage": {
+      "modal": {
+        "summary": "From pre-marital guidance to an officiated Nikah and your official marriage certificate — handled end to end.",
+        "req": {
+          "1": "National ID or passport for both partners",
+          "2": "Wali (guardian) consent and ID",
+          "3": "Two adult Muslim witnesses",
+          "4": "RMC membership for both partners",
+          "5": "Agreed mahr (dowry) details",
+          "6": "Passport-size photographs"
+        },
+        "step": {
+          "1": "Enter the couple's details as on their National IDs",
+          "2": "Choose the ceremony date and venue",
+          "3": "Add two Muslim witnesses and the bride's Wali",
+          "4": "Set the agreed mahr and preferred imam",
+          "5": "Upload the required documents",
+          "6": "Pick a fee tier, pay, and submit",
+          "7": "RMC reviews, the Nikah is performed, and your certificate is issued"
+        },
+        "notes": "Both partners must be RMC members. Your application saves as a draft, so you can finish it later."
+      },
       "title": "Marriage Services",
       "desc": "Official Islamic marriage ceremonies, certificates, and documentation for couples in the community.",
       "detail": {
@@ -643,6 +703,26 @@
       }
     },
     "funeral": {
+      "modal": {
+        "summary": "From reporting a death to burial, RMC walks with families at every step — with dignity and care.",
+        "req": {
+          "1": "Deceased's full name, gender, dates of birth and death",
+          "2": "National ID and death certificate, if available",
+          "3": "Place of death (city or facility)",
+          "4": "Next-of-kin name and phone number",
+          "5": "Preferred mosque and cemetery",
+          "6": "Preferred burial date and any transport needs"
+        },
+        "step": {
+          "1": "Report the death to RMC to begin arrangements",
+          "2": "Details are verified and the family is contacted",
+          "3": "Ghusl is performed and the kafan prepared",
+          "4": "Janāzah prayer is scheduled",
+          "5": "The deceased is transported to the cemetery",
+          "6": "Burial is completed with dignity"
+        },
+        "notes": "RMC is here at any hour and assists families in need with counselling, food and financial aid."
+      },
       "title": "Funeral Services",
       "desc": "Coordination of Islamic burial rites, imam assignment, and logistics support for families.",
       "landing": {
@@ -865,6 +945,26 @@
       }
     },
     "conduct": {
+      "modal": {
+        "summary": "Official certificate of good Islamic conduct for members, required for various administrative processes.",
+        "req": {
+          "1": "An RMC account (sign in to apply)",
+          "2": "Your full names, plus father's and mother's names",
+          "3": "Residence: district, sector, cell, village",
+          "4": "Email and a valid Rwanda phone number (07XXXXXXXX)",
+          "5": "Your mosque (Imam's name auto-filled)",
+          "6": "Reason: employment, visa, school, or other"
+        },
+        "step": {
+          "1": "Sign in and open the request form",
+          "2": "Enter your identity and contact details",
+          "3": "Select your mosque and reason for the request",
+          "4": "Pay the fee by Mobile Money or bank transfer",
+          "5": "A reviewer verifies your details and approves it",
+          "6": "Download your issued Good Conduct certificate"
+        },
+        "notes": "Pay the fee by Mobile Money or bank transfer."
+      },
       "title": "Good Conduct Certificate",
       "desc": "Official certificates of good Islamic conduct for members — required for various administrative processes.",
       "apply": {
@@ -1036,6 +1136,23 @@
       }
     },
     "scholarship": {
+      "modal": {
+        "summary": "Financial support for Muslim students pursuing education at all levels.",
+        "req": {
+          "1": "Your full name, date of birth, and phone number",
+          "2": "Your district and sector",
+          "3": "Current school, education level, and grade or year",
+          "4": "A guardian's name, phone number, and relationship to you",
+          "5": "A short statement on why you need the scholarship"
+        },
+        "step": {
+          "1": "Sign in to your RMC account, or create one",
+          "2": "Fill the short 3-step form: personal, education, and guardian details",
+          "3": "Submit and get your application tracking number",
+          "4": "Use your tracking number to check your status anytime"
+        },
+        "notes": "Applying is free. Reviews take 5–10 business days."
+      },
       "title": "Scholarships",
       "desc": "Financial support for Muslim students pursuing education at all levels.",
       "levels": {
@@ -1236,6 +1353,23 @@
       }
     },
     "tender": {
+      "modal": {
+        "summary": "Submit a bid against an open RMC tender and track it from evaluation to award.",
+        "req": {
+          "1": "Company Registration (RDB) certificate from the Rwanda Development Board",
+          "2": "Valid RRA Tax Clearance certificate from the Rwanda Revenue Authority",
+          "3": "Technical & Financial Proposal, including your pricing",
+          "4": "Registered company name, 9-digit TIN, and a contact person",
+          "5": "Submit before the tender deadline; bids can't be edited after it passes"
+        },
+        "step": {
+          "1": "Browse open tenders and read the terms and deadline",
+          "2": "Complete the form: company details, contact, address, bid amount",
+          "3": "Upload the three required documents (PDF, JPG or PNG, up to 10 MB)",
+          "4": "Get a reference number and track your bid to the outcome"
+        },
+        "notes": "You need an RMC account to submit and track a bid."
+      },
       "title": "Tenders",
       "desc": "Business opportunities published by RMC for qualified organizations and contractors.",
       "landing": {
@@ -1434,6 +1568,25 @@
       }
     },
     "jobs": {
+      "modal": {
+        "summary": "Apply for open positions at RMC and affiliated organizations, and track your application status.",
+        "req": {
+          "1": "Application letter",
+          "2": "Curriculum Vitae (CV)",
+          "3": "National ID",
+          "4": "Criminal record certificate",
+          "5": "Academic papers (diplomas / certificates)",
+          "6": "Good conduct certificate — a number to verify, or a file to upload"
+        },
+        "step": {
+          "1": "Sign in to your RMC account, or register if you're new",
+          "2": "Enter your personal details and the position you're applying for",
+          "3": "Upload your letter, CV, National ID, criminal record and academic papers",
+          "4": "Verify your good-conduct certificate number, or upload the certificate",
+          "5": "Submit and keep your tracking number to follow your status"
+        },
+        "notes": "Sign-in required. You can upload PDF, Word or images; employer recommendation is optional."
+      },
       "title": "Job Opportunities",
       "desc": "Employment vacancies at RMC and affiliated organizations across Rwanda.",
       "openings": {
@@ -1729,6 +1882,25 @@
       }
     },
     "hajj": {
+      "modal": {
+        "summary": "Guidance, registration and support for pilgrims — from preparation to departure, with online status tracking.",
+        "req": {
+          "1": "Passport valid at least 6 months beyond travel",
+          "2": "Registration fee — 40,000 RWF, non-refundable",
+          "3": "Initial payment — 400,000 RWF to reserve your place",
+          "4": "Financial capacity to cover the remaining cost",
+          "5": "Scanned documents ready before you register",
+          "6": "Proof of payment to upload with your application"
+        },
+        "step": {
+          "1": "Register online with your personal and passport details",
+          "2": "Pay the fees to an official bank account and upload proofs",
+          "3": "The committee reviews your documents and payments",
+          "4": "Once approved, we process your Hajj visa and travel documents",
+          "5": "Travel with the group and perform Hajj, guided throughout"
+        },
+        "notes": "Pay the Hajj fees into an official bank account, then upload your receipt when you register."
+      },
       "title": "Hajj Services",
       "desc": "Guidance, registration, and support for pilgrims — from preparation to departure.",
       "requirements": {
@@ -1740,6 +1912,7 @@
         "title": "Register for Hajj",
         "subtitle": "Complete the form below to begin your Hajj registration. Fields marked * are required.",
         "back": "Back to Hajj Services",
+        "nav": { "back": "Back", "next": "Next" },
         "submit": "Submit registration",
         "submitting": "Submitting…",
         "sections": {
@@ -1967,6 +2140,7 @@
       "donations": "Donations",
       "finance": "Finance",
       "inbox": "Inbox",
+      "projects": "Projects",
       "content": "Manage Content",
       "subscribers": "Subscribers",
       "users": "Users",
@@ -2513,7 +2687,6 @@
           "summary": "Summary",
           "body": "Lesson content",
           "duration": "Duration (minutes)",
-          "isPreview": "Free preview",
           "mediaUrl": "Video URL (YouTube / Vimeo)",
           "audioFile": "Audio file",
           "pdfFile": "PDF file",
@@ -2524,6 +2697,7 @@
         "empty": "This course has no lessons yet.",
         "subtitle": "Build and order the lesson outline for this course.",
         "backToCourses": "Back to courses",
+        "donePreview": "Back to preview",
         "refresh": "Refresh",
         "add": "Add lesson",
         "saving": "Saving…",
@@ -2578,22 +2752,15 @@
           "language": "Language",
           "cover": "Cover image",
           "file": "Book PDF",
-          "previewFile": "Preview excerpt (optional)",
           "pageCount": "Pages",
-          "visibility": "Visibility",
           "allowDownload": "Allow download",
           "featured": "Feature on the landing page",
           "sortOrder": "Sort order"
-        },
-        "visibility": {
-          "public": "Anyone can read",
-          "members": "Signed-in members only"
         },
         "uploadHint": "PDF only, up to 25 MB.",
         "uploading": "Uploading…",
         "uploadFailed": "Upload failed. Please try again.",
         "downloadWarning": "Turning downloads off hides the button and blocks the download link. It is a deterrent, not copy protection — anyone who can read a PDF can save it.",
-        "previewHint": "When an excerpt is set, visitors who are not signed in preview the excerpt instead of the full book.",
         "openFile": "Open file",
         "confirmDelete": "Delete this book?",
         "empty": "No books yet. Upload the first one.",
@@ -2621,7 +2788,6 @@
           "title": "Book",
           "category": "Category",
           "language": "Language",
-          "visibility": "Visibility",
           "download": "Download",
           "status": "Status",
           "updated": "Updated",
@@ -2642,13 +2808,8 @@
           "on": "Allowed",
           "off": "Read-only"
         },
-        "visibilityHelp": {
-          "public": "Anyone can open and read this book — no account needed.",
-          "members": "Only signed-in members can read the full book. Signed-out visitors see the preview excerpt (if you add one below) or a sign-in prompt."
-        },
         "allowDownloadHelp": "When off, the Download button is hidden and the download link is blocked — visitors read in the browser only.",
         "downloadDeterrent": "This is a deterrent, not protection. Anyone who can read a PDF in their browser can still save the file — it stops casual sharing, but it is not DRM.",
-        "previewFileHelp": "Optional short excerpt (a separate PDF). When the book is members-only, signed-out visitors see THIS instead of the full book — a way to show a taste without giving the whole thing away.",
         "stats": {
           "reads": "reads",
           "downloads": "downloads",
@@ -2685,7 +2846,9 @@
         "nameRequired": "An English name is required.",
         "active": "Active",
         "inactive": "Inactive",
-        "iconHint": "A lucide-react icon name, e.g. BookOpen.",
+        "iconHint": "Pick an icon, or search by name.",
+        "iconSearch": "Search icons…",
+        "iconNone": "No icon selected",
         "col": {
           "icon": "Icon",
           "slug": "Slug",
@@ -3241,6 +3404,7 @@
       "about": "About RMC",
       "services": "Our Services",
       "schools": "Find Schools",
+      "newMuslim": "Becoming a Muslim",
       "projects": "Projects",
       "announcements": "Announcements",
       "blog": "Blogs",
@@ -3307,6 +3471,18 @@
       "allLanguages": "All languages",
       "resultCount": "{count, plural, =0 {No courses} one {# course} other {# courses}}",
       "lessonCount": "{count, plural, =0 {No lessons} one {# lesson} other {# lessons}}",
+      "learners": "{count, plural, =0 {No learners yet} one {# learner} other {# learners}}",
+      "enrolled": "{count, plural, =0 {No learners yet} one {# learner enrolled} other {# learners enrolled}}",
+      "progress": {
+        "heading": "Your progress",
+        "lessonsDone": "{completed} of {total} lessons",
+        "percentComplete": "{percent}% complete",
+        "completed": "Completed",
+        "courseComplete": "You've completed this course",
+        "signInPrompt": "Sign in to track your progress through this course.",
+        "signIn": "Sign in",
+        "error": "Couldn't save. Please try again."
+      },
       "duration": "{minutes} min",
       "instructor": "Instructor",
       "level": {
@@ -3327,7 +3503,6 @@
       },
       "view": "View course",
       "outline": "Course outline",
-      "freePreview": "Free preview",
       "related": "Related courses",
       "loading": "Loading courses…",
       "empty": {
@@ -3379,10 +3554,6 @@
       "read": "Read",
       "download": "Download",
       "downloadDisabled": "This book cannot be downloaded",
-      "membersOnly": "Members only",
-      "signInToRead": "Sign in to read this book",
-      "signIn": "Sign in",
-      "excerptNotice": "This is a preview excerpt. Sign in to read the full book.",
       "close": "Close",
       "loading": "Loading library…",
       "empty": {
@@ -3395,7 +3566,6 @@
         "retry": "Retry"
       },
       "loadingBook": "Loading book…",
-      "signInBody": "This book is available to members. Sign in to read it in full.",
       "previewUnavailable": {
         "title": "Could not load this book",
         "body": "The file could not be loaded. Please try again, or open it in a new tab."
@@ -3493,6 +3663,7 @@
         "empty": "Nothing awaiting review.",
         "release": "Release",
         "verify": "Verify",
+        "unverify": "Un-verify",
         "releaseHelp": "Publish without endorsing — \"this may be seen\".",
         "verifyHelp": "Publish and mark \"Verified by RMC\" — \"this is correct\".",
         "inCategory": "in",

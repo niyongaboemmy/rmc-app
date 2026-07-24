@@ -57,7 +57,7 @@ export function SmsTestingTab({ gatewayActive }: Props) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
       {/* Left — Input form */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <Send className="w-4 h-4 text-rmc-green" />
           <h2 className="text-sm font-semibold text-gray-900">Send Test SMS</h2>

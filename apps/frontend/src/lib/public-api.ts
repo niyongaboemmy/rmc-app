@@ -2,6 +2,9 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'),
+  // Bound every call so a slow/unreachable backend fails fast to the caller's
+  // fallback instead of hanging server-rendered pages (e.g. the About page).
+  timeout: 8000,
 });
 
 function unwrap<T>(promise: Promise<{ data: { data: T } }>): Promise<T> {

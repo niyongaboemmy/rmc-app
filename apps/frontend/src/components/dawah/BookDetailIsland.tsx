@@ -23,7 +23,7 @@ export function BookReadButton({ book, locale }: { book: DawahBook; locale: stri
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rmc-green-dark sm:w-auto"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rmc-green-dark sm:w-auto"
       >
         <BookOpen className="h-4 w-4" aria-hidden />
         {t('library.read')}

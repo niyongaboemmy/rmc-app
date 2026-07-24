@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowLeft, ArrowRight, Check, CheckCircle2, FileCheck2, Loader2, Upload, X,
+  ArrowLeft, ArrowRight, Check, CheckCircle2, Eye, FileCheck2, Loader2, Upload, X,
 } from 'lucide-react';
 import {
   funeralApi,
@@ -17,6 +17,8 @@ import {
 } from '@/lib/funeralApi';
 import { mosqueApi } from '@/lib/mosqueApi';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Button } from '@/components/ui/Button';
+import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
 import type { Cemetery } from './types';
 
 // Rwandan phone: 10 digits starting 07 (e.g. 0788123456). National ID: 16 digits.
@@ -90,8 +92,8 @@ function buildSchema(tr: (k: string) => string) {
 type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30';
-const inputError = 'border-red-300 focus:border-red-400 focus:ring-red-400/30';
+  'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/30';
 
 const STEP_KEYS = ['deceased', 'family', 'arrangements', 'review'] as const;
 
@@ -113,6 +115,9 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
   // Holds the STORED certificate (key + metadata) so the admin can open the real
   // file — previously only the filename was kept and the file was thrown away.
   const [certificate, setCertificate] = useState<UploadedFuneralDocument | null>(null);
+  // Kept only so the family can re-open the certificate they just attached —
+  // the stored copy needs an admin token, the local File does not.
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certUploading, setCertUploading] = useState(false);
   const [certPct, setCertPct] = useState(0);
   const [certError, setCertError] = useState('');
@@ -198,6 +203,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
     setCertError('');
     if (!file) {
       setCertificate(null);
+      setCertificateFile(null);
       setValue('deceased.deathCertificate', '');
       return;
     }
@@ -215,10 +221,12 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
     try {
       const doc = await funeralApi.uploadDocument(file, setCertPct);
       setCertificate(doc);
+      setCertificateFile(file);
       setValue('deceased.deathCertificate', doc.fileKey);
     } catch {
       setCertError(t('deceased.certificateUploadFailed'));
       setCertificate(null);
+      setCertificateFile(null);
       setValue('deceased.deathCertificate', '');
     } finally {
       setCertUploading(false);
@@ -239,13 +247,13 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
             <button
               type="button"
               onClick={() => { reset(); setSubmitted(false); setCertificate(null); setStep(0); }}
-              className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               {t('success.again')}
             </button>
             <Link
               href={`/${locale}/services/funeral`}
-              className="inline-flex items-center justify-center rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               {t('success.home')}
             </Link>
@@ -301,7 +309,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               <Field label={t('deceased.gender')} required error={errors.deceased?.gender?.message}>
                 <div className="flex gap-2">
                   {(['male', 'female'] as const).map((g) => (
-                    <label key={g} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/50 has-[:checked]:text-rmc-green-dark">
+                    <label key={g} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/50 has-[:checked]:text-rmc-green-dark">
                       <input type="radio" value={g} className="accent-rmc-green" {...register('deceased.gender')} />
                       {t(`deceased.${g}`)}
                     </label>
@@ -338,6 +346,12 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
                         {Math.max(1, Math.round(certificate.fileSize / 1024))} KB · {t('deceased.certificateUploaded')}
                       </span>
                     </span>
+                    <FilePreviewTrigger
+                      file={certificateFile}
+                      className="shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-white hover:text-rmc-green"
+                    >
+                      <Eye className="h-4 w-4" aria-hidden="true" />
+                    </FilePreviewTrigger>
                     <button
                       type="button"
                       onClick={() => void onPickFile(null)}
@@ -351,7 +365,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
                   <label className={cx(
                     'flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3.5 py-3 text-sm transition-colors',
                     certError
-                      ? 'border-red-300 text-red-500'
+                      ? 'border-red-400 text-red-500'
                       : 'border-gray-300 bg-gray-50 text-gray-500 hover:border-rmc-green/40 hover:text-rmc-green',
                     certUploading && 'cursor-wait',
                   )}>
@@ -443,7 +457,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               <legend className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">
                 {t('arrangements.servicesLabel')}
               </legend>
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40">
+              <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-700 transition-colors has-[:checked]:border-rmc-green has-[:checked]:bg-rmc-green-light/40">
                 <input type="checkbox" className="h-4 w-4 rounded border-gray-300 accent-rmc-green" {...register('arrangements.transportationRequired')} />
                 {t('arrangements.transport')}
               </label>
@@ -489,7 +503,7 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
             </div>
 
             {submitError && (
-              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">{submitError}</p>
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-600">{submitError}</p>
             )}
           </Section>
         )}
@@ -504,32 +518,32 @@ export function FuneralRequestForm({ locale }: { locale: string }) {
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /> {t('back')}
             </Link>
           ) : (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              leftIcon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />}
             >
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /> {t('prev')}
-            </button>
+              {t('prev')}
+            </Button>
           )}
 
           {last ? (
-            <button
+            <Button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-60"
+              isLoading={isSubmitting}
+              leftIcon={<Check className="h-4 w-4" aria-hidden="true" />}
             >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
               {isSubmitting ? t('submitting') : t('submit')}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="button"
               onClick={goNext}
-              className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark"
+              rightIcon={<ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />}
             >
-              {t('next')} <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-            </button>
+              {t('next')}
+            </Button>
           )}
         </div>
       </form>

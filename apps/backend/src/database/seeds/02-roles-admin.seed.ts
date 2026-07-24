@@ -31,6 +31,12 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.SCHOOLS_MANAGE,
   Permission.DAWAH_VIEW,
   Permission.DAWAH_MANAGE,
+  // Discussions moderation, so the report queue is never unstaffed before a
+  // dedicated Moderator exists. Mirrors the grant in migration 055 — WITHOUT
+  // this line a reseed would strip it back off the Admin role (the loop below
+  // overwrites permissions wholesale). NOT discussions:verify: that is the
+  // Scholar's alone (a religious-knowledge authority, not an admin one).
+  Permission.DISCUSSIONS_MODERATE,
   Permission.CONTACT_MESSAGES_VIEW,
   Permission.CONTACT_MESSAGES_MANAGE,
   Permission.REPORTS_EXPORT,
@@ -151,6 +157,25 @@ const DEFAULT_ROLES = [
     slug: 'scholarship_officer',
     description: 'Manages scholarship programs and reviews applications',
     permissions: SCHOLARSHIP_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  // Dawah Discussions roles — mirrors migration 055 so the seed is the full
+  // role set, not a subset the migration silently completes. isSystem: false —
+  // RMC appoints and removes these people themselves.
+  {
+    name: 'Scholar',
+    slug: 'scholar',
+    description:
+      'Verifies answers in Dawah Discussions. May mark one answer per question as "Verified by RMC". No administrative access.',
+    permissions: [Permission.DISCUSSIONS_VERIFY],
+    isSystem: false,
+  },
+  {
+    name: 'Moderator',
+    slug: 'moderator',
+    description:
+      'Moderates Dawah Discussions: works the report queue, hides/restores/locks posts, sets a category answer policy. No administrative access.',
+    permissions: [Permission.DISCUSSIONS_MODERATE],
     isSystem: false,
   },
   {

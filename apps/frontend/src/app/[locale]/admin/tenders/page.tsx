@@ -215,7 +215,7 @@ function AdminTendersContent() {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Input
           placeholder="Company, TIN, reference, phone…"
           value={search}
@@ -232,7 +232,7 @@ function AdminTendersContent() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
@@ -352,7 +352,7 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
       <p className="text-lg font-bold text-gray-900 mt-1">{value}</p>
     </div>

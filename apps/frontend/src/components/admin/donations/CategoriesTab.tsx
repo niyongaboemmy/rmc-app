@@ -24,8 +24,8 @@ const LANGS = [
 type LangKey = (typeof LANGS)[number]['key'];
 
 const inputCls =
-  'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-rmc-green/40 focus:ring-2 focus:ring-rmc-green/30';
-const labelCls = 'mb-1.5 block text-xs font-medium text-gray-500';
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
+const labelCls = 'mb-1.5 block text-sm font-medium text-gray-700';
 
 export function CategoriesTab({
   categories,
@@ -100,7 +100,7 @@ export function CategoriesTab({
         {canManage && (
           <button
             onClick={() => setCatModal({ open: true, category: null })}
-            className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
           >
             <Plus className="h-4 w-4" /> New category
           </button>
@@ -283,7 +283,7 @@ function LangTabs({ lang, setLang }: { lang: LangKey; setLang: (l: LangKey) => v
           key={l.key}
           type="button"
           onClick={() => setLang(l.key)}
-          className={cn('rounded-md px-3 py-1 text-xs font-bold transition-colors', lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green')}
+          className={cn('rounded-lg px-3 py-1 text-xs font-bold transition-colors', lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green')}
         >
           {l.label}
         </button>
@@ -421,8 +421,8 @@ function CategoryModal({ category, defaultSortOrder = 0, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-        <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
+        <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        <button onClick={save} disabled={saving} className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
         </button>
       </ModalFooter>
@@ -535,8 +535,8 @@ function SubFundModal({ categoryId, subfund, onClose, onSaved }: {
         </div>
       </ModalBody>
       <ModalFooter>
-        <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-        <button onClick={save} disabled={saving} className="rounded-xl bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
+        <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        <button onClick={save} disabled={saving} className="rounded-lg bg-rmc-green px-5 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark disabled:opacity-50">
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
         </button>
       </ModalFooter>

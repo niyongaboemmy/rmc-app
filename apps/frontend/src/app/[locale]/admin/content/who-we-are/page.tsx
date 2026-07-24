@@ -13,6 +13,7 @@ import {
   saveSiteContent,
   type WhoWeAreContent,
 } from '@/lib/content-api';
+import { usePreviewStore } from '@/lib/content/preview-store';
 import { Info, ArrowLeft, Save, Users, Building2, Map, Star } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -35,9 +36,10 @@ export default function WhoWeArePage() {
   );
 }
 
-function WhoWeAreManager() {
+function WhoWeAreManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
+  const store = usePreviewStore();
   const [lang, setLang] = useState<Lang>('en');
   const [form, setForm] = useState<WhoWeAreContent>(INITIAL);
   const [saving, setSaving] = useState(false);
@@ -61,6 +63,18 @@ function WhoWeAreManager() {
     };
   }, []);
 
+  // Live-preview bridge: while embedded, mirror the in-progress form to the
+  // preview store so the real section updates as the admin types; clear it when
+  // the drawer closes so the section falls back to persisted content.
+  useEffect(() => {
+    if (!store || loading) return;
+    store.setOverride(ContentKeys.whoWeAre, form);
+  }, [store, loading, form]);
+  useEffect(() => {
+    if (!store) return;
+    return () => store.clearOverride(ContentKeys.whoWeAre);
+  }, [store]);
+
   const set = useCallback(<K extends keyof WhoWeAreContent>(field: K, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   }, []);
@@ -70,13 +84,14 @@ function WhoWeAreManager() {
     try {
       const saved = await saveSiteContent(ContentKeys.whoWeAre, form);
       setForm((prev) => ({ ...prev, ...saved }));
+      store?.bumpRefresh();
       success('Content saved successfully.');
     } catch {
       error('Could not save content. Please try again.');
     } finally {
       setSaving(false);
     }
-  }, [form, success, error]);
+  }, [form, success, error, store]);
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
@@ -84,26 +99,28 @@ function WhoWeAreManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-            <Info className="w-5 h-5 text-violet-600" />
+      {/* Header — hidden when embedded in the Live Editor drawer (which supplies its own chrome) */}
+      {!embedded && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
+              <Info className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Who We Are</h1>
+              <p className="text-xs text-gray-400">Update homepage overview content</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Who We Are</h1>
-            <p className="text-xs text-gray-400">Update homepage overview content</p>
-          </div>
+          <button onClick={handleSave} disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-violet-600/20 transition-colors">
+            {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? 'Loading…' : 'Save Changes'}
+          </button>
         </div>
-        <button onClick={handleSave} disabled={saving || loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-violet-600/20 transition-colors">
-          {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-          {loading ? 'Loading…' : 'Save Changes'}
-        </button>
-      </div>
+      )}
 
       {/* Community stats */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -197,6 +214,17 @@ function WhoWeAreManager() {
           );
         })}
       </div>
+
+      {/* Embedded save bar — sticky footer inside the Live Editor drawer */}
+      {embedded && (
+        <div className="sticky bottom-0 -mx-1 mt-2 flex items-center justify-end gap-2 bg-white/90 backdrop-blur border-t border-gray-100 px-1 py-3">
+          <button onClick={handleSave} disabled={saving || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-sky-600/20 transition-colors">
+            {saving || loading ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? 'Loading…' : 'Save Changes'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

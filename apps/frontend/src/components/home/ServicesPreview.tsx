@@ -14,9 +14,9 @@ const serviceKeys = [
 const serviceConfig: Record<string, { Icon: React.ComponentType<{ className?: string }>; gradient: string; iconBg: string; iconColor: string }> = {
   marriage: {
     Icon: Heart,
-    gradient: 'from-rose-50 to-white',
-    iconBg: 'bg-rose-100',
-    iconColor: 'text-rose-500',
+    gradient: 'from-rmc-green-light to-white',
+    iconBg: 'bg-rmc-green-light',
+    iconColor: 'text-rmc-green',
   },
   funeral: {
     Icon: FileText,
@@ -73,7 +73,7 @@ export function ServicesPreview() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <div className="inline-flex items-center gap-2 bg-rmc-green/10 text-rmc-green px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 bg-rmc-green/10 text-rmc-green px-4 py-1.5 rounded-lg text-sm font-semibold mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-rmc-green" />
             {t('nav.services')}
           </div>

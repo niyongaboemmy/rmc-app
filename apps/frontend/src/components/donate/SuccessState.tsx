@@ -188,7 +188,7 @@ export function SuccessState({
             {paymentStatus === 'failed' && (
               <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-left rtl:text-right">
                 <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-                <p className="text-[13px] leading-relaxed text-red-700">{t('payment.failed')}</p>
+                <p className="text-[13px] leading-relaxed text-red-600">{t('payment.failed')}</p>
               </div>
             )}
             {paymentStatus === 'completed' && (

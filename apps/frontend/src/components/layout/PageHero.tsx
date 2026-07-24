@@ -21,14 +21,14 @@ const DEFAULT_SLIDES = [
 
 interface PageHeroProps {
   /** Small uppercase pill above the title. */
-  eyebrow?: string;
-  /** Main heading. Accepts a node so callers can render an inline editor in its place. */
+  eyebrow?: ReactNode;
+  /** Main heading (a string, or an inline-editable node in Edit Mode). */
   title: ReactNode;
   /** Override the heading's responsive font-size classes (defaults to the large hero size). */
   titleClassName?: string;
   /** Override the heading's font weight (defaults to bold). */
   titleWeightClassName?: string;
-  /** Supporting line under the title. Accepts a node for inline editing. */
+  /** Supporting line under the title (a string, or an inline-editable node). */
   subtitle?: ReactNode;
   /** Extra classes for the subtitle (e.g. a lighter weight). */
   subtitleClassName?: string;
@@ -116,7 +116,7 @@ export function PageHero({
           {backHref && (
             <Link
               href={backHref}
-              className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm transition-colors hover:border-rmc-gold/50 hover:text-white"
+              className="mb-7 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm transition-colors hover:border-rmc-gold/50 hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
               {backLabel}
@@ -125,7 +125,7 @@ export function PageHero({
 
           <div className={centered ? 'text-center mx-auto max-w-3xl' : 'text-left max-w-2xl'}>
             {eyebrow && (
-              <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-white/75 backdrop-blur-sm sm:text-xs">
+              <div className="mb-6 inline-flex items-center gap-2.5 rounded-lg border border-white/15 bg-white/5 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-white/75 backdrop-blur-sm sm:text-xs">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
                 {eyebrow}
               </div>

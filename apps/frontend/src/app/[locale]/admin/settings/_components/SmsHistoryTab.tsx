@@ -77,7 +77,7 @@ export function SmsHistoryTab() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading && !data ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 border-2 border-rmc-green border-t-transparent rounded-full animate-spin" />

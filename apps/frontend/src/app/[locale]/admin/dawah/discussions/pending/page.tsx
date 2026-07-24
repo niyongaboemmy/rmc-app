@@ -14,8 +14,8 @@ import { dawahApi, serverMessage, type PendingAnswer } from '@/lib/dawahApi';
  * Scholar review queue.
  *
  * Gated on DISCUSSIONS_VERIFY — and the SERVER additionally demands the caller's role is
- * actually `scholar` (the §3.2 wildcard fix), so a superadmin who lands here still cannot
- * verify.
+ * actually `scholar` or `superadmin` (the §3.2 wildcard fix, widened to the platform owner
+ * by RMC decision 2026-07-20), so a stray wildcard role still cannot verify.
  *
  * Release and Verify are TWO VISUALLY DISTINCT actions, never one button with two labels.
  * Release (neutral) = "this may be seen." Verify (gold) = "RMC says this is correct." If

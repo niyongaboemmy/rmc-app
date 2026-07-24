@@ -9,6 +9,7 @@ import { VERSES } from '@/data/verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePageEdit } from '@/contexts/PageEditContext';
 import { PermissionGate } from '@/components/auth/PermissionGate';
+import { EditModeToggle } from '@/components/edit-mode/EditModeToggle';
 import { Permission } from '@/lib/permissions';
 import Image from 'next/image';
 import { useScrollProgress } from '@/hooks/useScrollProgress';
@@ -345,21 +346,20 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                       // `start-0` not `left-0`: the panel hangs off the leading
                       // edge of its trigger, which flips under RTL.
                       <div className="absolute start-0 top-full pt-2 z-50">
-                        {/* Exactly the bar's own solid layer: bg-rmc-green-deep/90 +
-                            backdrop-blur-xl. The /90 is not a readability risk —
-                            the 24px backdrop blur averages whatever is behind into
-                            a flat wash first, so even a hard white/black split
-                            under the panel moves it by ~4/255. Keep the blur if you
-                            touch the alpha; the two go together.
+                        {/* Solid white panel, matching the navbar's other menus
+                            (user avatar, language switcher) so all three read as
+                            one system. Opaque on purpose: there is no alpha, so
+                            no backdrop-blur is needed — the blur only existed to
+                            flatten what showed through the old translucent green.
 
-                            Every border and fill below is mixed from rmc-green
-                            (#1A7A4A) over rmc-green-deep (#0D3D24) — the same hue
-                            family as the surface. A white-alpha wash would have
-                            desaturated toward grey and read as a foreign panel
-                            dropped on the navbar. */}
+                            The accent is GREEN, not gold. On white, rmc-gold
+                            scores 2.38:1 and rmc-gold-light 1.70:1 — both far
+                            below the 4.5:1 needed for text — while rmc-green hits
+                            5.35:1 and rmc-green-dark 8.02:1. Gold survives here
+                            only as a non-text element (the trigger's underline). */}
                         <div
                           role="menu"
-                          className={`rounded-lg border border-rmc-green/30 bg-rmc-green-deep/90 p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] backdrop-blur-xl animate-slide-down ${
+                          className={`rounded-lg border border-gray-100 bg-white p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,0.28)] animate-slide-down ${
                             link.columns === 2 ? 'w-[34rem]' : 'w-72'
                           }`}
                         >
@@ -378,14 +378,16 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                                 // without a second rule.
                                 className={`group/item flex items-center justify-between gap-3 rounded-md border px-3 py-2.5 outline-none transition-colors duration-200 ${
                                   isActive(href)
-                                    ? 'border-rmc-gold/40 bg-rmc-gold/[0.08]'
-                                    : 'border-rmc-green/25 bg-rmc-green/[0.12] hover:border-rmc-green/60 hover:bg-rmc-green/25 focus-visible:border-rmc-green/60 focus-visible:bg-rmc-green/25'
+                                    ? 'border-rmc-green/30 bg-rmc-green-light'
+                                    : 'border-gray-100 bg-gray-50/70 hover:border-rmc-green/30 hover:bg-rmc-green-light focus-visible:border-rmc-green/30 focus-visible:bg-rmc-green-light'
                                 }`}
                               >
                                 <span className="min-w-0">
                                   <span
                                     className={`block truncate text-[13px] font-semibold transition-colors ${
-                                      isActive(href) ? 'text-rmc-gold-light' : 'text-white/90 group-hover/item:text-white'
+                                      isActive(href)
+                                        ? 'text-rmc-green-dark'
+                                        : 'text-gray-900 group-hover/item:text-rmc-green'
                                     }`}
                                   >
                                     {label}
@@ -393,7 +395,10 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                                   {/* Secondary line. line-clamp-2 because these
                                       strings are the pages' own subtitles — reused
                                       rather than re-translated, so they run long. */}
-                                  <span className="mt-0.5 text-[11px] leading-snug text-white/45 line-clamp-2">
+                                  {/* gray-600, not gray-500: this line also sits on
+                                      the mint active row, where gray-500 drops to
+                                      4.31:1 — under the bar for 11px text. */}
+                                  <span className="mt-0.5 text-[11px] leading-snug text-gray-600 line-clamp-2">
                                     {desc}
                                   </span>
                                 </span>
@@ -401,8 +406,8 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                                   aria-hidden
                                   className={`h-4 w-4 shrink-0 transition-colors ${
                                     isActive(href)
-                                      ? 'text-rmc-gold-light'
-                                      : 'text-white/35 group-hover/item:text-rmc-gold-light'
+                                      ? 'text-rmc-green'
+                                      : 'text-gray-400 group-hover/item:text-rmc-green'
                                   }`}
                                 />
                               </Link>
@@ -465,6 +470,8 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
 
             {isAuthenticated && user ? (
               <div className="hidden lg:flex items-center gap-2">
+                {/* Super-admin: toggle in-context page editing */}
+                <EditModeToggle />
                 <PermissionGate anyOf={[Permission.USERS_VIEW, Permission.ROLES_VIEW, Permission.MEMBERS_VIEW]}>
                   <Link
                     href={`/${locale}/admin/members`}
@@ -656,6 +663,8 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
                       <Shield className="w-4 h-4 text-white/50" /> {t('admin')}
                     </Link>
                   </PermissionGate>
+                  {/* Super-admin: toggle in-context page editing */}
+                  <EditModeToggle variant="mobile" onToggle={() => setMobileOpen(false)} />
                   <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm text-red-300 hover:bg-red-500/15 transition-colors">
                     <LogOut className="w-4 h-4" /> {t('logout')}
                   </button>

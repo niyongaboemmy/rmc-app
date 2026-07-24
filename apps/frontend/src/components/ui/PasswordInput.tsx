@@ -38,7 +38,7 @@ function getStrength(password: string): { score: number; label: string; color: s
   if (score <= 2) return { score, label: 'Fair',   color: 'bg-orange-400' };
   if (score <= 3) return { score, label: 'Good',   color: 'bg-yellow-400' };
   if (score <= 4) return { score, label: 'Strong', color: 'bg-green-500' };
-  return              { score, label: 'Very strong', color: 'bg-emerald-500' };
+  return              { score, label: 'Very strong', color: 'bg-rmc-green' };
 }
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(

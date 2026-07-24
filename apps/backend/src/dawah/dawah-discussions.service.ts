@@ -30,6 +30,13 @@ export interface PublicAuthor {
 }
 
 /**
+ * Roles allowed to release / verify an answer — the authority to speak for RMC on a point
+ * of religion. `scholar` by design; `superadmin` by RMC decision (2026-07-20). Checked
+ * against the caller's ACTUAL role, never the raw permission bit (see assertCanVerify).
+ */
+const VERIFY_ROLE_SLUGS = new Set(['scholar', 'superadmin']);
+
+/**
  * Community Discussions — the read path.
  *
  * ── toPublic() is the single most important thing in this file ───────────────────────
@@ -612,26 +619,27 @@ export class DawahDiscussionsService {
   // ══ ANSWERING + THE SCHOLAR GATE (Phase C) ═════════════════════════════════
 
   /**
-   * THE scholar gate, and the fix for the wildcard finding (plan §3.2).
+   * The verify gate, and the fix for the wildcard finding (plan §3.2).
    *
-   * `@Permissions(DISCUSSIONS_VERIFY)` on the route is NOT enough: a superadmin resolves to
-   * `['*']`, which the guard treats as holding every permission — so it would wave a
-   * superadmin through despite the Scholar role being the only one granted verify. Being
-   * able to run the platform is not being qualified to rule on religious practice.
+   * `@Permissions(DISCUSSIONS_VERIFY)` on the route is NOT enough on its own: a superadmin
+   * resolves to `['*']`, which the guard treats as holding every permission — so the
+   * decorator alone would wave through any wildcard role. Verification is authority over a
+   * point of religion, so it is pinned to specific ROLES, loaded fresh, not to a raw
+   * permission bit.
    *
-   * So verification checks the acting user's ACTUAL role, loaded fresh, and demands it be
-   * `scholar`. A superadmin who is not a scholar is refused here even though the decorator
-   * passed them. If RMC wants someone to verify, they assign the Scholar role — the one
-   * place that authority is meant to live.
+   * Allowed roles: `scholar` (by design — the role RMC appoints for exactly this) and
+   * `superadmin` (by RMC decision, 2026-07-20 — the platform owner may verify too). Any
+   * other role, including one holding DISCUSSIONS_VERIFY through some future wildcard, is
+   * refused here even though the decorator passed them.
    */
-  private async assertScholar(userId: string): Promise<void> {
+  private async assertCanVerify(userId: string): Promise<void> {
     const rows = await this.dataSource.query(
       `SELECT r.slug FROM users u LEFT JOIN roles r ON r.id = u.role_id WHERE u.id = $1`,
       [userId],
     );
-    if (rows[0]?.slug !== 'scholar') {
+    if (!VERIFY_ROLE_SLUGS.has(rows[0]?.slug)) {
       throw new ForbiddenException(
-        'Only an RMC scholar may verify or release an answer. Running the platform is not the same authority.',
+        'Only an RMC scholar or a super admin may verify or release an answer.',
       );
     }
   }
@@ -732,7 +740,7 @@ export class DawahDiscussionsService {
    * answer a scholar merely triaged.
    */
   async releaseAnswer(scholar: User, id: string) {
-    await this.assertScholar(scholar.id);
+    await this.assertCanVerify(scholar.id);
     const answer = await this.answers.findOne({ where: { id } });
     if (!answer) throw new NotFoundException('Answer not found');
 
@@ -749,7 +757,7 @@ export class DawahDiscussionsService {
    * second verify hits the index and becomes a clean 409, not a 500.
    */
   async verifyAnswer(scholar: User, id: string) {
-    await this.assertScholar(scholar.id);
+    await this.assertCanVerify(scholar.id);
     const answer = await this.answers.findOne({ where: { id } });
     if (!answer) throw new NotFoundException('Answer not found');
 
@@ -776,7 +784,7 @@ export class DawahDiscussionsService {
 
   /** Un-verify. Stays published (releasing the endorsement is not un-publishing). */
   async unverifyAnswer(scholar: User, id: string) {
-    await this.assertScholar(scholar.id);
+    await this.assertCanVerify(scholar.id);
     const answer = await this.answers.findOne({ where: { id } });
     if (!answer) throw new NotFoundException('Answer not found');
     await this.dataSource.transaction(async (manager) => {

@@ -83,7 +83,7 @@ export default function HajjContentPage() {
   );
 }
 
-function HajjContentManager() {
+function HajjContentManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
   const [lang, setLang] = useState<Lang>('en');
@@ -185,7 +185,7 @@ function HajjContentManager() {
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
-  const inputClass = `w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green/40 focus:border-transparent ${fontClass}`;
+  const inputClass = `w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`;
 
   // Group the fields so the form reads like the page it edits.
   const groups = FIELDS.reduce<Record<string, FieldDef[]>>((acc, f) => {
@@ -197,20 +197,22 @@ function HajjContentManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/admin/content`} className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-rmc-green/30 hover:text-rmc-green">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rmc-green-light">
-            <Compass className="h-5 w-5 text-rmc-green" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link href={`/${locale}/admin/content`} className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-rmc-green/30 hover:text-rmc-green">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rmc-green-light">
+              <Compass className="h-5 w-5 text-rmc-green" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Hajj Service</h1>
+              <p className="text-xs text-gray-400">Update the Hajj page copy and photo</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Hajj Service</h1>
-            <p className="text-xs text-gray-400">Update the Hajj page copy and photo</p>
-          </div>
-        </div>
+        )}
         <button onClick={handleSave} disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
+          className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save Changes
         </button>
@@ -245,7 +247,7 @@ function HajjContentManager() {
             className="h-28 w-40 shrink-0 rounded-xl object-cover ring-1 ring-gray-100"
           />
           <div className="min-w-0 flex-1">
-            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+            <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
               <ImageIcon className="h-3.5 w-3.5 text-rmc-green" /> Photo
             </label>
             <input
@@ -253,14 +255,14 @@ function HajjContentManager() {
               value={form.about.photoUrl}
               onChange={(e) => setPhoto(e.target.value)}
               placeholder="https://… or an uploaded image key"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green/40"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green"
             />
             <div className="mt-2 flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
                 disabled={uploading}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green disabled:opacity-60"
               >
                 {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                 Upload image
@@ -308,7 +310,7 @@ function HajjContentManager() {
             const value = (form[group] as Record<string, Record<Lang, string>>)[key][lang];
             return (
               <div key={`${group}.${key}`}>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-700">{label}</label>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{label}</label>
                 {rich ? (
                   // Remounted per language: the editor only seeds its content once.
                   <RichTextEditor
@@ -347,7 +349,7 @@ function HajjContentManager() {
           <button
             type="button"
             onClick={addStep}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-rmc-green px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
           >
             <Plus className="h-3.5 w-3.5" /> Add step
           </button>
@@ -372,7 +374,7 @@ function HajjContentManager() {
                       value={step.icon}
                       onChange={(e) => setStepIcon(i, e.target.value)}
                       aria-label={`Step ${i + 1} icon`}
-                      className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green/40"
+                      className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green"
                     >
                       <option value="">No icon</option>
                       {REQUIREMENT_ICON_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
