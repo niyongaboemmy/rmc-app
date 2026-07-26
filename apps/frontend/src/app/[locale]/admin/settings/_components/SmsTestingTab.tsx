@@ -86,7 +86,7 @@ export function SmsTestingTab({ gatewayActive }: Props) {
               rows={5}
               maxLength={160}
               placeholder="Enter test message..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green resize-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rmc-green resize-none transition-colors"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">{message.length}/160</p>
           </div>

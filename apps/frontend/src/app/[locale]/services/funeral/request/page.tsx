@@ -28,7 +28,7 @@ export default async function FuneralRequestPage({
             className="object-cover object-center"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-slate-950/70 to-black/45" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/70 to-black/45" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-25" aria-hidden="true" />
           <div className="relative mx-auto max-w-3xl px-4 pt-28 pb-4 text-center sm:px-6">
             <div className="mb-4 flex justify-center">
