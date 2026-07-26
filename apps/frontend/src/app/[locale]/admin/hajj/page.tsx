@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ConfirmModal } from '@/components/ui/Modal';
 import {
   hajjApi,
   HAJJ_FINAL_STATUSES,
@@ -44,6 +45,32 @@ function Portal({ children }: { children: React.ReactNode }) {
   useEffect(() => setMounted(true), []);
   return mounted ? createPortal(children, document.body) : null;
 }
+
+/**
+ * Copy for the "are you sure?" step on the actions that notify the applicant and
+ * can't be taken back. Only the confirmed actions appear here; start-review and
+ * document verification stay one-click.
+ */
+const CONFIRM_COPY: Partial<
+  Record<HajjStatus, { title: string; message: string; confirmLabel: string; danger?: boolean }>
+> = {
+  approved: {
+    title: 'Approve this application?',
+    message: 'The applicant will be notified by SMS and email, and this decision is final.',
+    confirmLabel: 'Approve',
+  },
+  rejected: {
+    title: 'Decline this application?',
+    message: 'The applicant will be notified with the reason you entered. This decision is final.',
+    confirmLabel: 'Decline',
+    danger: true,
+  },
+  more_info_requested: {
+    title: 'Send this request?',
+    message: 'The applicant will be texted and emailed asking for the selected document(s).',
+    confirmLabel: 'Send request',
+  },
+};
 
 const STATUS_OPTIONS: { value: HajjStatus | ''; label: string }[] = [
   { value: '', label: 'All statuses' },
@@ -277,6 +304,8 @@ function ReviewDrawer({
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState<HajjStatus | null>(null);
   const [error, setError] = useState('');
+  // A pending status change awaiting the admin's "are you sure?" confirmation.
+  const [confirmAction, setConfirmAction] = useState<HajjStatus | null>(null);
   const [rejecting, setRejecting] = useState(false);
   // Mirrors `rejecting`: the message is required, so it is composed before the
   // action fires rather than after.
@@ -548,7 +577,7 @@ function ReviewDrawer({
                   </ActionButton>
                 )}
                 <ActionButton
-                  onClick={() => void move('approved')}
+                  onClick={() => setConfirmAction('approved')}
                   busy={busy === 'approved'}
                   icon={CheckCircle2}
                   className="bg-rmc-green hover:bg-rmc-green-dark"
@@ -558,7 +587,7 @@ function ReviewDrawer({
                 {askingInfo ? (
                   <>
                     <ActionButton
-                      onClick={() => void move('more_info_requested')}
+                      onClick={() => setConfirmAction('more_info_requested')}
                       busy={busy === 'more_info_requested'}
                       disabled={!infoRequest.trim() || infoDocTypes.length === 0}
                       icon={HelpCircle}
@@ -587,7 +616,7 @@ function ReviewDrawer({
                 {rejecting ? (
                   <>
                     <ActionButton
-                      onClick={() => void move('rejected')}
+                      onClick={() => setConfirmAction('rejected')}
                       busy={busy === 'rejected'}
                       disabled={!reason.trim()}
                       icon={XCircle}
@@ -647,6 +676,23 @@ function ReviewDrawer({
         </aside>
 
         {viewing && <Lightbox doc={viewing} onClose={() => setViewing(null)} />}
+
+        {/* Confirm the applicant-notifying, irreversible decisions before they fire. */}
+        {confirmAction && CONFIRM_COPY[confirmAction] && (
+          <ConfirmModal
+            open
+            onClose={() => setConfirmAction(null)}
+            onConfirm={async () => {
+              await move(confirmAction);
+              setConfirmAction(null);
+            }}
+            title={CONFIRM_COPY[confirmAction]!.title}
+            message={CONFIRM_COPY[confirmAction]!.message}
+            confirmLabel={CONFIRM_COPY[confirmAction]!.confirmLabel}
+            variant={CONFIRM_COPY[confirmAction]!.danger ? 'danger' : 'default'}
+            isLoading={busy === confirmAction}
+          />
+        )}
       </div>
     </Portal>
   );
