@@ -1969,11 +1969,9 @@
       "status": {
         "back": "Subira kuri Serivisi za Hija",
         "title": "Reba aho ubusabe bwa Hajj bugeze",
-        "sub": "Andika nimero y’ubusabe wahawe wiyandikisha.",
-        "placeholder": "RMC-HAJ-202607-00001",
-        "check": "Reba aho bigeze",
-        "notFound": "Nta busabe bufite iyo nimero. Ongera ugenzure unyuze.",
-        "error": "Ntibishobotse kureba aho bigeze ubu. Ongera ugerageze.",
+        "sub": "Andika nimero y’ubusabe bwawe. Tuzakohereza kode y’imibare 6 kuri telefoni wiyandikishijeho.",
+        "codePlaceholder": "Nimero y’ubusabe (urugero: RMC-HAJ-2607-A1B2C3D4)",
+        "codeHint": "Nimero iri muri SMS cyangwa imeyili yo kwemeza. Ntugomba kwandika telefoni — tuyifite.",
         "submittedOn": "Byoherejwe ku wa",
         "lastUpdate": "Ivugururwa riheruka",
         "applicant": "Usaba",
@@ -1981,14 +1979,31 @@
         "steps": {
           "submitted": "Ubusabe bwakiriwe",
           "under_review": "Burimo gusuzumwa n’itsinda ryacu",
+          "more_info_requested": "Hakenewe andi makuru",
           "approved": "Bwemewe",
           "rejected": "Ntibwemewe"
         },
         "stepHint": {
           "submitted": "Twakiriye ubusabe bwawe, tugiye gutangira kubugenzura.",
           "under_review": "Itsinda ryacu ririmo kugenzura pasiporo n’ibimenyetso by’ubwishyu.",
+          "more_info_requested": "Itsinda ryacu rikeneye indi nyandiko mbere y’uko isuzuma rikomeza. Yishyire hano hepfo.",
           "approved": "Twishimiye kukumenyesha ko bwemewe. Itsinda ryacu rizakuvugisha.",
           "rejected": "Ubusabe bwawe ntibwemewe. Reba impamvu hepfo."
+        },
+        "upload": {
+          "requested": "Icyo dukeneye",
+          "choose": "Hitamo dosiye",
+          "remove": "Kuraho",
+          "send": "Ohereza inyandiko",
+          "sending": "Kohereza…",
+          "sentTitle": "Inyandiko yakiriwe",
+          "sentHint": "Murakoze. Ubusabe bwawe bwagarutse ku basuzuma — tuzakumenyesha icyemezo.",
+          "tooLarge": "Iyi dosiye irenze 10 MB. Nyamuneka ohereza dosiye ntoya.",
+          "wrongType": "Ubwo bwoko bwa dosiye ntibwemewe. Ohereza ifoto (JPG, PNG, WEBP, HEIC) cyangwa PDF.",
+          "sessionExpired": "Igihe cyo kwemeza cyararangiye. Ongera wemeze kugira ngo wohereze.",
+          "notAwaiting": "Iri saba ryamaze gusubizwa. Vugurura urebe aho bigeze.",
+          "uploading": "Kohereza…",
+          "failed": "Ntibyashobotse kohereza inyandiko. Reba interineti yawe hanyuma wongere ugerageze."
         }
       },
       "bankAccounts": {
@@ -2011,7 +2026,9 @@
     "codePlaceholder": "Kode yo gukurikirana (urugero RMC-…-2607-XXXXXXXX)",
     "codeHint": "Iyi ni kode iri kuri SMS/email yo kwemeza ko wasabye. Ntugomba kwandika telefone — twayifite.",
     "sendCode": "Ohereza kode y'ibanga",
+    "check": "Reba aho bigeze",
     "sending": "Kohereza…",
+    "otpTitle": "Andika kode y'ibanga",
     "otpSent": "Twoherereje kode y'imibare 6 kuri SMS kuri telefone iri ku isaba ryawe. Yandike hano.",
     "otpSentTo": "Twoherereje kode y'imibare 6 kuri SMS kuri {phone}. Yandike hano.",
     "otpPlaceholder": "Kode y'imibare 6",

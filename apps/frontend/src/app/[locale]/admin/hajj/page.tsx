@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Compass, Search, RefreshCw, Loader2, CheckCircle2, XCircle, Clock,
-  FileText, Phone, Mail, MapPin, BookUser, X, History, Eye, Download,
+  FileText, Phone, Mail, MapPin, BookUser, X, History, Eye, Download, HelpCircle,
 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,7 @@ import {
   HAJJ_DOCUMENT_LABELS,
   type HajjApplication,
   type HajjDocument,
+  type HajjDocumentType,
   type HajjStatus,
   type HajjStatusHistoryEntry,
 } from '@/lib/hajjApi';
@@ -48,6 +49,7 @@ const STATUS_OPTIONS: { value: HajjStatus | ''; label: string }[] = [
   { value: '', label: 'All statuses' },
   { value: 'submitted', label: HAJJ_STATUS_LABELS.submitted },
   { value: 'under_review', label: HAJJ_STATUS_LABELS.under_review },
+  { value: 'more_info_requested', label: HAJJ_STATUS_LABELS.more_info_requested },
   { value: 'approved', label: HAJJ_STATUS_LABELS.approved },
   { value: 'rejected', label: HAJJ_STATUS_LABELS.rejected },
 ];
@@ -276,6 +278,13 @@ function ReviewDrawer({
   const [busy, setBusy] = useState<HajjStatus | null>(null);
   const [error, setError] = useState('');
   const [rejecting, setRejecting] = useState(false);
+  // Mirrors `rejecting`: the message is required, so it is composed before the
+  // action fires rather than after.
+  const [askingInfo, setAskingInfo] = useState(false);
+  const [infoRequest, setInfoRequest] = useState('');
+  // Which receipt(s) the applicant must (re)upload — the tracking page shows
+  // exactly these slots, so the ask is never left to guesswork.
+  const [infoDocTypes, setInfoDocTypes] = useState<HajjDocumentType[]>([]);
   const [viewing, setViewing] = useState<HajjDocument | null>(null);
   const [docs, setDocs] = useState<HajjDocument[]>(app.documents ?? []);
 
@@ -306,6 +315,9 @@ function ReviewDrawer({
         status,
         notes: notes.trim() || undefined,
         ...(status === 'rejected' ? { rejectionReason: reason.trim() } : {}),
+        ...(status === 'more_info_requested'
+          ? { moreInfoRequested: infoRequest.trim(), moreInfoDocumentTypes: infoDocTypes }
+          : {}),
       });
       onDecided(
         updated,
@@ -313,11 +325,16 @@ function ReviewDrawer({
           ? `${app.applicationNumber} approved — applicant notified`
           : status === 'rejected'
             ? `${app.applicationNumber} declined — applicant notified with the reason`
-            : `${app.applicationNumber} marked under review — applicant notified`,
+            : status === 'more_info_requested'
+              ? `${app.applicationNumber} — request sent; the applicant can now upload it`
+              : `${app.applicationNumber} marked under review — applicant notified`,
       );
       setRejecting(false);
+      setAskingInfo(false);
       setNotes('');
       setReason('');
+      setInfoRequest('');
+      setInfoDocTypes([]);
     } catch (err: unknown) {
       setError(
         (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
@@ -362,28 +379,66 @@ function ReviewDrawer({
             <Row icon={BookUser} label="Passport" value={app.passportNumber} mono />
           </section>
 
-          {/* The receipts themselves — click to open the actual file. */}
+          {/* The receipts themselves, grouped by category — a re-upload keeps the
+              original alongside it, so a category can hold more than one file. */}
           <section>
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Payment receipts
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {docs.map((doc) => (
-                <DocumentCard
-                  key={doc.id}
-                  doc={doc}
-                  canVerify={canApprove}
-                  onOpen={() => setViewing(doc)}
-                  onVerified={onDocVerified}
-                />
-              ))}
-              {docs.length === 0 && (
-                <p className="col-span-2 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500">
-                  No receipts were uploaded with this application.
-                </p>
-              )}
-            </div>
+            {docs.length === 0 ? (
+              <p className="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500">
+                No receipts were uploaded with this application.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {(Object.keys(HAJJ_DOCUMENT_LABELS) as HajjDocumentType[]).map((type) => {
+                  const group = docs
+                    .filter((d) => d.documentType === type)
+                    .sort((a, b) => +new Date(b.uploadedAt) - +new Date(a.uploadedAt));
+                  return (
+                    <div key={type}>
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        {HAJJ_DOCUMENT_LABELS[type]}
+                        {group.length > 1 && (
+                          <span className="ml-1.5 font-normal normal-case text-gray-400">· {group.length} versions</span>
+                        )}
+                      </p>
+                      {group.length === 0 ? (
+                        <p className="rounded-xl bg-gray-50 px-4 py-2.5 text-xs text-gray-400">Not uploaded.</p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          {group.map((doc) => (
+                            <DocumentCard
+                              key={doc.id}
+                              doc={doc}
+                              canVerify={canApprove}
+                              onOpen={() => setViewing(doc)}
+                              onVerified={onDocVerified}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
+
+          {/* Waiting on the applicant. Rendered ALONGSIDE the decision controls,
+              not instead of them — a reviewer must still be able to approve or
+              decline (or re-ask) without waiting for an upload that may not come. */}
+          {!decided && app.status === 'more_info_requested' && (
+            <div className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-800 ring-1 ring-blue-100">
+              <p className="font-semibold">Waiting for the applicant</p>
+              {app.moreInfoRequested && (
+                <p className="mt-1 leading-relaxed">Requested: {app.moreInfoRequested}</p>
+              )}
+              <p className="mt-1 text-[11px] text-blue-600">
+                Returns to review automatically once they upload.
+              </p>
+            </div>
+          )}
 
           {/* Decision */}
           {decided ? (
@@ -435,6 +490,50 @@ function ReviewDrawer({
                 </label>
               )}
 
+              {askingInfo && (
+                <div className="space-y-3">
+                  <div>
+                    <span className="mb-1.5 block text-xs font-semibold text-blue-700">
+                      Which document(s) do you need? <span className="font-normal">(required)</span>
+                    </span>
+                    <div className="space-y-1.5">
+                      {(Object.keys(HAJJ_DOCUMENT_LABELS) as HajjDocumentType[]).map((type) => (
+                        <label key={type} className="flex items-center gap-2 text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={infoDocTypes.includes(type)}
+                            onChange={(e) =>
+                              setInfoDocTypes((prev) =>
+                                e.target.checked ? [...prev, type] : prev.filter((x) => x !== type),
+                              )
+                            }
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          {HAJJ_DOCUMENT_LABELS[type]}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-blue-700">
+                      What is still needed <span className="font-normal">(required — sent to the applicant)</span>
+                    </span>
+                    <textarea
+                      value={infoRequest}
+                      onChange={(e) => setInfoRequest(e.target.value)}
+                      rows={2}
+                      autoFocus
+                      className="w-full resize-none rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30"
+                      placeholder="e.g. The advance payment receipt is cut off — please re-upload the full page"
+                    />
+                    <span className="mt-1 block text-[11px] text-gray-400">
+                      They receive this by SMS and email, and can upload the selected document(s) from the tracking page.
+                    </span>
+                  </label>
+                </div>
+              )}
+
               {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
 
               <div className="flex flex-wrap gap-2">
@@ -456,6 +555,35 @@ function ReviewDrawer({
                 >
                   Approve
                 </ActionButton>
+                {askingInfo ? (
+                  <>
+                    <ActionButton
+                      onClick={() => void move('more_info_requested')}
+                      busy={busy === 'more_info_requested'}
+                      disabled={!infoRequest.trim() || infoDocTypes.length === 0}
+                      icon={HelpCircle}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Send request
+                    </ActionButton>
+                    <button
+                      onClick={() => { setAskingInfo(false); setInfoRequest(''); setInfoDocTypes([]); }}
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-white"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  !rejecting &&
+                  app.status !== 'more_info_requested' && (
+                    <button
+                      onClick={() => setAskingInfo(true)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50"
+                    >
+                      <HelpCircle className="h-4 w-4" aria-hidden="true" /> Request more info
+                    </button>
+                  )
+                )}
                 {rejecting ? (
                   <>
                     <ActionButton
@@ -475,12 +603,16 @@ function ReviewDrawer({
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => setRejecting(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
-                  >
-                    <XCircle className="h-4 w-4" aria-hidden="true" /> Decline
-                  </button>
+                  // Hidden while composing an info request, so the two
+                  // message-required flows can't be half-filled at once.
+                  !askingInfo && (
+                    <button
+                      onClick={() => setRejecting(true)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                    >
+                      <XCircle className="h-4 w-4" aria-hidden="true" /> Decline
+                    </button>
+                  )
                 )}
               </div>
               <p className="text-[11px] leading-relaxed text-gray-400">
@@ -614,11 +746,12 @@ function DocumentCard({
         </span>
       </button>
       <div className="space-y-1.5 px-3 py-2.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-          {HAJJ_DOCUMENT_LABELS[doc.documentType]}
-        </p>
+        {/* The category label now lives on the group heading; show the upload
+            date here so two files in one category are easy to tell apart. */}
         <p className="truncate text-xs font-medium text-gray-900">{doc.fileName}</p>
-        <p className="text-[11px] text-gray-400">{prettySize(doc.fileSize)}</p>
+        <p className="text-[11px] text-gray-400">
+          {prettySize(doc.fileSize)} · {new Date(doc.uploadedAt).toLocaleDateString()}
+        </p>
         <div className="flex items-center gap-1.5 pt-1">
           <button
             onClick={onOpen}

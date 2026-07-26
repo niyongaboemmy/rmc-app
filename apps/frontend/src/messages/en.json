@@ -1969,11 +1969,9 @@
       "status": {
         "back": "Back to Hajj Services",
         "title": "Track your Hajj application",
-        "sub": "Enter the application number you received when you registered.",
-        "placeholder": "RMC-HAJ-202607-00001",
-        "check": "Check status",
-        "notFound": "No application found with that number. Check it and try again.",
-        "error": "Could not check the status right now. Please try again.",
+        "sub": "Enter your application number. We'll text a 6-digit code to the phone you registered with.",
+        "codePlaceholder": "Application number (e.g. RMC-HAJ-2607-A1B2C3D4)",
+        "codeHint": "The number from your confirmation SMS or email. No need to type your phone — we already have it.",
         "submittedOn": "Submitted on",
         "lastUpdate": "Last update",
         "applicant": "Applicant",
@@ -1981,14 +1979,31 @@
         "steps": {
           "submitted": "Application received",
           "under_review": "Under review by our team",
+          "more_info_requested": "More information needed",
           "approved": "Approved",
           "rejected": "Not approved"
         },
         "stepHint": {
           "submitted": "We have your application and will begin verification shortly.",
           "under_review": "Our team is verifying your passport details and payment proofs.",
+          "more_info_requested": "Our team needs one more document before the review can continue. Upload it below.",
           "approved": "Congratulations. Our team will contact you with the next steps.",
           "rejected": "Your application was not approved. See the reason below."
+        },
+        "upload": {
+          "requested": "What we need",
+          "choose": "Choose a file",
+          "remove": "Remove",
+          "send": "Send document",
+          "sending": "Sending…",
+          "sentTitle": "Document received",
+          "sentHint": "Thank you. Your application is back with our reviewers — we will notify you of the decision.",
+          "tooLarge": "That file is larger than 10 MB. Please upload a smaller file.",
+          "wrongType": "That file type isn't accepted. Upload a photo (JPG, PNG, WEBP, HEIC) or a PDF.",
+          "sessionExpired": "Your verification session has expired. Please verify again to upload.",
+          "notAwaiting": "This request was already answered. Refresh to see the latest status.",
+          "uploading": "Uploading…",
+          "failed": "Could not send the document. Please check your connection and try again."
         }
       },
       "bankAccounts": {
@@ -2011,7 +2026,9 @@
     "codePlaceholder": "Tracking code (e.g. RMC-…-2607-XXXXXXXX)",
     "codeHint": "This is the code from your submission SMS/email. No need to type your phone — we already have it.",
     "sendCode": "Send verification code",
+    "check": "Check status",
     "sending": "Sending…",
+    "otpTitle": "Enter verification code",
     "otpSent": "We've sent a 6-digit code by SMS to the phone on your application. Enter it below.",
     "otpSentTo": "We've sent a 6-digit code by SMS to {phone}. Enter it below.",
     "otpPlaceholder": "6-digit code",

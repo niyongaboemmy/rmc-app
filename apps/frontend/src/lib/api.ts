@@ -89,9 +89,14 @@ export const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor — attach access token
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (typeof window !== 'undefined') {
+  // Never clobber an Authorization a caller set explicitly. The OTP-gated
+  // "track your application" calls send a short-lived TRACKING token, not the
+  // logged-in user's access token — overwriting it (whenever an admin happens to
+  // be logged in on the same browser) makes the backend reject a valid tracking
+  // session as expired. Only fall back to the stored token when none was given.
+  if (typeof window !== 'undefined' && config.headers && !config.headers.Authorization) {
     const token = localStorage.getItem('rmc_access_token');
-    if (token && config.headers) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
@@ -105,7 +110,12 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register');
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    // Public OTP-gated tracking calls carry their own short-lived token, not the
+    // admin session — a 401 there means "re-verify", never "refresh the admin
+    // token and, failing that, redirect to the admin login". Let the caller
+    // handle it so the applicant sees the right message instead of being bounced.
+    const isTrackingEndpoint = originalRequest.url?.includes('/applications/track');
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint && !isTrackingEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve) => {
           subscribeTokenRefresh((token) => {
