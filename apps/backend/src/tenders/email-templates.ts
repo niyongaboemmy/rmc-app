@@ -58,7 +58,12 @@ function refLine(ref: string, tenderTitle?: string): string {
 }
 
 export const EmailTemplates = {
-  submission(company: string, ref: string, tenderTitle: string): { subject: string; html: string } {
+  submission(
+    company: string,
+    ref: string,
+    trackingCode: string,
+    tenderTitle: string,
+  ): { subject: string; html: string } {
     return {
       subject: `Bid received — ${ref}`,
       html: wrap(
@@ -67,7 +72,10 @@ export const EmailTemplates = {
           p(
             'Your tender application has been received. It will be evaluated after the submission deadline closes, and you will be notified of the outcome.',
           ) +
-          refLine(ref, tenderTitle),
+          refLine(ref, tenderTitle) +
+          p(
+            `To check your status without signing in, use your tracking code <strong>${trackingCode}</strong> on the tenders page — keep it safe.`,
+          ),
       ),
     };
   },

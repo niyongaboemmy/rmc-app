@@ -1379,6 +1379,8 @@
         "applyCta": "Start an application",
         "statusTitle": "Check your status",
         "statusText": "Track a bid you have already submitted, update it, or withdraw it.",
+        "trackPlaceholder": "Bid tracking code",
+        "trackHint": "The tracking code from your submission SMS or email. We'll text a verification code to the phone on your bid.",
         "statusCta": "Check status",
         "stepsTitle": "How to apply",
         "stepsSubtitle": "Four steps from opportunity to submitted bid.",
@@ -1424,6 +1426,8 @@
             "text": "Bids cannot be submitted or edited once a tender's deadline has passed."
           }
         },
+        "browseTitle": "Browse open tenders",
+        "browseNote": "Every procurement and contracting opportunity currently published by RMC. Filter by status or search to find a specific tender, then open it for full details and attachments.",
         "boardTitle": "See what's open right now",
         "boardText": "Browse every tender RMC has published, with deadlines and attached documents.",
         "boardCta": "View all tenders"
@@ -1504,6 +1508,8 @@
         "successEditText": "Your changes have been saved and your bid is back with the evaluation committee.",
         "yourReference": "Your reference number",
         "copyReference": "Copy reference number",
+        "yourTrackingCode": "Your tracking code",
+        "trackingCodeHint": "Use this to check your bid status without signing in — keep it safe.",
         "checkStatusBtn": "Track this bid",
         "browseMoreBtn": "Browse more tenders"
       },
@@ -3352,6 +3358,14 @@
     "title": "Open Tenders",
     "subtitle": "Procurement and contracting opportunities published by Rwanda Muslim Community.",
     "backToHome": "Back to Home",
+    "searchPlaceholder": "Search tenders…",
+    "search": {
+      "clear": "Clear search"
+    },
+    "pagination": {
+      "previous": "Previous page",
+      "next": "Next page"
+    },
     "filters": {
       "all": "All Tenders",
       "open": "Open",
@@ -3367,15 +3381,19 @@
       "todayUrgent": "Closes today!",
       "tomorrow": "Closes tomorrow",
       "inDays": "Closes in {days} days",
+      "dayRemaining": "day remaining",
+      "daysRemaining": "days remaining",
       "remaining": "{pct}% time remaining"
     },
     "empty": {
       "title": "No tenders found",
       "allSubtitle": "No tenders are published at this time.",
+      "noMatch": "No tenders match “{query}”.",
       "viewAll": "View all tenders"
     },
     "card": {
-      "view": "View"
+      "view": "View",
+      "viewDetails": "View details"
     },
     "detail": {
       "heroTitle": "Tender Details",
@@ -3392,8 +3410,8 @@
       "attachments": "Attachments ({count})",
       "cta": {
         "title": "Interested in this tender?",
-        "subtitle": "Submit your bid or contact RMC before the deadline.",
-        "button": "Contact RMC →"
+        "subtitle": "Submit your bid before the deadline.",
+        "button": "Submit a bid"
       },
       "notFound": {
         "message": "Tender not found",

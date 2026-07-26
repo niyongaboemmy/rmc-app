@@ -9,6 +9,8 @@ import {
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, In, DataSource, IsNull } from 'typeorm';
 import { TenderApplication, TenderApplicationStatus } from './entities/tender-application.entity';
+import type { TrackingSubject } from '../tracking/tracking-verification.service';
+import { generateTrackingCode } from '../tracking/tracking-code.util';
 import {
   TenderApplicationDocument,
   TenderDocumentType,
@@ -103,6 +105,45 @@ export class TendersService {
     return tender.titleI18n?.en || tender.title;
   }
 
+  // ── Secure public tracking (phone-OTP gated) ──────────────────────────────────
+
+  /**
+   * Resolve a bid's public tracking code to the OTP subject (id + phone), or null.
+   *
+   * Deliberately resolves the crypto-random `trackingCode`, NOT the sequential
+   * `applicationNumber`: the latter is enumerable, so accepting it would let an
+   * attacker guess references and trigger OTP SMS to their owners. The tracking
+   * code (32^8 combinations) is not guessable, and nothing is disclosed without
+   * the phone OTP either way.
+   */
+  async findSubjectByCode(code: string): Promise<TrackingSubject | null> {
+    const value = (code || '').trim().toUpperCase();
+    if (!value) return null;
+    const app = await this.appRepo.findOne({
+      where: { trackingCode: value },
+      select: { id: true, phone: true },
+    });
+    return app ? { id: app.id, phone: app.phone } : null;
+  }
+
+  /** Minimal, PII-safe status view for a verified tracking session (by id). */
+  async getTrackingInfo(id: string) {
+    const app = await this.appRepo.findOne({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
+    const tender = await this.announcementRepo.findOne({ where: { id: app.tenderId } });
+    return {
+      applicationNumber: app.applicationNumber,
+      companyName: app.companyName,
+      tenderTitle: tender ? this.tenderTitle(tender) : null,
+      tenderTitleI18n: tender?.titleI18n ?? null,
+      status: app.status,
+      moreInfoRequested: app.moreInfoRequested,
+      rejectionReason: app.rejectionReason,
+      submittedAt: app.submittedAt,
+      updatedAt: app.updatedAt,
+    };
+  }
+
   // ── Documents ────────────────────────────────────────────────────────────────
 
   /**
@@ -146,9 +187,11 @@ export class TendersService {
     }
 
     const applicationNumber = await this.generateApplicationNumber();
+    const trackingCode = await this.generateUniqueTrackingCode();
 
     const application = this.appRepo.create({
       applicationNumber,
+      trackingCode,
       tenderId: dto.tenderId,
       applicantId,
       companyName: dto.companyName,
@@ -613,6 +656,16 @@ export class TendersService {
     return `RMC-TND-${year}${month}-${seq}`;
   }
 
+  /** Crypto-random public tracking code, retried on the (rare) collision. */
+  private async generateUniqueTrackingCode(): Promise<string> {
+    for (let i = 0; i < 5; i++) {
+      const code = generateTrackingCode('RMC-TND');
+      const clash = await this.appRepo.count({ where: { trackingCode: code } });
+      if (clash === 0) return code;
+    }
+    throw new Error('Could not generate a unique tracking code');
+  }
+
   /**
    * Persists scalar column changes via a targeted `.update()` rather than
    * `.save()` on the loaded entity.
@@ -689,10 +742,15 @@ export class TendersService {
 
   private sendSubmissionNotice(application: TenderApplication, tenderTitle: string): void {
     this.notify(application, 'tender.submission', {
-      sms: SmsTemplates.submission(application.applicationNumber, tenderTitle),
+      sms: SmsTemplates.submission(
+        application.applicationNumber,
+        application.trackingCode,
+        tenderTitle,
+      ),
       email: EmailTemplates.submission(
         application.companyName,
         application.applicationNumber,
+        application.trackingCode,
         tenderTitle,
       ),
     });

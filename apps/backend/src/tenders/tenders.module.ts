@@ -5,18 +5,21 @@ import { TenderApplicationDocument } from './entities/tender-application-documen
 import { TenderApplicationStatusHistory } from './entities/tender-application-status-history.entity';
 import { TendersService } from './tenders.service';
 import { TendersController } from './tenders.controller';
+import { TendersPublicController } from './tenders-public.controller';
 import { TendersAdminController } from './tenders-admin.controller';
 import { Announcement } from '../public/entities/announcement.entity';
 import { User } from '../users/entities/user.entity';
 import { NotificationSettingsModule } from '../integrations/notifications/notification-settings.module';
 import { SmsModule } from '../integrations/sms/sms.module';
 import { EmailModule } from '../integrations/email/email.module';
+import { TrackingModule } from '../tracking/tracking.module';
 
 @Module({
   imports: [
     NotificationSettingsModule,
     SmsModule,
     EmailModule,
+    TrackingModule,
     // `Announcement` is registered here read-only — tenders are announcement rows
     // (type='tender'), so this module needs to look them up to validate a bid's
     // target and deadline. It never writes to them; PublicModule owns that.
@@ -29,7 +32,7 @@ import { EmailModule } from '../integrations/email/email.module';
     ]),
   ],
   providers: [TendersService],
-  controllers: [TendersController, TendersAdminController],
+  controllers: [TendersPublicController, TendersController, TendersAdminController],
   exports: [TendersService],
 })
 export class TendersModule {}

@@ -21,6 +21,7 @@ type I18n = { en: string; rw: string; ar: string };
 
 type Tender = {
   id: string;
+  slug: string | null;
   title: string;
   content: string;
   titleI18n:   I18n | null;
@@ -133,7 +134,7 @@ export function TendersSection() {
             </div>
           </div>
           <Link
-            href={`/${locale}/tenders`}
+            href={`/${locale}/services/tender`}
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark transition-colors"
           >
             {t('card.view')} <ArrowRight className="w-4 h-4" />
@@ -156,7 +157,7 @@ export function TendersSection() {
               return (
               <Link
                 key={tender.id}
-                href={`/${locale}/tenders/${tender.id}`}
+                href={`/${locale}/tenders/${tender.slug ?? tender.id}`}
                 className={`flex flex-col p-5 rounded-lg border border-rmc-gold/20 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 group ${
                   visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                 }`}
@@ -199,7 +200,7 @@ export function TendersSection() {
 
         <div className="mt-6 flex sm:hidden">
           <Link
-            href={`/${locale}/tenders`}
+            href={`/${locale}/services/tender`}
             className="flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark transition-colors"
           >
             {t('empty.viewAll')} <ArrowRight className="w-4 h-4" />

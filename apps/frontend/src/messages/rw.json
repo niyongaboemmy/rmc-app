@@ -1379,6 +1379,8 @@
         "applyCta": "Tangira gusaba",
         "statusTitle": "Reba aho ugeze",
         "statusCta": "Reba aho bigeze",
+        "trackPlaceholder": "Kode yo gukurikirana ipiganwa",
+        "trackHint": "Kode yo gukurikirana iri muri SMS cyangwa imeyili yo kwemeza gutanga. Tuzakohereza kode y'ibanga kuri telefoni iri ku ipiganwa.",
         "statusText": "Kurikirana ipiganwa wamaze gutanga, urihindure, cyangwa urikureho.",
         "stepsTitle": "Uko usaba",
         "stepsSubtitle": "Intambwe enye kuva ku ihirwe kugeza ku ipiganwa ryatanzwe.",
@@ -1424,6 +1426,8 @@
             "text": "Ipiganwa ntirishobora gutangwa cyangwa guhindurwa igihe ntarengwa cyarenze."
           }
         },
+        "browseTitle": "Reba amasoko afunguye",
+        "browseNote": "Amahirwe yose y'amasoko RMC yatangaje. Yungurura ukurikije uko ahagaze cyangwa ushakishe kugira ngo ubone isoko runaka, hanyuma urifungure urebe amakuru yuzuye n'inyandiko ziriho.",
         "boardTitle": "Reba ibikinguye ubu",
         "boardText": "Reba amatumba yose RMC yatangaje, hamwe n'ibihe ntarengwa n'inyandiko.",
         "boardCta": "Reba amatumba yose"
@@ -1504,6 +1508,8 @@
         "successEditText": "Impinduka zawe zabitswe kandi ipiganwa ryawe ryagarutse ku itsinda risuzuma.",
         "yourReference": "Nomero y'ipiganwa ryawe",
         "copyReference": "Koporora nomero",
+        "yourTrackingCode": "Kode yo gukurikirana",
+        "trackingCodeHint": "Iyi ni yo ukoresha kureba aho ipiganwa ryawe rigeze utinjiye — igume neza.",
         "checkStatusBtn": "Kurikirana iri piganwa",
         "browseMoreBtn": "Reba andi matumba"
       },
@@ -3352,6 +3358,14 @@
     "title": "Itangazo ry'Umushinga",
     "subtitle": "Amahirwe yo gupiganira imishinga yakuwe na Sosiyete y'Abasilamu yo mu Rwanda.",
     "backToHome": "Subira Ahabanza",
+    "searchPlaceholder": "Shakisha amasoko…",
+    "search": {
+      "clear": "Siba ubushakashatsi"
+    },
+    "pagination": {
+      "previous": "Urupapuro rwabanje",
+      "next": "Urupapuro rukurikira"
+    },
     "filters": {
       "all": "Imishinga Yose",
       "open": "Ifunguye",
@@ -3367,15 +3381,19 @@
       "todayUrgent": "Ifunga uyu munsi!",
       "tomorrow": "Ifunga ejo",
       "inDays": "Ifunga mu minsi {days}",
+      "dayRemaining": "umunsi usigaye",
+      "daysRemaining": "iminsi isigaye",
       "remaining": "{pct}% y'igihe gisigaye"
     },
     "empty": {
       "title": "Nta mishinga yabonetse",
       "allSubtitle": "Nta mishinga itangazwa ubu.",
+      "noMatch": "Nta soko rihuye na “{query}”.",
       "viewAll": "Reba imishinga yose"
     },
     "card": {
-      "view": "Reba"
+      "view": "Reba",
+      "viewDetails": "Reba birambuye"
     },
     "detail": {
       "heroTitle": "Amakuru y'Umushinga",
@@ -3392,8 +3410,8 @@
       "attachments": "Inyandiko ({count})",
       "cta": {
         "title": "Uzirikana uyu mushinga?",
-        "subtitle": "Ohereza igitekerezo cyawe cyangwa watumanahana na RMC mbere y'igihe.",
-        "button": "Watumanahane →"
+        "subtitle": "Ohereza ipiganwa ryawe mbere y'igihe ntarengwa.",
+        "button": "Tanga ipiganwa"
       },
       "notFound": {
         "message": "Umushinga ntuboneka",

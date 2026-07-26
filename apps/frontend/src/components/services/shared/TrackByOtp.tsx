@@ -51,6 +51,9 @@ interface Props<T> {
   /** e.g. '/hajj/applications/track', '/marriage/applications/track'. */
   basePath: string;
   accent?: keyof typeof ACCENTS;
+  /** Per-service heading; falls back to the shared `tracking` namespace. */
+  title?: string;
+  subtitle?: string;
   /**
    * Per-service wording for the first field. Services differ in WHAT they accept
    * — Hajj takes the application number or the tracking code, marriage takes the
@@ -73,6 +76,8 @@ interface Props<T> {
 export function TrackByOtp<T>({
   basePath,
   accent = 'green',
+  title,
+  subtitle,
   codePlaceholder,
   codeHint,
   children,
@@ -160,8 +165,8 @@ export function TrackByOtp<T>({
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="font-bold text-gray-900">{t('title')}</h2>
-        <p className="text-xs text-gray-400 mt-1">{t('subtitle')}</p>
+        <h2 className="font-bold text-gray-900">{title ?? t('title')}</h2>
+        <p className="text-xs text-gray-400 mt-1">{subtitle ?? t('subtitle')}</p>
       </div>
 
       <div className="space-y-3">

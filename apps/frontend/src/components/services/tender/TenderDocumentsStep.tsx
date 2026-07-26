@@ -142,7 +142,7 @@ export function TenderDocumentsStep({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
+      className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
     >
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
@@ -167,7 +167,7 @@ export function TenderDocumentsStep({
       {formError && (
         <div
           role="alert"
-          className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3"
+          className="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3"
         >
           {formError}
         </div>
@@ -234,7 +234,7 @@ function DocumentSlot({
 
       <div
         className={cn(
-          'rounded-xl border-2 border-dashed transition-all duration-150',
+          'rounded-lg border-2 border-dashed transition-all duration-150',
           dragOver
             ? 'border-rmc-green bg-rmc-green-light'
             : state.phase === 'done'

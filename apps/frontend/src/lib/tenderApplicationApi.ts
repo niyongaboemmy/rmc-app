@@ -61,6 +61,8 @@ export interface TenderSummary {
 export interface TenderApplication {
   id: string;
   applicationNumber: string;
+  /** Unguessable public code for OTP-gated status tracking (not the sequential number). */
+  trackingCode: string;
   tenderId: string;
   applicantId: string;
   companyName: string;

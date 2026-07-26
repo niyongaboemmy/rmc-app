@@ -29,6 +29,16 @@ export class TenderApplication {
   @Column({ name: 'application_number', type: 'varchar', length: 40, unique: true })
   applicationNumber: string;
 
+  /**
+   * Crypto-random, unguessable public tracking code (RMC-TND-YYMM-XXXXXXXX). This
+   * — not the sequential applicationNumber — is what the OTP-gated status lookup
+   * resolves, so the tracking endpoint can't be enumerated. Given to the bidder
+   * on submission.
+   */
+  @Index('IDX_tender_app_tracking_code', { unique: true })
+  @Column({ name: 'tracking_code', type: 'varchar', length: 40 })
+  trackingCode: string;
+
   /** FK into `announcements` — the tender is an announcement row with type='tender'. */
   @Index('IDX_tender_app_tender')
   @Column({ name: 'tender_id', type: 'uuid' })
