@@ -24,7 +24,7 @@ type Tender = {
   id: string;
   title: string;
   content: string;
-  titleI18n:   I18n | null;
+  titleI18n: I18n | null;
   contentI18n: I18n | null;
   priority: string;
   publishAt: string;
@@ -32,6 +32,8 @@ type Tender = {
   type: string;
   attachments: Attachment[];
 };
+
+type Status = 'open' | 'closing' | 'closed';
 
 function resolveText(i18n: I18n | null | undefined, fallback: string, locale: string): string {
   if (!i18n) return fallback;
@@ -45,14 +47,32 @@ function getDiffDays(expiresAt: string | null): number | null {
   return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
 }
 
-function deadlineStyle(expiresAt: string | null) {
+function getStatus(expiresAt: string | null): Status {
   const diff = getDiffDays(expiresAt);
-  if (diff === null) return { bar: 'bg-rmc-green', badge: 'bg-rmc-green/10 text-rmc-green border-rmc-green/20' };
-  if (diff < 0)  return { bar: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-400 border-gray-200' };
-  if (diff <= 3) return { bar: 'bg-red-500',     badge: 'bg-red-50 text-red-600 border-red-200' };
-  if (diff <= 7) return { bar: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-600 border-amber-200' };
-  return { bar: 'bg-rmc-green', badge: 'bg-rmc-green/10 text-rmc-green border-rmc-green/20' };
+  if (diff === null) return 'open';
+  if (diff < 0) return 'closed';
+  if (diff <= 7) return 'closing';
+  return 'open';
 }
+
+// Status-driven accents, spelled out for the JIT.
+const STATUS_STYLES: Record<Status, { dot: string; chip: string; heroChip: string }> = {
+  open: {
+    dot: 'bg-rmc-green',
+    chip: 'bg-rmc-green/10 text-rmc-green',
+    heroChip: 'bg-white/10 border-white/20 text-white',
+  },
+  closing: {
+    dot: 'bg-amber-500',
+    chip: 'bg-amber-50 text-amber-600',
+    heroChip: 'bg-amber-400/20 border-amber-200/40 text-amber-50',
+  },
+  closed: {
+    dot: 'bg-gray-400',
+    chip: 'bg-gray-100 text-gray-500',
+    heroChip: 'bg-white/10 border-white/20 text-white/70',
+  },
+};
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -60,12 +80,16 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
 function isPdf(mimeType: string) { return mimeType === 'application/pdf'; }
 function isImage(mimeType: string) { return mimeType.startsWith('image/'); }
 
 const PRIORITY_COLOR: Record<string, string> = {
   normal: 'bg-blue-100 text-blue-700 border-blue-200',
-  high:   'bg-orange-100 text-orange-700 border-orange-200',
+  high: 'bg-orange-100 text-orange-700 border-orange-200',
   urgent: 'bg-red-100 text-red-700 border-red-200',
 };
 
@@ -80,7 +104,8 @@ export default function TenderDetailPage() {
   const [previewAtt, setPreviewAtt] = useState<Attachment | null>(null);
 
   useEffect(() => {
-    publicApi.getTender(id)
+    publicApi
+      .getTender(id)
       .then((data) => setTender(data as Tender))
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
@@ -89,24 +114,36 @@ export default function TenderDetailPage() {
   const diff = tender ? getDiffDays(tender.expiresAt) : null;
   // A tender with no deadline never closes, so `diff === null` is open, not closed.
   const isClosed = diff !== null && diff < 0;
-  const styles = tender ? deadlineStyle(tender.expiresAt) : null;
+  const status: Status = tender ? getStatus(tender.expiresAt) : 'open';
+  const styles = STATUS_STYLES[status];
   const priorityColor = tender ? (PRIORITY_COLOR[tender.priority] ?? PRIORITY_COLOR.normal) : null;
   const priorityLabel = tender
     ? t(`detail.priority.${tender.priority as 'normal' | 'high' | 'urgent'}`)
     : '';
 
   const isRtl = locale === 'ar';
-  const displayTitle   = tender ? resolveText(tender.titleI18n,   tender.title,   locale) : '';
+  const displayTitle = tender ? resolveText(tender.titleI18n, tender.title, locale) : '';
   const displayContent = tender ? resolveText(tender.contentI18n, tender.content, locale) : '';
 
-  function deadlineLabel(expiresAt: string | null): string {
+  function deadlineRelative(expiresAt: string | null): string {
     const d = getDiffDays(expiresAt);
     if (d === null) return t('deadline.noneSet');
-    if (d < 0)  return t('deadline.submissionClosed');
+    if (d < 0) return t('deadline.submissionClosed');
     if (d === 0) return t('deadline.today');
     if (d === 1) return t('deadline.tomorrow');
     return t('deadline.inDays', { days: d });
   }
+
+  const deadlineTone =
+    diff === null
+      ? 'text-gray-500'
+      : diff < 0
+      ? 'text-gray-400'
+      : diff <= 3
+      ? 'text-red-600'
+      : diff <= 7
+      ? 'text-amber-600'
+      : 'text-rmc-green';
 
   const heroTitle = loading
     ? t('detail.heroTitle')
@@ -118,8 +155,7 @@ export default function TenderDetailPage() {
     <div className="min-h-screen">
       <Navbar />
       <main>
-
-        {/* Hero */}
+        {/* Hero — clean title banner; structured facts live in the sidebar. */}
         <PageHero
           eyebrow={t('eyebrow')}
           title={heroTitle}
@@ -127,47 +163,35 @@ export default function TenderDetailPage() {
           align="left"
           backHref={`/${locale}/tenders`}
           backLabel={t('detail.backLabel')}
-          minHeightClassName="min-h-[42vh]"
+          minHeightClassName="min-h-[38vh]"
           paddingClassName="pt-28 pb-10"
           ornament={false}
         >
           {tender && (
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border backdrop-blur-sm bg-white/10 border-white/20 text-white uppercase tracking-wide ${priorityColor}`}>
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border backdrop-blur-sm ${styles.heroChip}`}>
+                <Clock className="w-3 h-3" />
+                {deadlineRelative(tender.expiresAt)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full border backdrop-blur-sm bg-white/10 border-white/20 text-white">
                 <Flag className="w-3 h-3" />
                 {priorityLabel}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border backdrop-blur-sm bg-white/10 border-white/20 text-white">
-                <Clock className="w-3 h-3" />
-                {deadlineLabel(tender.expiresAt)}
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-white/60 backdrop-blur-sm">
-                <Calendar className="w-3 h-3" />
-                {t('detail.published')}{' '}
-                {new Date(tender.publishAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
-              </span>
-              {tender.expiresAt && (
-                <span className={`inline-flex items-center gap-1.5 text-[11px] backdrop-blur-sm ${diff !== null && diff <= 3 && diff >= 0 ? 'text-red-300' : 'text-white/60'}`}>
-                  <Clock className="w-3 h-3" />
-                  {t('detail.deadlineLabel')}{' '}
-                  <span className="font-semibold">
-                    {new Date(tender.expiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
-                  </span>
-                </span>
-              )}
             </div>
           )}
         </PageHero>
 
         {/* Body */}
-        <section className="py-14 bg-gray-50 pattern-light">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-
+        <section className="py-12 sm:py-14 bg-gray-50 pattern-light">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Loading skeletons */}
             {loading && (
-              <div className="space-y-5 animate-pulse">
-                <div className="h-48 rounded-2xl bg-gray-200" />
-                <div className="h-32 rounded-2xl bg-gray-200" />
+              <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 animate-pulse">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="h-64 rounded-2xl bg-white border border-gray-100" />
+                  <div className="h-40 rounded-2xl bg-white border border-gray-100" />
+                </div>
+                <div className="h-72 rounded-2xl bg-white border border-gray-100" />
               </div>
             )}
 
@@ -179,7 +203,10 @@ export default function TenderDetailPage() {
                 </div>
                 <p className="text-lg font-semibold text-gray-400">{t('detail.notFound.message')}</p>
                 <p className="text-sm text-gray-300 mt-1">{t('detail.notFound.subtitle')}</p>
-                <Link href={`/${locale}/tenders`} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:underline">
+                <Link
+                  href={`/${locale}/tenders`}
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:underline"
+                >
                   ← {t('detail.notFound.backLink')}
                 </Link>
               </div>
@@ -187,88 +214,147 @@ export default function TenderDetailPage() {
 
             {/* Content */}
             {!loading && tender && (
-              <div className="space-y-5">
-
-                {/* Urgency progress bar */}
-                {diff !== null && diff >= 0 && diff <= 7 && (
-                  <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-semibold ${diff <= 3 ? 'text-red-600' : 'text-amber-600'}`}>
-                        {diff === 0
-                          ? t('deadline.todayUrgent')
-                          : diff === 1
-                          ? t('deadline.tomorrow')
-                          : t('deadline.inDays', { days: diff })}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {t('deadline.remaining', { pct: Math.round((diff / 14) * 100) })}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${diff <= 3 ? 'bg-red-400' : 'bg-amber-400'}`}
-                        style={{ width: `${Math.max(5, 100 - (diff / 14) * 100)}%` }}
-                      />
+              <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+                {/* Main column — description + attachments */}
+                <div className="order-2 lg:order-1 lg:col-span-2 space-y-6">
+                  {/* Description */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-gray-300" />
+                      {t('detail.description')}
+                    </h2>
+                    <div
+                      dir={isRtl ? 'rtl' : 'ltr'}
+                      className={`prose prose-sm prose-gray max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap ${isRtl ? 'font-arabic' : ''}`}
+                    >
+                      {displayContent}
                     </div>
                   </div>
-                )}
 
-                {/* Description */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-                  <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-5">
-                    {t('detail.description')}
-                  </h2>
-                  <div
-                    dir={isRtl ? 'rtl' : 'ltr'}
-                    className={`prose prose-sm prose-gray max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap ${isRtl ? 'font-arabic' : ''}`}
-                  >
-                    {displayContent}
-                  </div>
-                </div>
-
-                {/* Attachments */}
-                {(tender.attachments?.length ?? 0) > 0 && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-                    <div className="flex items-center gap-2 mb-5">
-                      <Paperclip className="w-4 h-4 text-rmc-gold" />
-                      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest">
+                  {/* Attachments */}
+                  {(tender.attachments?.length ?? 0) > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+                      <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5 flex items-center gap-2">
+                        <Paperclip className="w-4 h-4 text-rmc-gold" />
                         {t('detail.attachments', { count: tender.attachments.length })}
                       </h2>
+                      <div className="space-y-3">
+                        {tender.attachments.map((att) => (
+                          <AttachmentCard
+                            key={att.key}
+                            att={att}
+                            onPreview={() => setPreviewAtt(att)}
+                            tAttachment={(key) => t(`detail.attachment.${key}` as Parameters<typeof t>[0])}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="space-y-3">
-                      {tender.attachments.map((att) => (
-                        <AttachmentCard
-                          key={att.key}
-                          att={att}
-                          onPreview={() => setPreviewAtt(att)}
-                          tAttachment={(key) => t(`detail.attachment.${key}` as Parameters<typeof t>[0])}
-                        />
-                      ))}
-                    </div>
-                  </div>
                 )}
-
-                {/* CTA — deep-links into the wizard with this tender pre-selected
-                    and its picker locked. Hidden once the deadline has passed:
-                    the backend refuses a late bid, so offering the button would
-                    only walk the bidder into a 400. */}
-                <div className="bg-rmc-green-deep/5 rounded-2xl border border-rmc-green/10 p-8 text-center">
-                  <p className="text-sm font-semibold text-gray-700 mb-1">{t('detail.cta.title')}</p>
-                  <p className="text-xs text-gray-400 mb-5">{t('detail.cta.subtitle')}</p>
-                  {isClosed ? (
-                    <p className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-400 text-sm font-semibold rounded-xl">
-                      {t('deadline.submissionClosed')}
-                    </p>
-                  ) : (
-                    <Link
-                      href={`/${locale}/services/tender/apply?tender=${tender.id}`}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-rmc-green/20"
-                    >
-                      {t('detail.cta.button')}
-                    </Link>
-                  )}
                 </div>
 
+                {/* Sidebar — key facts + apply CTA, sticky on desktop, first on mobile */}
+                <aside className="order-1 lg:order-2 lg:col-span-1">
+                  <div className="lg:sticky lg:top-24 space-y-5">
+                    {/* Overview card */}
+                    <div className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                      <div className="flex items-center justify-between gap-2 px-6 py-4 border-b border-gray-50">
+                        <span className="inline-flex items-center gap-2 text-sm font-bold text-gray-900">
+                          <span className={`w-2 h-2 rounded-full ${styles.dot}`} />
+                          {t(`filters.${status}`)}
+                        </span>
+                        {priorityColor && (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${priorityColor}`}>
+                            <Flag className="w-2.5 h-2.5" />
+                            {priorityLabel}
+                          </span>
+                        )}
+                      </div>
+
+                      <dl className="p-6 space-y-5 text-sm">
+                        {/* Deadline */}
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-50 border border-gray-100">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                          </span>
+                          <div className="min-w-0">
+                            <dt className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                              {t('detail.deadlineLabel')}
+                            </dt>
+                            <dd className="font-semibold text-gray-900">
+                              {tender.expiresAt ? formatDate(tender.expiresAt) : t('deadline.noneSet')}
+                            </dd>
+                            <dd className={`text-xs font-medium mt-0.5 ${deadlineTone}`}>
+                              {deadlineRelative(tender.expiresAt)}
+                            </dd>
+                          </div>
+                        </div>
+
+                        {/* Published */}
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-50 border border-gray-100">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                          </span>
+                          <div className="min-w-0">
+                            <dt className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                              {t('detail.published')}
+                            </dt>
+                            <dd className="font-semibold text-gray-900">{formatDate(tender.publishAt)}</dd>
+                          </div>
+                        </div>
+
+                        {/* Documents (count) */}
+                        {(tender.attachments?.length ?? 0) > 0 && (
+                          <div className="flex items-start gap-3">
+                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-50 border border-gray-100">
+                              <Paperclip className="w-4 h-4 text-gray-400" />
+                            </span>
+                            <div className="min-w-0">
+                              <dt className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                {t('detail.attachments', { count: tender.attachments.length })}
+                              </dt>
+                            </div>
+                          </div>
+                        )}
+                      </dl>
+
+                      {/* Urgency bar for closing-soon tenders */}
+                      {diff !== null && diff >= 0 && diff <= 7 && (
+                        <div className="px-6 pb-6 -mt-1">
+                          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${diff <= 3 ? 'bg-red-400' : 'bg-amber-400'}`}
+                              style={{ width: `${Math.max(5, 100 - (diff / 14) * 100)}%` }}
+                            />
+                          </div>
+                          <p className="mt-2 text-[11px] text-gray-400">
+                            {t('deadline.remaining', { pct: Math.round((diff / 14) * 100) })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Apply CTA — deep-links into the wizard with this tender pre-selected
+                        and its picker locked. Hidden once the deadline has passed: the
+                        backend refuses a late bid, so offering the button would only walk
+                        the bidder into a 400. */}
+                    <div className="rounded-2xl bg-gradient-to-br from-teal-600 to-teal-800 shadow-sm shadow-teal-900/10 p-6 text-center">
+                      <p className="text-sm font-bold text-white mb-1">{t('detail.cta.title')}</p>
+                      <p className="text-xs text-teal-50/80 mb-4 leading-relaxed">{t('detail.cta.subtitle')}</p>
+                      {isClosed ? (
+                        <p className="inline-flex w-full items-center justify-center gap-2 px-5 py-3 bg-white/10 text-white/70 text-sm font-semibold rounded-xl border border-white/20">
+                          {t('deadline.submissionClosed')}
+                        </p>
+                      ) : (
+                        <Link
+                          href={`/${locale}/services/tender/apply?tender=${tender.id}`}
+                          className="inline-flex w-full items-center justify-center gap-2 px-5 py-3 bg-white text-teal-800 text-sm font-bold rounded-xl transition-colors hover:bg-teal-50 shadow-sm"
+                        >
+                          {t('detail.cta.button')}
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </aside>
               </div>
             )}
           </div>
@@ -306,11 +392,13 @@ function AttachmentCard({
   return (
     <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-rmc-gold/30 hover:bg-amber-50/20 transition-all group">
       <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 group-hover:border-rmc-gold/40 transition-colors">
-        {isPdf(att.mimeType)
-          ? <FileText className="w-5 h-5 text-red-500" />
-          : isImage(att.mimeType)
-          ? <Eye className="w-5 h-5 text-blue-500" />
-          : <Paperclip className="w-5 h-5 text-gray-400" />}
+        {isPdf(att.mimeType) ? (
+          <FileText className="w-5 h-5 text-red-500" />
+        ) : isImage(att.mimeType) ? (
+          <Eye className="w-5 h-5 text-blue-500" />
+        ) : (
+          <Paperclip className="w-5 h-5 text-gray-400" />
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
