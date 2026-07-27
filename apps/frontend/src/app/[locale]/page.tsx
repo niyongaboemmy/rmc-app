@@ -2,6 +2,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { HeroSection } from '@/components/home/HeroSection';
 import { WelcomeCarouselSection } from '@/components/home/WelcomeCarouselSection';
 import { WhoWeAreSection } from '@/components/home/WhoWeAreSection';
+import { VerseOfDay } from '@/components/home/VerseOfDay';
 import { HowToBecomeMuslimSection } from '@/components/home/HowToBecomeMuslimSection';
 import { AreasOfInterventionSection } from '@/components/home/AreasOfInterventionSection';
 import { ActivitiesEventsSection } from '@/components/home/ActivitiesEventsSection';
@@ -26,6 +27,10 @@ export default function HomePage() {
         <Reveal>
           <WhoWeAreSection />
         </Reveal>
+
+        {/* 2b. Verse of the Day — admin-managed (Admin → Content → Verse of the Day),
+            shows the verse whose date is today; self-animates on scroll. */}
+        <VerseOfDay />
 
         {/* 3. Welcome — Updates & Programs (with live prayer times) */}
         <Reveal>
