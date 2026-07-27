@@ -864,6 +864,38 @@ export class TendersService {
     return this.docRepo.save(doc);
   }
 
+  /**
+   * Bid counts per tender, for the admin board's tender picker — one grouped
+   * query rather than a count request per card, which would be a request per
+   * tender on every page load.
+   *
+   * Returns a row for every tender that has at least one bid; the caller pairs
+   * these with the tender list and reads a missing entry as zero.
+   */
+  async adminApplicationCountsByTender(): Promise<
+    Array<{ tenderId: string; total: number; byStatus: Record<string, number> }>
+  > {
+    const rows = await this.appRepo
+      .createQueryBuilder('app')
+      .select('app.tenderId', 'tenderId')
+      .addSelect('app.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('app.tenderId')
+      .addGroupBy('app.status')
+      .getRawMany<{ tenderId: string; status: string; count: string }>();
+
+    const byTender = new Map<string, { tenderId: string; total: number; byStatus: Record<string, number> }>();
+    for (const row of rows) {
+      const count = Number(row.count);
+      const entry = byTender.get(row.tenderId) ?? { tenderId: row.tenderId, total: 0, byStatus: {} };
+      entry.total += count;
+      entry.byStatus[row.status] = count;
+      byTender.set(row.tenderId, entry);
+    }
+
+    return [...byTender.values()];
+  }
+
   async adminGetReports(filters: { dateFrom?: string; dateTo?: string } = {}) {
     const qb = this.appRepo.createQueryBuilder('app');
     if (filters.dateFrom) qb.andWhere('app.createdAt >= :dateFrom', { dateFrom: filters.dateFrom });

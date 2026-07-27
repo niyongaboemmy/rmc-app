@@ -51,6 +51,18 @@ export class TendersAdminController {
     });
   }
 
+  /**
+   * Declared before `applications/:id` — Nest matches routes in declaration
+   * order, and a `:id` param would otherwise swallow `counts-by-tender` and
+   * fail it on the UUID pipe.
+   */
+  @Get('applications/counts-by-tender')
+  @Permissions(Permission.TENDER_VIEW)
+  @ApiOperation({ summary: 'Bid counts grouped by tender, for the board picker' })
+  countsByTender() {
+    return this.service.adminApplicationCountsByTender();
+  }
+
   @Get('applications/:id')
   @Permissions(Permission.TENDER_VIEW)
   @ApiOperation({ summary: 'Get full application detail' })

@@ -19,37 +19,22 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
-import { Checkbox } from '@/components/ui/Checkbox';
-import {
-  ConfirmModal,
-  Modal,
-  ModalHeader,
-  ModalTitle,
-  ModalBody,
-  ModalFooter,
-} from '@/components/ui/Modal';
+import { ConfirmModal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
+import {
+  DOC_LABELS,
+  FIELD_LABELS,
+  RequestMoreInfoModal,
+} from '@/components/admin/tenders/RequestMoreInfoModal';
 import { cn } from '@/lib/utils';
 import { resolveI18n } from '@/lib/tendersApi';
-import {
-  REQUIRED_DOCUMENTS,
-  STATUS_COLORS,
-  TENDER_MORE_INFO_FIELDS,
-  openAdminBidDocument,
-  type TenderDocumentType,
-  type TenderMoreInfoField,
-} from '@/lib/tenderApplicationApi';
+import { STATUS_COLORS, openAdminBidDocument } from '@/lib/tenderApplicationApi';
+import { STATUS_LABELS, statusLabel } from '@/lib/tenderWorkflow';
 import {
   tenderApplicationAdminApi,
   type AdminTenderApplication,
   type TenderStatusAction,
 } from '@/lib/tenderApplicationAdminApi';
-
-const DOC_LABELS: Record<TenderDocumentType, string> = {
-  rdb_certificate: 'Company Registration (RDB)',
-  tax_clearance: 'RRA Tax Clearance',
-  proposal: 'Technical & Financial Proposal',
-};
 
 /**
  * Copy for the "are you sure?" step on the evaluation decisions that text and
@@ -83,16 +68,6 @@ const CONFIRM_COPY: Partial<
     confirmLabel: 'Reject',
     danger: true,
   },
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  submitted: 'Submitted',
-  under_review: 'Under review',
-  more_info_requested: 'More info requested',
-  shortlisted: 'Shortlisted',
-  awarded: 'Awarded',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
 };
 
 export default function AdminTenderDetailPage() {
@@ -192,7 +167,7 @@ function AdminTenderDetailContent() {
           href={`/${locale}/admin/tenders`}
           className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:underline"
         >
-          ← Back to applications
+          ← Back to tenders
         </Link>
       </div>
     );
@@ -204,11 +179,13 @@ function AdminTenderDetailContent() {
 
   return (
     <div className="space-y-5 max-w-4xl">
+      {/* Back to the board this bid came from, not the tender picker — the
+          reviewer opened it from one specific pipeline. */}
       <Link
-        href={`/${locale}/admin/tenders`}
+        href={`/${locale}/admin/tenders/board/${application.tenderId}`}
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to applications
+        <ArrowLeft className="w-4 h-4" /> Back to board
       </Link>
 
       {/* Header */}
@@ -457,8 +434,8 @@ function AdminTenderDetailContent() {
                 <div className="flex-1">
                   <p className="text-gray-900">
                     {entry.fromStatus
-                      ? `${STATUS_LABELS[entry.fromStatus] ?? entry.fromStatus} → ${STATUS_LABELS[entry.toStatus] ?? entry.toStatus}`
-                      : (STATUS_LABELS[entry.toStatus] ?? entry.toStatus)}
+                      ? `${statusLabel(entry.fromStatus)} → ${statusLabel(entry.toStatus)}`
+                      : statusLabel(entry.toStatus)}
                   </p>
                   {entry.notes && <p className="text-xs text-gray-500 mt-0.5">{entry.notes}</p>}
                 </div>
@@ -498,134 +475,6 @@ function AdminTenderDetailContent() {
         />
       )}
     </div>
-  );
-}
-
-/** Admin-facing names for the field groups the bidder can be asked to correct. */
-const FIELD_LABELS: Record<TenderMoreInfoField, string> = {
-  company: 'Company name & TIN',
-  contact: 'Contact person',
-  phone: 'Phone number',
-  email: 'Email address',
-  address: 'Address (district, sector, cell, village)',
-  bid_amount: 'Bid amount',
-  cover_note: 'Cover note',
-};
-
-/**
- * Names exactly what the bidder must fix. Whatever is ticked here is what their
- * bid page will let them change — everything else stays locked, so an ask for a
- * corrected TIN can't become an opportunity to revise the price.
- *
- * This form IS the confirmation for the action: it takes a written note and at
- * least one deliberate tick, which no stray click produces.
- */
-function RequestMoreInfoModal({
-  open,
-  sending,
-  onClose,
-  onSend,
-}: {
-  open: boolean;
-  sending: boolean;
-  onClose: () => void;
-  onSend: (payload: {
-    notes: string;
-    moreInfoFields: TenderMoreInfoField[];
-    moreInfoDocumentTypes: TenderDocumentType[];
-  }) => void;
-}) {
-  const [note, setNote] = useState('');
-  const [fields, setFields] = useState<TenderMoreInfoField[]>([]);
-  const [docs, setDocs] = useState<TenderDocumentType[]>([]);
-
-  // Reset on each open so a cancelled request doesn't seed the next one.
-  useEffect(() => {
-    if (open) {
-      setNote('');
-      setFields([]);
-      setDocs([]);
-    }
-  }, [open]);
-
-  const toggle = <T,>(list: T[], value: T): T[] =>
-    list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
-
-  // The backend refuses an empty scope — an ask the bidder cannot act on would
-  // park the bid in more_info_requested with no way out.
-  const canSend = note.trim().length > 0 && fields.length + docs.length > 0;
-
-  return (
-    <Modal open={open} onClose={onClose} size="md">
-      <ModalHeader>
-        <ModalTitle>Request more information</ModalTitle>
-      </ModalHeader>
-      <ModalBody>
-        <div className="space-y-5">
-          <Textarea
-            label="What does the bidder need to do?"
-            rows={3}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            hint="Sent to the bidder by SMS and email, and shown on their bid page."
-          />
-
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Details they may correct
-            </p>
-            <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
-              {TENDER_MORE_INFO_FIELDS.map((field) => (
-                <Checkbox
-                  key={field}
-                  id={`mi-field-${field}`}
-                  label={FIELD_LABELS[field]}
-                  checked={fields.includes(field)}
-                  onChange={() => setFields((prev) => toggle(prev, field))}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Documents they may replace
-            </p>
-            <div className="mt-2.5 space-y-2">
-              {REQUIRED_DOCUMENTS.map((docType) => (
-                <Checkbox
-                  key={docType}
-                  id={`mi-doc-${docType}`}
-                  label={DOC_LABELS[docType]}
-                  checked={docs.includes(docType)}
-                  onChange={() => setDocs((prev) => toggle(prev, docType))}
-                />
-              ))}
-            </div>
-          </div>
-
-          {!canSend && (
-            <p className="text-xs text-gray-400">
-              Write a note and tick at least one thing the bidder should fix.
-            </p>
-          )}
-        </div>
-      </ModalBody>
-      <ModalFooter>
-        <Button variant="outline" onClick={onClose} disabled={sending}>
-          Cancel
-        </Button>
-        <Button
-          isLoading={sending}
-          disabled={!canSend}
-          onClick={() =>
-            onSend({ notes: note.trim(), moreInfoFields: fields, moreInfoDocumentTypes: docs })
-          }
-        >
-          Send request
-        </Button>
-      </ModalFooter>
-    </Modal>
   );
 }
 
