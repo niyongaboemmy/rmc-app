@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VerseOfDay } from './entities/verse-of-day.entity';
@@ -34,8 +34,47 @@ export class PublicService {
   }
 
   async createVerse(dto: Partial<VerseOfDay>): Promise<VerseOfDay> {
-    const verse = this.verses.create(dto);
-    return this.verses.save(verse);
+    try {
+      const verse = this.verses.create(dto);
+      return await this.verses.save(verse);
+    } catch (e) {
+      throw this.asDateConflict(e);
+    }
+  }
+
+  /** All scheduled verses, newest display date first (admin management view). */
+  async adminListVerses(): Promise<VerseOfDay[]> {
+    return this.verses.find({ order: { displayDate: 'DESC' } });
+  }
+
+  async updateVerse(id: string, dto: Partial<VerseOfDay>): Promise<VerseOfDay> {
+    const verse = await this.verses.findOne({ where: { id } });
+    if (!verse) throw new NotFoundException('Verse not found');
+    // Only persist mutable columns; id/createdBy/createdAt are never client-set.
+    const { id: _id, createdBy: _cb, createdAt: _ca, ...patch } = dto;
+    Object.assign(verse, patch);
+    try {
+      return await this.verses.save(verse);
+    } catch (e) {
+      throw this.asDateConflict(e);
+    }
+  }
+
+  /**
+   * displayDate is unique — one verse per day. Translate the Postgres
+   * unique-violation (23505) into a clean 409 instead of a raw 500.
+   */
+  private asDateConflict(e: unknown): unknown {
+    if ((e as { code?: string })?.code === '23505') {
+      return new ConflictException('A verse is already scheduled for this date.');
+    }
+    return e;
+  }
+
+  async deleteVerse(id: string): Promise<{ success: boolean }> {
+    const result = await this.verses.delete(id);
+    if (!result.affected) throw new NotFoundException('Verse not found');
+    return { success: true };
   }
 
   getActiveAnnouncements(type?: string, limit = 10, includeExpired = false) {

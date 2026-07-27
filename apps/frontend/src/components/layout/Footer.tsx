@@ -10,9 +10,12 @@ import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 import {
   ContentKeys,
   SOCIAL_DEFAULT,
+  CONTACT_DEFAULT,
   getSiteContent,
   mergeContent,
+  pick,
   type SocialChannel,
+  type ContactContent,
 } from '@/lib/content-api';
 
 // Channel key → icon, mirroring the contact page so the footer shows the same
@@ -76,6 +79,22 @@ export function Footer() {
       .catch(() => {/* keep defaults */});
     return () => { active = false; };
   }, []);
+
+  // Contact details (address / phone / emails) come from the SAME admin-managed
+  // store as the Contact page — Content → Contact Page. Editing it there updates
+  // the footer everywhere automatically. Falls back to seeded defaults until loaded.
+  const [contact, setContact] = useState<ContactContent>(CONTACT_DEFAULT);
+  useEffect(() => {
+    let active = true;
+    getSiteContent<Record<string, unknown>>(ContentKeys.contact)
+      .then((data) => {
+        if (active && data) setContact(mergeContent(CONTACT_DEFAULT, data));
+      })
+      .catch(() => {/* keep defaults */});
+    return () => { active = false; };
+  }, []);
+
+  const address = pick(contact.address, locale);
 
   const quickLinks = [
     { href: `/${locale}/announcements`, labelKey: 'links.announcements' },
@@ -188,30 +207,38 @@ export function Footer() {
           {/* Contact */}
           <CollapsibleColumn title={t('contact')}>
             <ul className="space-y-2">
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <a href="mailto:rwandamuslimc@gmail.com" className="text-white/55 hover:text-white text-sm transition-colors">rwandamuslimc@gmail.com</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <a href="mailto:islamrwanda18@gmail.com" className="text-white/55 hover:text-white text-sm transition-colors">islamrwanda18@gmail.com</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <Phone className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <a href="tel:+250788308436" className="text-white/55 hover:text-white text-sm transition-colors">(+250) 788 308 436</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <MapPin className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <span className="text-white/55 text-sm">Kigali, Rwanda</span>
-              </li>
+              {contact.email && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <a href={`mailto:${contact.email}`} className="text-white/55 hover:text-white text-sm transition-colors break-all">{contact.email}</a>
+                </li>
+              )}
+              {contact.email2 && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <a href={`mailto:${contact.email2}`} className="text-white/55 hover:text-white text-sm transition-colors break-all">{contact.email2}</a>
+                </li>
+              )}
+              {contact.phone && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <Phone className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <a href={contact.phoneHref || `tel:${contact.phone.replace(/[^+\d]/g, '')}`} className="text-white/55 hover:text-white text-sm transition-colors">{contact.phone}</a>
+                </li>
+              )}
+              {address && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <MapPin className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <span className="text-white/55 text-sm">{address}</span>
+                </li>
+              )}
             </ul>
           </CollapsibleColumn>
         </div>
