@@ -6,13 +6,10 @@ import { getTranslations } from 'next-intl/server';
 import {
   Briefcase,
   ArrowLeft,
-  ArrowRight,
-  FileText,
-  Search,
-  CheckCircle2,
-  ListChecks,
   ListOrdered,
 } from 'lucide-react';
+import { TenderList } from '@/components/services/tender/TenderList';
+import { TenderStatusCard } from '@/components/services/tender/TenderStatusCard';
 
 /**
  * Tender service landing page — teal accent throughout, matching the `tender`
@@ -24,9 +21,6 @@ import {
  * Tailwind classes are spelled out in full rather than interpolated, so the JIT
  * compiler can see them (the same rule the services registry calls out).
  */
-
-/** The three documents every bid must carry — mirrors REQUIRED_DOCUMENTS on the client and the DB CHECK constraint. */
-const REQUIREMENT_KEYS = ['rdb', 'tax', 'proposal', 'company', 'deadline'] as const;
 
 /** The bidder's journey, in the order the wizard actually walks them through it. */
 const STEP_KEYS = ['browse', 'form', 'documents', 'track'] as const;
@@ -82,107 +76,45 @@ export default async function TenderServicePage({
           </div>
         </section>
 
+        {/* Browse the tender board — description + filters in a left rail beside the list */}
         <section className="bg-gray-50/60 pattern-light py-14 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto space-y-10">
-            {/* CTA cards */}
-            <div className="grid sm:grid-cols-2 gap-5">
-              <Link
-                href={`/${locale}/services/tender/apply`}
-                className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
-              >
-                <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-rmc-green-dark" />
+          <div className="max-w-5xl mx-auto">
+            <TenderList
+              variant="sidebar"
+              listHeader={
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{t('landing.browseTitle')}</h2>
+                  <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{t('landing.browseNote')}</p>
                 </div>
-                <p className="font-bold text-gray-900">{t('landing.applyTitle')}</p>
-                <p className="text-sm text-gray-500 flex-1">{t('landing.applyText')}</p>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                  {t('landing.applyCta')} <ArrowRight className="w-4 h-4" />
-                </span>
-              </Link>
-
-              <Link
-                href={`/${locale}/services/tender/status`}
-                className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
-              >
-                <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
-                  <Search className="w-5 h-5 text-rmc-green-dark" />
-                </div>
-                <p className="font-bold text-gray-900">{t('landing.statusTitle')}</p>
-                <p className="text-sm text-gray-500 flex-1">{t('landing.statusText')}</p>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                  {t('landing.statusCta')} <ArrowRight className="w-4 h-4" />
-                </span>
-              </Link>
-            </div>
-
-            {/* How to apply — the four steps, in wizard order */}
-            <div>
-              <div className="flex items-center gap-2.5 mb-1">
-                <ListOrdered className="w-5 h-5 text-rmc-green" />
-                <h2 className="font-bold text-gray-900">{t('landing.stepsTitle')}</h2>
-              </div>
-              <p className="text-sm text-gray-500 mb-6">{t('landing.stepsSubtitle')}</p>
-
-              <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {STEP_KEYS.map((key, i) => (
-                  <li
-                    key={key}
-                    className="relative rounded-2xl bg-white border border-gray-100 shadow-sm p-5 flex flex-col gap-2"
-                  >
-                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white text-sm font-bold flex items-center justify-center shadow-md shadow-rmc-green-dark/10">
-                      {i + 1}
-                    </span>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {t(`landing.steps.${key}.title`)}
-                    </p>
-                    <p className="text-sm text-gray-500 leading-relaxed">
-                      {t(`landing.steps.${key}.text`)}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {/* Requirements checklist — static copy, deliberately not fetched */}
-            <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6 sm:p-8">
-              <div className="flex items-center gap-2.5 mb-1">
-                <ListChecks className="w-5 h-5 text-rmc-green" />
-                <h2 className="font-bold text-gray-900">{t('landing.requirementsTitle')}</h2>
-              </div>
-              <p className="text-sm text-gray-500 mb-6">{t('landing.requirementsSubtitle')}</p>
-
-              <ul className="space-y-4">
-                {REQUIREMENT_KEYS.map((key) => (
-                  <li key={key} className="flex gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-rmc-green shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {t(`landing.requirements.${key}.title`)}
-                      </p>
-                      <p className="text-sm text-gray-500 leading-relaxed">
-                        {t(`landing.requirements.${key}.text`)}
-                      </p>
+              }
+              railBottom={
+                <>
+                  {/* How to apply */}
+                  <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex items-center gap-2">
+                      <ListOrdered className="h-4 w-4 text-rmc-green" />
+                      <h3 className="text-sm font-bold text-gray-900">{t('landing.stepsTitle')}</h3>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                    <ol className="space-y-3">
+                      {STEP_KEYS.map((key, i) => (
+                        <li key={key} className="flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rmc-green to-rmc-green-dark text-xs font-bold text-white">
+                            {i + 1}
+                          </span>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-900">{t(`landing.steps.${key}.title`)}</p>
+                            <p className="text-xs leading-relaxed text-gray-500">{t(`landing.steps.${key}.text`)}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
 
-            {/* Link out to the existing tenders board */}
-            <div className="rounded-2xl bg-rmc-green-deep text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-5 shadow-lg ring-1 ring-white/10">
-              <div className="flex-1">
-                <p className="font-bold text-lg">{t('landing.boardTitle')}</p>
-                <p className="text-white/70 text-sm mt-1 leading-relaxed">
-                  {t('landing.boardText')}
-                </p>
-              </div>
-              <Link
-                href={`/${locale}/tenders`}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-rmc-green-dark text-sm font-semibold hover:bg-rmc-green-light transition-colors shrink-0"
-              >
-                {t('landing.boardCta')} <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+                  {/* Track an already-submitted bid — opens the checker in a modal */}
+                  <TenderStatusCard />
+                </>
+              }
+            />
           </div>
         </section>
       </main>

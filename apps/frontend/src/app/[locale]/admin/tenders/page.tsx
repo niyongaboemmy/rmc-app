@@ -14,6 +14,7 @@ import {
   Inbox,
   FileCheck,
   Settings2,
+  Eye,
 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
@@ -254,6 +255,7 @@ function AdminTendersContent() {
                   <Th>Docs</Th>
                   <Th>Status</Th>
                   <Th>Submitted</Th>
+                  <th className="px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody>
@@ -301,6 +303,14 @@ function AdminTendersContent() {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                       {new Date(app.submittedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <Link
+                        href={`/${locale}/admin/tenders/${app.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
+                      >
+                        <Eye className="h-3.5 w-3.5" /> View
+                      </Link>
                     </td>
                   </tr>
                 ))}

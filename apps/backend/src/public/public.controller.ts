@@ -76,6 +76,13 @@ export class PublicController {
     return this.service.getAnnouncementById(id);
   }
 
+  @Get('announcements/slug/:slug')
+  @Public()
+  @ApiOperation({ summary: 'Get a single tender/announcement by slug' })
+  getAnnouncementBySlug(@Param('slug') slug: string) {
+    return this.service.getAnnouncementBySlug(slug);
+  }
+
   @Post('announcements')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)

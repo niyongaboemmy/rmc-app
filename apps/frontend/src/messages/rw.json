@@ -1353,6 +1353,53 @@
       }
     },
     "tender": {
+      "bid": {
+        "checklistTitle": "Ibyo ugomba gukosora",
+        "field": {
+          "company": "Izina ry'ikigo na TIN",
+          "contact": "Uwo bavugana",
+          "phone": "Nimero ya telefone",
+          "email": "Aderesi imeyili",
+          "address": "Aderesi",
+          "bid_amount": "Igiciro cyatanzwe",
+          "cover_note": "Ubutumwa bwiyongera"
+        },
+        "eyebrow": "Gukurikirana icyifuzo",
+        "heroTitle": "Reba icyifuzo cyawe",
+        "heroSubtitle": "Andika nimero y'icyifuzo wahawe, hanyuma wemeze kode tukoherereza kuri telefone yanditse ku cyifuzo.",
+        "withdrawTitle": "Kuraho icyifuzo",
+        "withdrawHint": "Kuraho icyifuzo cyawe mu byasuzumwa. Ntibisubirwaho — wakwiyandikisha bushya gusa mu gihe isoko rikiri rifunguye.",
+        "withdraw": "Kuraho icyifuzo",
+        "withdrawConfirmTitle": "Urashaka kuraho iki cyifuzo?",
+        "withdrawConfirmBody": "Icyifuzo cyawe kizakurwa mu byasuzumwa kandi RMC izahagarika kugisuzuma. Ibi ntibisubirwaho.",
+        "withdrawFailed": "Ntibyashobotse kuraho icyifuzo. Ongera ugerageze.",
+        "backToTenders": "Subira ku matangazo y'amasoko",
+        "sessionExpired": "Igihe cyo gukoresha konti yawe cyarangiye. Ongera wandike nimero y'icyemezo cyawe.",
+        "tender": "Isoko",
+        "deadline": "Rifunga",
+        "submittedOn": "Byoherejwe ku wa",
+        "endSession": "Sohoka",
+        "detailsTitle": "Amakuru y'icyifuzo",
+        "documentsTitle": "Inyandiko zometseho",
+        "documentsPrivacy": "Inyandiko zawe ni ibanga. Zishobora gufungurwa gusa muri iyi konti yemejwe cyangwa n'umukozi wa RMC ubifitiye uburenganzira.",
+        "documentsEditHint": "Niba utahinduye inyandiko, iyari isanzweho iguma; ushobora no kohereza indi nshya isimbura iyari isanzwe.",
+        "contactName": "Uwo bavugana",
+        "tin": "TIN",
+        "phone": "Telefone",
+        "email": "Imeyili",
+        "bidAmount": "Igiciro cyatanzwe",
+        "address": "Aderesi",
+        "coverNote": "Ubutumwa bwiyongera",
+        "view": "Reba",
+        "openFailed": "Ntibyashobotse gufungura iyo nyandiko. Ongera ugerageze.",
+        "edit": "Hindura icyifuzo",
+        "editTitle": "Hindura icyifuzo cyawe",
+        "lockedHint": "Ntigishobora guhindurwa",
+        "cancel": "Reka",
+        "save": "Bika impinduka",
+        "saveFailed": "Ntibyashobotse kubika impinduka. Ongera ugerageze.",
+        "noLongerEditable": "Iki cyifuzo ntigishobora guhindurwa — hari usuzuma wagitangiye, cyangwa isoko ryarafunze."
+      },
       "modal": {
         "summary": "Tanga ipiganwa ku itumba rikinguye rya RMC, urikurikirane kuva ku isuzuma kugeza ku mwanzuro.",
         "req": {
@@ -1379,6 +1426,8 @@
         "applyCta": "Tangira gusaba",
         "statusTitle": "Reba aho ugeze",
         "statusCta": "Reba aho bigeze",
+        "trackPlaceholder": "Kode yo gukurikirana ipiganwa",
+        "trackHint": "Kode yo gukurikirana iri muri SMS cyangwa imeyili yo kwemeza gutanga. Tuzakohereza kode y'ibanga kuri telefoni iri ku ipiganwa.",
         "statusText": "Kurikirana ipiganwa wamaze gutanga, urihindure, cyangwa urikureho.",
         "stepsTitle": "Uko usaba",
         "stepsSubtitle": "Intambwe enye kuva ku ihirwe kugeza ku ipiganwa ryatanzwe.",
@@ -1424,6 +1473,8 @@
             "text": "Ipiganwa ntirishobora gutangwa cyangwa guhindurwa igihe ntarengwa cyarenze."
           }
         },
+        "browseTitle": "Reba amasoko afunguye",
+        "browseNote": "Amahirwe yose y'amasoko RMC yatangaje. Yungurura ukurikije uko ahagaze cyangwa ushakishe kugira ngo ubone isoko runaka, hanyuma urifungure urebe amakuru yuzuye n'inyandiko ziriho.",
         "boardTitle": "Reba ibikinguye ubu",
         "boardText": "Reba amatumba yose RMC yatangaje, hamwe n'ibihe ntarengwa n'inyandiko.",
         "boardCta": "Reba amatumba yose"
@@ -1504,6 +1555,8 @@
         "successEditText": "Impinduka zawe zabitswe kandi ipiganwa ryawe ryagarutse ku itsinda risuzuma.",
         "yourReference": "Nomero y'ipiganwa ryawe",
         "copyReference": "Koporora nomero",
+        "yourTrackingCode": "Kode yo gukurikirana",
+        "trackingCodeHint": "Iyi ni yo ukoresha kureba aho ipiganwa ryawe rigeze utinjiye — igume neza.",
         "checkStatusBtn": "Kurikirana iri piganwa",
         "browseMoreBtn": "Reba andi matumba"
       },
@@ -1609,7 +1662,25 @@
         "applyNow": "Saba aka kazi",
         "notFound": "Uyu mwanya ntukiriho.",
         "closed": "Uyu mwanya warafunzwe, ntabwo ukiakira abasaba.",
-        "deadlineOver": "Igihe cyo gusaba uyu mwanya cyararangiye."
+        "deadlineOver": "Igihe cyo gusaba uyu mwanya cyararangiye.",
+        "searchPlaceholder": "Shakisha akazi, ishami cyangwa aho gakorerwa…",
+        "allTypes": "Ubwoko bwose",
+        "noMatch": "Nta kazi gahuye n’ibyo ushaka",
+        "noMatchSub": "Gerageza irindi jambo cyangwa usibe amashyize.",
+        "clear": "Siba amashyize",
+        "errorTitle": "Ntibyashobotse gutangiza imyanya",
+        "errorSub": "Hari ikitagenze neza mu gutangiza imyanya. Ongera ugerageze.",
+        "retry": "Ongera ugerageze",
+        "posted": "Byatangajwe",
+        "viewDetails": "Reba ibisobanuro",
+        "apply": "Saba",
+        "prev": "Ibanjirije",
+        "next": "Ikurikira",
+        "pageLabel": "Ipaji",
+        "ofLabel": "kuri",
+        "relatedTitle": "Indi myanya ifunguye",
+        "closingSoon": "Birafunga vuba",
+        "overview": "Incamake y’akazi"
       },
       "landing": {
         "backToServices": "Subira ku serivisi",
@@ -1969,11 +2040,9 @@
       "status": {
         "back": "Subira kuri Serivisi za Hija",
         "title": "Reba aho ubusabe bwa Hajj bugeze",
-        "sub": "Andika nimero y’ubusabe wahawe wiyandikisha.",
-        "placeholder": "RMC-HAJ-202607-00001",
-        "check": "Reba aho bigeze",
-        "notFound": "Nta busabe bufite iyo nimero. Ongera ugenzure unyuze.",
-        "error": "Ntibishobotse kureba aho bigeze ubu. Ongera ugerageze.",
+        "sub": "Andika nimero y’ubusabe bwawe. Tuzakohereza kode y’imibare 6 kuri telefoni wiyandikishijeho.",
+        "codePlaceholder": "Nimero y’ubusabe (urugero: RMC-HAJ-2607-A1B2C3D4)",
+        "codeHint": "Nimero iri muri SMS cyangwa imeyili yo kwemeza. Ntugomba kwandika telefoni — tuyifite.",
         "submittedOn": "Byoherejwe ku wa",
         "lastUpdate": "Ivugururwa riheruka",
         "applicant": "Usaba",
@@ -1981,14 +2050,31 @@
         "steps": {
           "submitted": "Ubusabe bwakiriwe",
           "under_review": "Burimo gusuzumwa n’itsinda ryacu",
+          "more_info_requested": "Hakenewe andi makuru",
           "approved": "Bwemewe",
           "rejected": "Ntibwemewe"
         },
         "stepHint": {
           "submitted": "Twakiriye ubusabe bwawe, tugiye gutangira kubugenzura.",
           "under_review": "Itsinda ryacu ririmo kugenzura pasiporo n’ibimenyetso by’ubwishyu.",
+          "more_info_requested": "Itsinda ryacu rikeneye indi nyandiko mbere y’uko isuzuma rikomeza. Yishyire hano hepfo.",
           "approved": "Twishimiye kukumenyesha ko bwemewe. Itsinda ryacu rizakuvugisha.",
           "rejected": "Ubusabe bwawe ntibwemewe. Reba impamvu hepfo."
+        },
+        "upload": {
+          "requested": "Icyo dukeneye",
+          "choose": "Hitamo dosiye",
+          "remove": "Kuraho",
+          "send": "Ohereza inyandiko",
+          "sending": "Kohereza…",
+          "sentTitle": "Inyandiko yakiriwe",
+          "sentHint": "Murakoze. Ubusabe bwawe bwagarutse ku basuzuma — tuzakumenyesha icyemezo.",
+          "tooLarge": "Iyi dosiye irenze 10 MB. Nyamuneka ohereza dosiye ntoya.",
+          "wrongType": "Ubwo bwoko bwa dosiye ntibwemewe. Ohereza ifoto (JPG, PNG, WEBP, HEIC) cyangwa PDF.",
+          "sessionExpired": "Igihe cyo kwemeza cyararangiye. Ongera wemeze kugira ngo wohereze.",
+          "notAwaiting": "Iri saba ryamaze gusubizwa. Vugurura urebe aho bigeze.",
+          "uploading": "Kohereza…",
+          "failed": "Ntibyashobotse kohereza inyandiko. Reba interineti yawe hanyuma wongere ugerageze."
         }
       },
       "bankAccounts": {
@@ -2011,7 +2097,9 @@
     "codePlaceholder": "Kode yo gukurikirana (urugero RMC-…-2607-XXXXXXXX)",
     "codeHint": "Iyi ni kode iri kuri SMS/email yo kwemeza ko wasabye. Ntugomba kwandika telefone — twayifite.",
     "sendCode": "Ohereza kode y'ibanga",
+    "check": "Reba aho bigeze",
     "sending": "Kohereza…",
+    "otpTitle": "Andika kode y'ibanga",
     "otpSent": "Twoherereje kode y'imibare 6 kuri SMS kuri telefone iri ku isaba ryawe. Yandike hano.",
     "otpSentTo": "Twoherereje kode y'imibare 6 kuri SMS kuri {phone}. Yandike hano.",
     "otpPlaceholder": "Kode y'imibare 6",
@@ -2871,7 +2959,6 @@
     "subtitle": "Ibihe by'amasengesho, serivisi, kwiga, n'imibereho rusange mu Rwanda hose",
     "all": "Byose",
     "viewAll": "Reba byose",
-    "back": "Subira muri galeri",
     "empty": {
       "title": "Nta mafoto arahari",
       "subtitle": "Amafoto ya galeri agaragara hano nyuma yo kuyashyiraho uhereye ku rubuga rw'ubuyobozi."
@@ -3318,6 +3405,14 @@
     "title": "Itangazo ry'Umushinga",
     "subtitle": "Amahirwe yo gupiganira imishinga yakuwe na Sosiyete y'Abasilamu yo mu Rwanda.",
     "backToHome": "Subira Ahabanza",
+    "searchPlaceholder": "Shakisha amasoko…",
+    "search": {
+      "clear": "Siba ubushakashatsi"
+    },
+    "pagination": {
+      "previous": "Urupapuro rwabanje",
+      "next": "Urupapuro rukurikira"
+    },
     "filters": {
       "all": "Imishinga Yose",
       "open": "Ifunguye",
@@ -3333,15 +3428,19 @@
       "todayUrgent": "Ifunga uyu munsi!",
       "tomorrow": "Ifunga ejo",
       "inDays": "Ifunga mu minsi {days}",
+      "dayRemaining": "umunsi usigaye",
+      "daysRemaining": "iminsi isigaye",
       "remaining": "{pct}% y'igihe gisigaye"
     },
     "empty": {
       "title": "Nta mishinga yabonetse",
       "allSubtitle": "Nta mishinga itangazwa ubu.",
+      "noMatch": "Nta soko rihuye na “{query}”.",
       "viewAll": "Reba imishinga yose"
     },
     "card": {
-      "view": "Reba"
+      "view": "Reba",
+      "viewDetails": "Reba birambuye"
     },
     "detail": {
       "heroTitle": "Amakuru y'Umushinga",
@@ -3358,8 +3457,8 @@
       "attachments": "Inyandiko ({count})",
       "cta": {
         "title": "Uzirikana uyu mushinga?",
-        "subtitle": "Ohereza igitekerezo cyawe cyangwa watumanahana na RMC mbere y'igihe.",
-        "button": "Watumanahane →"
+        "subtitle": "Ohereza ipiganwa ryawe mbere y'igihe ntarengwa.",
+        "button": "Tanga ipiganwa"
       },
       "notFound": {
         "message": "Umushinga ntuboneka",

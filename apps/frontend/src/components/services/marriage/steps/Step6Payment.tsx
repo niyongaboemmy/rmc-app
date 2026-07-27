@@ -309,7 +309,7 @@ export function Step6Payment({ formData, onBack, onSubmit, isSubmitting, fees }:
           )}
 
           {payment === 'momo' && (
-            <div className="mt-3 rounded-xl bg-blue-50 border border-blue-200 px-3 py-2.5 text-xs text-blue-800">
+            <div className="mt-3 rounded-xl bg-rmc-green-light border border-rmc-green/20 px-3 py-2.5 text-xs text-rmc-green-dark">
               After clicking &quot;Pay Now&quot;, accept the MoMo prompt on your phone. Your application is submitted automatically once payment is confirmed.
             </div>
           )}

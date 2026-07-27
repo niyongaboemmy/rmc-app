@@ -47,9 +47,9 @@ interface Props {
   onNext: (data: Partial<WizardFormData>) => void;
 }
 
-function SectionLabel({ children, color = 'rose' }: { children: string; color?: 'blue' | 'rose' }) {
+function SectionLabel({ children }: { children: string }) {
   return (
-    <p className={`text-[10px] font-bold tracking-widest uppercase mb-4 ${color === 'blue' ? 'text-blue-500' : 'text-rmc-green'}`}>
+    <p className="text-[10px] font-bold tracking-widest uppercase mb-4 text-rmc-green">
       {children}
     </p>
   );
@@ -93,7 +93,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
     <form onSubmit={handleSubmit(handleNext)} className="space-y-6">
       {/* Groom */}
       <div>
-        <SectionLabel color="blue">Groom</SectionLabel>
+        <SectionLabel>Groom</SectionLabel>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input
             label="Full name"
@@ -137,7 +137,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
 
       {/* Bride */}
       <div>
-        <SectionLabel color="rose">Bride</SectionLabel>
+        <SectionLabel>Bride</SectionLabel>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input
             label="Full name"
@@ -181,7 +181,7 @@ export function Step1Couple({ initialData, onNext }: Props) {
 
       {/* SMS notifications */}
       <div>
-        <SectionLabel color="rose">SMS Notifications</SectionLabel>
+        <SectionLabel>SMS Notifications</SectionLabel>
         <PhoneInput
           label="Phone number for SMS updates"
           required

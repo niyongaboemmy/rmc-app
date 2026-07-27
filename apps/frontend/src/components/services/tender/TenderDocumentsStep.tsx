@@ -53,12 +53,47 @@ function fmtSize(bytes: number): string {
   return `${bytes} B`;
 }
 
+/** How a picked file gets to storage — see `upload` below. */
+export type BidDocumentUploader = (
+  file: File,
+  docType: TenderDocumentType,
+  onProgress?: (pct: number) => void,
+) => Promise<TenderDocumentPayload>;
+
 interface Props {
   /** Documents already attached to the bid being edited — pre-seeds the slots as done. */
   initialDocuments?: TenderDocumentPayload[];
-  submitting: boolean;
-  onBack: () => void;
-  onSubmit: (documents: TenderDocumentPayload[]) => void;
+  submitting?: boolean;
+  onBack?: () => void;
+  onSubmit?: (documents: TenderDocumentPayload[]) => void;
+  /**
+   * Which upload route to use. Defaults to the signed-in bidder's; the bid page
+   * reached through OTP tracking has no access token and passes the
+   * tracking-token uploader instead.
+   */
+  upload?: BidDocumentUploader;
+  /**
+   * Render only the three slots — no <form>, heading or buttons.
+   *
+   * The bid page edits documents and text fields together under a single Save, so
+   * it owns the form and is told the slot state through `onChange` rather than
+   * being handed a completed set by `onSubmit`.
+   */
+  embedded?: boolean;
+  /**
+   * Embedded mode only. `documents` is null until every offered slot holds an
+   * uploaded file, so the parent can keep Save disabled on a half-finished set;
+   * `busy` is true while any upload is in flight.
+   */
+  onChange?: (documents: TenderDocumentPayload[] | null, busy: boolean) => void;
+  /**
+   * Which documents this bidder may touch. Defaults to all three (a new bid, or
+   * an edit before review). After a scoped "more information" request it is just
+   * the documents the reviewer named — the others are neither rendered nor
+   * reported, so an untouched (possibly already-verified) attachment is never
+   * resubmitted. The backend enforces the same list.
+   */
+  allowedDocTypes?: TenderDocumentType[];
 }
 
 export function TenderDocumentsStep({
@@ -66,6 +101,10 @@ export function TenderDocumentsStep({
   submitting,
   onBack,
   onSubmit,
+  upload = uploadBidDocument,
+  embedded = false,
+  onChange,
+  allowedDocTypes = REQUIRED_DOCUMENTS,
 }: Props) {
   const t = useTranslations('services.tender.apply');
 
@@ -111,7 +150,7 @@ export function TenderDocumentsStep({
 
     setSlot(docType, { phase: 'uploading', fileName: file.name, pct: 0 });
     try {
-      const payload = await uploadBidDocument(file, docType, (pct) =>
+      const payload = await upload(file, docType, (pct) =>
         setSlot(docType, { phase: 'uploading', fileName: file.name, pct }),
       );
       setSlot(docType, { phase: 'done', payload });
@@ -123,36 +162,38 @@ export function TenderDocumentsStep({
     }
   };
 
+  /** Every offered slot's payload, or null while any of them is empty/erroring. */
+  const completeSet = (): TenderDocumentPayload[] | null => {
+    const done = allowedDocTypes
+      .map((type) => slots[type])
+      .filter((s): s is Extract<SlotState, { phase: 'done' }> => s.phase === 'done');
+    return done.length === allowedDocTypes.length ? done.map((s) => s.payload) : null;
+  };
+
+  const uploading = allowedDocTypes.some((type) => slots[type].phase === 'uploading');
+
+  // Embedded mode has no submit of its own — the parent saves, so it needs to
+  // know after every slot change whether the set is complete and settled.
+  useEffect(() => {
+    if (embedded) onChange?.(completeSet(), uploading);
+    // `completeSet` is derived from `slots`, which is the real dependency here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots, uploading, embedded]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const documents = REQUIRED_DOCUMENTS.map((type) => slots[type]).filter(
-      (s): s is Extract<SlotState, { phase: 'done' }> => s.phase === 'done',
-    );
-
-    if (documents.length < REQUIRED_DOCUMENTS.length) {
+    const documents = completeSet();
+    if (!documents) {
       setFormError(t('docs.errorMissing'));
       return;
     }
     setFormError(null);
-    onSubmit(documents.map((s) => s.payload));
+    onSubmit?.(documents);
   };
 
-  const uploading = REQUIRED_DOCUMENTS.some((type) => slots[type].phase === 'uploading');
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
-    >
-      <div>
-        <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-rmc-green" /> {t('step3Title')}
-        </h2>
-        <p className="text-xs text-gray-400 mt-1">{t('step3Subtitle')}</p>
-      </div>
-
-      <div className="space-y-4">
-        {REQUIRED_DOCUMENTS.map((docType) => (
+  const slotList = (
+    <div className="space-y-4">
+        {allowedDocTypes.map((docType) => (
           <DocumentSlot
             key={docType}
             docType={docType}
@@ -162,12 +203,29 @@ export function TenderDocumentsStep({
             onClear={() => clearSlot(docType)}
           />
         ))}
+    </div>
+  );
+
+  if (embedded) return slotList;
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
+    >
+      <div>
+        <h2 className="font-bold text-gray-900 flex items-center gap-2">
+          <FileText className="w-4 h-4 text-rmc-green" /> {t('step3Title')}
+        </h2>
+        <p className="text-xs text-gray-400 mt-1">{t('step3Subtitle')}</p>
       </div>
+
+      {slotList}
 
       {formError && (
         <div
           role="alert"
-          className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3"
+          className="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3"
         >
           {formError}
         </div>
@@ -234,7 +292,7 @@ function DocumentSlot({
 
       <div
         className={cn(
-          'rounded-xl border-2 border-dashed transition-all duration-150',
+          'rounded-lg border-2 border-dashed transition-all duration-150',
           dragOver
             ? 'border-rmc-green bg-rmc-green-light'
             : state.phase === 'done'

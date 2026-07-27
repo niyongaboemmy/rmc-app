@@ -19,11 +19,26 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
+import {
+  ConfirmModal,
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+} from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
 import { cn } from '@/lib/utils';
-import { fileUrl } from '@/lib/api';
 import { resolveI18n } from '@/lib/tendersApi';
-import { STATUS_COLORS, type TenderDocumentType } from '@/lib/tenderApplicationApi';
+import {
+  REQUIRED_DOCUMENTS,
+  STATUS_COLORS,
+  TENDER_MORE_INFO_FIELDS,
+  openAdminBidDocument,
+  type TenderDocumentType,
+  type TenderMoreInfoField,
+} from '@/lib/tenderApplicationApi';
 import {
   tenderApplicationAdminApi,
   type AdminTenderApplication,
@@ -34,6 +49,40 @@ const DOC_LABELS: Record<TenderDocumentType, string> = {
   rdb_certificate: 'Company Registration (RDB)',
   tax_clearance: 'RRA Tax Clearance',
   proposal: 'Technical & Financial Proposal',
+};
+
+/**
+ * Copy for the "are you sure?" step on the evaluation decisions that text and
+ * email the bidder and can't be taken back. Start review — the natural first
+ * step — stays one-click, as on the Hajj review drawer.
+ */
+const CONFIRM_COPY: Partial<
+  Record<
+    TenderStatusAction,
+    { title: string; message: string; confirmLabel: string; danger?: boolean }
+  >
+> = {
+  // `request_more_info` is deliberately absent: it opens a picker modal where the
+  // reviewer names the note, the fields and the documents, and that form's own
+  // Send button is the deliberate step. A second "are you sure?" on top of a
+  // multi-field form is noise, not a safeguard.
+  shortlist: {
+    title: 'Shortlist this bid?',
+    message: 'The bidder will be notified by SMS and email that their bid was shortlisted.',
+    confirmLabel: 'Shortlist',
+  },
+  award: {
+    title: 'Award the tender to this bidder?',
+    message: 'The bidder will be notified by SMS and email, and this decision is final.',
+    confirmLabel: 'Award tender',
+  },
+  reject: {
+    title: 'Reject this bid?',
+    message:
+      'The bidder will be notified with the reason you entered. A rejected bid can no longer be actioned.',
+    confirmLabel: 'Reject',
+    danger: true,
+  },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -65,6 +114,11 @@ function AdminTenderDetailContent() {
   const [acting, setActing] = useState<TenderStatusAction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
+  // An evaluation decision awaiting the admin's "are you sure?" confirmation.
+  const [confirmAction, setConfirmAction] = useState<TenderStatusAction | null>(null);
+  /** Which attachment is being fetched — they stream through the backend, not a link. */
+  const [opening, setOpening] = useState<string | null>(null);
+  const [moreInfoOpen, setMoreInfoOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,18 +135,16 @@ function AdminTenderDetailContent() {
     load();
   }, [load]);
 
-  const act = async (action: TenderStatusAction) => {
+  const act = async (
+    action: TenderStatusAction,
+    extra: Parameters<typeof tenderApplicationAdminApi.updateStatus>[2] = {},
+  ) => {
     setActing(action);
     setError(null);
     try {
-      // `notes` doubles as the rejection reason — the backend requires one for
-      // REJECT and the other for REQUEST_MORE_INFO, and rejects a blank either way.
-      const body =
-        action === 'reject'
-          ? { reason: notes }
-          : action === 'request_more_info'
-            ? { notes }
-            : {};
+      // The shared `notes` box is the rejection reason; request_more_info carries
+      // its own note (and its scope) from the picker modal instead.
+      const body = action === 'reject' ? { reason: notes, ...extra } : extra;
       const updated = await tenderApplicationAdminApi.updateStatus(id, action, body);
       setApplication((prev) => (prev ? { ...prev, ...updated } : updated));
       setNotes('');
@@ -110,6 +162,18 @@ function AdminTenderDetailContent() {
   const toggleDocVerified = async (documentId: string, verified: boolean) => {
     await tenderApplicationAdminApi.verifyDocument(id, documentId, verified);
     await load();
+  };
+
+  const openDocument = async (documentId: string) => {
+    setOpening(documentId);
+    setError(null);
+    try {
+      await openAdminBidDocument(id, documentId);
+    } catch {
+      setError('Could not open that document.');
+    } finally {
+      setOpening(null);
+    }
   };
 
   if (loading) {
@@ -249,14 +313,18 @@ function AdminTenderDetailContent() {
                 <p className="text-xs text-gray-400 truncate">{doc.fileName}</p>
               </div>
 
-              <a
-                href={fileUrl(doc.fileKey)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:border-teal-400 hover:text-teal-600 transition-colors shrink-0"
+              {/* Not a link: bid attachments live under a protected file-server
+                  prefix, so the bytes come back through a permission-gated
+                  backend route that authenticates by header. */}
+              <Button
+                size="xs"
+                variant="outline"
+                isLoading={opening === doc.id}
+                leftIcon={<Eye className="w-3.5 h-3.5" />}
+                onClick={() => openDocument(doc.id)}
               >
-                <Eye className="w-3.5 h-3.5" /> View
-              </a>
+                View
+              </Button>
 
               {canManage && (
                 <Button
@@ -271,6 +339,29 @@ function AdminTenderDetailContent() {
           ))}
         </ul>
       </div>
+
+      {/* What the bidder was last asked for, so a reviewer picking the bid up
+          later can see the outstanding ask without reading the history. */}
+      {application.status === 'more_info_requested' && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+          <h2 className="text-sm font-bold text-amber-900">Awaiting the bidder</h2>
+          {application.moreInfoRequested && (
+            <p className="mt-1.5 text-sm leading-relaxed text-amber-800">
+              {application.moreInfoRequested}
+            </p>
+          )}
+          {(application.moreInfoFields?.length || application.moreInfoDocumentTypes?.length) && (
+            <ul className="mt-3 space-y-1 text-xs text-amber-800">
+              {application.moreInfoFields?.map((field) => (
+                <li key={field}>• {FIELD_LABELS[field]}</li>
+              ))}
+              {application.moreInfoDocumentTypes?.map((docType) => (
+                <li key={docType}>• {DOC_LABELS[docType]}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Evaluation actions */}
       {canEvaluate && !isClosed && (
@@ -287,11 +378,11 @@ function AdminTenderDetailContent() {
           )}
 
           <Textarea
-            label="Notes / reason"
+            label="Rejection reason"
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            hint="Required when requesting more information or rejecting a bid — it is sent to the bidder."
+            hint="Required to reject a bid — it is sent to the bidder. Requesting more information has its own form."
           />
 
           <div className="flex flex-wrap gap-2">
@@ -311,8 +402,7 @@ function AdminTenderDetailContent() {
               variant="outline"
               leftIcon={<AlertTriangle className="w-4 h-4" />}
               isLoading={acting === 'request_more_info'}
-              disabled={!notes.trim()}
-              onClick={() => act('request_more_info')}
+              onClick={() => setMoreInfoOpen(true)}
             >
               Request more info
             </Button>
@@ -321,7 +411,7 @@ function AdminTenderDetailContent() {
               <Button
                 size="sm"
                 isLoading={acting === 'shortlist'}
-                onClick={() => act('shortlist')}
+                onClick={() => setConfirmAction('shortlist')}
               >
                 Shortlist
               </Button>
@@ -334,7 +424,7 @@ function AdminTenderDetailContent() {
                 size="sm"
                 leftIcon={<Trophy className="w-4 h-4" />}
                 isLoading={acting === 'award'}
-                onClick={() => act('award')}
+                onClick={() => setConfirmAction('award')}
               >
                 Award tender
               </Button>
@@ -346,7 +436,7 @@ function AdminTenderDetailContent() {
               leftIcon={<XCircle className="w-4 h-4" />}
               isLoading={acting === 'reject'}
               disabled={!notes.trim()}
-              onClick={() => act('reject')}
+              onClick={() => setConfirmAction('reject')}
             >
               Reject
             </Button>
@@ -380,7 +470,162 @@ function AdminTenderDetailContent() {
           </ol>
         </div>
       )}
+
+      <RequestMoreInfoModal
+        open={moreInfoOpen}
+        sending={acting === 'request_more_info'}
+        onClose={() => setMoreInfoOpen(false)}
+        onSend={async (payload) => {
+          await act('request_more_info', payload);
+          setMoreInfoOpen(false);
+        }}
+      />
+
+      {/* Confirm the bidder-notifying decisions before they fire. */}
+      {confirmAction && CONFIRM_COPY[confirmAction] && (
+        <ConfirmModal
+          open
+          onClose={() => setConfirmAction(null)}
+          onConfirm={async () => {
+            await act(confirmAction);
+            setConfirmAction(null);
+          }}
+          title={CONFIRM_COPY[confirmAction]!.title}
+          message={CONFIRM_COPY[confirmAction]!.message}
+          confirmLabel={CONFIRM_COPY[confirmAction]!.confirmLabel}
+          variant={CONFIRM_COPY[confirmAction]!.danger ? 'danger' : 'default'}
+          isLoading={acting === confirmAction}
+        />
+      )}
     </div>
+  );
+}
+
+/** Admin-facing names for the field groups the bidder can be asked to correct. */
+const FIELD_LABELS: Record<TenderMoreInfoField, string> = {
+  company: 'Company name & TIN',
+  contact: 'Contact person',
+  phone: 'Phone number',
+  email: 'Email address',
+  address: 'Address (district, sector, cell, village)',
+  bid_amount: 'Bid amount',
+  cover_note: 'Cover note',
+};
+
+/**
+ * Names exactly what the bidder must fix. Whatever is ticked here is what their
+ * bid page will let them change — everything else stays locked, so an ask for a
+ * corrected TIN can't become an opportunity to revise the price.
+ *
+ * This form IS the confirmation for the action: it takes a written note and at
+ * least one deliberate tick, which no stray click produces.
+ */
+function RequestMoreInfoModal({
+  open,
+  sending,
+  onClose,
+  onSend,
+}: {
+  open: boolean;
+  sending: boolean;
+  onClose: () => void;
+  onSend: (payload: {
+    notes: string;
+    moreInfoFields: TenderMoreInfoField[];
+    moreInfoDocumentTypes: TenderDocumentType[];
+  }) => void;
+}) {
+  const [note, setNote] = useState('');
+  const [fields, setFields] = useState<TenderMoreInfoField[]>([]);
+  const [docs, setDocs] = useState<TenderDocumentType[]>([]);
+
+  // Reset on each open so a cancelled request doesn't seed the next one.
+  useEffect(() => {
+    if (open) {
+      setNote('');
+      setFields([]);
+      setDocs([]);
+    }
+  }, [open]);
+
+  const toggle = <T,>(list: T[], value: T): T[] =>
+    list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+
+  // The backend refuses an empty scope — an ask the bidder cannot act on would
+  // park the bid in more_info_requested with no way out.
+  const canSend = note.trim().length > 0 && fields.length + docs.length > 0;
+
+  return (
+    <Modal open={open} onClose={onClose} size="md">
+      <ModalHeader>
+        <ModalTitle>Request more information</ModalTitle>
+      </ModalHeader>
+      <ModalBody>
+        <div className="space-y-5">
+          <Textarea
+            label="What does the bidder need to do?"
+            rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            hint="Sent to the bidder by SMS and email, and shown on their bid page."
+          />
+
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Details they may correct
+            </p>
+            <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+              {TENDER_MORE_INFO_FIELDS.map((field) => (
+                <Checkbox
+                  key={field}
+                  id={`mi-field-${field}`}
+                  label={FIELD_LABELS[field]}
+                  checked={fields.includes(field)}
+                  onChange={() => setFields((prev) => toggle(prev, field))}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Documents they may replace
+            </p>
+            <div className="mt-2.5 space-y-2">
+              {REQUIRED_DOCUMENTS.map((docType) => (
+                <Checkbox
+                  key={docType}
+                  id={`mi-doc-${docType}`}
+                  label={DOC_LABELS[docType]}
+                  checked={docs.includes(docType)}
+                  onChange={() => setDocs((prev) => toggle(prev, docType))}
+                />
+              ))}
+            </div>
+          </div>
+
+          {!canSend && (
+            <p className="text-xs text-gray-400">
+              Write a note and tick at least one thing the bidder should fix.
+            </p>
+          )}
+        </div>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" onClick={onClose} disabled={sending}>
+          Cancel
+        </Button>
+        <Button
+          isLoading={sending}
+          disabled={!canSend}
+          onClick={() =>
+            onSend({ notes: note.trim(), moreInfoFields: fields, moreInfoDocumentTypes: docs })
+          }
+        >
+          Send request
+        </Button>
+      </ModalFooter>
+    </Modal>
   );
 }
 

@@ -12,8 +12,8 @@
  * identifier until the certificate is issued.
  */
 export const SmsTemplates = {
-  submission(ref: string, tenderTitle: string): string {
-    return `RMC Tender | Bid ${ref} received for "${tenderTitle.slice(0, 40)}". Track at rwandamuslim.org`;
+  submission(ref: string, trackingCode: string, tenderTitle: string): string {
+    return `RMC Tender | Bid ${ref} received for "${tenderTitle.slice(0, 35)}". Track code: ${trackingCode} at rwandamuslim.org`;
   },
 
   underReview(ref: string): string {

@@ -25,6 +25,10 @@ import {
 } from './entities/hajj-document.entity';
 import { CreateHajjApplicationDto } from './dto/create-hajj-application.dto';
 import { UpdateHajjStatusDto } from './dto/update-hajj-status.dto';
+import {
+  ResubmitHajjDocumentsDto,
+  ResubmitHajjDocumentItemDto,
+} from './dto/resubmit-hajj-document.dto';
 import { QueryHajjApplicationsDto } from './dto/query-hajj-applications.dto';
 import { PublicUploadService } from '../integrations/storage/public-upload.service';
 import { HajjSmsTemplates } from './hajj-sms-templates';
@@ -54,6 +58,7 @@ export interface HajjApplicationFilters {
 const HAJJ_STATUS_LABELS: Record<HajjApplicationStatus, string> = {
   [HajjApplicationStatus.SUBMITTED]: 'Submitted',
   [HajjApplicationStatus.UNDER_REVIEW]: 'Under Review',
+  [HajjApplicationStatus.MORE_INFO_REQUESTED]: 'More Information Requested',
   [HajjApplicationStatus.APPROVED]: 'Approved',
   [HajjApplicationStatus.REJECTED]: 'Not Approved',
 };
@@ -194,8 +199,12 @@ export class HajjService {
     const reviewers = await this.reviewerNames(applications);
 
     const rows = applications.map((app) => {
+      // A category can hold several uploads (the applicant re-sent a correction);
+      // the report reflects the latest one.
       const receipt = (type: HajjDocumentType) =>
-        app.documents?.find((d) => d.documentType === type);
+        app.documents
+          ?.filter((d) => d.documentType === type)
+          .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())[0];
 
       return {
         'Application Number': app.applicationNumber,
@@ -327,6 +336,18 @@ export class HajjService {
     if (dto.status === HajjApplicationStatus.REJECTED) {
       app.rejectionReason = dto.rejectionReason ?? null;
     }
+    // Carry the request only while it is outstanding: moving to any other status
+    // means the admin is no longer waiting, so the applicant must stop being told
+    // that something is missing.
+    app.moreInfoRequested =
+      dto.status === HajjApplicationStatus.MORE_INFO_REQUESTED
+        ? (dto.moreInfoRequested ?? null)
+        : null;
+    // The requested slots travel with the ask and are cleared the same moment.
+    app.moreInfoDocumentTypes =
+      dto.status === HajjApplicationStatus.MORE_INFO_REQUESTED
+        ? (dto.moreInfoDocumentTypes ?? null)
+        : null;
 
     const saved = await this.applications.save(app);
     await this.recordStatusChange(saved.id, previous, saved.status, adminId, dto.notes ?? null);
@@ -364,9 +385,26 @@ export class HajjService {
   // ── Secure tracking (phone-OTP gated) ────────────────────────────────────────
 
   /** Resolve a public tracking code to the OTP subject (id + phone), or null. */
-  async findSubjectByCode(trackingCode: string): Promise<TrackingSubject | null> {
+  /**
+   * Resolve what the applicant typed into the application to verify against.
+   *
+   * Accepts EITHER identifier, because an applicant holds both and the two look
+   * confusingly alike:
+   *   • applicationNumber — RMC-HAJ-202607-00001 (what the screens show them)
+   *   • trackingCode      — RMC-HAJ-2607-XXXXXXXX (older confirmation emails)
+   *
+   * Note the trade-off: applicationNumber is sequential, so this makes the
+   * lookup enumerable in a way the random trackingCode was not. Nothing is
+   * disclosed without the phone OTP, and both the per-IP (15) and
+   * per-application (3) limits still apply per 10-minute window — but it does
+   * mean a guessed number can trigger an SMS to its owner.
+   */
+  async findSubjectByCode(code: string): Promise<TrackingSubject | null> {
+    const value = (code || '').trim().toUpperCase();
+    if (!value) return null;
     const app = await this.applications.findOne({
-      where: { trackingCode: (trackingCode || '').trim().toUpperCase() },
+      // An array is an OR in TypeORM. Both columns are unique, so at most one row.
+      where: [{ applicationNumber: value }, { trackingCode: value }],
       select: { id: true, phone: true },
     });
     return app ? { id: app.id, phone: app.phone } : null;
@@ -383,9 +421,111 @@ export class HajjService {
       sector: app.sector,
       status: app.status,
       rejectionReason: app.rejectionReason,
+      /** Drives the upload panel on the tracking page. */
+      moreInfoRequested: app.moreInfoRequested,
+      /** Which upload slots that panel shows (null = both, for legacy rows). */
+      moreInfoDocumentTypes: app.moreInfoDocumentTypes,
       submittedAt: app.createdAt,
       updatedAt: app.updatedAt,
     };
+  }
+
+  /**
+   * The applicant's answer to a "more information requested": attach the file(s)
+   * they just uploaded and hand the application back to the reviewers.
+   *
+   * Every requested document is attached in ONE call and the application returns
+   * to review only once, after all of them are in — so an admin who asked for
+   * both receipts doesn't lock the applicant out the moment they upload the
+   * first. Guarded by the OTP tracking token (the caller resolves it to `id`),
+   * and only legal while the request is actually outstanding — otherwise anyone
+   * holding a live token could keep mutating a decided application.
+   */
+  async resubmitDocuments(
+    id: string,
+    dto: ResubmitHajjDocumentsDto,
+  ): Promise<{ status: HajjApplicationStatus; documentTypes: HajjDocumentType[] }> {
+    const app = await this.applications.findOne({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
+
+    if (app.status !== HajjApplicationStatus.MORE_INFO_REQUESTED) {
+      // A distinct code so the tracking page can say "already answered — refresh"
+      // rather than a generic upload failure.
+      throw new BadRequestException({
+        code: 'HAJJ_NOT_AWAITING_DOCS',
+        message: 'This application is not awaiting additional documents',
+      });
+    }
+
+    // When the admin named the receipts they need, hold the applicant to exactly
+    // that set: they may not overwrite an unrequested (possibly already-verified)
+    // receipt, and the application does not return to review until every
+    // requested one is in. A null list is a legacy ask — accept either receipt.
+    const requested = app.moreInfoDocumentTypes;
+    if (requested?.length) {
+      const unexpected = dto.documents.find((d) => !requested.includes(d.documentType));
+      if (unexpected) {
+        throw new BadRequestException({
+          code: 'HAJJ_DOC_NOT_REQUESTED',
+          message: `The ${unexpected.documentType} receipt was not requested.`,
+        });
+      }
+      const submitted = new Set(dto.documents.map((d) => d.documentType));
+      const missing = requested.filter((r) => !submitted.has(r));
+      if (missing.length) {
+        throw new BadRequestException({
+          code: 'HAJJ_DOCS_INCOMPLETE',
+          message: `Still awaiting: ${missing.join(', ')}.`,
+        });
+      }
+    }
+
+    // Attach each in turn; a later item for the same type just re-replaces the
+    // slot, so a duplicate in one batch is harmless (last one wins).
+    for (const item of dto.documents) {
+      await this.attachDocument(id, item);
+    }
+
+    const previous = app.status;
+    app.status = HajjApplicationStatus.UNDER_REVIEW;
+    app.moreInfoRequested = null; // the ask has been answered
+    app.moreInfoDocumentTypes = null;
+    const saved = await this.applications.save(app);
+
+    const documentTypes = dto.documents.map((d) => d.documentType);
+    await this.recordStatusChange(
+      saved.id,
+      previous,
+      saved.status,
+      null, // the applicant, not an admin
+      `Applicant re-uploaded ${documentTypes.join(', ')}`,
+    );
+
+    return { status: saved.status, documentTypes };
+  }
+
+  /**
+   * Attach one re-uploaded receipt as a NEW document under its category, keeping
+   * any earlier upload of the same type rather than overwriting it — the reviewer
+   * can compare the original against the correction, and a previously verified
+   * receipt is never silently discarded. A fresh file is unverified until an
+   * admin opens it.
+   */
+  private async attachDocument(
+    applicationId: string,
+    item: ResubmitHajjDocumentItemDto,
+  ): Promise<void> {
+    await this.documents.save(
+      this.documents.create({
+        applicationId,
+        documentType: item.documentType,
+        fileKey: item.fileKey,
+        fileName: item.fileName,
+        fileSize: item.fileSize,
+        mimeType: item.mimeType,
+        verified: false,
+      }),
+    );
   }
 
   private async recordStatusChange(
@@ -428,6 +568,8 @@ export class HajjService {
         return HajjSmsTemplates.underReview(app.trackingCode);
       case HajjApplicationStatus.APPROVED:
         return HajjSmsTemplates.approved(app.trackingCode);
+      case HajjApplicationStatus.MORE_INFO_REQUESTED:
+        return HajjSmsTemplates.moreInfoRequested(app.trackingCode, app.moreInfoRequested);
       case HajjApplicationStatus.REJECTED:
         return HajjSmsTemplates.rejected(app.trackingCode, app.rejectionReason);
       default:
@@ -441,6 +583,8 @@ export class HajjService {
         return HajjEmailTemplates.underReview(app);
       case HajjApplicationStatus.APPROVED:
         return HajjEmailTemplates.approved(app);
+      case HajjApplicationStatus.MORE_INFO_REQUESTED:
+        return HajjEmailTemplates.moreInfoRequested(app);
       case HajjApplicationStatus.REJECTED:
         return HajjEmailTemplates.rejected(app);
       default:
