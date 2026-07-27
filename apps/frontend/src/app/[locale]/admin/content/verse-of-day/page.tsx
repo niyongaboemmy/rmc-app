@@ -10,58 +10,53 @@ import {
   ModalTitle, ModalDescription, ConfirmModal,
 } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
-import { getSiteContent, saveSiteContent } from '@/lib/content-api';
+import { verseOfDayApi, type VerseOfDay, type VerseInput } from '@/lib/verseOfDayApi';
 import {
-  BookOpen, ArrowLeft, Plus, Edit2, Trash2,
-  ToggleLeft, ToggleRight, Quote,
+  BookOpen, ArrowLeft, Plus, Edit2, Trash2, Quote,
+  CalendarDays, CheckCircle2, AlertTriangle, RefreshCw,
 } from 'lucide-react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-interface Verse {
-  id: string;
-  arabicText: string;
-  translationEn: string;
-  translationRw: string;
-  translationAr: string;
-  referenceEn: string;
-  referenceRw: string;
-  referenceAr: string;
-  isActive: boolean;
+const inputCls =
+  'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
+const labelCls = 'block text-sm font-medium text-gray-700 mb-1.5';
+
+/** Today's date in the browser's timezone as YYYY-MM-DD. */
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-type Lang = 'en' | 'rw' | 'ar';
+/** Normalize a backend date/datetime to a YYYY-MM-DD value for <input type="date">. */
+function toDateInput(d: string): string {
+  return d ? d.split('T')[0] : '';
+}
 
-const EMPTY_VERSE: Omit<Verse, 'id'> = {
+function formatDate(iso: string, locale: string): string {
+  const d = new Date(`${toDateInput(iso)}T00:00:00`);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString(locale, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function extractMsg(err: unknown): string {
+  const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
+  const m = e?.response?.data?.error?.message ?? e?.response?.data?.message;
+  return Array.isArray(m) ? m.join(', ') : (m ?? '');
+}
+
+const EMPTY: VerseInput = {
+  surah: 1,
+  ayah: 1,
   arabicText: '',
   translationEn: '',
   translationRw: '',
-  translationAr: '',
-  referenceEn: '',
-  referenceRw: '',
-  referenceAr: '',
-  isActive: true,
+  reference: '',
+  displayDate: todayISO(),
 };
 
-// Verses persist in the shared site-content store under this key — the same
-// mechanism every other admin content page uses. No fake sample data.
-const CONTENT_KEY = 'verse-of-day';
-
-function newId(): string {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : Date.now().toString();
-}
-
-// ─── Language config ──────────────────────────────────────────────────────────
-
-const LANGS: { key: Lang; label: string; dir: 'ltr' | 'rtl'; flag: string }[] = [
-  { key: 'en', label: 'English', dir: 'ltr', flag: 'EN' },
-  { key: 'rw', label: 'Kinyarwanda', dir: 'ltr', flag: 'RW' },
-  { key: 'ar', label: 'Arabic', dir: 'rtl', flag: 'AR' },
-];
-
-// ─── Page wrapper with toast ──────────────────────────────────────────────────
+// ─── Page wrapper ─────────────────────────────────────────────────────────────
 
 export default function VerseOfDayPage() {
   return (
@@ -73,113 +68,139 @@ export default function VerseOfDayPage() {
   );
 }
 
-// ─── Manager ─────────────────────────────────────────────────────────────────
+// ─── Manager ────────────────────────────────────────────────────────────────
 
 function VerseOfDayManager() {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
-  const [verses, setVerses] = useState<Verse[]>([]);
+  const [verses, setVerses] = useState<VerseOfDay[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lang, setLang] = useState<Lang>('en');
+  const [loadError, setLoadError] = useState(false);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingVerse, setEditingVerse] = useState<Verse | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<VerseOfDay | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<VerseOfDay | null>(null);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<Omit<Verse, 'id'>>(EMPTY_VERSE);
+  const [form, setForm] = useState<VerseInput>(EMPTY);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // Load saved verses from the content store on mount.
-  useEffect(() => {
-    let active = true;
-    getSiteContent<{ verses?: Verse[] }>(CONTENT_KEY)
-      .then((data) => { if (active && data?.verses) setVerses(data.verses); })
-      .catch(() => {/* start with an empty list */})
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const list = await verseOfDayApi.adminGetAll();
+      setVerses(list.map((v) => ({ ...v, displayDate: toDateInput(v.displayDate) })));
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Persist the whole verse list, then reflect it locally.
-  const persist = useCallback(async (next: Verse[]) => {
-    await saveSiteContent(CONTENT_KEY, { verses: next });
-    setVerses(next);
-  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const today = todayISO();
+  const todaysVerse = verses.find((v) => v.displayDate === today) ?? null;
 
   const openCreate = useCallback(() => {
-    setEditingVerse(null);
-    setFormData(EMPTY_VERSE);
+    setEditing(null);
+    setForm({ ...EMPTY, displayDate: today });
+    setFieldErrors({});
+    setIsModalOpen(true);
+  }, [today]);
+
+  const openEdit = useCallback((v: VerseOfDay) => {
+    setEditing(v);
+    setForm({
+      surah: v.surah,
+      ayah: v.ayah,
+      arabicText: v.arabicText,
+      translationEn: v.translationEn,
+      translationRw: v.translationRw ?? '',
+      reference: v.reference,
+      displayDate: toDateInput(v.displayDate),
+    });
+    setFieldErrors({});
     setIsModalOpen(true);
   }, []);
 
-  const openEdit = useCallback((verse: Verse) => {
-    setEditingVerse(verse);
-    setFormData({ ...verse });
-    setIsModalOpen(true);
+  const setField = useCallback((k: keyof VerseInput, v: string | number) => {
+    setForm((prev) => ({ ...prev, [k]: v }));
+    setFieldErrors((prev) => (prev[k] ? { ...prev, [k]: '' } : prev));
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (!formData.arabicText.trim() || !formData.translationEn.trim()) {
-      error('Arabic text and English translation are required.');
-      return;
-    }
+  const validate = (): boolean => {
+    const e: Record<string, string> = {};
+    if (!form.displayDate) e.displayDate = 'Date is required.';
+    if (!(Number(form.surah) >= 1 && Number(form.surah) <= 114)) e.surah = 'Surah must be between 1 and 114.';
+    if (!(Number(form.ayah) >= 1)) e.ayah = 'Ayah must be 1 or more.';
+    if (!form.arabicText.trim()) e.arabicText = 'Arabic text is required.';
+    if (!form.translationEn.trim()) e.translationEn = 'English translation is required.';
+    if (!form.reference.trim()) e.reference = 'Reference is required.';
+    setFieldErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
     setSaving(true);
     try {
-      const next = editingVerse
-        ? verses.map((v) => (v.id === editingVerse.id ? { ...formData, id: v.id } : v))
-        : [...verses, { ...formData, id: newId() }];
-      await persist(next);
-      success(editingVerse ? 'Verse updated successfully.' : 'Verse added successfully.');
-      setIsModalOpen(false);
-    } catch {
-      error('Could not save. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  }, [formData, editingVerse, verses, persist, success, error]);
-
-  const handleDelete = useCallback(async () => {
-    if (!deleteId) return;
-    setSaving(true);
-    try {
-      await persist(verses.filter((v) => v.id !== deleteId));
-      success('Verse deleted.');
-      setDeleteId(null);
-    } catch {
-      error('Could not delete. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  }, [deleteId, verses, persist, success, error]);
-
-  const toggleActive = useCallback(
-    async (id: string) => {
-      const previous = verses;
-      const next = verses.map((v) => (v.id === id ? { ...v, isActive: !v.isActive } : v));
-      setVerses(next); // optimistic
-      try {
-        await saveSiteContent(CONTENT_KEY, { verses: next });
-      } catch {
-        setVerses(previous); // revert on failure
-        error('Could not update. Please try again.');
+      const payload: VerseInput = {
+        surah: Number(form.surah),
+        ayah: Number(form.ayah),
+        arabicText: form.arabicText.trim(),
+        translationEn: form.translationEn.trim(),
+        translationRw: form.translationRw?.trim() ? form.translationRw.trim() : null,
+        reference: form.reference.trim(),
+        displayDate: form.displayDate,
+      };
+      if (editing) {
+        await verseOfDayApi.update(editing.id, payload);
+        success('Verse updated successfully.');
+      } else {
+        await verseOfDayApi.create(payload);
+        success('Verse added successfully.');
       }
-    },
-    [verses, error],
-  );
+      setIsModalOpen(false);
+      await load();
+    } catch (err: unknown) {
+      const msg = extractMsg(err);
+      if (/unique|duplicate|already|display_date|displayDate|scheduled/i.test(msg)) {
+        setFieldErrors((p) => ({ ...p, displayDate: 'A verse is already scheduled for this date.' }));
+        error('A verse is already scheduled for this date — edit that one instead.');
+      } else {
+        error(msg || 'Could not save the verse. Please try again.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  const setField = useCallback((field: keyof typeof formData, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  }, []);
-
-  const activeLang = LANGS.find((l) => l.key === lang)!;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setSaving(true);
+    try {
+      await verseOfDayApi.delete(deleteTarget.id);
+      success('Verse deleted.');
+      setDeleteTarget(null);
+      await load();
+    } catch (err) {
+      error(extractMsg(err) || 'Could not delete the verse. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
-
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             href={`/${locale}/admin/content`}
-            className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
+            aria-label="Back to content"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -188,180 +209,177 @@ function VerseOfDayManager() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Verse of the Day</h1>
-            <p className="text-xs text-gray-400">{verses.length} verse{verses.length !== 1 ? 's' : ''} · {verses.filter((v) => v.isActive).length} active</p>
+            <p className="text-xs text-gray-400">
+              {loading ? 'Loading…' : `${verses.length} scheduled verse${verses.length !== 1 ? 's' : ''}`}
+            </p>
           </div>
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg shadow-sm shadow-rmc-green/20 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          Add Verse
+          <Plus className="w-4 h-4" /> Add Verse
         </button>
       </div>
 
-      {/* ── Language tabs ── */}
-      <LanguageTabs lang={lang} onChange={setLang} />
-
-      {/* ── Verse list ── */}
-      <div className="space-y-3">
-        {loading ? (
-          <div className="text-center py-16 text-gray-300">
-            <span className="inline-block w-6 h-6 border-2 border-gray-200 border-t-emerald-500 rounded-full animate-spin" />
-            <p className="text-sm mt-3">Loading verses…</p>
-          </div>
-        ) : verses.length === 0 ? (
-          <div className="text-center py-16 text-gray-300">
-            <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No verses yet. Add one above.</p>
+      {/* ── Today status banner ── */}
+      {!loading && !loadError && (
+        todaysVerse ? (
+          <div className="flex items-start gap-3 rounded-xl border border-rmc-green/20 bg-rmc-green-light/60 px-4 py-3">
+            <CheckCircle2 className="w-5 h-5 text-rmc-green shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-rmc-green-dark">Live on the homepage today</p>
+              <p className="text-sm text-gray-600 truncate">
+                <span className="font-arabic">{todaysVerse.arabicText}</span> — {todaysVerse.reference}
+              </p>
+            </div>
           </div>
         ) : (
-          verses.map((verse) => (
-            <VerseCard
-              key={verse.id}
-              verse={verse}
-              lang={lang}
-              onEdit={() => openEdit(verse)}
-              onDelete={() => setDeleteId(verse.id)}
-              onToggle={() => toggleActive(verse.id)}
-            />
-          ))
-        )}
-      </div>
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">No verse set for today</p>
+              <p className="text-sm text-amber-700">The homepage will show its built-in fallback verse until you add one for {formatDate(today, locale)}.</p>
+            </div>
+          </div>
+        )
+      )}
 
-      {/* ── Create/Edit modal ── */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
+      {/* ── List / states ── */}
+      {loading ? (
+        <div className="text-center py-16 text-gray-400">
+          <RefreshCw className="w-6 h-6 mx-auto animate-spin text-rmc-green" />
+          <p className="text-sm mt-3">Loading verses…</p>
+        </div>
+      ) : loadError ? (
+        <div className="text-center py-16">
+          <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-red-300" />
+          <p className="text-sm text-gray-600 mb-4">Could not load the verses.</p>
+          <button onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600 hover:border-rmc-green/40 hover:text-rmc-green transition-colors">
+            <RefreshCw className="w-4 h-4" /> Try again
+          </button>
+        </div>
+      ) : verses.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
+          <p className="text-sm">No verses scheduled yet. Add your first one above.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {verses.map((v) => (
+            <VerseCard
+              key={v.id}
+              verse={v}
+              isToday={v.displayDate === today}
+              dateLabel={formatDate(v.displayDate, locale)}
+              onEdit={() => openEdit(v)}
+              onDelete={() => setDeleteTarget(v)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ── Create / Edit modal ── */}
+      <Modal isOpen={isModalOpen} onClose={() => !saving && setIsModalOpen(false)} size="xl">
         <ModalHeader>
-          <ModalTitle>{editingVerse ? 'Edit Verse' : 'Add Verse'}</ModalTitle>
-          <ModalDescription>Fill in the verse content in all three languages.</ModalDescription>
+          <ModalTitle>{editing ? 'Edit Verse' : 'Add Verse'}</ModalTitle>
+          <ModalDescription>The verse whose date matches today is shown on the homepage.</ModalDescription>
         </ModalHeader>
-        <ModalBody className="space-y-5">
-          {/* Arabic text — shared across all languages */}
+        <ModalBody className="space-y-4">
+          {/* Date + reference */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Display date <span className="text-red-500">*</span></label>
+              <input
+                type="date"
+                value={form.displayDate}
+                onChange={(e) => setField('displayDate', e.target.value)}
+                className={inputCls}
+              />
+              {fieldErrors.displayDate && <p className="mt-1.5 text-xs text-red-600">{fieldErrors.displayDate}</p>}
+            </div>
+            <div>
+              <label className={labelCls}>Reference <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={form.reference}
+                onChange={(e) => setField('reference', e.target.value)}
+                placeholder="e.g. Ash-Sharh 94:6"
+                className={inputCls}
+              />
+              {fieldErrors.reference && <p className="mt-1.5 text-xs text-red-600">{fieldErrors.reference}</p>}
+            </div>
+          </div>
+
+          {/* Surah + ayah */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Surah number <span className="text-red-500">*</span></label>
+              <input
+                type="number" min={1} max={114}
+                value={form.surah}
+                onChange={(e) => setField('surah', e.target.value)}
+                className={inputCls}
+              />
+              {fieldErrors.surah && <p className="mt-1.5 text-xs text-red-600">{fieldErrors.surah}</p>}
+            </div>
+            <div>
+              <label className={labelCls}>Ayah number <span className="text-red-500">*</span></label>
+              <input
+                type="number" min={1}
+                value={form.ayah}
+                onChange={(e) => setField('ayah', e.target.value)}
+                className={inputCls}
+              />
+              {fieldErrors.ayah && <p className="mt-1.5 text-xs text-red-600">{fieldErrors.ayah}</p>}
+            </div>
+          </div>
+
+          {/* Arabic text */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Arabic Text <span className="text-red-500">*</span>
-            </label>
+            <label className={labelCls}>Arabic text <span className="text-red-500">*</span></label>
             <textarea
               dir="rtl"
               rows={3}
-              value={formData.arabicText}
+              value={form.arabicText}
               onChange={(e) => setField('arabicText', e.target.value)}
               placeholder="أدخل الآية الكريمة..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-xl font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
+              className={`${inputCls} text-xl font-arabic resize-none`}
             />
+            {fieldErrors.arabicText && <p className="mt-1.5 text-xs text-red-600">{fieldErrors.arabicText}</p>}
           </div>
 
-          {/* Language tabs in modal */}
-          <div className="border rounded-2xl border-gray-100 overflow-hidden">
-            <div className="flex border-b border-gray-100 bg-gray-50/50">
-              {LANGS.map((l) => (
-                <button
-                  key={l.key}
-                  onClick={() => setLang(l.key)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-colors ${
-                    lang === l.key
-                      ? 'bg-white text-rmc-green border-b-2 border-rmc-green'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <span>{l.flag}</span> {l.label}
-                </button>
-              ))}
-            </div>
-            <div className="p-4 space-y-4">
-              {lang === 'en' && (
-                <>
-                  <FormField label="English Translation" required>
-                    <textarea
-                      rows={2}
-                      value={formData.translationEn}
-                      onChange={(e) => setField('translationEn', e.target.value)}
-                      placeholder="English translation..."
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
-                    />
-                  </FormField>
-                  <FormField label="Reference (e.g. Al-Baqarah 2:286)">
-                    <input
-                      type="text"
-                      value={formData.referenceEn}
-                      onChange={(e) => setField('referenceEn', e.target.value)}
-                      placeholder="Surah Name 1:1"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
-                    />
-                  </FormField>
-                </>
-              )}
-              {lang === 'rw' && (
-                <>
-                  <FormField label="Kinyarwanda Translation">
-                    <textarea
-                      rows={2}
-                      value={formData.translationRw}
-                      onChange={(e) => setField('translationRw', e.target.value)}
-                      placeholder="Ubusobanuro mu Kinyarwanda..."
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
-                    />
-                  </FormField>
-                  <FormField label="Reference (Kinyarwanda)">
-                    <input
-                      type="text"
-                      value={formData.referenceRw}
-                      onChange={(e) => setField('referenceRw', e.target.value)}
-                      placeholder="Ash-Sharh 94:6"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
-                    />
-                  </FormField>
-                </>
-              )}
-              {lang === 'ar' && (
-                <>
-                  <FormField label="Arabic Translation / Tafsir">
-                    <textarea
-                      dir="rtl"
-                      rows={2}
-                      value={formData.translationAr}
-                      onChange={(e) => setField('translationAr', e.target.value)}
-                      placeholder="التفسير بالعربية..."
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
-                    />
-                  </FormField>
-                  <FormField label="Reference (Arabic)">
-                    <input
-                      dir="rtl"
-                      type="text"
-                      value={formData.referenceAr}
-                      onChange={(e) => setField('referenceAr', e.target.value)}
-                      placeholder="الشرح ٩٤:٦"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
-                    />
-                  </FormField>
-                </>
-              )}
-            </div>
+          {/* English translation */}
+          <div>
+            <label className={labelCls}>English translation <span className="text-red-500">*</span></label>
+            <textarea
+              rows={2}
+              value={form.translationEn}
+              onChange={(e) => setField('translationEn', e.target.value)}
+              placeholder="English translation…"
+              className={`${inputCls} resize-none`}
+            />
+            {fieldErrors.translationEn && <p className="mt-1.5 text-xs text-red-600">{fieldErrors.translationEn}</p>}
           </div>
 
-          {/* Active toggle */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100">
-            <div>
-              <p className="text-sm font-semibold text-gray-800">Active</p>
-              <p className="text-xs text-gray-400">Show this verse on the homepage</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setField('isActive', !formData.isActive)}
-              className="transition-colors"
-            >
-              {formData.isActive
-                ? <ToggleRight className="w-8 h-8 text-rmc-green" />
-                : <ToggleLeft className="w-8 h-8 text-gray-300" />}
-            </button>
+          {/* Kinyarwanda translation (optional) */}
+          <div>
+            <label className={labelCls}>Kinyarwanda translation <span className="text-gray-400 font-normal">(optional)</span></label>
+            <textarea
+              rows={2}
+              value={form.translationRw ?? ''}
+              onChange={(e) => setField('translationRw', e.target.value)}
+              placeholder="Ubusobanuro mu Kinyarwanda…"
+              className={`${inputCls} resize-none`}
+            />
           </div>
         </ModalBody>
         <ModalFooter>
           <button
             type="button"
             onClick={() => setIsModalOpen(false)}
-            className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+            disabled={saving}
+            className="px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-60 transition-colors"
           >
             Cancel
           </button>
@@ -372,18 +390,18 @@ function VerseOfDayManager() {
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-            {editingVerse ? 'Save Changes' : 'Add Verse'}
+            {editing ? 'Save Changes' : 'Add Verse'}
           </button>
         </ModalFooter>
       </Modal>
 
       {/* ── Delete confirm ── */}
       <ConfirmModal
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Delete this verse?"
-        description="This will remove the verse from the rotation. This action cannot be undone."
+        description={deleteTarget ? `The verse scheduled for ${formatDate(deleteTarget.displayDate, locale)} will be permanently removed.` : ''}
         confirmLabel="Delete"
         cancelLabel="Keep"
         variant="danger"
@@ -396,93 +414,55 @@ function VerseOfDayManager() {
 // ─── Verse card ───────────────────────────────────────────────────────────────
 
 function VerseCard({
-  verse, lang, onEdit, onDelete, onToggle,
-}: { verse: Verse; lang: Lang; onEdit: () => void; onDelete: () => void; onToggle: () => void }) {
-  const translation = lang === 'en' ? verse.translationEn : lang === 'rw' ? verse.translationRw : verse.translationAr;
-  const reference = lang === 'en' ? verse.referenceEn : lang === 'rw' ? verse.referenceRw : verse.referenceAr;
-
+  verse, isToday, dateLabel, onEdit, onDelete,
+}: {
+  verse: VerseOfDay;
+  isToday: boolean;
+  dateLabel: string;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   return (
-    <div className={`group flex gap-4 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md ${
-      verse.isActive ? 'bg-white border-gray-100 hover:border-rmc-green-light' : 'bg-gray-50/60 border-gray-100 opacity-60'
+    <div className={`group flex gap-4 p-5 rounded-2xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md ${
+      isToday ? 'border-rmc-green/40 ring-1 ring-rmc-green/10' : 'border-gray-100'
     }`}>
-      {/* Icon */}
       <div className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
         <Quote className="w-4 h-4 text-rmc-green" />
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-xl font-arabic text-gray-900 mb-2 leading-loose" dir="rtl">
-          {verse.arabicText}
-        </p>
-        {translation && (
-          <p className="text-sm text-gray-500 italic mb-1" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-            &ldquo;{translation}&rdquo;
-          </p>
-        )}
-        {reference && (
-          <p className="text-xs text-rmc-green font-semibold">— {reference}</p>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col items-end gap-2 shrink-0">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onEdit}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green-light transition-colors"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500">
+            <CalendarDays className="w-3.5 h-3.5" /> {dateLabel}
+          </span>
+          {isToday && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-rmc-green-light text-rmc-green text-[11px] font-semibold px-2 py-0.5">
+              <CheckCircle2 className="w-3 h-3" /> Today
+            </span>
+          )}
+          <span className="text-[11px] text-gray-400">Surah {verse.surah} : {verse.ayah}</span>
         </div>
+        <p className="text-xl font-arabic text-gray-900 mb-2 leading-loose" dir="rtl">{verse.arabicText}</p>
+        <p className="text-sm text-gray-500 italic mb-1">&ldquo;{verse.translationEn}&rdquo;</p>
+        <p className="text-xs text-rmc-green font-semibold">— {verse.reference}</p>
+      </div>
+
+      <div className="flex items-start gap-1 shrink-0">
         <button
-          onClick={onToggle}
-          title={verse.isActive ? 'Deactivate' : 'Activate'}
+          onClick={onEdit}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green-light transition-colors"
+          aria-label="Edit verse"
         >
-          {verse.isActive
-            ? <ToggleRight className="w-6 h-6 text-rmc-green" />
-            : <ToggleLeft className="w-6 h-6 text-gray-300" />}
+          <Edit2 className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          aria-label="Delete verse"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
-    </div>
-  );
-}
-
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-
-function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
-  return (
-    <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
-      {LANGS.map((l) => (
-        <button
-          key={l.key}
-          onClick={() => onChange(l.key)}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
-            lang === l.key
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <span>{l.flag}</span> {l.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
     </div>
   );
 }

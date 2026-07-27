@@ -28,11 +28,33 @@ export class PublicController {
     return this.service.getVerseOfDay();
   }
 
+  @Get('verse-of-day/admin-all')
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'List all scheduled verses of the day (admin)' })
+  adminListVerses() {
+    return this.service.adminListVerses();
+  }
+
   @Post('verse-of-day')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   createVerse(@CurrentUser('id') userId: string, @Body() dto: any) {
     return this.service.createVerse({ ...dto, createdBy: userId });
+  }
+
+  @Put('verse-of-day/:id')
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  updateVerse(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
+    return this.service.updateVerse(id, dto);
+  }
+
+  @Delete('verse-of-day/:id')
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  deleteVerse(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deleteVerse(id);
   }
 
   // ── Announcements ──
