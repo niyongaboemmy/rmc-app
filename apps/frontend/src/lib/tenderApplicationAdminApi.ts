@@ -3,6 +3,8 @@ import type {
   TenderApplication,
   TenderApplicationDocument,
   TenderApplicationStatus,
+  TenderDocumentType,
+  TenderMoreInfoField,
 } from './tenderApplicationApi';
 
 export interface AdminTenderApplication extends TenderApplication {
@@ -55,7 +57,13 @@ export const tenderApplicationAdminApi = {
   updateStatus: async (
     id: string,
     action: TenderStatusAction,
-    body: { notes?: string; reason?: string } = {},
+    body: {
+      notes?: string;
+      reason?: string;
+      /** request_more_info only — what the bidder is allowed to correct. */
+      moreInfoFields?: TenderMoreInfoField[];
+      moreInfoDocumentTypes?: TenderDocumentType[];
+    } = {},
   ): Promise<AdminTenderApplication> => {
     const { data } = await apiClient.patch(`/admin/tenders/applications/${id}/status`, {
       action,

@@ -13,6 +13,7 @@ import { NotificationSettingsModule } from '../integrations/notifications/notifi
 import { SmsModule } from '../integrations/sms/sms.module';
 import { EmailModule } from '../integrations/email/email.module';
 import { TrackingModule } from '../tracking/tracking.module';
+import { PublicUploadModule } from '../integrations/storage/public-upload.module';
 
 @Module({
   imports: [
@@ -20,6 +21,10 @@ import { TrackingModule } from '../tracking/tracking.module';
     SmsModule,
     EmailModule,
     TrackingModule,
+    // Bid attachments live under the protected `tender-applications/` prefix, so
+    // they are uploaded and read back through the backend's service token —
+    // never straight from the browser to the file server.
+    PublicUploadModule,
     // `Announcement` is registered here read-only — tenders are announcement rows
     // (type='tender'), so this module needs to look them up to validate a bid's
     // target and deadline. It never writes to them; PublicModule owns that.

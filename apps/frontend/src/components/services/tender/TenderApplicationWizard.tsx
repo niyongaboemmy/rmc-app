@@ -608,9 +608,8 @@ function SuccessScreen({
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-        <Button onClick={() => router.push(`/${locale}/services/tender/status`)}>
-          {t('checkStatusBtn')}
-        </Button>
+        {/* The tracking code shown above is what this page asks for. */}
+        <Button onClick={() => router.push(`/${locale}/tenders/bid`)}>{t('checkStatusBtn')}</Button>
         <Button variant="outline" onClick={() => router.push(`/${locale}/services/tender`)}>
           {t('browseMoreBtn')}
         </Button>

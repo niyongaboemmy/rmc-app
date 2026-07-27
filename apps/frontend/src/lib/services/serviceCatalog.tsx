@@ -184,7 +184,8 @@ export const SERVICES: ServiceDef[] = [
     modal: { requirements: 5, steps: 4, notes: true },
     actions: [
       { kind: 'apply',  labelKey: 'explore.apply',  href: '/services/tender/apply' },
-      { kind: 'status', labelKey: 'explore.status', href: '/services/tender/status' },
+      // Tracking a bid needs no account — the page opens its own OTP gate.
+      { kind: 'status', labelKey: 'explore.status', href: '/tenders/bid' },
     ],
   },
   {

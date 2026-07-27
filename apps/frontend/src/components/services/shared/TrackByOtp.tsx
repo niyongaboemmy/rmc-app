@@ -62,8 +62,17 @@ interface Props<T> {
    */
   codePlaceholder?: string;
   codeHint?: string;
-  /** Rendered once the phone OTP is verified. */
-  children: (result: T, reset: () => void, session: TrackedSession) => React.ReactNode;
+  /**
+   * Called the moment the OTP is verified, before anything renders.
+   *
+   * For services whose result is a whole page rather than a panel — tenders hands
+   * the bidder their full, editable bid — this is where the caller stashes the
+   * session token and navigates away. `children` is then never reached, so it is
+   * optional; a service that renders in place leaves this unset instead.
+   */
+  onVerified?: (result: T, session: TrackedSession) => void;
+  /** Rendered once the phone OTP is verified. Omit when `onVerified` navigates away. */
+  children?: (result: T, reset: () => void, session: TrackedSession) => React.ReactNode;
 }
 
 /**
@@ -80,6 +89,7 @@ export function TrackByOtp<T>({
   subtitle,
   codePlaceholder,
   codeHint,
+  onVerified,
   children,
 }: Props<T>) {
   const t = useTranslations('tracking');
@@ -126,9 +136,17 @@ export function TrackByOtp<T>({
     try {
       const { data } = await apiClient.post(`${basePath}/verify-otp`, { trackingCode: code.trim(), otp: otp.trim() });
       const payload = (data.data ?? data) as T & { token?: string };
-      setToken(payload?.token ?? '');
+      const freshToken = payload?.token ?? '';
+      setToken(freshToken);
       setResult(payload as T);
       setPhase('result');
+      // Passed the token directly rather than through `refresh`'s closure: the
+      // state set above has not committed yet, so a navigating caller reading
+      // `token` here would get the previous (empty) value.
+      onVerified?.(payload as T, {
+        token: freshToken,
+        refresh: () => refreshWith(freshToken),
+      });
     } catch (err) {
       setError(messageForCode(t, apiError(err).code));
     } finally { setLoading(false); }
@@ -142,18 +160,27 @@ export function TrackByOtp<T>({
    */
   const closeOtp = () => { setPhase('enter'); setOtp(''); setError(null); };
 
-  /** Re-read the status with the token we already hold (no new OTP). */
-  const refresh = async () => {
-    if (!token) return;
+  /**
+   * Re-read the status with a token we already hold (no new OTP). Takes the token
+   * explicitly so it can also be handed to `onVerified`, which fires before the
+   * `setToken` above has committed and would otherwise close over the old value.
+   */
+  const refreshWith = async (t: string) => {
+    if (!t) return;
     const { data } = await apiClient.get(`${basePath}/session`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${t}` },
     });
     setResult((data.data ?? data) as T);
   };
 
+  const refresh = () => refreshWith(token);
+
   const inputCls = cn('w-full rounded-xl border border-gray-200 bg-white py-2.5 px-4 text-sm text-gray-900 outline-none transition-colors', a.ring);
 
-  if (phase === 'result' && result) {
+  // With `onVerified` the caller has navigated away by now, so there is nothing
+  // to render in place — fall through to the form rather than showing an empty
+  // result shell behind the transition.
+  if (phase === 'result' && result && children) {
     return (
       <div className="space-y-4">
         {children(result, reset, { token, refresh })}

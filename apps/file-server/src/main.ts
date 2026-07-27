@@ -18,11 +18,16 @@ import { resolveProtectedPrefixes } from './common/guards/jwt-auth.guard';
  * downloadable by raw URL. No request fails. No error is logged. Nothing looks
  * broken. The only symptom is that private data is served to anyone who asks.
  *
- * All three are listed, not just the newest, so this catches the mistake
+ * All of them are listed, not just the newest, so this catches the mistake
  * whatever introduces it — including a future change that has nothing to do
- * with Dawah.
+ * with the prefix being added.
  */
-const EXPECTED_PROTECTED_PREFIXES = ['hajj-proofs/', 'funeral-docs/', 'dawah-library/'];
+const EXPECTED_PROTECTED_PREFIXES = [
+  'hajj-proofs/',
+  'funeral-docs/',
+  'dawah-library/',
+  'tender-applications/',
+];
 
 function assertProtectedPrefixes(config: ConfigService, logger: Logger): void {
   const active = resolveProtectedPrefixes(config);
