@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { VERSES } from '@/data/verses';
+import { publicApi } from '@/lib/public-api';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePageEdit } from '@/contexts/PageEditContext';
 import { PermissionGate } from '@/components/auth/PermissionGate';
@@ -91,6 +92,10 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [openMobileMenu, setOpenMobileMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  // Admin-managed "Verse of the Day" (Admin → Content → Verse of the Day). When a
+  // verse is scheduled for today the ticker shows it; otherwise it falls back to
+  // the built-in rotating set so the bar is never empty.
+  const [dailyVerse, setDailyVerse] = useState<{ ar: string; en: string; ref: string } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const progress = useScrollProgress();
@@ -101,6 +106,20 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    publicApi.getVerseOfDay()
+      .then((v) => {
+        if (active && v) setDailyVerse({ ar: v.arabicText, en: v.translationEn, ref: v.reference });
+      })
+      .catch(() => {/* keep the fallback set */});
+    return () => { active = false; };
+  }, []);
+
+  // Repeat the single daily verse so the marquee stays visually full, like the
+  // multi-verse fallback set.
+  const tickerVerses = dailyVerse ? Array<typeof dailyVerse>(5).fill(dailyVerse) : VERSES;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -263,7 +282,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
           <div className="flex w-max animate-marquee py-1.5" style={{ animationDuration: '110s' }}>
             {[0, 1].map((dup) => (
               <div key={dup} className="flex items-center shrink-0" aria-hidden={dup === 1}>
-                {VERSES.map((v, i) => (
+                {tickerVerses.map((v, i) => (
                   <span key={i} className="flex items-center gap-2.5 px-10 whitespace-nowrap text-xs">
                     <span className="font-arabic text-white" dir="rtl">
                       {v.ar}
