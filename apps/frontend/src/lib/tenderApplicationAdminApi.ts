@@ -35,6 +35,13 @@ export interface TenderReports {
   awardedValue: number;
 }
 
+/** Bid counts for one tender — only tenders with at least one bid come back. */
+export interface TenderApplicationCounts {
+  tenderId: string;
+  total: number;
+  byStatus: Partial<Record<TenderApplicationStatus, number>>;
+}
+
 /** Admin action names — the backend maps each to the resulting status. */
 export type TenderStatusAction =
   | 'start_review'
@@ -46,6 +53,12 @@ export type TenderStatusAction =
 export const tenderApplicationAdminApi = {
   list: async (filters: AdminListFilters = {}): Promise<PaginatedApplications> => {
     const { data } = await apiClient.get('/admin/tenders/applications', { params: filters });
+    return data.data ?? data;
+  },
+
+  /** One grouped query behind the tender picker — not a count call per card. */
+  countsByTender: async (): Promise<TenderApplicationCounts[]> => {
+    const { data } = await apiClient.get('/admin/tenders/applications/counts-by-tender');
     return data.data ?? data;
   },
 

@@ -78,6 +78,7 @@ export function Footer() {
   }, []);
 
   const quickLinks = [
+    { href: `/${locale}/announcements`, labelKey: 'links.announcements' },
     { href: `/${locale}/blog`, labelKey: 'links.blog' },
     { href: `/${locale}/schools`, labelKey: 'links.schools' },
     { href: `/${locale}/new-muslim`, labelKey: 'links.newMuslim' },
