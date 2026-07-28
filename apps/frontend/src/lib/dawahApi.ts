@@ -391,86 +391,67 @@ export function uploadLessonMedia(
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
-// ── Community Discussions ─────────────────────────────────────────────────
-// Shapes frozen in docs/dawah-discussions-contract.md. They mirror the backend's
-// toPublic() EXACTLY. Do not add a field here "for later": a type that promises
-// something the API does not send is worse than a missing one, because the bug
-// surfaces as `undefined` in a component instead of a compile error.
+// ── Dawah Q&A ─────────────────────────────────────────────────────────────
+// Shapes mirror the backend's toPublic() EXACTLY — see docs/dawah-discussions-contract.md.
+// Do not add a field here "for later": a type that promises something the API does not
+// send is worse than a missing one, because the bug surfaces as `undefined` in a component
+// instead of a compile error.
 
-/** `en` | `rw` | `ar` — the language a member WROTE in, not a translation axis. */
+/** `en` | `rw` | `ar` — the language an entry is WRITTEN in, not a translation axis. */
 export type PostLanguage = 'en' | 'rw' | 'ar';
-export type QuestionStatus = 'published' | 'auto_hidden' | 'hidden' | 'locked' | 'deleted';
-export type AnswerStatus = 'pending_review' | 'published' | 'auto_hidden' | 'hidden' | 'deleted';
-export type DiscussionSort = 'active' | 'new' | 'unanswered';
+export type QuestionStatus = 'pending' | 'published' | 'rejected' | 'hidden' | 'deleted';
+/** Newest-published first. A `search` term overrides it with relevance ranking. */
+export type DiscussionSort = 'new';
 
-/**
- * A post's author as the public sees them.
- *
- * `null` — not a flag — is how anonymity reaches the client. There is deliberately no
- * `authorId` and no `isAnonymous`: the id never crosses the wire, so no component can
- * leak it by accident, and `author === null` is the single source of truth.
- */
+/** The RMC person who answered. */
 export interface PublicAuthor {
   name: string;
   /** Renders the scholar badge. Resolved from the live role, so it disappears on removal. */
   isScholar: boolean;
 }
 
+/**
+ * One published Q&A entry: a question and RMC's answer.
+ *
+ * There is no asker here, in any form. RMC answers the question; who raised it is not part
+ * of the published record. That is why there is no `author`, no `authorId` and no
+ * `isAnonymous` — not a flag set to false, but no field at all, so no component can leak
+ * one by accident.
+ */
 export interface DiscussionQuestion {
   id: string;
   slug: string;
   title: string;
   /** Rendered + sanitised SERVER-SIDE. The client renders no markdown, ever. */
   bodyHtml: string;
-  /** Drives `dir` on THIS post — never the page locale. An Arabic question on the
+  /** RMC's answer, likewise rendered and sanitised server-side. */
+  answerHtml: string;
+  /** Drives `dir` on THIS entry — never the page locale. An Arabic entry on the
    *  English page is still RTL. */
   language: PostLanguage;
   category: DawahCategory | null;
-  author: PublicAuthor | null;
-  status: QuestionStatus;
-  /** Excludes answers still in review — "3 answers" with none visible is a bug. */
-  answerCount: number;
+  /** WHO answered — a person, not a badge. An institution hiding behind itself is
+   *  the thing this names. */
+  answeredBy: PublicAuthor | null;
+  answeredAt: string | null;
   viewCount: number;
-  verifiedAnswerId: string | null;
-  lastActivityAt: string;
+  publishedAt: string | null;
   createdAt: string;
 }
 
-export interface DiscussionAnswer {
-  id: string;
-  questionId: string;
-  bodyHtml: string;
-  language: PostLanguage;
-  author: PublicAuthor | null;
-  status: AnswerStatus;
-  isVerified: boolean;
-  /** WHO verified — a person, not a boolean. "Verified by RMC" with nobody behind it
-   *  is an institution hiding behind itself. */
-  verifiedBy: PublicAuthor | null;
-  verifiedAt: string | null;
-  voteScore: number;
-  createdAt: string;
-}
-
-export interface DiscussionThread {
-  question: DiscussionQuestion;
-  answers: DiscussionAnswer[];
-}
-
-/** A member's new question. No `status`: the server always publishes it. */
+/** A member's submitted question. No `status`: the server always holds it as pending. */
 export interface CreateQuestionPayload {
   title: string;
   body: string;            // markdown; rendered + sanitised server-side
   categoryId?: string;
   language: PostLanguage;
-  isAnonymous?: boolean;
 }
 
-export interface CreateReportPayload {
-  targetType: 'question' | 'answer';
-  targetId: string;
-  reason: string;
-  note?: string;
+/** What a submission returns — receipt only. Nothing is public until RMC answers it. */
+export interface SubmittedQuestion {
+  id: string;
+  title: string;
+  status: QuestionStatus;
 }
 
 /** Thrown on HTTP 429 so a caller can say "you're posting too quickly" rather than
@@ -482,47 +463,65 @@ export class ThrottledError extends Error {
   }
 }
 
-export interface DiscussionReport {
-  id: string;
-  targetType: 'question' | 'answer';
-  targetId: string;
-  reason: string;
-  note: string;
-  reporter: string | null;
-  createdAt: string;
-}
-
+/** A row in the admin's entry list — any status, including the ones no reader ever sees. */
 export interface AdminQuestion {
   id: string;
   slug: string;
   title: string;
   language: PostLanguage;
   status: QuestionStatus;
-  category: { nameEn: string } | null;
+  hasAnswer: boolean;
+  category: { id: string; nameEn: string } | null;
+  /** The real name of whoever asked. Admins are trusted; this is review, not publication. */
   author: string | null;
-  isAnonymous: boolean;
-  answerCount: number;
-  reportCount: number;
+  answeredBy: string | null;
+  publishedAt: string | null;
   createdAt: string;
 }
 
-export interface CategoryPolicy {
+/** A member's question waiting for RMC to answer it. */
+export interface PendingSubmission {
+  id: string;
+  title: string;
+  bodyHtml: string;
+  language: PostLanguage;
+  category: { id: string; nameEn: string } | null;
+  author: string | null;
+  createdAt: string;
+  /** So a queue nobody is working is visible at a glance. */
+  ageHours: number;
+}
+
+/** One entry with its MARKDOWN SOURCE, for the admin editor. Never a reader shape. */
+export interface AdminEntry {
   id: string;
   slug: string;
-  nameEn: string;
-  answerPolicy: 'scholar_review' | 'open';
+  title: string;
+  body: string;
+  answerBody: string;
+  language: PostLanguage;
+  status: QuestionStatus;
+  categoryId: string | null;
+  author: string | null;
+  answeredBy: string | null;
+  answeredAt: string | null;
+  publishedAt: string | null;
+  createdAt: string;
 }
 
-export interface PendingAnswer {
-  id: string;
-  bodyHtml: string;
-  author: string | null;
-  createdAt: string;
-  ageHours: number;
-  /** True when the question already has a verified answer — this one can be released but
-   *  not verified (one verified answer per question). */
-  questionHasVerified: boolean;
-  question: { slug: string; title: string; language: PostLanguage } | null;
+/** Author a complete entry. Creating one publishes it — it has nothing left to wait for. */
+export interface CreateEntryPayload {
+  title: string;
+  body: string;
+  answerBody: string;
+  categoryId?: string;
+  language: PostLanguage;
+}
+
+/** Answer a member's submission. The question text is not editable here — that is an edit. */
+export interface AnswerQuestionPayload {
+  answerBody: string;
+  categoryId?: string;
 }
 
 export interface DiscussionsQuery {
@@ -558,22 +557,23 @@ export const dawahApi = {
     unwrap(publicHttp.get('/dawah/categories')),
 
   /**
-   * Community Discussions — read-only (Phase A).
-   *
-   * Posting arrives in Phase B together with its report queue; there is deliberately no
-   * `create` here yet, so no component can be written against an endpoint that cannot
-   * yet be moderated.
+   * Dawah Q&A. RMC authors the answers, so a member can read and submit — nothing else.
+   * There is no answer/vote/report method because there are no such endpoints.
    */
   discussions: {
     list: (query: DiscussionsQuery = {}): Promise<Paginated<DiscussionQuestion>> =>
       unwrap(publicHttp.get('/dawah/discussions', { params: query })),
 
-    /** One thread; answers arrive verified-first from the API. 404s anything not published. */
-    bySlug: (slug: string): Promise<DiscussionThread> =>
+    /** One entry with RMC's answer. 404s anything not published. */
+    bySlug: (slug: string): Promise<DiscussionQuestion> =>
       unwrap(publicHttp.get(`/dawah/discussions/${slug}`)),
 
-    /** Ask a question. Authed (apiClient carries the token). Maps 429 → ThrottledError. */
-    create: async (payload: CreateQuestionPayload): Promise<DiscussionQuestion> => {
+    /**
+     * Submit a question for RMC to answer. Authed (apiClient carries the token).
+     * Maps 429 → ThrottledError. Returns a receipt, not a published entry — nothing is
+     * public until RMC has answered it.
+     */
+    submit: async (payload: CreateQuestionPayload): Promise<SubmittedQuestion> => {
       try {
         return await unwrap(apiClient.post('/dawah/discussions', payload));
       } catch (err) {
@@ -582,30 +582,9 @@ export const dawahApi = {
     },
 
     /** Render markdown → sanitised HTML through the server's real pipeline, so the
-     *  preview cannot diverge from the published post. */
+     *  preview cannot diverge from the published entry. */
     preview: (body: string): Promise<{ html: string }> =>
       unwrap(apiClient.post('/dawah/discussions/preview', { body })),
-
-    report: async (payload: CreateReportPayload): Promise<{ reported: boolean }> => {
-      try {
-        return await unwrap(apiClient.post('/dawah/discussions/report', payload));
-      } catch (err) {
-        throw asThrottled(err);
-      }
-    },
-
-    /** Answer a question. Server computes pending vs published from the category policy. */
-    answer: async (slug: string, body: string, isAnonymous = false): Promise<DiscussionAnswer> => {
-      try {
-        return await unwrap(apiClient.post(`/dawah/discussions/${slug}/answers`, { body, isAnonymous }));
-      } catch (err) {
-        throw asThrottled(err);
-      }
-    },
-
-    /** Vote on an answer: 1 up, -1 down, 0 clears. */
-    vote: (answerId: string, value: 1 | -1 | 0): Promise<{ id: string; voteScore: number }> =>
-      unwrap(apiClient.post(`/dawah/discussions/answers/${answerId}/vote`, { value })),
   },
 
   courses: {
@@ -682,42 +661,39 @@ export const dawahApi = {
 
   admin: {
     discussions: {
-      /** The moderation queue — open reports, oldest first. Gated on DISCUSSIONS_MODERATE. */
-      reports: (): Promise<DiscussionReport[]> =>
-        unwrap(apiClient.get('/admin/dawah/discussions/reports')),
+      /** Member questions awaiting an answer — oldest first. */
+      submissions: (): Promise<PendingSubmission[]> =>
+        unwrap(apiClient.get('/admin/dawah/discussions/submissions')),
 
-      /** ALL questions incl. hidden/locked — so a moderator can act on unreported ones. */
-      questions: (query: { search?: string; status?: string; page?: number; limit?: number } = {}):
+      /** ALL entries in any status — pending, published, rejected, hidden. */
+      entries: (query: { search?: string; status?: string; page?: number; limit?: number } = {}):
         Promise<Paginated<AdminQuestion>> =>
-        unwrap(apiClient.get('/admin/dawah/discussions/questions', { params: query })),
+        unwrap(apiClient.get('/admin/dawah/discussions/entries', { params: query })),
 
-      /** Hide / restore / lock / delete a question. Delete is a soft-delete. Always logged. */
-      moderate: (id: string, action: 'hide' | 'restore' | 'lock' | 'unlock' | 'delete', reason = ''):
+      /** One entry with its MARKDOWN SOURCE, for the editor. */
+      entry: (id: string): Promise<AdminEntry> =>
+        unwrap(apiClient.get(`/admin/dawah/discussions/entries/${id}`)),
+
+      /** Author a question and its answer together. Publishes immediately. */
+      createEntry: (payload: CreateEntryPayload): Promise<DiscussionQuestion> =>
+        unwrap(apiClient.post('/admin/dawah/discussions/entries', payload)),
+
+      /** Edit a published entry. Deliberately silent — does NOT re-notify the asker. */
+      updateEntry: (id: string, payload: Partial<CreateEntryPayload>): Promise<DiscussionQuestion> =>
+        unwrap(apiClient.patch(`/admin/dawah/discussions/entries/${id}`, payload)),
+
+      /** Answer a member's submission and publish it. Emails the asker. */
+      answer: (id: string, payload: AnswerQuestionPayload): Promise<DiscussionQuestion> =>
+        unwrap(apiClient.post(`/admin/dawah/discussions/entries/${id}/answer`, payload)),
+
+      /** Decline to answer a submission. Distinct from hiding a published entry. */
+      reject: (id: string, reason = ''): Promise<{ id: string; status: string }> =>
+        unwrap(apiClient.post(`/admin/dawah/discussions/entries/${id}/reject`, { reason })),
+
+      /** Hide / restore / delete a PUBLISHED entry. Delete is a soft-delete. Always logged. */
+      moderate: (id: string, action: 'hide' | 'restore' | 'delete', reason = ''):
         Promise<{ id: string; status: string }> =>
         unwrap(apiClient.post(`/admin/dawah/discussions/${id}/${action}`, { reason })),
-
-      /** The scholar review queue — pending answers, oldest first. */
-      pending: (): Promise<PendingAnswer[]> =>
-        unwrap(apiClient.get('/admin/dawah/discussions/pending')),
-
-      /** Release: publish, NO badge ("not harmful"). */
-      release: (answerId: string): Promise<{ id: string; verified: boolean }> =>
-        unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/release`, {})),
-
-      /** Verify: publish + badge + pin ("RMC says this is correct"). One per question —
-       *  409s if another answer is already verified (un-verify it first). */
-      verify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
-        unwrap(apiClient.post(`/admin/dawah/discussions/answers/${answerId}/verify`, {})),
-
-      /** Un-verify: drops the badge/pin. The answer stays published. */
-      unverify: (answerId: string): Promise<{ id: string; verified: boolean }> =>
-        unwrap(apiClient.delete(`/admin/dawah/discussions/answers/${answerId}/verify`)),
-
-      /** Category answer_policy — read + set. Setting is NOT retroactive. */
-      categoryPolicies: (): Promise<CategoryPolicy[]> =>
-        unwrap(apiClient.get('/admin/dawah/discussions/categories')),
-      setPolicy: (id: string, answerPolicy: 'scholar_review' | 'open'): Promise<CategoryPolicy> =>
-        unwrap(apiClient.patch(`/admin/dawah/discussions/categories/${id}/policy`, { answerPolicy })),
     },
 
     categories: {

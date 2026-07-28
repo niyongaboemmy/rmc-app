@@ -22,7 +22,15 @@ import { User } from '../../users/entities/user.entity';
 export type AnswerStatus = 'pending_review' | 'published' | 'auto_hidden' | 'hidden' | 'deleted';
 
 /**
- * An answer to a community question.
+ * ⚠ RETIRED — nothing reads or writes this table any more.
+ *
+ * Migration 049 moved the answer onto the question itself, because RMC now authors every
+ * answer and there is exactly one. The rows are kept, and this entity with them, so that
+ * migration's `down()` can rebuild `answer_count` and `verified_answer_id` from the real
+ * data rather than guessing. A follow-up migration drops the table once the editorial
+ * model has proven itself; delete this file at the same time.
+ *
+ * ── Historical: an answer to a community question ────────────────────────────────────
  *
  * ── Release and verify are two different acts ────────────────────────────────────────
  *
@@ -47,7 +55,9 @@ export class DawahAnswer {
   @Column({ name: 'question_id', type: 'uuid' })
   questionId: string;
 
-  @ManyToOne(() => DawahQuestion, (question) => question.answers, { onDelete: 'CASCADE' })
+  // No inverse side: DawahQuestion no longer has an `answers` collection, because a
+  // question now carries its single answer in its own columns.
+  @ManyToOne(() => DawahQuestion, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_id' })
   question?: DawahQuestion;
 

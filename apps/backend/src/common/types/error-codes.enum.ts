@@ -29,7 +29,12 @@ export enum ErrorCode {
 
   // Generic
   VALIDATION_ERROR = 'VALIDATION_ERROR',
+  UNAUTHORIZED = 'UNAUTHORIZED',
   NOT_FOUND = 'NOT_FOUND',
   FORBIDDEN = 'FORBIDDEN',
+  /** 409 — the request conflicts with current state (duplicate, already-done, raced). */
+  CONFLICT = 'CONFLICT',
+  /** 429 — rate limited. Distinct from AUTH_TOO_MANY_ATTEMPTS, which is login-specific. */
+  RATE_LIMITED = 'RATE_LIMITED',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }

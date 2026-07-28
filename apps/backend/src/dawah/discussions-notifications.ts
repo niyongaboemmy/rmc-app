@@ -32,27 +32,21 @@ function shell(frontendUrl: string, heading: string, body: string, ctaHref: stri
     </div></body></html>`;
 }
 
-/** To the QUESTION author: their question received a (now-visible) answer. */
-export function newAnswerEmail(frontendUrl: string, locale: string, questionTitle: string, questionSlug: string): Built {
+/**
+ * To the person who ASKED: RMC has answered their question and published it.
+ *
+ * The only discussion notification there is. The old pair — "someone answered you" and
+ * "a scholar verified your answer" — both described a community forum: members answering
+ * each other, and a scholar blessing one of those answers. Neither event exists now.
+ */
+export function answeredEmail(frontendUrl: string, locale: string, questionTitle: string, questionSlug: string): Built {
   const href = `/${locale}/dawah/discussions/${questionSlug}`;
   return {
-    subject: `New answer: ${questionTitle}`.slice(0, 120),
-    html: shell(frontendUrl, 'Your question has a new answer',
-      `Someone has answered your question, <strong>${escapeHtml(questionTitle)}</strong>.`,
+    subject: `Answered: ${questionTitle}`.slice(0, 120),
+    html: shell(frontendUrl, 'Your question has been answered',
+      `RMC has answered your question, <strong>${escapeHtml(questionTitle)}</strong>, and published it for the community.`,
       href, 'Read the answer'),
-    text: `Your question "${questionTitle}" has a new answer. Read it: ${frontendUrl}${href}`,
-  };
-}
-
-/** To the ANSWER author: a scholar verified their answer. */
-export function verifiedEmail(frontendUrl: string, locale: string, questionTitle: string, questionSlug: string): Built {
-  const href = `/${locale}/dawah/discussions/${questionSlug}`;
-  return {
-    subject: `Your answer was verified by RMC`,
-    html: shell(frontendUrl, 'Your answer was verified',
-      `An RMC scholar has marked your answer to <strong>${escapeHtml(questionTitle)}</strong> as verified. It now appears at the top of the thread with the RMC badge.`,
-      href, 'View your answer'),
-    text: `Your answer to "${questionTitle}" was verified by RMC. View it: ${frontendUrl}${href}`,
+    text: `RMC has answered your question "${questionTitle}". Read it: ${frontendUrl}${href}`,
   };
 }
 

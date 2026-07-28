@@ -21,6 +21,7 @@ import { UpdateDawahBookDto } from './dto/update-dawah-book.dto';
 import { QueryCoursesDto } from './dto/query-courses.dto';
 import { QueryBooksDto } from './dto/query-books.dto';
 import { DawahDiscussionsService } from './dawah-discussions.service';
+import { AnswerQuestionDto, CreateEntryDto } from './dto/create-entry.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { Permissions } from '../common/decorators/permissions.decorator';
@@ -43,80 +44,86 @@ export class DawahAdminController {
     private readonly discussions: DawahDiscussionsService,
   ) {}
 
-  // ── Discussions moderation (DISCUSSIONS_MODERATE) ───────────────────────────
-  // Separate from DAWAH_MANAGE on purpose: uploading a PDF and judging a member's
-  // religious post are different authorities held by different people.
+  // ── Q&A authoring (DISCUSSIONS_VERIFY) ──────────────────────────────────────
+  // DISCUSSIONS_VERIFY still means "may speak for RMC on a point of religion" — it
+  // now grants writing and publishing the answer itself rather than blessing a
+  // member's. The permission STRING is unchanged so no role has to be re-granted;
+  // only what it authorises has moved.
+  //
+  // Declared before `discussions/:id/:action`, because Nest matches in declaration
+  // order and 'submissions' would otherwise be parsed as an :id.
 
-  @Get('discussions/categories')
-  @Permissions(Permission.DISCUSSIONS_MODERATE)
-  @ApiOperation({ summary: 'Categories with their answer_policy (for the policy editor).' })
-  categoryPolicies() {
-    return this.discussions.listCategoryPolicies();
+  @Get('discussions/submissions')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'Member questions awaiting an answer — oldest first.' })
+  submissions() {
+    return this.discussions.submissionQueue();
   }
 
-  @Patch('discussions/categories/:id/policy')
-  @Permissions(Permission.DISCUSSIONS_MODERATE)
-  @ApiOperation({ summary: "Set a category's answer_policy. NOT retroactive." })
-  setPolicy(@Param('id') id: string, @Body() body: { answerPolicy: 'scholar_review' | 'open' }) {
-    return this.discussions.setAnswerPolicy(id, body.answerPolicy);
+  @Get('discussions/entries')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'ALL entries in any status, for the admin listing.' })
+  entries(@Query() query: { search?: string; status?: string; page?: number; limit?: number }) {
+    return this.discussions.adminList(query);
   }
 
-  @Get('discussions/reports')
-  @Permissions(Permission.DISCUSSIONS_MODERATE)
-  @ApiOperation({ summary: 'The moderation queue — open reports, auto-hidden first.' })
-  reportQueue() {
-    return this.discussions.reportQueue();
+  @Post('discussions/entries')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'Author a question and its answer, and publish it.' })
+  createEntry(@CurrentUser() user: User, @Body() dto: CreateEntryDto) {
+    return this.discussions.createEntry(user, dto);
   }
 
-  @Get('discussions/questions')
-  @Permissions(Permission.DISCUSSIONS_MODERATE)
-  @ApiOperation({ summary: 'ALL questions (incl. hidden/locked) so a moderator can act on unreported ones.' })
-  allQuestions(@Query() query: { search?: string; status?: string; page?: number; limit?: number }) {
-    return this.discussions.adminQuestions(query);
+  @Get('discussions/entries/:id')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'One entry with its markdown source, for the editor.' })
+  entry(@Param('id') id: string) {
+    return this.discussions.adminGetById(id);
   }
+
+  @Patch('discussions/entries/:id')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'Edit a published entry in place. Does not re-notify.' })
+  updateEntry(@Param('id') id: string, @Body() dto: Partial<CreateEntryDto>) {
+    return this.discussions.updateEntry(id, dto);
+  }
+
+  @Post('discussions/entries/:id/answer')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: "Answer a member's submission and publish it. Notifies the asker." })
+  answerQuestion(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() dto: AnswerQuestionDto,
+  ) {
+    return this.discussions.answerQuestion(user, id, dto);
+  }
+
+  @Post('discussions/entries/:id/reject')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'Decline to answer a submission. Distinct from hiding.' })
+  rejectQuestion(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.discussions.rejectQuestion(user, id, body?.reason ?? '');
+  }
+
+  // ── Withdrawal (DISCUSSIONS_MODERATE) ───────────────────────────────────────
+  // Separate from authoring on purpose: writing RMC's answer and pulling a published
+  // entry are different authorities, and RMC may hold them in different hands.
 
   @Post('discussions/:id/:action')
   @Permissions(Permission.DISCUSSIONS_MODERATE)
-  @ApiOperation({ summary: 'Hide / restore / lock / unlock a question. Always logged.' })
+  @ApiOperation({ summary: 'Hide / restore / delete a published entry. Always logged.' })
   moderateQuestion(
     @CurrentUser() user: User,
     @Param('id') id: string,
-    @Param('action') action: 'hide' | 'restore' | 'lock' | 'unlock' | 'delete',
+    @Param('action') action: 'hide' | 'restore' | 'delete',
     @Body() body: { reason?: string },
   ) {
     return this.discussions.moderateQuestion(user, id, action, body?.reason ?? '');
-  }
-
-  // ── Scholar actions (DISCUSSIONS_VERIFY at the decorator; the SERVICE additionally
-  //    demands role.slug === 'scholar', because a superadmin resolves to '*' and the
-  //    decorator alone would wave them through — the §3.2 wildcard fix). ──────────
-
-  @Get('discussions/pending')
-  @Permissions(Permission.DISCUSSIONS_VERIFY)
-  @ApiOperation({ summary: 'The scholar review queue — pending answers, oldest first.' })
-  pending() {
-    return this.discussions.pendingQueue();
-  }
-
-  @Post('discussions/answers/:id/release')
-  @Permissions(Permission.DISCUSSIONS_VERIFY)
-  @ApiOperation({ summary: 'Release an answer from review (publish, NO badge).' })
-  release(@CurrentUser() user: User, @Param('id') id: string) {
-    return this.discussions.releaseAnswer(user, id);
-  }
-
-  @Post('discussions/answers/:id/verify')
-  @Permissions(Permission.DISCUSSIONS_VERIFY)
-  @ApiOperation({ summary: 'Verify an answer (publish + badge + pin). One per question.' })
-  verify(@CurrentUser() user: User, @Param('id') id: string) {
-    return this.discussions.verifyAnswer(user, id);
-  }
-
-  @Delete('discussions/answers/:id/verify')
-  @Permissions(Permission.DISCUSSIONS_VERIFY)
-  @ApiOperation({ summary: 'Un-verify an answer (stays published).' })
-  unverify(@CurrentUser() user: User, @Param('id') id: string) {
-    return this.discussions.unverifyAnswer(user, id);
   }
 
   // ── Categories ────────────────────────────────────────────────────────────

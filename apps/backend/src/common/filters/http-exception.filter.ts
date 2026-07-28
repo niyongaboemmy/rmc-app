@@ -42,12 +42,31 @@ export class HttpExceptionFilter implements ExceptionFilter {
     });
   }
 
+  /**
+   * The status → `error.code` map the whole API is labelled from.
+   *
+   * A status missing from here falls through to INTERNAL_ERROR, which is not a harmless
+   * default: it tells a client "the server broke" for something the server handled
+   * deliberately. 409 and 429 were both missing, so every duplicate-submission conflict and
+   * every rate-limit in the platform arrived carrying the same code as a crash — correct
+   * HTTP status, misleading body. A frontend switching on `error.code` could not tell them
+   * apart, and the honest "you already submitted this" / "you're posting too quickly"
+   * messages were unreachable without string-matching the prose.
+   *
+   * 422 maps to VALIDATION_ERROR alongside 400: both mean "your payload is wrong", and a
+   * client has no use for the distinction.
+   */
   private statusToCode(status: number): string {
     const map: Record<number, string> = {
       400: ErrorCode.VALIDATION_ERROR,
+      // Kept as the auth-specific code rather than UNAUTHORIZED: existing clients match on
+      // it for the sign-in flow, and changing it would be a breaking change for no gain.
       401: ErrorCode.AUTH_INVALID_CREDENTIALS,
       403: ErrorCode.FORBIDDEN,
       404: ErrorCode.NOT_FOUND,
+      409: ErrorCode.CONFLICT,
+      422: ErrorCode.VALIDATION_ERROR,
+      429: ErrorCode.RATE_LIMITED,
       500: ErrorCode.INTERNAL_ERROR,
     };
     return map[status] || ErrorCode.INTERNAL_ERROR;

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Eye, Loader2, Pencil, AlertCircle } from 'lucide-react';
+import { Eye, Loader2, Pencil, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,7 +20,12 @@ const inputClass =
   'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green';
 
 /**
- * Ask a question.
+ * Submit a question for RMC to answer.
+ *
+ * It does NOT publish. RMC writes the answers, so a submission goes into a queue and
+ * becomes public only once someone has answered it — which is why this ends on a receipt
+ * screen rather than redirecting to the entry. There is no entry to redirect to, and
+ * bouncing a member to a 404 the instant they submit would read as the form having failed.
  *
  * The editor is a PLAIN MARKDOWN TEXTAREA — deliberately NOT the RichTextEditor (TipTap)
  * the admin uses. That one emits HTML, and accepting HTML from a member means the whole
@@ -28,13 +33,12 @@ const inputClass =
  * and sanitises it.
  *
  * The preview renders through the SERVER's real pipeline (`discussions.preview`), not a
- * client markdown library — so what the reader previews is exactly what gets published,
- * with no second renderer to drift from the first.
+ * client markdown library — so what the member previews is exactly what an admin will
+ * read, with no second renderer to drift from the first.
  */
 export function AskQuestionForm() {
   const t = useTranslations('dawah');
   const { locale } = useParams<{ locale: string }>();
-  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [categories, setCategories] = useState<DawahCategory[]>([]);
@@ -42,12 +46,12 @@ export function AskQuestionForm() {
   const [body, setBody] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [language, setLanguage] = useState<PostLanguage>((locale as PostLanguage) || 'en');
-  const [isAnonymous, setIsAnonymous] = useState(false);
 
   const [tab, setTab] = useState<'write' | 'preview'>('write');
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewing, setPreviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -80,14 +84,13 @@ export function AskQuestionForm() {
     setError('');
     setSubmitting(true);
     try {
-      const q = await dawahApi.discussions.create({
+      await dawahApi.discussions.submit({
         title: title.trim(),
         body,
         categoryId: categoryId || undefined,
         language,
-        isAnonymous,
       });
-      router.push(`/${locale}/dawah/discussions/${q.slug}`);
+      setSubmitted(true);
     } catch (err) {
       // ThrottledError carries the server's honest "you're posting too quickly".
       setError(err instanceof ThrottledError ? err.message : t('discussions.ask.submitError'));
@@ -116,7 +119,25 @@ export function AskQuestionForm() {
             {t('discussions.ask.heading')}
           </h1>
 
-          {authLoading ? null : !isAuthenticated ? (
+          {authLoading ? null : submitted ? (
+            // A receipt, not a redirect. The question is queued, not published — see the
+            // component comment.
+            <div className="mt-6 rounded-lg border border-gray-200 bg-white p-8 text-center">
+              <CheckCircle2 className="mx-auto h-10 w-10 text-rmc-green" aria-hidden />
+              <h2 className="mt-3 text-base font-bold text-gray-900">
+                {t('discussions.ask.sentTitle')}
+              </h2>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-gray-500">
+                {t('discussions.ask.sentBody')}
+              </p>
+              <Link
+                href={`/${locale}/dawah/discussions`}
+                className="mt-5 inline-flex rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white hover:bg-rmc-green-dark"
+              >
+                {t('discussions.backToDiscussions')}
+              </Link>
+            </div>
+          ) : !isAuthenticated ? (
             // Not signed in: posting requires auth, so ask for it rather than 401 on submit.
             <div className="mt-6 rounded-lg border border-gray-200 bg-white p-8 text-center">
               <p className="text-sm text-gray-600">{t('discussions.ask.signInRequired')}</p>
@@ -203,20 +224,12 @@ export function AskQuestionForm() {
                 )}
               </div>
 
-              {/* Anonymity: honest copy. Never imply RMC cannot see who asked. */}
-              <label className="flex items-start gap-2.5 rounded-lg border border-gray-200 p-3">
-                <input
-                  type="checkbox"
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-rmc-green focus:ring-rmc-green"
-                />
-                <span className="text-xs text-gray-600">
-                  <span className="font-semibold">{t('discussions.ask.anonymousLabel')}</span>
-                  <br />
-                  {t('discussions.ask.anonymousHelp')}
-                </span>
-              </label>
+              {/* No anonymity toggle: the published entry names nobody who asked, so
+                  there is nothing to opt out of. Say so, rather than leaving a member
+                  wondering whether their name will appear. */}
+              <p className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs leading-relaxed text-gray-600">
+                {t('discussions.ask.privacyNote')}
+              </p>
 
               {error && (
                 <p className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
