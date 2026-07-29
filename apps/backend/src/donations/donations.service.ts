@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Not, IsNull } from 'typeorm';
@@ -81,6 +81,8 @@ const DONATION_SORT_COLUMNS: Record<string, string> = {
 
 @Injectable()
 export class DonationsService {
+  private readonly logger = new Logger(DonationsService.name);
+
   constructor(
     @InjectRepository(Donation)
     private readonly donations: Repository<Donation>,
@@ -182,11 +184,16 @@ export class DonationsService {
       saved.paymentReference = result.transactionId
         ? `${requestTxnId}|${result.transactionId}`
         : requestTxnId;
+      saved.gatewayResponseCode = result.responseCode || null;
+      saved.gatewayMessage = result.message || null;
 
       if (result.status === 'SUCCESSFUL') {
         saved.status = DonationStatus.COMPLETED;
       } else if (result.status === 'FAILED') {
         saved.status = DonationStatus.FAILED;
+        this.logger.warn(
+          `[Donations] Payment failed for donation ${saved.id}: rc=${result.responseCode} message="${result.message}"`,
+        );
       }
       await this.donations.save(saved);
     }
@@ -221,10 +228,16 @@ export class DonationsService {
           gatewayBaseUrl: creds.gatewayUrl || undefined,
         });
 
+        donation.gatewayResponseCode = result.responseCode || null;
+        donation.gatewayMessage = result.message || null;
+
         if (result.status === 'SUCCESSFUL') {
           donation.status = DonationStatus.COMPLETED;
         } else if (result.status === 'FAILED') {
           donation.status = DonationStatus.FAILED;
+          this.logger.warn(
+            `[Donations] Payment failed for donation ${donation.id}: rc=${result.responseCode} message="${result.message}"`,
+          );
         }
 
         if (result.status !== 'PENDING') {

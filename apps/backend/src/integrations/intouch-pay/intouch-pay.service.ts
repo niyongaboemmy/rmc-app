@@ -201,13 +201,20 @@ export class IntouchPayService {
       const data: Record<string, unknown> = await res.json();
       const rc = String(data['responsecode'] ?? '');
       const success = data['success'] === true || data['success'] === 'true';
+      const message = this.extractMessage(data, rc);
+
+      if (!success) {
+        this.logger.warn(
+          `[IntouchPay] RequestDeposit FAILED (txn: ${req.transactionId}) rc=${rc} message="${message}" raw=${JSON.stringify(data)}`,
+        );
+      }
 
       return {
         requestTransactionId: req.transactionId,
         referenceId: String(data['referenceid'] ?? ''),
         status: success ? 'SUCCESSFUL' : 'FAILED',
         responseCode: rc,
-        message: String(data['message'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
+        message,
         raw: data,
       };
     } catch (err) {
@@ -264,13 +271,20 @@ export class IntouchPayService {
       const data: Record<string, unknown> = await res.json();
       const rc = String(data['responsecode'] ?? '');
       const status = this.resolveStatus(rc, String(data['status'] ?? ''));
+      const message = this.extractMessage(data, rc);
+
+      if (status === 'FAILED') {
+        this.logger.warn(
+          `[IntouchPay] GetTransactionStatus FAILED (txn: ${opts.requestTransactionId}) rc=${rc} message="${message}" raw=${JSON.stringify(data)}`,
+        );
+      }
 
       return {
         requestTransactionId: opts.requestTransactionId,
         transactionId: opts.transactionId,
         status,
         responseCode: rc,
-        message: String(data['message'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
+        message,
       };
     } catch (err) {
       // Network error — we cannot determine the payment outcome.
@@ -323,11 +337,12 @@ export class IntouchPayService {
         body: params.toString(),
       });
       const data: Record<string, unknown> = await res.json();
+      const rc = String(data['responsecode'] ?? '');
       return {
         balance: String(data['balance'] ?? '0.0'),
         success: data['success'] === true || data['success'] === 'true',
-        responseCode: String(data['responsecode'] ?? ''),
-        message: String(data['message'] ?? ''),
+        responseCode: rc,
+        message: this.extractMessage(data, rc),
       };
     } catch (err) {
       this.logger.error(`[IntouchPay] GetBalance error: ${err}`);
@@ -369,6 +384,23 @@ export class IntouchPayService {
   }
 
   /**
+   * Pulls a human-readable message out of an IntouchPay response. Most
+   * responses carry `message`; some (notably auth failures like
+   * `{"detail":"Invalid Password"}`) use `detail` instead; fall back to the
+   * §2.9 response-code lookup table.
+   */
+  private extractMessage(data: Record<string, unknown>, responseCode: string): string {
+    return String(
+      data['message'] ??
+        data['statusdesc'] ??
+        data['detail'] ??
+        data['error'] ??
+        INTOUCH_RESPONSE_CODES[responseCode] ??
+        '',
+    );
+  }
+
+  /**
    * Maps response code + status text to PENDING / SUCCESSFUL / FAILED.
    * '01'   = successful payment (§2.9)
    * '2001' = successful deposit (§3.7)
@@ -398,13 +430,20 @@ export class IntouchPayService {
       const data: Record<string, unknown> = await res.json();
       const rc = String(data['responsecode'] ?? '');
       const status = this.resolveStatus(rc, String(data['status'] ?? ''));
+      const message = this.extractMessage(data, rc);
+
+      if (status === 'FAILED') {
+        this.logger.warn(
+          `[IntouchPay] RequestPayment FAILED (txn: ${txId}) rc=${rc} message="${message}" raw=${JSON.stringify(data)}`,
+        );
+      }
 
       return {
         requestTransactionId: txId,
         transactionId: String(data['transactionid'] ?? ''),
         status,
         responseCode: rc,
-        message: String(data['message'] ?? data['statusdesc'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
+        message,
         raw: data,
       };
     } catch (err) {
