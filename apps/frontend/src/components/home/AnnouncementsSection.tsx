@@ -7,6 +7,15 @@ import { useTranslations } from 'next-intl';
 import { Bell, AlertTriangle, Info, ArrowRight } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { publicApi } from '@/lib/public-api';
+import {
+  ContentKeys,
+  ANNOUNCEMENTS_DEFAULT,
+  pick as pickTri,
+  type AnnouncementsContent,
+  type Locale,
+} from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 type I18n = { en: string; rw: string; ar: string };
 
@@ -41,6 +50,14 @@ export function AnnouncementsSection() {
   const t = useTranslations('home.announcements');
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
 
+  // Header copy is admin-editable (inline in Edit Mode) via the `announcements`
+  // content section; the list itself is fetched live from the API below.
+  const { content, editing, setField } = useEditableContent<AnnouncementsContent>(
+    ContentKeys.announcements,
+    ANNOUNCEMENTS_DEFAULT,
+  );
+  const lang = locale as Locale;
+
   const [items, setItems] = useState<DbAnnouncement[]>([]);
 
   useEffect(() => {
@@ -55,7 +72,7 @@ export function AnnouncementsSection() {
   const rtl = isRtl(locale);
 
   return (
-    <section className="bg-transparent py-10">
+    <section className="bg-transparent py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -69,13 +86,37 @@ export function AnnouncementsSection() {
               <Bell className="w-5 h-5 text-rmc-green" />
             </div>
             <div>
-              <h2
-                className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
-                dir={rtl ? 'rtl' : 'ltr'}
-              >
-                {t('title')}
-              </h2>
-              <p className="text-gray-400 text-xs mt-0.5">Latest news & updates</p>
+              {editing ? (
+                <InlineText
+                  as="h2"
+                  lang={locale}
+                  value={pickTri(content.title, locale)}
+                  onCommit={(v) => setField((d) => { d.title[lang] = v; })}
+                  className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
+                  dir={rtl ? 'rtl' : 'ltr'}
+                  placeholder="Section title"
+                />
+              ) : (
+                <h2
+                  className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
+                  dir={rtl ? 'rtl' : 'ltr'}
+                >
+                  {pickTri(content.title, locale)}
+                </h2>
+              )}
+              {editing ? (
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pickTri(content.subtitle, locale)}
+                  onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
+                  className="text-gray-400 text-xs mt-0.5"
+                  dir={rtl ? 'rtl' : 'ltr'}
+                  placeholder="Subtitle"
+                />
+              ) : (
+                <p className="text-gray-400 text-xs mt-0.5">{pickTri(content.subtitle, locale)}</p>
+              )}
             </div>
           </div>
           {items.length > 0 && (
@@ -137,7 +178,7 @@ function AnnouncementItem({
   return (
     <Link
       href={`/${locale}/announcements/${item.id}`}
-      className={`flex items-start gap-4 p-5 rounded-2xl border transition-all duration-500 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer ${config.bg} ${
+      className={`flex items-start gap-4 p-5 rounded-lg border transition-all duration-500 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer ${config.bg} ${
         parentVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
       }`}
       style={{ transitionDelay: `${delay + 200}ms` }}

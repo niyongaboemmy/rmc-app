@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { resolvePostLoginPath, getRedirectParam } from '@/lib/authRedirect';
 
 interface GuestRouteProps {
   children: React.ReactNode;
@@ -17,16 +18,21 @@ interface GuestRouteProps {
  * - Renders children only when loading is done and the user is not logged in.
  */
 export function GuestRoute({ children, redirectTo }: GuestRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? 'rw';
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace(`/${locale}${redirectTo ?? ''}`);
+      // An explicit redirectTo prop wins; otherwise honour the captured
+      // ?redirect= target, falling back to the user's role-based dashboard.
+      const dest = redirectTo
+        ? `/${locale}${redirectTo}`
+        : resolvePostLoginPath(user, getRedirectParam(), locale);
+      router.replace(dest);
     }
-  }, [isLoading, isAuthenticated, router, locale, redirectTo]);
+  }, [isLoading, isAuthenticated, user, router, locale, redirectTo]);
 
   if (isLoading) {
     return (

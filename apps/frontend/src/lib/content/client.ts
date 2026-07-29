@@ -16,6 +16,9 @@ import { apiClient } from '../api';
 
 const publicHttp = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
+  // Bound reads so a slow/unreachable backend fails fast to the section's
+  // built-in defaults instead of hanging server-rendered pages.
+  timeout: 8000,
 });
 
 /** Public read of a section's content. Returns null when the section is unset. */
@@ -37,6 +40,7 @@ export const ContentKeys = {
   stats: 'community-impact',
   partners: 'partners',
   activities: 'activities-events',
+  projects: 'projects',
   updates: 'updates-programs',
   announcements: 'announcements',
   social: 'social-media',
@@ -45,7 +49,21 @@ export const ContentKeys = {
   howToBecomeMuslim: 'how-to-become-muslim',
   about: 'about',
   contact: 'contact',
+  funeral: 'funeral',
   hajj: 'hajj',
+  dawah: 'dawah',
+  library: 'library',
+  courses: 'courses',
+  discussions: 'discussions',
+  services: 'services',
+  historyHeader: 'about-history',
+  galleryHero: 'gallery-hero',
+  tendersHero: 'tenders-hero',
+  registerHero: 'register-hero',
+  newMuslimHero: 'new-muslim-hero',
+  servicesHero: 'services-hero',
+  contactHero: 'contact-hero',
+  tendersHome: 'tenders-home',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

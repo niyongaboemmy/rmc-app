@@ -57,7 +57,7 @@ export function SmsTestingTab({ gatewayActive }: Props) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
       {/* Left — Input form */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <Send className="w-4 h-4 text-rmc-green" />
           <h2 className="text-sm font-semibold text-gray-900">Send Test SMS</h2>
@@ -86,7 +86,7 @@ export function SmsTestingTab({ gatewayActive }: Props) {
               rows={5}
               maxLength={160}
               placeholder="Enter test message..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green/30 focus:border-rmc-green resize-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-rmc-green resize-none transition-colors"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">{message.length}/160</p>
           </div>

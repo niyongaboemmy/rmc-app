@@ -96,9 +96,9 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
               aria-current={active ? 'step' : undefined}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${
                 active
-                  ? 'bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-md'
+                  ? 'bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white shadow-md'
                   : done
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-rmc-green text-white'
                     : 'bg-gray-100 text-gray-400'
               }`}
             >
@@ -108,7 +108,7 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
               {label}
             </span>
             {i < steps.length - 1 && (
-              <div className={`flex-1 h-px transition-colors ${done ? 'bg-indigo-300' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-px transition-colors ${done ? 'bg-rmc-green' : 'bg-gray-200'}`} />
             )}
           </div>
         );
@@ -172,8 +172,13 @@ export function GoodConductWizard({ editRequest }: Props) {
         motifDetail: data.motifDetail || undefined,
       };
 
-      const saved = editRequest
-        ? await goodConductApi.updateDraft(editRequest.id, payload)
+      // Use the draft we already have (either an edited request, or one created
+      // earlier in THIS session) instead of creating a second one. Without this,
+      // going back from Payment to this step and re-submitting calls createDraft
+      // again and trips the "one active request per applicant" rule.
+      const existing = editRequest ?? request;
+      const saved = existing
+        ? await goodConductApi.updateDraft(existing.id, payload)
         : await goodConductApi.createDraft(payload);
 
       setRequest(saved);
@@ -277,7 +282,7 @@ function Step1Identity({
     <form onSubmit={handleSubmit(onNext)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <User className="w-4 h-4 text-indigo-500" /> {t('step1Title')}
+          <User className="w-4 h-4 text-rmc-green" /> {t('step1Title')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('step1Subtitle')}</p>
       </div>
@@ -407,7 +412,7 @@ function Step2Masjid({
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5">
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-indigo-500" /> {t('step2Title')}
+          <Building2 className="w-4 h-4 text-rmc-green" /> {t('step2Title')}
         </h2>
         <p className="text-xs text-gray-400 mt-1">{t('step2Subtitle')}</p>
       </div>
@@ -441,12 +446,12 @@ function Step2Masjid({
             <label
               key={value}
               className={`flex items-center gap-2.5 rounded-xl border-2 px-4 py-3 cursor-pointer transition-colors ${
-                motif === value ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                motif === value ? 'border-rmc-green bg-rmc-green-light' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <input type="radio" value={value} {...register('motif')} className="sr-only" />
-              <Icon className={`w-4 h-4 ${motif === value ? 'text-indigo-600' : 'text-gray-400'}`} />
-              <span className={`text-sm font-medium ${motif === value ? 'text-indigo-700' : 'text-gray-600'}`}>
+              <Icon className={`w-4 h-4 ${motif === value ? 'text-rmc-green' : 'text-gray-400'}`} />
+              <span className={`text-sm font-medium ${motif === value ? 'text-rmc-green-dark' : 'text-gray-600'}`}>
                 {t(`motifOptions.${value}`)}
               </span>
             </label>
@@ -488,8 +493,14 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
 
   const [request, setRequest] = useState(initialRequest);
   const [phone, setPhone] = useState(toLocalPhone(initialRequest.phone) || '');
-  const [phase, setPhase] = useState<'idle' | 'waiting' | 'confirmed' | 'failed'>('idle');
+  // 'slow' = provider timed out / is unresponsive; the charge may still be in
+  // flight, so we show a friendly "try again shortly" state rather than a failure.
+  const [phase, setPhase] = useState<'idle' | 'waiting' | 'confirmed' | 'failed' | 'slow'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const pollCountRef = useRef(0);
+  // ~45 seconds of polling at 5s before we surface the "taking longer" screen.
+  const MAX_POLLS = 9;
   const [showBank, setShowBank] = useState(false);
   const [bankNoticeSent, setBankNoticeSent] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -506,19 +517,35 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
 
   const startPolling = useCallback(() => {
     stopPolling();
+    pollCountRef.current = 0;
     pollRef.current = setInterval(async () => {
+      pollCountRef.current += 1;
       try {
         const result = await goodConductApi.checkPaymentStatus(request.id);
         if (result.paymentStatus === 'paid' || result.gatewayStatus === 'SUCCESSFUL') {
           stopPolling();
           setPhase('confirmed');
-        } else if (result.paymentStatus === 'failed' || result.gatewayStatus === 'FAILED') {
+          return;
+        }
+        if (result.paymentStatus === 'failed' || result.gatewayStatus === 'FAILED') {
           stopPolling();
           setPhase('failed');
           setError(t('paymentDeclined'));
+          return;
+        }
+        // Still pending — if we've waited long enough (provider slow/unreachable),
+        // stop the spinner and show the friendly "taking longer" screen. The
+        // background reconciler will still settle the payment automatically.
+        if (pollCountRef.current >= MAX_POLLS) {
+          stopPolling();
+          setPhase('slow');
         }
       } catch {
-        // transient error — keep polling
+        // transient error — keep polling until the max window elapses
+        if (pollCountRef.current >= MAX_POLLS) {
+          stopPolling();
+          setPhase('slow');
+        }
       }
     }, 5000);
   }, [request.id, stopPolling, t]);
@@ -536,6 +563,7 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
       return;
     }
     setError(null);
+    setNotice(null);
     setPhase('waiting');
     try {
       const result = await goodConductApi.initiateMomoPayment(request.id, toE164Phone(phone));
@@ -543,6 +571,11 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
       if (result.request.paymentStatus === 'paid') {
         setPhase('confirmed');
       } else {
+        // Provider was slow/unreachable at charge time — the charge may still be
+        // in flight, so keep waiting but tell the user it's taking longer.
+        if (result.responseCode === 'TIMEOUT' || result.responseCode === 'NETWORK_ERROR') {
+          setNotice(t('paymentSlowNotice'));
+        }
         startPolling();
       }
     } catch (err: unknown) {
@@ -595,8 +628,8 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
   if (bankNoticeSent) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
-          <Landmark className="w-8 h-8 text-blue-600" />
+        <div className="w-16 h-16 mx-auto rounded-full bg-rmc-green-light flex items-center justify-center">
+          <Landmark className="w-8 h-8 text-rmc-green" />
         </div>
         <h2 className="text-xl font-bold text-gray-900">{t('bankNoticeSentTitle')}</h2>
         <p className="text-gray-500 text-sm">{t('bankNoticeSentText')}</p>
@@ -607,13 +640,39 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
     );
   }
 
+  // Provider slow/unresponsive: not a failure — the charge may still clear and
+  // the background reconciler will confirm it. Offer a safe retry (the backend
+  // re-checks any in-flight charge before starting a new one, so no double bill).
+  if (phase === 'slow') {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
+        <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 flex items-center justify-center">
+          <Info className="w-8 h-8 text-amber-600" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900">{t('paymentSlowTitle')}</h2>
+        <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">{t('paymentSlowText')}</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Button
+            variant="outline"
+            onClick={() => { setError(null); setNotice(null); setPhase('idle'); }}
+          >
+            {t('tryAgain')}
+          </Button>
+          <Button onClick={() => router.push(`/${locale}/services/good-conduct/status`)}>
+            {t('checkStatusBtn')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6">
       <h2 className="font-bold text-gray-900">{t('paymentSection')}</h2>
 
-      <div className="rounded-xl bg-indigo-50 border border-indigo-100 px-5 py-4 flex items-center justify-between">
-        <span className="text-sm text-indigo-900">{t('amountDue')}</span>
-        <span className="text-lg font-bold text-indigo-900 font-mono">
+      <div className="rounded-xl bg-rmc-green-light border border-rmc-green-light px-5 py-4 flex items-center justify-between">
+        <span className="text-sm text-rmc-green-dark">{t('amountDue')}</span>
+        <span className="text-lg font-bold text-rmc-green-dark font-mono">
           {Number(request.amountDue).toLocaleString()} RWF
         </span>
       </div>
@@ -624,8 +683,13 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
 
       {phase === 'waiting' ? (
         <div className="text-center py-6 space-y-3">
-          <Loader2 className="w-8 h-8 mx-auto text-indigo-500 animate-spin" />
+          <Loader2 className="w-8 h-8 mx-auto text-rmc-green animate-spin" />
           <p className="text-sm text-gray-600">{t('waitingForPayment')}</p>
+          {notice && (
+            <div className="mx-auto max-w-sm rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2.5 flex items-start gap-2">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" /> <span>{notice}</span>
+            </div>
+          )}
           <Button variant="outline" size="sm" onClick={() => { stopPolling(); setPhase('idle'); }}>
             {t('cancelPayment')}
           </Button>

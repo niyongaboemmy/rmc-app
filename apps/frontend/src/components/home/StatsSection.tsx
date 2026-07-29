@@ -7,12 +7,13 @@ import { useScrollReveal } from '@/hooks/useScrollReveal';
 import {
   ContentKeys,
   STATS_DEFAULT,
-  getSiteContent,
-  mergeContent,
   pick,
   isRtl,
   type StatsContent,
+  type Locale,
 } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 /** Lucide icons available to stat items, resolved by name from content. */
 const ICONS: Record<string, LucideIcon> = { Users, GraduationCap, Building2 };
@@ -74,14 +75,14 @@ function StatCard({ value, label, suffix, Icon, ringColor, glowColor, delay = 0 
   return (
     <div
       ref={ref}
-      className={`group relative overflow-hidden bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 text-center transition-all duration-700 ${
+      className={`group relative overflow-hidden bg-white/5 border border-white/10 rounded-lg p-6 md:p-8 text-center transition-all duration-700 ${
         cardVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
       }`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {/* Hover glow overlay */}
       <div
-        className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+        className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
         style={{ background: `radial-gradient(ellipse at center, ${glowColor} 0%, transparent 70%)` }}
       />
 
@@ -119,21 +120,11 @@ export function StatsSection() {
   const rtl = isRtl(locale);
 
   // Content managed from Admin → Content → Community Impact. Falls back to the
-  // built-in defaults until something is saved (or if the fetch fails).
-  const [content, setContent] = useState<StatsContent>(STATS_DEFAULT);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<Partial<StatsContent>>(ContentKeys.stats)
-      .then((d) => {
-        if (active && d) setContent(mergeContent(STATS_DEFAULT, d));
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // built-in defaults until something is saved. In super-admin Edit Mode the
+  // heading copy below is click-to-edit; the animated counters are managed from
+  // the admin panel (a counting number isn't a type-in-place field).
+  const { content, setField } = useEditableContent<StatsContent>(ContentKeys.stats, STATS_DEFAULT);
+  const lang = locale as Locale;
 
   const stats: Stat[] = content.items.map((item, i) => ({
     value: item.value,
@@ -159,15 +150,34 @@ export function StatsSection() {
             titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
           }`}
         >
-          <div className={`inline-flex items-center gap-2 bg-rmc-gold/15 border border-rmc-gold/25 text-rmc-gold px-4 py-1.5 rounded-full text-sm font-medium mb-4 ${rtl ? 'font-arabic' : ''}`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold animate-pulse" />
-            {pick(content.eyebrow, locale)}
-          </div>
           <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-white ${rtl ? 'font-arabic' : ''}`}>
-            {pick(content.title, locale)}{' '}
-            <span className="text-emerald-400">{pick(content.titleAccent, locale)}</span>
+            <InlineText
+              as="span"
+              lang={locale}
+              value={pick(content.title, locale)}
+              onCommit={(v) => setField((d) => { d.title[lang] = v; })}
+              placeholder="Title"
+            />{' '}
+            <InlineText
+              as="span"
+              lang={locale}
+              value={pick(content.titleAccent, locale)}
+              onCommit={(v) => setField((d) => { d.titleAccent[lang] = v; })}
+              className="text-emerald-400"
+              placeholder="Accent"
+            />
           </h2>
-          <p className={`text-white/40 mt-2 text-sm ${rtl ? 'font-arabic' : ''}`}>{pick(content.subtitle, locale)}</p>
+          <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+          </div>
+          <InlineText
+            as="p"
+            lang={locale}
+            value={pick(content.subtitle, locale)}
+            onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
+            className={`text-white/40 text-sm ${rtl ? 'font-arabic' : ''}`}
+            placeholder="Subtitle"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">

@@ -2,7 +2,12 @@ import axios from 'axios';
 import { apiClient, API_BASE_URL } from './api';
 import { downloadXlsx } from './downloadXlsx';
 
-export type HajjStatus = 'submitted' | 'under_review' | 'approved' | 'rejected';
+export type HajjStatus =
+  | 'submitted'
+  | 'under_review'
+  | 'more_info_requested'
+  | 'approved'
+  | 'rejected';
 
 /** Statuses an admin can move an application to. A decision is final. */
 export const HAJJ_FINAL_STATUSES: HajjStatus[] = ['approved', 'rejected'];
@@ -10,6 +15,7 @@ export const HAJJ_FINAL_STATUSES: HajjStatus[] = ['approved', 'rejected'];
 export const HAJJ_STATUS_LABELS: Record<HajjStatus, string> = {
   submitted: 'Submitted',
   under_review: 'Under Review',
+  more_info_requested: 'More Info Requested',
   approved: 'Approved',
   rejected: 'Not Approved',
 };
@@ -17,6 +23,9 @@ export const HAJJ_STATUS_LABELS: Record<HajjStatus, string> = {
 export const HAJJ_STATUS_COLORS: Record<HajjStatus, string> = {
   submitted: 'bg-gray-100 text-gray-700 ring-gray-200',
   under_review: 'bg-amber-50 text-amber-700 ring-amber-200',
+  // Blue, not amber: it must read as "your turn to act", distinct from the
+  // amber "we are working on it" of under_review.
+  more_info_requested: 'bg-blue-50 text-blue-700 ring-blue-200',
   approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
   rejected: 'bg-red-50 text-red-700 ring-red-200',
 };
@@ -64,18 +73,29 @@ export interface HajjApplication {
   reviewedAt: string | null;
   reviewNotes: string | null;
   rejectionReason: string | null;
+  /** Outstanding ask. Non-null only while status is more_info_requested. */
+  moreInfoRequested: string | null;
+  /** Which receipt(s) the admin asked for. Non-null only with more_info_requested. */
+  moreInfoDocumentTypes: HajjDocumentType[] | null;
   createdAt: string;
   updatedAt: string;
 }
 
-/** The PII-free shape the public status lookup returns. */
+/** The PII-free shape the OTP-verified status lookup returns. */
 export interface HajjApplicationPublic {
-  applicationNumber: string;
+  trackingCode: string;
   fullName: string;
   district: string;
   sector: string;
   status: HajjStatus;
   rejectionReason: string | null;
+  /** What the admin still needs. Non-null only while status is more_info_requested. */
+  moreInfoRequested: string | null;
+  /**
+   * Which receipt(s) the applicant must (re)upload. Non-null only while status is
+   * more_info_requested; null means "not specified" (legacy — offer both slots).
+   */
+  moreInfoDocumentTypes: HajjDocumentType[] | null;
   submittedAt: string;
   updatedAt: string;
 }
@@ -105,6 +125,13 @@ export interface UpdateHajjStatusPayload {
   notes?: string;
   /** Required by the backend when rejecting — it is sent to the applicant. */
   rejectionReason?: string;
+  /**
+   * Required by the backend when asking for more information — it is sent to the
+   * applicant and shown on their tracking page.
+   */
+  moreInfoRequested?: string;
+  /** Required when asking for more information — which receipt(s) are needed. */
+  moreInfoDocumentTypes?: HajjDocumentType[];
 }
 
 /** Accepted receipt formats — kept in step with the backend's allow-list. */
@@ -230,15 +257,28 @@ export const hajjApi = {
   /** Public — submit an application. Returns the number the applicant must keep. */
   apply: async (
     payload: HajjApplicationPayload,
-  ): Promise<{ id: string; applicationNumber: string; status: HajjStatus }> => {
+  ): Promise<{ id: string; applicationNumber: string; trackingCode: string; status: HajjStatus }> => {
     const { data } = await apiClient.post('/hajj/apply', payload);
     return data.data ?? data;
   },
 
-  /** Public — applicant status lookup by application number. */
-  getByNumber: async (applicationNumber: string): Promise<HajjApplicationPublic> => {
-    const { data } = await apiClient.get(
-      `/hajj/applications/by-number/${encodeURIComponent(applicationNumber)}`,
+  // Public status lookup is now OTP-gated — see the shared <TrackByOtp> component
+  // (basePath '/hajj/applications/track'), which returns HajjApplicationPublic.
+
+  /**
+   * Public (OTP-gated) — answer an admin's "more information requested" by
+   * attaching one or more receipts already uploaded with `uploadProof`. Sent as a
+   * batch so a two-document ask returns to review only once, after both are in.
+   * The token comes from the verified tracking session, so no login is involved.
+   */
+  resubmitDocuments: async (
+    token: string,
+    documents: (UploadedProof & { documentType: HajjDocumentType })[],
+  ): Promise<{ status: HajjStatus; documentTypes: HajjDocumentType[] }> => {
+    const { data } = await apiClient.post(
+      '/hajj/applications/track/resubmit',
+      { documents },
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return data.data ?? data;
   },

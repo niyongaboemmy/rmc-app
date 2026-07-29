@@ -7,11 +7,21 @@ import { FileText, Clock, ArrowRight, ExternalLink } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { publicApi } from '@/lib/public-api';
 import { useTranslations } from 'next-intl';
+import {
+  ContentKeys,
+  TENDERS_HOME_DEFAULT,
+  pick,
+  type TendersHomeContent,
+  type Locale,
+} from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 type I18n = { en: string; rw: string; ar: string };
 
 type Tender = {
   id: string;
+  slug: string | null;
   title: string;
   content: string;
   titleI18n:   I18n | null;
@@ -43,8 +53,15 @@ function deadlineColor(expiresAt: string | null): string {
 
 export function TendersSection() {
   const { locale } = useParams<{ locale: string }>();
+  const lang = locale as Locale;
   const t = useTranslations('tenders');
   const { ref, visible } = useScrollReveal(0.1);
+
+  // Header copy is admin-editable inline (the tender records stay API-driven).
+  const { content, editing, setField } = useEditableContent<TendersHomeContent>(
+    ContentKeys.tendersHome,
+    TENDERS_HOME_DEFAULT,
+  );
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,7 +89,7 @@ export function TendersSection() {
   if (!loading && tenders.length === 0) return null;
 
   return (
-    <section className="py-14 bg-gradient-to-b from-rmc-green-deep/3 to-transparent">
+    <section className="py-12 md:py-16 bg-gradient-to-b from-rmc-green-deep/3 to-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -86,16 +103,38 @@ export function TendersSection() {
               <FileText className="w-5 h-5 text-rmc-gold" />
             </div>
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900">
-                {t('title')}
-              </h2>
-              <p className="text-gray-400 text-xs mt-0.5">
-                {t('subtitle')}
-              </p>
+              {editing ? (
+                <InlineText
+                  as="h2"
+                  lang={locale}
+                  value={pick(content.title, locale)}
+                  onCommit={(v) => setField((d) => { d.title[lang] = v; })}
+                  className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900"
+                  placeholder="Section title"
+                />
+              ) : (
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900">
+                  {pick(content.title, locale)}
+                </h2>
+              )}
+              {editing ? (
+                <InlineText
+                  as="p"
+                  lang={locale}
+                  value={pick(content.subtitle, locale)}
+                  onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
+                  className="text-gray-400 text-xs mt-0.5"
+                  placeholder="Subtitle"
+                />
+              ) : (
+                <p className="text-gray-400 text-xs mt-0.5">
+                  {pick(content.subtitle, locale)}
+                </p>
+              )}
             </div>
           </div>
           <Link
-            href={`/${locale}/tenders`}
+            href={`/${locale}/services/tender`}
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark transition-colors"
           >
             {t('card.view')} <ArrowRight className="w-4 h-4" />
@@ -106,7 +145,7 @@ export function TendersSection() {
         {loading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-40 rounded-2xl bg-gray-100 animate-pulse" />
+              <div key={i} className="h-40 rounded-lg bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -118,8 +157,8 @@ export function TendersSection() {
               return (
               <Link
                 key={tender.id}
-                href={`/${locale}/tenders/${tender.id}`}
-                className={`flex flex-col p-5 rounded-2xl border border-rmc-gold/20 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 group ${
+                href={`/${locale}/tenders/${tender.slug ?? tender.id}`}
+                className={`flex flex-col p-5 rounded-lg border border-rmc-gold/20 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 group ${
                   visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                 }`}
                 style={{ transitionDelay: `${i * 100 + 200}ms` }}
@@ -161,7 +200,7 @@ export function TendersSection() {
 
         <div className="mt-6 flex sm:hidden">
           <Link
-            href={`/${locale}/tenders`}
+            href={`/${locale}/services/tender`}
             className="flex items-center gap-1.5 text-sm font-semibold text-rmc-green hover:text-rmc-green-dark transition-colors"
           >
             {t('empty.viewAll')} <ArrowRight className="w-4 h-4" />

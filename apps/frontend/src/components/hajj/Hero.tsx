@@ -42,10 +42,7 @@ export function Hero() {
   const hero = content.hero;
 
   return (
-    <section
-      className="relative flex flex-col overflow-hidden text-white"
-      style={{ minHeight: 'max(42vh, 320px)' }}
-    >
+    <section className="relative flex min-h-[40vh] flex-col overflow-hidden text-white">
       <Image
         src={HERO_IMAGE}
         alt=""
@@ -59,12 +56,12 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-25" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/50 to-transparent" aria-hidden="true" />
 
-      <div className="relative flex flex-1 items-center justify-center px-4 pt-32 pb-4 text-center sm:px-6 lg:px-8">
+      <div className="relative flex flex-1 items-center justify-center px-6 pt-28 pb-10 text-center sm:px-8 lg:px-12">
         <div className="mx-auto max-w-3xl">
         {/* Crest */}
         <div className="mb-4 flex justify-center">
-          <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
-            <span className="absolute inset-0 rounded-2xl bg-rmc-gold/20 blur-md" aria-hidden="true" />
+          <span className="relative flex h-16 w-16 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/20 backdrop-blur">
+            <span className="absolute inset-0 rounded-lg bg-rmc-gold/20 blur-md" aria-hidden="true" />
             <Compass className="relative h-8 w-8 text-rmc-gold-light" strokeWidth={1.5} aria-hidden="true" />
           </span>
         </div>
@@ -77,17 +74,7 @@ export function Hero() {
           {pick(hero.talbiyahMeaning, locale)}
         </p>
 
-        {/* Ornamental divider */}
-        <div className="my-4 flex items-center justify-center gap-3" aria-hidden="true">
-          <span className="h-px w-14 bg-gradient-to-r from-transparent to-rmc-gold/60" />
-          <span className="h-1.5 w-1.5 rotate-45 bg-rmc-gold/70" />
-          <span className="h-px w-14 bg-gradient-to-l from-transparent to-rmc-gold/60" />
-        </div>
-
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-rmc-gold-light">
-          {pick(hero.eyebrow, locale)}
-        </p>
-        <h1 className="mx-auto max-w-2xl text-3xl font-bold leading-tight drop-shadow-lg md:text-[2.75rem] md:leading-[1.1]">
+        <h1 className="mx-auto mt-5 max-w-2xl text-3xl font-bold leading-tight drop-shadow-lg md:text-[2.75rem] md:leading-[1.1]">
           {pick(hero.title, locale)}
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-white/70 md:text-base">

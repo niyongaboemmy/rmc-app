@@ -201,7 +201,7 @@ export function SmsConfigTab() {
         )}
 
         {/* Configuration card */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-rmc-green" />
             <h2 className="text-sm font-semibold text-gray-900">InTouch SMS Gateway</h2>
@@ -269,7 +269,7 @@ export function SmsConfigTab() {
               value={form.dlrUrl ?? ''}
               onChange={(e) => handleChange('dlrUrl', e.target.value)}
               disabled={!canManage}
-              placeholder="https://api.rmc.org.rw/api/v1/webhooks/sms-delivery"
+              placeholder="https://api.isengesho.com/api/v1/webhooks/sms-delivery"
               hint="InTouch will send a GET request to this URL with delivery status updates"
             />
 

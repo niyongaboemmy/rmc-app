@@ -252,7 +252,7 @@ function ToggleSwitch({
       disabled={disabled}
       className={cn(
         'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent',
-        'transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-rmc-green/30',
+        'transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-rmc-green',
         'disabled:cursor-not-allowed disabled:opacity-40',
         enabled ? 'bg-rmc-green' : 'bg-gray-200',
       )}

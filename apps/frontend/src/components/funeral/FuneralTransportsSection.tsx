@@ -59,8 +59,8 @@ export function FuneralTransportsSection() {
   if (!loaded || transports.length === 0) return null;
 
   return (
-    <section className="relative bg-transparent pb-14">
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative bg-transparent py-16 md:py-20">
+      <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="mb-6 max-w-2xl">
           <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
             <Truck className="h-6 w-6 text-rmc-green" aria-hidden="true" /> {t('title')}
@@ -76,7 +76,7 @@ export function FuneralTransportsSection() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 rtl:pl-4 rtl:pr-9"
+              className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 rtl:pl-4 rtl:pr-9"
             />
           </div>
           <div className="sm:w-64">

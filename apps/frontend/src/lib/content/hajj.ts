@@ -47,6 +47,42 @@ export interface HajjContent {
     title: Tri;
     subtitle: Tri;
   };
+  /** "How it works" — the ordered journey, shown after the checklist. */
+  steps: {
+    eyebrow: Tri;
+    title: Tri;
+    subtitle: Tri;
+    items: HajjStep[];
+  };
+}
+
+/** One numbered step of the Hajj journey. `icon` is a REQUIREMENT_ICONS name. */
+export interface HajjStep {
+  /** Stable id, so React keys survive reordering. Any unique string. */
+  id: string;
+  icon: string;
+  title: Tri;
+  description: Tri;
+}
+
+/**
+ * The steps an admin has saved, or the seeded ones when the section has never
+ * been edited.
+ *
+ * Deliberately NOT run through `mergeContent`: that merges arrays by index, so
+ * an admin who leaves step 3's Kinyarwanda blank would inherit the *seeded*
+ * step 3's Kinyarwanda — text from a step they may have replaced entirely. Here
+ * an empty translation just falls back to the step's own English via `pick()`.
+ */
+export function hajjSteps(saved: unknown): HajjStep[] {
+  const items = (saved as HajjContent | null)?.steps?.items;
+  if (!Array.isArray(items)) return HAJJ_DEFAULT.steps.items;
+  return items.map((item, i) => ({
+    id: item?.id || `step-${i}`,
+    icon: item?.icon || '',
+    title: item?.title ?? tri(''),
+    description: item?.description ?? tri(''),
+  }));
 }
 
 /**
@@ -128,5 +164,70 @@ export const HAJJ_DEFAULT: HajjContent = {
       'Ibyo ukeneye gutegura mbere yo kwiyandikisha no kugenda.',
       'ما تحتاج إلى تجهيزه قبل التسجيل والسفر.',
     ),
+  },
+  steps: {
+    eyebrow: tri('How it works', 'Uko bigenda', 'كيف تسير العملية'),
+    title: tri(
+      'Your journey, step by step',
+      'Urugendo rwawe, intambwe ku yindi',
+      'رحلتك، خطوة بخطوة',
+    ),
+    subtitle: tri(
+      'From your first registration to your return home — here is what happens at each stage.',
+      'Kuva wiyandikisha kugeza usubiye mu rugo — dore ibiba kuri buri ntambwe.',
+      'من تسجيلك الأول حتى عودتك إلى الوطن — إليك ما يحدث في كل مرحلة.',
+    ),
+    items: [
+      {
+        id: 'register',
+        icon: 'BookUser',
+        title: tri('Register online', 'Iyandikishe kuri interineti', 'سجّل عبر الإنترنت'),
+        description: tri(
+          'Fill in the registration form with your personal details and passport information. Have your documents scanned and ready before you begin.',
+          'Uzuza ifishi yo kwiyandikisha n’amakuru yawe bwite n’ay’urwandiko rw’inzira. Banza utegure inyandiko zawe zafotowe mbere yo gutangira.',
+          'املأ استمارة التسجيل ببياناتك الشخصية ومعلومات جواز السفر. جهّز نسخًا ممسوحة من وثائقك قبل البدء.',
+        ),
+      },
+      {
+        id: 'pay',
+        icon: 'Banknote',
+        title: tri('Pay the registration fee', 'Ishyura amafaranga yo kwiyandikisha', 'ادفع رسوم التسجيل'),
+        description: tri(
+          'Transfer the registration fee and the initial payment to one of the official bank accounts listed on this page, then upload the payment proofs with your application.',
+          'Ohereza amafaranga yo kwiyandikisha n’ubwishyu bwa mbere kuri konti za banki zemewe ziri kuri uru rupapuro, hanyuma wohereze ibimenyetso by’ubwishyu hamwe n’ubusabe bwawe.',
+          'حوّل رسوم التسجيل والدفعة الأولى إلى أحد الحسابات المصرفية الرسمية المذكورة في هذه الصفحة، ثم أرفق إثباتات الدفع مع طلبك.',
+        ),
+      },
+      {
+        id: 'review',
+        icon: 'ShieldCheck',
+        title: tri('We review your application', 'Dusuzuma ubusabe bwawe', 'نراجع طلبك'),
+        description: tri(
+          'The committee checks your documents and payment proofs. You can follow the status of your application at any time using the reference you receive.',
+          'Komite isuzuma inyandiko zawe n’ibimenyetso by’ubwishyu. Ushobora gukurikirana aho ubusabe bwawe bugeze igihe cyose ukoresheje inomero wahawe.',
+          'تتحقق اللجنة من وثائقك وإثباتات الدفع. يمكنك متابعة حالة طلبك في أي وقت باستخدام الرقم المرجعي الذي تستلمه.',
+        ),
+      },
+      {
+        id: 'visa',
+        icon: 'Stamp',
+        title: tri('Visa and travel documents', 'Viza n’inyandiko z’urugendo', 'التأشيرة ووثائق السفر'),
+        description: tri(
+          'Once you are approved, we process your Hajj visa and travel documents with the Saudi authorities and confirm your departure date.',
+          'Nyuma yo kwemererwa, dutunganya viza yawe ya Hija n’inyandiko z’urugendo ku bufatanye n’inzego za Arabiya Sawudite, tukemeza itariki y’ukugenda.',
+          'بعد الموافقة، نتولى إصدار تأشيرة الحج ووثائق السفر لدى الجهات السعودية ونؤكد موعد مغادرتك.',
+        ),
+      },
+      {
+        id: 'travel',
+        icon: 'Plane',
+        title: tri('Travel and perform Hajj', 'Genda ukore Hija', 'السفر وأداء الحج'),
+        description: tri(
+          'You travel with the group and are guided through the rites in Makkah and Madinah by experienced guides, with our support until you return home safely.',
+          'Ugendana n’itsinda, ukayoborwa mu migenzo y’i Maka n’i Madina n’abayobozi b’inzobere, tukagufasha kugeza usubiye mu rugo amahoro.',
+          'تسافر مع المجموعة ويرافقك مرشدون ذوو خبرة في أداء المناسك بمكة والمدينة، مع دعمنا حتى عودتك سالمًا.',
+        ),
+      },
+    ],
   },
 };

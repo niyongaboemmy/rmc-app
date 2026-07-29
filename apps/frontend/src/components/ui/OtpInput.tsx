@@ -79,7 +79,7 @@ export function OtpInput({ length = 6, value, onChange, disabled, error, autoFoc
             onFocus={(e) => e.target.select()}
             className={[
               'w-11 h-13 text-center text-xl font-bold rounded-xl border-2 outline-none transition-all duration-150 select-none',
-              'focus:border-rmc-green focus:ring-2 focus:ring-rmc-green/20',
+              'focus:border-rmc-green focus:ring-2 focus:ring-rmc-green',
               error
                 ? 'border-red-400 bg-red-50 text-red-700'
                 : digits[i]

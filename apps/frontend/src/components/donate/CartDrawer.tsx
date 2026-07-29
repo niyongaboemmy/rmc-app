@@ -82,7 +82,7 @@ function ConfirmedPopup({
         .ripple-ring { animation: ripple 1.8s ease-out infinite }
       `}</style>
 
-      <div className="pop-card relative mx-4 w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl">
+      <div className="pop-card relative mx-4 w-full max-w-sm rounded-lg bg-white p-8 text-center shadow-2xl">
         {/* Ripple rings */}
         <div className="pointer-events-none absolute left-1/2 top-[4.5rem] -translate-x-1/2 -translate-y-1/2">
           {[0, 0.6, 1.2].map((delay, i) => (
@@ -156,7 +156,7 @@ function ConfirmedPopup({
         <button
           type="button"
           onClick={onContinue}
-          className="w-full rounded-full bg-rmc-green py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark"
+          className="w-full rounded-lg bg-rmc-green py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark"
         >
           Continue — {countdown}s
         </button>
@@ -236,7 +236,7 @@ function WaitingScreen({
       </p>
 
       {/* Live status indicator */}
-      <div className={`mb-5 flex items-center gap-2.5 rounded-2xl border px-4 py-3 transition-colors duration-300 ${
+      <div className={`mb-5 flex items-center gap-2.5 rounded-lg border px-4 py-3 transition-colors duration-300 ${
         isChecking
           ? 'border-rmc-green/30 bg-rmc-green-light/50'
           : 'border-amber-200 bg-amber-50'
@@ -256,9 +256,9 @@ function WaitingScreen({
       </p>
 
       {error && (
-        <div className="mb-4 flex w-full items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-left">
+        <div className="mb-4 flex w-full items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-left">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-          <p className="text-[12.5px] text-red-700">{error}</p>
+          <p className="text-[12.5px] text-red-600">{error}</p>
         </div>
       )}
 
@@ -267,7 +267,7 @@ function WaitingScreen({
           type="button"
           onClick={onResend}
           disabled={isResending}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-rmc-green px-4 py-2.5 text-sm font-bold text-rmc-green transition-colors hover:bg-rmc-green-light/50 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-rmc-green px-4 py-2.5 text-sm font-bold text-rmc-green transition-colors hover:bg-rmc-green-light/50 disabled:opacity-50"
         >
           {isResending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -619,14 +619,14 @@ export function CartDrawer({
                   Your payment of <span className="font-bold text-gray-900">{money(currency, confirmedTotal)}</span> is being processed.
                 </p>
                 <p className="mb-6 text-[12.5px] leading-relaxed text-gray-400">
-                  MTN MoMo can take a few minutes to confirm. If you approved the prompt on your phone, your donation will be recorded automatically — you'll receive an SMS.
+                  MTN MoMo can take a few minutes to confirm. If you approved the prompt on your phone, your donation will be recorded automatically — you&apos;ll receive an SMS.
                 </p>
                 <div className="flex w-full flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-rmc-green px-4 py-2.5 text-sm font-bold text-rmc-green transition-colors hover:bg-rmc-green-light/50 disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-rmc-green px-4 py-2.5 text-sm font-bold text-rmc-green transition-colors hover:bg-rmc-green-light/50 disabled:opacity-50"
                   >
                     {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     Try again with a new request
@@ -636,7 +636,7 @@ export function CartDrawer({
                     onClick={onClose}
                     className="text-sm font-medium text-gray-400 underline-offset-2 transition-colors hover:text-gray-600 hover:underline"
                   >
-                    Close — I'll wait for the SMS
+                    Close — I&apos;ll wait for the SMS
                   </button>
                 </div>
               </div>
@@ -651,7 +651,7 @@ export function CartDrawer({
                     <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400">Your gift</p>
                     <ul className="space-y-2">
                       {items.map((it) => (
-                        <li key={it.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 ring-1 ring-black/5">
+                        <li key={it.id} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-white p-3 ring-1 ring-black/5">
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-[13px] font-bold text-gray-900">{it.label}</p>
                             <p className="text-[11px] text-gray-400">{it.categoryTitle}</p>
@@ -675,7 +675,7 @@ export function CartDrawer({
                     type="button"
                     onClick={() => setRecurring(!recurring)}
                     aria-pressed={recurring}
-                    className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
+                    className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all duration-200 ${
                       recurring ? 'border-rmc-green bg-rmc-green-light/40 ring-1 ring-rmc-green/30' : 'border-gray-200 hover:border-rmc-green/40'
                     }`}
                   >
@@ -687,7 +687,7 @@ export function CartDrawer({
                       <span className="block text-[11px] text-gray-400">{t('cart.monthlyHint')}</span>
                     </span>
                     <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${recurring ? 'bg-rmc-green' : 'bg-gray-200'}`}>
-                      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${recurring ? 'left-4' : 'left-0.5'}`} />
+                      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${recurring ? 'left-4' : 'left-0.5'}`} />
                     </span>
                   </button>
 
@@ -700,14 +700,14 @@ export function CartDrawer({
                       onChange={(e) => setName(e.target.value)}
                       disabled={anonymous}
                       placeholder={anonymous ? t('cart.anonName') : t('cart.namePlaceholder')}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 disabled:bg-gray-50 disabled:text-gray-400"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green disabled:bg-gray-50 disabled:text-gray-400"
                     />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={t('cart.emailPlaceholder')}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-[13px] text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green"
                     />
                     <label className="flex cursor-pointer items-center gap-2 text-[12.5px] text-gray-600">
                       <input
@@ -730,7 +730,7 @@ export function CartDrawer({
                       <button
                         type="button"
                         aria-pressed
-                        className="flex flex-col items-center gap-1.5 rounded-xl border border-rmc-green bg-rmc-green-light/40 p-3 text-center ring-1 ring-rmc-green/30"
+                        className="flex flex-col items-center gap-1.5 rounded-lg border border-rmc-green bg-rmc-green-light/40 p-3 text-center ring-1 ring-rmc-green/30"
                       >
                         <Smartphone className="h-5 w-5 text-rmc-green" />
                         <span className="text-[11px] font-bold text-gray-900">{METHOD_LABELS.momo}</span>
@@ -742,7 +742,7 @@ export function CartDrawer({
                         return (
                           <div
                             key={key}
-                            className="relative flex flex-col items-center gap-1.5 rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-center opacity-60 cursor-not-allowed"
+                            className="relative flex flex-col items-center gap-1.5 rounded-lg border border-gray-100 bg-gray-50/50 p-3 text-center opacity-60 cursor-not-allowed"
                             title="Coming soon"
                           >
                             <Icon className="h-5 w-5 text-gray-300" />
@@ -768,9 +768,9 @@ export function CartDrawer({
 
                   {/* Error */}
                   {(error || phase === 'failed') && (
-                    <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3">
+                    <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3">
                       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                      <p className="text-[12.5px] text-red-700">{error || t('cart.error')}</p>
+                      <p className="text-[12.5px] text-red-600">{error || t('cart.error')}</p>
                     </div>
                   )}
                 </div>
@@ -791,7 +791,7 @@ export function CartDrawer({
                 type="button"
                 onClick={initiatePayment}
                 disabled={submitting || total <= 0}
-                className="group flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50"
+                className="group flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting ? (
                   <>

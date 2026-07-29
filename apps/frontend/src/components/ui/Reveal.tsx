@@ -25,9 +25,17 @@ export function Reveal({ children, variant = 'up', delay = 0, className = '' }: 
     if (!el) return;
     // Re-trigger every time the section enters/leaves the viewport, so it
     // animates again whenever the user scrolls back to it (not just once).
+    //
+    // threshold MUST be 0, never a fraction. A fractional threshold becomes
+    // unreachable as soon as the section is taller than the viewport: 12% of a
+    // 50,000px lesson body is 6,000px, more than any screen, so isIntersecting
+    // never fired and the whole section stayed at opacity:0 — present in the DOM
+    // but permanently invisible. (A long rich-text lesson with inline images hits
+    // this immediately.) With 0, any sliver entering reveals it, at any height;
+    // the negative rootMargin still holds the trigger back slightly.
     const observer = new IntersectionObserver(
       ([entry]) => setVisible(entry.isIntersecting),
-      { threshold: 0.12, rootMargin: '0px 0px -10% 0px' },
+      { threshold: 0, rootMargin: '0px 0px -10% 0px' },
     );
     observer.observe(el);
     return () => observer.disconnect();

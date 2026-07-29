@@ -198,7 +198,7 @@ export function UploadSettingsTab() {
       </div>
 
       {/* Max file size card */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <Upload className="w-4 h-4 text-rmc-green" />
           <h2 className="text-sm font-semibold text-gray-900">Maximum File Size</h2>
@@ -219,7 +219,7 @@ export function UploadSettingsTab() {
                 onChange={(e) => setMaxSizeMB(e.target.value)}
                 disabled={!canManage}
                 placeholder="800"
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none disabled:bg-gray-50 disabled:text-gray-400"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none disabled:bg-gray-50 disabled:text-gray-400"
               />
               {canManage && (
                 <Button
@@ -259,7 +259,7 @@ export function UploadSettingsTab() {
       </div>
 
       {/* Allowed MIME types card */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <FileType className="w-4 h-4 text-rmc-green" />
           <h2 className="text-sm font-semibold text-gray-900">Allowed File Types</h2>
@@ -319,7 +319,7 @@ export function UploadSettingsTab() {
                     onChange={(e) => setCustomMime(e.target.value)}
                     placeholder="e.g. application/zip"
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddMime(customMime); }}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rmc-green focus:border-transparent outline-none"
                   />
                   <Button
                     onClick={() => handleAddMime(customMime)}

@@ -3,8 +3,9 @@ import { ImageIcon } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
-import { PageHero } from '@/components/layout/PageHero';
+import { GalleryHero } from '@/components/gallery/GalleryHero';
 import { GalleryCategories } from '@/components/gallery/GalleryCategories';
+import { GallerySwitch } from '@/components/gallery/GallerySwitch';
 import { publicApi } from '@/lib/public-api';
 import {
   CATEGORY_KEYS,
@@ -87,46 +88,45 @@ export default async function GalleryPage() {
     <div className="min-h-screen">
       <Navbar />
       <main>
-        {/* Hero header */}
-        <PageHero
-          eyebrow="RMC"
-          title={t('title')}
-          subtitle={t('subtitle')}
-          ornament
-          minHeightClassName="min-h-[25vh]"
-          paddingClassName="pt-36 pb-8"
-        />
+        {/* Hero header — heading/subtitle are admin-editable inline (Edit Mode). */}
+        <GalleryHero />
 
-        {isEmpty ? (
-          /* Empty state — gallery is now purely API-driven */
-          <section className="py-24">
-            <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <ImageIcon className="w-12 h-12 mx-auto mb-4 text-rmc-green/30" />
-              <h2 className="text-xl font-bold text-gray-900">{t('empty.title')}</h2>
-              <p className="mt-2 text-sm text-gray-500">{t('empty.subtitle')}</p>
-            </div>
-          </section>
-        ) : (
-          <>
-            {/* ALL — 3D carousel of every photo */}
-            <section className="py-8 md:py-10 bg-transparent">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="relative rounded-3xl overflow-hidden w-full max-w-4xl mx-auto min-h-[340px] md:min-h-[440px]">
-                  <ImageCarousel3D images={allImages} />
+        {/* Public view below. For a super-admin in Edit Mode, GallerySwitch swaps
+            it for the in-context editable board (category tabs + add tiles). */}
+        <GallerySwitch
+          read={
+            isEmpty ? (
+              /* Empty state — gallery is now purely API-driven */
+              <section className="py-24">
+                <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                  <ImageIcon className="w-12 h-12 mx-auto mb-4 text-rmc-green/30" />
+                  <h2 className="text-xl font-bold text-gray-900">{t('empty.title')}</h2>
+                  <p className="mt-2 text-sm text-gray-500">{t('empty.subtitle')}</p>
                 </div>
-              </div>
-            </section>
+              </section>
+            ) : (
+              <>
+                {/* ALL — 3D carousel of every photo */}
+                <section className="py-6 md:py-8 bg-transparent">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="relative rounded-lg overflow-hidden w-full max-w-3xl mx-auto min-h-[400px] md:min-h-[520px]">
+                      <ImageCarousel3D images={allImages} />
+                    </div>
+                  </div>
+                </section>
 
-            {/* Category sections — clustered by month */}
-            <GalleryCategories
-              categories={categories}
-              items={items}
-              periods={periods}
-              locale={locale}
-              viewAllLabel={t('viewAll')}
-            />
-          </>
-        )}
+                {/* Category sections — clustered by month */}
+                <GalleryCategories
+                  categories={categories}
+                  items={items}
+                  periods={periods}
+                  locale={locale}
+                  viewAllLabel={t('viewAll')}
+                />
+              </>
+            )
+          }
+        />
       </main>
       <Footer />
     </div>

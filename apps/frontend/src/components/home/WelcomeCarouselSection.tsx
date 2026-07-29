@@ -20,12 +20,13 @@ import { PrayerColumn } from './PrayerColumn';
 import {
   ContentKeys,
   UPDATES_DEFAULT,
-  getSiteContent,
-  mergeContent,
   isRtl,
   pick,
   type UpdatesContent,
+  type Locale,
 } from '@/lib/content-api';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 interface Slide {
   badge: string;
@@ -50,25 +51,15 @@ export function WelcomeCarouselSection() {
   const [paused, setPaused] = useState(false);
   const liveRef = useRef<HTMLParagraphElement>(null);
 
-  // Content managed from Admin → Content → Updates & Programs. Falls back to the
-  // built-in defaults until something is saved (or if the fetch fails).
-  const [content, setContent] = useState<UpdatesContent>(UPDATES_DEFAULT);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<UpdatesContent>(ContentKeys.updates)
-      .then((data) => {
-        if (active && data) setContent(mergeContent(UPDATES_DEFAULT, data));
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Content managed from Admin → Content → Updates & Programs, and inline in Edit
+  // Mode (the section header). Falls back to the built-in defaults until saved.
+  const { content, editing, setField } = useEditableContent<UpdatesContent>(
+    ContentKeys.updates,
+    UPDATES_DEFAULT,
+  );
+  const lang = locale as Locale;
 
   const rtl = isRtl(locale);
-  const heading = pick(content.heading, locale);
 
   const SLIDES: Slide[] = content.items.map((item) => ({
     badge: pick(item.badge, locale),
@@ -139,32 +130,51 @@ export function WelcomeCarouselSection() {
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
       <div aria-hidden className="absolute -top-24 left-1/3 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-rmc-green-light/50 blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-10 md:py-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 md:py-16">
         {/* Section header */}
         <div
           className={`text-center max-w-2xl mx-auto mb-8 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
           style={{ animationDelay: '120ms' }}
         >
-          <span className="inline-flex items-center gap-2.5 rounded-full border border-rmc-green/15 bg-rmc-green-light/60 px-4 py-1.5 text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] text-rmc-green-dark backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold shrink-0" />
-            <span dir={rtl ? 'rtl' : undefined} className={rtl ? 'font-arabic' : undefined}>{heading}</span>
-          </span>
           <h2
-            className={`mt-4 text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
+            className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
             dir={rtl ? 'rtl' : 'ltr'}
           >
-            {pick({ en: 'Initiatives shaping the', rw: 'Gahunda zubaka', ar: 'مبادرات تبني' }, locale)}{' '}
-            <span className="text-rmc-green">
-              {pick({ en: 'Rwandan ummah', rw: 'umat nyarwanda', ar: 'الأمة الرواندية' }, locale)}
-            </span>
+            {editing ? (
+              <>
+                <InlineText
+                  as="span"
+                  lang={locale}
+                  value={pick(content.headingTitle, locale)}
+                  onCommit={(v) => setField((d) => { d.headingTitle[lang] = v; })}
+                  placeholder="Heading"
+                />{' '}
+                <InlineText
+                  as="span"
+                  lang={locale}
+                  value={pick(content.headingAccent, locale)}
+                  onCommit={(v) => setField((d) => { d.headingAccent[lang] = v; })}
+                  className="text-rmc-green"
+                  placeholder="Accent"
+                />
+              </>
+            ) : (
+              <>
+                {pick(content.headingTitle, locale)}{' '}
+                <span className="text-rmc-green">{pick(content.headingAccent, locale)}</span>
+              </>
+            )}
           </h2>
+          <div className="ornament-divider mx-auto my-4 max-w-xs" aria-hidden>
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+          </div>
         </div>
 
         {/* Two clean, matched, equal-height white panels */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {/* ════════ LEFT — Updates & Programs ════════ */}
           <article
-            className={`lg:col-span-2 relative h-full flex flex-col overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-[0_1px_2px_rgba(13,61,36,0.04),0_16px_40px_-24px_rgba(13,61,36,0.22)] ${
+            className={`lg:col-span-2 relative h-full flex flex-col overflow-hidden rounded-lg border border-gray-200/70 bg-white ${
               visible ? 'animate-fade-up' : 'opacity-0'
             }`}
             style={{ animationDelay: '240ms' }}
@@ -239,13 +249,13 @@ export function WelcomeCarouselSection() {
                   <div className="mt-5 flex flex-col sm:flex-row gap-3">
                     <Link
                       href={`/${locale}${slide.ctaHref}`}
-                      className={`inline-flex items-center justify-center px-5 py-2 bg-rmc-green text-white font-semibold rounded-full text-sm shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors duration-200 ${ring} ${rtl ? 'font-arabic' : ''}`}
+                      className={`inline-flex items-center justify-center px-5 py-2 bg-rmc-green text-white font-semibold rounded-lg text-sm shadow-sm shadow-rmc-green/20 hover:bg-rmc-green-dark transition-colors duration-200 ${ring} ${rtl ? 'font-arabic' : ''}`}
                     >
                       {slide.cta}
                     </Link>
                     <Link
                       href={`/${locale}/donate`}
-                      className={`inline-flex items-center justify-center px-5 py-2 border border-rmc-green/30 text-rmc-green-dark font-semibold rounded-full text-sm hover:bg-rmc-green-light/50 hover:border-rmc-green/50 transition-colors duration-200 ${ring}`}
+                      className={`inline-flex items-center justify-center px-5 py-2 border border-rmc-green/30 text-rmc-green-dark font-semibold rounded-lg text-sm hover:bg-rmc-green-light/50 hover:border-rmc-green/50 transition-colors duration-200 ${ring}`}
                     >
                       {pick({ en: 'Donate', rw: 'Gutera inkunga', ar: 'تبرّع' }, locale)}
                     </Link>
@@ -275,14 +285,14 @@ export function WelcomeCarouselSection() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={prev}
-                      className={`grid place-items-center w-8 h-8 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors ${ring}`}
+                      className={`grid place-items-center w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors ${ring}`}
                       aria-label="Previous slide"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setPaused((p) => !p)}
-                      className={`grid place-items-center w-8 h-8 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors ${ring}`}
+                      className={`grid place-items-center w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors ${ring}`}
                       aria-label={paused ? 'Play automatic slideshow' : 'Pause automatic slideshow'}
                       aria-pressed={paused}
                     >
@@ -290,7 +300,7 @@ export function WelcomeCarouselSection() {
                     </button>
                     <button
                       onClick={next}
-                      className={`grid place-items-center w-8 h-8 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors ${ring}`}
+                      className={`grid place-items-center w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors ${ring}`}
                       aria-label="Next slide"
                     >
                       <ChevronRight className="w-4 h-4" />

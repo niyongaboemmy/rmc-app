@@ -10,10 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
-  LayoutDashboard, Users, Shield, UserCheck, Landmark,
-  Clock, BarChart2, Settings, ChevronLeft, ChevronRight,
-  LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass,
-  ShieldCheck,
+  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Briefcase, Award, ClipboardList, Building2,
 } from 'lucide-react';
 
 interface NavItem {
@@ -23,6 +20,8 @@ interface NavItem {
   labelKey: string;
   permission?: Permission;
   group: string;
+  /** When present, the item renders as an expandable group instead of a link. */
+  children?: NavItem[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -30,12 +29,35 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'members',   href: '/admin/members',      icon: UserCheck,       labelKey: 'sidebar.members',   group: 'main',   permission: Permission.MEMBERS_VIEW      },
   { key: 'marriage',  href: '/admin/marriage',     icon: Heart,           labelKey: 'sidebar.marriage',  group: 'main',   permission: Permission.MARRIAGE_VIEW     },
   { key: 'goodConduct', href: '/admin/good-conduct', icon: ShieldCheck,   labelKey: 'sidebar.goodConduct', group: 'main', permission: Permission.GOOD_CONDUCT_VIEW },
+  { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW       },
+  { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW },
+  { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
+  { key: 'jobs',      href: '/admin/jobs',         icon: Briefcase,       labelKey: 'sidebar.jobs',      group: 'main',   permission: Permission.JOB_APPLICATIONS_VIEW },
+  { key: 'jobPostings', href: '/admin/job-postings', icon: ClipboardList, labelKey: 'sidebar.jobPostings', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
   { key: 'mosques',   href: '/admin/mosques',      icon: Landmark,        labelKey: 'sidebar.mosques',   group: 'main',   permission: Permission.MOSQUES_VIEW      },
   { key: 'schools',   href: '/admin/schools',      icon: GraduationCap,   labelKey: 'sidebar.schools',   group: 'main',   permission: Permission.SCHOOLS_VIEW      },
   { key: 'prayer',    href: '/admin/prayer-times', icon: Clock,           labelKey: 'sidebar.prayer',    group: 'main',   permission: Permission.PRAYER_TIMES_VIEW },
   { key: 'finance',   href: '/admin/donations',    icon: Wallet,          labelKey: 'sidebar.finance',   group: 'main',   permission: Permission.DONATIONS_VIEW    },
   { key: 'funeral',   href: '/admin/funeral',      icon: Moon,            labelKey: 'sidebar.funeral',   group: 'main',   permission: Permission.FUNERAL_VIEW      },
   { key: 'hajj',      href: '/admin/hajj',         icon: Compass,         labelKey: 'sidebar.hajj',      group: 'main',   permission: Permission.HAJJ_VIEW         },
+  { key: 'dawah',     href: '/admin/dawah/courses', icon: Library,        labelKey: 'sidebar.dawah',     group: 'content', permission: Permission.DAWAH_VIEW,
+    children: [
+      { key: 'dawah-courses',    href: '/admin/dawah/courses',    icon: BookOpen,   labelKey: 'dawah.tabs.courses',    group: 'content', permission: Permission.DAWAH_VIEW   },
+      { key: 'dawah-library',    href: '/admin/dawah/library',    icon: BookMarked, labelKey: 'dawah.tabs.library',    group: 'content', permission: Permission.DAWAH_VIEW   },
+      { key: 'dawah-categories', href: '/admin/dawah/categories', icon: Tags,       labelKey: 'dawah.tabs.categories', group: 'content', permission: Permission.DAWAH_VIEW   },
+      { key: 'dawah-content',    href: '/admin/content/dawah',    icon: FileText,   labelKey: 'dawah.tabs.content',    group: 'content', permission: Permission.CONTENT_VIEW },
+      // Discussions moderation & scholar review — nested here for grouping. Each stays gated
+      // on its OWN permission (moderate / verify), and the group filter below shows the Dawah
+      // parent whenever a user can see ANY child. So a pure Moderator or Scholar who lacks
+      // DAWAH_VIEW still reaches their queue under an expandable Dawah section (and the
+      // collapsed rail links to their first visible child, never a page they can't open).
+      // Two, not three. The old trio (all questions / report queue / scholar review) split
+      // work that no longer divides: reports are gone with member-authored answers, and
+      // "all questions" is now just the library with its filter cleared.
+      { key: 'discussionsAll',    href: '/admin/dawah/discussions',             icon: MessagesSquare, labelKey: 'sidebar.discussionsAll',    group: 'content', permission: Permission.DISCUSSIONS_VERIFY },
+      { key: 'discussionsReview', href: '/admin/dawah/discussions/submissions', icon: ClipboardCheck, labelKey: 'sidebar.discussionsReview', group: 'content', permission: Permission.DISCUSSIONS_VERIFY },
+    ],
+  },
   { key: 'inbox',     href: '/admin/inbox',        icon: Inbox,           labelKey: 'sidebar.inbox',     group: 'content', permission: Permission.CONTACT_MESSAGES_VIEW },
   { key: 'drive',     href: '/admin/drive',        icon: HardDrive,       labelKey: 'sidebar.drive',     group: 'content', permission: Permission.DRIVE_ADMIN       },
   { key: 'content',   href: '/admin/content',      icon: BookOpen,        labelKey: 'sidebar.content',   group: 'content', permission: Permission.CONTENT_VIEW      },
@@ -139,6 +161,114 @@ function SidebarNavItem({ item, active, collapsed, locale, label, badge = 0, onM
   );
 }
 
+interface SidebarNavGroupProps {
+  item: NavItem;
+  childrenItems: NavItem[];
+  collapsed: boolean;
+  locale: string;
+  isActive: (href: string) => boolean;
+  onMobileClose: () => void;
+  mounted: boolean;
+}
+
+/**
+ * A parent nav item that expands to reveal sub-pages (e.g. Dawah → Courses /
+ * Library / Categories / Landing page). Auto-opens when the current route is
+ * one of its children, and stays openable/closable by hand otherwise.
+ */
+function SidebarNavGroup({
+  item, childrenItems, collapsed, locale, isActive, onMobileClose, mounted,
+}: SidebarNavGroupProps) {
+  const t = useTranslations('admin');
+  const anyActive = childrenItems.some((c) => isActive(c.href));
+  const [open, setOpen] = useState(anyActive);
+  // Navigating INTO a child opens the group; a manual collapse while already
+  // active is preserved (anyActive doesn't change, so this effect won't re-fire).
+  useEffect(() => { if (anyActive) setOpen(true); }, [anyActive]);
+
+  // Collapsed rail: no room to expand, so the parent behaves like every other
+  // collapsed item — an icon link with the hover tooltip. It links to the FIRST
+  // VISIBLE child (childrenItems is already permission-filtered), never the
+  // parent's own href, so a role that can't open the parent page (e.g. a
+  // Moderator without DAWAH_VIEW) still lands somewhere it's allowed.
+  const railHref = childrenItems[0]?.href ?? item.href;
+  if (collapsed) {
+    return mounted ? (
+      <SidebarNavItem
+        item={{ ...item, href: railHref }}
+        active={anyActive}
+        collapsed={collapsed}
+        locale={locale}
+        label={t(item.labelKey)}
+        onMobileClose={onMobileClose}
+      />
+    ) : (
+      <li className="lg:flex lg:justify-center">
+        <Link
+          href={`/${locale}${railHref}`}
+          className={`relative flex items-center rounded-md h-10 px-2 gap-3 lg:h-9 lg:w-9 lg:justify-center lg:px-0 lg:gap-0 ${
+            anyActive ? 'bg-rmc-green/8 text-rmc-green' : 'text-gray-500'
+          }`}
+        >
+          <item.icon className={`shrink-0 w-4 h-4 ${anyActive ? 'text-rmc-green' : ''}`} />
+        </Link>
+      </li>
+    );
+  }
+
+  const Icon = item.icon;
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className={`group relative flex w-full items-center rounded-md transition-all duration-150 h-10 px-2 gap-3 lg:h-9 lg:gap-2.5 ${
+          anyActive ? 'text-rmc-green' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+        }`}
+      >
+        <Icon className={`shrink-0 w-4 h-4 ${anyActive ? 'text-rmc-green' : ''}`} />
+        <span className={`text-[13px] font-medium truncate ${anyActive ? 'text-rmc-green font-semibold' : ''}`}>
+          {t(item.labelKey)}
+        </span>
+        <ChevronDown
+          className={`ms-auto h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform duration-200 ${
+            open ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {open && (
+        <ul className="mt-px space-y-px">
+          {childrenItems.map((c) => {
+            const active = isActive(c.href);
+            const CIcon = c.icon;
+            return (
+              <li key={c.key}>
+                <Link
+                  href={`/${locale}${c.href}`}
+                  onClick={onMobileClose}
+                  className={`relative flex items-center rounded-md h-9 ps-9 pe-2 gap-2.5 text-[13px] transition-all duration-150 ${
+                    active
+                      ? 'bg-rmc-green/8 text-rmc-green font-semibold'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-rmc-green" />
+                  )}
+                  <CIcon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{t(c.labelKey)}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </li>
+  );
+}
+
 interface Props {
   collapsed: boolean;
   onToggle: () => void;
@@ -213,7 +343,15 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
       {/* Navigation — overflow-x-hidden is safe now because tooltips use portals */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3">
         {GROUPS.map((group) => {
-          const items = NAV_ITEMS.filter((i) => i.group === group.key && canSee(i));
+          // A leaf shows when its own permission is held. A PARENT shows when the user can
+          // see the parent itself OR any of its children — otherwise nesting a queue under a
+          // section the role can't open (e.g. discussions under DAWAH_VIEW-gated Dawah) would
+          // hide it. Children are re-filtered by their own permission where they're rendered.
+          const items = NAV_ITEMS.filter((i) => {
+            if (i.group !== group.key) return false;
+            const kids = (i.children ?? []).filter(canSee);
+            return canSee(i) || kids.length > 0;
+          });
           if (!items.length) return null;
           return (
             <div key={group.key} className={`mb-4 ${collapsed ? 'lg:px-2 px-3' : 'px-3'}`}>
@@ -224,8 +362,23 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
               </p>
 
               <ul className="space-y-px">
-                {items.map((item) => (
-                  mounted ? (
+                {items.map((item) => {
+                  const kids = (item.children ?? []).filter(canSee);
+                  if (kids.length > 0) {
+                    return (
+                      <SidebarNavGroup
+                        key={item.key}
+                        item={item}
+                        childrenItems={kids}
+                        collapsed={collapsed}
+                        locale={locale}
+                        isActive={isActive}
+                        onMobileClose={onMobileClose}
+                        mounted={mounted}
+                      />
+                    );
+                  }
+                  return mounted ? (
                     <SidebarNavItem
                       key={item.key}
                       item={item}
@@ -254,8 +407,8 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
                         </span>
                       </Link>
                     </li>
-                  )
-                ))}
+                  );
+                })}
               </ul>
             </div>
           );

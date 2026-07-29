@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
+import { EditablePageHero } from '@/components/layout/EditablePageHero';
 import { Reveal } from '@/components/ui/Reveal';
-import { pick } from '@/lib/content-api';
+import { pick, ContentKeys, NEW_MUSLIM_HERO_DEFAULT } from '@/lib/content-api';
 import { submitContactMessage } from '@/lib/contactApi';
 
 // Leaflet touches `window`, so the map only loads on the client.
@@ -87,17 +87,10 @@ export default function NewMuslimPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <PageHero
-        eyebrow={pick({ en: 'Welcome to Islam', rw: 'Murakaza neza muri Islam', ar: 'مرحباً بك في الإسلام' }, locale)}
-        title={pick({ en: 'Your Journey Begins Here', rw: 'Urugendo Rwawe Rutangirira Hano', ar: 'رحلتك تبدأ من هنا' }, locale)}
-        subtitle={pick(
-          {
-            en: 'Congratulations and welcome, dear brother or sister. Here is what comes next — and how the Rwanda Muslim Community is here to walk with you.',
-            rw: 'Twishimiye kandi turagusuhuje, mwene wacu nkunda. Dore ibikurikira — n\'uko Umuryango w\'Abayisilamu bo mu Rwanda uri kumwe nawe.',
-            ar: 'مبروك وأهلاً بك، أخي أو أختي العزيزة. إليك ما يأتي بعد ذلك — وكيف يقف المجتمع الإسلامي الرواندي معك.',
-          },
-          locale,
-        )}
+      <EditablePageHero
+        contentKey={ContentKeys.newMuslimHero}
+        defaults={NEW_MUSLIM_HERO_DEFAULT}
+        showEyebrow
         ornament
       />
 
@@ -106,7 +99,7 @@ export default function NewMuslimPage() {
         <Reveal>
           <section>
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <div className={`inline-flex items-center gap-2 mb-3 px-4 py-1.5 rounded-full bg-rmc-green/10 text-rmc-green text-xs font-semibold ${isAr ? 'font-arabic' : ''}`}>
+              <div className={`inline-flex items-center gap-2 mb-3 px-4 py-1.5 rounded-lg bg-rmc-green/10 text-rmc-green text-xs font-semibold ${isAr ? 'font-arabic' : ''}`}>
                 <Sparkles className="w-3.5 h-3.5" />
                 {pick({ en: 'What\'s Next', rw: 'Ibikurikira', ar: 'الخطوات التالية' }, locale)}
               </div>
@@ -226,7 +219,7 @@ function RegisterForm({ locale, isAr }: { locale: string; isAr: boolean }) {
   };
 
   const inputCls =
-    'w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
+    'w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
 
   if (status === 'done') {
     return (
@@ -310,7 +303,7 @@ function RegisterForm({ locale, isAr }: { locale: string; isAr: boolean }) {
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="mt-5 inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-rmc-green text-white text-sm font-bold rounded-full shadow-lg shadow-rmc-green/25 hover:bg-rmc-green-dark disabled:opacity-60 transition-colors"
+        className="mt-5 inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-rmc-green text-white text-sm font-bold rounded-lg shadow-lg shadow-rmc-green/25 hover:bg-rmc-green-dark disabled:opacity-60 transition-colors"
       >
         {status === 'sending' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         {pick({ en: 'Send & connect me', rw: 'Ohereza unyhuze', ar: 'أرسل وتواصل معي' }, locale)}

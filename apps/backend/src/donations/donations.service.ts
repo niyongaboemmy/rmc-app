@@ -387,17 +387,23 @@ export class DonationsService {
     start.setDate(start.getDate() - (span - 1));
     const startKey = start.toISOString().slice(0, 10);
 
+    // NOTE: these three expressions carry a `::date` cast, and TypeORM only
+    // rewrites `alias.property` when it is followed by a space, `=`, `)` or `,`.
+    // The trailing `:` defeats that, so the property name would reach Postgres
+    // raw and fail as the lower-cased `donation.donatedat`. Spell the real
+    // column out instead — `donatedAt` is the only field here whose column name
+    // differs from its property.
     const rows = await this.donations
       .createQueryBuilder('donation')
-      .select("TO_CHAR(donation.donatedAt::date, 'YYYY-MM-DD')", 'date')
+      .select(`TO_CHAR("donation"."donated_at"::date, 'YYYY-MM-DD')`, 'date')
       .addSelect(
         `COALESCE(SUM(donation.amount) FILTER (WHERE donation.status = 'completed'), 0)`,
         'received',
       )
       .addSelect(`COUNT(*) FILTER (WHERE donation.status = 'completed')`, 'count')
       .where('donation.currency = :currency', { currency })
-      .andWhere('donation.donatedAt::date >= :start', { start: startKey })
-      .groupBy('donation.donatedAt::date')
+      .andWhere(`"donation"."donated_at"::date >= :start`, { start: startKey })
+      .groupBy(`"donation"."donated_at"::date`)
       .getRawMany<{ date: string; received: string; count: string }>();
 
     const byDate = new Map(rows.map((r) => [r.date, r]));

@@ -91,7 +91,7 @@ export function ImageCarousel3D({ images, interval = 5000 }: Props) {
               aria-label={`Show image ${i + 1} of ${len}`}
               aria-current={i === current}
               tabIndex={i === current ? 0 : -1}
-              className="absolute top-1/2 left-1/2 w-[74%] h-[84%] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold"
+              className="absolute top-1/2 left-1/2 w-[74%] h-[84%] rounded-lg overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold"
               style={{
                 transform,
                 opacity: visible ? 1 : 0,

@@ -34,7 +34,7 @@ interface PaymentCallbackEvent {
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
   pending:    { label: 'Pending',    icon: Clock,         color: 'text-amber-600',   bg: 'bg-amber-50 border-amber-200' },
-  successful: { label: 'Successful', icon: CheckCircle2,  color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
+  successful: { label: 'Successful', icon: CheckCircle2,  color: 'text-rmc-green', bg: 'bg-rmc-green-light border-rmc-green' },
   failed:     { label: 'Failed',     icon: XCircle,       color: 'text-red-600',     bg: 'bg-red-50 border-red-200' },
   cancelled:  { label: 'Cancelled',  icon: XCircle,       color: 'text-slate-500',   bg: 'bg-slate-50 border-slate-200' },
 };
@@ -598,14 +598,14 @@ export default function PaymentTestingTab({ methods, types }: Props) {
       <div className="space-y-6">
 
         {/* Balance banner */}
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
-          <Wallet className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-rmc-green-light to-teal-50 border border-rmc-green">
+          <Wallet className="w-5 h-5 text-rmc-green shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-emerald-700 font-medium uppercase tracking-wide">IntouchPay Account Balance</p>
+            <p className="text-xs text-rmc-green-dark font-medium uppercase tracking-wide">IntouchPay Account Balance</p>
             {loadingBalance ? (
               <p className="text-sm text-slate-400 mt-0.5">Loading…</p>
             ) : balance?.success ? (
-              <p className="text-lg font-bold text-emerald-800">{balance.balance} RWF</p>
+              <p className="text-lg font-bold text-rmc-green-dark">{balance.balance} RWF</p>
             ) : (
               <p className="text-sm text-slate-500 mt-0.5">Could not retrieve balance</p>
             )}
@@ -613,7 +613,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
           <button
             onClick={loadBalance}
             disabled={loadingBalance}
-            className="shrink-0 p-2 rounded-lg hover:bg-emerald-100 text-emerald-600 transition-colors"
+            className="shrink-0 p-2 rounded-lg hover:bg-rmc-green-light text-rmc-green transition-colors"
           >
             <RefreshCw className={cn('w-4 h-4', loadingBalance && 'animate-spin')} />
           </button>
@@ -642,7 +642,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     className={cn(
                       'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
                       direction === 'collect'
-                        ? 'bg-violet-600 border-violet-600 text-white'
+                        ? 'bg-rmc-green border-violet-600 text-white'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
                     )}
                   >
@@ -654,7 +654,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     className={cn(
                       'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
                       direction === 'deposit'
-                        ? 'bg-violet-600 border-violet-600 text-white'
+                        ? 'bg-rmc-green border-violet-600 text-white'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
                     )}
                   >
@@ -670,7 +670,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                   <select
                     value={selectedMethodId}
                     onChange={(e) => setSelectedMethodId(e.target.value)}
-                    className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-rmc-green"
                   >
                     {activeMethods.length === 0 && <option value="">No active methods</option>}
                     {activeMethods.map((m) => (
@@ -691,7 +691,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     <select
                       value={selectedTypeKey}
                       onChange={(e) => setSelectedTypeKey(e.target.value)}
-                      className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+                      className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-rmc-green"
                     >
                       <option value="">— None —</option>
                       {activeTypes.map((t) => (
@@ -713,7 +713,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     value={mobilePhone}
                     onChange={(e) => setMobilePhone(e.target.value)}
                     placeholder="250788000000"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                   />
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Accepts: 0780313448 or 250780313448 — auto-converted to international format</p>
@@ -731,7 +731,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="100"
-                    className="w-full pl-12 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="w-full pl-12 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                   />
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Test account maximum: 100 RWF</p>
@@ -744,7 +744,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                   'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all',
                   sending || activeMethods.length === 0
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm hover:shadow',
+                    : 'bg-rmc-green hover:bg-rmc-green-dark text-white shadow-sm hover:shadow',
                 )}
               >
                 {sending ? (

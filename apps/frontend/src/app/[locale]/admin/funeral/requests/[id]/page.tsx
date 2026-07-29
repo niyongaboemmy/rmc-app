@@ -127,7 +127,7 @@ function RequestDetail() {
           <button
             type="button"
             onClick={() => setManaging(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark"
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> {t('detail.manage')}
           </button>
@@ -411,14 +411,14 @@ function DeathCertificateCard({
           <div className="flex items-center gap-1.5 pt-0.5">
             <button
               onClick={() => setOpen(true)}
-              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green"
             >
               <Eye className="h-3 w-3" aria-hidden="true" /> {t('detail.inspect')}
             </button>
             <a
               href={url || undefined}
               download={name}
-              className={`inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green ${url ? '' : 'pointer-events-none opacity-50'}`}
+              className={`inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-rmc-green/40 hover:text-rmc-green ${url ? '' : 'pointer-events-none opacity-50'}`}
             >
               <Download className="h-3 w-3" aria-hidden="true" /> {t('detail.download')}
             </a>
@@ -449,7 +449,7 @@ function DeathCertificateCard({
             </div>
             <div className="flex min-h-0 flex-1 items-center justify-center" onClick={(e) => e.stopPropagation()}>
               {failed ? (
-                <p className="rounded-xl bg-white/10 px-5 py-4 text-sm text-white">{t('detail.certificateFailed')}</p>
+                <p className="rounded-lg bg-white/10 px-5 py-4 text-sm text-white">{t('detail.certificateFailed')}</p>
               ) : !url ? (
                 <Loader2 className="h-7 w-7 animate-spin text-white/70" aria-hidden="true" />
               ) : isImage ? (

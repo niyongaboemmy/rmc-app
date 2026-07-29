@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -76,7 +76,7 @@ export default function UpdatesProgramsPage() {
   );
 }
 
-function UpdatesProgramsManager() {
+function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
@@ -90,6 +90,15 @@ function UpdatesProgramsManager() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<UpdateSlide>(EMPTY_SLIDE);
 
+  // The visible carousel header (`headingTitle`/`headingAccent`) is edited on the
+  // landing page itself, not here. This editor still owns the whole `updates`
+  // record, so it must carry those fields through a save or they would be reset
+  // to the defaults on every slide edit.
+  const sectionHeader = useRef({
+    headingTitle: UPDATES_DEFAULT.headingTitle,
+    headingAccent: UPDATES_DEFAULT.headingAccent,
+  });
+
   // Load any previously saved content; fall back to defaults if none exists.
   useEffect(() => {
     let active = true;
@@ -99,6 +108,10 @@ function UpdatesProgramsManager() {
           const merged = { ...UPDATES_DEFAULT, ...data };
           setHeading(merged.heading);
           setItems(withIds(merged.items));
+          sectionHeader.current = {
+            headingTitle: merged.headingTitle,
+            headingAccent: merged.headingAccent,
+          };
         }
       })
       .catch(() => {
@@ -117,6 +130,7 @@ function UpdatesProgramsManager() {
     async (nextHeading: Tri, nextItems: SlideRow[]) => {
       const full: UpdatesContent = {
         heading: nextHeading,
+        ...sectionHeader.current,
         items: nextItems.map(stripId),
       };
       await saveSiteContent(ContentKeys.updates, full);
@@ -206,25 +220,27 @@ function UpdatesProgramsManager() {
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/${locale}/admin/content`}
-            className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <Megaphone className="w-5 h-5 text-blue-600" />
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/${locale}/admin/content`}
+              className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-rmc-green hover:border-rmc-green/30 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Megaphone className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Updates & Programs</h1>
+              <p className="text-xs text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Updates & Programs</h1>
-            <p className="text-xs text-gray-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
-          </div>
-        </div>
+        )}
         <button
           onClick={openCreate}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl shadow-sm shadow-blue-600/20 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-sm shadow-blue-600/20 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Item
@@ -232,13 +248,13 @@ function UpdatesProgramsManager() {
       </div>
 
       {/* ── Section heading (Tri) ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-gray-700">Section Heading</h2>
           <button
             onClick={handleSaveHeading}
             disabled={saving || loading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-xs font-semibold rounded-lg transition-colors"
           >
             {saving || loading ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             {loading ? 'Loading…' : 'Save Heading'}
@@ -247,7 +263,7 @@ function UpdatesProgramsManager() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {LANGS.map((l) => (
             <div key={l.key}>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Heading ({l.label}){l.key === 'en' && <span className="text-red-500"> *</span>}
               </label>
               <input
@@ -343,7 +359,7 @@ function UpdatesProgramsManager() {
               <select
                 value={formData.icon}
                 onChange={(e) => setField('icon', e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
               >
                 {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
               </select>
@@ -422,7 +438,7 @@ function UpdatesProgramsManager() {
         </ModalBody>
         <ModalFooter>
           <button type="button" onClick={() => setIsModalOpen(false)} className={CANCEL_BTN}>Cancel</button>
-          <button type="button" onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+          <button type="button" onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
             {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {editingItem ? 'Save Changes' : 'Add Item'}
           </button>
@@ -446,7 +462,7 @@ function UpdatesProgramsManager() {
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const INPUT_CLS = 'w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+const INPUT_CLS = 'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
 const CANCEL_BTN = 'px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors';
 
 function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
@@ -465,7 +481,7 @@ function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => v
 function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}

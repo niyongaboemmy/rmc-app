@@ -19,6 +19,20 @@ const config: Config = {
         'rmc-dark': '#0A1628',
         'rmc-navy': '#0F2740',
       },
+      // App-wide weight remap — every utility shifted down one step for a
+      // lighter overall feel. `font-bold` now renders 600, not 700, etc.
+      // Change here to re-weight the entire app in one place.
+      fontWeight: {
+        thin: '100',
+        extralight: '200',
+        light: '300',
+        normal: '300',
+        medium: '400',
+        semibold: '500',
+        bold: '600',
+        extrabold: '700',
+        black: '800',
+      },
       fontFamily: {
         // Latin — Nunito (all weights, weight = hierarchy)
         latin:   ['var(--font-latin)', 'system-ui', 'sans-serif'],

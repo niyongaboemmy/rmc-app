@@ -248,7 +248,7 @@ export function AskAIButton() {
         onClick={() => setOpen(true)}
         aria-label={t.askAi}
         title={t.askAi}
-        className={`fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-[60] flex items-center gap-1.5 rounded-full py-2.5 pl-3 pr-4 text-sm font-semibold text-white bg-gradient-to-br from-rmc-green to-rmc-green-dark shadow-lg shadow-rmc-green/30 ring-1 ring-white/20 transition-all duration-300 hover:scale-105 hover:shadow-rmc-green/40 ${
+        className={`fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-[60] flex items-center gap-1.5 rounded-lg py-2.5 pl-3 pr-4 text-sm font-semibold text-white bg-gradient-to-br from-rmc-green to-rmc-green-dark shadow-md shadow-rmc-green/25 ring-1 ring-white/20 transition-all duration-300 ${
           open ? 'pointer-events-none scale-90 opacity-0' : 'scale-100 opacity-100'
         }`}
       >
@@ -266,9 +266,9 @@ export function AskAIButton() {
 
       {/* Chat panel */}
       <div
-        className={`fixed z-[60] flex flex-col overflow-hidden border border-black/5 bg-white shadow-2xl
-          inset-x-3 bottom-3 top-20 rounded-3xl
-          sm:inset-auto sm:bottom-6 sm:right-6 sm:top-auto sm:h-[80vh] sm:max-h-[660px] sm:w-[400px] sm:rounded-[28px]
+        className={`fixed z-[60] flex flex-col overflow-hidden border border-black/5 bg-white shadow-xl
+          inset-x-3 bottom-3 top-20 rounded-lg
+          sm:inset-auto sm:bottom-6 sm:right-6 sm:top-auto sm:h-[80vh] sm:max-h-[660px] sm:w-[400px] sm:rounded-lg
           origin-bottom-right transition-all duration-300 ${
             open
               ? 'scale-100 translate-y-0 opacity-100'
@@ -281,7 +281,7 @@ export function AskAIButton() {
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/25">
                   <Bot className="h-6 w-6" />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-400 ring-2 ring-rmc-green-dark" />
@@ -318,8 +318,8 @@ export function AskAIButton() {
               <div
                 className={`max-w-[82%] whitespace-pre-wrap break-words px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                   msg.role === 'user'
-                    ? 'rounded-2xl rounded-br-md bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white'
-                    : 'rounded-2xl rounded-bl-md bg-white text-gray-700 ring-1 ring-gray-100'
+                    ? 'rounded-lg rounded-br-md bg-gradient-to-br from-rmc-green to-rmc-green-dark text-white'
+                    : 'rounded-lg rounded-bl-md bg-white text-gray-700 ring-1 ring-gray-100'
                 }`}
               >
                 {renderRichText(msg.text, locale, msg.role)}
@@ -332,7 +332,7 @@ export function AskAIButton() {
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rmc-green-light ring-1 ring-rmc-green/10">
                 <Bot className="h-3.5 w-3.5 text-rmc-green" />
               </div>
-              <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100">
+              <div className="flex items-center gap-1 rounded-lg rounded-bl-md bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100">
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-rmc-green/50" style={{ animationDelay: '0ms' }} />
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-rmc-green/50" style={{ animationDelay: '150ms' }} />
                 <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-rmc-green/50" style={{ animationDelay: '300ms' }} />
@@ -349,7 +349,7 @@ export function AskAIButton() {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="group flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-3.5 py-2.5 text-left text-[13px] text-gray-600 shadow-sm transition-all hover:border-rmc-green/30 hover:bg-rmc-green-light/40 hover:text-rmc-green-dark"
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3.5 py-2.5 text-left text-[13px] text-gray-600 shadow-sm transition-all hover:border-rmc-green/30 hover:bg-rmc-green-light/40 hover:text-rmc-green-dark"
                   >
                     <Sparkles className="h-3.5 w-3.5 shrink-0 text-rmc-green/60 transition-colors group-hover:text-rmc-green" />
                     <span className="flex-1">{s}</span>
@@ -365,7 +365,7 @@ export function AskAIButton() {
 
         {/* Input */}
         <div className="shrink-0 border-t border-gray-100 bg-white px-3 pb-3 pt-2.5">
-          <div className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 transition-colors focus-within:border-rmc-green/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-rmc-green/10">
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 transition-colors focus-within:border-rmc-green/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-rmc-green/10">
             <input
               type="text"
               value={input}

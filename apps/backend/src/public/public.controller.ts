@@ -13,7 +13,6 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { Public } from '../common/decorators/public.decorator';
 import { Roles, Role } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { JwtPayload } from '../common/types/jwt-payload.interface';
 import { PublicService } from './public.service';
 
 @ApiTags('Public')
@@ -32,8 +31,8 @@ export class PublicController {
   @Post('verse-of-day')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  createVerse(@CurrentUser() user: JwtPayload, @Body() dto: any) {
-    return this.service.createVerse({ ...dto, createdBy: user.sub });
+  createVerse(@CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.service.createVerse({ ...dto, createdBy: userId });
   }
 
   // ── Announcements ──
@@ -77,11 +76,18 @@ export class PublicController {
     return this.service.getAnnouncementById(id);
   }
 
+  @Get('announcements/slug/:slug')
+  @Public()
+  @ApiOperation({ summary: 'Get a single tender/announcement by slug' })
+  getAnnouncementBySlug(@Param('slug') slug: string) {
+    return this.service.getAnnouncementBySlug(slug);
+  }
+
   @Post('announcements')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  createAnnouncement(@CurrentUser() user: JwtPayload, @Body() dto: any) {
-    return this.service.createAnnouncement({ ...dto, createdBy: user.sub });
+  createAnnouncement(@CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.service.createAnnouncement({ ...dto, createdBy: userId });
   }
 
   @Put('announcements/:id')
@@ -125,8 +131,8 @@ export class PublicController {
   @Post('blog/posts')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN, Role.OPERATOR)
-  createPost(@CurrentUser() user: JwtPayload, @Body() dto: any) {
-    return this.service.createPost({ ...dto, authorId: user.sub });
+  createPost(@CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.service.createPost({ ...dto, authorId: userId });
   }
 
   @Put('blog/posts/:id')

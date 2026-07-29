@@ -71,7 +71,7 @@ export function BlogCategoryTabs({
               onChange={(e) => setQuery(e.target.value)}
               placeholder={searchPlaceholder}
               aria-label={searchPlaceholder}
-              className="w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-colors focus:border-rmc-green/50 focus:outline-none focus:ring-2 focus:ring-rmc-green/15"
+              className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-colors focus:border-rmc-green/50 focus:outline-none focus:ring-2 focus:ring-rmc-green/15"
             />
           </div>
 
@@ -118,7 +118,7 @@ export function BlogCategoryTabs({
             <Link
               key={p.slug}
               href={`/${locale}/blog/${p.slug}`}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-28px_rgba(13,61,36,0.3)]"
+              className="group flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-rmc-green/50 hover:shadow-[0_24px_50px_-28px_rgba(13,61,36,0.3)]"
             >
               <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
                 <Image
@@ -128,7 +128,7 @@ export function BlogCategoryTabs({
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                 />
-                <span className="absolute top-3 left-3 rounded-full bg-black/50 backdrop-blur-sm px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+                <span className="absolute top-3 left-3 rounded-lg bg-black/50 backdrop-blur-sm px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
                   {p.category}
                 </span>
               </div>

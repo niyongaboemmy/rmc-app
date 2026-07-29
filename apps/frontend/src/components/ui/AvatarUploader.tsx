@@ -201,7 +201,7 @@ export function AvatarUploader({
       />
 
       {error && (
-        <p className="text-xs text-red-500 text-center max-w-[160px]">{error}</p>
+        <p className="text-xs text-red-600 text-center max-w-[160px]">{error}</p>
       )}
     </div>
   );

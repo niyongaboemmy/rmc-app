@@ -29,6 +29,14 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.DONATIONS_MANAGE,
   Permission.SCHOOLS_VIEW,
   Permission.SCHOOLS_MANAGE,
+  Permission.DAWAH_VIEW,
+  Permission.DAWAH_MANAGE,
+  // Discussions moderation, so the report queue is never unstaffed before a
+  // dedicated Moderator exists. Mirrors the grant in migration 055 — WITHOUT
+  // this line a reseed would strip it back off the Admin role (the loop below
+  // overwrites permissions wholesale). NOT discussions:verify: that is the
+  // Scholar's alone (a religious-knowledge authority, not an admin one).
+  Permission.DISCUSSIONS_MODERATE,
   Permission.CONTACT_MESSAGES_VIEW,
   Permission.CONTACT_MESSAGES_MANAGE,
   Permission.REPORTS_EXPORT,
@@ -38,6 +46,14 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.USERS_ASSIGN_ROLE,
   Permission.ROLES_VIEW,
   Permission.AUDIT_LOG_VIEW,
+  Permission.TENDER_VIEW,
+  Permission.TENDER_MANAGE,
+  Permission.TENDER_EVALUATE,
+  Permission.TENDER_REPORTS,
+  Permission.SCHOLARSHIP_VIEW,
+  Permission.SCHOLARSHIP_MANAGE,
+  Permission.SCHOLARSHIP_APPROVE,
+  Permission.SCHOLARSHIP_REPORTS,
 ];
 
 const MARRIAGE_OFFICER_PERMISSIONS: Permission[] = [
@@ -65,6 +81,25 @@ const GOOD_CONDUCT_OFFICER_PERMISSIONS: Permission[] = [
   Permission.GOOD_CONDUCT_MANAGE,
   Permission.MEMBERS_VIEW,
   Permission.MOSQUES_VIEW,
+];
+
+const TENDER_OFFICER_PERMISSIONS: Permission[] = [
+  Permission.TENDER_VIEW,
+  Permission.TENDER_MANAGE,
+  Permission.TENDER_EVALUATE,
+  Permission.TENDER_REPORTS,
+  // Tenders are published as announcements (type='tender'), so an officer who
+  // evaluates bids also needs to see and post the tenders themselves.
+  Permission.CONTENT_VIEW,
+  Permission.CONTENT_CREATE,
+  Permission.CONTENT_EDIT,
+];
+
+const SCHOLARSHIP_OFFICER_PERMISSIONS: Permission[] = [
+  Permission.SCHOLARSHIP_VIEW,
+  Permission.SCHOLARSHIP_MANAGE,
+  Permission.SCHOLARSHIP_REPORTS,
+  Permission.MEMBERS_VIEW,
 ];
 
 const DEFAULT_ROLES = [
@@ -108,6 +143,39 @@ const DEFAULT_ROLES = [
     slug: 'good_conduct_officer',
     description: 'Processes Good Conduct requests: payment confirmation, imam assignment',
     permissions: GOOD_CONDUCT_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  {
+    name: 'Tender Officer',
+    slug: 'tender_officer',
+    description: 'Publishes tenders and evaluates the bids submitted against them',
+    permissions: TENDER_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  {
+    name: 'Scholarship Officer',
+    slug: 'scholarship_officer',
+    description: 'Manages scholarship programs and reviews applications',
+    permissions: SCHOLARSHIP_OFFICER_PERMISSIONS,
+    isSystem: false,
+  },
+  // Dawah Discussions roles — mirrors migration 055 so the seed is the full
+  // role set, not a subset the migration silently completes. isSystem: false —
+  // RMC appoints and removes these people themselves.
+  {
+    name: 'Scholar',
+    slug: 'scholar',
+    description:
+      'Verifies answers in Dawah Discussions. May mark one answer per question as "Verified by RMC". No administrative access.',
+    permissions: [Permission.DISCUSSIONS_VERIFY],
+    isSystem: false,
+  },
+  {
+    name: 'Moderator',
+    slug: 'moderator',
+    description:
+      'Moderates Dawah Discussions: works the report queue, hides/restores/locks posts, sets a category answer policy. No administrative access.',
+    permissions: [Permission.DISCUSSIONS_MODERATE],
     isSystem: false,
   },
   {

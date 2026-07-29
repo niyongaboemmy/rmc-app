@@ -15,7 +15,7 @@ export function HeroBackLink({ href, label }: { href: string; label: string }) {
     <div className="relative flex justify-center px-4 pb-5 pt-2 sm:justify-start sm:px-6 lg:px-8">
       <Link
         href={href}
-        className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur transition-all hover:border-white/50 hover:bg-white/20"
+        className="inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur transition-all hover:border-white/50 hover:bg-white/20"
       >
         <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
         {label}

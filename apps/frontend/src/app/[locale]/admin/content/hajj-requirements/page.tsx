@@ -36,13 +36,13 @@ export default function HajjRequirementsAdminPage() {
   return (
     <ProtectedRoute permissions={[Permission.HAJJ_VIEW]}>
       <ToastProvider>
-        <Manager />
+        <HajjRequirementsManager />
       </ToastProvider>
     </ProtectedRoute>
   );
 }
 
-function Manager() {
+function HajjRequirementsManager({ embedded = false }: { embedded?: boolean } = {}) {
   const { locale } = useParams<{ locale: string }>();
   const { hasPermission } = useAuth();
   const canManage = hasPermission(Permission.HAJJ_MANAGE);
@@ -111,22 +111,24 @@ function Manager() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link href={`/${locale}/admin/content`} className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-rmc-green">
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Content
-          </Link>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Compass className="h-5 w-5 text-rmc-green" strokeWidth={1.75} /> Hajj Requirements
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            The checklist on the public Hajj page. The registration fee and initial payment amounts
-            set here are also the amounts the registration form asks applicants to pay.
-          </p>
-        </div>
+        {!embedded && (
+          <div>
+            <Link href={`/${locale}/admin/content`} className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-rmc-green">
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to Content
+            </Link>
+            <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+              <Compass className="h-5 w-5 text-rmc-green" strokeWidth={1.75} /> Hajj Requirements
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              The checklist on the public Hajj page. The registration fee and initial payment amounts
+              set here are also the amounts the registration form asks applicants to pay.
+            </p>
+          </div>
+        )}
         {canManage && (
           <button
             onClick={() => setEditing({ open: true })}
-            className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rmc-green-dark"
+            className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rmc-green-dark"
           >
             <Plus className="h-4 w-4" /> Add requirement
           </button>
@@ -253,8 +255,8 @@ function RequirementFormModal({
       onClose={onClose}
       footer={
         <>
-          <button type="button" onClick={onClose} className="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50">Cancel</button>
-          <button type="button" onClick={submit} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-rmc-green px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
+          <button type="button" onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={submit} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rmc-green-dark disabled:opacity-60">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
           </button>
         </>
@@ -281,7 +283,7 @@ function RequirementFormModal({
         {/* Language tabs */}
         <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
           {LANGS.map((l) => (
-            <button key={l.key} type="button" onClick={() => setLang(l.key)} className={`rounded-md px-3 py-1 text-xs font-bold transition-colors ${lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'}`}>{l.label}</button>
+            <button key={l.key} type="button" onClick={() => setLang(l.key)} className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${lang === l.key ? 'bg-rmc-green text-white shadow-sm' : 'text-gray-500 hover:text-rmc-green'}`}>{l.label}</button>
           ))}
         </div>
 
@@ -295,7 +297,7 @@ function RequirementFormModal({
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-gray-600">Description</span>
           <textarea dir={dir} rows={2} value={desc[lang]} onChange={(e) => setDesc((p) => ({ ...p, [lang]: e.target.value }))}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30" />
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green" />
         </label>
 
         {/* Amount + currency */}
@@ -321,7 +323,7 @@ function RequirementFormModal({
               value={currency}
               onChange={(e) => setCurrency(e.target.value as HajjCurrency)}
               disabled={amount.trim() === ''}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-rmc-green disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
             >
               {HAJJ_CURRENCIES.map((c) => (
                 <option key={c} value={c}>{c}</option>

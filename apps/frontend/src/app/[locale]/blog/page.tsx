@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { SquareArrowOutUpRight, CalendarDays } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageHero } from '@/components/layout/PageHero';
 import { getPosts } from '@/components/blog/blogData';
 import { BlogCategoryTabs } from '@/components/blog/BlogCategoryTabs';
 
@@ -24,17 +23,17 @@ export default async function BlogPage({
 
   return (
     <div className="min-h-screen">
-      <Navbar />
+      {/* Solid navbar: with the image hero gone, a transparent bar would put
+          white links on the light page and read as invisible. */}
+      <Navbar solid />
       <main>
-        {/* Hero — animated community photo background */}
-        <PageHero
-          eyebrow={t('title')}
-          title={t('subtitle')}
-          titleClassName="text-2xl md:text-3xl"
-          minHeightClassName="min-h-[26vh]"
-          paddingClassName="pt-36 pb-20"
-          ornament
-        />
+        {/* Compact header — replaces the image hero; pt clears the fixed navbar. */}
+        <section className="px-4 sm:px-6 lg:px-8 pt-24 pb-2 md:pt-28">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-2xl font-bold text-rmc-green-deep md:text-3xl">{t('title')}</h1>
+            <p className="mt-1.5 text-sm text-gray-500 md:text-base">{t('subtitle')}</p>
+          </div>
+        </section>
 
         {/* ===================================================================
             1. FEATURED — most recently added blog, image background + overlay
@@ -44,7 +43,7 @@ export default async function BlogPage({
           <div className="max-w-7xl mx-auto">
             <Link
               href={`/${locale}/blog/${featured.slug}`}
-              className="group relative block overflow-hidden rounded-3xl max-w-4xl mx-auto min-h-[58vh] md:min-h-[62vh] shadow-[0_30px_70px_-30px_rgba(13,61,36,0.5)] ring-1 ring-black/5"
+              className="group relative block overflow-hidden rounded-lg max-w-4xl mx-auto min-h-[58vh] md:min-h-[62vh] shadow-[0_30px_70px_-30px_rgba(13,61,36,0.5)] ring-1 ring-black/5"
             >
               {/* Background image */}
               <Image
@@ -89,11 +88,11 @@ export default async function BlogPage({
                   </div>
 
                   <div className="flex flex-wrap items-center justify-end gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rmc-gold/20 border border-rmc-gold/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-gold/20 border border-rmc-gold/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
                       <span className="w-1.5 h-1.5 rounded-full bg-rmc-gold" />
                       {t('latest')}
                     </span>
-                    <span className="rounded-full bg-white/10 border border-white/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/80">
+                    <span className="rounded-lg bg-white/10 border border-white/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/80">
                       {featured.category}
                     </span>
                   </div>

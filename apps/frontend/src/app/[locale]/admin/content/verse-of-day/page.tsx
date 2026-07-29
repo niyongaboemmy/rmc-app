@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -10,6 +10,7 @@ import {
   ModalTitle, ModalDescription, ConfirmModal,
 } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
+import { getSiteContent, saveSiteContent } from '@/lib/content-api';
 import {
   BookOpen, ArrowLeft, Plus, Edit2, Trash2,
   ToggleLeft, ToggleRight, Quote,
@@ -42,41 +43,15 @@ const EMPTY_VERSE: Omit<Verse, 'id'> = {
   isActive: true,
 };
 
-const MOCK_VERSES: Verse[] = [
-  {
-    id: '1',
-    arabicText: 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا',
-    translationEn: 'Indeed, with hardship [will be] ease.',
-    translationRw: 'Birumvikana ko n\'ingutu hazaza ubwo bworoshye.',
-    translationAr: 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا',
-    referenceEn: 'Ash-Sharh 94:6',
-    referenceRw: 'Ash-Sharh 94:6',
-    referenceAr: 'الشرح ٩٤:٦',
-    isActive: true,
-  },
-  {
-    id: '2',
-    arabicText: 'لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
-    translationEn: 'Allah does not burden a soul beyond that it can bear.',
-    translationRw: 'Imana ntirengurura umuntu uburemere burenzeho imbaraga ze.',
-    translationAr: 'لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
-    referenceEn: 'Al-Baqarah 2:286',
-    referenceRw: 'Al-Baqarah 2:286',
-    referenceAr: 'البقرة ٢:٢٨٦',
-    isActive: true,
-  },
-  {
-    id: '3',
-    arabicText: 'وَعَسَىٰ أَن تَكْرَهُوا شَيْئًا وَهُوَ خَيْرٌ لَّكُمْ',
-    translationEn: 'But perhaps you hate a thing and it is good for you.',
-    translationRw: 'Ariko ushobora gukunda ikintu kandi ari kibi kuri wewe.',
-    translationAr: 'وَعَسَىٰ أَن تَكْرَهُوا شَيْئًا وَهُوَ خَيْرٌ لَّكُمْ',
-    referenceEn: 'Al-Baqarah 2:216',
-    referenceRw: 'Al-Baqarah 2:216',
-    referenceAr: 'البقرة ٢:٢١٦',
-    isActive: false,
-  },
-];
+// Verses persist in the shared site-content store under this key — the same
+// mechanism every other admin content page uses. No fake sample data.
+const CONTENT_KEY = 'verse-of-day';
+
+function newId(): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Date.now().toString();
+}
 
 // ─── Language config ──────────────────────────────────────────────────────────
 
@@ -104,13 +79,30 @@ function VerseOfDayManager() {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
-  const [verses, setVerses] = useState<Verse[]>(MOCK_VERSES);
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<Lang>('en');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVerse, setEditingVerse] = useState<Verse | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<Omit<Verse, 'id'>>(EMPTY_VERSE);
+
+  // Load saved verses from the content store on mount.
+  useEffect(() => {
+    let active = true;
+    getSiteContent<{ verses?: Verse[] }>(CONTENT_KEY)
+      .then((data) => { if (active && data?.verses) setVerses(data.verses); })
+      .catch(() => {/* start with an empty list */})
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  // Persist the whole verse list, then reflect it locally.
+  const persist = useCallback(async (next: Verse[]) => {
+    await saveSiteContent(CONTENT_KEY, { verses: next });
+    setVerses(next);
+  }, []);
 
   const openCreate = useCallback(() => {
     setEditingVerse(null);
@@ -130,31 +122,48 @@ function VerseOfDayManager() {
       return;
     }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    if (editingVerse) {
-      setVerses((prev) => prev.map((v) => v.id === editingVerse.id ? { ...formData, id: v.id } : v));
-      success('Verse updated successfully.');
-    } else {
-      setVerses((prev) => [...prev, { ...formData, id: Date.now().toString() }]);
-      success('Verse added successfully.');
+    try {
+      const next = editingVerse
+        ? verses.map((v) => (v.id === editingVerse.id ? { ...formData, id: v.id } : v))
+        : [...verses, { ...formData, id: newId() }];
+      await persist(next);
+      success(editingVerse ? 'Verse updated successfully.' : 'Verse added successfully.');
+      setIsModalOpen(false);
+    } catch {
+      error('Could not save. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setIsModalOpen(false);
-  }, [formData, editingVerse, success, error]);
+  }, [formData, editingVerse, verses, persist, success, error]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setVerses((prev) => prev.filter((v) => v.id !== deleteId));
-    success('Verse deleted.');
-    setSaving(false);
-    setDeleteId(null);
-  }, [deleteId, success]);
+    try {
+      await persist(verses.filter((v) => v.id !== deleteId));
+      success('Verse deleted.');
+      setDeleteId(null);
+    } catch {
+      error('Could not delete. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [deleteId, verses, persist, success, error]);
 
-  const toggleActive = useCallback((id: string) => {
-    setVerses((prev) => prev.map((v) => v.id === id ? { ...v, isActive: !v.isActive } : v));
-  }, []);
+  const toggleActive = useCallback(
+    async (id: string) => {
+      const previous = verses;
+      const next = verses.map((v) => (v.id === id ? { ...v, isActive: !v.isActive } : v));
+      setVerses(next); // optimistic
+      try {
+        await saveSiteContent(CONTENT_KEY, { verses: next });
+      } catch {
+        setVerses(previous); // revert on failure
+        error('Could not update. Please try again.');
+      }
+    },
+    [verses, error],
+  );
 
   const setField = useCallback((field: keyof typeof formData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -174,8 +183,8 @@ function VerseOfDayManager() {
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-emerald-600" />
+          <div className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-rmc-green" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Verse of the Day</h1>
@@ -184,7 +193,7 @@ function VerseOfDayManager() {
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-600/20 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-semibold rounded-lg shadow-sm shadow-rmc-green/20 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Verse
@@ -196,22 +205,28 @@ function VerseOfDayManager() {
 
       {/* ── Verse list ── */}
       <div className="space-y-3">
-        {verses.length === 0 && (
+        {loading ? (
+          <div className="text-center py-16 text-gray-300">
+            <span className="inline-block w-6 h-6 border-2 border-gray-200 border-t-emerald-500 rounded-full animate-spin" />
+            <p className="text-sm mt-3">Loading verses…</p>
+          </div>
+        ) : verses.length === 0 ? (
           <div className="text-center py-16 text-gray-300">
             <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">No verses yet. Add one above.</p>
           </div>
+        ) : (
+          verses.map((verse) => (
+            <VerseCard
+              key={verse.id}
+              verse={verse}
+              lang={lang}
+              onEdit={() => openEdit(verse)}
+              onDelete={() => setDeleteId(verse.id)}
+              onToggle={() => toggleActive(verse.id)}
+            />
+          ))
         )}
-        {verses.map((verse) => (
-          <VerseCard
-            key={verse.id}
-            verse={verse}
-            lang={lang}
-            onEdit={() => openEdit(verse)}
-            onDelete={() => setDeleteId(verse.id)}
-            onToggle={() => toggleActive(verse.id)}
-          />
-        ))}
       </div>
 
       {/* ── Create/Edit modal ── */}
@@ -223,7 +238,7 @@ function VerseOfDayManager() {
         <ModalBody className="space-y-5">
           {/* Arabic text — shared across all languages */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Arabic Text <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -232,7 +247,7 @@ function VerseOfDayManager() {
               value={formData.arabicText}
               onChange={(e) => setField('arabicText', e.target.value)}
               placeholder="أدخل الآية الكريمة..."
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-xl font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-xl font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
             />
           </div>
 
@@ -245,7 +260,7 @@ function VerseOfDayManager() {
                   onClick={() => setLang(l.key)}
                   className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-colors ${
                     lang === l.key
-                      ? 'bg-white text-emerald-600 border-b-2 border-emerald-600'
+                      ? 'bg-white text-rmc-green border-b-2 border-rmc-green'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -262,7 +277,7 @@ function VerseOfDayManager() {
                       value={formData.translationEn}
                       onChange={(e) => setField('translationEn', e.target.value)}
                       placeholder="English translation..."
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
                     />
                   </FormField>
                   <FormField label="Reference (e.g. Al-Baqarah 2:286)">
@@ -271,7 +286,7 @@ function VerseOfDayManager() {
                       value={formData.referenceEn}
                       onChange={(e) => setField('referenceEn', e.target.value)}
                       placeholder="Surah Name 1:1"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </FormField>
                 </>
@@ -284,7 +299,7 @@ function VerseOfDayManager() {
                       value={formData.translationRw}
                       onChange={(e) => setField('translationRw', e.target.value)}
                       placeholder="Ubusobanuro mu Kinyarwanda..."
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
                     />
                   </FormField>
                   <FormField label="Reference (Kinyarwanda)">
@@ -293,7 +308,7 @@ function VerseOfDayManager() {
                       value={formData.referenceRw}
                       onChange={(e) => setField('referenceRw', e.target.value)}
                       placeholder="Ash-Sharh 94:6"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </FormField>
                 </>
@@ -307,7 +322,7 @@ function VerseOfDayManager() {
                       value={formData.translationAr}
                       onChange={(e) => setField('translationAr', e.target.value)}
                       placeholder="التفسير بالعربية..."
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent resize-none"
                     />
                   </FormField>
                   <FormField label="Reference (Arabic)">
@@ -317,7 +332,7 @@ function VerseOfDayManager() {
                       value={formData.referenceAr}
                       onChange={(e) => setField('referenceAr', e.target.value)}
                       placeholder="الشرح ٩٤:٦"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-arabic text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
                     />
                   </FormField>
                 </>
@@ -337,7 +352,7 @@ function VerseOfDayManager() {
               className="transition-colors"
             >
               {formData.isActive
-                ? <ToggleRight className="w-8 h-8 text-emerald-500" />
+                ? <ToggleRight className="w-8 h-8 text-rmc-green" />
                 : <ToggleLeft className="w-8 h-8 text-gray-300" />}
             </button>
           </div>
@@ -354,7 +369,7 @@ function VerseOfDayManager() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rmc-green hover:bg-rmc-green-dark disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             {saving && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {editingVerse ? 'Save Changes' : 'Add Verse'}
@@ -388,11 +403,11 @@ function VerseCard({
 
   return (
     <div className={`group flex gap-4 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md ${
-      verse.isActive ? 'bg-white border-gray-100 hover:border-emerald-100' : 'bg-gray-50/60 border-gray-100 opacity-60'
+      verse.isActive ? 'bg-white border-gray-100 hover:border-rmc-green-light' : 'bg-gray-50/60 border-gray-100 opacity-60'
     }`}>
       {/* Icon */}
-      <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 mt-0.5">
-        <Quote className="w-4 h-4 text-emerald-600" />
+      <div className="w-10 h-10 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0 mt-0.5">
+        <Quote className="w-4 h-4 text-rmc-green" />
       </div>
 
       {/* Content */}
@@ -406,7 +421,7 @@ function VerseCard({
           </p>
         )}
         {reference && (
-          <p className="text-xs text-emerald-600 font-semibold">— {reference}</p>
+          <p className="text-xs text-rmc-green font-semibold">— {reference}</p>
         )}
       </div>
 
@@ -415,7 +430,7 @@ function VerseCard({
         <div className="flex items-center gap-1">
           <button
             onClick={onEdit}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rmc-green hover:bg-rmc-green-light transition-colors"
           >
             <Edit2 className="w-3.5 h-3.5" />
           </button>
@@ -431,7 +446,7 @@ function VerseCard({
           title={verse.isActive ? 'Deactivate' : 'Activate'}
         >
           {verse.isActive
-            ? <ToggleRight className="w-6 h-6 text-emerald-500" />
+            ? <ToggleRight className="w-6 h-6 text-rmc-green" />
             : <ToggleLeft className="w-6 h-6 text-gray-300" />}
         </button>
       </div>
@@ -464,7 +479,7 @@ function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => v
 function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}

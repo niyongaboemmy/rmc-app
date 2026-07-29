@@ -17,6 +17,18 @@ export type PaymentStatus = 'unpaid' | 'pending_cash' | 'processing' | 'paid' | 
 export type VenueType = 'mosque' | 'outside';
 export type PaymentMethod = 'momo' | 'bank' | 'cash';
 
+/** Minimal, safe status view returned after phone-OTP verification. */
+export interface MarriagePublicStatus {
+  trackingCode: string;
+  groomName: string;
+  brideName: string;
+  status: MarriageApplicationStatus;
+  rejectionReason: string | null;
+  submittedAt: string | null;
+  updatedAt: string;
+  parties: { role: string; confirmedAt: string | null }[];
+}
+
 export interface MarriageDocument {
   id: string;
   documentType: string;
@@ -48,6 +60,7 @@ export interface StatusHistoryEntry {
 export interface MarriageApplication {
   id: string;
   applicationNumber: string;
+  trackingCode: string;
   applicantId: string;
   notificationPhone: string | null;
   groomName: string;
@@ -251,6 +264,8 @@ export const marriageApi = {
     return data.data ?? data;
   },
 
+  // Status lookup is OTP-gated — see <TrackByOtp> (basePath '/marriage/applications/track').
+  // This by-number lookup is retained ONLY for the certificate viewer pages.
   getByNumber: async (number: string): Promise<MarriageApplication | null> => {
     try {
       const { data } = await apiClient.get(`/marriage/applications/by-number/${number}`);

@@ -13,10 +13,16 @@ import {
 } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
 import { FuneralActionCard } from '@/components/funeral/FuneralActionCard';
+import { FuneralDescription } from '@/components/funeral/FuneralDescription';
+import { FuneralProcessSteps } from '@/components/funeral/FuneralProcessSteps';
 import { FuneralTransportsSection } from '@/components/funeral/FuneralTransportsSection';
 import { HERO_AYAH, HERO_IMAGE } from '@/components/funeral/data';
 
 type Tone = 'green' | 'gold' | 'slate';
+
+// The description, the timeline heading and the hotline are read from the CMS on
+// the server, so render per request — an admin's edit must not wait for a rebuild.
+export const dynamic = 'force-dynamic';
 
 export default async function FuneralServicesPage({
   params: { locale },
@@ -50,11 +56,11 @@ export default async function FuneralServicesPage({
             priority
           />
           {/* Darkening wash so the ayah and title stay legible over the photo. */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-slate-950/70 to-black/45" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/70 to-black/45" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-25" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/50 to-transparent" aria-hidden="true" />
 
-          <div className="relative flex flex-1 items-center justify-center px-4 pt-32 pb-4 text-center sm:px-6 lg:px-8">
+          <div className="relative flex flex-1 items-center justify-center px-6 pt-32 pb-4 text-center sm:px-8 lg:px-12">
             <div className="mx-auto max-w-4xl">
             <div className="mb-3 flex justify-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
@@ -76,9 +82,9 @@ export default async function FuneralServicesPage({
         </section>
 
         {/* ── Quick actions + stats ── */}
-        <section className="relative bg-transparent py-12">
+        <section className="relative bg-transparent py-16 md:py-20">
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" aria-hidden="true" />
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
             <div className="mb-6 max-w-2xl">
               <h2 className="text-2xl font-bold text-gray-900">{t('landing.quickTitle')}</h2>
               <p className="mt-2 text-sm text-gray-500">{t('landing.quickSub')}</p>
@@ -99,25 +105,31 @@ export default async function FuneralServicesPage({
           </div>
         </section>
 
+        {/* ── What RMC does for the family (admin-written) ── */}
+        <FuneralDescription />
+
+        {/* ── What happens next: the lifecycle steps families will track ── */}
+        <FuneralProcessSteps />
+
         {/* ── Available transport means (grouped by mosque) ── */}
         <FuneralTransportsSection />
 
         {/* ── Closing CTA ── */}
-        <section className="relative overflow-hidden bg-rmc-green-deep py-14 text-center text-white">
+        <section className="relative overflow-hidden bg-rmc-green-deep py-16 text-center text-white md:py-20">
           <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-15" aria-hidden="true" />
-          <div className="relative mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+          <div className="relative mx-auto max-w-2xl px-6 sm:px-8 lg:px-12">
             <h2 className="mb-3 text-2xl font-bold">{t('landing.ctaTitle')}</h2>
             <p className="mb-7 text-sm leading-relaxed text-white/60">{t('landing.ctaSub')}</p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href={`${base}/request`}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-black/20 transition-all duration-300 hover:bg-rmc-green-dark"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-black/20 transition-all duration-300 hover:bg-rmc-green-dark"
               >
                 {t('landing.ctaReport')} <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
               </Link>
               <Link
                 href={`/${locale}/contact`}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20"
               >
                 <Phone className="h-4 w-4" aria-hidden="true" /> {t('landing.ctaContact')}
               </Link>

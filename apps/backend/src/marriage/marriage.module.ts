@@ -13,6 +13,7 @@ import { NotificationSettingsModule } from '../integrations/notifications/notifi
 import { SmsModule } from '../integrations/sms/sms.module';
 import { PaymentSettingsModule } from '../payment-settings/payment-settings.module';
 import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module';
+import { TrackingModule } from '../tracking/tracking.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module
     SmsModule,
     PaymentSettingsModule,
     IntouchPayModule,
+    TrackingModule,
     TypeOrmModule.forFeature([
       MarriageApplication,
       MarriageDocument,

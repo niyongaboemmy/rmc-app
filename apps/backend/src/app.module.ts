@@ -22,8 +22,11 @@ import { MembersModule } from './members/members.module';
 import { PublicModule } from './public/public.module';
 import { MarriageModule } from './marriage/marriage.module';
 import { GoodConductModule } from './good-conduct/good-conduct.module';
+import { ScholarshipModule } from './scholarship/scholarship.module';
 import { FuneralModule } from './funeral/funeral.module';
 import { HajjModule } from './hajj/hajj.module';
+import { DawahModule } from './dawah/dawah.module';
+import { TendersModule } from './tenders/tenders.module';
 import { ContentModule } from './content/content.module';
 import { DonationsModule } from './donations/donations.module';
 import { FinanceModule } from './finance/finance.module';
@@ -36,6 +39,7 @@ import { PaymentSettingsModule } from './payment-settings/payment-settings.modul
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { DriveModule } from './drive/drive.module';
 import { UploadSettingsModule } from './upload-settings/upload-settings.module';
+import { JobApplicationsModule } from './job-applications/job-applications.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -68,8 +72,12 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     PublicModule,
     MarriageModule,
     GoodConductModule,
+    ScholarshipModule,
+    JobApplicationsModule,
     FuneralModule,
     HajjModule,
+    DawahModule,
+    TendersModule,
     ContentModule,
     DonationsModule,
     FinanceModule,
