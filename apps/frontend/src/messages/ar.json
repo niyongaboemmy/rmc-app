@@ -3672,7 +3672,19 @@
       "mobileHint": "للحصول على أفضل تجربة قراءة على الهاتف، افتح الكتاب في علامة تبويب جديدة.",
       "backToLibrary": "كل الكتب",
       "aboutBook": "عن هذا الكتاب",
-      "related": "كتب ذات صلة"
+      "related": "كتب ذات صلة",
+      "reader": {
+        "search": "ابحث في هذا الكتاب",
+        "searchPlaceholder": "ابحث في هذا الكتاب…",
+        "searchHint": "اكتب للبحث في الكتاب كاملاً. تُظهر النتائج رقم الصفحة.",
+        "indexing": "جارٍ تجهيز البحث… {percent}%",
+        "noMatches": "لا توجد نتائج في هذا الكتاب.",
+        "matchSummary": "{matches} نتيجة في {pages} صفحة",
+        "matchSummaryCapped": "أول {matches} نتيجة — ضيّق البحث لنتائج أقل",
+        "prevMatch": "النتيجة السابقة",
+        "nextMatch": "النتيجة التالية",
+        "pageShort": "ص.{page}"
+      }
     },
     "pagination": {
       "previous": "السابق",

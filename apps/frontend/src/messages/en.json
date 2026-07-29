@@ -3672,7 +3672,19 @@
       "mobileHint": "For the best reading experience on a phone, open the book in a new tab.",
       "backToLibrary": "All books",
       "aboutBook": "About this book",
-      "related": "Related books"
+      "related": "Related books",
+      "reader": {
+        "search": "Search this book",
+        "searchPlaceholder": "Search in this book…",
+        "searchHint": "Type to search the whole book. Results show the page they are on.",
+        "indexing": "Preparing search… {percent}%",
+        "noMatches": "No matches in this book.",
+        "matchSummary": "{matches, plural, one {# match} other {# matches}} on {pages, plural, one {# page} other {# pages}}",
+        "matchSummaryCapped": "First {matches} matches — narrow the search for fewer",
+        "prevMatch": "Previous match",
+        "nextMatch": "Next match",
+        "pageShort": "p.{page}"
+      }
     },
     "pagination": {
       "previous": "Previous",

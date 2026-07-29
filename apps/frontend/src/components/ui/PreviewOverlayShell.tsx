@@ -85,6 +85,14 @@ export function PreviewOverlayShell({
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // An inner widget may own Escape first — a find bar, an inline editor —
+        // and closing the whole overlay because someone wanted to dismiss THAT
+        // is a real loss of work. It cannot be settled by propagation: both
+        // listeners sit on `document` in the capture phase, where stopPropagation
+        // does not reach a sibling and the shell is registered first anyway,
+        // having mounted earlier. So the widget marks itself instead, and the
+        // shell stands down for exactly one Escape.
+        if (containerRef.current?.querySelector('[data-escape-capture="true"]')) return;
         e.stopPropagation();
         onClose();
         return;

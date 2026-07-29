@@ -3672,7 +3672,19 @@
       "mobileHint": "For the best reading experience on a phone, open the book in a new tab.",
       "backToLibrary": "All books",
       "aboutBook": "About this book",
-      "related": "Related books"
+      "related": "Related books",
+      "reader": {
+        "search": "Shakisha muri iki gitabo",
+        "searchPlaceholder": "Shakisha muri iki gitabo…",
+        "searchHint": "Andika kugira ngo ushakishe mu gitabo cyose. Ibyabonetse byerekana urupapuro biriho.",
+        "indexing": "Gutegura ishakisha… {percent}%",
+        "noMatches": "Nta cyabonetse muri iki gitabo.",
+        "matchSummary": "Byabonetse {matches} ku mpapuro {pages}",
+        "matchSummaryCapped": "Ibya mbere {matches} — shakisha neza kugira ngo bibe bike",
+        "prevMatch": "Icyabanjirije",
+        "nextMatch": "Ikurikira",
+        "pageShort": "p.{page}"
+      }
     },
     "pagination": {
       "previous": "Previous",
