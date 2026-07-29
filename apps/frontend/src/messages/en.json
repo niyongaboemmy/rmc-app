@@ -3717,7 +3717,9 @@
         "submitError": "We couldn't post your question. Please try again.",
         "privacyNote": "Your question will be reviewed by RMC and published with our answer. Your name is not shown on the published entry.",
         "sentTitle": "Question received",
-        "sentBody": "RMC will review your question and publish it with an answer. We'll email you when it goes live."
+        "sentBody": "RMC will review your question and publish it with an answer. We'll email you when it goes live.",
+        "discardTitle": "Discard this question?",
+        "discardBody": "It won't be sent, and what you've written will be lost."
       },
       "searchPlaceholder": "Search questions…",
       "openEntry": "Open the full entry",

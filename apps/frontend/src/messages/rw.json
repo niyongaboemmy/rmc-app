@@ -3717,7 +3717,9 @@
         "submitError": "Ntitwashoboye kohereza ikibazo cyawe. Ongera ugerageze.",
         "privacyNote": "Ikibazo cyawe kizasuzumwa na RMC hanyuma gitangazwe hamwe n'igisubizo cyacu. Izina ryawe ntirigaragara ku cyatangajwe.",
         "sentTitle": "Ikibazo cyakiriwe",
-        "sentBody": "RMC izasuzuma ikibazo cyawe hanyuma igitangaze hamwe n'igisubizo. Tuzakwandikira igihe kizaba kigaragaye."
+        "sentBody": "RMC izasuzuma ikibazo cyawe hanyuma igitangaze hamwe n'igisubizo. Tuzakwandikira igihe kizaba kigaragaye.",
+        "discardTitle": "Gusiba iki kibazo?",
+        "discardBody": "Ntikizoherezwa, kandi ibyo wanditse bizabura."
       },
       "searchPlaceholder": "Shakisha ibibazo…",
       "openEntry": "Fungura inyandiko yose",

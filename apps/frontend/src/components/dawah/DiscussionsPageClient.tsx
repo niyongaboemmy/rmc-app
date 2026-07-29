@@ -9,7 +9,7 @@ import {
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { ConfirmModal } from '@/components/ui/Modal';
+import { ConfirmModal, Modal, ModalBody, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Permission } from '@/lib/permissions';
@@ -18,6 +18,7 @@ import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { InlineText } from '@/components/edit-mode/InlineText';
 import { ContentKeys, DISCUSSIONS_DEFAULT, pick, type DiscussionsContent, type Locale } from '@/lib/content-api';
 import { DiscussionCard } from './DiscussionCard';
+import { AskQuestionFields } from './AskQuestionForm';
 import {
   dawahApi,
   serverMessage,
@@ -53,6 +54,8 @@ const PAGE_SIZE = 12;
  */
 export function DiscussionsPageClient() {
   const t = useTranslations('dawah');
+  const tCommon = useTranslations('common');
+  const tCms = useTranslations('cms');
   const { locale } = useParams<{ locale: string }>();
   const lang = locale as Locale;
   const router = useRouter();
@@ -94,6 +97,35 @@ export function DiscussionsPageClient() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<DiscussionQuestion | null>(null);
+
+  // Asking happens in a modal over the listing rather than on its own route: a member
+  // asking a question has almost always just searched and not found it, so sending them
+  // away from the results loses the thing they were about to reference. Deliberately NOT
+  // in the URL — an open composer is transient UI, and putting it in the query string
+  // makes a half-typed question look like a shareable link.
+  const [askOpen, setAskOpen] = useState(false);
+
+  // Closing the composer destroys the draft (the form unmounts with it), so dismissal is
+  // guarded in two layers rather than one:
+  //   · the modal ignores Escape and backdrop clicks — those are accidents, and neither
+  //     announces itself before throwing work away;
+  //   · the close button still works, but asks first once something has been written.
+  // Either alone leaves a hole: gestures-only still loses a draft to a misclicked X, and
+  // confirm-only nags on every stray backdrop click.
+  const [askDirty, setAskDirty] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+
+  const closeAsk = useCallback(() => {
+    setConfirmDiscard(false);
+    setAskOpen(false);
+    setAskDirty(false);
+  }, []);
+
+  // What the close button routes through: confirm only when there is writing to lose.
+  const requestCloseAsk = useCallback(() => {
+    if (askDirty) setConfirmDiscard(true);
+    else closeAsk();
+  }, [askDirty, closeAsk]);
 
   const setParams = useCallback(
     (next: Record<string, string | number | null>) => {
@@ -388,12 +420,13 @@ export function DiscussionsPageClient() {
                     <p className="mt-1 text-xs leading-relaxed text-gray-500">
                       {t('discussions.askRailHint')}
                     </p>
-                    <Link
-                      href={`/${locale}/dawah/discussions/ask`}
+                    <button
+                      type="button"
+                      onClick={() => setAskOpen(true)}
                       className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-rmc-green px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
                     >
                       <Plus className="h-3.5 w-3.5" /> {t('discussions.askCta')}
-                    </Link>
+                    </button>
                   </div>
                 )}
               </aside>
@@ -402,6 +435,30 @@ export function DiscussionsPageClient() {
         </section>
       </main>
       <Footer />
+
+      {/* Mounted only while open, so a closed composer holds no half-typed draft and the
+          next open starts clean — the same reason the form resets rather than persists.
+          That is also precisely why dismissal is guarded: see the state above. */}
+      <Modal open={askOpen} onClose={requestCloseAsk} size="xl" closeOnGesture={false}>
+        <ModalHeader>
+          <ModalTitle>{t('discussions.ask.heading')}</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          {/* The receipt closes outright: the question is sent, so there is no draft. */}
+          <AskQuestionFields onDone={closeAsk} onDirtyChange={setAskDirty} />
+        </ModalBody>
+      </Modal>
+
+      <ConfirmModal
+        open={confirmDiscard}
+        title={t('discussions.ask.discardTitle')}
+        message={t('discussions.ask.discardBody')}
+        confirmLabel={tCms('discard')}
+        cancelLabel={tCommon('cancel')}
+        variant="danger"
+        onConfirm={closeAsk}
+        onClose={() => setConfirmDiscard(false)}
+      />
 
       <ConfirmModal
         open={!!confirmDelete}
