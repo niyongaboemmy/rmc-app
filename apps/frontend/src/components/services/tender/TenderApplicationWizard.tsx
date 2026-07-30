@@ -217,7 +217,7 @@ export function TenderApplicationWizard({ editApplication, lockedTenderId }: Pro
       {submitError && (
         <div
           role="alert"
-          className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3"
+          className="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3"
         >
           {submitError}
         </div>
@@ -307,7 +307,7 @@ function Step1Company({
     <form
       onSubmit={handleSubmit(onNext)}
       noValidate
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
+      className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
     >
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
@@ -317,7 +317,7 @@ function Step1Company({
       </div>
 
       {lockedTenderId ? (
-        <div className="rounded-xl bg-rmc-green-light border border-rmc-green-light px-4 py-3">
+        <div className="rounded-lg bg-rmc-green-light border border-rmc-green-light px-4 py-3">
           <p className="text-xs text-rmc-green-dark font-medium">{t('tenderLabel')}</p>
           <p className="text-sm font-semibold text-rmc-green-dark mt-0.5">
             {lockedTender
@@ -430,7 +430,7 @@ function Step2Contact({
     <form
       onSubmit={handleSubmit(onNext)}
       noValidate
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
+      className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 sm:p-8 space-y-5"
     >
       <div>
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
@@ -536,6 +536,7 @@ function SuccessScreen({
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const copyRef = () => {
     navigator.clipboard.writeText(application.applicationNumber);
@@ -543,8 +544,14 @@ function SuccessScreen({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const copyCode = () => {
+    navigator.clipboard.writeText(application.trackingCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
+    <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-8 text-center space-y-4">
       <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
         <CheckCircle2 className="w-8 h-8 text-green-600" />
       </div>
@@ -576,11 +583,34 @@ function SuccessScreen({
         </div>
       </div>
 
+      {/* Tracking code — the credential for checking status without signing in. */}
+      <div>
+        <p className="text-xs text-gray-400 mb-1.5">{t('yourTrackingCode')}</p>
+        <div className="inline-flex items-center gap-2 rounded-lg border border-rmc-green/30 bg-rmc-green-light/40 px-4 py-2">
+          <code className="text-sm font-mono font-semibold text-rmc-green-dark">
+            {application.trackingCode}
+          </code>
+          <button
+            onClick={copyCode}
+            aria-label={t('copyReference')}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            {copiedCode ? (
+              <Check className="w-4 h-4 text-green-600" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+        <p className="mx-auto mt-1.5 max-w-xs text-[11px] leading-relaxed text-gray-400">
+          {t('trackingCodeHint')}
+        </p>
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-        <Button onClick={() => router.push(`/${locale}/services/tender/status`)}>
-          {t('checkStatusBtn')}
-        </Button>
-        <Button variant="outline" onClick={() => router.push(`/${locale}/tenders`)}>
+        {/* The tracking code shown above is what this page asks for. */}
+        <Button onClick={() => router.push(`/${locale}/tenders/bid`)}>{t('checkStatusBtn')}</Button>
+        <Button variant="outline" onClick={() => router.push(`/${locale}/services/tender`)}>
           {t('browseMoreBtn')}
         </Button>
       </div>

@@ -270,13 +270,20 @@ export class IntouchPayService {
       const data: Record<string, unknown> = await res.json();
       const rc = String(data['responsecode'] ?? '');
       const success = data['success'] === true || data['success'] === 'true';
+      const message = this.extractMessage(data, rc);
+
+      if (!success) {
+        this.logger.warn(
+          `[IntouchPay] RequestDeposit FAILED (txn: ${req.transactionId}) rc=${rc} message="${message}" raw=${JSON.stringify(data)}`,
+        );
+      }
 
       return {
         requestTransactionId: req.transactionId,
         referenceId: String(data['referenceid'] ?? ''),
         status: success ? 'SUCCESSFUL' : 'FAILED',
         responseCode: rc,
-        message: String(data['message'] ?? INTOUCH_RESPONSE_CODES[rc] ?? ''),
+        message,
         raw: data,
       };
     } catch (err) {
@@ -449,6 +456,23 @@ export class IntouchPayService {
     return createHash('sha256')
       .update(username + accountNo + partnerPassword + timestamp)
       .digest('hex');
+  }
+
+  /**
+   * Pulls a human-readable message out of an IntouchPay response. Most
+   * responses carry `message`; some (notably auth failures like
+   * `{"detail":"Invalid Password"}`) use `detail` instead; fall back to the
+   * §2.9 response-code lookup table.
+   */
+  private extractMessage(data: Record<string, unknown>, responseCode: string): string {
+    return String(
+      data['message'] ??
+        data['statusdesc'] ??
+        data['detail'] ??
+        data['error'] ??
+        INTOUCH_RESPONSE_CODES[responseCode] ??
+        '',
+    );
   }
 
   /**

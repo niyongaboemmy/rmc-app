@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { IsBoolean } from 'class-validator';
 import { TendersService } from './tenders.service';
+import { sendInlineFile } from '../common/utils/send-file';
 import { UpdateTenderApplicationStatusDto } from './dto/update-tender-application-status.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
@@ -50,6 +51,18 @@ export class TendersAdminController {
     });
   }
 
+  /**
+   * Declared before `applications/:id` — Nest matches routes in declaration
+   * order, and a `:id` param would otherwise swallow `counts-by-tender` and
+   * fail it on the UUID pipe.
+   */
+  @Get('applications/counts-by-tender')
+  @Permissions(Permission.TENDER_VIEW)
+  @ApiOperation({ summary: 'Bid counts grouped by tender, for the board picker' })
+  countsByTender() {
+    return this.service.adminApplicationCountsByTender();
+  }
+
   @Get('applications/:id')
   @Permissions(Permission.TENDER_VIEW)
   @ApiOperation({ summary: 'Get full application detail' })
@@ -66,6 +79,23 @@ export class TendersAdminController {
     @Body() dto: UpdateTenderApplicationStatusDto,
   ) {
     return this.service.adminUpdateStatus(id, user.id, dto);
+  }
+
+  /**
+   * Stream a bid attachment. `tender-applications/` is a protected prefix on the
+   * file server, so it will not serve these keys to a browser — this route is how
+   * a reviewer opens a bidder's company registration, tax clearance or proposal.
+   */
+  @Get('applications/:id/documents/:documentId/file')
+  @Permissions(Permission.TENDER_VIEW)
+  @ApiOperation({ summary: 'Download/inspect a bid attachment' })
+  async documentFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { fileName, buffer, mimeType } = await this.service.adminGetDocument(id, documentId);
+    sendInlineFile(res, fileName, buffer, mimeType);
   }
 
   @Patch('applications/:id/documents/:documentId/verify')

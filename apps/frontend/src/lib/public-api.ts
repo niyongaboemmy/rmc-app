@@ -26,7 +26,7 @@ export const publicApi = {
 
   getAnnouncements: (type?: string, limit?: number, includeExpired?: boolean) =>
     unwrap<Array<{
-      id: string; title: string; content: string; priority: string;
+      id: string; slug: string | null; title: string; content: string; priority: string;
       publishAt: string; expiresAt: string | null; type: string;
       titleI18n:   { en: string; rw: string; ar: string } | null;
       contentI18n: { en: string; rw: string; ar: string } | null;
@@ -35,14 +35,15 @@ export const publicApi = {
       api.get('/public/announcements', { params: { type, limit, includeExpired } }),
     ),
 
-  getTender: (id: string) =>
+  /** Tenders are addressed by slug (/tenders/<slug>), not the announcement UUID. */
+  getTender: (slug: string) =>
     unwrap<{
-      id: string; title: string; content: string; priority: string;
+      id: string; slug: string | null; title: string; content: string; priority: string;
       publishAt: string; expiresAt: string | null; type: string;
       titleI18n:   { en: string; rw: string; ar: string } | null;
       contentI18n: { en: string; rw: string; ar: string } | null;
       attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
-    }>(api.get(`/public/announcements/${id}`)),
+    }>(api.get(`/public/announcements/slug/${slug}`)),
 
   getAnnouncement: (id: string) =>
     unwrap<{

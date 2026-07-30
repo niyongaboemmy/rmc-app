@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import { Body, Controller, Delete, Get, Param, Post, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { DawahCategoryService } from './dawah-category.service';
@@ -12,9 +12,6 @@ import { QueryCoursesDto } from './dto/query-courses.dto';
 import { QueryBooksDto } from './dto/query-books.dto';
 import { QueryDiscussionsDto } from './dto/query-discussions.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
-import { CreateReportDto } from './dto/create-report.dto';
-import { CreateAnswerDto } from './dto/create-answer.dto';
-import { VoteDto } from './dto/vote.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { Public } from '../common/decorators/public.decorator';
@@ -39,75 +36,47 @@ export class DawahController {
     private readonly caller: OptionalCallerService,
   ) {}
 
-  // ── Community Discussions (Phase A: read-only) ────────────────────────────
-  // Posting arrives in Phase B WITH its report queue, never before: a question
-  // goes live on submit, so the phase that allows one must also be able to
-  // remove one. See docs/dawah-discussions-implementation-plan.md §9.
+  // ── Dawah Q&A ─────────────────────────────────────────────────────────────
+  // RMC writes the answers, so there is nothing here for a member to answer, vote
+  // on or report. A member may submit a question; it is invisible until an admin
+  // answers it through the admin controller.
 
   @Public()
   @Get('discussions')
-  @ApiOperation({ summary: 'List published community questions.' })
+  @ApiOperation({ summary: 'List published Q&A entries.' })
   listDiscussions(@Query() query: QueryDiscussionsDto) {
     return this.discussions.list(query);
   }
 
   /**
-   * One thread. 404s anything not published — never 403, which would confirm the
-   * row exists and turn the status code itself into a moderation notice.
+   * One entry. 404s anything not published — never 403, which would confirm the
+   * row exists and turn the status code itself into a notice that RMC declined to
+   * answer somebody.
    */
   @Public()
   @Get('discussions/:slug')
-  @ApiOperation({ summary: 'One question with its published answers, verified first.' })
-  discussionBySlug(@Param('slug') slug: string, @Req() req: Request) {
-    // Optional caller: a signed-in author sees their own pending answer; an anonymous
-    // reader sees only published. The token is read best-effort, never required.
-    const viewerId = this.caller.resolveUserId(req) ?? undefined;
-    return this.discussions.bySlug(slug, viewerId);
+  @ApiOperation({ summary: "One question with RMC's answer." })
+  discussionBySlug(@Param('slug') slug: string) {
+    return this.discussions.bySlug(slug);
   }
 
   /**
-   * Ask a question. NOT @Public — the global JwtAuthGuard requires a signed-in member.
-   * Rate-limited per user in the service (5/hour, 24h new-account delay, dup guard).
+   * Submit a question for RMC to answer. NOT @Public — the global JwtAuthGuard requires a
+   * signed-in member. Rate-limited per user in the service (5/hour, 24h new-account delay,
+   * duplicate guard). The response says only that it was received: nothing is public until
+   * an admin answers it.
    */
   @Post('discussions')
-  @ApiOperation({ summary: 'Ask a question (members only).' })
+  @ApiOperation({ summary: 'Submit a question for RMC to answer (members only).' })
   ask(@CurrentUser() user: User, @Body() dto: CreateQuestionDto) {
-    return this.discussions.createQuestion(user, dto);
+    return this.discussions.submitQuestion(user, dto);
   }
 
-  /** Live compose preview — same render+sanitise pipeline as the published post. */
+  /** Live compose preview — same render+sanitise pipeline as the published entry. */
   @Post('discussions/preview')
   @ApiOperation({ summary: 'Render markdown to sanitised HTML (compose preview).' })
   preview(@Body() body: { body?: string }) {
     return this.discussions.previewMarkdown(body?.body ?? '');
-  }
-
-  /** Report a question or answer. Auto-hides at the eligible-report threshold. */
-  @Post('discussions/report')
-  @ApiOperation({ summary: 'Report a question or answer (members only).' })
-  report(@CurrentUser() user: User, @Body() dto: CreateReportDto) {
-    return this.discussions.report(user, dto);
-  }
-
-  /** Answer a question. Status is computed from the category's answer_policy. */
-  @Post('discussions/:slug/answers')
-  @ApiOperation({ summary: 'Answer a question (members only).' })
-  answer(@CurrentUser() user: User, @Param('slug') slug: string, @Body() dto: CreateAnswerDto) {
-    return this.discussions.createAnswer(user, slug, dto);
-  }
-
-  /** Edit your own answer within the edit window. */
-  @Patch('discussions/answers/:id')
-  @ApiOperation({ summary: 'Edit your own answer (within the edit window).' })
-  editAnswer(@CurrentUser() user: User, @Param('id') id: string, @Body() dto: CreateAnswerDto) {
-    return this.discussions.editAnswer(user, id, dto.body);
-  }
-
-  /** Vote on an answer. value 1/-1, or 0 to clear. */
-  @Post('discussions/answers/:id/vote')
-  @ApiOperation({ summary: 'Vote on an answer (members only).' })
-  voteAnswer(@CurrentUser() user: User, @Param('id') id: string, @Body() dto: VoteDto) {
-    return this.discussions.vote(user, id, dto.value);
   }
 
   /**

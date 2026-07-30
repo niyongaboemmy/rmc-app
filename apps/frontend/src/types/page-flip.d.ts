@@ -54,6 +54,14 @@ declare module 'page-flip' {
     flip(page: number, corner?: 'top' | 'bottom'): void;
     flipNext(corner?: 'top' | 'bottom'): void;
     flipPrev(corner?: 'top' | 'bottom'): void;
+    /**
+     * Jump straight to a page with no flip animation. What search results use:
+     * `flip()` animates every intervening turn, so jumping from page 3 to 180
+     * would run an absurd sequence before arriving.
+     */
+    turnToPage(page: number): void;
+    turnToNextPage(): void;
+    turnToPrevPage(): void;
     getCurrentPageIndex(): number;
     getPageCount(): number;
     getOrientation(): 'portrait' | 'landscape';

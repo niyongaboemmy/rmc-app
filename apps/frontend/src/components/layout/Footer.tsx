@@ -97,6 +97,7 @@ export function Footer() {
   const address = pick(contact.address, locale);
 
   const quickLinks = [
+    { href: `/${locale}/announcements`, labelKey: 'links.announcements' },
     { href: `/${locale}/blog`, labelKey: 'links.blog' },
     { href: `/${locale}/schools`, labelKey: 'links.schools' },
     { href: `/${locale}/new-muslim`, labelKey: 'links.newMuslim' },

@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from 'pdfjs-dist';
 import type { PageFlip } from 'page-flip';
+import { BookSearch } from './BookSearch';
+import type { BookHandle } from './pdfSearch';
 // pdf.js's own text-layer stylesheet. Hand-copying it was tempting (we use ~3KB of
 // its 163KB) but the rules depend on internals — --total-scale-factor, the
 // .markedContent contract, per-span transforms — that move between majors. Import
@@ -32,6 +34,7 @@ import 'pdfjs-dist/web/pdf_viewer.css';
 const WINDOW = 2; // pages rendered ahead/behind the current spread
 const RELEASE_BEYOND = 4; // free canvases further away than this
 
+
 export function BookFlipReader({
   src,
   onReady,
@@ -47,6 +50,22 @@ export function BookFlipReader({
   // would compute a negative scale and render nothing.
   const stageRef = useRef<HTMLDivElement>(null);
   const [pageLabel, setPageLabel] = useState('');
+
+  // Everything the search panel needs to reach into the book. Held in a ref
+  // rather than state because the build effect owns these and must not re-run:
+  // rebuilding the book on every search interaction would re-download nothing
+  // but would tear down and re-rasterise every page.
+  const bookRef = useRef<BookHandle | null>(null);
+  const [ready, setReady] = useState(false);
+
+  // Called after a page's text layer finishes rendering, so an active search can
+  // repaint its highlights — `release()` wipes the layer when a page leaves the
+  // window, and it comes back empty.
+  const onPageRenderedRef = useRef<((index: number, page: HTMLElement) => void) | null>(null);
+  const registerOnPageRendered = useCallback(
+    (fn: ((index: number, page: HTMLElement) => void) | null) => { onPageRenderedRef.current = fn; },
+    [],
+  );
 
   // Callbacks routed through refs: they are recreated on every parent render, and
   // a changing dep here would tear down and rebuild the whole book.
@@ -149,6 +168,10 @@ export function BookFlipReader({
             viewport,
           });
           await layer.render();
+          if (cancelled) return;
+          // The layer is only now populated, so this is the earliest point a
+          // search highlight can be painted onto it.
+          onPageRenderedRef.current?.(idx, el);
         };
 
         const release = (current: number) => {
@@ -190,6 +213,18 @@ export function BookFlipReader({
         // First spread, then the next one so a forward flip is instant.
         for (let i = 0; i <= WINDOW + 1; i++) await ensure(i);
         if (cancelled) return;
+
+        // Publish the handle only once the book is actually usable, so the
+        // search panel can never drive a half-built flipbook.
+        bookRef.current = {
+          doc,
+          pageEls,
+          ensure,
+          turnTo: (index) => {
+            try { flip?.turnToPage(index); } catch { /* out of range: leave the reader where it is */ }
+          },
+        };
+        setReady(true);
         onReadyRef.current?.();
       } catch {
         if (!cancelled) onFailRef.current?.();
@@ -198,6 +233,8 @@ export function BookFlipReader({
 
     return () => {
       cancelled = true;
+      bookRef.current = null;
+      setReady(false);
       try { flip?.destroy(); } catch { /* already gone */ }
       for (const canvas of Array.from(rendered.values())) { canvas.width = 0; canvas.height = 0; }
       rendered.clear();
@@ -210,6 +247,12 @@ export function BookFlipReader({
     // The wrapper centres; the host is page-flip's and gets no layout of ours.
     <div ref={stageRef} className="relative flex h-full w-full items-center justify-center overflow-hidden">
       <div ref={hostRef} className="flip-book" />
+      {/* `ready` is what makes the handle reachable: bookRef is not reactive, so
+          the state flip is what re-renders this with a live book. */}
+      <BookSearch
+        book={ready ? bookRef.current : null}
+        registerOnPageRendered={registerOnPageRendered}
+      />
       {pageLabel && (
         <span className="pointer-events-none absolute bottom-2 start-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-medium tabular-nums text-white/80 backdrop-blur-sm rtl:translate-x-1/2">
           {pageLabel}

@@ -1,26 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  Search,
-  AlertCircle,
   CheckCircle2,
   GraduationCap,
-  MapPin,
   School,
   Calendar,
-  Loader2,
   XCircle,
 } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import {
-  scholarshipPublicApi,
-  type ScholarshipApplication,
-  type ScholarshipApplicationStatus,
+import { TrackByOtp } from '@/components/services/shared/TrackByOtp';
+import type {
+  ScholarshipPublicStatus,
+  ScholarshipApplicationStatus,
 } from '@/lib/scholarshipApi';
 
 // Public-facing linear progress flow — collapses the backend states into the four
@@ -44,7 +37,7 @@ function stepIndexFor(status: ScholarshipApplicationStatus): number {
   }
 }
 
-function stageDateFor(app: ScholarshipApplication, stage: string): string | null {
+function stageDateFor(app: ScholarshipPublicStatus, stage: string): string | null {
   const hist = (s: string) => app.statusHistory?.find((h) => h.toStatus === s)?.changedAt ?? null;
   switch (stage) {
     case 'submitted':
@@ -60,92 +53,41 @@ function stageDateFor(app: ScholarshipApplication, stage: string): string | null
   }
 }
 
+/**
+ * Track a scholarship application.
+ *
+ * Gated by TrackByOtp, the same shared component hajj, marriage, tenders and job
+ * applications use: the applicant gives their tracking code, an SMS goes to the
+ * phone already on the record, and only a verified session sees anything.
+ *
+ * What this replaced typed an application NUMBER into a public lookup that
+ * returned the whole record. The numbers run in sequence, so counting through
+ * them walked the applicant list — national IDs, dates of birth, guardians'
+ * phone numbers, for secondary-school students. See migration 051.
+ */
 export function ScholarshipStatusChecker() {
-  const t = useTranslations('services.scholarship');
   const { locale } = useParams<{ locale: string }>();
-  const searchParams = useSearchParams();
-
-  const [id, setId] = useState('');
-  const [result, setResult] = useState<ScholarshipApplication | null>(null);
-  const [searched, setSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const lookup = useCallback(async (value: string) => {
-    const num = value.trim();
-    if (!num) return;
-    setLoading(true);
-    setSearched(true);
-    try {
-      const app = await scholarshipPublicApi.getByNumber(num);
-      setResult(app);
-    } catch {
-      setResult(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Auto-check when arriving with ?id= (from the application success screen).
-  useEffect(() => {
-    const queryId = searchParams.get('id');
-    if (queryId) {
-      setId(queryId.toUpperCase());
-      lookup(queryId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    lookup(id);
-  };
+  const t = useTranslations('services.scholarship');
 
   return (
-    <div className="space-y-8">
-      {/* Search box */}
-      <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div className="flex-1">
-            <Input
-              label={t('status.idLabel')}
-              value={id}
-              onChange={(e) => setId(e.target.value.toUpperCase())}
-              placeholder={t('status.idPlaceholder')}
-              leftIcon={<Search className="w-4 h-4" />}
-              inputSize="lg"
-            />
-          </div>
-          <Button
-            type="submit"
-            size="lg"
-            disabled={id.trim().length === 0 || loading}
-            leftIcon={loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            className="!bg-gradient-to-br !from-rmc-green !to-rmc-green-dark !text-white hover:!shadow-lg hover:!shadow-rmc-green-dark/30 focus:!ring-rmc-green sm:w-auto"
-          >
-            {loading ? t('status.checking') : t('status.checkButton')}
-          </Button>
-        </div>
-      </form>
-
-      {/* Not found */}
-      {searched && !loading && !result && (
-        <div className="flex gap-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 animate-fade-in">
-          <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-bold text-amber-900 mb-1">{t('status.notFoundTitle')}</h3>
-            <p className="text-amber-900/80 text-sm leading-relaxed">{t('status.notFoundText')}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Result */}
-      {!loading && result && <StatusResult app={result} locale={locale} />}
-    </div>
+    <TrackByOtp<ScholarshipPublicStatus>
+      basePath="/scholarship/applications/track"
+      accent="green"
+      // Placeholder is service-specific so the example carries the real RMC-SCH
+      // prefix; the hint is identical for every service, so it falls back to the
+      // shared `tracking` namespace rather than being restated here.
+      codePlaceholder={t('status.idPlaceholder')}
+    >
+      {(app) => <StatusResult app={app} locale={locale} />}
+    </TrackByOtp>
   );
 }
 
-function StatusResult({ app, locale }: { app: ScholarshipApplication; locale: string }) {
+function StatusResult({ app, locale }: { app: ScholarshipPublicStatus; locale: string }) {
   const t = useTranslations('services.scholarship');
+  // Reuses the registration form's label rather than adding a fourth translation
+  // of the same two words.
+  const tMember = useTranslations('member.register');
   const currentIndex = stepIndexFor(app.status);
   const isTerminal = app.status === 'rejected' || app.status === 'cancelled';
 
@@ -153,9 +95,10 @@ function StatusResult({ app, locale }: { app: ScholarshipApplication; locale: st
   const submitted = submittedRaw
     ? new Date(submittedRaw).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })
     : '—';
-  const location = [app.districtId, app.sectorId].filter(Boolean).length > 0
-    ? [app.cell, app.village].filter(Boolean).join(' — ') || '—'
-    : '—';
+  // Location is deliberately absent from the tracked projection — it is part of
+  // the applicant's identity, not their case's progress. Education level tells
+  // them they opened the right record without disclosing where they live.
+  const level = app.educationLevel ? t(`levels.${app.educationLevel}`) : '—';
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -192,7 +135,7 @@ function StatusResult({ app, locale }: { app: ScholarshipApplication; locale: st
           <Detail label={t('status.applicant')} value={app.fullNames} icon={<GraduationCap className="w-4 h-4" />} />
           <Detail label={t('status.submittedOn')} value={submitted} icon={<Calendar className="w-4 h-4" />} />
           <Detail label={t('status.school')} value={app.schoolName} icon={<School className="w-4 h-4" />} />
-          <Detail label={t('apply.district')} value={location} icon={<MapPin className="w-4 h-4" />} />
+          <Detail label={tMember('education')} value={level} icon={<School className="w-4 h-4" />} />
         </div>
       </div>
 

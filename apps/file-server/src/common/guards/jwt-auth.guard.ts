@@ -40,6 +40,12 @@ export const DEFAULT_PROTECTED_PREFIXES = [
   // backend — which is exactly where the visibility / allow_download policy
   // lives. Remove this and the policy becomes decorative.
   'dawah-library/',
+  // Tender bid attachments: company registration, RRA tax clearance and the
+  // technical/financial proposal. A competitor who learns a key must not be
+  // able to read a rival's pricing, so these are fetched only by the backend —
+  // which re-serves them to permitted admins and to the bidder's own verified
+  // OTP tracking session.
+  'tender-applications/',
 ];
 
 /**

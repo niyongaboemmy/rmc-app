@@ -9,6 +9,8 @@ import {
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, In, DataSource, IsNull } from 'typeorm';
 import { TenderApplication, TenderApplicationStatus } from './entities/tender-application.entity';
+import type { TrackingSubject } from '../tracking/tracking-verification.service';
+import { generateTrackingCode } from '../tracking/tracking-code.util';
 import {
   TenderApplicationDocument,
   TenderDocumentType,
@@ -16,10 +18,17 @@ import {
 } from './entities/tender-application-document.entity';
 import { TenderApplicationStatusHistory } from './entities/tender-application-status-history.entity';
 import { CreateTenderApplicationDto, TenderDocumentDto } from './dto/create-tender-application.dto';
+import { UpdateTenderApplicationDto } from './dto/update-tender-application.dto';
 import {
   UpdateTenderApplicationStatusDto,
   TenderStatusAction,
 } from './dto/update-tender-application-status.dto';
+import { PublicUploadService } from '../integrations/storage/public-upload.service';
+import {
+  TENDER_MORE_INFO_FIELDS,
+  columnsForFields,
+  type TenderMoreInfoField,
+} from './more-info-targets';
 import { SmsTemplates } from './sms-templates';
 import { EmailTemplates } from './email-templates';
 import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
@@ -75,6 +84,7 @@ export class TendersService {
     private readonly notifSettings: NotificationSettingsService,
     private readonly smsService: SmsService,
     private readonly emailService: EmailService,
+    private readonly storage: PublicUploadService,
   ) {}
 
   // ── Tender lookup ────────────────────────────────────────────────────────────
@@ -88,19 +98,208 @@ export class TendersService {
    * tenders, but a stale tab or a hand-rolled POST must not slip a late bid in.
    */
   private async loadOpenTender(tenderId: string): Promise<Announcement> {
+    const tender = await this.loadTender(tenderId);
+    this.assertTenderOpen(tender);
+    return tender;
+  }
+
+  /** Existence and type only — no deadline check. */
+  private async loadTender(tenderId: string): Promise<Announcement> {
     const tender = await this.announcementRepo.findOne({ where: { id: tenderId } });
     if (!tender || tender.type !== 'tender') throw new NotFoundException('Tender not found');
     if (!tender.isPublished) throw new NotFoundException('Tender not found');
+    return tender;
+  }
 
+  private assertTenderOpen(tender: Announcement): void {
     if (tender.expiresAt && new Date(tender.expiresAt).getTime() < Date.now()) {
       throw new BadRequestException('The submission deadline for this tender has passed');
     }
-    return tender;
+  }
+
+  /**
+   * Whether the deadline still applies to this bidder.
+   *
+   * It governs NEW bids and voluntary revisions. It must not govern answering a
+   * reviewer's explicit "more information" request: RMC chooses when to ask, and
+   * an ask issued near the deadline would otherwise strand the bid — the bidder
+   * locked out of the correction, the reviewer never receiving what they asked
+   * for, and the bid sitting in more_info_requested until it was cleaned up by
+   * hand. Same reasoning that makes withdrawal deadline-independent.
+   */
+  private isAnsweringRequest(application: TenderApplication): boolean {
+    return application.status === TenderApplicationStatus.MORE_INFO_REQUESTED;
   }
 
   /** EN title of a tender, for SMS/email bodies. */
   private tenderTitle(tender: Announcement): string {
     return tender.titleI18n?.en || tender.title;
+  }
+
+  // ── Secure public tracking (phone-OTP gated) ──────────────────────────────────
+
+  /**
+   * Resolve a bid's public tracking code to the OTP subject (id + phone), or null.
+   *
+   * Deliberately resolves the crypto-random `trackingCode`, NOT the sequential
+   * `applicationNumber`: the latter is enumerable, so accepting it would let an
+   * attacker guess references and trigger OTP SMS to their owners. The tracking
+   * code (32^8 combinations) is not guessable, and nothing is disclosed without
+   * the phone OTP either way.
+   */
+  async findSubjectByCode(code: string): Promise<TrackingSubject | null> {
+    const value = (code || '').trim().toUpperCase();
+    if (!value) return null;
+    const app = await this.appRepo.findOne({
+      where: { trackingCode: value },
+      select: { id: true, phone: true },
+    });
+    return app ? { id: app.id, phone: app.phone } : null;
+  }
+
+  /** Minimal, PII-safe status view for a verified tracking session (by id). */
+  async getTrackingInfo(id: string) {
+    const app = await this.appRepo.findOne({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
+    const tender = await this.announcementRepo.findOne({ where: { id: app.tenderId } });
+    return {
+      applicationNumber: app.applicationNumber,
+      companyName: app.companyName,
+      tenderTitle: tender ? this.tenderTitle(tender) : null,
+      tenderTitleI18n: tender?.titleI18n ?? null,
+      status: app.status,
+      moreInfoRequested: app.moreInfoRequested,
+      rejectionReason: app.rejectionReason,
+      submittedAt: app.submittedAt,
+      updatedAt: app.updatedAt,
+    };
+  }
+
+  /**
+   * The bidder's own full bid, for a verified OTP tracking session.
+   *
+   * Fuller than `getTrackingInfo` — every field they typed, plus their
+   * attachments — because the OTP proved control of the phone on the bid, so the
+   * reader IS the bidder. It is still not `findOwn`: nothing internal leaks —
+   * reviewer ids, review notes, per-document verification flags.
+   *
+   * `fileKey` IS included. It grants nothing on its own now that
+   * `tender-applications/` is a protected prefix (the file server refuses the key
+   * to a browser), and the edit form needs it to echo back the documents the
+   * bidder did not replace — an update sends the document set wholesale.
+   *
+   * `editable` is computed here rather than re-derived in the UI, so the form and
+   * the endpoint can never disagree about whether an edit is allowed.
+   */
+  async getTrackingBid(id: string) {
+    const app = await this.appRepo.findOne({ where: { id }, relations: ['documents'] });
+    if (!app) throw new NotFoundException('Application not found');
+
+    const tender = await this.announcementRepo.findOne({ where: { id: app.tenderId } });
+    const deadline = tender?.expiresAt ?? null;
+    const tenderOpen = !deadline || new Date(deadline) >= new Date();
+    // A reviewer's outstanding request outranks the deadline — see
+    // isAnsweringRequest. Without this, an ask issued near the closing date would
+    // present the bidder a locked form and no way to supply what was asked for.
+    const editable =
+      EDITABLE_STATUSES.includes(app.status) && (tenderOpen || this.isAnsweringRequest(app));
+    const scope = this.editScope(app);
+
+    return {
+      applicationNumber: app.applicationNumber,
+      trackingCode: app.trackingCode,
+      status: app.status,
+      // The tender is open AND the bid is at a stage the bidder may still change.
+      // Both halves are re-checked server-side on the update itself.
+      editable,
+      // Withdrawal deliberately does NOT depend on the tender still being open —
+      // pulling out after the deadline is exactly when a bidder needs to, and the
+      // rule is purely about how far evaluation has gone.
+      withdrawable: WITHDRAWABLE_STATUSES.includes(app.status),
+      tenderId: app.tenderId,
+      tenderTitle: tender ? this.tenderTitle(tender) : null,
+      tenderTitleI18n: tender?.titleI18n ?? null,
+      tenderSlug: tender?.slug ?? null,
+      tenderDeadline: deadline,
+      companyName: app.companyName,
+      companyTin: app.companyTin,
+      contactName: app.contactName,
+      email: app.email,
+      phone: app.phone,
+      districtId: app.districtId,
+      sectorId: app.sectorId,
+      cell: app.cell,
+      village: app.village,
+      bidAmount: app.bidAmount,
+      coverNote: app.coverNote,
+      moreInfoRequested: app.moreInfoRequested,
+      // What the reviewer named, verbatim — drives the "here's what to fix"
+      // checklist on the bid page.
+      moreInfoFields: app.moreInfoFields ?? [],
+      moreInfoDocumentTypes: app.moreInfoDocumentTypes ?? [],
+      // …and what that actually unlocks, resolved through the same editScope the
+      // update enforces. The form disables everything outside this, so the UI and
+      // the endpoint cannot drift into offering an edit that would be rejected.
+      editableFields: editable ? [...scope.fieldGroups] : [],
+      editableDocuments: editable ? [...scope.documents] : [],
+      rejectionReason: app.rejectionReason,
+      submittedAt: app.submittedAt,
+      updatedAt: app.updatedAt,
+      documents: (app.documents ?? []).map((doc) => ({
+        id: doc.id,
+        docType: doc.docType,
+        fileKey: doc.fileKey,
+        fileName: doc.fileName,
+        mimeType: doc.mimeType,
+        fileSize: Number(doc.fileSize),
+        uploadedAt: doc.uploadedAt,
+      })),
+    };
+  }
+
+  /**
+   * Edit a bid from a verified OTP tracking session — no login involved.
+   *
+   * `id` comes from the tracking token, which is only minted after the SMS OTP
+   * succeeded, so ownership is already established and there is no applicantId to
+   * check against. Everything else (editable status, tender still open, complete
+   * document set) is the same rule set the signed-in path runs.
+   */
+  async updateViaTracking(id: string, dto: UpdateTenderApplicationDto) {
+    const application = await this.appRepo.findOne({ where: { id } });
+    if (!application) throw new NotFoundException('Application not found');
+    await this.applyBidEdit(application, dto, null);
+    return this.getTrackingBid(id);
+  }
+
+  /**
+   * Stream one of the bid's own attachments back to the verified session.
+   *
+   * `tender-applications/` is a protected prefix, so the file server will not
+   * serve these keys to a browser — this route and the admin one are the only
+   * ways to read them. The document is looked up BY application, so a token for
+   * bid A cannot name a document id belonging to bid B.
+   */
+  async getTrackingDocument(applicationId: string, documentId: string) {
+    const doc = await this.docRepo.findOne({ where: { id: documentId, applicationId } });
+    if (!doc) throw new NotFoundException('Document not found on this bid');
+    const { buffer, mimeType } = await this.storage.fetch(doc.fileKey);
+    return { fileName: doc.fileName, buffer, mimeType: doc.mimeType || mimeType };
+  }
+
+  /** Same read-back for an admin who holds TENDER_VIEW — see adminGetById for the scoping. */
+  async adminGetDocument(applicationId: string, documentId: string) {
+    return this.getTrackingDocument(applicationId, documentId);
+  }
+
+  /**
+   * And for the signed-in bidder looking at their own bids. `findOwn` is what
+   * enforces ownership — without it, any authenticated user could read any bid's
+   * attachments by id.
+   */
+  async getOwnDocument(applicationId: string, documentId: string, applicantId: string) {
+    await this.findOwn(applicationId, applicantId);
+    return this.getTrackingDocument(applicationId, documentId);
   }
 
   // ── Documents ────────────────────────────────────────────────────────────────
@@ -146,9 +345,11 @@ export class TendersService {
     }
 
     const applicationNumber = await this.generateApplicationNumber();
+    const trackingCode = await this.generateUniqueTrackingCode();
 
     const application = this.appRepo.create({
       applicationNumber,
+      trackingCode,
       tenderId: dto.tenderId,
       applicantId,
       companyName: dto.companyName,
@@ -197,72 +398,189 @@ export class TendersService {
   async update(
     id: string,
     applicantId: string,
-    dto: Partial<CreateTenderApplicationDto>,
+    dto: UpdateTenderApplicationDto,
   ): Promise<TenderApplication> {
     const application = await this.findOwn(id, applicantId);
+    await this.applyBidEdit(application, dto, applicantId);
+    return this.findOwn(id, applicantId);
+  }
 
+  /**
+   * The edit itself, shared by the two ways a bidder can reach it: signed in
+   * (`update`, scoped by applicantId) and via a verified OTP tracking session
+   * (`updateViaTracking`, scoped by the token's subject). Ownership is settled by
+   * the caller — by the time we get here, the editor is the bid's owner.
+   */
+  private async applyBidEdit(
+    application: TenderApplication,
+    dto: UpdateTenderApplicationDto,
+    actorId: string | null,
+  ): Promise<void> {
     if (!EDITABLE_STATUSES.includes(application.status)) {
       throw new ForbiddenException('Only a submitted or more-info-requested bid can be updated');
     }
 
-    // A bid can only be edited while its tender is still open — the same
-    // deadline rule that governs creation.
-    await this.loadOpenTender(application.tenderId);
+    // The tender must still exist and be published. The DEADLINE, though, is only
+    // enforced on a voluntary revision — a bidder answering a reviewer's request
+    // must be able to answer it even if the deadline has since passed.
+    const tender = await this.loadTender(application.tenderId);
+    if (!this.isAnsweringRequest(application)) this.assertTenderOpen(tender);
 
-    Object.assign(application, {
-      companyName: dto.companyName ?? application.companyName,
-      companyTin: dto.companyTin ?? application.companyTin,
-      contactName: dto.contactName ?? application.contactName,
-      email: dto.email ?? application.email,
-      phone: dto.phone ?? application.phone,
-      districtId: dto.districtId ?? application.districtId,
-      sectorId: dto.sectorId ?? application.sectorId,
-      cell: dto.cell ?? application.cell,
-      village: dto.village ?? application.village,
-      bidAmount: dto.bidAmount ?? application.bidAmount,
-      coverNote: dto.coverNote ?? application.coverNote,
-    });
+    const scope = this.editScope(application);
 
-    // A re-submission answers whatever the reviewer asked for, so the note is
-    // cleared and the bid re-enters the queue as a plain submission.
+    // Validated BEFORE anything is written. These checks used to live down with
+    // the document write, which ran last — so a rejected out-of-scope attachment
+    // still left behind the scalar changes, the cleared "more info" ask and the
+    // status flip back to `submitted` that had already been committed above it.
+    // The bidder got a 403 and lost the reviewer's request anyway.
+    this.assertDocumentsInScope(dto.documents, scope.documents);
+
+    // Only the columns the scope allows are read off the payload; the rest keep
+    // their stored value. This is the enforcement, not the UI — a bidder asked to
+    // fix their TIN cannot restate their price by posting a fuller body.
+    const patch: Record<string, unknown> = {};
+    for (const column of scope.fields) {
+      const supplied = (dto as Record<string, unknown>)[column];
+      if (supplied !== undefined) patch[column] = supplied;
+    }
+    Object.assign(application, patch);
+
+    // A re-submission answers whatever the reviewer asked for, so the ask is
+    // retired and the bid re-enters the queue as a plain submission.
     if (application.status === TenderApplicationStatus.MORE_INFO_REQUESTED) {
       application.moreInfoRequested = null;
+      application.moreInfoFields = null;
+      application.moreInfoDocumentTypes = null;
       application.status = TenderApplicationStatus.SUBMITTED;
       await this.recordStatusChange(
         application.id,
         TenderApplicationStatus.MORE_INFO_REQUESTED,
         TenderApplicationStatus.SUBMITTED,
-        applicantId,
+        actorId,
         'Bid updated and re-submitted by applicant',
       );
     }
 
     await this.saveScalarFields(application);
 
-    // Documents are replaced wholesale when supplied — a partial set would leave
-    // the bid with a stale mix of old and new files.
     if (dto.documents?.length) {
-      this.assertDocumentsComplete(dto.documents);
-      await this.docRepo.delete({ applicationId: application.id });
+      await this.replaceDocuments(application.id, dto.documents, scope.documents);
+    }
+  }
+
+  /**
+   * What this bid's owner may currently change.
+   *
+   * A plain `submitted` bid is fully editable — nothing has been reviewed, so
+   * there is nothing to protect. Once a reviewer has asked for specific
+   * corrections, the bid narrows to exactly what they named. An unscoped
+   * more-info request (legacy rows, written before the ask could be targeted)
+   * stays fully editable rather than becoming uneditable.
+   */
+  private editScope(application: TenderApplication): {
+    /** Field GROUPS, for the UI. */
+    fieldGroups: TenderMoreInfoField[];
+    /** The columns those groups resolve to, for enforcement. */
+    fields: Set<string>;
+    documents: TenderDocumentType[];
+  } {
+    const scoped =
+      application.status === TenderApplicationStatus.MORE_INFO_REQUESTED &&
+      (application.moreInfoFields?.length || application.moreInfoDocumentTypes?.length);
+
+    const fieldGroups = scoped ? (application.moreInfoFields ?? []) : [...TENDER_MORE_INFO_FIELDS];
+    const documents = scoped
+      ? (application.moreInfoDocumentTypes ?? [])
+      : [...REQUIRED_TENDER_DOCUMENTS];
+
+    return { fieldGroups, fields: columnsForFields(fieldGroups), documents };
+  }
+
+  /**
+   * Merge the supplied documents in by type, replacing only what was sent.
+   *
+   * Deliberately NOT a wholesale delete-and-reinsert: a scoped re-submission
+   * carries only the requested attachments, and wiping the others would drop
+   * files the reviewer never asked about — along with the `verified` flags they
+   * had already earned. The complete-set invariant is checked afterwards against
+   * what actually remains.
+   */
+  /**
+   * Pure validation — no writes, so it is safe to run before anything is
+   * committed. One row per type, and every type one the reviewer actually asked
+   * for.
+   */
+  private assertDocumentsInScope(
+    documents: TenderDocumentDto[] | undefined,
+    allowed: TenderDocumentType[],
+  ): void {
+    if (!documents?.length) return;
+
+    const seen = new Set<TenderDocumentType>();
+    for (const doc of documents) {
+      if (seen.has(doc.docType)) {
+        throw new BadRequestException(`Duplicate document supplied for "${doc.docType}"`);
+      }
+      seen.add(doc.docType);
+      if (!allowed.includes(doc.docType)) {
+        throw new ForbiddenException(`You were not asked to update the "${doc.docType}" document`);
+      }
+    }
+  }
+
+  private async replaceDocuments(
+    applicationId: string,
+    documents: TenderDocumentDto[],
+    allowed: TenderDocumentType[],
+  ): Promise<void> {
+    // Re-asserted here as well as up-front: this is the last gate before the
+    // write, and it must not depend on a caller having checked first.
+    this.assertDocumentsInScope(documents, allowed);
+
+    for (const doc of documents) {
+      await this.docRepo.delete({ applicationId, docType: doc.docType });
       await this.docRepo.save(
-        dto.documents.map((doc) =>
-          this.docRepo.create({
-            applicationId: application.id,
-            docType: doc.docType,
-            fileKey: doc.fileKey,
-            fileName: doc.fileName,
-            mimeType: doc.mimeType,
-            fileSize: doc.fileSize,
-          }),
-        ),
+        this.docRepo.create({
+          applicationId,
+          docType: doc.docType,
+          fileKey: doc.fileKey,
+          fileName: doc.fileName,
+          mimeType: doc.mimeType,
+          fileSize: doc.fileSize,
+        }),
       );
     }
 
-    return this.findOwn(id, applicantId);
+    const remaining = await this.docRepo.find({ where: { applicationId } });
+    const present = new Set(remaining.map((d) => d.docType));
+    const missing = REQUIRED_TENDER_DOCUMENTS.filter((type) => !present.has(type));
+    if (missing.length) {
+      throw new BadRequestException(`Missing required document(s): ${missing.join(', ')}`);
+    }
   }
 
   async withdraw(id: string, applicantId: string): Promise<TenderApplication> {
     const application = await this.findOwn(id, applicantId);
+    await this.applyWithdrawal(application, applicantId);
+    return application;
+  }
+
+  /**
+   * Withdraw from a verified OTP tracking session — the bidder proved control of
+   * the phone on the bid, which is the same standing the signed-in path requires.
+   */
+  async withdrawViaTracking(id: string) {
+    const application = await this.appRepo.findOne({ where: { id } });
+    if (!application) throw new NotFoundException('Application not found');
+    await this.applyWithdrawal(application, null);
+    return this.getTrackingBid(id);
+  }
+
+  /** Shared by both withdrawal paths; ownership is settled by the caller. */
+  private async applyWithdrawal(
+    application: TenderApplication,
+    actorId: string | null,
+  ): Promise<void> {
     if (!WITHDRAWABLE_STATUSES.includes(application.status)) {
       throw new ForbiddenException(`A ${application.status} bid cannot be withdrawn`);
     }
@@ -274,10 +592,9 @@ export class TendersService {
       application.id,
       prev,
       TenderApplicationStatus.WITHDRAWN,
-      applicantId,
+      actorId,
       'Withdrawn by applicant',
     );
-    return application;
   }
 
   // ── Queries (applicant) ──────────────────────────────────────────────────────
@@ -400,13 +717,26 @@ export class TendersService {
         toStatus = TenderApplicationStatus.UNDER_REVIEW;
         break;
 
-      case TenderStatusAction.REQUEST_MORE_INFO:
+      case TenderStatusAction.REQUEST_MORE_INFO: {
         if (!dto.notes?.trim()) {
           throw new BadRequestException('Notes are required when requesting more info');
         }
+        const fields = dto.moreInfoFields ?? [];
+        const documents = dto.moreInfoDocumentTypes ?? [];
+        // An ask that names nothing leaves the bidder a note they cannot act on:
+        // the edit form would offer no field and no upload slot, and the bid would
+        // sit in more_info_requested until it expired.
+        if (fields.length === 0 && documents.length === 0) {
+          throw new BadRequestException(
+            'Select at least one field or document the bidder should correct',
+          );
+        }
         application.moreInfoRequested = dto.notes;
+        application.moreInfoFields = fields.length ? fields : null;
+        application.moreInfoDocumentTypes = documents.length ? documents : null;
         toStatus = TenderApplicationStatus.MORE_INFO_REQUESTED;
         break;
+      }
 
       case TenderStatusAction.SHORTLIST:
         toStatus = TenderApplicationStatus.SHORTLISTED;
@@ -431,6 +761,13 @@ export class TendersService {
 
       default:
         throw new BadRequestException('Unsupported action');
+    }
+
+    // Any move off "more info requested" retires the ask, so a later edit can't
+    // be measured against a scope that no longer applies.
+    if (toStatus !== TenderApplicationStatus.MORE_INFO_REQUESTED) {
+      application.moreInfoFields = null;
+      application.moreInfoDocumentTypes = null;
     }
 
     application.status = toStatus;
@@ -527,6 +864,38 @@ export class TendersService {
     return this.docRepo.save(doc);
   }
 
+  /**
+   * Bid counts per tender, for the admin board's tender picker — one grouped
+   * query rather than a count request per card, which would be a request per
+   * tender on every page load.
+   *
+   * Returns a row for every tender that has at least one bid; the caller pairs
+   * these with the tender list and reads a missing entry as zero.
+   */
+  async adminApplicationCountsByTender(): Promise<
+    Array<{ tenderId: string; total: number; byStatus: Record<string, number> }>
+  > {
+    const rows = await this.appRepo
+      .createQueryBuilder('app')
+      .select('app.tenderId', 'tenderId')
+      .addSelect('app.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('app.tenderId')
+      .addGroupBy('app.status')
+      .getRawMany<{ tenderId: string; status: string; count: string }>();
+
+    const byTender = new Map<string, { tenderId: string; total: number; byStatus: Record<string, number> }>();
+    for (const row of rows) {
+      const count = Number(row.count);
+      const entry = byTender.get(row.tenderId) ?? { tenderId: row.tenderId, total: 0, byStatus: {} };
+      entry.total += count;
+      entry.byStatus[row.status] = count;
+      byTender.set(row.tenderId, entry);
+    }
+
+    return [...byTender.values()];
+  }
+
   async adminGetReports(filters: { dateFrom?: string; dateTo?: string } = {}) {
     const qb = this.appRepo.createQueryBuilder('app');
     if (filters.dateFrom) qb.andWhere('app.createdAt >= :dateFrom', { dateFrom: filters.dateFrom });
@@ -613,6 +982,16 @@ export class TendersService {
     return `RMC-TND-${year}${month}-${seq}`;
   }
 
+  /** Crypto-random public tracking code, retried on the (rare) collision. */
+  private async generateUniqueTrackingCode(): Promise<string> {
+    for (let i = 0; i < 5; i++) {
+      const code = generateTrackingCode('RMC-TND');
+      const clash = await this.appRepo.count({ where: { trackingCode: code } });
+      if (clash === 0) return code;
+    }
+    throw new Error('Could not generate a unique tracking code');
+  }
+
   /**
    * Persists scalar column changes via a targeted `.update()` rather than
    * `.save()` on the loaded entity.
@@ -689,10 +1068,15 @@ export class TendersService {
 
   private sendSubmissionNotice(application: TenderApplication, tenderTitle: string): void {
     this.notify(application, 'tender.submission', {
-      sms: SmsTemplates.submission(application.applicationNumber, tenderTitle),
+      sms: SmsTemplates.submission(
+        application.applicationNumber,
+        application.trackingCode,
+        tenderTitle,
+      ),
       email: EmailTemplates.submission(
         application.companyName,
         application.applicationNumber,
+        application.trackingCode,
         tenderTitle,
       ),
     });

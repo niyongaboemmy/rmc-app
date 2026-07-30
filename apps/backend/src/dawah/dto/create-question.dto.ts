@@ -1,15 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { POST_LANGUAGES } from './query-discussions.dto';
 import { DISCUSSION_LIMITS } from '../discussions.constants';
 
 /**
- * Ask a question.
+ * Submit a question for RMC to answer.
  *
- * There is NO `status` field, and there never will be. Questions are always born
- * `published` (plan §0.1); a client-settable status would be a client-settable
- * publication gate. `body` is MARKDOWN — the service stores it verbatim and the reader
- * gets sanitised HTML; the client never sends HTML.
+ * There is NO `status` field, and there never will be. A submission is always born
+ * `pending` and is invisible until an admin answers it; a client-settable status would be
+ * a client-settable publication gate. `body` is MARKDOWN — the service stores it verbatim
+ * and the reader gets sanitised HTML; the client never sends HTML.
  */
 export class CreateQuestionDto {
   @ApiProperty({ minLength: DISCUSSION_LIMITS.MIN_TITLE_LENGTH, maxLength: 200 })
@@ -35,12 +35,4 @@ export class CreateQuestionDto {
   @ApiProperty({ enum: POST_LANGUAGES })
   @IsIn(POST_LANGUAGES)
   language: (typeof POST_LANGUAGES)[number];
-
-  @ApiPropertyOptional({
-    default: false,
-    description: 'Hide the name PUBLICLY. The author is always stored for moderation.',
-  })
-  @IsOptional()
-  @IsBoolean()
-  isAnonymous?: boolean;
 }

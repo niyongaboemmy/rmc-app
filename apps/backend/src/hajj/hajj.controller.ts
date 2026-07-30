@@ -22,6 +22,7 @@ import {
   type UploadedDocument,
 } from '../integrations/storage/public-upload.service';
 import { CreateHajjApplicationDto } from './dto/create-hajj-application.dto';
+import { ResubmitHajjDocumentsDto } from './dto/resubmit-hajj-document.dto';
 import { TrackingVerificationService } from '../tracking/tracking-verification.service';
 import { RequestTrackingOtpDto, VerifyTrackingOtpDto } from '../tracking/dto/tracking-otp.dto';
 import { Public } from '../common/decorators/public.decorator';
@@ -128,5 +129,25 @@ export class HajjController {
     const token = (authHeader || '').replace(/^Bearer\s+/i, '');
     const id = this.tracking.verifyToken(token, HAJJ_SUBJECT);
     return this.service.getTrackingInfo(id);
+  }
+
+  /**
+   * Answer an admin's "more information requested" by attaching one or more
+   * freshly uploaded receipts. Same OTP token as the tracking session — the
+   * applicant has already proved they hold the phone on the application — and the
+   * service rejects it unless a request is genuinely outstanding.
+   */
+  @Post('applications/track/resubmit')
+  @Public()
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
+  @ApiOperation({ summary: 'Re-upload requested document(s) using a valid tracking token' })
+  async resubmitDocuments(
+    @Body() dto: ResubmitHajjDocumentsDto,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const token = (authHeader || '').replace(/^Bearer\s+/i, '');
+    const id = this.tracking.verifyToken(token, HAJJ_SUBJECT);
+    return this.service.resubmitDocuments(id, dto);
   }
 }

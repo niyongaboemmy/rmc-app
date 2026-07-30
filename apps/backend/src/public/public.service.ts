@@ -6,6 +6,18 @@ import { Announcement } from './entities/announcement.entity';
 import { BlogPost, BlogCategory } from './entities/blog-post.entity';
 import { GalleryItem } from './entities/gallery-item.entity';
 
+/** Readable URL slug. Kept byte-identical to the announcement-slug migration. */
+function slugify(input: string): string {
+  return input
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/['’`]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 130);
+}
+
 @Injectable()
 export class PublicService {
   constructor(
@@ -102,6 +114,13 @@ export class PublicService {
 
   async createAnnouncement(dto: Partial<Announcement>): Promise<Announcement> {
     const announcement = this.announcements.create(dto);
+    // Tenders are viewed at /tenders/<slug>, so give every new one a stable,
+    // unique slug from its title.
+    if (announcement.type === 'tender' && !announcement.slug) {
+      announcement.slug = await this.generateUniqueSlug(
+        announcement.titleI18n?.en || announcement.title,
+      );
+    }
     return this.announcements.save(announcement);
   }
 
@@ -109,7 +128,31 @@ export class PublicService {
     const a = await this.announcements.findOne({ where: { id } });
     if (!a) throw new NotFoundException('Announcement not found');
     Object.assign(a, dto);
+    // Slug is set once and kept stable (a changed title must not break existing
+    // links); only backfill a tender that somehow still lacks one.
+    if (a.type === 'tender' && !a.slug) {
+      a.slug = await this.generateUniqueSlug(a.titleI18n?.en || a.title);
+    }
     return this.announcements.save(a);
+  }
+
+  /** A tender's readable slug, de-duplicated against every existing slug. */
+  private async generateUniqueSlug(title: string): Promise<string> {
+    const base = slugify(title) || 'tender';
+    let slug = base;
+    let n = 2;
+    // withDeleted: a soft-deleted row still occupies the slug in the unique index.
+    while (await this.announcements.count({ where: { slug }, withDeleted: true })) {
+      slug = `${base}-${n++}`;
+    }
+    return slug;
+  }
+
+  /** Look a tender/announcement up by its slug — how the public detail page loads. */
+  async getAnnouncementBySlug(slug: string): Promise<Announcement> {
+    const a = await this.announcements.findOne({ where: { slug } });
+    if (!a) throw new NotFoundException('Announcement not found');
+    return a;
   }
 
   async deleteAnnouncement(id: string): Promise<void> {

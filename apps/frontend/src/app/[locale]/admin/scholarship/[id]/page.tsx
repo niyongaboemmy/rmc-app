@@ -10,6 +10,7 @@ import {
   Clock, RefreshCw, Search, Award, X, Paperclip, Download, ShieldCheck, Loader2,
 } from 'lucide-react';
 import { type ScholarshipApplication, type ScholarshipDocument, STATUS_COLORS } from '@/lib/scholarshipApi';
+import type { AdminScholarshipApplication } from '@/lib/scholarshipAdminApi';
 import { scholarshipAdminApi } from '@/lib/scholarshipAdminApi';
 import { publicApi } from '@/lib/public-api';
 import { fileUrl } from '@/lib/api';
@@ -56,11 +57,14 @@ function formatFileSize(bytes: number): string {
 
 function DocumentCard({
   doc,
+  requirementLabel,
   canManage,
   verifying,
   onVerify,
 }: {
   doc: ScholarshipDocument;
+  /** Human label of the scholarship requirement this file answers, if any. */
+  requirementLabel?: string;
   canManage: boolean;
   verifying: boolean;
   onVerify: () => void;
@@ -90,8 +94,13 @@ function DocumentCard({
       <div className="p-3 flex-1 flex flex-col gap-2">
         <div>
           <p className="text-sm font-medium text-gray-900 truncate" title={doc.fileName}>{doc.fileName}</p>
+          {/* The requirement it answers, when it answers one. `documentType` is
+              a four-value label, so two "Additional" files were previously
+              indistinguishable on this screen (migration 055). */}
           <p className="text-xs text-gray-400">
-            {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType} · {formatFileSize(doc.fileSize)}
+            {requirementLabel ?? DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType}
+            {' · '}
+            {formatFileSize(doc.fileSize)}
           </p>
         </div>
         <div className="mt-auto flex items-center gap-2">
@@ -99,7 +108,7 @@ function DocumentCard({
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-medium text-rmc-green hover:text-rmc-green-dark transition-colors"
           >
             <Download className="w-3.5 h-3.5" /> Open
           </a>
@@ -111,7 +120,7 @@ function DocumentCard({
                 'ml-auto inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors disabled:opacity-50',
                 doc.verified
                   ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                  : 'border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700',
+                  : 'border-gray-200 text-gray-600 hover:border-rmc-green/40 hover:text-rmc-green-dark',
               )}
             >
               {verifying ? (
@@ -158,7 +167,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-        <span className="text-violet-500">{icon}</span>
+        <span className="text-rmc-green">{icon}</span>
         {title}
       </h3>
       {children}
@@ -242,7 +251,23 @@ function AdminScholarshipDetailContent() {
   const permApprove = hasPermission(Permission.SCHOLARSHIP_APPROVE);
   const permManage = hasPermission(Permission.SCHOLARSHIP_MANAGE);
 
-  const [application, setApplication] = useState<ScholarshipApplication | null>(null);
+  const [application, setApplication] = useState<AdminScholarshipApplication | null>(null);
+
+  /**
+   * The scholarship's declared documents, keyed for lookup, plus whatever is
+   * still outstanding. Both derive from the SAME list the applicant was shown,
+   * so the review screen and the form can never disagree about what was asked.
+   */
+  const requirementLabels: Record<string, string> = {};
+  for (const req of application?.program?.requiredDocuments ?? []) {
+    requirementLabels[req.key] = req.label?.en?.trim() || req.key;
+  }
+  const attachedKeys = new Set(
+    (application?.documents ?? []).map((d) => d.requirementKey).filter(Boolean) as string[],
+  );
+  const missingRequired = (application?.program?.requiredDocuments ?? [])
+    .filter((req) => req.required !== false && !attachedKeys.has(req.key))
+    .map((req) => requirementLabels[req.key]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -308,7 +333,7 @@ function AdminScholarshipDetailContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <RefreshCw className="w-6 h-6 text-violet-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-rmc-green animate-spin" />
       </div>
     );
   }
@@ -339,12 +364,27 @@ function AdminScholarshipDetailContent() {
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-            <GraduationCap className="w-5 h-5 text-violet-700" />
+          <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0">
+            <GraduationCap className="w-5 h-5 text-rmc-green-dark" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{application.fullNames}</h1>
             <p className="text-xs text-gray-400 font-mono">{application.applicationNumber}</p>
+            {/* WHICH scholarship this answers. Every application targets one now,
+                and a reviewer cannot judge it without knowing which call it is
+                against — its deadline and criteria are the scholarship's. */}
+            {application.program && (
+              <p className="mt-1 text-xs text-gray-500">
+                Applying to{' '}
+                <Link
+                  href={`/${locale}/services/scholarship/${application.program.slug ?? application.program.id}`}
+                  target="_blank"
+                  className="font-semibold text-rmc-green hover:underline"
+                >
+                  {application.program.title}
+                </Link>
+              </p>
+            )}
           </div>
         </div>
         <StatusBadge status={application.status} />
@@ -401,12 +441,22 @@ function AdminScholarshipDetailContent() {
                   <DocumentCard
                     key={doc.id}
                     doc={doc}
+                    requirementLabel={requirementLabels[doc.requirementKey ?? '']}
                     canManage={permManage}
                     verifying={activeAction === `verify-${doc.id}`}
                     onVerify={() => handleVerifyDoc(doc.id, !doc.verified)}
                   />
                 ))}
               </div>
+            )}
+
+            {/* A required document that never arrived. Worth stating outright —
+                otherwise its absence is invisible, and a reviewer would have to
+                remember what the scholarship asked for. */}
+            {missingRequired.length > 0 && (
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                Not attached: {missingRequired.join(', ')}
+              </p>
             )}
           </Section>
 
@@ -461,7 +511,7 @@ function AdminScholarshipDetailContent() {
               <ol className="relative space-y-4">
                 {[...application.statusHistory].reverse().map((h) => (
                   <li key={h.id} className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-violet-400 mt-2 shrink-0" />
+                    <div className="w-2 h-2 rounded-full bg-rmc-green mt-2 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {h.fromStatus ? `${STATUS_LABELS[h.fromStatus] ?? h.fromStatus} → ` : ''}
@@ -481,7 +531,7 @@ function AdminScholarshipDetailContent() {
           {application.programId && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2 text-sm">
-                <GraduationCap className="w-4 h-4 text-violet-500" /> Program
+                <GraduationCap className="w-4 h-4 text-rmc-green" /> Program
               </h3>
               <p className="text-xs text-gray-400 font-mono">{application.programId}</p>
             </div>

@@ -3,33 +3,30 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { ArrowLeft, BadgeCheck, Eye, MessageSquare, UserRound } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Eye } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
-import { dawahApi, type DiscussionThread, type PostLanguage } from '@/lib/dawahApi';
-import { AnswerComposer } from '@/components/dawah/AnswerComposer';
-import { VerifyAnswerControl } from '@/components/dawah/VerifyAnswerControl';
-import { ThreadPendingAnswers } from '@/components/dawah/ThreadPendingAnswers';
+import { dawahApi, type DiscussionQuestion, type PostLanguage } from '@/lib/dawahApi';
 
 export const dynamic = 'force-dynamic';
 
-/** A post's own direction. NOT the page's — see the component comment. */
+/** An entry's own direction. NOT the page's — see the component comment. */
 const dirOf = (language: PostLanguage) => (language === 'ar' ? 'rtl' : 'ltr');
 
 /**
  * React.cache dedupes within a request: generateMetadata and the page body both need the
- * thread, and without it every view fetches twice. Returns null so the caller chooses
+ * entry, and without it every view fetches twice. Returns null so the caller chooses
  * between notFound() and empty metadata.
  */
-const getThread = cache(async (slug: string): Promise<DiscussionThread | null> => {
+const getEntry = cache(async (slug: string): Promise<DiscussionQuestion | null> => {
   try {
     return await dawahApi.discussions.bySlug(slug);
   } catch {
-    // 404 (missing, hidden, auto-hidden, locked — the API refuses to distinguish them)
-    // and a backend that is simply down both land here. That conflation is deliberate on
-    // the API side: a status code must not leak a moderation decision.
+    // 404 (missing, pending, rejected, hidden — the API refuses to distinguish them) and a
+    // backend that is simply down both land here. That conflation is deliberate on the API
+    // side: a status code must not reveal that RMC declined to answer someone.
     return null;
   }
 });
@@ -39,47 +36,47 @@ export async function generateMetadata({
 }: {
   params: { locale: string; slug: string };
 }): Promise<Metadata> {
-  const thread = await getThread(slug);
-  if (!thread) return {};
-  const { question } = thread;
-  // Strip the rendered HTML for the description — never a slice of raw markdown.
-  const description = question.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+  const entry = await getEntry(slug);
+  if (!entry) return {};
+  // Describe with the ANSWER, not the question: a search result should show what RMC said,
+  // which is the thing worth clicking. Strip the rendered HTML — never a slice of markdown.
+  const description = entry.answerHtml
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160);
   return {
-    title: question.title,
+    title: entry.title,
     description,
-    openGraph: { title: question.title, description, type: 'article', locale },
+    openGraph: { title: entry.title, description, type: 'article', locale },
   };
 }
 
 /**
- * One discussion thread.
+ * One Q&A entry: a question, and RMC's answer to it.
  *
- * ── The verified answer is the point of the page ─────────────────────────────────────
+ * ── There is no asker on this page ───────────────────────────────────────────────────
  *
- * It renders first, in gold, with the scholar's name. Everything below it is explicitly
- * labelled "community answers" and styled subordinate. A reader who scans and leaves must
- * take away RMC's answer, not the most upvoted one — the API already sorts verified-first,
- * and this page must not undo that visually.
+ * Not hidden, not anonymised — absent. The API never sends one. A published entry is
+ * RMC's answer to a question the community raised, and whose name was attached to the
+ * raising of it is not part of the published record.
  *
- * ── dir comes from the POST, not the page ───────────────────────────────────────────
+ * ── dir comes from the ENTRY, not the page ──────────────────────────────────────────
  *
- * An Arabic question read on the English page is still Arabic. `dir` is set per post from
- * its `language` column. Driving it from the page locale would put Arabic punctuation on
- * the wrong side for the only reader who can actually read it.
+ * An Arabic entry read on the English page is still Arabic. `dir` is set from its
+ * `language` column. Driving it from the page locale would put Arabic punctuation on the
+ * wrong side for the only reader who can actually read it.
  */
-export default async function DiscussionThreadPage({
+export default async function DiscussionEntryPage({
   params: { locale, slug },
 }: {
   params: { locale: string; slug: string };
 }) {
   const t = await getTranslations('dawah');
-  const thread = await getThread(slug);
-  if (!thread) notFound();
+  const entry = await getEntry(slug);
+  if (!entry) notFound();
 
-  const { question, answers } = thread;
-  const category = question.category ? localized(question.category, 'name', locale) : null;
-  const verified = answers.find((a) => a.isVerified);
-  const community = answers.filter((a) => !a.isVerified);
+  const category = entry.category ? localized(entry.category, 'name', locale) : null;
 
   return (
     <div className="min-h-screen">
@@ -103,29 +100,22 @@ export default async function DiscussionThreadPage({
             )}
 
             <h1
-              dir={dirOf(question.language)}
+              dir={dirOf(entry.language)}
               className="mt-1.5 text-xl font-bold leading-snug text-rmc-green-deep md:text-2xl"
             >
-              {question.title}
+              {entry.title}
             </h1>
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
               <span className="inline-flex items-center gap-1.5">
-                <UserRound className="h-3.5 w-3.5 text-gray-400" aria-hidden />
-                {question.author ? (
-                  <span className="text-gray-600">{question.author.name}</span>
-                ) : (
-                  <span className="italic text-gray-400">{t('discussions.anonymous')}</span>
-                )}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <MessageSquare className="h-3.5 w-3.5 text-rmc-green" aria-hidden />
-                {t('discussions.answers', { count: question.answerCount })}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
                 <Eye className="h-3.5 w-3.5 text-gray-400" aria-hidden />
-                {t('discussions.views', { count: question.viewCount })}
+                {t('discussions.views', { count: entry.viewCount })}
               </span>
+              {entry.publishedAt && (
+                <time dateTime={entry.publishedAt}>
+                  {new Date(entry.publishedAt).toLocaleDateString(locale)}
+                </time>
+              )}
             </div>
 
             <span
@@ -137,114 +127,53 @@ export default async function DiscussionThreadPage({
 
         <section className="bg-white py-6">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            {/* The question body. bodyHtml is rendered AND sanitised server-side by the
-                API — the client never renders markdown, and never trusts a member's HTML. */}
+            {/* The question. Rendered AND sanitised server-side by the API — the client
+                never renders markdown, and never trusts stored HTML. */}
             <Reveal>
               <div className="rounded-lg border border-gray-200 bg-white p-4 md:p-5">
                 <div
-                  dir={dirOf(question.language)}
+                  dir={dirOf(entry.language)}
                   className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-p:leading-[1.65] prose-a:text-rmc-green prose-blockquote:border-rmc-gold"
-                  dangerouslySetInnerHTML={{ __html: question.bodyHtml }}
+                  dangerouslySetInnerHTML={{ __html: entry.bodyHtml }}
                 />
               </div>
             </Reveal>
 
-            {/* ── The verified answer, first and unmistakable ─────────────── */}
-            {verified && (
-              <Reveal>
-                <div className="mt-6 rounded-lg border border-rmc-gold/40 bg-rmc-gold/[0.04] p-4 md:p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rmc-gold/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rmc-gold-light">
-                      <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-                      {t('discussions.verifiedBadge')}
-                    </span>
-                    {/* Name the scholar. "Verified by RMC" with nobody behind it is an
-                        institution hiding behind itself. */}
-                    {verified.verifiedBy && (
-                      <span className="text-[11px] text-gray-500">
-                        {t('discussions.verifiedBy', { name: verified.verifiedBy.name })}
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    dir={dirOf(verified.language)}
-                    className="prose prose-sm md:prose-base mt-3 max-w-none text-gray-700 prose-p:leading-[1.65] prose-a:text-rmc-green"
-                    dangerouslySetInnerHTML={{ __html: verified.bodyHtml }}
-                  />
-                  <p className="mt-3 text-[11px] text-gray-500">
-                    {verified.author ? verified.author.name : t('discussions.anonymousAnswer')}
-                  </p>
-                  {/* Scholar-only: drop the verification. Renders nothing for anyone
-                      without discussions:verify. */}
-                  <VerifyAnswerControl answerId={verified.id} verified />
-                </div>
-              </Reveal>
-            )}
-
-            {/* ── Community answers, explicitly subordinate ───────────────── */}
+            {/* ── RMC's answer ────────────────────────────────────────────── */}
             <Reveal>
-              <div className="mt-8">
-                <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-gray-400">
-                  {t('discussions.communityAnswers')}
-                </h2>
-                <span
-                  aria-hidden
-                  className="mt-2 mb-4 block h-px w-10 rounded-full bg-gradient-to-r from-rmc-gold to-rmc-gold-light"
+              <div className="mt-6 rounded-lg border border-rmc-gold/40 bg-rmc-gold/[0.04] p-4 md:p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rmc-gold/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rmc-gold-light">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                    {t('discussions.answerBadge')}
+                  </span>
+                  {/* Name the person. An institution hiding behind itself is exactly what
+                      naming the answerer prevents. */}
+                  {entry.answeredBy && (
+                    <span className="text-[11px] text-gray-500">
+                      {t('discussions.answeredBy', { name: entry.answeredBy.name })}
+                    </span>
+                  )}
+                </div>
+                <div
+                  dir={dirOf(entry.language)}
+                  className="prose prose-sm md:prose-base mt-3 max-w-none text-gray-700 prose-p:leading-[1.65] prose-a:text-rmc-green"
+                  dangerouslySetInnerHTML={{ __html: entry.answerHtml }}
                 />
-
-                {community.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
-                    {t('discussions.noAnswersYet')}
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {community.map((a) => (
-                      <div key={a.id} className="rounded-lg border border-gray-200 bg-white p-4">
-                        <div
-                          dir={dirOf(a.language)}
-                          className="prose prose-sm max-w-none text-gray-600 prose-p:leading-[1.65] prose-a:text-rmc-green"
-                          dangerouslySetInnerHTML={{ __html: a.bodyHtml }}
-                        />
-                        <div className="mt-3 flex items-center gap-2 text-[11px] text-gray-500">
-                          <UserRound className="h-3.5 w-3.5 text-gray-400" aria-hidden />
-                          {a.author ? (
-                            <>
-                              <span className="text-gray-600">{a.author.name}</span>
-                              {a.author.isScholar && (
-                                <span className="rounded-full bg-rmc-green-light px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-rmc-green">
-                                  {t('discussions.scholar')}
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span className="italic text-gray-400">{t('discussions.anonymousAnswer')}</span>
-                          )}
-                        </div>
-                        {/* Scholar-only: promote this to the verified answer. Offered
-                            only while the question has none yet — the API allows one
-                            per question (un-verify the current one to switch). */}
-                        {!verified && <VerifyAnswerControl answerId={a.id} />}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </Reveal>
 
-            {/* Scholar-only: this question's answers still held for review, with
-                Release / Verify actions. Renders nothing for anyone without
-                discussions:verify, and nothing when the queue for this thread is
-                empty. */}
-            <ThreadPendingAnswers slug={question.slug} />
-
-            {/* Compose. A client island in this server page. It knows whether the
-                category holds answers for review, so it can warn before submit. */}
-            <AnswerComposer
-              slug={question.slug}
-              language={question.language}
-              scholarReview={(question.category?.answerPolicy ?? 'scholar_review') === 'scholar_review'}
-              locked={question.status === 'locked'}
-            />
+            <Reveal>
+              <div className="mt-8 rounded-lg border border-dashed border-gray-200 p-5 text-center">
+                <p className="text-sm text-gray-500">{t('discussions.askPrompt')}</p>
+                <Link
+                  href={`/${locale}/dawah/discussions/ask`}
+                  className="mt-3 inline-flex items-center rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+                >
+                  {t('discussions.askCta')}
+                </Link>
+              </div>
+            </Reveal>
           </div>
         </section>
       </main>

@@ -176,9 +176,9 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
       // no translation debt and cannot drift from the pages it points at.
       //
       // The hrefs mirror src/app/[locale]/services/page.tsx, which is the
-      // authoritative list: note `conduct` lives at /services/good-conduct and
-      // `tender` at /tenders, NOT at /services/{slug}. The footer's service links
-      // disagree with both — see the report.
+      // authoritative list: note `conduct` lives at /services/good-conduct. The
+      // tender board lives at /services/tender (the old /tenders index now just
+      // redirects there); tender detail pages remain at /tenders/<slug>.
       children: [
         { href: `/${locale}/services`, Icon: LayoutGrid, label: t('servicesMenu.overview'), desc: t('servicesMenu.overviewDesc') },
         { href: `/${locale}/services/marriage`, Icon: Heart, label: ts('marriage.title'), desc: ts('marriage.desc') },
@@ -186,7 +186,7 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
         { href: `/${locale}/services/good-conduct`, Icon: Shield, label: ts('conduct.title'), desc: ts('conduct.desc') },
         { href: `/${locale}/services/scholarship`, Icon: GraduationCap, label: ts('scholarship.title'), desc: ts('scholarship.desc') },
         { href: `/${locale}/services/hajj`, Icon: Compass, label: ts('hajj.title'), desc: ts('hajj.desc') },
-        { href: `/${locale}/tenders`, Icon: FileText, label: ts('tender.title'), desc: ts('tender.desc') },
+        { href: `/${locale}/services/tender`, Icon: FileText, label: ts('tender.title'), desc: ts('tender.desc') },
         { href: `/${locale}/services/jobs`, Icon: Briefcase, label: ts('jobs.title'), desc: ts('jobs.desc') },
       ],
     },

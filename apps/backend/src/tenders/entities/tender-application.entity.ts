@@ -8,8 +8,12 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { TenderApplicationDocument } from './tender-application-document.entity';
+import {
+  TenderApplicationDocument,
+  TenderDocumentType,
+} from './tender-application-document.entity';
 import { TenderApplicationStatusHistory } from './tender-application-status-history.entity';
+import { TenderMoreInfoField } from '../more-info-targets';
 
 export enum TenderApplicationStatus {
   SUBMITTED = 'submitted',
@@ -28,6 +32,16 @@ export class TenderApplication {
 
   @Column({ name: 'application_number', type: 'varchar', length: 40, unique: true })
   applicationNumber: string;
+
+  /**
+   * Crypto-random, unguessable public tracking code (RMC-TND-YYMM-XXXXXXXX). This
+   * — not the sequential applicationNumber — is what the OTP-gated status lookup
+   * resolves, so the tracking endpoint can't be enumerated. Given to the bidder
+   * on submission.
+   */
+  @Index('IDX_tender_app_tracking_code', { unique: true })
+  @Column({ name: 'tracking_code', type: 'varchar', length: 40 })
+  trackingCode: string;
 
   /** FK into `announcements` — the tender is an announcement row with type='tender'. */
   @Index('IDX_tender_app_tender')
@@ -95,6 +109,24 @@ export class TenderApplication {
 
   @Column({ name: 'more_info_requested', type: 'text', nullable: true })
   moreInfoRequested: string | null;
+
+  /**
+   * Which field groups the reviewer asked the bidder to correct, set alongside
+   * `moreInfoRequested`. Bounds what a re-submission may change: a bid scoped to
+   * ['company'] keeps its stored bid amount no matter what the payload says.
+   * Cleared once the ask is answered. Null on legacy rows / when unscoped, which
+   * falls back to "everything is editable".
+   */
+  @Column({ name: 'more_info_fields', type: 'simple-array', nullable: true })
+  moreInfoFields: TenderMoreInfoField[] | null;
+
+  /**
+   * Same, for attachments — exactly which documents may be replaced. An
+   * unrequested document keeps its file AND its verification flag, so answering
+   * one ask cannot quietly reset a reviewer's earlier check on another.
+   */
+  @Column({ name: 'more_info_document_types', type: 'simple-array', nullable: true })
+  moreInfoDocumentTypes: TenderDocumentType[] | null;
 
   @Column({ name: 'submitted_at', type: 'timestamptz' })
   submittedAt: Date;

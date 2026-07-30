@@ -1,5 +1,7 @@
-import { IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, Length } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TenderDocumentType } from '../entities/tender-application-document.entity';
+import { TenderMoreInfoField } from '../more-info-targets';
 
 /**
  * Admins name an *action*, not a target status — the service maps the action to
@@ -32,4 +34,23 @@ export class UpdateTenderApplicationStatusDto {
   @IsString()
   @Length(1, 2000)
   reason?: string;
+
+  /**
+   * REQUEST_MORE_INFO only — which field groups the bidder may correct. Together
+   * with `moreInfoDocumentTypes` this scopes the re-submission; the service
+   * refuses a request that names neither, since an ask the bidder cannot act on
+   * is just a status change.
+   */
+  @ApiPropertyOptional({ enum: TenderMoreInfoField, isArray: true })
+  @IsOptional()
+  @IsArray()
+  @IsEnum(TenderMoreInfoField, { each: true })
+  moreInfoFields?: TenderMoreInfoField[];
+
+  /** REQUEST_MORE_INFO only — which attachments the bidder may replace. */
+  @ApiPropertyOptional({ enum: TenderDocumentType, isArray: true })
+  @IsOptional()
+  @IsArray()
+  @IsEnum(TenderDocumentType, { each: true })
+  moreInfoDocumentTypes?: TenderDocumentType[];
 }

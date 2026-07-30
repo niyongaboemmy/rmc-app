@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('announcements')
@@ -25,6 +26,16 @@ export class Announcement {
   /** Multilingual content. Falls back to `content` when absent. */
   @Column({ name: 'content_i18n', type: 'jsonb', nullable: true })
   contentI18n: { en: string; rw: string; ar: string } | null;
+
+  /**
+   * Readable URL slug for tenders (e.g. /tenders/construction-of-masjid-wall).
+   * Generated from the title on create and kept stable afterwards. Null for
+   * non-tender announcements; unique where present — Postgres allows multiple
+   * NULLs in a unique index.
+   */
+  @Index('IDX_announcements_slug', { unique: true })
+  @Column({ type: 'varchar', length: 160, nullable: true })
+  slug: string | null;
 
   @Column({ type: 'varchar', length: 10, default: 'normal' })
   priority: string;

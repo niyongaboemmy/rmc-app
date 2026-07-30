@@ -3,6 +3,8 @@ import type {
   TenderApplication,
   TenderApplicationDocument,
   TenderApplicationStatus,
+  TenderDocumentType,
+  TenderMoreInfoField,
 } from './tenderApplicationApi';
 
 export interface AdminTenderApplication extends TenderApplication {
@@ -33,6 +35,13 @@ export interface TenderReports {
   awardedValue: number;
 }
 
+/** Bid counts for one tender — only tenders with at least one bid come back. */
+export interface TenderApplicationCounts {
+  tenderId: string;
+  total: number;
+  byStatus: Partial<Record<TenderApplicationStatus, number>>;
+}
+
 /** Admin action names — the backend maps each to the resulting status. */
 export type TenderStatusAction =
   | 'start_review'
@@ -47,6 +56,12 @@ export const tenderApplicationAdminApi = {
     return data.data ?? data;
   },
 
+  /** One grouped query behind the tender picker — not a count call per card. */
+  countsByTender: async (): Promise<TenderApplicationCounts[]> => {
+    const { data } = await apiClient.get('/admin/tenders/applications/counts-by-tender');
+    return data.data ?? data;
+  },
+
   getById: async (id: string): Promise<AdminTenderApplication> => {
     const { data } = await apiClient.get(`/admin/tenders/applications/${id}`);
     return data.data ?? data;
@@ -55,7 +70,13 @@ export const tenderApplicationAdminApi = {
   updateStatus: async (
     id: string,
     action: TenderStatusAction,
-    body: { notes?: string; reason?: string } = {},
+    body: {
+      notes?: string;
+      reason?: string;
+      /** request_more_info only — what the bidder is allowed to correct. */
+      moreInfoFields?: TenderMoreInfoField[];
+      moreInfoDocumentTypes?: TenderDocumentType[];
+    } = {},
   ): Promise<AdminTenderApplication> => {
     const { data } = await apiClient.patch(`/admin/tenders/applications/${id}/status`, {
       action,

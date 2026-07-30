@@ -57,10 +57,12 @@ export class DonationWebhookService {
 
     const previousStatus = donation.status;
     donation.status = isSuccess ? DonationStatus.COMPLETED : DonationStatus.FAILED;
+    donation.gatewayResponseCode = rc || null;
+    donation.gatewayMessage = payload['message'] || null;
     await this.repo.save(donation);
 
     this.logger.log(
-      `[DonationWebhook] Donation ${donation.id} ${previousStatus} → ${donation.status} (rc=${rc})`,
+      `[DonationWebhook] Donation ${donation.id} ${previousStatus} → ${donation.status} (rc=${rc}, message="${donation.gatewayMessage}")`,
     );
 
     if (isSuccess && donation.donorPhone) {

@@ -749,6 +749,22 @@ img[data-align='right']  { margin-inline-start: auto; margin-inline-end: 0; }
   background: rgba(26, 122, 74, 0.3);
 }
 
+/* Search hits (BookSearch). The text layer sits invisibly over the canvas, so a
+   highlight is a translucent block behind glyphs painted on the canvas below —
+   `color: inherit` keeps the mark itself transparent, exactly like the spans it
+   splits. Without that, `mark`'s UA default (black on yellow) would paint a
+   second, offset copy of the word over the rendered page. */
+.flip-page .textLayer mark.pdf-hit {
+  background: rgba(255, 213, 0, 0.42);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0;
+}
+.flip-page .textLayer mark.pdf-hit.is-active {
+  background: rgba(255, 145, 0, 0.62);
+  box-shadow: 0 0 0 1px rgba(255, 145, 0, 0.85);
+}
+
 /* ── In-context Edit Mode affordances ───────────────────────────────────────
    Every click-to-edit text node (see InlineText) carries `.ie-editable`. The
    class is only ever rendered while a super-admin is in Edit Mode, so it has
