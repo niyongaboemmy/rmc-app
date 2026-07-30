@@ -56,9 +56,34 @@ export class ScholarshipAdminController {
     return this.service.adminUpdateProgram(id, dto);
   }
 
+  /**
+   * Publish and close are distinct actions rather than a `status` field on
+   * PATCH. Publishing is the moment a scholarship becomes real to applicants, so
+   * it is the one place worth refusing an incomplete record; a status writable
+   * through a general update invites a half-composed offer going live.
+   *
+   * Declared BEFORE `programs/:id` is irrelevant here (these are POSTs to a
+   * longer path), but keep them adjacent to the CRUD they belong to.
+   */
+  @Post('programs/:id/publish')
+  @Permissions(Permission.SCHOLARSHIP_MANAGE)
+  @ApiOperation({ summary: 'Make a scholarship public (validates it is complete)' })
+  publishProgram(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.adminPublishProgram(id);
+  }
+
+  @Post('programs/:id/close')
+  @Permissions(Permission.SCHOLARSHIP_MANAGE)
+  @ApiOperation({ summary: 'Stop accepting applications; submitted ones continue through review' })
+  closeProgram(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.adminCloseProgram(id);
+  }
+
   @Delete('programs/:id')
   @Permissions(Permission.SCHOLARSHIP_MANAGE)
-  @ApiOperation({ summary: 'Delete (soft) a scholarship program' })
+  @ApiOperation({
+    summary: 'Delete (soft) a scholarship program — refused once it has applications',
+  })
   deleteProgram(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.adminDeleteProgram(id);
   }
@@ -127,11 +152,16 @@ export class ScholarshipAdminController {
 
   @Get('reports')
   @Permissions(Permission.SCHOLARSHIP_REPORTS)
-  @ApiOperation({ summary: 'Get scholarship service statistics' })
+  @ApiOperation({ summary: 'Application statistics, optionally for one scholarship' })
+  @ApiQuery({ name: 'programId', required: false })
   @ApiQuery({ name: 'dateFrom', required: false })
   @ApiQuery({ name: 'dateTo', required: false })
-  getReports(@Query('dateFrom') dateFrom?: string, @Query('dateTo') dateTo?: string) {
-    return this.service.adminGetReports({ dateFrom, dateTo });
+  getReports(
+    @Query('programId') programId?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.service.adminGetReports({ programId, dateFrom, dateTo });
   }
 
   @Get('reports/export')

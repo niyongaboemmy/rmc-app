@@ -13,7 +13,16 @@ import { apiClient } from './api';
 //   POST /scholarship/applications/:id/cancel            auth
 //   GET  /scholarship/applications/:id                   auth
 //   GET  /scholarship/applications                       auth (listMine)
-//   GET  /scholarship/applications/by-number/:number     public (status tracking)
+//
+//   POST /scholarship/applications/track/request-otp     public  \
+//   POST /scholarship/applications/track/verify-otp      public   > see TrackByOtp
+//   GET  /scholarship/applications/track/session         token   /
+//
+// There is deliberately NO public by-number lookup. It used to exist and
+// returned the whole application — national ID, date of birth, applicant and
+// guardian phones — keyed on a SEQUENTIAL number that could simply be counted
+// through. Tracking is now gated on a random code plus an SMS OTP to the phone
+// on file (migration 051).
 
 export type ScholarshipApplicationStatus =
   | 'draft'
@@ -24,16 +33,71 @@ export type ScholarshipApplicationStatus =
   | 'cancelled'
   | 'confirmed';
 
+/**
+ * Everything a verified tracking session may see — and nothing else.
+ *
+ * Mirrors `getTrackingInfo` on the backend exactly. Kept separate from
+ * `ScholarshipApplication` (the authenticated, full record) so that widening one
+ * cannot silently widen the other: an applicant proving control of their phone
+ * earns the right to see where their case has got to, not to be read back their
+ * own national ID.
+ */
+export interface ScholarshipPublicStatus {
+  trackingCode: string;
+  applicationNumber: string | null;
+  fullNames: string;
+  schoolName: string;
+  educationLevel: EducationLevel;
+  status: ScholarshipApplicationStatus;
+  rejectionReason: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  statusHistory: Array<{ toStatus: ScholarshipApplicationStatus; changedAt: string }>;
+}
+
 export type EducationLevel = 'secondary' | 'tvet' | 'university';
 export type GuardianRelationship = 'parent' | 'guardian' | 'sibling' | 'other';
 
+export type ScholarshipProgramStatus = 'draft' | 'published' | 'closed';
+
+export interface I18nText {
+  en: string;
+  rw: string;
+  ar: string;
+}
+
+export interface RequiredDocument {
+  key: string;
+  label: I18nText;
+  required: boolean;
+}
+
+/**
+ * A scholarship OPPORTUNITY — what RMC announces and an application is made
+ * against. `titleI18n`/`descriptionI18n` fall back to `title`/`description`,
+ * matching how announcements behave, so rows authored before the trilingual
+ * fields existed still render.
+ */
 export interface ScholarshipProgram {
   id: string;
+  slug: string | null;
   title: string;
   description: string;
+  titleI18n: I18nText | null;
+  descriptionI18n: I18nText | null;
+  eligibilityI18n: I18nText | null;
+  benefitsI18n: I18nText | null;
+  requiredDocuments: RequiredDocument[];
+  attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
   level: EducationLevel | null;
   amount: number | null;
+  slots: number | null;
+  referenceNumber: string | null;
+  opensAt: string | null;
   deadline: string | null;
+  status: ScholarshipProgramStatus;
+  /** @deprecated Derived from `status`; prefer `status` in new code. */
   isOpen: boolean;
 }
 
@@ -51,6 +115,13 @@ export type ScholarshipDocumentType = 'transcript' | 'academic_record' | 'proof'
 export interface ScholarshipDocument {
   id: string;
   documentType: ScholarshipDocumentType;
+  /**
+   * Which of the scholarship's declared documents this file answers. Null for a
+   * generic upload, or anything filed before scholarships declared their own
+   * (migration 055) — `documentType` alone is a four-value label that cannot
+   * tell two "additional" files apart.
+   */
+  requirementKey?: string | null;
   fileKey: string;
   fileName: string;
   fileSize: number;
@@ -62,6 +133,12 @@ export interface ScholarshipDocument {
 
 export interface SaveScholarshipDocumentPayload {
   documentType: ScholarshipDocumentType;
+  /**
+   * Which of the scholarship's declared `requiredDocuments` this file answers.
+   * Omitted for generic uploads — `documentType` is only a four-value label, so
+   * this is what actually identifies the document (migration 055).
+   */
+  requirementKey?: string;
   fileKey: string;
   fileName: string;
   fileSize: number;
@@ -70,7 +147,10 @@ export interface SaveScholarshipDocumentPayload {
 
 export interface ScholarshipApplication {
   id: string;
+  /** Human reference for correspondence. Sequential — never a credential. */
   applicationNumber: string;
+  /** The credential the applicant tracks with. Shown on the success screen. */
+  trackingCode: string;
   applicantId: string;
   programId: string | null;
   fullNames: string;
@@ -102,7 +182,8 @@ export interface ScholarshipApplication {
 }
 
 export interface CreateScholarshipApplicationPayload {
-  programId?: string;
+  /** REQUIRED — the scholarship being applied to. The backend rejects a payload without it. */
+  programId: string;
   fullNames: string;
   dateOfBirth?: string;
   gender?: 'male' | 'female';
@@ -205,12 +286,14 @@ export const scholarshipPublicApi = {
     }
   },
 
-  getByNumber: async (number: string): Promise<ScholarshipApplication | null> => {
+  /** One scholarship by its public slug. Null for anything not published. */
+  getProgramBySlug: async (slug: string): Promise<ScholarshipProgram | null> => {
     try {
-      const { data } = await apiClient.get(`/scholarship/applications/by-number/${number}`);
+      const { data } = await apiClient.get(`/scholarship/programs/slug/${encodeURIComponent(slug)}`);
       return data.data ?? data;
     } catch {
       return null;
     }
   },
+
 };

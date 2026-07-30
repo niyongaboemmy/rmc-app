@@ -30,7 +30,18 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'marriage',  href: '/admin/marriage',     icon: Heart,           labelKey: 'sidebar.marriage',  group: 'main',   permission: Permission.MARRIAGE_VIEW     },
   { key: 'goodConduct', href: '/admin/good-conduct', icon: ShieldCheck,   labelKey: 'sidebar.goodConduct', group: 'main', permission: Permission.GOOD_CONDUCT_VIEW },
   { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW       },
-  { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW },
+  // Scholarships splits into the three jobs a scholarship administrator does:
+  // compose and publish the scholarships, work the applications, report on them.
+  // Each child keeps its OWN permission, so a reviewer who may not publish and a
+  // finance reader who may not review each land only on pages they can open.
+  // The parent points at the applications list, where most of the work is.
+  { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW,
+    children: [
+      { key: 'scholarshipManage',  href: '/admin/scholarship/programs', icon: FileText,       labelKey: 'sidebar.scholarshipManage',  group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
+      { key: 'scholarshipApps',    href: '/admin/scholarship',          icon: ClipboardCheck, labelKey: 'sidebar.scholarshipApps',    group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
+      { key: 'scholarshipReports', href: '/admin/scholarship/reports',  icon: BarChart2,      labelKey: 'sidebar.scholarshipReports', group: 'main', permission: Permission.SCHOLARSHIP_REPORTS },
+    ],
+  },
   { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
   { key: 'jobs',      href: '/admin/jobs',         icon: Briefcase,       labelKey: 'sidebar.jobs',      group: 'main',   permission: Permission.JOB_APPLICATIONS_VIEW },
   { key: 'jobPostings', href: '/admin/job-postings', icon: ClipboardList, labelKey: 'sidebar.jobPostings', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
@@ -182,6 +193,18 @@ function SidebarNavGroup({
   const t = useTranslations('admin');
   const anyActive = childrenItems.some((c) => isActive(c.href));
   const [open, setOpen] = useState(anyActive);
+
+  /**
+   * Exactly ONE child highlights, even when sibling routes nest.
+   *
+   * `isActive` is a prefix test, so on `/admin/dawah/discussions/submissions`
+   * BOTH "All questions" (`/admin/dawah/discussions`) and "Member questions"
+   * matched, and both lit up. Taking the LONGEST matching sibling picks the most
+   * specific route — the page you are actually on.
+   */
+  const activeChildKey = childrenItems
+    .filter((c) => isActive(c.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.key;
   // Navigating INTO a child opens the group; a manual collapse while already
   // active is preserved (anyActive doesn't change, so this effect won't re-fire).
   useEffect(() => { if (anyActive) setOpen(true); }, [anyActive]);
@@ -241,7 +264,7 @@ function SidebarNavGroup({
       {open && (
         <ul className="mt-px space-y-px">
           {childrenItems.map((c) => {
-            const active = isActive(c.href);
+            const active = c.key === activeChildKey;
             const CIcon = c.icon;
             return (
               <li key={c.key}>

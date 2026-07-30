@@ -7,24 +7,22 @@ import {
   GraduationCap,
   ArrowLeft,
   ArrowRight,
-  Search,
-  FileText,
-  User,
-  MapPin,
-  Users,
+  ListOrdered,
   Phone,
 } from 'lucide-react';
 import { ScholarshipProgramsList } from '@/components/services/scholarship/ScholarshipProgramsList';
+import { ScholarshipStatusCard } from '@/components/services/scholarship/ScholarshipStatusCard';
 
-const needIcons = {
-  i1: User,
-  i2: MapPin,
-  i3: GraduationCap,
-  i4: Users,
-  i5: FileText,
-} as const;
-const needKeys = ['i1', 'i2', 'i3', 'i4', 'i5'] as const;
-const stepKeys = ['s1', 's2', 's3', 's4'] as const;
+/**
+ * The same four steps, in the same order, as the tenders board
+ * (`services.tender.landing.steps`). Semantic keys rather than s1..s4 so the two
+ * services can be read side by side and neither drifts silently.
+ *
+ * Step one is BROWSE, not "sign in": under the opportunity flow an applicant
+ * starts by finding a scholarship, and signing in is incidental to that rather
+ * than a stage of the process.
+ */
+const stepKeys = ['browse', 'form', 'documents', 'track'] as const;
 const faqKeys = ['f1', 'f2', 'f3', 'f4'] as const;
 
 export default async function ScholarshipServicePage({
@@ -79,101 +77,60 @@ export default async function ScholarshipServicePage({
         </section>
 
         {/* ===================================================================
-            GET STARTED — the two CTA cards
-        =================================================================== */}
-        <section className="pattern-light py-14 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-5">
-            <Link
-              href={`/${locale}/services/scholarship/apply`}
-              className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
-            >
-              <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
-                <FileText className="w-5 h-5 text-rmc-green-dark" />
-              </div>
-              <p className="font-bold text-gray-900">{t('landing.applyTitle')}</p>
-              <p className="text-sm text-gray-500 flex-1">{t('landing.applyText')}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                {t('landing.applyCta')} <ArrowRight className="w-4 h-4" />
-              </span>
-            </Link>
+            BROWSE — the list beside a sticky rail.
 
-            <Link
-              href={`/${locale}/services/scholarship/status`}
-              className="group flex flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
-            >
-              <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
-                <Search className="w-5 h-5 text-rmc-green-dark" />
-              </div>
-              <p className="font-bold text-gray-900">{t('landing.statusTitle')}</p>
-              <p className="text-sm text-gray-500 flex-1">{t('landing.statusText')}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                {t('landing.statusCta')} <ArrowRight className="w-4 h-4" />
-              </span>
-            </Link>
-          </div>
-        </section>
-
-        {/* ===================================================================
-            WHAT YOU'LL NEED — grounded in the actual application form fields
+            One section instead of four. This is the tenders board's shape
+            (TenderList variant="sidebar"): the scholarships themselves own the
+            page, and everything that used to be a full-width section of its own
+            — how to apply, what to prepare, track an application — sits in the
+            rail beside them, where it stays in view while the reader scrolls
+            the list rather than being scrolled past once.
         =================================================================== */}
-        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-rmc-green-deep">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">{t('detail.needTitle')}</h2>
-              <p className="text-white/60 text-sm max-w-xl mx-auto">{t('detail.needSubtitle')}</p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {needKeys.map((key) => {
-                const Icon = needIcons[key];
-                return (
-                  <div key={key} className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
-                    <div className="w-9 h-9 shrink-0 rounded-lg bg-rmc-green/30 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-rmc-green" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white text-sm mb-0.5">{t(`detail.need.${key}.title`)}</p>
-                      <p className="text-white/60 text-xs leading-relaxed">{t(`detail.need.${key}.text`)}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* ===================================================================
-            AVAILABLE SCHOLARSHIPS — the actionable heart of the page
-        =================================================================== */}
-        <section className="py-14 px-4 sm:px-6 lg:px-8 bg-gray-50/80 pattern-light">
+        <section className="bg-gray-50/60 pattern-light py-14 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('landing.programsTitle')}</h2>
-              <p className="text-gray-500 text-sm max-w-2xl mx-auto">{t('landing.programsSubtitle')}</p>
-            </div>
-            <ScholarshipProgramsList />
-          </div>
-        </section>
-
-        {/* ===================================================================
-            HOW IT WORKS — compact horizontal steps
-        =================================================================== */}
-        <section className="py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('detail.processTitle')}</h2>
-              <p className="text-gray-500 text-sm max-w-2xl mx-auto">{t('detail.processSubtitle')}</p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {stepKeys.map((key, i) => (
-                <div key={key} className="relative bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rmc-green text-white text-xs font-bold mb-3">
-                    {i + 1}
-                  </span>
-                  <h3 className="font-bold text-gray-900 text-sm mb-1">{t(`detail.steps.${key}.title`)}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{t(`detail.steps.${key}.text`)}</p>
+            <ScholarshipProgramsList
+              variant="sidebar"
+              listHeader={
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{t('landing.programsTitle')}</h2>
+                  <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+                    {t('landing.programsSubtitle')}
+                  </p>
                 </div>
-              ))}
-            </div>
+              }
+              railBottom={
+                <>
+                  {/* How to apply */}
+                  <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex items-center gap-2">
+                      <ListOrdered className="h-4 w-4 text-rmc-green" />
+                      <h3 className="text-sm font-bold text-gray-900">{t('detail.processTitle')}</h3>
+                    </div>
+                    <ol className="space-y-3">
+                      {stepKeys.map((key, i) => (
+                        <li key={key} className="flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rmc-green to-rmc-green-dark text-xs font-bold text-white">
+                            {i + 1}
+                          </span>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-900">{t(`detail.steps.${key}.title`)}</p>
+                            <p className="text-xs leading-relaxed text-gray-500">{t(`detail.steps.${key}.text`)}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {/* "What you'll need" lives on the scholarship's own page now.
+                      It is preparation for ONE application, so it belongs beside
+                      that scholarship's eligibility and deadline rather than
+                      beside a list the reader is still choosing from. */}
+
+                  {/* Track an application already submitted */}
+                  <ScholarshipStatusCard locale={locale} />
+                </>
+              }
+            />
           </div>
         </section>
 
