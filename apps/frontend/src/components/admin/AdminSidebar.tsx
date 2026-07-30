@@ -43,7 +43,15 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
-  { key: 'jobs',      href: '/admin/jobs',         icon: Briefcase,       labelKey: 'sidebar.jobs',      group: 'main',   permission: Permission.JOB_APPLICATIONS_VIEW },
+  // Manage Job — mirrors the Tenders/Scholarship pattern: work the applications
+  // on the board, and report on them. The parent points at the applications
+  // board, where most of the work is. Each child keeps its own permission.
+  { key: 'jobs', href: '/admin/jobs', icon: Briefcase, labelKey: 'sidebar.manageJob', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW,
+    children: [
+      { key: 'jobsApplication', href: '/admin/jobs',        icon: ClipboardCheck, labelKey: 'sidebar.jobsApplication', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+      { key: 'jobsReport',      href: '/admin/jobs/reports', icon: BarChart2,      labelKey: 'sidebar.jobsReport',     group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+    ],
+  },
   { key: 'jobPostings', href: '/admin/job-postings', icon: ClipboardList, labelKey: 'sidebar.jobPostings', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
   { key: 'mosques',   href: '/admin/mosques',      icon: Landmark,        labelKey: 'sidebar.mosques',   group: 'main',   permission: Permission.MOSQUES_VIEW      },
   { key: 'schools',   href: '/admin/schools',      icon: GraduationCap,   labelKey: 'sidebar.schools',   group: 'main',   permission: Permission.SCHOOLS_VIEW      },

@@ -2271,7 +2271,10 @@
       "discussionsAll": "Ibibazo byose",
       "tenders": "Amatumba",
       "jobs": "Amasaba y'Akazi",
-      "jobPostings": "Imyanya y'Akazi"
+      "jobPostings": "Imyanya y'Akazi",
+      "manageJob": "Gucunga Akazi",
+      "jobsApplication": "Amasaba",
+      "jobsReport": "Raporo"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
