@@ -9,10 +9,12 @@ import { ScholarshipController } from './scholarship.controller';
 import { ScholarshipAdminController } from './scholarship-admin.controller';
 import { User } from '../users/entities/user.entity';
 import { LocationsModule } from '../locations/locations.module';
+import { TrackingModule } from '../tracking/tracking.module';
 
 @Module({
   imports: [
     LocationsModule,
+    TrackingModule,
     TypeOrmModule.forFeature([
       ScholarshipApplication,
       ScholarshipStatusHistory,

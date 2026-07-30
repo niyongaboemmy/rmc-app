@@ -5,6 +5,19 @@ import type {
   EducationLevel,
 } from './scholarshipApi';
 
+/**
+ * What the admin detail endpoint returns: the application plus the two things a
+ * reviewer needs that are not columns on it — who applied, and WHICH scholarship
+ * they applied to. Both are attached ad-hoc by `adminGetById`, not relations.
+ */
+export interface AdminScholarshipApplication extends ScholarshipApplication {
+  applicant?: { id: string; name: string; email: string | null; phone: string | null };
+  program?: Pick<
+    ScholarshipProgram,
+    'id' | 'slug' | 'title' | 'titleI18n' | 'level' | 'deadline' | 'status' | 'requiredDocuments'
+  >;
+}
+
 export interface AdminScholarshipListResult {
   items: ScholarshipApplication[];
   total: number;
@@ -26,12 +39,37 @@ export interface UpdateScholarshipStatusPayload {
   reason?: string;
 }
 
+export interface I18nTextPayload {
+  en?: string;
+  rw?: string;
+  ar?: string;
+}
+
+export interface RequiredDocumentPayload {
+  key: string;
+  label: I18nTextPayload;
+  required?: boolean;
+}
+
+/**
+ * Note there is no `status`. Publishing and closing are their own endpoints, so
+ * a half-written scholarship cannot go live through a general save.
+ */
 export interface CreateScholarshipProgramPayload {
   title: string;
   description: string;
+  titleI18n?: I18nTextPayload;
+  descriptionI18n?: I18nTextPayload;
+  eligibilityI18n?: I18nTextPayload;
+  benefitsI18n?: I18nTextPayload;
+  requiredDocuments?: RequiredDocumentPayload[];
   level?: EducationLevel;
   amount?: number;
+  slots?: number;
+  opensAt?: string;
   deadline?: string;
+  referenceNumber?: string;
+  /** @deprecated Derived from `status` server-side; kept for the old form. */
   isOpen?: boolean;
 }
 
@@ -49,7 +87,7 @@ export const scholarshipAdminApi = {
     return data.data ?? data;
   },
 
-  getOne: async (id: string): Promise<ScholarshipApplication> => {
+  getOne: async (id: string): Promise<AdminScholarshipApplication> => {
     const { data } = await apiClient.get(`/admin/scholarship/applications/${id}`);
     return data.data ?? data;
   },
@@ -74,7 +112,7 @@ export const scholarshipAdminApi = {
     return data.data ?? data;
   },
 
-  getReports: async (params?: { dateFrom?: string; dateTo?: string }): Promise<AdminScholarshipStats> => {
+  getReports: async (params?: { programId?: string; dateFrom?: string; dateTo?: string }): Promise<AdminScholarshipStats> => {
     const { data } = await apiClient.get('/admin/scholarship/reports', { params });
     return data.data ?? data;
   },
@@ -110,6 +148,18 @@ export const scholarshipAdminApi = {
     payload: Partial<CreateScholarshipProgramPayload>,
   ): Promise<ScholarshipProgram> => {
     const { data } = await apiClient.patch(`/admin/scholarship/programs/${id}`, payload);
+    return data.data ?? data;
+  },
+
+  /** Make it public. Rejects an incomplete offer (title, description, deadline). */
+  publishProgram: async (id: string): Promise<ScholarshipProgram> => {
+    const { data } = await apiClient.post(`/admin/scholarship/programs/${id}/publish`);
+    return data.data ?? data;
+  },
+
+  /** Stop accepting applications. Submitted ones continue through review. */
+  closeProgram: async (id: string): Promise<ScholarshipProgram> => {
+    const { data } = await apiClient.post(`/admin/scholarship/programs/${id}/close`);
     return data.data ?? data;
   },
 

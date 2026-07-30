@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, LogIn, GraduationCap } from 'lucide-react';
@@ -10,7 +9,12 @@ import { ScholarshipWizard } from '@/components/services/scholarship/Scholarship
 import { useAuth } from '@/hooks/useAuth';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { scholarshipApi, type ScholarshipApplication } from '@/lib/scholarshipApi';
+import {
+  scholarshipApi,
+  scholarshipPublicApi,
+  type ScholarshipApplication,
+  type ScholarshipProgram,
+} from '@/lib/scholarshipApi';
 
 function RequirementsView({ locale }: { locale: string }) {
   const router = useRouter();
@@ -55,6 +59,32 @@ export default function ScholarshipApplyPage() {
   const [editRequest, setEditRequest] = useState<ScholarshipApplication | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(!!editId);
   const [checkingExisting, setCheckingExisting] = useState(!editId);
+  const [program, setProgram] = useState<ScholarshipProgram | null>(null);
+
+  /**
+   * An application must target a scholarship. Reaching /apply with no `?program=`
+   * and no `?edit=` means there is nothing to apply to, so send them to the list
+   * rather than render a form whose submit the backend would reject.
+   */
+  useEffect(() => {
+    if (!programId && !editId) {
+      router.replace(`/${locale}/services/scholarship`);
+    }
+  }, [programId, editId, locale, router]);
+
+  // Load the scholarship so the wizard can name it. An edit carries its own.
+  useEffect(() => {
+    const id = programId ?? editRequest?.programId ?? undefined;
+    if (!id) return;
+    let cancelled = false;
+    scholarshipPublicApi
+      .getProgram(id)
+      .then((p) => !cancelled && setProgram(p))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [programId, editRequest]);
 
   useEffect(() => {
     if (!editId || !isAuthenticated) return;
@@ -89,7 +119,10 @@ export default function ScholarshipApplyPage() {
         if (EDITABLE_STATUSES.has(active.status)) {
           router.replace(`/${locale}/services/scholarship/apply?edit=${active.id}`);
         } else {
-          router.replace(`/${locale}/services/scholarship/status?id=${active.applicationNumber}`);
+          // No `?id=` — tracking is gated on a tracking code plus an SMS OTP
+          // (migration 051), so an application NUMBER in the URL prefills
+          // nothing and is the wrong identifier to hand anyone.
+          router.replace(`/${locale}/services/scholarship/status`);
         }
       })
       .catch(() => setCheckingExisting(false));
@@ -102,47 +135,29 @@ export default function ScholarshipApplyPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <section
-        className="relative text-white overflow-hidden flex flex-col"
-        style={{ minHeight: 'max(38vh, 300px)' }}
-      >
-        <Image
-          src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&q=80"
-          alt="Scholarship application"
-          fill
-          className="object-cover object-center"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-rmc-green-deep/65 to-black/45" />
-        <div className="absolute inset-0 pattern-islamic opacity-25" />
-
-        <div className="relative flex-1 flex items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-8 pb-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="flex justify-center mb-4 pt-24">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rmc-green to-rmc-green-dark flex items-center justify-center shadow-xl shadow-rmc-green-dark/50 ring-1 ring-white/20">
-                <GraduationCap className="w-7 h-7 text-white" strokeWidth={2.25} />
-              </div>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold drop-shadow-lg">
-              {isAuthenticated ? t('heroTitle') : t('requirementsHeroTitle')}
-            </h1>
-            {!isAuthenticated && (
-              <p className="text-white/70 text-base max-w-xl mx-auto mt-3 leading-relaxed">
-                {t('requirementsHeroSubtitle')}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="relative px-4 sm:px-6 lg:px-8 pb-5 pt-2 flex justify-center sm:justify-start">
+      {/* No hero. This is a form, not a landing page: a 300px photograph pushes
+          the first field below the fold and says nothing the applicant needs.
+          The title and the way back are kept — they are navigation, not
+          decoration. */}
+      <header className="border-b border-gray-200 bg-white pt-24 md:pt-28">
+        <div className="mx-auto max-w-2xl px-4 pb-5 sm:px-6 lg:px-8">
           <Link
             href={`/${locale}/services/scholarship`}
-            className="inline-flex items-center gap-2 text-white text-sm font-medium transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/25 hover:border-white/50 shadow-sm"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 transition-colors hover:text-rmc-green"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> {t('backToService')}
+            <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" /> {t('backToService')}
           </Link>
+          <h1 className="mt-2 flex items-center gap-2.5 text-xl font-bold text-gray-900 md:text-2xl">
+            <GraduationCap className="h-6 w-6 shrink-0 text-rmc-green" strokeWidth={2.25} />
+            {isAuthenticated ? t('heroTitle') : t('requirementsHeroTitle')}
+          </h1>
+          {!isAuthenticated && (
+            <p className="mt-1.5 text-sm leading-relaxed text-gray-500">
+              {t('requirementsHeroSubtitle')}
+            </p>
+          )}
         </div>
-      </section>
+      </header>
 
       {(isLoading || loadingEdit || checkingExisting) && (
         <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -156,7 +171,44 @@ export default function ScholarshipApplyPage() {
           `isAuthenticated` split below (see git history) before this ships. */}
       {!isLoading && !loadingEdit && !checkingExisting && (
         <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-          <ScholarshipWizard editRequest={editRequest ?? undefined} initialProgramId={programId} />
+          {/* Which scholarship this application is for. Stated plainly and not
+              editable — the applicant chose it by opening it, and a picker here
+              would let them file the form against a different one. */}
+          {program && (
+            <div className="mb-6 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+              <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-rmc-green" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                  {t('applyingFor')}
+                </p>
+                <p className="truncate text-sm font-bold text-gray-900">{program.title}</p>
+                {program.deadline && (
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {t('deadlineOn', {
+                      date: new Date(program.deadline).toLocaleDateString(locale, {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      }),
+                    })}
+                  </p>
+                )}
+                <Link
+                  href={`/${locale}/services/scholarship/${program.slug ?? program.id}`}
+                  className="mt-1 inline-block text-xs font-semibold text-rmc-green hover:underline"
+                >
+                  {t('viewScholarship')}
+                </Link>
+              </div>
+            </div>
+          )}
+          {/* The scholarship's own document list drives the upload step, so the
+              form asks for exactly what its detail page said to bring. */}
+          <ScholarshipWizard
+            editRequest={editRequest ?? undefined}
+            initialProgramId={programId}
+            requiredDocuments={program?.requiredDocuments}
+          />
         </main>
       )}
 
