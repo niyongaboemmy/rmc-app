@@ -14,6 +14,15 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
   className?: string;
   zIndex?: number;
+  /**
+   * Whether Escape and a click on the backdrop dismiss the dialog. Defaults to true.
+   *
+   * Set false for a dialog holding work the user would have to redo — a composer, a
+   * multi-step form. Both of those are *gestures*: easy to fire by accident, and neither
+   * asks for confirmation, so an errant click beside the panel silently destroys a draft.
+   * The close button still calls `onClose`, so the owner can confirm there instead.
+   */
+  closeOnGesture?: boolean;
 }
 
 const sizeClasses = {
@@ -33,7 +42,9 @@ export function ModalPortal({ children }: { children: React.ReactNode }) {
   return createPortal(<>{children}</>, document.body);
 }
 
-export function Modal({ open, isOpen, onClose, children, size = 'md', className, zIndex }: ModalProps) {
+export function Modal({
+  open, isOpen, onClose, children, size = 'md', className, zIndex, closeOnGesture = true,
+}: ModalProps) {
   const visible = open ?? isOpen ?? false;
   const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -41,13 +52,13 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className,
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || !closeOnGesture) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [visible, onClose]);
+  }, [visible, onClose, closeOnGesture]);
 
   if (!visible || !mounted) return null;
 
@@ -57,7 +68,7 @@ export function Modal({ open, isOpen, onClose, children, size = 'md', className,
       className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       style={{ zIndex: zIndex ?? 9999 }}
       onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
+        if (closeOnGesture && e.target === overlayRef.current) onClose();
       }}
     >
       <div

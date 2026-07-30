@@ -1,25 +1,29 @@
 import {
   Entity, PrimaryGeneratedColumn, Column,
   CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Index,
-  ManyToOne, JoinColumn, OneToMany,
+  ManyToOne, JoinColumn,
 } from 'typeorm';
 import { DawahCategory } from './dawah-category.entity';
-import { DawahAnswer } from './dawah-answer.entity';
 import { User } from '../../users/entities/user.entity';
 
 /**
  * Where a question can be in its life.
  *
- * There is deliberately NO `pending_review` here — that state exists only for answers.
- * The asymmetry is the whole moderation model (plan §0.1): a bad question is noise, a bad
- * answer is a false ruling someone acts on. A question goes live on submit and can only
- * be pulled BACK. Mirrored by CHK_dawah_questions_status.
+ * `pending` is the entry state for anything a member submits, and it is the reversal of
+ * the model this table was built for (migration 054). Questions used to go live on submit
+ * and could only be pulled back, because the answers were the dangerous part and they were
+ * what got held. Now RMC writes the answers, so nothing is public until RMC has answered
+ * it — the question is what waits.
  *
- * `auto_hidden` is distinct from `hidden` ON PURPOSE: a moderator must be able to see at
- * a glance whether a human made the call or a report threshold did. Collapsing the two
- * destroys exactly the signal needed to notice the threshold being abused.
+ * `rejected` is distinct from `hidden`: rejected means RMC declined to answer a
+ * submission, hidden means a published entry was withdrawn. Both are invisible to the
+ * public, but a reviewer clearing the queue needs to tell "we said no" from "we changed
+ * our minds", and one list of `hidden` rows cannot.
+ *
+ * Mirrored by CHK_dawah_questions_status. CHK_dawah_questions_published_has_answer
+ * additionally forbids the one incoherent state — published with no answer.
  */
-export type QuestionStatus = 'published' | 'auto_hidden' | 'hidden' | 'locked' | 'deleted';
+export type QuestionStatus = 'pending' | 'published' | 'rejected' | 'hidden' | 'deleted';
 
 /**
  * The language the member WROTE IN — not a translation axis.
@@ -33,12 +37,15 @@ export type QuestionStatus = 'published' | 'auto_hidden' | 'hidden' | 'locked' |
 export type PostLanguage = 'en' | 'rw' | 'ar';
 
 /**
- * A question in the community Q&A.
+ * One entry in the Dawah Q&A: a question and RMC's answer to it.
  *
- * `author_id` is NOT NULL even when `is_anonymous` — always. Anonymity is a projection
- * concern, stripped in DawahDiscussionsService.toPublic(), never a storage concern. A
- * nullable author would mean an anonymous member is unbannable, which is not anonymity,
- * it is impunity.
+ * A row arrives one of two ways — an admin authors both halves at once, or a member
+ * submits the question and an admin supplies the answer later. Either way the answer is
+ * RMC's, which is why it lives here on the question rather than in a table of competing
+ * answers: there is only ever one, and it is authoritative.
+ *
+ * `author_id` is who ASKED (NOT NULL — an unattributable submission is unbannable);
+ * `answered_by_id` is who answered, and is null until someone has.
  */
 @Entity('dawah_questions')
 export class DawahQuestion {
@@ -84,39 +91,46 @@ export class DawahQuestion {
   @JoinColumn({ name: 'author_id' })
   author?: User;
 
-  /** Hides the name in the projection. Never hides the row's author_id. */
-  @Column({ name: 'is_anonymous', type: 'boolean', default: false })
-  isAnonymous: boolean;
-
-  @Column({ type: 'varchar', length: 20, default: 'published' })
+  /** Submissions start `pending`; an admin-authored entry is `published` immediately. */
+  @Column({ type: 'varchar', length: 20, default: 'pending' })
   status: QuestionStatus;
 
-  /** Denormalised. EXCLUDES pending_review answers — "3 answers" with none visible is a bug. */
-  @Column({ name: 'answer_count', type: 'int', default: 0 })
-  answerCount: number;
+  /**
+   * RMC's answer. MARKDOWN SOURCE, never HTML — see `body`.
+   *
+   * Empty until answered. A published row with an empty answer is refused by
+   * CHK_dawah_questions_published_has_answer, so the public listing can render the answer
+   * unconditionally without a "coming soon" branch that should never be reachable.
+   */
+  @Column({ name: 'answer_body', type: 'text', default: '' })
+  answerBody: string;
 
-  /** Denormalised. Drives auto-hide at REPORT_AUTOHIDE_THRESHOLD. Never public. */
-  @Column({ name: 'report_count', type: 'int', default: 0 })
-  reportCount: number;
+  /** The admin who wrote the answer. SET NULL on delete — the ruling outlives the account. */
+  @Column({ name: 'answered_by_id', type: 'uuid', nullable: true })
+  answeredById: string | null;
+
+  @ManyToOne(() => User, { nullable: true, eager: false, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'answered_by_id' })
+  answeredBy?: User | null;
+
+  @Column({ name: 'answered_at', type: 'timestamptz', nullable: true })
+  answeredAt: Date | null;
+
+  /**
+   * When it became public — the listing's sort key.
+   *
+   * Not `created_at`, which is when the member asked: a question submitted in March and
+   * answered in July belongs at the top of the list in July, not buried in March.
+   */
+  @Column({ name: 'published_at', type: 'timestamptz', nullable: true })
+  publishedAt: Date | null;
 
   @Column({ name: 'view_count', type: 'int', default: 0 })
   viewCount: number;
 
-  /** Denormalised so the listing can badge "answered" without joining. */
-  @Column({ name: 'verified_answer_id', type: 'uuid', nullable: true })
-  verifiedAnswerId: string | null;
-
-  /**
-   * The sort key for "active" — NOT `updated_at`.
-   *
-   * An edit bumps updated_at, so sorting on it would let anyone float a stale question to
-   * the top by fixing a typo. This moves only on real activity: a new answer.
-   */
+  /** Retained from the forum model; no longer a sort key. See `publishedAt`. */
   @Column({ name: 'last_activity_at', type: 'timestamptz', default: () => 'now()' })
   lastActivityAt: Date;
-
-  @OneToMany(() => DawahAnswer, (answer) => answer.question)
-  answers?: DawahAnswer[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

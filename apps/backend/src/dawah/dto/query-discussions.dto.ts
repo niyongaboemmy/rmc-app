@@ -3,7 +3,16 @@ import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-va
 import { Type } from 'class-transformer';
 
 export const POST_LANGUAGES = ['en', 'rw', 'ar'] as const;
-export const DISCUSSION_SORTS = ['active', 'new', 'unanswered'] as const;
+
+/**
+ * Only one order remains: newest first, by publication date.
+ *
+ * `active` sorted by last answer and `unanswered` floated questions nobody had replied to
+ * — both described a forum where answers arrived over time from members. Every entry here
+ * is published complete, so there is no activity to track and nothing is ever unanswered.
+ * A search query overrides this with relevance ranking.
+ */
+export const DISCUSSION_SORTS = ['new'] as const;
 export type DiscussionSort = (typeof DISCUSSION_SORTS)[number];
 
 /**
@@ -31,12 +40,12 @@ export class QueryDiscussionsDto {
 
   @ApiPropertyOptional({
     enum: DISCUSSION_SORTS,
-    default: 'active',
-    description: '`unanswered` SORTS unanswered first; it does not hide answered questions.',
+    default: 'new',
+    description: 'Newest published first. A `search` term overrides this with relevance.',
   })
   @IsOptional()
   @IsIn(DISCUSSION_SORTS)
-  sort?: DiscussionSort = 'active';
+  sort?: DiscussionSort = 'new';
 
   /** Full-text search across title + body (GIN index, 'simple' config). Phase D. */
   @ApiPropertyOptional({ description: 'Full-text search across title and body.' })

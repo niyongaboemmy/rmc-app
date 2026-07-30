@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
-  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Flag, Briefcase, Award, ClipboardList, Building2,
+  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Briefcase, Award, ClipboardList, Building2,
 } from 'lucide-react';
 
 interface NavItem {
@@ -51,9 +51,11 @@ const NAV_ITEMS: NavItem[] = [
       // parent whenever a user can see ANY child. So a pure Moderator or Scholar who lacks
       // DAWAH_VIEW still reaches their queue under an expandable Dawah section (and the
       // collapsed rail links to their first visible child, never a page they can't open).
-      { key: 'discussionsAll',    href: '/admin/dawah/discussions/all',     icon: MessagesSquare, labelKey: 'sidebar.discussionsAll',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
-      { key: 'discussionsMod',    href: '/admin/dawah/discussions',         icon: Flag,           labelKey: 'sidebar.discussionsMod',    group: 'content', permission: Permission.DISCUSSIONS_MODERATE },
-      { key: 'discussionsReview', href: '/admin/dawah/discussions/pending', icon: ClipboardCheck, labelKey: 'sidebar.discussionsReview', group: 'content', permission: Permission.DISCUSSIONS_VERIFY   },
+      // Two, not three. The old trio (all questions / report queue / scholar review) split
+      // work that no longer divides: reports are gone with member-authored answers, and
+      // "all questions" is now just the library with its filter cleared.
+      { key: 'discussionsAll',    href: '/admin/dawah/discussions',             icon: MessagesSquare, labelKey: 'sidebar.discussionsAll',    group: 'content', permission: Permission.DISCUSSIONS_VERIFY },
+      { key: 'discussionsReview', href: '/admin/dawah/discussions/submissions', icon: ClipboardCheck, labelKey: 'sidebar.discussionsReview', group: 'content', permission: Permission.DISCUSSIONS_VERIFY },
     ],
   },
   { key: 'inbox',     href: '/admin/inbox',        icon: Inbox,           labelKey: 'sidebar.inbox',     group: 'content', permission: Permission.CONTACT_MESSAGES_VIEW },
