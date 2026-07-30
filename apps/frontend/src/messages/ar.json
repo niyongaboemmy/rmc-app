@@ -2271,7 +2271,10 @@
       "discussionsAll": "كل الأسئلة",
       "tenders": "المناقصات",
       "jobs": "طلبات التوظيف",
-      "jobPostings": "إعلانات الوظائف"
+      "jobPostings": "إعلانات الوظائف",
+      "manageJob": "إدارة الوظائف",
+      "jobsApplication": "الطلبات",
+      "jobsReport": "التقارير"
     },
     "topbar": {
       "viewSite": "عرض الموقع",

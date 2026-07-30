@@ -2271,7 +2271,10 @@
       "discussionsAll": "All questions",
       "tenders": "Tenders",
       "jobs": "Job Applications",
-      "jobPostings": "Job Postings"
+      "jobPostings": "Job Postings",
+      "manageJob": "Manage Job",
+      "jobsApplication": "Application",
+      "jobsReport": "Report"
     },
     "topbar": {
       "viewSite": "View site",

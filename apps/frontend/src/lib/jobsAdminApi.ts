@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { JobApplication } from './jobsApi';
+import type { JobApplication, JobApplicationStatus } from './jobsApi';
 
 export interface AdminJobsListResult {
   items: JobApplication[];
@@ -22,6 +22,12 @@ export interface UpdateJobStatusPayload {
   reason?: string;
 }
 
+/** Application counts by status over an optional date range (admin reports). */
+export interface JobReports {
+  total: number;
+  byStatus: Array<{ status: JobApplicationStatus; count: string }>;
+}
+
 export const jobsAdminApi = {
   list: async (params?: {
     status?: string;
@@ -42,6 +48,11 @@ export const jobsAdminApi = {
 
   updateStatus: async (id: string, payload: UpdateJobStatusPayload): Promise<JobApplication> => {
     const { data } = await apiClient.patch(`/admin/job-applications/${id}/status`, payload);
+    return data.data ?? data;
+  },
+
+  getReports: async (params?: { dateFrom?: string; dateTo?: string }): Promise<JobReports> => {
+    const { data } = await apiClient.get('/admin/job-applications/reports', { params });
     return data.data ?? data;
   },
 };

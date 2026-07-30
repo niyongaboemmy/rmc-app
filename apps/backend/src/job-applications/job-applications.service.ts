@@ -275,6 +275,32 @@ export class JobApplicationsService {
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
+  /**
+   * Application counts by status over an optional date range — powers the admin
+   * Job reports screen. Mirrors the tender reports service; job applications
+   * carry no monetary value, so there is no "awarded value" figure.
+   */
+  async adminGetReports(filters: { dateFrom?: string; dateTo?: string } = {}) {
+    const qb = this.applicationRepo.createQueryBuilder('app');
+    if (filters.dateFrom) qb.andWhere('app.createdAt >= :dateFrom', { dateFrom: filters.dateFrom });
+    if (filters.dateTo) {
+      const end = new Date(filters.dateTo);
+      end.setDate(end.getDate() + 1); // inclusive end date
+      qb.andWhere('app.createdAt < :dateTo', { dateTo: end.toISOString() });
+    }
+
+    const total = await qb.getCount();
+
+    const byStatus = await qb
+      .clone()
+      .select('app.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('app.status')
+      .getRawMany();
+
+    return { total, byStatus };
+  }
+
   async adminGetById(id: string): Promise<JobApplication> {
     const application = await this.applicationRepo.findOne({
       where: { id },
