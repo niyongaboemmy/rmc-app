@@ -50,3 +50,15 @@ export function postedDate(p: Pick<JobPosting, 'publishedAt' | 'createdAt'>): st
 export function canApplyTo(p: Pick<JobPosting, 'status' | 'applicationDeadline'>): boolean {
   return p.status === 'open' && !deadlineInfo(p.applicationDeadline).passed;
 }
+
+/** Lifecycle status, mirroring the Tenders model: a posting is closed once it's
+ *  been closed by an admin or its deadline lapses, and "closing" in its final week. */
+export type JobStatus = 'open' | 'closing' | 'closed';
+
+export function statusOf(p: Pick<JobPosting, 'status' | 'applicationDeadline'>): JobStatus {
+  if (p.status === 'closed') return 'closed';
+  const dl = deadlineInfo(p.applicationDeadline);
+  if (dl.passed) return 'closed';
+  if (dl.soon) return 'closing';
+  return 'open';
+}
