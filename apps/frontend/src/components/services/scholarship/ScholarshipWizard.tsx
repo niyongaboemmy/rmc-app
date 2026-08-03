@@ -16,6 +16,9 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
+import { AccountPrefillNote } from '@/components/services/shared/AccountPrefillNote';
+import { useAuth, type AuthUser } from '@/hooks/useAuth';
+import { accountFullName, toLocalRwandanPhone } from '@/lib/accountPrefill';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/lib/mediaUpload';
 import {
@@ -43,11 +46,6 @@ const HOW_MAX = 300;
 const ELSE_MAX = 200;
 const PROGRAM_MAX = 60;
 const INCOME_MAX = 30;
-
-/** +250781234567 (backend/API format) → 0781234567 (what the user sees/types). */
-function toLocalPhone(e164: string): string {
-  return e164?.startsWith('+250') ? `0${e164.slice(4)}` : e164;
-}
 
 /** 0781234567 (what the user types) → +250781234567 (backend/API format). */
 function toE164Phone(local: string): string {
@@ -164,6 +162,19 @@ const step4Schema = z.object({
 });
 type Step4Data = z.infer<typeof step4Schema>;
 
+/**
+ * Prefill from the signed-in account. Only the applicant's own contact details —
+ * the Student ID is a school number, not anything the account holds, and the
+ * guardian in step 4 is by definition someone else.
+ */
+function accountStep1(user: AuthUser | null): Partial<Step1Data> {
+  return {
+    fullNames: accountFullName(user) || undefined,
+    email: user?.email ?? '',
+    phone: toLocalRwandanPhone(user?.phone),
+  };
+}
+
 type WizardPhase = 1 | 2 | 3 | 4 | 'success';
 
 interface Props {
@@ -233,6 +244,9 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
 export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocuments }: Props) {
   const t = useTranslations('services.scholarship.apply');
   const { locale } = useParams<{ locale: string }>();
+  // Null when nobody is signed in — the page renders this wizard either way, and
+  // the prefill simply does nothing.
+  const { user } = useAuth();
 
   // Lazily seeded from `editRequest` (never a post-mount effect) — react-hook-form
   // only reads `defaultValues` once, at mount. For edited drafts the combined
@@ -246,9 +260,11 @@ export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocum
           fullNames: editRequest.fullNames,
           studentId: editRequest.nationalId ?? '',
           email: editRequest.email ?? '',
-          phone: toLocalPhone(editRequest.phone),
+          phone: toLocalRwandanPhone(editRequest.phone),
         }
-      : {},
+      : // A saved draft always wins over the account: it is what the applicant
+        // last typed. Account details only fill a form with nothing in it yet.
+        accountStep1(user),
   );
   const [step2Data, setStep2Data] = useState<Partial<Step2Data>>(() =>
     editRequest
@@ -267,7 +283,7 @@ export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocum
     editRequest
       ? {
           guardianName: editRequest.guardianName,
-          guardianPhone: toLocalPhone(editRequest.guardianPhone),
+          guardianPhone: toLocalRwandanPhone(editRequest.guardianPhone),
           householdIncome: '',
         }
       : {},
@@ -323,6 +339,11 @@ export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocum
   const [draftId, setDraftId] = useState<string | null>(editRequest?.id ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Shown while the prefilled fields are on screen, so nobody submits their own
+  // name and number without noticing they were filled in for them.
+  const prefilled =
+    !editRequest && !!(step1Data.fullNames || step1Data.phone || step1Data.email);
 
   const setFile = (key: string, f: File | null) =>
     setFiles((prev) => ({ ...prev, [key]: f }));
@@ -411,7 +432,9 @@ export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocum
   };
 
   const handleReset = () => {
-    setStep1Data({});
+    // Back to a blank form, which for a signed-in applicant means their account
+    // details again — not emptier than the form they first saw.
+    setStep1Data(accountStep1(user));
     setStep2Data({});
     setStep3Data({});
     setStep4Data({});
@@ -432,6 +455,8 @@ export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocum
           {submitError}
         </div>
       )}
+
+      {prefilled && phase === 1 && <AccountPrefillNote text={t('prefillNote')} />}
 
       {phase === 1 && (
         <Step1Personal

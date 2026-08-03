@@ -14,6 +14,9 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { AccountPrefillNote } from '@/components/services/shared/AccountPrefillNote';
+import { useAuth, type AuthUser } from '@/hooks/useAuth';
+import { accountFullName, toLocalRwandanPhone } from '@/lib/accountPrefill';
 import { publicApi } from '@/lib/public-api';
 import {
   goodConductApi,
@@ -27,11 +30,6 @@ import {
 // Local Rwandan mobile format the user types: 0 + network prefix (72/73/78/79) + 7 digits = 10 chars.
 const PHONE_RE = /^07[2389][0-9]{7}$/;
 const MOTIF_DETAIL_MAX = 500;
-
-/** +250781234567 (backend/API format) → 0781234567 (what the user sees/types). */
-function toLocalPhone(e164: string): string {
-  return e164?.startsWith('+250') ? `0${e164.slice(4)}` : e164;
-}
 
 /** 0781234567 (what the user types) → +250781234567 (backend/API format). */
 function toE164Phone(local: string): string {
@@ -63,6 +61,20 @@ const step2Schema = z
     path: ['motifDetail'],
   });
 type Step2Data = z.infer<typeof step2Schema>;
+
+// ─── Prefill from the signed-in account ────────────────────────────────────────
+// One account may file for several people (a family member, someone an officer
+// is helping), so this is a starting point and nothing more — every field stays
+// editable and the note above the form says so.
+function accountStep1(user: AuthUser | null): Partial<Step1Data> {
+  return {
+    fullNames: accountFullName(user) || undefined,
+    email: user?.email ?? '',
+    phone: toLocalRwandanPhone(user?.phone),
+    districtId: user?.districtId ?? '',
+    sectorId: user?.sectorId ?? '',
+  };
+}
 
 type District = { id: string; name: string };
 type Sector = { id: string; name: string };
@@ -119,6 +131,9 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
 
 export function GoodConductWizard({ editRequest }: Props) {
   const t = useTranslations('services.conduct.apply');
+  // The parent page renders this wizard only once auth has settled, so a
+  // signed-in applicant always has their account on hand by first render.
+  const { user } = useAuth();
 
   // Lazily seeded from `editRequest` (never a post-mount effect): the parent
   // page already gates rendering of this component behind its own "loading
@@ -139,11 +154,18 @@ export function GoodConductWizard({ editRequest }: Props) {
           cell: editRequest.cell ?? '',
           village: editRequest.village ?? '',
           email: editRequest.email ?? '',
-          phone: toLocalPhone(editRequest.phone),
+          phone: toLocalRwandanPhone(editRequest.phone),
         }
-      : {},
+      : // A saved request always wins over the account: it is what the applicant
+        // last typed. Account details only fill a form with nothing in it yet.
+        accountStep1(user),
   );
   const [request, setRequest] = useState<GoodConductRequest | null>(editRequest ?? null);
+
+  // Shown while the prefilled fields are on screen, so nobody submits their own
+  // name and number without noticing they were filled in for them.
+  const prefilled =
+    !editRequest && !!(step1Data.fullNames || step1Data.phone || step1Data.email);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -202,6 +224,8 @@ export function GoodConductWizard({ editRequest }: Props) {
           {submitError}
         </div>
       )}
+
+      {prefilled && phase === 1 && <AccountPrefillNote text={t('prefillNote')} />}
 
       {phase === 1 && (
         <Step1Identity initialData={step1Data} onNext={handleStep1Next} />
@@ -269,6 +293,26 @@ function Step1Identity({
     }
     publicApi.getSectors(districtId).then(setSectors).catch(() => setSectors([]));
   }, [districtId]);
+
+  // Both selects are uncontrolled and their options arrive an API round-trip
+  // after mount, so a value carried in from the account (or a saved request)
+  // lands on a list with no matching <option> and the browser quietly falls back
+  // to the placeholder — still submitted, but not what the applicant is shown.
+  // Re-apply it once the option exists.
+  useEffect(() => {
+    if (!initialData.districtId) return;
+    if (!districts.some((d) => d.id === initialData.districtId)) return;
+    setValue('districtId', initialData.districtId);
+  }, [districts, initialData.districtId, setValue]);
+
+  useEffect(() => {
+    // Only while the district is still the one this sector belongs to — picking
+    // a different district clears the sector on purpose, and re-applying here
+    // would undo that.
+    if (!initialData.sectorId || districtId !== initialData.districtId) return;
+    if (!sectors.some((s) => s.id === initialData.sectorId)) return;
+    setValue('sectorId', initialData.sectorId);
+  }, [sectors, districtId, initialData.districtId, initialData.sectorId, setValue]);
 
   const fullNamesError = errors.fullNames
     ? errors.fullNames.message === 'tooShort'
@@ -492,7 +536,7 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
   const router = useRouter();
 
   const [request, setRequest] = useState(initialRequest);
-  const [phone, setPhone] = useState(toLocalPhone(initialRequest.phone) || '');
+  const [phone, setPhone] = useState(toLocalRwandanPhone(initialRequest.phone));
   // 'slow' = provider timed out / is unresponsive; the charge may still be in
   // flight, so we show a friendly "try again shortly" state rather than a failure.
   const [phase, setPhase] = useState<'idle' | 'waiting' | 'confirmed' | 'failed' | 'slow'>('idle');

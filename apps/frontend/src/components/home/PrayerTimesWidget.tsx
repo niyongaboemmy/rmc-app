@@ -221,7 +221,7 @@ export function PrayerTimesWidget() {
         </div>
 
         {/* The board */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
           {/* Slim header line — location · live next prayer · find a mosque */}
           <div className="flex flex-col gap-3 px-5 py-4 border-b border-gray-100 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <p className="flex items-center gap-1.5 text-xs md:text-sm text-gray-500">

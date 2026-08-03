@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { Compass } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import { HERO_IMAGE } from './data';
 import {
-  ContentKeys, getSiteContent, mergeContent, pick,
-  HAJJ_DEFAULT, type HajjContent,
+  ContentKeys, pick, isRtl,
+  HAJJ_DEFAULT, type HajjContent, type Locale,
 } from '@/lib/content-api';
 
 /**
@@ -24,20 +25,22 @@ const TALBIYAH = 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ';
  *
  * Copy is admin-managed (Content → Hajj Service); the seeded defaults render
  * immediately, so there is no empty flash while the content loads.
+ *
+ * In super-admin Edit Mode the title, subtitle and Talbiyah meaning are editable
+ * in place; everyone else gets the identical read-only markup. The Talbiyah
+ * itself is scripture and stays out of it.
  */
 export function Hero() {
   const locale = useLocale();
-  const [content, setContent] = useState<HajjContent>(HAJJ_DEFAULT);
+  const lang = locale as Locale;
+  const dir = isRtl(locale) ? 'rtl' : 'ltr';
 
-  useEffect(() => {
-    let active = true;
-    getSiteContent<HajjContent>(ContentKeys.hajj)
-      .then((data) => {
-        if (active && data) setContent(mergeContent(HAJJ_DEFAULT, data));
-      })
-      .catch(() => { /* keep the defaults — a CMS outage must not blank the page */ });
-    return () => { active = false; };
-  }, []);
+  // Same merged content as before (defaults, then whatever the CMS holds) —
+  // plus the in-progress draft while an admin is editing.
+  const { content, editing, setField } = useEditableContent<HajjContent>(
+    ContentKeys.hajj,
+    HAJJ_DEFAULT,
+  );
 
   const hero = content.hero;
 
@@ -70,16 +73,53 @@ export function Hero() {
         <p className="font-arabic text-xl leading-relaxed text-rmc-gold-light drop-shadow md:text-2xl" dir="rtl" lang="ar">
           {TALBIYAH}
         </p>
-        <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.2em] text-white/45">
-          {pick(hero.talbiyahMeaning, locale)}
-        </p>
+        {editing ? (
+          <InlineText
+            as="p"
+            lang={locale}
+            dir={dir}
+            value={pick(hero.talbiyahMeaning, locale)}
+            onCommit={(v) => setField((d) => { d.hero.talbiyahMeaning[lang] = v; })}
+            className="mt-1 text-[11px] font-medium uppercase tracking-[0.2em] text-white/45"
+            placeholder="Meaning of the Talbiyah"
+          />
+        ) : (
+          <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.2em] text-white/45">
+            {pick(hero.talbiyahMeaning, locale)}
+          </p>
+        )}
 
-        <h1 className="mx-auto mt-5 max-w-2xl text-3xl font-bold leading-tight drop-shadow-lg md:text-[2.75rem] md:leading-[1.1]">
-          {pick(hero.title, locale)}
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-white/70 md:text-base">
-          {pick(hero.subtitle, locale)}
-        </p>
+        {editing ? (
+          <InlineText
+            as="h1"
+            lang={locale}
+            dir={dir}
+            value={pick(hero.title, locale)}
+            onCommit={(v) => setField((d) => { d.hero.title[lang] = v; })}
+            className="mx-auto mt-5 max-w-2xl text-3xl font-bold leading-tight drop-shadow-lg md:text-[2.75rem] md:leading-[1.1]"
+            placeholder="Hero title"
+          />
+        ) : (
+          <h1 className="mx-auto mt-5 max-w-2xl text-3xl font-bold leading-tight drop-shadow-lg md:text-[2.75rem] md:leading-[1.1]">
+            {pick(hero.title, locale)}
+          </h1>
+        )}
+
+        {editing ? (
+          <InlineText
+            as="p"
+            lang={locale}
+            dir={dir}
+            value={pick(hero.subtitle, locale)}
+            onCommit={(v) => setField((d) => { d.hero.subtitle[lang] = v; })}
+            className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-white/70 md:text-base"
+            placeholder="Hero subtitle"
+          />
+        ) : (
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-white/70 md:text-base">
+            {pick(hero.subtitle, locale)}
+          </p>
+        )}
         </div>
       </div>
 

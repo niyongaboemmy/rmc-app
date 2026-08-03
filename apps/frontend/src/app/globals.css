@@ -792,3 +792,29 @@ img[data-align='right']  { margin-inline-start: auto; margin-inline-end: 0; }
   opacity: 0.7;
   pointer-events: none;
 }
+
+/* --------------------------------------------------------
+   Floating launcher vs. page bottom bars
+   --------------------------------------------------------
+   The Ask-AI launcher owns the bottom-right corner site-wide.
+   A page that puts its OWN control down there sets
+   data-bottom-bar on <body> for as long as that control is
+   mounted, and the launcher steps up out of the way — without
+   the assistant having to know which pages those are.
+
+   6rem clears both shapes the donate page uses: the full-width
+   gift bar below lg (~4.25rem tall) and the review pill above
+   it (bottom-6, ~3rem tall).
+
+   Specificity here (0,2,1) beats Tailwind's bottom-5 / sm:bottom-6
+   on the element, so no !important is needed.
+
+   Nothing sets `transition` here on purpose: the launcher already
+   carries `transition-all duration-300`, which animates `bottom`
+   too. A `transition: bottom` rule of our own would win on source
+   order (it lands after @tailwind utilities) and take the scale /
+   opacity animation off the open-close toggle with it.
+   -------------------------------------------------------- */
+body[data-bottom-bar='true'] .ask-launcher {
+  bottom: 6rem;
+}

@@ -154,7 +154,6 @@ async function seedDawahDevFixtures(): Promise<void> {
           summaryEn,
           bodyEn: `<p>${summaryEn}</p>`,
           sortOrder: i + 1,
-          isPreview: i === 0,
         }),
       ),
     );

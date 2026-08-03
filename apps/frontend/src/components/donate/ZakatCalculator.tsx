@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Calculator, Plus, Info } from 'lucide-react';
+import { Calculator, Plus, Info, ArrowRight } from 'lucide-react';
 import { CURRENCIES, money, type CartItem } from './donateData';
 
 type NewItem = Omit<CartItem, 'id'>;
@@ -13,9 +13,11 @@ type NewItem = Omit<CartItem, 'id'>;
 export function ZakatCalculator({
   currency,
   onAddZakat,
+  onDonateZakatNow,
 }: {
   currency: string;
   onAddZakat: (item: NewItem) => void;
+  onDonateZakatNow: (item: NewItem) => void;
 }) {
   const t = useTranslations('donate');
   const [savings, setSavings] = useState('');
@@ -28,17 +30,24 @@ export function ZakatCalculator({
   const eligible = wealth >= nisabVal && wealth > 0;
   const zakat = useMemo(() => (eligible ? Math.round(wealth * 0.025) : 0), [eligible, wealth]);
 
+  const item = (): NewItem => ({
+    category: 'charity',
+    categoryTitle: t('zakatItem.category'),
+    fundKey: 'zakat',
+    label: t('zakatItem.label'),
+    campaignSlug: null,
+    amount: zakat,
+  });
+
   const add = () => {
     if (zakat <= 0) return;
-    onAddZakat({
-      category: 'charity',
-      categoryTitle: t('zakatItem.category'),
-      fundKey: 'zakat',
-      label: t('zakatItem.label'),
-      campaignSlug: null,
-      amount: zakat,
-    });
+    onAddZakat(item());
     setAdded(true);
+  };
+
+  const donateNow = () => {
+    if (zakat <= 0) return;
+    onDonateZakatNow(item());
   };
 
   return (
@@ -69,15 +78,26 @@ export function ZakatCalculator({
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A6A0F]">{t('zakat.yourZakat')}</p>
             <p className="mt-0.5 text-2xl font-bold tabular-nums text-gray-900">{money(currency, zakat)}</p>
           </div>
-          <button
-            type="button"
-            onClick={add}
-            disabled={zakat <= 0}
-            className="flex items-center justify-center gap-2 rounded-lg bg-[#8A6A0F] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#8A6A0F]/25 transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Plus className="h-4 w-4" />
-            {added ? t('zakat.addedAgain') : t('zakat.addZakat')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={add}
+              disabled={zakat <= 0}
+              className="flex items-center justify-center gap-2 rounded-lg border border-[#8A6A0F]/40 px-4 py-2.5 text-sm font-bold text-[#8A6A0F] transition-all duration-300 hover:bg-[#8A6A0F]/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" />
+              {added ? t('zakat.addedAgain') : t('zakat.addZakat')}
+            </button>
+            <button
+              type="button"
+              onClick={donateNow}
+              disabled={zakat <= 0}
+              className="group flex items-center justify-center gap-2 rounded-lg bg-[#8A6A0F] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#8A6A0F]/25 transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t('card.donateNow')}
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180" />
+            </button>
+          </div>
         </div>
 
         {!eligible && wealth > 0 && (

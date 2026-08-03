@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { Check, Plus, CheckCircle2, X, Sparkles, HandHeart } from 'lucide-react';
+import { Check, Plus, CheckCircle2, X, Sparkles, HandHeart, ArrowRight } from 'lucide-react';
 import { fundedPercent, formatMoney, type PublicCampaignLike } from './eventsBridge';
 import { toneChip, money, type CartItem } from './donateData';
 import { resolveIcon } from './categoryIcons';
@@ -40,18 +40,43 @@ interface Cause {
   funding?: Funding;
 }
 
+/* Cart line items. Pure functions of their arguments, so they live out here
+   rather than being rebuilt every render inside a hook dependency list. */
+const causeItem = (catKey: string, catTitle: string, c: Cause, amount: number): NewItem => ({
+  category: catKey,
+  categoryTitle: catTitle,
+  fundKey: c.fundKey,
+  label: c.label,
+  campaignSlug: c.campaignSlug,
+  amount,
+});
+
+/** A program records its own category in `fundType`; catTitle is display-only. */
+const programItem = (p: PublicCampaign, amount: number, catTitle?: string): NewItem => ({
+  category: p.fundType,
+  categoryTitle: catTitle ?? p.fundType,
+  fundKey: p.slug,
+  label: p.title,
+  campaignSlug: p.slug,
+  amount,
+});
+
 export function CategoryGrid({
   categories,
   currency,
   liveBySlug,
   campaigns,
   onAdd,
+  onDonateNow,
 }: {
   categories: PublicCategory[];
   currency: string;
   liveBySlug: Map<string, PublicCampaignLike>;
   campaigns: PublicCampaign[];
+  /** Add to the running gift and stay on the page — for donors giving to several causes. */
   onAdd: (item: NewItem) => void;
+  /** Take this one cause straight to checkout, leaving any running gift untouched. */
+  onDonateNow: (item: NewItem) => void;
 }) {
   const t = useTranslations('donate');
   const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -63,18 +88,21 @@ export function CategoryGrid({
 
   const handleAdd = useCallback(
     (catKey: string, catTitle: string, c: Cause, amount: number) => {
-      onAdd({
-        category: catKey,
-        categoryTitle: catTitle,
-        fundKey: c.fundKey,
-        label: c.label,
-        campaignSlug: c.campaignSlug,
-        amount,
-      });
+      onAdd(causeItem(catKey, catTitle, c, amount));
       setAdded((p) => ({ ...p, [`${catKey}:${c.fundKey}`]: true }));
       setActiveKey(null);
     },
     [onAdd],
+  );
+
+  // No "Added" badge here: nothing was added to anything — the donor is being
+  // taken straight to checkout for this one cause.
+  const handleDonateNow = useCallback(
+    (catKey: string, catTitle: string, c: Cause, amount: number) => {
+      onDonateNow(causeItem(catKey, catTitle, c, amount));
+      setActiveKey(null);
+    },
+    [onDonateNow],
   );
 
   // Group programs (campaigns) by the sub-fund they belong to; programs without a
@@ -102,10 +130,14 @@ export function CategoryGrid({
     };
   };
 
-  // A program records its own category in `fundType`; catTitle is display-only.
   const handleAddProgram = (p: PublicCampaign, amount: number, catTitle?: string) => {
-    onAdd({ category: p.fundType, categoryTitle: catTitle ?? p.fundType, fundKey: p.slug, label: p.title, campaignSlug: p.slug, amount });
+    onAdd(programItem(p, amount, catTitle));
     setAdded((prev) => ({ ...prev, [`prog:${p.slug}`]: true }));
+    setActiveKey(null);
+  };
+
+  const handleDonateNowProgram = (p: PublicCampaign, amount: number, catTitle?: string) => {
+    onDonateNow(programItem(p, amount, catTitle));
     setActiveKey(null);
   };
 
@@ -122,6 +154,7 @@ export function CategoryGrid({
             wasAdded={!!added[key]}
             onToggle={() => toggle(key)}
             onAdd={(amount) => handleAddProgram(p, amount, catTitle)}
+            onDonateNow={(amount) => handleDonateNowProgram(p, amount, catTitle)}
           />
         );
       })}
@@ -190,6 +223,7 @@ export function CategoryGrid({
                     wasAdded={!!added[key]}
                     onToggle={() => toggle(key)}
                     onAdd={(amount) => handleAdd(cat.key, catTitle, c, amount)}
+                    onDonateNow={(amount) => handleDonateNow(cat.key, catTitle, c, amount)}
                   />
                 );
               })}
@@ -239,6 +273,7 @@ function CauseCard({
   wasAdded,
   onToggle,
   onAdd,
+  onDonateNow,
 }: {
   cause: Cause;
   currency: string;
@@ -246,6 +281,7 @@ function CauseCard({
   wasAdded: boolean;
   onToggle: () => void;
   onAdd: (amount: number) => void;
+  onDonateNow: (amount: number) => void;
 }) {
   const t = useTranslations('donate');
   const [amount, setAmount] = useState(0);
@@ -259,9 +295,15 @@ function CauseCard({
     setResetKey((k) => k + 1);
   };
 
+  const donateNow = () => {
+    if (amount <= 0) return;
+    onDonateNow(amount);
+    setResetKey((k) => k + 1);
+  };
+
   return (
     <div
-      className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 transition-all duration-300 motion-safe:hover:-translate-y-1.5 hover:shadow-[0_20px_44px_-22px_rgba(26,122,74,0.35)] ${
+      className={`group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm ring-1 transition-all duration-300 motion-safe:hover:-translate-y-1.5 hover:shadow-[0_20px_44px_-22px_rgba(26,122,74,0.35)] ${
         active ? 'border-rmc-green ring-rmc-green/30' : 'border-gray-100 ring-black/[0.03] hover:border-rmc-green/30'
       }`}
     >
@@ -323,30 +365,45 @@ function CauseCard({
           </p>
         )}
 
-        {/* Add control */}
+        {/* Give controls */}
         <div className="mt-4 pt-1">
           {active ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
               <p className="mb-2 text-[11.5px] text-gray-500">{t('card.howMuch', { fund: cause.label })}</p>
               <AmountPicker key={resetKey} currency={currency} onAmount={onAmount} />
-              <div className="mt-2.5 flex gap-2">
+
+              {/* Two ways out, and the order is the point: giving to this one
+                  cause is the common case and gets the filled button, while
+                  "add to gift" is for the donor still assembling several. */}
+              <div className="mt-2.5 space-y-2">
                 <button
                   type="button"
-                  onClick={add}
+                  onClick={donateNow}
                   disabled={amount <= 0}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-rmc-green px-4 py-2 text-[13px] font-bold text-white transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group/pay flex w-full items-center justify-center gap-1.5 rounded-lg bg-rmc-green px-4 py-2 text-[13px] font-bold text-white transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  {t('card.add')} {amount > 0 ? money(currency, amount) : ''}
+                  {t('card.donateNow')} {amount > 0 ? money(currency, amount) : ''}
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/pay:translate-x-0.5 rtl:rotate-180" />
                 </button>
-                <button
-                  type="button"
-                  onClick={onToggle}
-                  aria-label={t('card.cancel')}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-colors hover:bg-gray-100"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={add}
+                    disabled={amount <= 0}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-rmc-green/30 px-4 py-2 text-[13px] font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green-light disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {t('card.addToGift')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onToggle}
+                    aria-label={t('card.cancel')}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-colors hover:bg-gray-100"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -355,8 +412,8 @@ function CauseCard({
               onClick={onToggle}
               className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-rmc-green/30 px-4 py-2 text-[13px] font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green hover:text-white"
             >
-              <Plus className="h-3.5 w-3.5" />
-              {t('card.addToGift')}
+              <HandHeart className="h-3.5 w-3.5" />
+              {t('card.give')}
             </button>
           )}
         </div>

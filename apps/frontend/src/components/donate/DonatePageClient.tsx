@@ -10,7 +10,7 @@ import { Footer } from '@/components/layout/Footer';
 import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
 import { donationCategoriesApi, type PublicCategory } from '@/lib/donationCategoriesApi';
 import { useDonationCart } from '@/contexts/DonationCartContext';
-import { CURRENCY_KEYS, money } from './donateData';
+import { CURRENCY_KEYS, money, type CartItem } from './donateData';
 import { DonateHero } from './DonateHero';
 import { CategoryGrid } from './CategoryGrid';
 import { QuickGive } from './QuickGive';
@@ -28,6 +28,28 @@ export function DonatePageClient() {
     useDonationCart();
   const [cartOpen, setCartOpen] = useState(false);
   const [summary, setSummary] = useState<DonationSummary | null>(null);
+
+  /**
+   * A one-cause gift going straight to checkout, deliberately kept OUT of the
+   * persisted cart. A donor who clicks "Donate now" on a single program means
+   * that program and nothing else — paying their whole running gift instead, or
+   * emptying it afterwards, would both be wrong. So the drawer is fed from this
+   * when set, and from the cart when it isn't.
+   */
+  const [directItem, setDirectItem] = useState<CartItem | null>(null);
+
+  const donateNow = (item: Omit<CartItem, 'id'>) => {
+    setDirectItem({ ...item, id: 'direct' });
+    setCartOpen(true);
+  };
+
+  const closeCheckout = () => {
+    setCartOpen(false);
+    setDirectItem(null);
+  };
+
+  const checkoutItems = directItem ? [directItem] : cart;
+  const checkoutTotal = directItem ? directItem.amount : total;
 
   // Live campaign funding (raised = completed transactions).
   const [liveCampaigns, setLiveCampaigns] = useState<PublicCampaign[]>([]);
@@ -54,15 +76,30 @@ export function DonatePageClient() {
 
   const niyyahLabel = t(`niyyah.${niyyah}.label`);
 
+  // The floating gift control (desktop pill / mobile bar) lands in the same
+  // bottom-right corner as the site-wide Ask-AI launcher, at the same z-index.
+  // Flagging it on <body> lets the launcher lift itself for exactly as long as
+  // the control is on screen. See globals.css → `.ask-launcher`.
+  const showFloatingCart = !summary && cart.length > 0 && !cartOpen;
+  useEffect(() => {
+    if (!showFloatingCart) return;
+    document.body.dataset.bottomBar = 'true';
+    return () => {
+      delete document.body.dataset.bottomBar;
+    };
+  }, [showFloatingCart]);
+
   const handleSuccess = (donationSummary: DonationSummary) => {
-    clear();
+    // Only a cart checkout empties the cart. A direct gift leaves whatever the
+    // donor was still assembling exactly where they left it.
+    if (!directItem) clear();
+    setDirectItem(null);
     setSummary(donationSummary);
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const reset = () => {
-    setSummary(null);
-    clear();
-  };
+  // Nothing to clear here — handleSuccess already emptied the cart if this was a
+  // cart checkout, and after a direct gift the cart is still wanted.
+  const reset = () => setSummary(null);
 
   return (
     <div className="min-h-screen bg-[#fbfcfb]">
@@ -90,11 +127,11 @@ export function DonatePageClient() {
                 {!catsLoaded ? (
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {[0, 1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="h-72 animate-pulse rounded-2xl bg-gray-100" />
+                      <div key={i} className="h-72 animate-pulse rounded-lg bg-gray-100" />
                     ))}
                   </div>
                 ) : categories.length === 0 && liveCampaigns.length === 0 ? (
-                  <div className="mx-auto max-w-md rounded-2xl border border-dashed border-gray-200 bg-white/60 p-10 text-center">
+                  <div className="mx-auto max-w-md rounded-lg border border-dashed border-gray-200 bg-white/60 p-10 text-center">
                     <HeartHandshake className="mx-auto mb-3 h-9 w-9 text-gray-300" aria-hidden="true" />
                     <p className="text-sm font-semibold text-gray-700">
                       {pick({ en: 'No causes yet', rw: 'Nta mpamvu irahari', ar: 'لا توجد قضايا بعد' }, locale)}
@@ -117,6 +154,7 @@ export function DonatePageClient() {
                     liveBySlug={liveBySlug}
                     campaigns={liveCampaigns}
                     onAdd={addItem}
+                    onDonateNow={donateNow}
                   />
                 )}
               </div>
@@ -127,8 +165,12 @@ export function DonatePageClient() {
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                 <h2 className="mb-8 text-center text-xl font-bold text-gray-900">More ways to give</h2>
                 <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
-                  <QuickGive currency={currency} onAdd={addItem} />
-                  <ZakatCalculator currency={currency} onAddZakat={addItem} />
+                  <QuickGive currency={currency} onAdd={addItem} onDonateNow={donateNow} />
+                  <ZakatCalculator
+                    currency={currency}
+                    onAddZakat={addItem}
+                    onDonateZakatNow={donateNow}
+                  />
                 </div>
               </div>
             </section>
@@ -138,12 +180,12 @@ export function DonatePageClient() {
       <Footer />
 
       {/* Floating cart — desktop pill + mobile bar, both open the checkout drawer */}
-      {!summary && cart.length > 0 && !cartOpen && (
+      {showFloatingCart && (
         <>
           <button
             type="button"
             onClick={() => setCartOpen(true)}
-            className="fixed bottom-6 right-6 z-[60] hidden items-center gap-3 rounded-full bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-rmc-green/30 transition-colors hover:bg-rmc-green-dark lg:flex animate-fade-up"
+            className="fixed bottom-6 right-6 z-[60] hidden items-center gap-3 rounded-lg bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-rmc-green/30 transition-colors hover:bg-rmc-green-dark lg:flex animate-fade-up"
           >
             <span className="relative shrink-0">
               <ShoppingBag className="h-5 w-5" />
@@ -177,14 +219,16 @@ export function DonatePageClient() {
 
       <CartDrawer
         open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        items={cart}
+        onClose={closeCheckout}
+        items={checkoutItems}
         currency={currency}
-        total={total}
+        total={checkoutTotal}
         niyyahLabel={niyyahLabel}
         niyyah={niyyah}
         locale={locale}
-        onRemove={removeItem}
+        // Removing the only line of a direct gift means "never mind" — there is
+        // nothing left to pay for, so back out rather than sit on an empty drawer.
+        onRemove={directItem ? closeCheckout : removeItem}
         onSuccess={handleSuccess}
       />
     </div>
