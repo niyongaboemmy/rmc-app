@@ -14,6 +14,14 @@ import {
   DawahBrowseCoursesButton,
   DawahCtaCards,
 } from '@/components/dawah/DawahLandingSections';
+import {
+  WhatIsDawah,
+  WhyDawahMatters,
+  CorePrinciples,
+  HowPracticed,
+  DawahFaq,
+  DawahFinalCta,
+} from '@/components/dawah/DawahAboutSections';
 import { getDawahContent, getFeaturedCourses, getRecentDiscussions } from '@/components/dawah/dawahData';
 import { pick } from '@/lib/content-api';
 
@@ -53,6 +61,21 @@ export default async function DawahPage({
       <main>
         {/* ── Hero — CMS copy, inline-editable ────────────────────────────── */}
         <DawahHero />
+
+        {/* ── Educational sections — explain the concept of Dawah to a
+            first-time visitor. Static, fully-translated copy (dawah.about.*). ── */}
+        <Reveal>
+          <WhatIsDawah />
+        </Reveal>
+        <Reveal>
+          <WhyDawahMatters />
+        </Reveal>
+        <Reveal>
+          <CorePrinciples />
+        </Reveal>
+        <Reveal>
+          <HowPracticed />
+        </Reveal>
 
         {/* ── Description — CMS rich text; eyebrow/title inline-editable ───── */}
         {hasDescription && (
@@ -154,6 +177,16 @@ export default async function DawahPage({
             </section>
           </Reveal>
         )}
+
+        {/* ── FAQ — common questions about Dawah ──────────────────────────── */}
+        <Reveal>
+          <DawahFaq />
+        </Reveal>
+
+        {/* ── Closing call-to-action — get involved ───────────────────────── */}
+        <Reveal>
+          <DawahFinalCta locale={locale} />
+        </Reveal>
       </main>
 
       <Footer />
