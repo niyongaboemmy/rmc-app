@@ -3,8 +3,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Search, GraduationCap, ChevronRight, RefreshCw } from 'lucide-react';
+import {
+  Search, GraduationCap, ChevronRight, RefreshCw, LayoutGrid, List as ListIcon,
+} from 'lucide-react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ScholarshipKanbanBoard } from '@/components/admin/scholarship/ScholarshipKanbanBoard';
+import { useAuth } from '@/contexts/AuthContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import {
   type ScholarshipApplication, type ScholarshipApplicationStatus, type ScholarshipProgram,
   type I18nText, type RequiredDocument,
@@ -58,12 +63,22 @@ function StatusBadge({ status }: { status: string }) {
 
 function ApplicationsTab() {
   const { locale } = useParams<{ locale: string }>();
+  const { hasPermission } = useAuth();
+  const canApprove = hasPermission(Permission.SCHOLARSHIP_APPROVE);
 
   const [applications, setApplications] = useState<ScholarshipApplication[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  /**
+   * List or board. The board is the same pipeline the list shows, laid out so a
+   * reviewer can move an application by dragging it — it lived on its own route
+   * reachable only from a row icon on Manage scholarships, which meant nobody
+   * working this screen ever found it.
+   */
+  const [view, setView] = useState<'list' | 'board'>('list');
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -111,6 +126,26 @@ function ApplicationsTab() {
           Reports page when the sidebar gained submenus — leaving them would mean
           two screens showing the same numbers, free to disagree. This screen is
           the working list: filters, then results. */}
+
+      {/* List | Board. The board needs ONE scholarship (applicants for different
+          awards are not competing), so it reuses the Scholarship filter below
+          rather than introducing a second picker that could disagree with it. */}
+      <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 w-fit">
+        {(['list', 'board'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setView(v)}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+              view === v ? 'bg-rmc-green text-white' : 'text-gray-500 hover:text-gray-800',
+            )}
+          >
+            {v === 'list' ? <ListIcon className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
+            {v === 'list' ? 'List' : 'Board'}
+          </button>
+        ))}
+      </div>
 
       {/* Filters — same shape as the Reports page, every control labelled, and
           the app's green accent throughout. Two screens in one section should
@@ -198,7 +233,30 @@ function ApplicationsTab() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* ── Board ─────────────────────────────────────────────────────────── */}
+      {view === 'board' && !programFilter && (
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-center">
+          <LayoutGrid className="mx-auto h-8 w-8 text-gray-300" />
+          <p className="mt-3 text-sm font-medium text-gray-600">Choose a scholarship</p>
+          <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-gray-400">
+            The board shows one scholarship&apos;s pipeline. Applicants for different
+            awards are not competing with each other, so there is nothing to compare
+            across a mixed board.
+          </p>
+        </div>
+      )}
+
+      {view === 'board' && programFilter && (
+        <ScholarshipKanbanBoard
+          key={programFilter}
+          locale={locale}
+          programId={programFilter}
+          canApprove={canApprove}
+        />
+      )}
+
+      {/* Table — list view only */}
+      {view === 'list' && (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -282,6 +340,7 @@ function ApplicationsTab() {
           </>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -310,7 +369,12 @@ function AdminScholarshipContent() {
 export default function AdminScholarshipPage() {
   return (
     <ProtectedRoute permissions={[Permission.SCHOLARSHIP_VIEW]}>
-      <AdminScholarshipContent />
+      {/* The board reports every move through a toast. ToastContext has a
+          NO-OP default, so without a provider a refused move would fail
+          silently — the reviewer would see the card snap back with no reason. */}
+      <ToastProvider>
+        <AdminScholarshipContent />
+      </ToastProvider>
     </ProtectedRoute>
   );
 }

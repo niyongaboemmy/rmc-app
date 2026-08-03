@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { HandHeart, Plus } from 'lucide-react';
-import { type CartItem } from './donateData';
+import { HandHeart, Plus, ArrowRight } from 'lucide-react';
+import { money, type CartItem } from './donateData';
 import { AmountPicker } from './AmountPicker';
 
 /* "Give to the general fund" card — a custom/preset amount straight to the
@@ -11,25 +11,35 @@ import { AmountPicker } from './AmountPicker';
 export function QuickGive({
   currency,
   onAdd,
+  onDonateNow,
 }: {
   currency: string;
   onAdd: (item: Omit<CartItem, 'id'>) => void;
+  onDonateNow: (item: Omit<CartItem, 'id'>) => void;
 }) {
   const t = useTranslations('donate');
   const [amount, setAmount] = useState(0);
   const [resetKey, setResetKey] = useState(0);
   const onAmount = useCallback((n: number) => setAmount(n), []);
 
+  const item = (): Omit<CartItem, 'id'> => ({
+    category: 'general',
+    categoryTitle: t('general.categoryTitle'),
+    fundKey: 'general',
+    label: t('general.label'),
+    campaignSlug: null,
+    amount,
+  });
+
   const add = () => {
     if (amount <= 0) return;
-    onAdd({
-      category: 'general',
-      categoryTitle: t('general.categoryTitle'),
-      fundKey: 'general',
-      label: t('general.label'),
-      campaignSlug: null,
-      amount,
-    });
+    onAdd(item());
+    setResetKey((k) => k + 1);
+  };
+
+  const donateNow = () => {
+    if (amount <= 0) return;
+    onDonateNow(item());
     setResetKey((k) => k + 1);
   };
 
@@ -52,11 +62,21 @@ export function QuickGive({
 
         <button
           type="button"
-          onClick={add}
+          onClick={donateNow}
           disabled={amount <= 0}
           className="group flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-all duration-300 hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
-          <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+          {t('card.donateNow')} {amount > 0 ? money(currency, amount) : ''}
+          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180" />
+        </button>
+
+        <button
+          type="button"
+          onClick={add}
+          disabled={amount <= 0}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-rmc-green/30 px-6 py-2.5 text-sm font-bold text-rmc-green transition-all duration-300 hover:bg-rmc-green-light disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" />
           {t('card.addToGift')}
         </button>
       </div>

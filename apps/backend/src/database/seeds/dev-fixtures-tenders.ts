@@ -1,27 +1,41 @@
-import { DataSource } from 'typeorm';
-import { Announcement } from '../../public/entities/announcement.entity';
+import 'reflect-metadata';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-/** Readable URL slug — mirrors slugify() in public.service. */
-function slugify(input: string): string {
-  return input
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/['’`]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 130);
-}
+import { AppDataSource } from '../../config/data-source';
+import { Announcement } from '../../public/entities/announcement.entity';
+import { slugify } from '../../common/slugify.util';
 
 /**
- * Seeds a spread of tender announcements so the public tender board and the
- * `/services/tender` landing page have real content to render — covering every
- * status the UI distinguishes (open, closing-soon, closed) plus a no-deadline
- * case, a couple of attachments, and all three priorities.
+ * LOCAL DEVELOPMENT FIXTURES — deliberately NOT registered in run-seeds.ts.
  *
- * Deadlines are relative to run time (a fixed date would drift into "closed"),
- * so re-seeding refreshes nothing that already exists — it is create-if-missing,
- * keyed on the English title, and never overwrites an admin's edits.
+ * Production runs the seed chain, so demo tenders must never be in it. Run by
+ * hand when the tender board needs something to show:
+ *
+ *   npx ts-node -r tsconfig-paths/register src/database/seeds/dev-fixtures-tenders.ts
+ *
+ * WAS `09-tenders.seed.ts`, in the production chain. It had to come out: these
+ * rows are written `isPublished: true` with a backdated `publishAt`, so the
+ * chain put six invented tenders straight onto the public board — and the bid
+ * wizard populates its picker from the open ones. A contractor could file a real
+ * bid, with real RDB and tax-clearance documents and a real tracking code,
+ * against a tender RMC never issued.
+ *
+ * Covers every status the UI distinguishes (open, closing-soon, closed) plus a
+ * no-deadline case and all three priorities, because the board and the
+ * `/services/tender` landing page branch on all of them.
+ *
+ * Deadlines are relative to run time — a fixed date would drift into "closed"
+ * and the fixture would stop exercising the open-tender paths.
+ *
+ * On the attachments: their keys point at nothing on the file-server, so the
+ * attachment LIST renders (name, type, size) and the download 404s. That is the
+ * point of keeping them — layout work needs the list — and it is survivable
+ * here in a way it would not be for a library book, whose file IS the record
+ * (see the no-fixture-books note in dev-fixtures-dawah.ts). Never let these
+ * reach an environment where someone might click them in earnest.
+ *
+ * Idempotent by English title.
  */
 type SeedTender = {
   title: { en: string; rw: string; ar: string };
@@ -126,17 +140,19 @@ const TENDERS: SeedTender[] = [
   },
 ];
 
-export async function seedTenders(dataSource: DataSource): Promise<void> {
-  const repo = dataSource.getRepository(Announcement);
+async function main(): Promise<void> {
+  await AppDataSource.initialize();
+  console.log('[fixtures] Connected. Seeding tender fixtures...');
 
-  console.log('[SEED] Seeding tenders...');
+  const repo = AppDataSource.getRepository(Announcement);
 
-  // created_by is NOT NULL — attribute the seed rows to the earliest user.
-  const [owner] = await dataSource.query<{ id: string }[]>(
+  // created_by is NOT NULL — attribute the fixture rows to the earliest user.
+  const [owner] = await AppDataSource.query<{ id: string }[]>(
     'SELECT id FROM users ORDER BY created_at ASC LIMIT 1',
   );
   if (!owner?.id) {
-    console.log('  [SEED] No user found for created_by — run the admin seed first. Skipping tenders.');
+    console.log('[fixtures] No user found for created_by — run `npm run seed` first. Nothing done.');
+    await AppDataSource.destroy();
     return;
   }
 
@@ -188,10 +204,14 @@ export async function seedTenders(dataSource: DataSource): Promise<void> {
       }),
     );
     created += 1;
-    console.log(`  [SEED] Created tender "${tk.title.en}"`);
+    console.log(`[fixtures] + ${tk.title.en}`);
   }
 
-  console.log(
-    `[SEED] Tenders seed complete — ${created} created, ${TENDERS.length - created} already present.`,
-  );
+  console.log(`[fixtures] done — ${created} created, ${TENDERS.length - created} already present.`);
+  await AppDataSource.destroy();
 }
+
+main().catch((err) => {
+  console.error('[fixtures] failed:', err);
+  process.exit(1);
+});

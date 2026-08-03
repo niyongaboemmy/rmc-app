@@ -6,8 +6,9 @@ import { PageHero } from '@/components/layout/PageHero';
 import { ImageCarousel3D } from '@/components/about/ImageCarousel3D';
 import { HistoryTimeline } from '@/components/about/HistoryTimeline';
 import { AboutSwitch } from '@/components/about/AboutSwitch';
+import { LeadershipGrid, type LeaderView } from '@/components/about/LeadershipGrid';
 import { getTranslations, getLocale } from 'next-intl/server';
-import { ArrowRight, Eye, Images, Mail, Phone, Target, User } from 'lucide-react';
+import { ArrowRight, Eye, Images, Target } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
 import { ContentKeys, getSiteContent, pickLang } from '@/lib/content-api';
 import DOMPurify from 'isomorphic-dompurify';
@@ -54,9 +55,11 @@ export default async function AboutPage() {
   // Admin-managed leaders take over once saved; otherwise use the fallback above.
   const cmsLeaders = Array.isArray(about?.leaders) ? (about!.leaders as Array<Record<string, string>>) : [];
   const resolveLeaderImg = (v: string) => (/^https?:\/\//.test(v) || v.startsWith('/') ? v : fileUrl(v));
-  const leaderList = cmsLeaders.length > 0
-    ? cmsLeaders.map((l) => ({ id: l.id, img: l.image ? resolveLeaderImg(l.image) : '', name: pickLang(l, 'name', locale), role: pickLang(l, 'role', locale), email: l.email || '', phone: l.phone || '' }))
-    : leaders.map((l) => ({ id: l.id, img: l.img as string, name: t(`leadership.${l.id}.name`), role: t(`leadership.${l.id}.role`), email: '', phone: '' }));
+  // `bio` is the long-form profile behind the card — modal-only, and empty until
+  // an admin writes one. The built-in fallback leaders have none.
+  const leaderList: LeaderView[] = cmsLeaders.length > 0
+    ? cmsLeaders.map((l) => ({ id: l.id, img: l.image ? resolveLeaderImg(l.image) : '', name: pickLang(l, 'name', locale), role: pickLang(l, 'role', locale), email: l.email || '', phone: l.phone || '', bio: pickLang(l, 'bio', locale) }))
+    : leaders.map((l) => ({ id: l.id, img: l.img as string, name: t(`leadership.${l.id}.name`), role: t(`leadership.${l.id}.role`), email: '', phone: '', bio: '' }));
 
   // Gallery preview 3D carousel — pulled from the public gallery API.
   const galleryImages = await publicApi
@@ -208,64 +211,9 @@ export default async function AboutPage() {
               </div>
               <p className="text-gray-400 max-w-xl mx-auto text-sm md:text-base">{txt('leadershipSubtitle', t('leadership.subtitle'))}</p>
             </div>
-            <div className="mx-auto grid max-w-4xl grid-cols-1 md:grid-cols-2 gap-5">
-              {leaderList.map(({ id, img, name, role, email, phone }) => (
-                <div
-                  key={id}
-                  className="group flex items-center gap-5 rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/30 hover:shadow-md"
-                >
-                  {/* Portrait — gradient green→gold ring frame; dark-green head
-                      placeholder when a leader has no photo set. */}
-                  <div className="relative shrink-0 rounded-full bg-gradient-to-br from-rmc-green via-rmc-gold to-rmc-green p-[2px] shadow-sm shadow-rmc-green/20">
-                    <div className="relative h-20 w-20 overflow-hidden rounded-full ring-2 ring-white">
-                      {img ? (
-                        <Image
-                          src={img}
-                          alt={name}
-                          fill
-                          quality={95}
-                          sizes="80px"
-                          className="object-cover object-top transition-transform duration-500 motion-reduce:transform-none group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-rmc-green-deep">
-                          <User className="h-9 w-9 text-white/80" strokeWidth={1.5} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="min-w-0 flex-1">
-                    {/* Role pill */}
-                    <span className="inline-flex items-center rounded-lg bg-rmc-green-light px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-rmc-green-dark">
-                      {role}
-                    </span>
-
-                    {/* Name + verified check */}
-                    <h3 className="mt-2 truncate font-medium text-gray-900">
-                      {name}
-                    </h3>
-
-                    {/* Contact — email & phone */}
-                    {(email || phone) && (
-                      <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
-                        {email && (
-                          <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 truncate hover:text-rmc-green transition-colors">
-                            <Mail className="h-3.5 w-3.5 shrink-0 text-rmc-green/70" /> <span className="truncate">{email}</span>
-                          </a>
-                        )}
-                        {phone && (
-                          <a href={`tel:${phone}`} className="inline-flex items-center gap-1.5 hover:text-rmc-green transition-colors" dir="ltr">
-                            <Phone className="h-3.5 w-3.5 shrink-0 text-rmc-green/70" /> {phone}
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Client component: each card opens a profile modal, which needs
+                state this server page cannot hold. */}
+            <LeadershipGrid leaders={leaderList} locale={locale} />
           </div>
         </section>
 

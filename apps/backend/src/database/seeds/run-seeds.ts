@@ -11,7 +11,8 @@ import { seedDonationContent } from './05-donation-content.seed';
 import { seedSmsConfig } from './06-sms-config.seed';
 import { seedSectors } from './07-sectors.seed';
 import { seedDawahCategories } from './08-dawah-categories.seed';
-import { seedTenders } from './09-tenders.seed';
+// No tenders here. They were `09-tenders.seed.ts` until it became clear the rows
+// are demo content published to the live board — see dev-fixtures-tenders.ts.
 
 async function runSeeds(): Promise<void> {
   await AppDataSource.initialize();
@@ -26,7 +27,6 @@ async function runSeeds(): Promise<void> {
   await seedSmsConfig(AppDataSource);
   await seedSectors(AppDataSource);
   await seedDawahCategories(AppDataSource);
-  await seedTenders(AppDataSource);
 
   await AppDataSource.destroy();
   // eslint-disable-next-line no-console

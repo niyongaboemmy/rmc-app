@@ -183,6 +183,11 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        // Service forms (tender bids, and anything else prefilling contact
+        // details) read this straight off the session, so it has to be here and
+        // not only on GET /auth/profile — otherwise the first form opened after
+        // signing in is the one that comes up with an empty phone field.
+        phone: user.phone,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
@@ -587,9 +592,14 @@ export class AuthService {
 
   // ── Profile ───────────────────────────────────────────────────────────────────
 
-  async getProfile(
-    userId: string,
-  ): Promise<Partial<User> & { membershipNumber?: string; joinedDate?: Date }> {
+  async getProfile(userId: string): Promise<
+    Partial<User> & {
+      membershipNumber?: string;
+      joinedDate?: Date;
+      districtId?: string;
+      sectorId?: string;
+    }
+  > {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -603,6 +613,10 @@ export class AuthService {
       ...safe,
       membershipNumber: member?.membershipNumber ?? undefined,
       joinedDate: member?.joinedDate ?? undefined,
+      // Where the member lives, for forms that ask for an address. Only members
+      // have these — a plain account gets undefined and the fields stay empty.
+      districtId: member?.districtId ?? undefined,
+      sectorId: member?.sectorId ?? undefined,
     };
   }
 

@@ -53,7 +53,18 @@ export function EditModeToggle({
       onClick={handleClick}
       aria-pressed={editMode}
       title={editMode ? 'Exit edit mode' : 'Edit this page in place'}
-      className={`inline-flex items-center gap-1.5 text-[13px] font-medium px-3 py-1.5 rounded-full border transition-all duration-200 ${
+      /*
+       * Geometry matches every other navbar button exactly — `rounded-lg`, not
+       * the pill this used to be. It was the only button in the bar shaped
+       * differently; the remaining `rounded-full` elements up there are dots,
+       * avatars and badges, never controls.
+       *
+       * The ACTIVE state keeps its gold. That is not decoration: it is the only
+       * signal that edit mode is on, and making it identical to a resting button
+       * would leave a super-admin unable to tell whether clicking the page will
+       * edit it.
+       */
+      className={`inline-flex items-center gap-1.5 text-[13px] font-medium px-3 py-1.5 rounded-lg border transition-all duration-200 ${
         editMode
           ? 'border-rmc-gold/60 bg-rmc-gold/20 text-rmc-gold-light'
           : 'border-white/25 bg-white/10 text-white/80 hover:bg-white/20 hover:border-white/50 hover:text-white'

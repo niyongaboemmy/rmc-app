@@ -33,6 +33,8 @@ interface Leader {
   id: string; image: string;
   nameEn: string; nameRw: string; nameAr: string;
   roleEn: string; roleRw: string; roleAr: string;
+  /** Long-form profile. Public site shows it only inside the leader's modal. */
+  bioEn?: string; bioRw?: string; bioAr?: string;
   email?: string; phone?: string;
 }
 
@@ -132,12 +134,14 @@ export function AboutEditBoard({ initial }: { initial: Record<string, unknown> |
   const addLeader = () =>
     writeLeaders([...leaders, {
       id: crypto.randomUUID(),
-      image: '', nameEn: 'New leader', nameRw: '', nameAr: '', roleEn: 'Role', roleRw: '', roleAr: '', email: '', phone: '',
+      image: '', nameEn: 'New leader', nameRw: '', nameAr: '', roleEn: 'Role', roleRw: '', roleAr: '',
+      bioEn: '', bioRw: '', bioAr: '', email: '', phone: '',
     }]);
   const removeLeader = (id: string) => writeLeaders(leaders.filter((l) => l.id !== id));
 
   const nameKey = `name${sfx}` as keyof Leader;
   const roleKey = `role${sfx}` as keyof Leader;
+  const bioKey = `bio${sfx}` as keyof Leader;
 
   // Gallery preview carousel — same source as the public page.
   const [gallery, setGallery] = useState<{ src: string; alt: string }[]>([]);
@@ -275,6 +279,12 @@ export function AboutEditBoard({ initial }: { initial: Record<string, unknown> |
                     placeholder="Role" className={`inline-flex rounded-lg bg-rmc-green-light px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-rmc-green-dark ${fontClass}`} />
                   <Editable tag="h3" value={(l[nameKey] as string) || ''} onChange={(v) => setLeader(l.id, nameKey, v)} dir={dir}
                     placeholder="Name" className={`mt-2 truncate font-medium text-gray-900 ${fontClass}`} />
+
+                  {/* Profile — public site shows this only inside the leader's
+                      modal, so it is edited here rather than on the card. */}
+                  <Editable value={(l[bioKey] as string) || ''} onChange={(v) => setLeader(l.id, bioKey, v)} dir={dir}
+                    placeholder="Profile / bio (shown in the pop-up)"
+                    className={`mt-2 block whitespace-pre-line text-xs leading-relaxed text-gray-500 ${fontClass}`} />
                   <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
                     <span className="inline-flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5 shrink-0 text-rmc-green/70" />

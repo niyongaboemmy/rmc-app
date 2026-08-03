@@ -248,7 +248,9 @@ export function AskAIButton() {
         onClick={() => setOpen(true)}
         aria-label={t.askAi}
         title={t.askAi}
-        className={`fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-[60] flex items-center gap-1.5 rounded-lg py-2.5 pl-3 pr-4 text-sm font-semibold text-white bg-gradient-to-br from-rmc-green to-rmc-green-dark shadow-md shadow-rmc-green/25 ring-1 ring-white/20 transition-all duration-300 ${
+        // `ask-launcher` is the hook a page uses to move this out of the way of
+        // its own bottom bar — see the data-bottom-bar rule in globals.css.
+        className={`ask-launcher fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-[60] flex items-center gap-1.5 rounded-lg py-2.5 pl-3 pr-4 text-sm font-semibold text-white bg-gradient-to-br from-rmc-green to-rmc-green-dark shadow-md shadow-rmc-green/25 ring-1 ring-white/20 transition-all duration-300 ${
           open ? 'pointer-events-none scale-90 opacity-0' : 'scale-100 opacity-100'
         }`}
       >

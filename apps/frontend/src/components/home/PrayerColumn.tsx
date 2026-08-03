@@ -98,7 +98,7 @@ export function PrayerColumn() {
 
         {/* Next prayer + live countdown — the highlight */}
         {times && next && (
-          <div className="rounded-xl bg-rmc-green-light/60 border border-rmc-green/15 px-3.5 py-3 mb-4">
+          <div className="rounded-lg bg-rmc-green-light/60 border border-rmc-green/15 px-3.5 py-3 mb-4">
             <div className="flex items-center justify-between gap-3 mb-1">
               <p className="text-[10px] uppercase tracking-[0.2em] text-rmc-green-dark font-bold">Next Prayer</p>
               <p className="text-rmc-green-dark font-bold text-xs tabular-nums">in {formatRemaining(remaining)}</p>
@@ -114,7 +114,7 @@ export function PrayerColumn() {
         {!times ? (
           <div className="flex flex-1 flex-col justify-between gap-2.5">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-11 rounded-xl bg-gray-100 animate-pulse" />
+              <div key={i} className="h-11 rounded-lg bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : (

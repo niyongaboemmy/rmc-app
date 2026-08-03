@@ -47,7 +47,7 @@ export function DonateHero({
         {/* Primary CTA */}
         <a
           href="#causes"
-          className="group mt-6 inline-flex items-center gap-2.5 rounded-full bg-rmc-gold px-7 py-3 text-sm font-bold text-rmc-green-deep shadow-xl shadow-black/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-rmc-gold-light"
+          className="group mt-6 inline-flex items-center gap-2.5 rounded-lg bg-rmc-gold px-7 py-3 text-sm font-bold text-rmc-green-deep shadow-xl shadow-black/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-rmc-gold-light"
         >
           <HeartHandshake className="h-5 w-5" />
           {t('header.title2')}
@@ -68,7 +68,7 @@ export function DonateHero({
                   type="button"
                   onClick={() => onNiyyah(n.key)}
                   aria-pressed={active}
-                  className={`group rounded-2xl border px-4 py-3.5 text-center backdrop-blur-md transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold ${
+                  className={`group rounded-lg border px-4 py-3.5 text-center backdrop-blur-md transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold ${
                     active
                       ? 'border-rmc-gold/70 bg-white/15 shadow-lg shadow-black/10 ring-1 ring-rmc-gold/40'
                       : 'border-white/15 bg-white/[0.06] hover:border-white/35 hover:bg-white/10'
