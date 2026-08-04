@@ -176,6 +176,68 @@ export function DawahBrowseCoursesButton() {
   );
 }
 
+// ── Recent-discussions heading (editable title + subtitle) ───────────────────
+export function DawahDiscussionsHeading() {
+  const { locale, lang, content, setField } = useDawahCopy();
+  return (
+    <div className="mx-auto max-w-2xl text-center">
+      <InlineText
+        as="h2"
+        lang={locale}
+        value={pick(content.discussions.title, locale)}
+        onCommit={(v) => setField((d) => { d.discussions.title[lang] = v; })}
+        className="text-2xl font-bold text-rmc-green-deep md:text-3xl"
+        placeholder="Title"
+      />
+      <div className="ornament-divider mx-auto my-4 max-w-xs">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
+      </div>
+      <InlineText
+        as="p"
+        lang={locale}
+        value={pick(content.discussions.subtitle, locale)}
+        onCommit={(v) => setField((d) => { d.discussions.subtitle[lang] = v; })}
+        className="text-sm leading-relaxed text-gray-500"
+        placeholder="Subtitle"
+      />
+    </div>
+  );
+}
+
+// ── Recent-discussions buttons (editable labels) ─────────────────────────────
+export function DawahDiscussionsCtas() {
+  const { locale, lang, content, setField } = useDawahCopy();
+  return (
+    <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+      <Link
+        href={`/${locale}/dawah/discussions`}
+        className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rmc-green/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-rmc-green-dark"
+      >
+        <InlineText
+          as="span"
+          lang={locale}
+          value={pick(content.discussions.viewAll, locale)}
+          onCommit={(v) => setField((d) => { d.discussions.viewAll[lang] = v; })}
+          placeholder="Link label"
+        />
+        <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+      </Link>
+      <Link
+        href={`/${locale}/dawah/discussions/ask`}
+        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/40"
+      >
+        <InlineText
+          as="span"
+          lang={locale}
+          value={pick(content.discussions.askCta, locale)}
+          onCommit={(v) => setField((d) => { d.discussions.askCta[lang] = v; })}
+          placeholder="Link label"
+        />
+      </Link>
+    </div>
+  );
+}
+
 // ── The two CTA cards → Courses and Library ──────────────────────────────────
 export function DawahCtaCards() {
   const { locale, lang, content, setField } = useDawahCopy();
