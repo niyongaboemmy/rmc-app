@@ -13,6 +13,7 @@ import { publicApi } from '@/lib/public-api';
 import { fileUrl } from '@/lib/api';
 import { useTranslations } from 'next-intl';
 import { TenderApplyButton } from '@/components/services/tender/TenderApplyButton';
+import { readDeadline, getLifecycle, type Lifecycle } from '@/lib/deadline';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ type Tender = {
   attachments: Attachment[];
 };
 
-type Status = 'open' | 'closing' | 'closed';
+type Status = Lifecycle;
 
 function resolveText(i18n: I18n | null | undefined, fallback: string, locale: string): string {
   if (!i18n) return fallback;
@@ -42,18 +43,10 @@ function resolveText(i18n: I18n | null | undefined, fallback: string, locale: st
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getDiffDays(expiresAt: string | null): number | null {
-  if (!expiresAt) return null;
-  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
-}
-
-function getStatus(expiresAt: string | null): Status {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'open';
-  if (diff < 0) return 'closed';
-  if (diff <= 7) return 'closing';
-  return 'open';
-}
+// Status, `isClosed`, and the countdown all derive from `@/lib/deadline`, which
+// compares raw timestamps the way `assertTenderOpen` does on the backend. That
+// agreement is what keeps the Apply button below from being offered on a tender
+// the API will reject.
 
 // Status-driven accents, spelled out for the JIT.
 const STATUS_STYLES: Record<Status, { dot: string; chip: string; heroChip: string }> = {
@@ -116,10 +109,10 @@ export default function TenderDetailPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  const diff = tender ? getDiffDays(tender.expiresAt) : null;
-  // A tender with no deadline never closes, so `diff === null` is open, not closed.
-  const isClosed = diff !== null && diff < 0;
-  const status: Status = tender ? getStatus(tender.expiresAt) : 'open';
+  const deadline = readDeadline(tender?.expiresAt);
+  // A tender with no deadline never closes.
+  const isClosed = deadline.closed;
+  const status: Status = tender ? getLifecycle(tender.expiresAt) : 'open';
   const styles = STATUS_STYLES[status];
   const priorityColor = tender ? (PRIORITY_COLOR[tender.priority] ?? PRIORITY_COLOR.normal) : null;
   const priorityLabel = tender
@@ -131,24 +124,30 @@ export default function TenderDetailPage() {
   const displayContent = tender ? resolveText(tender.contentI18n, tender.content, locale) : '';
 
   function deadlineRelative(expiresAt: string | null): string {
-    const d = getDiffDays(expiresAt);
-    if (d === null) return t('deadline.noneSet');
-    if (d < 0) return t('deadline.submissionClosed');
-    if (d === 0) return t('deadline.today');
-    if (d === 1) return t('deadline.tomorrow');
-    return t('deadline.inDays', { days: d });
+    const d = readDeadline(expiresAt);
+    switch (d.state) {
+      case 'none':
+        return t('deadline.noneSet');
+      case 'closed':
+        return t('deadline.submissionClosed');
+      case 'today':
+        return t('deadline.today');
+      case 'tomorrow':
+        return t('deadline.tomorrow');
+      default:
+        return t('deadline.inDays', { days: d.days });
+    }
   }
 
-  const deadlineTone =
-    diff === null
-      ? 'text-gray-500'
-      : diff < 0
-      ? 'text-gray-400'
-      : diff <= 3
-      ? 'text-red-600'
-      : diff <= 7
-      ? 'text-amber-600'
-      : 'text-rmc-green';
+  const deadlineTone = deadline.closed
+    ? 'text-gray-400'
+    : deadline.days === null
+    ? 'text-gray-500'
+    : deadline.days <= 3
+    ? 'text-red-600'
+    : deadline.days <= 7
+    ? 'text-amber-600'
+    : 'text-rmc-green';
 
   const heroTitle = loading
     ? t('detail.heroTitle')
@@ -351,10 +350,12 @@ export default function TenderDetailPage() {
                         )}
                       </dl>
 
-                      {/* Days remaining — a highlighted count, colour-coded by urgency */}
-                      {diff !== null && diff >= 0 && (
+                      {/* Days remaining — a highlighted count, colour-coded by urgency.
+                          Gone once closed: counting down to a deadline that has
+                          already passed is the thing this page must never do. */}
+                      {!deadline.closed && deadline.days !== null && (
                         <div className="px-5 pb-5 -mt-1">
-                          {diff === 0 ? (
+                          {deadline.days === 0 ? (
                             <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-red-600">
                               <Clock className="h-4 w-4" />
                               <span className="text-sm font-bold">{t('deadline.today')}</span>
@@ -362,18 +363,18 @@ export default function TenderDetailPage() {
                           ) : (
                             <div
                               className={`flex items-center gap-3 rounded-lg px-4 py-3 ${
-                                diff <= 3 ? 'bg-red-50' : diff <= 7 ? 'bg-amber-50' : 'bg-rmc-green-light/50'
+                                deadline.days <= 3 ? 'bg-red-50' : deadline.days <= 7 ? 'bg-amber-50' : 'bg-rmc-green-light/50'
                               }`}
                             >
                               <span
                                 className={`text-3xl font-extrabold leading-none tabular-nums ${
-                                  diff <= 3 ? 'text-red-600' : diff <= 7 ? 'text-amber-600' : 'text-rmc-green'
+                                  deadline.days <= 3 ? 'text-red-600' : deadline.days <= 7 ? 'text-amber-600' : 'text-rmc-green'
                                 }`}
                               >
-                                {diff}
+                                {deadline.days}
                               </span>
                               <span className="text-xs font-semibold text-gray-600">
-                                {t(diff === 1 ? 'deadline.dayRemaining' : 'deadline.daysRemaining')}
+                                {t(deadline.days === 1 ? 'deadline.dayRemaining' : 'deadline.daysRemaining')}
                               </span>
                             </div>
                           )}

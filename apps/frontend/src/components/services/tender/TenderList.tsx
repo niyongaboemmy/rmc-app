@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { FileText, Clock, ArrowRight, AlertCircle, Paperclip, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
 import { useTranslations } from 'next-intl';
+import { readDeadline, getLifecycle, type Lifecycle } from '@/lib/deadline';
 
 type I18n = { en: string; rw: string; ar: string };
 
@@ -29,31 +30,25 @@ function resolveText(i18n: I18n | null | undefined, fallback: string, locale: st
 }
 
 type Filter = 'all' | 'open' | 'closing' | 'closed';
-type Status = 'open' | 'closing' | 'closed';
-
-function getDiffDays(expiresAt: string | null): number | null {
-  if (!expiresAt) return null;
-  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
-}
-
-function getStatus(expiresAt: string | null): Status {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'open';
-  if (diff < 0) return 'closed';
-  if (diff <= 7) return 'closing';
-  return 'open';
-}
+type Status = Lifecycle;
 
 function deadlineLabel(
   expiresAt: string | null,
   t: (key: string, values?: Record<string, unknown>) => string,
 ): string {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return t('deadline.none');
-  if (diff < 0) return t('deadline.closed');
-  if (diff === 0) return t('deadline.today');
-  if (diff === 1) return t('deadline.tomorrow');
-  return t('deadline.inDays', { days: diff });
+  const deadline = readDeadline(expiresAt);
+  switch (deadline.state) {
+    case 'none':
+      return t('deadline.none');
+    case 'closed':
+      return t('deadline.closed');
+    case 'today':
+      return t('deadline.today');
+    case 'tomorrow':
+      return t('deadline.tomorrow');
+    default:
+      return t('deadline.inDays', { days: deadline.days });
+  }
 }
 
 // Status drives every accent on a card — bar, dot, chip and deadline pill — so
@@ -140,15 +135,15 @@ export function TenderList({ variant = 'grid', listHeader, railBottom }: TenderL
 
   const filtered = useMemo(() => {
     if (filter === 'all') return searched;
-    return searched.filter((tender) => getStatus(tender.expiresAt) === filter);
+    return searched.filter((tender) => getLifecycle(tender.expiresAt) === filter);
   }, [searched, filter]);
 
   const counts = useMemo(
     () => ({
       all: searched.length,
-      open: searched.filter((tender) => getStatus(tender.expiresAt) === 'open').length,
-      closing: searched.filter((tender) => getStatus(tender.expiresAt) === 'closing').length,
-      closed: searched.filter((tender) => getStatus(tender.expiresAt) === 'closed').length,
+      open: searched.filter((tender) => getLifecycle(tender.expiresAt) === 'open').length,
+      closing: searched.filter((tender) => getLifecycle(tender.expiresAt) === 'closing').length,
+      closed: searched.filter((tender) => getLifecycle(tender.expiresAt) === 'closed').length,
     }),
     [searched],
   );
@@ -174,9 +169,9 @@ export function TenderList({ variant = 'grid', listHeader, railBottom }: TenderL
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
   const renderCard = (tender: Tender, i: number) => {
-    const status = getStatus(tender.expiresAt);
+    const status = getLifecycle(tender.expiresAt);
     const styles = STATUS_STYLES[status];
-    const diff = getDiffDays(tender.expiresAt);
+    const deadline = readDeadline(tender.expiresAt);
     const attachCount = tender.attachments?.length ?? 0;
     const isRtl = locale === 'ar';
     const displayTitle = resolveText(tender.titleI18n, tender.title, locale);
@@ -300,11 +295,11 @@ export function TenderList({ variant = 'grid', listHeader, railBottom }: TenderL
           </div>
 
           {/* Urgency bar for closing-soon tenders */}
-          {status === 'closing' && diff !== null && diff >= 0 && (
+          {status === 'closing' && deadline.days !== null && (
             <div className="mt-3 h-1 rounded-full bg-amber-100 overflow-hidden">
               <div
                 className="h-full bg-amber-400 rounded-full"
-                style={{ width: `${Math.max(5, 100 - (diff / 7) * 100)}%` }}
+                style={{ width: `${Math.max(5, 100 - (deadline.days / 7) * 100)}%` }}
               />
             </div>
           )}
