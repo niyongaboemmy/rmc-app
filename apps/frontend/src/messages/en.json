@@ -3600,6 +3600,120 @@
     }
   },
   "dawah": {
+    "about": {
+      "what": {
+        "eyebrow": "What is Dawah?",
+        "title": "An invitation, offered with kindness",
+        "lead": "The word dawah (دعوة) means “invitation” or “calling.” In Islam, it is the act of gently inviting others — and reminding ourselves — to know God and to live with goodness, mercy, and justice.",
+        "verse": "“Invite to the way of your Lord with wisdom and good instruction, and speak to them in the best manner.”",
+        "verseRef": "Qur’an 16:125",
+        "p1": "Dawah is never about pressure or winning an argument. It is sharing something you value while fully respecting the other person’s freedom to think and choose for themselves.",
+        "p2": "At its heart, dawah is as much about how you live as what you say. A kept promise, an honest deal, a patient answer and a helping hand can speak louder than any words."
+      },
+      "why": {
+        "eyebrow": "Why it matters",
+        "title": "More than words — a way of life",
+        "subtitle": "Dawah shapes the person who offers it and strengthens the community around them.",
+        "cards": {
+          "understanding": {
+            "title": "It builds understanding",
+            "body": "In a diverse society, dawah opens honest, respectful conversation. It replaces suspicion with familiarity and helps neighbours know one another as they truly are."
+          },
+          "character": {
+            "title": "It strengthens character",
+            "body": "Inviting others to good keeps us accountable to it first. Practising patience, honesty and compassion for the sake of others quietly shapes who we become."
+          },
+          "community": {
+            "title": "It serves the community",
+            "body": "Dawah is lived through service — feeding the hungry, teaching the young and standing for justice — leaving the community better than we found it."
+          }
+        }
+      },
+      "principles": {
+        "eyebrow": "Core principles",
+        "title": "The values that guide it",
+        "subtitle": "Dawah done well rests on timeless values that keep it sincere, gentle and true.",
+        "items": {
+          "wisdom": {
+            "title": "Wisdom",
+            "body": "Meeting people where they are — choosing the right word, the right moment and the right tone for each person."
+          },
+          "compassion": {
+            "title": "Compassion",
+            "body": "Caring genuinely for the wellbeing of others, in this life and the next, without judgement or harshness."
+          },
+          "knowledge": {
+            "title": "Knowledge",
+            "body": "Speaking from understanding rather than assumption — and having the humility to say “I don’t know.”"
+          },
+          "character": {
+            "title": "Good character",
+            "body": "Living the message first. Honesty, humility and kindness are the most convincing invitation of all."
+          },
+          "patience": {
+            "title": "Patience",
+            "body": "Guidance takes time. We plant, water and leave the outcome to God, never forcing a result."
+          }
+        }
+      },
+      "practices": {
+        "eyebrow": "In practice",
+        "title": "How Dawah is lived",
+        "subtitle": "There is no single method. These are some of the ways Muslims share and embody it every day.",
+        "items": {
+          "example": {
+            "title": "By example",
+            "body": "The most powerful dawah is a life well lived — reliable, generous and calm — so that goodness is seen before it is ever heard."
+          },
+          "learning": {
+            "title": "Through learning & teaching",
+            "body": "Studying the deen and sharing it clearly, from a simple conversation to a structured course, so understanding grows on firm ground."
+          },
+          "conversation": {
+            "title": "Through conversation",
+            "body": "Listening first, answering questions with respect and welcoming honest dialogue across faiths and backgrounds."
+          },
+          "service": {
+            "title": "Through service",
+            "body": "Meeting real needs with charity, mentorship and support — because compassion in action speaks to every heart."
+          }
+        }
+      },
+      "faq": {
+        "eyebrow": "Questions",
+        "title": "Common questions",
+        "subtitle": "A few things people often ask about dawah.",
+        "items": {
+          "f1": {
+            "q": "Is dawah about converting people?",
+            "a": "No. Dawah means sincerely sharing and inviting; guidance itself rests with God alone. The goal is understanding and goodwill, never coercion — “There is no compulsion in religion.” (Qur’an 2:256)"
+          },
+          "f2": {
+            "q": "Do I need to be a scholar to take part?",
+            "a": "Not at all. Everyone can practise dawah through good character, honesty and kindness. Share what you know clearly, and it is always fine to say “I’m not sure — let me find out.”"
+          },
+          "f3": {
+            "q": "Is dawah only for Muslims?",
+            "a": "Its lessons — patience, service and respectful dialogue — reach everyone. Muslims also practise dawah among themselves, encouraging one another toward good."
+          },
+          "f4": {
+            "q": "How is dawah different from preaching?",
+            "a": "Dawah is an invitation, not a lecture. It values listening, wisdom and respect for the other person’s freedom to choose as much as the message itself."
+          },
+          "f5": {
+            "q": "How can I get involved with RMC?",
+            "a": "Start with our courses and library to learn, join the discussions to ask and answer questions, or contact us to take part in community programs."
+          }
+        }
+      },
+      "cta": {
+        "eyebrow": "Get involved",
+        "title": "Start your journey today",
+        "subtitle": "Learn at your own pace, ask your questions and take part in the life of the community.",
+        "primary": "Explore courses",
+        "secondary": "Contact us"
+      }
+    },
     "title": "Dawah Learning",
     "tabs": {
       "courses": "Courses",
