@@ -381,10 +381,10 @@ export function DawahFaq() {
         />
 
         <div className="mt-10 space-y-3">
-          {FAQ_KEYS.map((key) => (
+          {FAQ_KEYS.map((key, i) => (
             <details
               key={key}
-              open
+              open={i === 0}
               className="group rounded-lg border border-gray-200/70 bg-gray-50/50 p-5 transition-colors duration-200 hover:border-rmc-green/40 [&_summary]:list-none"
             >
               <summary className="flex cursor-pointer items-center justify-between gap-4 text-sm font-bold text-gray-900">
