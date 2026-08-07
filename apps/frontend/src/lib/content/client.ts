@@ -61,6 +61,7 @@ export const ContentKeys = {
   tendersHero: 'tenders-hero',
   registerHero: 'register-hero',
   newMuslimHero: 'new-muslim-hero',
+  newMuslim: 'new-muslim',
   servicesHero: 'services-hero',
   contactHero: 'contact-hero',
   tendersHome: 'tenders-home',
