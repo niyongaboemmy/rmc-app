@@ -196,8 +196,12 @@ export class PublicService {
   }
 
   async deletePost(id: string): Promise<{ success: boolean }> {
-    const result = await this.posts.delete(id);
-    if (!result.affected) throw new NotFoundException('Post not found');
+    const post = await this.posts.findOne({ where: { id } });
+    if (!post) throw new NotFoundException('Post not found');
+    // Hide, don't destroy: archiving keeps the row (audit/recovery) while
+    // removing it from every public view (which only shows 'published').
+    post.status = 'archived';
+    await this.posts.save(post);
     return { success: true };
   }
 
