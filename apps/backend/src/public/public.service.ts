@@ -165,7 +165,11 @@ export class PublicService {
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.category', 'c')
       .where('p.status = :status', { status: 'published' })
-      .orderBy('p.published_at', 'DESC')
+      // Order by the ENTITY property (publishedAt), not the DB column name.
+      // With the category join + take(), TypeORM builds a DISTINCT pagination
+      // sub-query and can only resolve the property alias — the snake_case
+      // column name here made every call throw (500).
+      .orderBy('p.publishedAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
     if (categorySlug) qb.andWhere('c.slug = :slug', { slug: categorySlug });
@@ -185,7 +189,16 @@ export class PublicService {
 
   async createPost(dto: Partial<BlogPost>): Promise<BlogPost> {
     const post = this.posts.create(dto);
+    // slug is NOT NULL + unique; derive a stable one from the title when the
+    // caller omits it so a valid post never fails with a raw 500.
+    if (!post.slug && post.title) post.slug = slugify(post.title);
     return this.posts.save(post);
+  }
+
+  async deletePost(id: string): Promise<{ success: boolean }> {
+    const result = await this.posts.delete(id);
+    if (!result.affected) throw new NotFoundException('Post not found');
+    return { success: true };
   }
 
   async updatePost(id: string, dto: Partial<BlogPost>): Promise<BlogPost> {

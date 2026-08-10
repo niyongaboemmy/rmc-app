@@ -14,6 +14,20 @@ import { Public } from '../common/decorators/public.decorator';
 import { Roles, Role } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PublicService } from './public.service';
+import {
+  CreateVerseDto,
+  UpdateVerseDto,
+  CreateAnnouncementDto,
+  UpdateAnnouncementDto,
+  CreateGalleryItemDto,
+  UpdateGalleryItemDto,
+  CreateBlogPostDto,
+  UpdateBlogPostDto,
+} from './dto/public-content.dto';
+import { VerseOfDay } from './entities/verse-of-day.entity';
+import { Announcement } from './entities/announcement.entity';
+import { BlogPost } from './entities/blog-post.entity';
+import { GalleryItem } from './entities/gallery-item.entity';
 
 @ApiTags('Public')
 @Controller('public')
@@ -39,15 +53,15 @@ export class PublicController {
   @Post('verse-of-day')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  createVerse(@CurrentUser('id') userId: string, @Body() dto: any) {
-    return this.service.createVerse({ ...dto, createdBy: userId });
+  createVerse(@CurrentUser('id') userId: string, @Body() dto: CreateVerseDto) {
+    return this.service.createVerse({ ...dto, createdBy: userId } as unknown as Partial<VerseOfDay>);
   }
 
   @Put('verse-of-day/:id')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  updateVerse(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
-    return this.service.updateVerse(id, dto);
+  updateVerse(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateVerseDto) {
+    return this.service.updateVerse(id, dto as unknown as Partial<VerseOfDay>);
   }
 
   @Delete('verse-of-day/:id')
@@ -108,15 +122,15 @@ export class PublicController {
   @Post('announcements')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  createAnnouncement(@CurrentUser('id') userId: string, @Body() dto: any) {
-    return this.service.createAnnouncement({ ...dto, createdBy: userId });
+  createAnnouncement(@CurrentUser('id') userId: string, @Body() dto: CreateAnnouncementDto) {
+    return this.service.createAnnouncement({ ...dto, createdBy: userId } as unknown as Partial<Announcement>);
   }
 
   @Put('announcements/:id')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  updateAnnouncement(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
-    return this.service.updateAnnouncement(id, dto);
+  updateAnnouncement(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAnnouncementDto) {
+    return this.service.updateAnnouncement(id, dto as unknown as Partial<Announcement>);
   }
 
   @Delete('announcements/:id')
@@ -153,15 +167,23 @@ export class PublicController {
   @Post('blog/posts')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN, Role.OPERATOR)
-  createPost(@CurrentUser('id') userId: string, @Body() dto: any) {
-    return this.service.createPost({ ...dto, authorId: userId });
+  createPost(@CurrentUser('id') userId: string, @Body() dto: CreateBlogPostDto) {
+    return this.service.createPost({ ...dto, authorId: userId } as unknown as Partial<BlogPost>);
   }
 
   @Put('blog/posts/:id')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN, Role.OPERATOR)
-  updatePost(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
-    return this.service.updatePost(id, dto);
+  updatePost(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBlogPostDto) {
+    return this.service.updatePost(id, dto as unknown as Partial<BlogPost>);
+  }
+
+  @Delete('blog/posts/:id')
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Delete a blog post' })
+  deletePost(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deletePost(id);
   }
 
   // ── Gallery ──
@@ -187,16 +209,16 @@ export class PublicController {
   @Post('gallery')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  addGalleryItem(@CurrentUser('id') userId: string, @Body() dto: any) {
-    return this.service.addGalleryItem({ ...dto, uploadedBy: userId });
+  addGalleryItem(@CurrentUser('id') userId: string, @Body() dto: CreateGalleryItemDto) {
+    return this.service.addGalleryItem({ ...dto, uploadedBy: userId } as unknown as Partial<GalleryItem>);
   }
 
   @Put('gallery/:id')
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   @ApiOperation({ summary: 'Update gallery item metadata' })
-  updateGalleryItem(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
-    return this.service.updateGalleryItem(id, dto);
+  updateGalleryItem(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateGalleryItemDto) {
+    return this.service.updateGalleryItem(id, dto as unknown as Partial<GalleryItem>);
   }
 
   @Delete('gallery/:id')
