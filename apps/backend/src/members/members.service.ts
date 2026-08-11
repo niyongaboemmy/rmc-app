@@ -14,6 +14,7 @@ import { User } from '../users/entities/user.entity';
 import { RegisterMemberDto } from './dto/register-member.dto';
 import { ApproveMemberDto, ApprovalAction } from './dto/approve-member.dto';
 import { UpdateMemberStatusDto } from './dto/update-member-status.dto';
+import { allocateMembershipNumber } from '../common/utils/membership-number';
 
 @Injectable()
 export class MembersService {
@@ -23,39 +24,57 @@ export class MembersService {
     private readonly config: ConfigService,
   ) {}
 
-  private generateMembershipNumber(): string {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 90000) + 10000;
-    return `RMC-${year}-${random}`;
-  }
-
+  /**
+   * Completes the member registration form.
+   *
+   * Signup already created a profile row to reserve a membership number, so this
+   * fills that stub in rather than creating a second one — the old code read any
+   * existing profile as "already registered" and threw 409, which every account
+   * triggered, making the endpoint permanently unreachable. `registered_at`
+   * (migration 058) is what actually separates the two states.
+   *
+   * The membership number is never reissued here. It was allocated at signup and
+   * may already have been shown to the member; re-rolling it on submission would
+   * change an identifier they had been given.
+   */
   async register(userId: string, dto: RegisterMemberDto): Promise<MemberProfile> {
-    const existing = await this.profiles.findOne({ where: { userId } });
-    if (existing) throw new ConflictException('Member profile already exists for this user');
-
     if (dto.nationalId) {
       const nationalIdConflict = await this.profiles.findOne({
         where: { nationalId: dto.nationalId },
       });
-      if (nationalIdConflict) throw new ConflictException('National ID already registered');
+      if (nationalIdConflict && nationalIdConflict.userId !== userId) {
+        throw new ConflictException('National ID already registered');
+      }
     }
 
-    let membershipNumber = this.generateMembershipNumber();
-    while (await this.profiles.findOne({ where: { membershipNumber } })) {
-      membershipNumber = this.generateMembershipNumber();
-    }
+    // One transaction: the legacy branch allocates a membership number, and a
+    // number claimed for a submission that then fails must not be burned.
+    return this.profiles.manager.transaction(async (manager) => {
+      const repo = manager.getRepository(MemberProfile);
+      const existing = await repo.findOne({ where: { userId } });
 
-    const profile = this.profiles.create({
-      userId,
-      membershipNumber,
-      joinedDate: new Date(),
-      consentDate: dto.consentGiven ? new Date() : null,
-      approvalStatus: ApprovalStatus.PENDING,
-      memberStatus: MemberStatus.ACTIVE,
-      ...dto,
+      if (existing?.registeredAt) {
+        throw new ConflictException('Member profile already exists for this user');
+      }
+
+      // Accounts predating signup creating a profile still arrive here with none.
+      const profile =
+        existing ??
+        repo.create({
+          userId,
+          membershipNumber: await allocateMembershipNumber(manager),
+          joinedDate: new Date(),
+          approvalStatus: ApprovalStatus.PENDING,
+          memberStatus: MemberStatus.ACTIVE,
+        });
+
+      Object.assign(profile, dto, {
+        registeredAt: new Date(),
+        consentDate: dto.consentGiven ? new Date() : null,
+      });
+
+      return repo.save(profile);
     });
-
-    return this.profiles.save(profile);
   }
 
   async findAll(filters: {
