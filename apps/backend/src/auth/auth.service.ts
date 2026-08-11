@@ -7,8 +7,8 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, MoreThan } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { Repository, DataSource, EntityManager, IsNull, MoreThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -58,6 +58,8 @@ export class AuthService {
     private readonly auditLogRepo: Repository<AuditLog>,
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
     @InjectRedis() private readonly redis: Redis,
     private readonly notifSettings: NotificationSettingsService,
     private readonly smsService: SmsService,
@@ -82,30 +84,54 @@ export class AuthService {
       });
     }
 
+    // Hashed before the transaction opens: at 12 rounds this takes ~300ms, and
+    // holding a transaction (and its row lock on the year's counter) open across
+    // it would serialise concurrent registrations behind each other's bcrypt.
     const rounds = this.configService.get<number>('app.bcryptRounds', 12);
     const passwordHash = await bcrypt.hash(dto.password, rounds);
 
-    const user = await this.usersService.save({
-      email: dto.email,
-      phone: dto.phone,
-      passwordHash,
-      firstName: dto.firstName,
-      lastName: dto.lastName,
-      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
-      gender: dto.gender || null,
-      role: 'user',
-      status: 'pending',
+    // User and member profile are one unit of work. Split across two commits, a
+    // failed profile insert would strand a user with no membership number who can
+    // never re-register — the uniqueness checks above would reject them forever.
+    const user = await this.dataSource.transaction(async (manager) => {
+      const created = await manager.getRepository(User).save({
+        email: dto.email,
+        phone: dto.phone,
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
+        gender: dto.gender || null,
+        role: 'user',
+        status: 'pending',
+      } as User);
+
+      await manager.getRepository(MemberProfile).save({
+        userId: created.id,
+        membershipNumber: await this.allocateMembershipNumber(manager),
+        joinedDate: new Date(),
+      });
+
+      return created;
     });
 
-    const membershipNumber = await this.generateMembershipNumber();
-    await this.memberProfileRepo.save({
-      userId: user.id,
-      membershipNumber,
-      joinedDate: new Date(),
-    });
-
+    // Outside the transaction: none of these are worth rolling a good registration
+    // back for, and the mail round-trip must not hold the counter lock.
     await this.writeAuditLog('user', user.id, 'create', user.id, user.role);
     await this.sendWelcomeEmail(user);
+
+    // Send the first code here rather than from the verify screen: sendOtp allows
+    // only 3 requests per 10 minutes per phone, and sending on page load would
+    // spend that budget on refreshes. The screen offers an explicit resend instead.
+    //
+    // Deliberately NOT awaited. The account is already committed and the caller
+    // needs no part of this result, whereas awaiting puts every dependency of OTP
+    // delivery on the signup critical path: with Redis unreachable, ioredis burns
+    // its 20 retries first and registration took 4.2s to return a success it had
+    // already earned.
+    void this.sendOtp(user.phone).catch((err) => {
+      this.logger.error(`Failed to send registration OTP to ${user.phone}: ${err}`);
+    });
 
     return {
       userId: user.id,
@@ -269,16 +295,34 @@ export class AuthService {
       });
     }
 
-    const rateLimitKey = `otp_rate:${phone}`;
-    const count = await this.redis.incr(rateLimitKey);
-    if (count === 1) {
-      await this.redis.expire(rateLimitKey, 600); // 10 minutes
-    }
-    if (count > 3) {
-      throw new BadRequestException({
-        code: 'AUTH_OTP_RATE_LIMITED',
-        message: 'Too many OTP requests. Try again later.',
-      });
+    /**
+     * Per-phone send budget: 3 per 10 minutes.
+     *
+     * Redis is a cache here, not the system of record, so an unreachable Redis
+     * degrades this limit instead of failing the request. It used to throw
+     * straight out of `incr`, which the filter rendered as a bare 500
+     * INTERNAL_ERROR — so with Redis down, phone verification was impossible and
+     * the response said nothing about why. The per-IP `@Throttle` on this route
+     * still applies when this path is skipped, so it is not left unguarded.
+     */
+    try {
+      const rateLimitKey = `otp_rate:${phone}`;
+      const count = await this.redis.incr(rateLimitKey);
+      if (count === 1) {
+        await this.redis.expire(rateLimitKey, 600); // 10 minutes
+      }
+      if (count > 3) {
+        throw new BadRequestException({
+          code: 'AUTH_OTP_RATE_LIMITED',
+          message: 'Too many OTP requests. Try again later.',
+        });
+      }
+    } catch (err) {
+      // The budget being spent is a real answer; only infrastructure failure degrades.
+      if (err instanceof BadRequestException) throw err;
+      this.logger.warn(
+        `Redis unavailable — per-phone OTP rate limit skipped for ${phone} (${String(err)})`,
+      );
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -292,6 +336,17 @@ export class AuthService {
     // Dev mode: log OTP to console
     const expiresStr = expiresAt.toTimeString().split(' ')[0];
     this.logger.log(`[OTP] Phone: ${phone} | Code: ${otp} | Expires: ${expiresStr}`);
+
+    // Actually deliver it. Without this the code only ever reached the server log,
+    // so registration could not be completed by anyone without shell access.
+    // Mirrors the 2FA path: gated on the same notification setting, fire-and-forget
+    // so a carrier timeout doesn't fail a request whose OTP row is already stored.
+    if (this.notifSettings.isSmsEnabled('auth.otp_sms')) {
+      void this.smsService.sendSms(
+        phone,
+        `RMC Platform: Your verification code is ${otp}. Valid for ${this.configService.get<number>('app.otpExpiryMinutes', 5)} minutes. Do not share it.`,
+      );
+    }
 
     return { message: 'OTP sent', expiresAt };
   }
@@ -333,7 +388,17 @@ export class AuthService {
     }
 
     await this.otpRepo.update(record.id, { verifiedAt: new Date() });
-    await this.usersService.update(record.userId, { isPhoneVerified: true });
+
+    // Verification is what completes onboarding, so this is where a registration's
+    // 'pending' finally becomes 'active' — nothing else ever promoted it, leaving
+    // every self-registered account pending forever. Scoped to 'pending' on
+    // purpose: it must not resurrect an account an admin suspended or deactivated.
+    const user = await this.usersService.findByIdRaw(record.userId);
+    await this.usersService.update(record.userId, {
+      isPhoneVerified: true,
+      ...(user?.status === 'pending' ? { status: 'active' } : {}),
+    });
+
     await this.writeAuditLog('user', record.userId, 'phone_verified', record.userId, 'user');
 
     return { message: 'Phone verified successfully' };
@@ -767,10 +832,26 @@ export class AuthService {
     }
   }
 
-  private async generateMembershipNumber(): Promise<string> {
+  /**
+   * `RMC-<year>-<6-digit-seq>`, allocated from `membership_counters` (migration 056).
+   *
+   * Runs on the caller's EntityManager so the number is claimed inside the same
+   * transaction as the profile row it belongs to: a registration that rolls back
+   * releases its number instead of leaving a permanent gap. The upsert is atomic,
+   * so concurrent registrations serialise on the year's row rather than racing.
+   */
+  private async allocateMembershipNumber(manager: EntityManager): Promise<string> {
     const year = new Date().getFullYear();
-    const key = `membership_counter:${year}`;
-    const seq = await this.redis.incr(key);
+    const rows = (await manager.query(
+      `INSERT INTO "membership_counters" ("year", "last_seq")
+            VALUES ($1, 1)
+       ON CONFLICT ("year") DO UPDATE
+              SET "last_seq" = "membership_counters"."last_seq" + 1
+        RETURNING "last_seq"`,
+      [year],
+    )) as Array<{ last_seq: number | string }>;
+
+    const seq = Number(rows[0].last_seq);
     return `RMC-${year}-${seq.toString().padStart(6, '0')}`;
   }
 

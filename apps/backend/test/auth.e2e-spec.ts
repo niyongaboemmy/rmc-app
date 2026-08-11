@@ -4,6 +4,7 @@ import * as request from 'supertest';
 import * as crypto from 'crypto';
 import axios from 'axios';
 import { Reflector } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppModule } from '../src/app.module';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
@@ -29,7 +30,15 @@ let refreshToken: string;
 beforeAll(async () => {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  })
+    // This suite deliberately hammers login to prove the per-account lockout, and
+    // registers repeatedly to prove the conflict paths. All of it arrives from one
+    // IP, so the real per-IP throttle would start answering 429 partway through
+    // and mask the responses being asserted. The limits themselves are exercised
+    // separately, below.
+    .overrideGuard(ThrottlerGuard)
+    .useValue({ canActivate: () => true })
+    .compile();
 
   app = moduleFixture.createNestApplication();
   app.setGlobalPrefix('api/v1');
@@ -367,6 +376,47 @@ describe('Swagger', () => {
     expect(res.body.paths['/api/v1/auth/forgot-password']).toBeDefined();
     expect(res.body.paths['/api/v1/auth/reset-password']).toBeDefined();
     expect(res.body.paths['/api/v1/auth/mfa/setup']).toBeDefined();
+  });
+});
+
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+
+/**
+ * The shared `app` above overrides ThrottlerGuard away, so the limits get their
+ * own instance with the guard live. `verify-phone` is the endpoint to probe: it
+ * has a limit of 10, and a well-formed body for a number with no outstanding OTP
+ * just returns 400 — no email, no SMS, no rows written.
+ */
+describe('Rate limiting', () => {
+  let throttledApp: INestApplication;
+
+  beforeAll(async () => {
+    const fixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    throttledApp = fixture.createNestApplication();
+    throttledApp.setGlobalPrefix('api/v1');
+    throttledApp.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+    throttledApp.useGlobalFilters(new HttpExceptionFilter());
+    await throttledApp.init();
+  });
+
+  afterAll(async () => {
+    await throttledApp.close();
+  });
+
+  it('429s once an endpoint limit is exceeded', async () => {
+    const send = () =>
+      request(throttledApp.getHttpServer())
+        .post('/api/v1/auth/verify-phone')
+        .send({ phone: '+250700000009', otp: '000000' });
+
+    const statuses: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      statuses.push((await send()).status);
+    }
+
+    // First 10 get through and fail on their merits; the rest are refused outright.
+    expect(statuses.slice(0, 10).every((s) => s === 400)).toBe(true);
+    expect(statuses.slice(10)).toEqual([429, 429]);
   });
 });
 

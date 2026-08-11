@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -93,6 +93,11 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
   ],
   controllers: [AppController, HealthController],
   providers: [
+    // ThrottlerModule was configured but its guard was never registered, so the
+    // limits below had no effect on any route. First in the list on purpose:
+    // rate limiting should reject a flood before it costs a JWT verify or a
+    // permission lookup.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },

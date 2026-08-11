@@ -12,16 +12,14 @@ import { Alert } from '@/components/ui/Alert';
 import { apiClient } from '@/lib/api';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { passwordSchema } from '@/lib/password';
 
 // ── Validation ─────────────────────────────────────────────────────────────────
 
 const schema = z
   .object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z
-      .string()
-      .min(8, 'Minimum 8 characters')
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_#])/, 'Must include uppercase, lowercase, number & special char'),
+    newPassword: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
