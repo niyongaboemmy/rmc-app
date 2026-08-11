@@ -7,6 +7,7 @@ import {
   MaxLength,
   IsDateString,
   IsUUID,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CampaignStatus } from '../entities/donation-campaign.entity';
@@ -26,6 +27,7 @@ export class CreateCampaignDto {
 
   @ApiProperty()
   @IsString()
+  @MaxLength(20000)
   description: string;
 
   @ApiProperty()
@@ -62,10 +64,13 @@ export class CreateCampaignDto {
   @IsDateString()
   endDate?: string | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Full URL, absolute path, or file-server key (no whitespace)' })
   @IsOptional()
   @IsString()
   @MaxLength(500)
+  // Accepts a full URL, a "/absolute" path, or a relative file-server key,
+  // but rejects obviously-invalid values (spaces / angle brackets).
+  @Matches(/^[^\s<>]+$/, { message: 'heroImageUrl must be a URL or file path with no spaces' })
   heroImageUrl?: string | null;
 
   @ApiPropertyOptional({ enum: CampaignStatus, default: CampaignStatus.ACTIVE })

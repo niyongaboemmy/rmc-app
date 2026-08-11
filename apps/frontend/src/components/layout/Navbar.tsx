@@ -205,7 +205,8 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
       ],
     },
     { href: `/${locale}/projects`, label: t('projects') },
-    { href: `/${locale}/blog`, label: t('blog'), mobileOnly: true },
+    // Blog is reachable from the footer; it is intentionally NOT in the navbar
+    // (desktop or mobile). See Footer.tsx.
     { href: `/${locale}/gallery`, label: t('gallery') },
     { href: `/${locale}/contact`, label: t('contact') },
   ];
