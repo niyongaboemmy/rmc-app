@@ -48,6 +48,14 @@ export class MemberProfile {
   @Column({ name: 'joined_date', type: 'date' })
   joinedDate: Date;
 
+  /**
+   * When the member submitted the registration form. NULL means this row is the
+   * stub signup created to reserve a membership number, and the form is still
+   * outstanding — see migration 058.
+   */
+  @Column({ name: 'registered_at', type: 'timestamptz', nullable: true })
+  registeredAt: Date | null;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   occupation: string | null;
 
