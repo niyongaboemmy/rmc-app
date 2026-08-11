@@ -1,7 +1,6 @@
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { sanitizeRichHtml } from '@/lib/sanitize';
-import { ArrowRight, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
@@ -13,7 +12,17 @@ import {
   DawahCoursesHeading,
   DawahBrowseCoursesButton,
   DawahCtaCards,
+  DawahDiscussionsHeading,
+  DawahDiscussionsCtas,
 } from '@/components/dawah/DawahLandingSections';
+import {
+  WhatIsDawah,
+  WhyDawahMatters,
+  CorePrinciples,
+  HowPracticed,
+  DawahFaq,
+  DawahFinalCta,
+} from '@/components/dawah/DawahAboutSections';
 import { getDawahContent, getFeaturedCourses, getRecentDiscussions } from '@/components/dawah/dawahData';
 import { pick } from '@/lib/content-api';
 
@@ -53,6 +62,21 @@ export default async function DawahPage({
       <main>
         {/* ── Hero — CMS copy, inline-editable ────────────────────────────── */}
         <DawahHero />
+
+        {/* ── Educational sections — explain the concept of Dawah to a
+            first-time visitor. Static, fully-translated copy (dawah.about.*). ── */}
+        <Reveal>
+          <WhatIsDawah />
+        </Reveal>
+        <Reveal>
+          <WhyDawahMatters />
+        </Reveal>
+        <Reveal>
+          <CorePrinciples />
+        </Reveal>
+        <Reveal>
+          <HowPracticed />
+        </Reveal>
 
         {/* ── Description — CMS rich text; eyebrow/title inline-editable ───── */}
         {hasDescription && (
@@ -117,17 +141,7 @@ export default async function DawahPage({
           <Reveal>
             <section className="bg-gray-50/60 py-14 lg:py-16">
               <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-                <div className="mx-auto max-w-2xl text-center">
-                  <h2 className="text-2xl font-bold text-rmc-green-deep md:text-3xl">
-                    {t('discussions.title')}
-                  </h2>
-                  <div className="ornament-divider mx-auto my-4 max-w-xs">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-                  </div>
-                  <p className="text-sm leading-relaxed text-gray-500">
-                    {t('discussions.subtitle')}
-                  </p>
-                </div>
+                <DawahDiscussionsHeading />
 
                 <div className="mt-12 grid gap-4 md:grid-cols-2">
                   {discussions.map((q) => (
@@ -135,25 +149,21 @@ export default async function DawahPage({
                   ))}
                 </div>
 
-                <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                  <Link
-                    href={`/${locale}/dawah/discussions`}
-                    className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rmc-green/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-rmc-green-dark"
-                  >
-                    {t('discussions.viewAll')}
-                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                  </Link>
-                  <Link
-                    href={`/${locale}/dawah/discussions/ask`}
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-all duration-300 hover:-translate-y-0.5 hover:border-rmc-green/40"
-                  >
-                    {t('discussions.askCta')}
-                  </Link>
-                </div>
+                <DawahDiscussionsCtas />
               </div>
             </section>
           </Reveal>
         )}
+
+        {/* ── FAQ — common questions about Dawah ──────────────────────────── */}
+        <Reveal>
+          <DawahFaq />
+        </Reveal>
+
+        {/* ── Closing call-to-action — get involved ───────────────────────── */}
+        <Reveal>
+          <DawahFinalCta />
+        </Reveal>
       </main>
 
       <Footer />

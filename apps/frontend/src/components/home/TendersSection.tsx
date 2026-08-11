@@ -16,6 +16,7 @@ import {
 } from '@/lib/content-api';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import { InlineText } from '@/components/edit-mode/InlineText';
+import { readDeadline } from '@/lib/deadline';
 
 type I18n = { en: string; rw: string; ar: string };
 
@@ -37,17 +38,12 @@ function resolveText(i18n: I18n | null | undefined, fallback: string, locale: st
   return i18n[locale as keyof I18n] || i18n.en || fallback;
 }
 
-function getDiffDays(expiresAt: string | null): number | null {
-  if (!expiresAt) return null;
-  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
-}
-
 function deadlineColor(expiresAt: string | null): string {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'text-rmc-green';
-  if (diff < 0) return 'text-gray-400';
-  if (diff <= 3) return 'text-red-500';
-  if (diff <= 7) return 'text-amber-500';
+  const deadline = readDeadline(expiresAt);
+  if (deadline.closed) return 'text-gray-400';
+  if (deadline.days === null) return 'text-rmc-green';
+  if (deadline.days <= 3) return 'text-red-500';
+  if (deadline.days <= 7) return 'text-amber-500';
   return 'text-rmc-green';
 }
 
@@ -66,12 +62,19 @@ export function TendersSection() {
   const [loading, setLoading] = useState(true);
 
   function deadlineLabel(expiresAt: string | null): string {
-    const diff = getDiffDays(expiresAt);
-    if (diff === null) return t('filters.open');
-    if (diff < 0)  return t('deadline.closed');
-    if (diff === 0) return t('deadline.today');
-    if (diff === 1) return t('deadline.tomorrow');
-    return t('deadline.inDays', { days: diff });
+    const deadline = readDeadline(expiresAt);
+    switch (deadline.state) {
+      case 'none':
+        return t('filters.open');
+      case 'closed':
+        return t('deadline.closed');
+      case 'today':
+        return t('deadline.today');
+      case 'tomorrow':
+        return t('deadline.tomorrow');
+      default:
+        return t('deadline.inDays', { days: deadline.days });
+    }
   }
 
   useEffect(() => {

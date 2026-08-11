@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request as ExpressRequest } from 'express';
 
 import { AuthService } from './auth.service';
@@ -40,6 +41,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  // 5 accounts / 10 min per IP — signup is human-paced
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -56,6 +59,8 @@ export class AuthController {
   }
 
   @Public()
+  // 10 attempts / 5 min per IP, on top of the per-account lockout
+  @Throttle({ default: { limit: 10, ttl: 300_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -105,6 +110,8 @@ export class AuthController {
   }
 
   @Public()
+  // the per-phone limit inside sendOtp is bypassed by rotating numbers
+  @Throttle({ default: { limit: 10, ttl: 600_000 } })
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -121,6 +128,8 @@ export class AuthController {
   }
 
   @Public()
+  // a 6-digit code falls fast to unlimited guessing
+  @Throttle({ default: { limit: 10, ttl: 600_000 } })
   @Post('verify-phone')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -135,6 +144,8 @@ export class AuthController {
   }
 
   @Public()
+  // 5 / 15 min per IP — each one sends an email to someone
+  @Throttle({ default: { limit: 5, ttl: 900_000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -151,6 +162,8 @@ export class AuthController {
   }
 
   @Public()
+  // token guessing
+  @Throttle({ default: { limit: 10, ttl: 900_000 } })
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

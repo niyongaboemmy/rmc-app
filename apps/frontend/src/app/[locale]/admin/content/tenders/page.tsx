@@ -16,6 +16,7 @@ import {
   type Tender, type TenderAttachment, type TenderI18n, type CreateTenderDto,
 } from '@/lib/tendersApi';
 import { fileUrl } from '@/lib/api';
+import { readDeadline } from '@/lib/deadline';
 import {
   FileText, ArrowLeft, Plus, Edit2, Trash2, Save,
   Clock, Upload, X, Eye, Paperclip, AlertCircle,
@@ -55,26 +56,28 @@ function fromDateInput(date: string): string {
   return date ? `${date}T00:00:00.000Z` : '';
 }
 
-function getDiffDays(expiresAt: string | null): number | null {
-  if (!expiresAt) return null;
-  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
-}
-
 function deadlineLabel(expiresAt: string | null): string {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'No deadline';
-  if (diff < 0) return 'Closed';
-  if (diff === 0) return 'Closes today';
-  if (diff === 1) return 'Closes tomorrow';
-  return `Closes in ${diff} days`;
+  const deadline = readDeadline(expiresAt);
+  switch (deadline.state) {
+    case 'none':
+      return 'No deadline';
+    case 'closed':
+      return 'Closed';
+    case 'today':
+      return 'Closes today';
+    case 'tomorrow':
+      return 'Closes tomorrow';
+    default:
+      return `Closes in ${deadline.days} days`;
+  }
 }
 
 function deadlineBadge(expiresAt: string | null): string {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'bg-green-100 text-green-700';
-  if (diff < 0) return 'bg-gray-100 text-gray-400';
-  if (diff <= 3) return 'bg-red-100 text-red-600';
-  if (diff <= 7) return 'bg-amber-100 text-amber-600';
+  const deadline = readDeadline(expiresAt);
+  if (deadline.closed) return 'bg-gray-100 text-gray-400';
+  if (deadline.days === null) return 'bg-green-100 text-green-700';
+  if (deadline.days <= 3) return 'bg-red-100 text-red-600';
+  if (deadline.days <= 7) return 'bg-amber-100 text-amber-600';
   return 'bg-green-100 text-green-700';
 }
 

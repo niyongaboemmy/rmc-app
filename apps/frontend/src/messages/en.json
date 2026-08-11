@@ -77,7 +77,42 @@
       "submit": "Create Account",
       "alreadyAccount": "Already have an account?",
       "login": "Sign In",
-      "success": "Account created! Please verify your phone number."
+      "success": "Account created! Please verify your phone number.",
+      "redirecting": "Redirecting you to phone verification…"
+    },
+    "verifyPhone": {
+      "title": "Verify Your Phone",
+      "subtitle": "Enter your number to receive a verification code",
+      "subtitleSent": "We sent a 6-digit code to {phone}",
+      "phone": "Phone Number",
+      "phoneHelp": "Format: 7XXXXXXXX",
+      "code": "Verification Code",
+      "codeHelp": "The code expires in 5 minutes",
+      "sendCode": "Send Code",
+      "submit": "Verify Phone",
+      "resend": "Resend code",
+      "resending": "Sending…",
+      "resendIn": "Resend available in {seconds}s",
+      "changeNumber": "Use a different number",
+      "codeSent": "Code sent. Check your messages.",
+      "codeResent": "A new code is on its way.",
+      "success": "Phone verified!",
+      "redirecting": "Redirecting you to sign in…",
+      "later": "Prefer to do this later?",
+      "skip": "Skip for now",
+      "errors": {
+        "badPhone": "Enter a valid Rwanda number: 7XXXXXXXX",
+        "badCode": "Enter the 6-digit code",
+        "notFound": "No code found for this number. Request a new one.",
+        "expired": "That code has expired. Request a new one.",
+        "invalid": "That code is incorrect. Check and try again.",
+        "maxAttempts": "Too many incorrect attempts. Request a new code.",
+        "rateLimited": "Too many requests. Please wait a few minutes.",
+        "alreadyVerified": "This number is already verified. You can sign in.",
+        "unknownPhone": "No account found for this number.",
+        "sendFailed": "Could not send the code. Please try again.",
+        "verifyFailed": "Verification failed. Please try again."
+      }
     },
     "forgotPassword": {
       "title": "Reset Password",

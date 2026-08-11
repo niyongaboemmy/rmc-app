@@ -1,81 +1,31 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, ZoomControl, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { Navigation, LocateFixed } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
+import { Marker, Polyline, Popup } from 'react-leaflet';
+import { LocateFixed, Navigation } from 'lucide-react';
 import { publicApi } from '@/lib/public-api';
 
-export interface SchoolPoint {
-  id: string;
-  name: string;
+import { RwandaMap } from '@/components/maps/RwandaMap';
+import { FlyToFocus } from '@/components/maps/controls';
+import { MAP_COLORS } from '@/components/maps/constants';
+import { nearestTo, type MapPlace } from '@/components/maps/geo';
+import { NEAREST_Z_OFFSET, nearestPin, placePin, userPin } from '@/components/maps/icons';
+import { useUserLocation } from '@/components/maps/useUserLocation';
+
+export interface SchoolPoint extends MapPlace {
   address: string | null;
-  lat: number;
-  lng: number;
 }
 
 /* Sample Islamic schools & mosques across Rwanda — used until the backend has
-   real data so the map is never empty. Mirrors the placeholder set the contact
-   finder uses. */
+   real data so the map is never empty. */
 const PLACEHOLDER_SCHOOLS: SchoolPoint[] = [
-  { id: 's-kig-1', name: 'Nyamirambo Islamic School', address: 'Nyamirambo, Kigali', lat: -1.9806, lng: 30.0469 },
-  { id: 's-kig-2', name: 'Kigali Islamic Centre', address: 'Nyarugenge, Kigali', lat: -1.9495, lng: 30.0588 },
-  { id: 's-nor-1', name: 'Musanze Madrasa', address: 'Musanze, Northern Province', lat: -1.4998, lng: 29.634 },
-  { id: 's-sou-1', name: 'Huye Jamia Institute', address: 'Huye, Southern Province', lat: -2.5967, lng: 29.739 },
-  { id: 's-eas-1', name: 'Rwamagana Islamic School', address: 'Rwamagana, Eastern Province', lat: -1.9487, lng: 30.4347 },
-  { id: 's-wes-1', name: 'Rubavu Islamic Centre', address: 'Rubavu, Western Province', lat: -1.6777, lng: 29.258 },
+  { id: 's-kig-1', name: 'Nyamirambo Islamic School', address: 'Nyamirambo, Kigali', gpsLat: -1.9806, gpsLng: 30.0469 },
+  { id: 's-kig-2', name: 'Kigali Islamic Centre', address: 'Nyarugenge, Kigali', gpsLat: -1.9495, gpsLng: 30.0588 },
+  { id: 's-nor-1', name: 'Musanze Madrasa', address: 'Musanze, Northern Province', gpsLat: -1.4998, gpsLng: 29.634 },
+  { id: 's-sou-1', name: 'Huye Jamia Institute', address: 'Huye, Southern Province', gpsLat: -2.5967, gpsLng: 29.739 },
+  { id: 's-eas-1', name: 'Rwamagana Islamic School', address: 'Rwamagana, Eastern Province', gpsLat: -1.9487, gpsLng: 30.4347 },
+  { id: 's-wes-1', name: 'Rubavu Islamic Centre', address: 'Rubavu, Western Province', gpsLat: -1.6777, gpsLng: 29.258 },
 ];
-
-const RWANDA_CENTER: [number, number] = [-1.94, 29.87];
-
-const schoolIcon = L.divIcon({
-  className: 'rmc-school-pin',
-  html: `<svg width="24" height="34" viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 24 12 24s12-15.6 12-24C24 5.4 18.6 0 12 0z" fill="#0d3d24"/>
-    <circle cx="12" cy="12" r="4.6" fill="#fff"/>
-  </svg>`,
-  iconSize: [24, 34],
-  iconAnchor: [12, 34],
-  popupAnchor: [0, -30],
-});
-
-const nearestIcon = L.divIcon({
-  className: 'rmc-school-pin-nearest',
-  html: `<svg width="30" height="42" viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 24 12 24s12-15.6 12-24C24 5.4 18.6 0 12 0z" fill="#D4A017"/>
-    <circle cx="12" cy="12" r="4.6" fill="#fff"/>
-  </svg>`,
-  iconSize: [30, 42],
-  iconAnchor: [15, 42],
-  popupAnchor: [0, -38],
-});
-
-const userIcon = L.divIcon({
-  className: 'rmc-user-pin',
-  html: `<span style="display:block;width:14px;height:14px;border-radius:9999px;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 2px rgba(37,99,235,0.35)"></span>`,
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
-});
-
-function haversineKm(a: [number, number], b: [number, number]): number {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b[0] - a[0]);
-  const dLng = toRad(b[1] - a[1]);
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-
-function FlyTo({ to }: { to: [number, number] | null }) {
-  const map = useMap();
-  useEffect(() => {
-    if (to) map.flyTo(to, 13, { duration: 0.8 });
-  }, [to, map]);
-  return null;
-}
 
 interface Props {
   locateLabel: string;
@@ -84,18 +34,27 @@ interface Props {
   directionsLabel: string;
 }
 
+/**
+ * The compact "find a mosque or school near you" map used on the home and
+ * new-muslim pages.
+ *
+ * Same basemap, pins and colours as the full finders — those all come from
+ * `components/maps` now, so the nearest pin can no longer be gold here and amber
+ * there. What stays deliberately lighter is the interaction: a shorter frame, no
+ * province overlay, no scroll-wheel capture mid-page, and location only on
+ * request, because a homepage section shouldn't fire a permission prompt at a
+ * visitor who never asked to be located.
+ */
 export default function NearestSchoolMap({
   locateLabel,
   locatingLabel,
   nearestLabel,
   directionsLabel,
 }: Props) {
-  const [schools, setSchools] = useState<SchoolPoint[]>(PLACEHOLDER_SCHOOLS);
-  const [user, setUser] = useState<[number, number] | null>(null);
-  const [locating, setLocating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [places, setPlaces] = useState<SchoolPoint[]>(PLACEHOLDER_SCHOOLS);
+  const { position, status, locate, isLocating } = useUserLocation();
 
-  // Pull real mosques/schools when available; keep placeholders otherwise.
+  // Pull real mosques when available; keep placeholders otherwise.
   useEffect(() => {
     let active = true;
     publicApi
@@ -104,124 +63,98 @@ export default function NearestSchoolMap({
         if (!active) return;
         const mapped = list
           .filter((m) => m.gpsLat != null && m.gpsLng != null)
-          .map((m) => ({
-            id: m.id,
-            name: m.name,
-            address: m.address,
-            lat: m.gpsLat as number,
-            lng: m.gpsLng as number,
-          }));
-        if (mapped.length) setSchools(mapped);
+          .map((m) => ({ id: m.id, name: m.name, address: m.address, gpsLat: m.gpsLat, gpsLng: m.gpsLng }));
+        if (mapped.length) setPlaces(mapped);
       })
-      .catch(() => {/* keep placeholders */});
+      .catch(() => {
+        /* keep placeholders */
+      });
     return () => {
       active = false;
     };
   }, []);
 
-  const nearest = useMemo(() => {
-    if (!user || !schools.length) return null;
-    return schools
-      .map((s) => ({ s, km: haversineKm(user, [s.lat, s.lng]) }))
-      .sort((a, b) => a.km - b.km)[0];
-  }, [user, schools]);
+  const nearest = useMemo(() => nearestTo(position, places), [position, places]);
 
-  const locateMe = () => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setError('Location is not available in this browser.');
-      return;
-    }
-    setLocating(true);
-    setError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUser([pos.coords.latitude, pos.coords.longitude]);
-        setLocating(false);
-      },
-      () => {
-        setError('Could not get your location.');
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  };
-
-  const flyTarget: [number, number] | null = nearest
-    ? [nearest.s.lat, nearest.s.lng]
-    : user;
+  // Frame the nearest place once located; failing that, the user themselves.
+  const flyTarget = nearest?.pos ?? position;
 
   return (
-    <div className="relative h-72 sm:h-80 w-full">
-      <MapContainer
-        center={RWANDA_CENTER}
-        zoom={7}
-        scrollWheelZoom={false}
-        zoomControl={false}
-        className="h-full w-full"
-        style={{ background: '#eef2ee' }}
-      >
-        <ZoomControl position="topright" />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    <div className="relative h-72 w-full sm:h-80">
+      <RwandaMap zoom={7} scrollWheelZoom={false}>
+        <FlyToFocus
+          focus={flyTarget ? { lat: flyTarget[0], lng: flyTarget[1], nonce: 0 } : null}
+          zoom={13}
         />
-        <FlyTo to={flyTarget} />
 
-        {user && (
+        {position && (
           <>
-            <Marker position={user} icon={userIcon} />
+            <Marker position={position} icon={userPin} />
             {nearest && (
               <Polyline
-                positions={[user, [nearest.s.lat, nearest.s.lng]]}
-                pathOptions={{ color: '#2563eb', weight: 3, opacity: 0.8, dashArray: '6 6' }}
+                positions={[position, nearest.pos]}
+                pathOptions={{ color: MAP_COLORS.user, weight: 3, opacity: 0.8, dashArray: '6 6' }}
               />
             )}
           </>
         )}
 
-        {schools.map((s) => {
-          const isNearest = nearest?.s.id === s.id;
+        {places.map((p) => {
+          if (p.gpsLat == null || p.gpsLng == null) return null;
+          const isNearest = nearest?.id === p.id;
           return (
-            <Marker key={s.id} position={[s.lat, s.lng]} icon={isNearest ? nearestIcon : schoolIcon}>
+            <Marker
+              key={p.id}
+              position={[p.gpsLat, p.gpsLng]}
+              icon={isNearest ? nearestPin : placePin}
+              zIndexOffset={isNearest ? NEAREST_Z_OFFSET : 0}
+            >
               <Popup>
-                <span className="block font-semibold text-gray-900">{s.name}</span>
-                {s.address && <span className="block text-gray-500 text-xs mt-0.5">{s.address}</span>}
+                {isNearest && (
+                  <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                    {nearestLabel}
+                  </span>
+                )}
+                <span className="block font-semibold text-gray-900">{p.name}</span>
+                {p.address && <span className="mt-0.5 block text-xs text-gray-500">{p.address}</span>}
+                {/* No on-map routing in the compact map, so this hands off to a
+                    maps app — styled to match the finder's directions button. */}
                 <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`}
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${p.gpsLat},${p.gpsLng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1.5 inline-flex items-center gap-1 text-rmc-green text-xs font-medium hover:underline"
+                  className="mt-1.5 flex items-center gap-1 text-xs font-medium text-rmc-green hover:underline"
                 >
-                  <Navigation className="w-3 h-3" /> {directionsLabel}
+                  <Navigation className="h-3 w-3" /> {directionsLabel}
                 </a>
               </Popup>
             </Marker>
           );
         })}
-      </MapContainer>
+      </RwandaMap>
 
       {/* Locate control */}
       <button
         type="button"
-        onClick={locateMe}
-        className="absolute top-3 left-3 z-[1000] inline-flex items-center gap-2 rounded-full border border-gray-100 bg-white/95 px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-lg ring-1 ring-black/5 backdrop-blur hover:text-rmc-green"
+        onClick={locate}
+        className="absolute left-3 top-3 z-[1000] inline-flex items-center gap-2 rounded-full border border-gray-100 bg-white/95 px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-lg ring-1 ring-black/5 backdrop-blur hover:text-rmc-green"
       >
         <LocateFixed className="h-4 w-4" />
-        {locating ? locatingLabel : locateLabel}
+        {isLocating ? locatingLabel : locateLabel}
       </button>
 
       {/* Nearest badge */}
       {nearest && (
-        <div className="absolute bottom-3 left-1/2 z-[1000] flex max-w-[90%] -translate-x-1/2 items-center gap-2 rounded-full border border-rmc-gold/30 bg-white/95 px-3.5 py-1.5 text-xs shadow-lg ring-1 ring-black/5 backdrop-blur">
-          <span className="font-semibold text-rmc-gold">{nearestLabel}:</span>
-          <span className="truncate font-medium text-gray-800">{nearest.s.name}</span>
+        <div className="absolute bottom-3 left-1/2 z-[1000] flex max-w-[90%] -translate-x-1/2 items-center gap-2 rounded-full border border-gray-100 bg-white/95 px-3.5 py-1.5 text-xs shadow-lg ring-1 ring-black/5 backdrop-blur">
+          <span className="font-semibold text-amber-600">{nearestLabel}:</span>
+          <span className="truncate font-medium text-gray-800">{nearest.place.name}</span>
           <span className="shrink-0 text-gray-500">· {nearest.km.toFixed(1)} km</span>
         </div>
       )}
 
-      {error && (
+      {status === 'error' && (
         <div className="absolute bottom-3 left-1/2 z-[1000] -translate-x-1/2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 shadow">
-          {error}
+          Could not get your location.
         </div>
       )}
     </div>

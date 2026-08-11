@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { resolveI18n, type Tender } from '@/lib/tendersApi';
 import type { TenderApplicationCounts } from '@/lib/tenderApplicationAdminApi';
 import { STATUS_LABELS_SHORT } from '@/lib/tenderWorkflow';
+import { readDeadline, getLifecycle, type Lifecycle } from '@/lib/deadline';
 
 /**
  * A tender as it appears on the admin picker, deliberately built to the same
@@ -17,29 +18,27 @@ import { STATUS_LABELS_SHORT } from '@/lib/tenderWorkflow';
  * many bids came in, and how long is left to decide.
  */
 
-export type TenderLifecycle = 'open' | 'closing' | 'closed';
-
-export function getDiffDays(expiresAt: string | null): number | null {
-  if (!expiresAt) return null;
-  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
-}
+export type TenderLifecycle = Lifecycle;
 
 /** Same thresholds as the public list: inside a week is "closing". */
-export function getLifecycle(expiresAt: string | null): TenderLifecycle {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'open';
-  if (diff < 0) return 'closed';
-  if (diff <= 7) return 'closing';
-  return 'open';
-}
+export { getLifecycle };
 
 export function deadlineLabel(expiresAt: string | null): string {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'No deadline';
-  if (diff < 0) return `Closed ${Math.abs(diff)}d ago`;
-  if (diff === 0) return 'Closes today';
-  if (diff === 1) return '1 day left';
-  return `${diff} days left`;
+  const deadline = readDeadline(expiresAt);
+  switch (deadline.state) {
+    case 'none':
+      return 'No deadline';
+    // `days` is the calendar gap, so a tender that lapsed this morning is 0 —
+    // "Closed 0d ago" reads as a bug. Name the day instead.
+    case 'closed':
+      return deadline.days === 0 ? 'Closed today' : `Closed ${Math.abs(deadline.days ?? 0)}d ago`;
+    case 'today':
+      return 'Closes today';
+    case 'tomorrow':
+      return '1 day left';
+    default:
+      return `${deadline.days} days left`;
+  }
 }
 
 const LIFECYCLE_STYLES: Record<
@@ -104,7 +103,7 @@ export function AdminTenderCard({
 }) {
   const lifecycle = getLifecycle(tender.expiresAt);
   const styles = LIFECYCLE_STYLES[lifecycle];
-  const diff = getDiffDays(tender.expiresAt);
+  const deadline = readDeadline(tender.expiresAt);
   const applied = counts?.total ?? 0;
   const attachCount = tender.attachments?.length ?? 0;
   const title = resolveI18n(tender.titleI18n, tender.title, locale);
@@ -220,11 +219,11 @@ export function AdminTenderCard({
         </div>
 
         {/* Urgency bar, same as the public card. */}
-        {lifecycle === 'closing' && diff !== null && diff >= 0 && (
+        {lifecycle === 'closing' && deadline.days !== null && (
           <div className="mt-3 h-1 overflow-hidden rounded-full bg-amber-100">
             <div
               className="h-full rounded-full bg-amber-400"
-              style={{ width: `${Math.max(5, 100 - (diff / 7) * 100)}%` }}
+              style={{ width: `${Math.max(5, 100 - (deadline.days / 7) * 100)}%` }}
             />
           </div>
         )}

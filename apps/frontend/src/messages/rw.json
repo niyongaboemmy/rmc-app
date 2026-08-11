@@ -77,7 +77,42 @@
       "submit": "Fungura Konti",
       "alreadyAccount": "Ufite konti?",
       "login": "Injira",
-      "success": "Konti yarafunguwe! Nyamuneka emeza numero yawe ya telefoni."
+      "success": "Konti yarafunguwe! Nyamuneka emeza numero yawe ya telefoni.",
+      "redirecting": "Turakwereka aho wemeza telefone…"
+    },
+    "verifyPhone": {
+      "title": "Emeza Nimero ya Telefone",
+      "subtitle": "Andika nimero yawe kugira ngo wakire kode yo kwemeza",
+      "subtitleSent": "Twoherereje kode y'imibare 6 kuri {phone}",
+      "phone": "Nimero ya Telefone",
+      "phoneHelp": "Uburyo: 7XXXXXXXX",
+      "code": "Kode yo Kwemeza",
+      "codeHelp": "Kode irangira mu minota 5",
+      "sendCode": "Ohereza Kode",
+      "submit": "Emeza Telefone",
+      "resend": "Ongera wohereze kode",
+      "resending": "Kohereza…",
+      "resendIn": "Ushobora kongera nyuma y'amasegonda {seconds}",
+      "changeNumber": "Koresha indi nimero",
+      "codeSent": "Kode yoherejwe. Reba ubutumwa bwawe.",
+      "codeResent": "Kode nshya iri kuza.",
+      "success": "Telefone yemejwe!",
+      "redirecting": "Turagusubiza ku kwinjira…",
+      "later": "Wifuza kubikora nyuma?",
+      "skip": "Simbuka ubu",
+      "errors": {
+        "badPhone": "Andika nimero y'u Rwanda yemewe: 7XXXXXXXX",
+        "badCode": "Andika kode y'imibare 6",
+        "notFound": "Nta kode iboneka kuri iyi nimero. Saba indi.",
+        "expired": "Iyo kode yarangiye. Saba indi.",
+        "invalid": "Iyo kode si yo. Ongera ugerageze.",
+        "maxAttempts": "Wagerageje kenshi bidakunze. Saba kode nshya.",
+        "rateLimited": "Wasabye kenshi cyane. Tegereza iminota mike.",
+        "alreadyVerified": "Iyi nimero yamaze kwemezwa. Urashobora kwinjira.",
+        "unknownPhone": "Nta konti ibonetse kuri iyi nimero.",
+        "sendFailed": "Ntibyashobotse kohereza kode. Ongera ugerageze.",
+        "verifyFailed": "Kwemeza ntibyakunze. Ongera ugerageze."
+      }
     },
     "forgotPassword": {
       "title": "Vugurura Ijambo ry'Ibanga",
