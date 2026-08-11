@@ -43,6 +43,13 @@ export class MembersController {
   @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'approvalStatus', required: false })
   @ApiQuery({ name: 'memberStatus', required: false })
+  @ApiQuery({
+    name: 'registrationState',
+    required: false,
+    enum: ['registered', 'unregistered', 'all'],
+    description:
+      'Defaults to "registered". "unregistered" lists accounts that signed up but never submitted the registration form.',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
@@ -52,6 +59,7 @@ export class MembersController {
     @Query('category') category?: string,
     @Query('approvalStatus') approvalStatus?: string,
     @Query('memberStatus') memberStatus?: string,
+    @Query('registrationState') registrationState?: 'registered' | 'unregistered' | 'all',
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -62,6 +70,7 @@ export class MembersController {
       category,
       approvalStatus,
       memberStatus,
+      registrationState,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 50,
     });
