@@ -65,6 +65,11 @@ export const ContentKeys = {
   servicesHero: 'services-hero',
   contactHero: 'contact-hero',
   tendersHome: 'tenders-home',
+  // The three service BOARD pages. Distinct from `tendersHome`, which is the home
+  // page's tender teaser — the names are close enough that conflating them is easy.
+  tenderService: 'tender-service',
+  jobsService: 'jobs-service',
+  scholarshipService: 'scholarship-service',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────
