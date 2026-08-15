@@ -91,6 +91,7 @@ export function AnnouncementsSection() {
                   as="h2"
                   lang={locale}
                   value={pickTri(content.title, locale)}
+                  editValue={content.title[lang]}
                   onCommit={(v) => setField((d) => { d.title[lang] = v; })}
                   className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
                   dir={rtl ? 'rtl' : 'ltr'}
@@ -109,6 +110,7 @@ export function AnnouncementsSection() {
                   as="p"
                   lang={locale}
                   value={pickTri(content.subtitle, locale)}
+                  editValue={content.subtitle[lang]}
                   onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
                   className="text-gray-400 text-xs mt-0.5"
                   dir={rtl ? 'rtl' : 'ltr'}

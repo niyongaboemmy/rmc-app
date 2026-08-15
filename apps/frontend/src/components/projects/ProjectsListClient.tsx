@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { Building2, Target, TrendingUp, Layers } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -9,13 +9,12 @@ import { ProjectCard } from '@/components/projects/ProjectCard';
 import {
   ContentKeys,
   PROJECTS_DEFAULT,
-  getSiteContent,
-  mergeContent,
   pick,
   isRtl,
   projectMoneyShort,
   type ProjectsContent,
 } from '@/lib/content-api';
+import { usePreviewableContentState } from '@/lib/content/preview-store';
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&q=80';
 
@@ -38,18 +37,13 @@ export function ProjectsListClient() {
   const rtl = isRtl(locale);
   const arFont = rtl ? 'font-arabic' : '';
 
-  const [content, setContent] = useState<ProjectsContent>(PROJECTS_DEFAULT);
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<ProjectsContent>(ContentKeys.projects)
-      .then((data) => {
-        if (active && data) setContent(mergeContent(PROJECTS_DEFAULT, data));
-      })
-      .catch(() => { /* keep defaults */ })
-      .finally(() => { if (active) setLoaded(true); });
-    return () => { active = false; };
-  }, []);
+  // The page reads this section on the server, so `ready` is already true on the
+  // first render and the saved copy is in the HTML — no skeleton, no flash of the
+  // seeded defaults. Without a provider this falls back to fetching on mount.
+  const { content, ready: loaded } = usePreviewableContentState<ProjectsContent>(
+    ContentKeys.projects,
+    PROJECTS_DEFAULT,
+  );
 
   // Ongoing first, completed last; otherwise the admin's order.
   const items = useMemo(

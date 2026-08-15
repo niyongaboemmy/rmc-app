@@ -167,6 +167,7 @@ export function WelcomeCarouselSection() {
                   as="span"
                   lang={locale}
                   value={pick(content.headingTitle, locale)}
+                  editValue={content.headingTitle[lang]}
                   onCommit={(v) => setField((d) => { d.headingTitle[lang] = v; })}
                   placeholder="Heading"
                 />{' '}
@@ -174,6 +175,7 @@ export function WelcomeCarouselSection() {
                   as="span"
                   lang={locale}
                   value={pick(content.headingAccent, locale)}
+                  editValue={content.headingAccent[lang]}
                   onCommit={(v) => setField((d) => { d.headingAccent[lang] = v; })}
                   className="text-rmc-green"
                   placeholder="Accent"

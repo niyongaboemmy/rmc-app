@@ -62,6 +62,9 @@ function PartnerCard({
   handlers: PartnerCardEditHandlers;
 }) {
   const linked = Boolean(partner.website);
+  // `sector`/`description` arrive locale-resolved for display; the edit boxes want
+  // this locale's own text so an untranslated field opens empty (see `editValue`).
+  const lang = locale as Locale;
 
   const cardClass = `group relative flex h-full flex-col items-center rounded-lg border border-gray-200/70 bg-white px-6 py-8 transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_12px_28px_-16px_rgba(26,122,74,0.2)] ${
     visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -108,6 +111,7 @@ function PartnerCard({
           as="p"
           lang={locale}
           value={sector}
+          editValue={partner.sector[lang]}
           onCommit={handlers.onSector}
           className="mt-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold"
           placeholder="Sector"
@@ -118,6 +122,7 @@ function PartnerCard({
           as="p"
           lang={locale}
           value={description}
+          editValue={partner.description?.[lang] ?? ''}
           onCommit={handlers.onDescription}
           className="mt-3 text-center text-xs leading-relaxed text-gray-500"
           placeholder="Short description"
@@ -366,6 +371,10 @@ export function PartnersSection() {
   const title = pick(content.title, locale);
   const lede = pick(content.lede, locale);
   const footerNote = pick(content.footerNote, locale);
+  // Unresolved active-locale copy, for the edit boxes only — see `editValue`.
+  const rawTitle = content.title[lang];
+  const rawLede = content.lede[lang];
+  const rawFooterNote = content.footerNote[lang];
 
   return (
     <section className="relative overflow-hidden bg-transparent py-12 md:py-16">
@@ -395,6 +404,7 @@ export function PartnersSection() {
                 as="span"
                 lang={locale}
                 value={title}
+                editValue={rawTitle}
                 onCommit={(v) => setField((d) => { d.title[lang] = v; })}
                 className="text-rmc-green"
                 dir={dir}
@@ -414,6 +424,7 @@ export function PartnersSection() {
               as="p"
               lang={locale}
               value={lede}
+              editValue={rawLede}
               onCommit={(v) => setField((d) => { d.lede[lang] = v; })}
               dir={dir}
               className={`mx-auto max-w-xl text-sm leading-relaxed text-gray-500 md:text-base ${fontClass}`}
@@ -470,6 +481,7 @@ export function PartnersSection() {
                 as="span"
                 lang={locale}
                 value={footerNote}
+                editValue={rawFooterNote}
                 onCommit={(v) => setField((d) => { d.footerNote[lang] = v; })}
                 placeholder="Footer prompt"
               />{' '}

@@ -7,9 +7,10 @@ import { funeralApi } from '@/lib/funeralApi';
 import type { FuneralStepConfig } from '@/components/funeral/types';
 import { stepIcon } from '@/components/funeral/stepIcons';
 import {
-  ContentKeys, getSiteContent, mergeContent, pick, isRtl,
-  FUNERAL_DEFAULT, type FuneralContent,
+  ContentKeys, pick, isRtl,
+  FUNERAL_DEFAULT,
 } from '@/lib/content-api';
+import { usePreviewableContent } from '@/lib/content/preview-store';
 
 /**
  * Section: "what happens next" — the funeral process, start to finish.
@@ -27,8 +28,11 @@ export function FuneralProcessSteps() {
   const rtl = isRtl(locale);
 
   const [steps, setSteps] = useState<FuneralStepConfig[]>([]);
-  const [heading, setHeading] = useState<FuneralContent['steps']>(FUNERAL_DEFAULT.steps);
   const [loading, setLoading] = useState(true);
+
+  // Section heading — read on the server by the page, so it is in the first paint.
+  // The step list itself still comes from its own API below.
+  const heading = usePreviewableContent(ContentKeys.funeral, FUNERAL_DEFAULT).steps;
 
   useEffect(() => {
     let active = true;
@@ -37,12 +41,6 @@ export function FuneralProcessSteps() {
       .then((res) => { if (active) setSteps(res); })
       .catch(() => { if (active) setSteps([]); })
       .finally(() => { if (active) setLoading(false); });
-
-    getSiteContent<FuneralContent>(ContentKeys.funeral)
-      .then((data) => {
-        if (active && data) setHeading(mergeContent(FUNERAL_DEFAULT, data).steps);
-      })
-      .catch(() => { /* keep the seeded heading */ });
 
     return () => { active = false; };
   }, []);

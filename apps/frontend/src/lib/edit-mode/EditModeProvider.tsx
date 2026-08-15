@@ -176,6 +176,11 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
     // page keeps showing the freshly-saved copy without a refetch flicker. Signal
     // collection sections to re-pull, and clear the dirty set on full success.
     store.bumpRefresh();
+    // Re-seed the editable fields from what the page now renders. Publish is a
+    // discrete action, so there is no caret to disturb, and it resolves the one case
+    // where box and page disagree: clearing a translation leaves the box empty while
+    // the page falls back to English, and only a re-seed makes the box agree again.
+    setSeedVersion((v) => v + 1);
     if (allOk) setDirty(new Set());
     setSaving(false);
     return allOk;

@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Noto_Naskh_Arabic } from 'next/font/google';
-import { NextIntlClientProvider, useMessages } from 'next-intl';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
+import { ContentKeys } from '@/lib/content-api';
+import { fetchSiteContent } from '@/lib/content/server';
+import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { DonationCartProvider } from '@/contexts/DonationCartContext';
 import { PWAInstallProvider } from '@/contexts/PWAInstallContext';
@@ -50,14 +54,47 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LocaleLayout({
+/**
+ * Admin-managed copy the SHARED CHROME needs, read here so it lands in the
+ * server-rendered HTML of every page rather than appearing a beat after hydration.
+ *
+ * Two things live in the layout rather than in each page. The footer is on 48 of the
+ * 50 public pages that render CMS copy, and many of those pages are client components
+ * — wiring it per page would mean restructuring every one of them. And
+ * `EditablePageHero` picks its key per page, so carrying the page-hero keys costs
+ * almost nothing and covers the two client pages that use it (contact,
+ * member/register) without touching them.
+ *
+ * There is no `tendersHero`: /tenders is now a redirect stub and nothing renders that
+ * section, so fetching it only bloated every page's HTML payload.
+ *
+ * Page-specific sections are NOT here: a page wraps its own tree in a nested
+ * `SiteContentProvider`, which merges over this map. Both calls share one round-trip
+ * (see `fetchSiteContent`), so a page adding its own is free.
+ */
+const SHARED_CONTENT_KEYS = [
+  ContentKeys.social,
+  ContentKeys.contact,
+  ContentKeys.registerHero,
+  ContentKeys.contactHero,
+  ContentKeys.servicesHero,
+  ContentKeys.newMuslimHero,
+  ContentKeys.galleryHero,
+];
+
+export default async function LocaleLayout({
   children,
   params: { locale },
 }: {
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  const messages = useMessages();
+  // `getMessages` is the async counterpart of the `useMessages` this used to call —
+  // needed because the layout now awaits the shared content above.
+  const [messages, sharedContent] = await Promise.all([
+    getMessages({ locale }),
+    fetchSiteContent(SHARED_CONTENT_KEYS),
+  ]);
   const isRtl = locale === 'ar';
 
   return (
@@ -68,23 +105,27 @@ export default function LocaleLayout({
     >
       <body className={isRtl ? 'font-arabic' : 'font-latin'}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider>
-            <PWAInstallProvider>
-              <ToastProvider position="top-right">
-                <DonationCartProvider>
-                  {/* In-context "Edit Mode" — super-admins edit real pages in place */}
-                  <EditModeProvider>
-                    {children}
-                    <PWAAutoInstallPrompt />
-                    {/* Floating "Ask AI" assistant — shown on every public page */}
-                    <AskAIButton />
-                    {/* Floating publish/discard bar — only visible in edit mode */}
-                    <EditModeBar />
-                  </EditModeProvider>
-                </DonationCartProvider>
-              </ToastProvider>
-            </PWAInstallProvider>
-          </AuthProvider>
+          {/* Server-read copy for the shared chrome. A page may nest its own
+              provider inside; the two maps merge. */}
+          <SiteContentProvider content={sharedContent}>
+            <AuthProvider>
+              <PWAInstallProvider>
+                <ToastProvider position="top-right">
+                  <DonationCartProvider>
+                    {/* In-context "Edit Mode" — super-admins edit real pages in place */}
+                    <EditModeProvider>
+                      {children}
+                      <PWAAutoInstallPrompt />
+                      {/* Floating "Ask AI" assistant — shown on every public page */}
+                      <AskAIButton />
+                      {/* Floating publish/discard bar — only visible in edit mode */}
+                      <EditModeBar />
+                    </EditModeProvider>
+                  </DonationCartProvider>
+                </ToastProvider>
+              </PWAInstallProvider>
+            </AuthProvider>
+          </SiteContentProvider>
         </NextIntlClientProvider>
       </body>
     </html>

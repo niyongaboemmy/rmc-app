@@ -33,6 +33,7 @@ import {
   CONTACT_DEFAULT,
   type ContactContent,
 } from '@/lib/content-api';
+import { useServerSiteContent } from '@/lib/content/SiteContentProvider';
 
 type Lang = 'en' | 'rw' | 'ar';
 
@@ -78,14 +79,25 @@ export function ContactInlineProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, hasPermission } = useAuth();
   const canEdit = isAuthenticated && hasPermission(Permission.CONTENT_EDIT);
 
-  const [content, setContent] = useState<ContactContent>(CONTACT_DEFAULT);
-  const [draft, setDraft] = useState<ContactContent>(CONTACT_DEFAULT);
+  // The locale layout reads this section on the server (the footer needs it too), so
+  // the saved copy is in hand on the very first render — the contact details are in
+  // the server HTML instead of replacing the seeded defaults after hydration. This
+  // editor keeps its own `content`/`draft` because it saves directly rather than
+  // through the edit-mode store, so the server value seeds that state.
+  const server = useServerSiteContent<Record<string, unknown>>(ContentKeys.contact);
+  const seed = () =>
+    server.value ? mergeContent(CONTACT_DEFAULT, server.value) : CONTACT_DEFAULT;
+
+  const [content, setContent] = useState<ContactContent>(seed);
+  const [draft, setDraft] = useState<ContactContent>(seed);
   const [editing, setEditing] = useState(false);
   const [lang, setLang] = useState<Lang>('en');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Nothing to fetch when the page already server-rendered this section.
+    if (server.provided) return;
     let active = true;
     getSiteContent<Record<string, unknown>>(ContentKeys.contact)
       .then((data) => {
@@ -100,7 +112,7 @@ export function ContactInlineProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [server.provided]);
 
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(content), [draft, content]);
 

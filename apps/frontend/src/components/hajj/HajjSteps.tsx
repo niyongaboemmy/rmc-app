@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Plus } from 'lucide-react';
 import { InlineText } from '@/components/edit-mode/InlineText';
@@ -8,6 +8,7 @@ import { CardEditToolbar } from '@/components/edit-mode/CardEditToolbar';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { usePreviewStore, useEditorRefreshKey } from '@/lib/content/preview-store';
+import { useServerSiteContent } from '@/lib/content/SiteContentProvider';
 import {
   ContentKeys, getSiteContent, pick, isRtl, tri,
   hajjSteps, HAJJ_DEFAULT, type HajjContent, type HajjStep, type Locale,
@@ -46,9 +47,18 @@ export function HajjSteps() {
 
   const heading = content.steps;
 
-  // The raw saved blob, never merged — see the header note.
-  const [saved, setSaved] = useState<HajjContent | null>(null);
+  // The raw saved blob, never merged — see the header note. Deliberately NOT
+  // `usePreviewableContent`, which merges: seeded step translations would graft onto
+  // steps an admin has replaced. Seeding from the server value keeps the first paint
+  // correct without giving that invariant up.
+  const server = useServerSiteContent<HajjContent>(ContentKeys.hajj);
+  const [saved, setSaved] = useState<HajjContent | null>(server.value);
+  const skipMountFetch = useRef(server.provided);
   useEffect(() => {
+    if (skipMountFetch.current) {
+      skipMountFetch.current = false;
+      return;
+    }
     let active = true;
     getSiteContent<HajjContent>(ContentKeys.hajj)
       .then((data) => { if (active && data) setSaved(data); })

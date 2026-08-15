@@ -89,6 +89,20 @@ export function pick(t: Tri | undefined | null, locale: string): string {
   return v && v.trim() ? v : t.en;
 }
 
+/**
+ * This locale's OWN text from a Tri — no English fallback.
+ *
+ * The counterpart to `pick()`: use it for anything that must distinguish "there is
+ * no copy in this locale" from "the copy happens to be the English one". That is
+ * what an edit box needs (see `InlineText`'s `editValue`), because rendering the
+ * fallback there makes an untranslated field look finished, leaving nobody able to
+ * tell what still needs translating.
+ */
+export function raw(t: Tri | undefined | null, locale: string): string {
+  if (!t) return '';
+  return (locale === 'rw' ? t.rw : locale === 'ar' ? t.ar : t.en) ?? '';
+}
+
 /** True when the active locale should render right-to-left. */
 export function isRtl(locale: string): boolean {
   return locale === 'ar';
@@ -106,15 +120,29 @@ export function pickLang(content: { [k: string]: unknown }, base: string, locale
   return typeof en === 'string' ? en : '';
 }
 
+/** `pickLang`'s counterpart: this locale's own `${base}{En|Rw|Ar}` value, no fallback. */
+export function rawLang(content: { [k: string]: unknown }, base: string, locale: string): string {
+  const suffix = locale === 'rw' ? 'Rw' : locale === 'ar' ? 'Ar' : 'En';
+  const value = content[`${base}${suffix}`];
+  return typeof value === 'string' ? value : '';
+}
+
 /**
  * Deep-merge saved backend content over the translated defaults.
  *
- * The admin store may hold entries whose translations are still empty (e.g.
- * `{ en: "Apply Now", rw: "", ar: "" }`). A shallow `{ ...DEFAULT, ...data }`
- * lets those blanks overwrite the seeded translations, so translated pages fall
- * back to English. This walks both values and keeps the backend value EXCEPT
- * when it is an empty string, where it falls back to the default's translation.
- * Arrays merge element-wise by index so per-item `Tri` translations survive.
+ * A shallow `{ ...DEFAULT, ...data }` would let a section that only stores part of
+ * its shape blank out the rest, so this walks both values: a key the saved blob
+ * does NOT carry takes the default, and a key it DOES carry wins outright. Arrays
+ * merge element-wise by index so per-item `Tri` translations survive.
+ *
+ * "Wins outright" includes the empty string, and that is deliberate. An empty
+ * translation is how an admin says "this locale has no copy of its own" — `pick()`
+ * then falls back to English at render time. This used to substitute the default's
+ * translation instead, which meant clearing e.g. the Kinyarwanda headline wrote ""
+ * to the store and then rendered the seeded Kinyarwanda copy anyway, so the edit
+ * looked like it had been ignored. Backend migration 059 strips the empty
+ * translations older admin editors wrote as placeholders, so the sections relying
+ * on the old behaviour keep falling back to their seeded copy.
  */
 export function mergeContent<T>(defaults: T, data: unknown): T {
   return deepFill(defaults, data) as T;
@@ -135,10 +163,6 @@ function deepFill(def: unknown, data: unknown): unknown {
       out[key] = deepFill(def[key], data[key]);
     }
     return out;
-  }
-  // Primitive: an empty backend string falls back to the default's (translated) value.
-  if (typeof data === 'string' && data.trim() === '' && typeof def === 'string' && def.trim() !== '') {
-    return def;
   }
   return data;
 }

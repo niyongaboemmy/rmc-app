@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,11 +27,10 @@ import {
   ContentKeys,
   SOCIAL_DEFAULT,
   CONTACT_HERO_DEFAULT,
-  getSiteContent,
-  mergeContent,
   pick,
   type SocialChannel,
 } from '@/lib/content-api';
+import { usePreviewableContent } from '@/lib/content/preview-store';
 import {
   ContactInlineProvider,
   useContactContent,
@@ -79,20 +78,12 @@ function ContactPageInner() {
 
   // Same social channels (and links) the home Social Media section shows — admin
   // managed in Content → Social Media, so the two surfaces stay in sync.
-  const [channels, setChannels] = useState<SocialChannel[]>(SOCIAL_DEFAULT.channels);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<Record<string, unknown>>(ContentKeys.social)
-      .then((data) => {
-        if (active && data) setChannels(mergeContent(SOCIAL_DEFAULT, data).channels);
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Read on the server by the locale layout (the footer needs the same section), so
+  // these render from saved copy in the first paint.
+  const channels: SocialChannel[] = usePreviewableContent(
+    ContentKeys.social,
+    SOCIAL_DEFAULT,
+  ).channels;
 
   const {
     register,

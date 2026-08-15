@@ -74,6 +74,9 @@ export function SocialMediaSection() {
   const rtl = isRtl(locale);
   const title = pick(content.title, locale);
   const subtitle = pick(content.subtitle, locale);
+  // Unresolved active-locale copy, for the edit boxes only — see `editValue`.
+  const rawTitle = content.title[lang];
+  const rawSubtitle = content.subtitle[lang];
 
   // Newest YouTube video (live feed is newest-first) → featured embed.
   const latestVideo = (livePosts ?? []).find((p) => p.platform === 'youtube' && p.url);
@@ -112,6 +115,7 @@ export function SocialMediaSection() {
               as="h2"
               lang={locale}
               value={title}
+              editValue={rawTitle}
               onCommit={(v) => setField((d) => { d.title[lang] = v; })}
               className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${rtl ? 'font-arabic' : ''}`}
               dir={rtl ? 'rtl' : 'ltr'}
@@ -133,6 +137,7 @@ export function SocialMediaSection() {
               as="p"
               lang={locale}
               value={subtitle}
+              editValue={rawSubtitle}
               onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
               className={`text-gray-400 max-w-xl mx-auto text-sm md:text-base ${rtl ? 'font-arabic' : ''}`}
               dir={rtl ? 'rtl' : 'ltr'}

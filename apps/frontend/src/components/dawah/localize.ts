@@ -1,4 +1,4 @@
-import { pickLang } from '@/lib/content-api';
+import { pickLang, rawLang } from '@/lib/content-api';
 
 /**
  * Resolve a tri-lingual sibling-column field from an API row.
@@ -18,4 +18,14 @@ import { pickLang } from '@/lib/content-api';
  */
 export function localized(row: object, base: string, locale: string): string {
   return pickLang(row as { [k: string]: unknown }, base, locale);
+}
+
+/**
+ * `localized`'s counterpart: the requested locale's own column, with NO fallback to
+ * English. For edit boxes (see `InlineText`'s `editValue`) — showing the English
+ * fallback there presents an untranslated record as a finished translation, so the
+ * admin cannot see which courses and books still need their rw/ar columns filled.
+ */
+export function rawLocalized(row: object, base: string, locale: string): string {
+  return rawLang(row as { [k: string]: unknown }, base, locale);
 }

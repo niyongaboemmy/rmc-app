@@ -21,7 +21,17 @@ import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 type Tag = 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
 
 interface InlineTextProps {
+  /** Locale-RESOLVED text — what the public site renders. */
   value: string;
+  /**
+   * The active locale's OWN text, unresolved. Pass this wherever `value` came from
+   * `pick()`/`pickLang()`: the edit box then opens empty (showing `placeholder`) for
+   * a field with no copy in this locale, instead of presenting the English fallback
+   * as though it were a translation — which left an admin editing /rw unable to tell
+   * what still needed translating. Omit for values that are not per-locale (a URL, an
+   * email, the Arabic Shahada), where `value` is already the raw text.
+   */
+  editValue?: string;
   onCommit: (next: string) => void;
   /** Element to render (defaults to span so it drops into any layout). */
   as?: Tag;
@@ -35,18 +45,41 @@ interface InlineTextProps {
   permission?: Permission;
 }
 
-function EditableNode({ value, onCommit, as = 'span', className = '', dir = 'ltr', style, placeholder }: InlineTextProps) {
+function EditableNode({ value, editValue, onCommit, as = 'span', className = '', dir = 'ltr', style, placeholder }: InlineTextProps) {
   const ref = useRef<HTMLElement>(null);
 
+  // What this box edits: the active locale's own text when the caller distinguishes
+  // it, else the resolved text. Editing the resolved text directly is what made an
+  // untranslated field on /rw indistinguishable from a translated one.
+  const seed = editValue ?? value;
+
+  // The text the box currently holds according to the store, tracked across renders
+  // so `commit` can tell a real edit from a no-op. `onBlur` fires unconditionally, so
+  // without this, merely clicking into a field and out again committed its text and
+  // marked the section dirty — writing the English fallback into the Kinyarwanda slot
+  // and, on publish, freezing English in as the translation. That destroys the "empty
+  // means untranslated" signal the whole fallback depends on.
+  const committed = useRef(seed);
   useEffect(() => {
-    // Seed the DOM text once per mount only — re-seeding on every `value` change
-    // would fight the caret while typing (see file header).
-    if (ref.current) ref.current.innerText = value ?? '';
+    committed.current = seed;
+  }, [seed]);
+
+  useEffect(() => {
+    // Seed the DOM text once per mount only — re-seeding on every change would fight
+    // the caret while typing (see file header).
+    if (ref.current) ref.current.innerText = seed ?? '';
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const Tag = as as React.ElementType;
-  const commit = (e: React.SyntheticEvent<HTMLElement>) => onCommit(e.currentTarget.innerText);
+  const commit = (e: React.SyntheticEvent<HTMLElement>) => {
+    const next = e.currentTarget.innerText;
+    // Nothing to persist: the store already holds exactly this text. Skipping cannot
+    // change what the page shows, and it keeps focus/blur from manufacturing an edit
+    // nobody made.
+    if (next === committed.current) return;
+    onCommit(next);
+  };
 
   return (
     <Tag

@@ -3,10 +3,18 @@ import { Footer } from '@/components/layout/Footer';
 import { EditablePageHero } from '@/components/layout/EditablePageHero';
 import { Reveal } from '@/components/ui/Reveal';
 import { ContentKeys, NEW_MUSLIM_HERO_DEFAULT } from '@/lib/content-api';
+import { fetchSiteContent } from '@/lib/content/server';
+import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
 import { FirstSteps } from '@/components/new-muslim/FirstSteps';
 import { EssentialDuas } from '@/components/new-muslim/EssentialDuas';
 import { FindNearby } from '@/components/new-muslim/FindNearby';
 import { MentorForm } from '@/components/new-muslim/MentorForm';
+
+/**
+ * The blob all four islands below share. `new-muslim-hero` is not here — the locale
+ * layout already provides it, because two client-rooted pages need the same key.
+ */
+const PAGE_CONTENT_KEYS = [ContentKeys.newMuslim];
 
 /**
  * "Welcome to Islam" — the page a brand-new Muslim lands on.
@@ -16,34 +24,38 @@ import { MentorForm } from '@/components/new-muslim/MentorForm';
  * whole page in place in Edit Mode. Sections alternate light / dark bands, with
  * the duas carried on the one deep-green band.
  */
-export default function NewMuslimPage() {
+export default async function NewMuslimPage() {
+  const content = await fetchSiteContent(PAGE_CONTENT_KEYS);
+
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
+    <SiteContentProvider content={content}>
+      <div className="min-h-screen bg-white">
+        <Navbar />
 
-      <EditablePageHero
-        contentKey={ContentKeys.newMuslimHero}
-        defaults={NEW_MUSLIM_HERO_DEFAULT}
-        showEyebrow
-        ornament
-      />
+        <EditablePageHero
+          contentKey={ContentKeys.newMuslimHero}
+          defaults={NEW_MUSLIM_HERO_DEFAULT}
+          showEyebrow
+          ornament
+        />
 
-      <main>
-        <Reveal>
-          <FirstSteps />
-        </Reveal>
-        <Reveal>
-          <EssentialDuas />
-        </Reveal>
-        <Reveal>
-          <FindNearby />
-        </Reveal>
-        <Reveal>
-          <MentorForm />
-        </Reveal>
-      </main>
+        <main>
+          <Reveal>
+            <FirstSteps />
+          </Reveal>
+          <Reveal>
+            <EssentialDuas />
+          </Reveal>
+          <Reveal>
+            <FindNearby />
+          </Reveal>
+          <Reveal>
+            <MentorForm />
+          </Reveal>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </SiteContentProvider>
   );
 }

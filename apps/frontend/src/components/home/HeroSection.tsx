@@ -197,6 +197,7 @@ export function HeroSection() {
                 as="span"
                 lang={locale}
                 value={pick(content.headline, locale)}
+                editValue={content.headline[lang]}
                 onCommit={(v) => setField((d) => { d.headline[lang] = v; })}
                 dir={locale === 'ar' ? 'rtl' : 'ltr'}
                 placeholder="Headline"
@@ -216,6 +217,7 @@ export function HeroSection() {
             as="p"
             lang={locale}
             value={pick(content.subtitle, locale)}
+            editValue={content.subtitle[lang]}
             onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
             className={`animate-fade-up mt-5 ml-auto max-w-md text-white/75 text-sm md:text-[15px] leading-relaxed ${locale === 'ar' ? 'font-arabic' : ''}`}
             style={{ animationDelay: '420ms' }}
@@ -233,6 +235,7 @@ export function HeroSection() {
                 as="span"
                 lang={locale}
                 value={pick(content.primaryCta, locale)}
+                editValue={content.primaryCta[lang]}
                 onCommit={(v) => setField((d) => { d.primaryCta[lang] = v; })}
                 className={`inline-flex items-center justify-center px-7 py-2.5 bg-rmc-green text-white font-semibold rounded-lg text-sm shadow-sm shadow-rmc-green/20 ${locale === 'ar' ? 'font-arabic' : ''}`}
                 placeholder="Button label"
@@ -250,6 +253,7 @@ export function HeroSection() {
                 as="span"
                 lang={locale}
                 value={pick(content.secondaryCta, locale)}
+                editValue={content.secondaryCta[lang]}
                 onCommit={(v) => setField((d) => { d.secondaryCta[lang] = v; })}
                 className={`inline-flex items-center justify-center px-7 py-2.5 border border-white/40 text-white font-semibold rounded-lg text-sm ${locale === 'ar' ? 'font-arabic' : ''}`}
                 placeholder="Button label"

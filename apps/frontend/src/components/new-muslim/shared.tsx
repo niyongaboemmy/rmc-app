@@ -8,7 +8,7 @@
  * public site renders identical plain text.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -21,6 +21,7 @@ import {
 } from '@/lib/content-api';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import { usePreviewStore, useEditorRefreshKey } from '@/lib/content/preview-store';
+import { useServerSiteContent } from '@/lib/content/SiteContentProvider';
 import { InlineText } from '@/components/edit-mode/InlineText';
 import { InlineSelect, type InlineSelectOption } from '@/components/edit-mode/InlineSelect';
 
@@ -57,9 +58,18 @@ export function useNewMuslimCopy() {
 export function useSavedNewMuslim(): NewMuslimContent | null {
   const store = usePreviewStore();
   const refreshKey = useEditorRefreshKey();
-  const [saved, setSaved] = useState<NewMuslimContent | null>(null);
+  // Seeded from the server read the page performs, so the first paint carries the
+  // saved copy. Deliberately still the RAW blob rather than `usePreviewableContent`,
+  // for the index-merge reason in this file's header.
+  const server = useServerSiteContent<NewMuslimContent>(ContentKeys.newMuslim);
+  const [saved, setSaved] = useState<NewMuslimContent | null>(server.value);
+  const skipMountFetch = useRef(server.provided);
 
   useEffect(() => {
+    if (skipMountFetch.current) {
+      skipMountFetch.current = false;
+      return;
+    }
     let active = true;
     getSiteContent<NewMuslimContent>(ContentKeys.newMuslim)
       .then((data) => { if (active && data) setSaved(data); })

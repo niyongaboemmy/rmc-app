@@ -111,6 +111,7 @@ export function TendersSection() {
                   as="h2"
                   lang={locale}
                   value={pick(content.title, locale)}
+                  editValue={content.title[lang]}
                   onCommit={(v) => setField((d) => { d.title[lang] = v; })}
                   className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900"
                   placeholder="Section title"
@@ -125,6 +126,7 @@ export function TendersSection() {
                   as="p"
                   lang={locale}
                   value={pick(content.subtitle, locale)}
+                  editValue={content.subtitle[lang]}
                   onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
                   className="text-gray-400 text-xs mt-0.5"
                   placeholder="Subtitle"
