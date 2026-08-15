@@ -11,13 +11,22 @@ import {
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
-  Compass, ListChecks, CalendarDays,
+  Compass, ListChecks, CalendarDays, Briefcase, GraduationCap,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
 type SectionType = 'crud' | 'edit';
-type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page' | 'Funeral Service' | 'Hajj Service';
+type PageLocation =
+  | 'Homepage'
+  | 'About Page'
+  | 'Blog Page'
+  | 'Contact Page'
+  | 'Funeral Service'
+  | 'Hajj Service'
+  | 'Tenders Page'
+  | 'Jobs Page'
+  | 'Scholarships Page';
 
 interface SectionConfig {
   id: string;
@@ -311,6 +320,48 @@ const SECTIONS: SectionConfig[] = [
     badge: 'bg-amber-100 text-amber-700',
     accentBar: 'bg-amber-400',
   },
+  /* The three service boards. Each entry edits the WORDING of its page; the records
+     the page lists (tenders, postings, programmes) have their own screens, which the
+     editors link across to. */
+  {
+    id: 'tender-service',
+    icon: Briefcase,
+    title: 'Tenders Page',
+    description: 'Hero, the heading above the board and the how-to-apply steps on the public Tenders page. The tenders themselves are managed under Tenders.',
+    type: 'edit', itemLabel: null,
+    page: 'Tenders Page', positionOrder: 0,
+    locationLabel: 'Tenders Page · Wording',
+    keywords: ['tender', 'tenders', 'bid', 'procurement', 'board', 'hero', 'heading', 'steps', 'how to apply', 'wording', 'copy'],
+    bg: 'bg-teal-50', iconColor: 'text-teal-600', border: 'border-teal-100',
+    badge: 'bg-teal-100 text-teal-700',
+    accentBar: 'bg-teal-400',
+  },
+  {
+    id: 'jobs-service',
+    icon: Briefcase,
+    title: 'Jobs Page',
+    description: 'Hero, the heading above the board and the how-to-apply steps on the public Jobs page. The openings themselves are managed under Job Postings.',
+    type: 'edit', itemLabel: null,
+    page: 'Jobs Page', positionOrder: 0,
+    locationLabel: 'Jobs Page · Wording',
+    keywords: ['job', 'jobs', 'vacancy', 'opening', 'career', 'employment', 'board', 'hero', 'heading', 'steps', 'how to apply', 'wording', 'copy'],
+    bg: 'bg-indigo-50', iconColor: 'text-indigo-600', border: 'border-indigo-100',
+    badge: 'bg-indigo-100 text-indigo-700',
+    accentBar: 'bg-indigo-400',
+  },
+  {
+    id: 'scholarship-service',
+    icon: GraduationCap,
+    title: 'Scholarships Page',
+    description: 'Hero, board heading, how-to-apply steps, the FAQ and the closing call to action on the public Scholarships page. The programmes themselves are managed under Scholarship Programs.',
+    type: 'edit', itemLabel: null,
+    page: 'Scholarships Page', positionOrder: 0,
+    locationLabel: 'Scholarships Page · Wording',
+    keywords: ['scholarship', 'scholarships', 'bursary', 'student', 'education', 'faq', 'cta', 'hero', 'heading', 'steps', 'how to apply', 'wording', 'copy'],
+    bg: 'bg-violet-50', iconColor: 'text-violet-600', border: 'border-violet-100',
+    badge: 'bg-violet-100 text-violet-700',
+    accentBar: 'bg-violet-400',
+  },
 ];
 
 const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string; description: string }[] = [
@@ -320,6 +371,9 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'Contact Page', icon: Mail, color: 'text-teal-600', description: 'Content on the /contact page' },
   { page: 'Funeral Service', icon: Moon, color: 'text-rmc-green', description: 'Content on the funeral service pages' },
   { page: 'Hajj Service', icon: Compass, color: 'text-amber-600', description: 'Content on the Hajj service pages' },
+  { page: 'Tenders Page', icon: Briefcase, color: 'text-teal-600', description: 'Wording on the public tenders board' },
+  { page: 'Jobs Page', icon: Briefcase, color: 'text-indigo-600', description: 'Wording on the public jobs board' },
+  { page: 'Scholarships Page', icon: GraduationCap, color: 'text-violet-600', description: 'Wording on the public scholarships board' },
 ];
 
 type Tab = 'sections' | 'gallery';
