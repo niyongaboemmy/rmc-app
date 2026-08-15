@@ -22,6 +22,9 @@ const LOCALES: LocaleOption[] = [
   { code: 'ar', flag: '🇸🇦', label: 'AR', name: 'العربية', rtl: true },
 ];
 
+/** Ties the trigger's `aria-controls` to the listbox it opens. */
+const LISTBOX_ID = 'language-switcher-listbox';
+
 export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -66,6 +69,7 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
         }`}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-controls={LISTBOX_ID}
         aria-label={`Change language — current: ${current.name}`}
       >
         <span className="text-base leading-none" aria-hidden>
@@ -77,10 +81,16 @@ export function LanguageSwitcher({ scrolled = false }: { scrolled?: boolean }) {
         />
       </button>
 
-      {/* Dropdown — flag + native name + clear selected state */}
+      {/* Dropdown — flag + native name + clear selected state.
+          `invisible` is what actually closes this, not `opacity-0`: an element at zero
+          opacity is still in the tab order and still read by screen readers, so the
+          collapsed menu used to hand keyboard users three invisible language buttons
+          and announce a listbox the trigger reported as collapsed. `visibility` still
+          animates alongside opacity, so the fade is unchanged. */}
       <div
+        id={LISTBOX_ID}
         className={`absolute end-0 mt-2 w-48 rounded-lg bg-white shadow-xl shadow-black/10 border border-gray-100 overflow-hidden z-50 transition-all duration-200 origin-top ${
-          open ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+          open ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'
         }`}
         role="listbox"
         aria-label="Select language"

@@ -64,16 +64,18 @@ function contentKeysOf(file: string, seen = new Set<string>()): Set<string> {
     return out;
   }
 
-  for (const m of src.matchAll(/ContentKeys\.([a-zA-Z]+)/g)) out.add(m[1]);
+  // Array.from throughout, not spread/for-of over the iterator: the repo tsconfig
+  // sets no `target`, so plain `tsc` compiles as ES5 and rejects iterating one.
+  for (const m of Array.from(src.matchAll(/ContentKeys\.([a-zA-Z]+)/g))) out.add(m[1]);
 
-  for (const m of src.matchAll(/from\s+['"]([^'"]+)['"]/g)) {
+  for (const m of Array.from(src.matchAll(/from\s+['"]([^'"]+)['"]/g))) {
     const target = resolveImport(m[1], file);
     // The barrel and the key table only DECLARE the keys — walking into them would
     // report every key in the app as reachable from every page.
     if (!target) continue;
     if (target.endsWith(path.join('lib', 'content-api.ts'))) continue;
     if (target.endsWith(path.join('content', 'client.ts'))) continue;
-    for (const k of contentKeysOf(target, seen)) out.add(k);
+    Array.from(contentKeysOf(target, seen)).forEach((k) => out.add(k));
   }
   return out;
 }
@@ -92,7 +94,9 @@ function sharedKeys(): Set<string> {
   const src = fs.readFileSync(LAYOUT, 'utf8');
   const block = src.match(/const SHARED_CONTENT_KEYS[^[]*\[([^\]]*)\]/);
   if (!block) throw new Error('SHARED_CONTENT_KEYS not found in the locale layout');
-  return new Set([...block[1].matchAll(/ContentKeys\.([a-zA-Z]+)/g)].map((m) => m[1]));
+  return new Set(
+    Array.from(block[1].matchAll(/ContentKeys\.([a-zA-Z]+)/g)).map((m) => m[1]),
+  );
 }
 
 describe('server-rendered content coverage', () => {
@@ -117,7 +121,7 @@ describe('server-rendered content coverage', () => {
     const isClientRoot = /^\s*['"]use client['"]/.test(src);
     const allowed = SERVER_RESOLVED_ELSEWHERE[rel.split(path.sep).join('/')] ?? [];
 
-    const uncovered = [...keys].filter((key) => {
+    const uncovered = Array.from(keys).filter((key) => {
       if (shared.has(key)) return false;
       if (allowed.includes(key)) return false;
       // A server page that names the key either hands it to a SiteContentProvider or
