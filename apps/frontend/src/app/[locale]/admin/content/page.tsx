@@ -12,6 +12,7 @@ import {
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
   Compass, ListChecks, CalendarDays, Briefcase, GraduationCap,
+  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -26,7 +27,12 @@ type PageLocation =
   | 'Hajj Service'
   | 'Tenders Page'
   | 'Jobs Page'
-  | 'Scholarships Page';
+  | 'Scholarships Page'
+  | 'Services Page'
+  | 'Dawah Pages'
+  | 'Welcome to Islam'
+  | 'Projects Page'
+  | 'Site-wide';
 
 interface SectionConfig {
   id: string;
@@ -362,6 +368,97 @@ const SECTIONS: SectionConfig[] = [
     badge: 'bg-violet-100 text-violet-700',
     accentBar: 'bg-violet-400',
   },
+  {
+    id: 'services',
+    icon: LayoutGrid,
+    title: 'Services Page',
+    description: 'The name, description and detail modal for each service listed on the public Services page.',
+    type: 'edit', itemLabel: null,
+    page: 'Services Page', positionOrder: 0,
+    locationLabel: 'Services Page · Service cards',
+    keywords: ['service', 'services', 'marriage', 'funeral', 'conduct', 'hajj', 'card', 'modal', 'requirements', 'steps', 'wording', 'copy'],
+    bg: 'bg-cyan-50', iconColor: 'text-cyan-600', border: 'border-cyan-100',
+    badge: 'bg-cyan-100 text-cyan-700',
+    accentBar: 'bg-cyan-400',
+  },
+  {
+    id: 'library',
+    icon: Library,
+    title: 'Library Page',
+    description: 'Heading and the empty / error messages on the public Dawah Library listing. The books themselves are managed under Dawah → Library.',
+    type: 'edit', itemLabel: null,
+    page: 'Dawah Pages', positionOrder: 0,
+    locationLabel: 'Dawah · Library listing',
+    keywords: ['library', 'books', 'dawah', 'reading', 'heading', 'empty', 'error', 'wording', 'copy'],
+    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
+    badge: 'bg-emerald-100 text-emerald-700',
+    accentBar: 'bg-emerald-400',
+  },
+  {
+    id: 'courses',
+    icon: GraduationCap,
+    title: 'Courses Page',
+    description: 'Heading and the empty / error messages on the public Dawah Courses listing. The courses themselves are managed under Dawah → Courses.',
+    type: 'edit', itemLabel: null,
+    page: 'Dawah Pages', positionOrder: 1,
+    locationLabel: 'Dawah · Courses listing',
+    keywords: ['courses', 'learning', 'dawah', 'lessons', 'heading', 'empty', 'error', 'wording', 'copy'],
+    bg: 'bg-sky-50', iconColor: 'text-sky-600', border: 'border-sky-100',
+    badge: 'bg-sky-100 text-sky-700',
+    accentBar: 'bg-sky-400',
+  },
+  {
+    id: 'discussions',
+    icon: MessagesSquare,
+    title: 'Discussions Page',
+    description: 'Heading and the empty / no-results / error messages on the public Dawah Discussions listing. The questions themselves are managed under Dawah → Discussions.',
+    type: 'edit', itemLabel: null,
+    page: 'Dawah Pages', positionOrder: 2,
+    locationLabel: 'Dawah · Discussions listing',
+    keywords: ['discussions', 'questions', 'answers', 'ask', 'dawah', 'heading', 'empty', 'error', 'wording', 'copy'],
+    bg: 'bg-orange-50', iconColor: 'text-orange-600', border: 'border-orange-100',
+    badge: 'bg-orange-100 text-orange-700',
+    accentBar: 'bg-orange-400',
+  },
+  {
+    id: 'new-muslim',
+    icon: Sparkles,
+    title: 'Welcome to Islam Page',
+    description: 'First steps, the essential duas, the mosque finder labels and the mentor form on the public Welcome to Islam page.',
+    type: 'edit', itemLabel: null,
+    page: 'Welcome to Islam', positionOrder: 0,
+    locationLabel: 'Welcome to Islam · Page sections',
+    keywords: ['new muslim', 'revert', 'convert', 'shahada', 'dua', 'duas', 'arabic', 'mentor', 'mosque', 'steps', 'welcome', 'islam'],
+    bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
+    badge: 'bg-rmc-green-light text-rmc-green-dark',
+    accentBar: 'bg-rmc-green',
+  },
+  {
+    id: 'projects',
+    icon: HandCoins,
+    title: 'Projects',
+    description: 'The section heading and the fundraising projects on the public Projects page — funding targets, status, cover image and description.',
+    type: 'crud', itemLabel: 'projects',
+    page: 'Projects Page', positionOrder: 0,
+    locationLabel: 'Projects Page · Projects',
+    keywords: ['project', 'projects', 'fundraising', 'donate', 'mosque', 'construction', 'funding', 'target', 'raised', 'progress', 'image'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
+  },
+  {
+    id: 'page-headers',
+    icon: Heading1,
+    title: 'Page Headers',
+    description: 'The banner copy at the top of the Services, Contact, Membership, Welcome to Islam and Gallery pages, plus the About timeline header. Two or three fields each, gathered on one screen.',
+    type: 'edit', itemLabel: null,
+    page: 'Site-wide', positionOrder: 0,
+    locationLabel: 'Site-wide · Page banners',
+    keywords: ['header', 'headers', 'hero', 'banner', 'title', 'subtitle', 'eyebrow', 'contact', 'services', 'gallery', 'membership', 'register', 'welcome', 'timeline', 'about'],
+    bg: 'bg-rose-50', iconColor: 'text-rose-600', border: 'border-rose-100',
+    badge: 'bg-rose-100 text-rose-700',
+    accentBar: 'bg-rose-400',
+  },
 ];
 
 const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string; description: string }[] = [
@@ -374,6 +471,11 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'Tenders Page', icon: Briefcase, color: 'text-teal-600', description: 'Wording on the public tenders board' },
   { page: 'Jobs Page', icon: Briefcase, color: 'text-indigo-600', description: 'Wording on the public jobs board' },
   { page: 'Scholarships Page', icon: GraduationCap, color: 'text-violet-600', description: 'Wording on the public scholarships board' },
+  { page: 'Services Page', icon: LayoutGrid, color: 'text-cyan-600', description: 'The service cards and their detail modals' },
+  { page: 'Dawah Pages', icon: Library, color: 'text-emerald-600', description: 'Wording on the Library, Courses and Discussions listings' },
+  { page: 'Welcome to Islam', icon: Sparkles, color: 'text-rmc-green', description: 'Content on the /new-muslim page' },
+  { page: 'Projects Page', icon: HandCoins, color: 'text-amber-600', description: 'Fundraising projects and the section heading' },
+  { page: 'Site-wide', icon: Heading1, color: 'text-rose-600', description: 'Copy that appears across several pages' },
 ];
 
 type Tab = 'sections' | 'gallery';
