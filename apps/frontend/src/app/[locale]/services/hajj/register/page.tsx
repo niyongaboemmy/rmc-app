@@ -4,11 +4,22 @@ import { ArrowLeft } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { HajjRegisterForm } from '@/components/hajj/HajjRegisterForm';
+import { HajjPageHeading } from '@/components/hajj/HajjPageHeading';
+import { ContentKeys } from '@/lib/content-api';
+import { fetchSiteContent } from '@/lib/content/server';
+import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
+
+/** The heading is admin-managed; the form's own fields stay in i18n. */
+const PAGE_CONTENT_KEYS = [ContentKeys.hajj];
 
 export default async function HajjRegisterPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = await getTranslations('services.hajj.register');
+  const [t, content] = await Promise.all([
+    getTranslations('services.hajj.register'),
+    fetchSiteContent(PAGE_CONTENT_KEYS),
+  ]);
 
   return (
+    <SiteContentProvider content={content}>
     <div className="min-h-screen">
       {/* Solid navbar: the image hero is gone, so a transparent bar would put
           white links on the light page and read as invisible. */}
@@ -24,8 +35,7 @@ export default async function HajjRegisterPage({ params: { locale } }: { params:
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
               {t('back')}
             </Link>
-            <h1 className="mt-4 text-2xl font-bold text-rmc-green-deep md:text-3xl">{t('title')}</h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-gray-500 md:text-base">{t('subtitle')}</p>
+            <HajjPageHeading group="register" />
           </div>
         </section>
 
@@ -33,5 +43,6 @@ export default async function HajjRegisterPage({ params: { locale } }: { params:
       </main>
       <Footer />
     </div>
+    </SiteContentProvider>
   );
 }

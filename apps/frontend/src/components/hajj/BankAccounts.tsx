@@ -4,6 +4,18 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Building2, Check, Copy, Loader2 } from 'lucide-react';
 import { hajjApi, type HajjBankAccountItem } from '@/lib/hajjApi';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import {
+  ContentKeys,
+  HAJJ_DEFAULT,
+  isRtl,
+  pick,
+  raw,
+  type HajjContent,
+  type Locale,
+} from '@/lib/content-api';
+import { useParams } from 'next/navigation';
 
 /**
  * Section: "Where to pay".
@@ -17,6 +29,14 @@ import { hajjApi, type HajjBankAccountItem } from '@/lib/hajjApi';
  */
 export function BankAccounts() {
   const t = useTranslations('services.hajj.bankAccounts');
+
+  /* The section's own copy is admin-managed. The per-account field labels and the
+     copy/copied button states stay in i18n — they are UI, not copy. */
+  const { locale } = useParams<{ locale: string }>();
+  const { content, setField } = useEditableContent<HajjContent>(ContentKeys.hajj, HAJJ_DEFAULT);
+  const lang = locale as Locale;
+  const dir = isRtl(locale) ? ('rtl' as const) : ('ltr' as const);
+  const copyText = content.bankAccounts;
 
   const [items, setItems] = useState<HajjBankAccountItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,10 +69,36 @@ export function BankAccounts() {
     <section id="hajj-bank-accounts" className="scroll-mt-24">
       <div className="mb-8 max-w-2xl">
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold">
-          {t('eyebrow')}
+          <InlineText
+            as="span"
+            lang={locale}
+            value={pick(copyText.eyebrow, locale)}
+            editValue={raw(copyText.eyebrow, locale)}
+            onCommit={(v) => setField((d) => { d.bankAccounts.eyebrow[lang] = v; })}
+            dir={dir}
+            placeholder="Eyebrow"
+          />
         </p>
-        <h2 className="text-2xl font-bold text-rmc-green-deep md:text-3xl">{t('title')}</h2>
-        <p className="mt-2 text-sm text-gray-500">{t('subtitle')}</p>
+        <InlineText
+          as="h2"
+          lang={locale}
+          value={pick(copyText.title, locale)}
+          editValue={raw(copyText.title, locale)}
+          onCommit={(v) => setField((d) => { d.bankAccounts.title[lang] = v; })}
+          className="text-2xl font-bold text-rmc-green-deep md:text-3xl"
+          dir={dir}
+          placeholder="Heading"
+        />
+        <InlineText
+          as="p"
+          lang={locale}
+          value={pick(copyText.subtitle, locale)}
+          editValue={raw(copyText.subtitle, locale)}
+          onCommit={(v) => setField((d) => { d.bankAccounts.subtitle[lang] = v; })}
+          className="mt-2 text-sm text-gray-500"
+          dir={dir}
+          placeholder="Subheading"
+        />
       </div>
 
       {loading ? (
@@ -127,7 +173,16 @@ export function BankAccounts() {
         </ul>
       )}
 
-      <p className="mt-6 text-[13px] leading-relaxed text-gray-500">{t('proofNote')}</p>
+      <InlineText
+        as="p"
+        lang={locale}
+        value={pick(copyText.proofNote, locale)}
+        editValue={raw(copyText.proofNote, locale)}
+        onCommit={(v) => setField((d) => { d.bankAccounts.proofNote[lang] = v; })}
+        className="mt-6 text-[13px] leading-relaxed text-gray-500"
+        dir={dir}
+        placeholder="Note"
+      />
     </section>
   );
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
 import { ArrowRight, Search } from 'lucide-react';
 import {
   ContentKeys, getSiteContent, mergeContent, pick,
@@ -17,10 +17,13 @@ import {
  */
 export async function HajjRegisterCta() {
   const locale = await getLocale();
-  const t = await getTranslations('services.hajj');
 
   const saved = await getSiteContent<HajjContent>(ContentKeys.hajj).catch(() => null);
-  const label = pick(mergeContent(HAJJ_DEFAULT, saved).about.cta, locale);
+  const content = mergeContent(HAJJ_DEFAULT, saved);
+  const label = pick(content.about.cta, locale);
+  // Sits with the status page's own heading rather than the About block: it is the
+  // door into that page, and an admin renaming one should find the other beside it.
+  const statusLabel = pick(content.status.checkLabel, locale);
 
   return (
     <section className="relative bg-white">
@@ -38,7 +41,7 @@ export async function HajjRegisterCta() {
           className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-rmc-green transition-colors hover:border-rmc-green/40 hover:bg-rmc-green-light/40"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
-          {t('status.check')}
+          {statusLabel}
         </Link>
       </div>
     </section>
