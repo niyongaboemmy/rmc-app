@@ -1,7 +1,12 @@
-import { boardSteps, TENDER_SERVICE_DEFAULT } from './service-boards';
+import {
+  boardFaqs,
+  boardSteps,
+  SCHOLARSHIP_SERVICE_DEFAULT,
+  TENDER_SERVICE_DEFAULT,
+} from './service-boards';
 import { mergeContent, pick, tri } from './client';
 import type { Tri } from './client';
-import type { ServiceBoardContent } from './service-boards';
+import type { ScholarshipServiceContent, ServiceBoardContent } from './service-boards';
 
 /**
  * `boardSteps` exists so an admin can DELETE a step.
@@ -86,5 +91,56 @@ describe('boardSteps', () => {
     const steps = boardSteps(broken, TENDER_SERVICE_DEFAULT);
     expect(steps).toHaveLength(2);
     expect(pick(steps[0].title, 'en')).toBe('');
+  });
+});
+
+/** The FAQ has the same shape of problem, and the same answer. */
+describe('boardFaqs', () => {
+  const enOnly = (en: string) => ({ en }) as unknown as Tri;
+
+  const savedWithFirstQuestionDeleted = {
+    ...SCHOLARSHIP_SERVICE_DEFAULT,
+    faq: {
+      ...SCHOLARSHIP_SERVICE_DEFAULT.faq,
+      items: [
+        { id: 'fee', q: enOnly('Is there a fee to apply?'), a: enOnly('No.') },
+        { id: 'status', q: enOnly('How do I check my status?'), a: enOnly('Use your tracking number.') },
+      ],
+    },
+  } as ScholarshipServiceContent;
+
+  it('returns the seeded questions when the section has never been saved', () => {
+    expect(boardFaqs(null, SCHOLARSHIP_SERVICE_DEFAULT)).toEqual(
+      SCHOLARSHIP_SERVICE_DEFAULT.faq.items,
+    );
+  });
+
+  it('honours a deletion and lets the list be emptied', () => {
+    expect(boardFaqs(savedWithFirstQuestionDeleted, SCHOLARSHIP_SERVICE_DEFAULT)).toHaveLength(2);
+    const emptied = {
+      ...SCHOLARSHIP_SERVICE_DEFAULT,
+      faq: { ...SCHOLARSHIP_SERVICE_DEFAULT.faq, items: [] },
+    } as ScholarshipServiceContent;
+    expect(boardFaqs(emptied, SCHOLARSHIP_SERVICE_DEFAULT)).toEqual([]);
+  });
+
+  it('does not graft a deleted question\'s translations onto its neighbour', () => {
+    const faqs = boardFaqs(savedWithFirstQuestionDeleted, SCHOLARSHIP_SERVICE_DEFAULT);
+    expect(pick(faqs[0].q, 'rw')).toBe('Is there a fee to apply?');
+    expect(pick(faqs[0].q, 'rw')).not.toBe(SCHOLARSHIP_SERVICE_DEFAULT.faq.items[0].q.rw);
+  });
+
+  it('is what the merged read would get wrong', () => {
+    const merged = mergeContent(SCHOLARSHIP_SERVICE_DEFAULT, savedWithFirstQuestionDeleted);
+    expect(pick(merged.faq.items[0].q, 'rw')).toBe(
+      SCHOLARSHIP_SERVICE_DEFAULT.faq.items[0].q.rw,
+    );
+  });
+
+  it('fills a missing id so React keys stay stable', () => {
+    const noIds = {
+      faq: { items: [{ q: tri('A'), a: tri('a') }] },
+    } as unknown as ScholarshipServiceContent;
+    expect(boardFaqs(noIds, SCHOLARSHIP_SERVICE_DEFAULT)[0].id).toBe('faq-0');
   });
 });

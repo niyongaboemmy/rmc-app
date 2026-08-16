@@ -17,11 +17,9 @@ import { Tri, tri } from './client';
  * (search boxes, table headers, status labels, "Back to Services") is still i18n
  * and should be: it is UI, not copy anyone would want to rewrite per-locale.
  *
- * The STEPS are read through `boardSteps()` rather than the merged blob, which is
- * what lets an admin add and remove them — see that function for why. The FAQ list
- * is still fixed-length: it is merged by index like any other array, so removing an
- * entry there would leak the seeded entry's translations onto the one that shifts
- * into its place.
+ * The STEPS and the scholarship FAQ are read through `boardSteps()` / `boardFaqs()`
+ * rather than the merged blob, which is what lets an admin add and remove them — see
+ * those functions for why a merged read cannot.
  */
 
 /** One numbered step in a "how to apply" rail. */
@@ -72,8 +70,31 @@ export interface ServiceBoardContent {
 
 /** One collapsible question in the scholarship FAQ. */
 export interface BoardFaq {
+  /** Stable id, so React keys survive reordering. Any unique string. */
+  id?: string;
   q: Tri;
   a: Tri;
+}
+
+/**
+ * The FAQ entries an admin has saved, or the seeded ones when the section has never
+ * been edited. The `boardSteps` counterpart, and unmerged for the same reason: a
+ * deleted question would otherwise leave the one that shifts up wearing the seeded
+ * question's translations.
+ */
+export function boardFaqs(saved: unknown, defaults: ScholarshipServiceContent): BoardFaq[] {
+  const items = (saved as ScholarshipServiceContent | null)?.faq?.items;
+  if (!Array.isArray(items)) return defaults.faq.items;
+  return items.map((item, i) => ({
+    id: item?.id || `faq-${i}`,
+    q: item?.q ?? tri(''),
+    a: item?.a ?? tri(''),
+  }));
+}
+
+/** Build a seeded FAQ entry; the id keeps React keys stable across reordering. */
+function faq(id: string, q: Tri, a: Tri): BoardFaq {
+  return { id, q, a };
 }
 
 /** Scholarships carry an FAQ and a closing call to action on top of the board. */
@@ -278,50 +299,54 @@ export const SCHOLARSHIP_SERVICE_DEFAULT: ScholarshipServiceContent = {
   faq: {
     title: tri('Frequently asked questions', 'Ibibazo Bikunze Kubazwa', 'الأسئلة الشائعة'),
     items: [
-      {
-        q: tri(
+      faq(
+        'account',
+        tri(
           'Do I need an account to apply?',
           'Ese ngomba kuba mfite konti kugira nsabe?',
           'هل أحتاج إلى حساب للتقديم؟',
         ),
-        a: tri(
+        tri(
           'Yes — you need to sign in to your RMC account to submit an application.',
           'Yego — ugomba kwinjira kuri konti yawe ya RMC kugira ngo wohereze ubusabe.',
           'نعم — يجب تسجيل الدخول إلى حسابك في RMC لإرسال طلب.',
         ),
-      },
-      {
-        q: tri('Is there a fee to apply?', 'Hari amafaranga yo gusaba?', 'هل هناك رسوم للتقديم؟'),
-        a: tri(
+      ),
+      faq(
+        'fee',
+        tri('Is there a fee to apply?', 'Hari amafaranga yo gusaba?', 'هل هناك رسوم للتقديم؟'),
+        tri(
           'No, applying for a scholarship does not require any payment.',
           'Oya, gusaba buruse ntibisaba kwishyura.',
           'لا، التقديم على منحة دراسية لا يتطلب أي دفع.',
         ),
-      },
-      {
-        q: tri(
+      ),
+      faq(
+        'status',
+        tri(
           'How do I check my application status?',
           'Nakurikirana nte aho ubusabe bwanjye bugeze?',
           'كيف أتحقق من حالة طلبي؟',
         ),
-        a: tri(
+        tri(
           'Use the tracking number you received after submitting, on the "Check Status" page — no account needed.',
           'Koresha nomero yo gukurikirana wahawe nyuma yo kohereza, ku rupapuro rwa "Reba Aho Bigeze" — nta konti ikenewe.',
           'استخدم رقم التتبع الذي حصلت عليه بعد الإرسال، في صفحة "تحقق من الحالة" — دون الحاجة إلى حساب.',
         ),
-      },
-      {
-        q: tri(
+      ),
+      faq(
+        'reapply',
+        tri(
           "Can I apply again if I'm not approved?",
           'Nashobora gusaba nanone niba ntemewe?',
           'هل يمكنني التقديم مرة أخرى إذا لم يُقبل طلبي؟',
         ),
-        a: tri(
+        tri(
           "Yes, you're welcome to submit a new application.",
           'Yego, urakaza neza kohereza ubundi busabe bushya.',
           'نعم، يسعدنا أن تقدّم طلبًا جديدًا.',
         ),
-      },
+      ),
     ],
   },
   cta: {

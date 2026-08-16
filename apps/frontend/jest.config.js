@@ -15,7 +15,9 @@ const customJestConfig = {
     '<rootDir>/.next_bak_root2/',
     '<rootDir>/node_modules/',
   ],
-  modulePathIgnorePatterns: ['<rootDir>/.next_bak_root2/'],
+  // Both build outputs contain a copy of package.json under `standalone/`, which
+  // jest-haste-map reports as a duplicate module name on every run.
+  modulePathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/.next_bak_root2/'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],
 };
 

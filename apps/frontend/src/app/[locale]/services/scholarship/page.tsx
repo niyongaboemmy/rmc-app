@@ -138,11 +138,10 @@ export default async function ScholarshipServicePage({
           </section>
 
           {/* ===================================================================
-              FAQ
+              FAQ — owns its own <section> so it can hide the whole band once an
+              admin removes every question, rather than leaving an empty one.
           =================================================================== */}
-          <section className="py-12 px-4 sm:px-6 lg:px-8 bg-rmc-green-light/40 pattern-light">
-            <ScholarshipFaq />
-          </section>
+          <ScholarshipFaq />
 
           {/* ===================================================================
               CTA

@@ -13,15 +13,13 @@
  * door into the same `site_content` blob, for admins who work from the dashboard —
  * both write the same key, so an edit made in either shows up in the other.
  *
- * Steps can be added, removed and reordered — the same as in Edit Mode, so neither
- * door can do something the other cannot. That needs care on LOAD: the saved blob is
- * merged over the defaults for everything else, but the steps array is then restored
- * from the RAW value via `boardSteps()`. Without that, an admin who had deleted a
- * step would open this form and find the shifted step wearing the seeded step's
- * translations — and saving would make that permanent.
- *
- * FAQ entries stay text-only. They are merged by index like any other array, and the
- * same repair would be needed to make them removable.
+ * Steps and the scholarship FAQ can be added, removed and reordered — the same as in
+ * Edit Mode, so neither door can do something the other cannot. That needs care on
+ * LOAD: the saved blob is merged over the defaults for everything else, but both
+ * arrays are then restored from the RAW value via `boardSteps()` / `boardFaqs()`.
+ * Without that, an admin who had deleted an entry would open this form and find the
+ * one that shifted up wearing the seeded entry's translations — and saving would make
+ * that permanent.
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -33,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import {
+  boardFaqs,
   boardSteps,
   getSiteContent,
   saveSiteContent,
@@ -65,6 +64,8 @@ interface FieldGroup {
   fields: FieldDef[];
   /** Render the add / remove / reorder step list under this group's fields. */
   stepsEditor?: boolean;
+  /** Same, for the scholarship FAQ. */
+  faqEditor?: boolean;
 }
 
 /** Immutable set of `obj` at `path`, cloning only the nodes along the way. */
@@ -86,6 +87,131 @@ function readAtPath(obj: unknown, path: (string | number)[]): string {
 /** Has the wider scholarship shape? */
 function hasExtras(v: ServiceBoardContent): v is ScholarshipServiceContent {
   return 'faq' in v && 'cta' in v;
+}
+
+/**
+ * An orderable list of entries, each a couple of `Tri` fields — the steps rail and
+ * the scholarship FAQ are the same widget with different nouns.
+ */
+function ListEditor({
+  noun,
+  emptyNote,
+  addLabel,
+  ids,
+  basePath,
+  fields,
+  lang,
+  dir,
+  inputClass,
+  read,
+  onFieldChange,
+  onAdd,
+  onRemove,
+  onMove,
+}: {
+  noun: string;
+  emptyNote: string;
+  addLabel: string;
+  /** One entry per list item; only the length and the React keys are used. */
+  ids: (string | undefined)[];
+  basePath: (string | number)[];
+  fields: { key: string; label: string; rows: number }[];
+  lang: Lang;
+  dir: 'ltr' | 'rtl';
+  inputClass: string;
+  read: (path: (string | number)[]) => string;
+  onFieldChange: (path: (string | number)[], value: string) => void;
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onMove: (i: number, delta: -1 | 1) => void;
+}) {
+  const ctrl =
+    'grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30';
+
+  return (
+    <div className="space-y-3 border-t border-gray-50 pt-4">
+      {ids.length === 0 && (
+        <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-xs text-gray-400">
+          {emptyNote}
+        </p>
+      )}
+
+      {ids.map((id, i) => (
+        <div key={id ?? i} className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-xs font-bold text-gray-500">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rmc-green text-[10px] text-white">
+                {i + 1}
+              </span>
+              {noun} {i + 1}
+            </span>
+            <span className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onMove(i, -1)}
+                disabled={i === 0}
+                className={ctrl}
+                aria-label={`Move ${noun.toLowerCase()} up`}
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onMove(i, 1)}
+                disabled={i === ids.length - 1}
+                className={ctrl}
+                aria-label={`Move ${noun.toLowerCase()} down`}
+              >
+                <ArrowDown className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                aria-label={`Remove ${noun.toLowerCase()}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          </div>
+
+          {fields.map((f) => {
+            const path = [...basePath, i, f.key];
+            return (
+              <div key={f.key}>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{f.label}</label>
+                {f.rows === 1 ? (
+                  <input
+                    dir={dir}
+                    type="text"
+                    value={read([...path, lang])}
+                    onChange={(e) => onFieldChange(path, e.target.value)}
+                    className={inputClass}
+                  />
+                ) : (
+                  <textarea
+                    dir={dir}
+                    rows={f.rows}
+                    value={read([...path, lang])}
+                    onChange={(e) => onFieldChange(path, e.target.value)}
+                    className={`${inputClass} resize-none`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={onAdd}
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green"
+      >
+        <Plus className="h-4 w-4" /> {addLabel}
+      </button>
+    </div>
+  );
 }
 
 /**
@@ -128,13 +254,10 @@ function buildGroups(form: ServiceBoardContent): FieldGroup[] {
       {
         title: 'Frequently asked questions',
         icon: HelpCircle,
-        fields: [
-          { path: ['faq', 'title'], label: 'Heading', rows: 1 },
-          ...form.faq.items.flatMap((_, i): FieldDef[] => [
-            { path: ['faq', 'items', i, 'q'], label: `Question ${i + 1}`, rows: 1 },
-            { path: ['faq', 'items', i, 'a'], label: `Answer ${i + 1}`, rows: 2 },
-          ]),
-        ],
+        // The questions are rendered by the dedicated editor below, which owns the
+        // add / remove / reorder controls a flat field list cannot offer.
+        fields: [{ path: ['faq', 'title'], label: 'Heading', rows: 1 }],
+        faqEditor: true,
       },
       {
         title: 'Closing call to action',
@@ -194,19 +317,27 @@ export function ServiceBoardEditor({
       .then((data) => {
         if (!data) return;
         const merged = mergeContent(defaults, data);
-        // Restore the steps from the RAW value — see the header note. Merging them by
-        // index is exactly what would put a deleted step's seeded translations onto
-        // the step that shifted into its place.
-        setForm({ ...merged, steps: { ...merged.steps, items: boardSteps(data, defaults) } });
+        // Restore the list arrays from the RAW value — see the header note. Merging
+        // them by index is exactly what would put a deleted entry's seeded
+        // translations onto the entry that shifted into its place.
+        const repaired: ServiceBoardContent = {
+          ...merged,
+          steps: { ...merged.steps, items: boardSteps(data, defaults) },
+        };
+        if (hasExtras(repaired)) {
+          const withFaq: ScholarshipServiceContent = {
+            ...repaired,
+            faq: { ...repaired.faq, items: boardFaqs(data, repaired) },
+          };
+          setForm(withFaq);
+        } else {
+          setForm(repaired);
+        }
       })
       .catch(() => {
         /* keep defaults */
       });
   }, [sectionKey, defaults]);
-
-  const writeSteps = useCallback((next: BoardStep[]) => {
-    setForm((prev) => ({ ...prev, steps: { ...prev.steps, items: next } }));
-  }, []);
 
   const addStep = useCallback(() => {
     setForm((prev) => ({
@@ -225,13 +356,41 @@ export function ServiceBoardEditor({
     }));
   }, []);
 
-  const moveStep = useCallback((i: number, dir: -1 | 1) => {
+  const moveStep = useCallback((i: number, delta: -1 | 1) => {
     setForm((prev) => {
-      const j = i + dir;
+      const j = i + delta;
       if (j < 0 || j >= prev.steps.items.length) return prev;
       const items = [...prev.steps.items];
       [items[i], items[j]] = [items[j], items[i]];
       return { ...prev, steps: { ...prev.steps, items } };
+    });
+  }, []);
+
+  /* The FAQ is scholarship-only; these are no-ops on a board without one. */
+  const addFaq = useCallback(() => {
+    setForm((prev) =>
+      hasExtras(prev)
+        ? { ...prev, faq: { ...prev.faq, items: [...prev.faq.items, { id: `f${Date.now()}`, q: tri(''), a: tri('') }] } }
+        : prev,
+    );
+  }, []);
+
+  const removeFaq = useCallback((i: number) => {
+    setForm((prev) =>
+      hasExtras(prev)
+        ? { ...prev, faq: { ...prev.faq, items: prev.faq.items.filter((_, idx) => idx !== i) } }
+        : prev,
+    );
+  }, []);
+
+  const moveFaq = useCallback((i: number, delta: -1 | 1) => {
+    setForm((prev) => {
+      if (!hasExtras(prev)) return prev;
+      const j = i + delta;
+      if (j < 0 || j >= prev.faq.items.length) return prev;
+      const items = [...prev.faq.items];
+      [items[i], items[j]] = [items[j], items[i]];
+      return { ...prev, faq: { ...prev.faq, items } };
     });
   }, []);
 
@@ -362,88 +521,47 @@ export function ServiceBoardEditor({
           })}
 
           {group.stepsEditor && (
-            <div className="space-y-3 border-t border-gray-50 pt-4">
-              {form.steps.items.length === 0 && (
-                <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-xs text-gray-400">
-                  No steps. The rail hides its list until you add one.
-                </p>
-              )}
+            <ListEditor
+              noun="Step"
+              emptyNote="No steps. The rail hides its list until you add one."
+              addLabel="Add step"
+              ids={form.steps.items.map((s) => s.id)}
+              basePath={['steps', 'items']}
+              fields={[
+                { key: 'title', label: 'Title', rows: 1 },
+                { key: 'text', label: 'Description', rows: 2 },
+              ]}
+              lang={lang}
+              dir={dir}
+              inputClass={inputClass}
+              read={(path) => readAtPath(form, path)}
+              onFieldChange={(path, value) => setField(path, lang, value)}
+              onAdd={addStep}
+              onRemove={removeStep}
+              onMove={moveStep}
+            />
+          )}
 
-              {form.steps.items.map((stepItem, i) => (
-                <div
-                  key={stepItem.id ?? i}
-                  className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rmc-green text-[10px] text-white">
-                        {i + 1}
-                      </span>
-                      Step {i + 1}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => moveStep(i, -1)}
-                        disabled={i === 0}
-                        className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30"
-                        aria-label="Move step up"
-                      >
-                        <ArrowUp className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveStep(i, 1)}
-                        disabled={i === form.steps.items.length - 1}
-                        className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30"
-                        aria-label="Move step down"
-                      >
-                        <ArrowDown className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeStep(i)}
-                        className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                        aria-label="Remove step"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
-                    <input
-                      dir={dir}
-                      type="text"
-                      value={readAtPath(form, ['steps', 'items', i, 'title', lang])}
-                      onChange={(e) => setField(['steps', 'items', i, 'title'], lang, e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      dir={dir}
-                      rows={2}
-                      value={readAtPath(form, ['steps', 'items', i, 'text', lang])}
-                      onChange={(e) => setField(['steps', 'items', i, 'text'], lang, e.target.value)}
-                      className={`${inputClass} resize-none`}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addStep}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green"
-              >
-                <Plus className="h-4 w-4" /> Add step
-              </button>
-            </div>
+          {group.faqEditor && hasExtras(form) && (
+            <ListEditor
+              noun="Question"
+              emptyNote="No questions. The FAQ section hides itself until you add one."
+              addLabel="Add question"
+              ids={form.faq.items.map((f) => f.id)}
+              basePath={['faq', 'items']}
+              fields={[
+                { key: 'q', label: 'Question', rows: 1 },
+                { key: 'a', label: 'Answer', rows: 3 },
+              ]}
+              lang={lang}
+              dir={dir}
+              inputClass={inputClass}
+              read={(path) => readAtPath(form, path)}
+              onFieldChange={(path, value) => setField(path, lang, value)}
+              onAdd={addFaq}
+              onRemove={removeFaq}
+              onMove={moveFaq}
+            />
           )}
         </div>
       ))}
