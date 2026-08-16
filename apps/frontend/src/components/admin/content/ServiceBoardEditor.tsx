@@ -13,21 +13,32 @@
  * door into the same `site_content` blob, for admins who work from the dashboard —
  * both write the same key, so an edit made in either shows up in the other.
  *
- * Step and FAQ entries are text-only here: no add or remove. `mergeContent` walks
- * arrays by index, so a removed entry would inherit the seeded one sitting at its
- * index and reappear on the page (the problem `HajjSteps` solves with an unmerged
- * read). The lengths are structural to each flow, so the restriction costs nothing.
+ * Steps can be added, removed and reordered — the same as in Edit Mode, so neither
+ * door can do something the other cannot. That needs care on LOAD: the saved blob is
+ * merged over the defaults for everything else, but the steps array is then restored
+ * from the RAW value via `boardSteps()`. Without that, an admin who had deleted a
+ * step would open this form and find the shifted step wearing the seeded step's
+ * translations — and saving would make that permanent.
+ *
+ * FAQ entries stay text-only. They are merged by index like any other array, and the
+ * same repair would be needed to make them removable.
  */
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Save, Loader2, ExternalLink, ListOrdered, Megaphone, HelpCircle, Layers } from 'lucide-react';
+import {
+  ArrowLeft, Save, Loader2, ExternalLink, ListOrdered, Megaphone, HelpCircle, Layers,
+  Plus, Trash2, ArrowUp, ArrowDown,
+} from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import {
+  boardSteps,
   getSiteContent,
   saveSiteContent,
   mergeContent,
+  tri,
+  type BoardStep,
   type ScholarshipServiceContent,
   type ServiceBoardContent,
 } from '@/lib/content-api';
@@ -52,6 +63,8 @@ interface FieldGroup {
   title: string;
   icon: React.ElementType;
   fields: FieldDef[];
+  /** Render the add / remove / reorder step list under this group's fields. */
+  stepsEditor?: boolean;
 }
 
 /** Immutable set of `obj` at `path`, cloning only the nodes along the way. */
@@ -103,13 +116,10 @@ function buildGroups(form: ServiceBoardContent): FieldGroup[] {
     {
       title: 'How to apply',
       icon: ListOrdered,
-      fields: [
-        { path: ['steps', 'title'], label: 'Heading', rows: 1 },
-        ...form.steps.items.flatMap((_, i): FieldDef[] => [
-          { path: ['steps', 'items', i, 'title'], label: `Step ${i + 1} — Title`, rows: 1 },
-          { path: ['steps', 'items', i, 'text'], label: `Step ${i + 1} — Description`, rows: 2 },
-        ]),
-      ],
+      // The steps themselves are rendered by the dedicated editor below, which owns
+      // the add / remove / reorder controls a flat field list cannot offer.
+      fields: [{ path: ['steps', 'title'], label: 'Heading', rows: 1 }],
+      stepsEditor: true,
     },
   ];
 
@@ -182,12 +192,48 @@ export function ServiceBoardEditor({
   useEffect(() => {
     getSiteContent<Record<string, unknown>>(sectionKey)
       .then((data) => {
-        if (data) setForm(mergeContent(defaults, data));
+        if (!data) return;
+        const merged = mergeContent(defaults, data);
+        // Restore the steps from the RAW value — see the header note. Merging them by
+        // index is exactly what would put a deleted step's seeded translations onto
+        // the step that shifted into its place.
+        setForm({ ...merged, steps: { ...merged.steps, items: boardSteps(data, defaults) } });
       })
       .catch(() => {
         /* keep defaults */
       });
   }, [sectionKey, defaults]);
+
+  const writeSteps = useCallback((next: BoardStep[]) => {
+    setForm((prev) => ({ ...prev, steps: { ...prev.steps, items: next } }));
+  }, []);
+
+  const addStep = useCallback(() => {
+    setForm((prev) => ({
+      ...prev,
+      steps: {
+        ...prev.steps,
+        items: [...prev.steps.items, { id: `s${Date.now()}`, title: tri(''), text: tri('') }],
+      },
+    }));
+  }, []);
+
+  const removeStep = useCallback((i: number) => {
+    setForm((prev) => ({
+      ...prev,
+      steps: { ...prev.steps, items: prev.steps.items.filter((_, idx) => idx !== i) },
+    }));
+  }, []);
+
+  const moveStep = useCallback((i: number, dir: -1 | 1) => {
+    setForm((prev) => {
+      const j = i + dir;
+      if (j < 0 || j >= prev.steps.items.length) return prev;
+      const items = [...prev.steps.items];
+      [items[i], items[j]] = [items[j], items[i]];
+      return { ...prev, steps: { ...prev.steps, items } };
+    });
+  }, []);
 
   const setField = useCallback((path: (string | number)[], l: Lang, value: string) => {
     setForm((prev) => setAtPath(prev, [...path, l], value));
@@ -314,6 +360,91 @@ export function ServiceBoardEditor({
               </div>
             );
           })}
+
+          {group.stepsEditor && (
+            <div className="space-y-3 border-t border-gray-50 pt-4">
+              {form.steps.items.length === 0 && (
+                <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-xs text-gray-400">
+                  No steps. The rail hides its list until you add one.
+                </p>
+              )}
+
+              {form.steps.items.map((stepItem, i) => (
+                <div
+                  key={stepItem.id ?? i}
+                  className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rmc-green text-[10px] text-white">
+                        {i + 1}
+                      </span>
+                      Step {i + 1}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveStep(i, -1)}
+                        disabled={i === 0}
+                        className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30"
+                        aria-label="Move step up"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveStep(i, 1)}
+                        disabled={i === form.steps.items.length - 1}
+                        className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30"
+                        aria-label="Move step down"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeStep(i)}
+                        className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                        aria-label="Remove step"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
+                    <input
+                      dir={dir}
+                      type="text"
+                      value={readAtPath(form, ['steps', 'items', i, 'title', lang])}
+                      onChange={(e) => setField(['steps', 'items', i, 'title'], lang, e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Description
+                    </label>
+                    <textarea
+                      dir={dir}
+                      rows={2}
+                      value={readAtPath(form, ['steps', 'items', i, 'text', lang])}
+                      onChange={(e) => setField(['steps', 'items', i, 'text'], lang, e.target.value)}
+                      className={`${inputClass} resize-none`}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addStep}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green"
+              >
+                <Plus className="h-4 w-4" /> Add step
+              </button>
+            </div>
+          )}
         </div>
       ))}
 

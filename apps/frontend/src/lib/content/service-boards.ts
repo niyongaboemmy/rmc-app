@@ -17,17 +17,49 @@ import { Tri, tri } from './client';
  * (search boxes, table headers, status labels, "Back to Services") is still i18n
  * and should be: it is UI, not copy anyone would want to rewrite per-locale.
  *
- * The step and FAQ lists are FIXED-LENGTH on purpose. `mergeContent` walks arrays
- * by index, so a removable item would inherit the seeded item that used to sit at
- * its index and reappear (see the note in `HajjSteps` for the version of this
- * problem that needed solving). Editing the text of a fixed list is safe; adding
- * and removing entries needs the unmerged-read treatment and is not offered here.
+ * The STEPS are read through `boardSteps()` rather than the merged blob, which is
+ * what lets an admin add and remove them — see that function for why. The FAQ list
+ * is still fixed-length: it is merged by index like any other array, so removing an
+ * entry there would leak the seeded entry's translations onto the one that shifts
+ * into its place.
  */
 
 /** One numbered step in a "how to apply" rail. */
 export interface BoardStep {
+  /** Stable id, so React keys survive reordering. Any unique string. */
+  id?: string;
   title: Tri;
   text: Tri;
+}
+
+/**
+ * The steps an admin has saved, or the seeded ones when the section has never been
+ * edited.
+ *
+ * Deliberately NOT run through `mergeContent`: that merges arrays by index, so an
+ * admin who deletes step 2 leaves step 3 sitting at index 2 — and any translation
+ * that step has not been given would then be filled from the SEEDED step 2, text
+ * belonging to a step that is no longer on the page. Read raw, an empty translation
+ * simply falls back to the step's own English via `pick()`.
+ *
+ * Takes the unmerged value: the live edit-mode draft when there is one, else exactly
+ * what the store returned. `defaults` is this board's own seed, used only when the
+ * section has never been saved — an admin who deletes every step gets an empty rail,
+ * not the seeded one back.
+ */
+export function boardSteps(saved: unknown, defaults: ServiceBoardContent): BoardStep[] {
+  const items = (saved as ServiceBoardContent | null)?.steps?.items;
+  if (!Array.isArray(items)) return defaults.steps.items;
+  return items.map((item, i) => ({
+    id: item?.id || `step-${i}`,
+    title: item?.title ?? tri(''),
+    text: item?.text ?? tri(''),
+  }));
+}
+
+/** Build a seeded step; the id keeps React keys stable across reordering. */
+function step(id: string, title: Tri, text: Tri): BoardStep {
+  return { id, title, text };
 }
 
 /** The hero + board header + steps every service board shares. */
@@ -72,38 +104,42 @@ export const TENDER_SERVICE_DEFAULT: ServiceBoardContent = {
   steps: {
     title: tri('How to apply', 'Uko usaba', 'كيفية التقديم'),
     items: [
-      {
-        title: tri('Browse open tenders', 'Reba amatumba akinguye', 'تصفح المناقصات المفتوحة'),
-        text: tri(
+      step(
+        'browse',
+        tri('Browse open tenders', 'Reba amatumba akinguye', 'تصفح المناقصات المفتوحة'),
+        tri(
           'Find an opportunity on the tenders board and read its terms and deadline.',
           "Shakisha ihirwe ku rutonde rw'amatumba usome amabwiriza n'igihe ntarengwa.",
           'ابحث عن فرصة في لوحة المناقصات واقرأ شروطها وموعدها النهائي.',
         ),
-      },
-      {
-        title: tri('Complete the form', 'Uzuza ifishi', 'أكمل النموذج'),
-        text: tri(
+      ),
+      step(
+        'form',
+        tri('Complete the form', 'Uzuza ifishi', 'أكمل النموذج'),
+        tri(
           'Give your company details, contact person, address and bid amount.',
           "Tanga amakuru y'ikigo cyawe, umuhuza, aderesi, n'igiciro utanga.",
           'أدخل بيانات شركتك، ومسؤول التواصل، والعنوان، وقيمة عرضك.',
         ),
-      },
-      {
-        title: tri('Upload your documents', 'Ohereza inyandiko', 'ارفع وثائقك'),
-        text: tri(
+      ),
+      step(
+        'documents',
+        tri('Upload your documents', 'Ohereza inyandiko', 'ارفع وثائقك'),
+        tri(
           'Attach the three required documents. PDF, JPG or PNG, up to 10 MB each.',
           'Shyiraho inyandiko eshatu zisabwa. PDF, JPG cyangwa PNG, ntizirenge 10 MB.',
           'أرفق الوثائق الثلاث المطلوبة. PDF أو JPG أو PNG، بحد أقصى 10 ميغابايت لكل ملف.',
         ),
-      },
-      {
-        title: tri('Track your bid', 'Kurikirana ipiganwa', 'تتبّع عرضك'),
-        text: tri(
+      ),
+      step(
+        'track',
+        tri('Track your bid', 'Kurikirana ipiganwa', 'تتبّع عرضك'),
+        tri(
           'Get a reference number, then follow your bid from evaluation to award.',
           "Uzahabwa nomero y'ipiganwa, ukurikirane uko rigenda kugeza ku mwanzuro.",
           'احصل على رقم مرجعي، ثم تابع عرضك من التقييم حتى الترسية.',
         ),
-      },
+      ),
     ],
   },
 };
@@ -130,46 +166,51 @@ export const JOBS_SERVICE_DEFAULT: ServiceBoardContent = {
   steps: {
     title: tri('How to apply', 'Uko usaba', 'كيفية التقديم'),
     items: [
-      {
-        title: tri('Sign in', 'Injira', 'تسجيل الدخول'),
-        text: tri(
+      step(
+        'signin',
+        tri('Sign in', 'Injira', 'تسجيل الدخول'),
+        tri(
           "Sign in to your RMC account, or register in a minute if you're new.",
           'Injira kuri konti yawe ya RMC, cyangwa wiyandikishe mu munota umwe niba uri mushya.',
           'سجّل الدخول إلى حسابك في RMC، أو أنشئ حسابًا في دقيقة إن كنت جديدًا.',
         ),
-      },
-      {
-        title: tri('Fill your details', 'Uzuza amakuru yawe', 'أدخل بياناتك'),
-        text: tri(
+      ),
+      step(
+        'details',
+        tri('Fill your details', 'Uzuza amakuru yawe', 'أدخل بياناتك'),
+        tri(
           "Enter your personal details and the position you're applying for.",
           "Andika amakuru yawe bwite n'umwanya usaba.",
           'أدخل بياناتك الشخصية والوظيفة التي تتقدم لها.',
         ),
-      },
-      {
-        title: tri('Upload your documents', 'Ohereza inyandiko zawe', 'ارفع مستنداتك'),
-        text: tri(
+      ),
+      step(
+        'documents',
+        tri('Upload your documents', 'Ohereza inyandiko zawe', 'ارفع مستنداتك'),
+        tri(
           'Attach your application letter, CV, National ID, criminal record and academic papers.',
           "Ohereza ibaruwa isaba, CV, Indangamuntu, icyemezo cy'imyifatire n'impamyabumenyi.",
           'أرفق خطاب التقديم والسيرة الذاتية والهوية الوطنية وشهادة السجل الجنائي والشهادات الأكاديمية.',
         ),
-      },
-      {
-        title: tri('Add good conduct', "Ongeraho icyemezo cy'imyifatire", 'أضف حسن السيرة'),
-        text: tri(
+      ),
+      step(
+        'conduct',
+        tri('Add good conduct', "Ongeraho icyemezo cy'imyifatire", 'أضف حسن السيرة'),
+        tri(
           'Verify your good-conduct certificate number, or upload the certificate.',
           "Genzura nimero y'icyemezo cy'imyifatire, cyangwa uohereze icyemezo.",
           'تحقّق من رقم شهادة حسن السيرة، أو ارفع الشهادة.',
         ),
-      },
-      {
-        title: tri('Submit & track', 'Ohereza & ukurikirane', 'أرسل وتابع'),
-        text: tri(
+      ),
+      step(
+        'submit',
+        tri('Submit & track', 'Ohereza & ukurikirane', 'أرسل وتابع'),
+        tri(
           'Submit and keep your tracking number to follow your application status.',
           'Ohereza ubike nimero yo gukurikirana kugira ngo urebe aho isaba rigeze.',
           'أرسل واحتفظ برقم التتبع لمتابعة حالة طلبك.',
         ),
-      },
+      ),
     ],
   },
 };
@@ -196,38 +237,42 @@ export const SCHOLARSHIP_SERVICE_DEFAULT: ScholarshipServiceContent = {
   steps: {
     title: tri('How to apply', 'Uko Usaba', 'كيف تتقدّم'),
     items: [
-      {
-        title: tri('Browse open scholarships', 'Reba buruse zikinguye', 'تصفح المنح المفتوحة'),
-        text: tri(
+      step(
+        'browse',
+        tri('Browse open scholarships', 'Reba buruse zikinguye', 'تصفح المنح المفتوحة'),
+        tri(
           'Find a scholarship on this page and read its eligibility and deadline.',
           "Shaka buruse kuri iyi paji hanyuma usome ibisabwa n'itariki ntarengwa.",
           'اختر منحة من هذه الصفحة واقرأ شروطها وموعدها النهائي.',
         ),
-      },
-      {
-        title: tri('Complete the form', 'Uzuza ifishi', 'أكمل النموذج'),
-        text: tri(
+      ),
+      step(
+        'form',
+        tri('Complete the form', 'Uzuza ifishi', 'أكمل النموذج'),
+        tri(
           'Give your personal, education and guardian details.',
           "Tanga amakuru yawe bwite, ay'uburezi, n'ay'umurera.",
           'أدخل بياناتك الشخصية والتعليمية وبيانات ولي أمرك.',
         ),
-      },
-      {
-        title: tri('Upload your documents', 'Ohereza inyandiko', 'ارفع وثائقك'),
-        text: tri(
+      ),
+      step(
+        'documents',
+        tri('Upload your documents', 'Ohereza inyandiko', 'ارفع وثائقك'),
+        tri(
           'Attach the documents that scholarship asks for.',
           'Shyiraho inyandiko izo buruse isaba.',
           'أرفق الوثائق التي تطلبها المنحة.',
         ),
-      },
-      {
-        title: tri('Track your application', 'Kurikirana ubusabe bwawe', 'تتبّع طلبك'),
-        text: tri(
+      ),
+      step(
+        'track',
+        tri('Track your application', 'Kurikirana ubusabe bwawe', 'تتبّع طلبك'),
+        tri(
           'Get a tracking code, then follow your application to the decision.',
           'Wakira kode yo gukurikirana, hanyuma ukurikirane ubusabe bwawe kugeza ku cyemezo.',
           'احصل على رمز التتبع، ثم تابع طلبك حتى القرار.',
         ),
-      },
+      ),
     ],
   },
   faq: {
