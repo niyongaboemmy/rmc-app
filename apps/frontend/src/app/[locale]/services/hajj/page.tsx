@@ -37,6 +37,9 @@ const PAGE_CONTENT_KEYS = [ContentKeys.hajj];
 
 export default async function HajjServicesPage() {
   const content = await fetchSiteContent(PAGE_CONTENT_KEYS);
+  // Handed to the one server-rendered section below; the client sections read the
+  // same blob through the provider, so nothing fetches it twice.
+  const hajj = content[ContentKeys.hajj];
 
   return (
     <SiteContentProvider content={content}>
@@ -49,7 +52,7 @@ export default async function HajjServicesPage() {
           <HajjAbout />
 
           {/* Section C — Admin-written description. Hides itself when left blank. */}
-          <HajjDescription />
+          <HajjDescription saved={hajj} />
 
           {/* Section D — Requirements. */}
           <section className="relative bg-gray-50/60 pattern-light">

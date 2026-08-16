@@ -2,8 +2,8 @@ import { getLocale } from 'next-intl/server';
 import DOMPurify from 'isomorphic-dompurify';
 import { BookOpen } from 'lucide-react';
 import {
-  ContentKeys, getSiteContent, mergeContent, pick, isRtl,
-  HAJJ_DEFAULT, type HajjContent,
+  mergeContent, pick, isRtl,
+  HAJJ_DEFAULT,
 } from '@/lib/content-api';
 import { HajjDescriptionHeading } from './HajjDescriptionHeading';
 
@@ -17,13 +17,16 @@ import { HajjDescriptionHeading } from './HajjDescriptionHeading';
  * `serverComponentsExternalPackages` in next.config.js). The page is
  * force-dynamic, so an admin's edit shows up on the next request.
  *
+ * The saved blob comes in as a prop rather than being fetched here. A server
+ * component cannot read the page's `SiteContentProvider` — that is client context —
+ * so fetching would mean a second request for a section the page already has. The
+ * page passes the RAW value; the merge below is what it always was.
+ *
  * Renders nothing when an admin clears the body — an empty editor saves
  * "<p></p>", so we test for actual text, not just a non-empty string.
  */
-export async function HajjDescription() {
+export async function HajjDescription({ saved }: { saved: unknown }) {
   const locale = await getLocale();
-
-  const saved = await getSiteContent<HajjContent>(ContentKeys.hajj).catch(() => null);
   const content = mergeContent(HAJJ_DEFAULT, saved).description;
 
   const html = DOMPurify.sanitize(pick(content.body, locale));
