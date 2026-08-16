@@ -1,12 +1,17 @@
 import {
   boardFaqs,
+  boardRequirements,
   boardSteps,
   SCHOLARSHIP_SERVICE_DEFAULT,
   TENDER_SERVICE_DEFAULT,
 } from './service-boards';
 import { mergeContent, pick, tri } from './client';
 import type { Tri } from './client';
-import type { ScholarshipServiceContent, ServiceBoardContent } from './service-boards';
+import type {
+  ScholarshipServiceContent,
+  ServiceBoardContent,
+  TenderServiceContent,
+} from './service-boards';
 
 /**
  * `boardSteps` exists so an admin can DELETE a step.
@@ -142,5 +147,57 @@ describe('boardFaqs', () => {
       faq: { items: [{ q: tri('A'), a: tri('a') }] },
     } as unknown as ScholarshipServiceContent;
     expect(boardFaqs(noIds, SCHOLARSHIP_SERVICE_DEFAULT)[0].id).toBe('faq-0');
+  });
+});
+
+/** The tender detail page's bid checklist — third list, same contract. */
+describe('boardRequirements', () => {
+  const enOnly = (en: string) => ({ en }) as unknown as Tri;
+
+  const savedWithFirstDeleted = {
+    ...TENDER_SERVICE_DEFAULT,
+    detail: {
+      ...TENDER_SERVICE_DEFAULT.detail,
+      requirements: {
+        ...TENDER_SERVICE_DEFAULT.detail.requirements,
+        items: [
+          { id: 'tax', title: enOnly('RRA Tax Clearance certificate'), text: enOnly('A valid certificate.') },
+          { id: 'proposal', title: enOnly('Technical & Financial Proposal'), text: enOnly('Your full proposal.') },
+        ],
+      },
+    },
+  } as TenderServiceContent;
+
+  it('returns the seeded requirements when the section has never been saved', () => {
+    expect(boardRequirements(null, TENDER_SERVICE_DEFAULT)).toEqual(
+      TENDER_SERVICE_DEFAULT.detail.requirements.items,
+    );
+  });
+
+  it('honours a deletion and lets the list be emptied', () => {
+    expect(boardRequirements(savedWithFirstDeleted, TENDER_SERVICE_DEFAULT)).toHaveLength(2);
+    const emptied = {
+      ...TENDER_SERVICE_DEFAULT,
+      detail: {
+        ...TENDER_SERVICE_DEFAULT.detail,
+        requirements: { ...TENDER_SERVICE_DEFAULT.detail.requirements, items: [] },
+      },
+    } as TenderServiceContent;
+    expect(boardRequirements(emptied, TENDER_SERVICE_DEFAULT)).toEqual([]);
+  });
+
+  it("does not graft a deleted requirement's translations onto its neighbour", () => {
+    const reqs = boardRequirements(savedWithFirstDeleted, TENDER_SERVICE_DEFAULT);
+    expect(pick(reqs[0].title, 'rw')).toBe('RRA Tax Clearance certificate');
+    expect(pick(reqs[0].title, 'rw')).not.toBe(
+      TENDER_SERVICE_DEFAULT.detail.requirements.items[0].title.rw,
+    );
+  });
+
+  it('is what the merged read would get wrong', () => {
+    const merged = mergeContent(TENDER_SERVICE_DEFAULT, savedWithFirstDeleted);
+    expect(pick(merged.detail.requirements.items[0].title, 'rw')).toBe(
+      TENDER_SERVICE_DEFAULT.detail.requirements.items[0].title.rw,
+    );
   });
 });

@@ -37,7 +37,10 @@ import {
   saveSiteContent,
   mergeContent,
   tri,
+  boardRequirements,
+  type BoardRequirement,
   type ScholarshipServiceContent,
+  type TenderServiceContent,
   type ServiceBoardContent,
 } from '@/lib/content-api';
 
@@ -61,10 +64,11 @@ interface FieldGroup {
   title: string;
   icon: React.ElementType;
   fields: FieldDef[];
-  /** Render the add / remove / reorder step list under this group's fields. */
-  stepsEditor?: boolean;
-  /** Same, for the scholarship FAQ. */
-  faqEditor?: boolean;
+  /**
+   * Render an add / remove / reorder list under this group's fields. Three lists
+   * on these boards are orderable, and they differ only in noun and path.
+   */
+  list?: 'steps' | 'faq' | 'requirements';
 }
 
 /** Immutable set of `obj` at `path`, cloning only the nodes along the way. */
@@ -81,6 +85,12 @@ function setAtPath<T>(obj: T, path: (string | number)[], value: string): T {
 function readAtPath(obj: unknown, path: (string | number)[]): string {
   const v = path.reduce<unknown>((a, k) => (a as Record<string | number, unknown>)?.[k], obj);
   return typeof v === 'string' ? v : '';
+}
+
+/** Has a bid-requirements checklist on its detail page? (Tenders only.) */
+function hasRequirements(v: ServiceBoardContent): v is TenderServiceContent {
+  const detail = (v as TenderServiceContent).detail;
+  return Boolean(detail && 'requirements' in detail);
 }
 
 /** Has the wider scholarship shape? */
@@ -244,7 +254,7 @@ function buildGroups(form: ServiceBoardContent, detailFields: FieldDef[]): Field
       // The steps themselves are rendered by the dedicated editor below, which owns
       // the add / remove / reorder controls a flat field list cannot offer.
       fields: [{ path: ['steps', 'title'], label: 'Heading', rows: 1 }],
-      stepsEditor: true,
+      list: 'steps',
     },
   ];
 
@@ -255,7 +265,12 @@ function buildGroups(form: ServiceBoardContent, detailFields: FieldDef[]): Field
    * here: that is edited on the record's admin screen.
    */
   if (detailFields.length) {
-    groups.push({ title: 'Detail page', icon: FileText, fields: detailFields });
+    groups.push({
+      title: 'Detail page',
+      icon: FileText,
+      fields: detailFields,
+      list: hasRequirements(form) ? 'requirements' : undefined,
+    });
   }
 
   if (hasExtras(form)) {
@@ -266,7 +281,7 @@ function buildGroups(form: ServiceBoardContent, detailFields: FieldDef[]): Field
         // The questions are rendered by the dedicated editor below, which owns the
         // add / remove / reorder controls a flat field list cannot offer.
         fields: [{ path: ['faq', 'title'], label: 'Heading', rows: 1 }],
-        faqEditor: true,
+        list: 'faq',
       },
       {
         title: 'Closing call to action',
@@ -339,6 +354,15 @@ export function ServiceBoardEditor({
           ...merged,
           steps: { ...merged.steps, items: boardSteps(data, defaults) },
         };
+        if (hasRequirements(repaired)) {
+          repaired.detail = {
+            ...repaired.detail,
+            requirements: {
+              ...repaired.detail.requirements,
+              items: boardRequirements(data, repaired),
+            },
+          };
+        }
         if (hasExtras(repaired)) {
           const withFaq: ScholarshipServiceContent = {
             ...repaired,
@@ -378,6 +402,38 @@ export function ServiceBoardEditor({
       const items = [...prev.steps.items];
       [items[i], items[j]] = [items[j], items[i]];
       return { ...prev, steps: { ...prev.steps, items } };
+    });
+  }, []);
+
+  /* Requirements are tender-only; these are no-ops on a board without them. */
+  const writeReqs = (fn: (items: BoardRequirement[]) => BoardRequirement[]) =>
+    setForm((prev) =>
+      hasRequirements(prev)
+        ? {
+            ...prev,
+            detail: {
+              ...prev.detail,
+              requirements: { ...prev.detail.requirements, items: fn(prev.detail.requirements.items) },
+            },
+          }
+        : prev,
+    );
+
+  const addRequirement = useCallback(
+    () => writeReqs((items) => [...items, { id: `r${Date.now()}`, title: tri(''), text: tri('') }]),
+    [],
+  );
+  const removeRequirement = useCallback(
+    (i: number) => writeReqs((items) => items.filter((_, idx) => idx !== i)),
+    [],
+  );
+  const moveRequirement = useCallback((i: number, delta: -1 | 1) => {
+    writeReqs((items) => {
+      const j = i + delta;
+      if (j < 0 || j >= items.length) return items;
+      const next = [...items];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
     });
   }, []);
 
@@ -535,7 +591,7 @@ export function ServiceBoardEditor({
             );
           })}
 
-          {group.stepsEditor && (
+          {group.list === 'steps' && (
             <ListEditor
               noun="Step"
               emptyNote="No steps. The rail hides its list until you add one."
@@ -557,7 +613,29 @@ export function ServiceBoardEditor({
             />
           )}
 
-          {group.faqEditor && hasExtras(form) && (
+          {group.list === 'requirements' && hasRequirements(form) && (
+            <ListEditor
+              noun="Requirement"
+              emptyNote="No requirements. The checklist hides itself until you add one."
+              addLabel="Add requirement"
+              ids={form.detail.requirements.items.map((r) => r.id)}
+              basePath={['detail', 'requirements', 'items']}
+              fields={[
+                { key: 'title', label: 'Requirement', rows: 1 },
+                { key: 'text', label: 'Description', rows: 2 },
+              ]}
+              lang={lang}
+              dir={dir}
+              inputClass={inputClass}
+              read={(path) => readAtPath(form, path)}
+              onFieldChange={(path, value) => setField(path, lang, value)}
+              onAdd={addRequirement}
+              onRemove={removeRequirement}
+              onMove={moveRequirement}
+            />
+          )}
+
+          {group.list === 'faq' && hasExtras(form) && (
             <ListEditor
               noun="Question"
               emptyNote="No questions. The FAQ section hides itself until you add one."

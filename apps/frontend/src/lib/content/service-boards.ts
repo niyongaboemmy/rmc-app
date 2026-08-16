@@ -46,13 +46,35 @@ export interface BoardStep {
  * not the seeded one back.
  */
 export function boardSteps(saved: unknown, defaults: ServiceBoardContent): BoardStep[] {
-  const items = (saved as ServiceBoardContent | null)?.steps?.items;
-  if (!Array.isArray(items)) return defaults.steps.items;
-  return items.map((item, i) => ({
-    id: item?.id || `step-${i}`,
-    title: item?.title ?? tri(''),
-    text: item?.text ?? tri(''),
-  }));
+  return unmergedList((saved as ServiceBoardContent | null)?.steps?.items, defaults.steps.items, 'step', titleText);
+}
+
+/**
+ * Shared body of the unmerged-list readers.
+ *
+ * `items` is whatever the store held at that path. Anything that is not an array —
+ * unset section, malformed blob — falls back to the seed; an array is taken exactly
+ * as saved, which is the whole point (see {@link boardSteps}).
+ */
+function unmergedList<T>(
+  items: unknown,
+  fallback: T[],
+  idPrefix: string,
+  make: (item: Record<string, unknown> | null, id: string) => T,
+): T[] {
+  if (!Array.isArray(items)) return fallback;
+  return items.map((item, i) =>
+    make(item ?? null, (item as { id?: string } | null)?.id || `${idPrefix}-${i}`),
+  );
+}
+
+/** The `{ id, title, text }` entry shape steps and requirements share. */
+function titleText(item: Record<string, unknown> | null, id: string): BoardStep {
+  return {
+    id,
+    title: (item?.title as Tri) ?? tri(''),
+    text: (item?.text as Tri) ?? tri(''),
+  };
 }
 
 /** Build a seeded step; the id keeps React keys stable across reordering. */
@@ -83,13 +105,35 @@ export interface BoardFaq {
  * question's translations.
  */
 export function boardFaqs(saved: unknown, defaults: ScholarshipServiceContent): BoardFaq[] {
-  const items = (saved as ScholarshipServiceContent | null)?.faq?.items;
-  if (!Array.isArray(items)) return defaults.faq.items;
-  return items.map((item, i) => ({
-    id: item?.id || `faq-${i}`,
-    q: item?.q ?? tri(''),
-    a: item?.a ?? tri(''),
-  }));
+  return unmergedList(
+    (saved as ScholarshipServiceContent | null)?.faq?.items,
+    defaults.faq.items,
+    'faq',
+    (item, id) => ({
+      id,
+      q: (item?.q as Tri) ?? tri(''),
+      a: (item?.a as Tri) ?? tri(''),
+    }),
+  );
+}
+
+/** A required document on the tender detail page — same shape as a step. */
+export type BoardRequirement = BoardStep;
+
+/**
+ * The bid requirements an admin has saved, or the seeded ones when the section has
+ * never been edited. Unmerged for the reason {@link boardSteps} explains.
+ */
+export function boardRequirements(
+  saved: unknown,
+  defaults: TenderServiceContent,
+): BoardRequirement[] {
+  return unmergedList(
+    (saved as TenderServiceContent | null)?.detail?.requirements?.items,
+    defaults.detail.requirements.items,
+    'req',
+    titleText,
+  );
 }
 
 /** Build a seeded FAQ entry; the id keeps React keys stable across reordering. */
@@ -116,6 +160,12 @@ export interface TenderDetailCopy {
   attachmentsTitle: Tri;
   cta: { title: Tri; subtitle: Tri; button: Tri };
   notFound: { heroTitle: Tri; title: Tri; body: Tri; backLink: Tri };
+  /**
+   * "What you need before you start" — the documents any bid must carry. Generic to
+   * the service, not to one tender: a tender's OWN attachments are its records.
+   * Read through `boardRequirements()`, so entries can be added and removed.
+   */
+  requirements: { title: Tri; subtitle: Tri; items: BoardStep[] };
 }
 
 export interface JobsDetailCopy {
@@ -241,6 +291,69 @@ export const TENDER_SERVICE_DEFAULT: TenderServiceContent = {
         'ربما تمت إزالتها أو الرابط غير صحيح.',
       ),
       backLink: tri('View all tenders', 'Reba imishinga yose', 'عرض جميع المناقصات'),
+    },
+    requirements: {
+      title: tri(
+        'What you need before you start',
+        'Ibyo ukeneye mbere yo gutangira',
+        'ما تحتاجه قبل البدء',
+      ),
+      subtitle: tri(
+        'Have these ready — you cannot submit a bid without them.',
+        'Ibi bigomba kuba byiteguye — ntushobora gutanga ipiganwa utabifite.',
+        'جهّز هذه المستندات — لا يمكنك تقديم عرض بدونها.',
+      ),
+      items: [
+        step(
+          'rdb',
+          tri(
+            'Company Registration (RDB) certificate',
+            "Icyemezo cy'iyandikwa ry'ikigo (RDB)",
+            'شهادة تسجيل الشركة (RDB)',
+          ),
+          tri(
+            'Your certificate of incorporation from the Rwanda Development Board.',
+            "Icyemezo cy'iyandikwa ry'ikigo cyawe gitangwa na Rwanda Development Board.",
+            'شهادة تأسيس شركتك الصادرة عن مجلس تنمية رواندا.',
+          ),
+        ),
+        step(
+          'tax',
+          tri('RRA Tax Clearance certificate', "Icyemezo cy'imisoro (RRA)", 'شهادة المخالصة الضريبية (RRA)'),
+          tri(
+            'A valid tax clearance certificate from the Rwanda Revenue Authority.',
+            "Icyemezo cyemewe cy'uko wishyuye imisoro gitangwa na Rwanda Revenue Authority.",
+            'شهادة مخالصة ضريبية سارية صادرة عن هيئة الإيرادات الرواندية.',
+          ),
+        ),
+        step(
+          'proposal',
+          tri('Technical & Financial Proposal', "Igitekerezo cya tekiniki n'imari", 'العرض الفني والمالي'),
+          tri(
+            'Your full proposal for the tender, including your pricing.',
+            "Igitekerezo cyawe cyuzuye ku itumba, hamwe n'ibiciro.",
+            'عرضك الكامل للمناقصة، متضمنًا التسعير.',
+          ),
+        ),
+        step(
+          'company',
+          tri('Company details', "Amakuru y'ikigo", 'بيانات الشركة'),
+          tri(
+            'Your registered company name, 9-digit TIN, and a contact person we can reach.',
+            "Izina ry'ikigo cyawe cyanditse, nomero ya TIN y'imibare 9, n'umuhuza twabasha kuvugana.",
+            'اسم شركتك المسجل، ورقم التعريف الضريبي المكوّن من 9 أرقام، ومسؤول تواصل.',
+          ),
+        ),
+        step(
+          'deadline',
+          tri('Time before the deadline', "Igihe mbere y'igihe ntarengwa", 'وقت قبل الموعد النهائي'),
+          tri(
+            "Bids cannot be submitted or edited once a tender's deadline has passed.",
+            'Ipiganwa ntirishobora gutangwa cyangwa guhindurwa igihe ntarengwa cyarenze.',
+            'لا يمكن تقديم العروض أو تعديلها بعد انتهاء الموعد النهائي للمناقصة.',
+          ),
+        ),
+      ],
     },
   },
 };

@@ -24,6 +24,8 @@ const DETAIL_FIELDS = [
   { path: ['detail', 'notFound', 'title'], label: 'Not found — Heading', rows: 1 },
   { path: ['detail', 'notFound', 'body'], label: 'Not found — Message', rows: 2 },
   { path: ['detail', 'notFound', 'backLink'], label: 'Not found — Back link', rows: 1 },
+  { path: ['detail', 'requirements', 'title'], label: 'Requirements — Heading', rows: 1 },
+  { path: ['detail', 'requirements', 'subtitle'], label: 'Requirements — Note', rows: 2 },
 ];
 
 export default function TenderServiceContentPage() {

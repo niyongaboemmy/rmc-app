@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   FileText, Clock, Paperclip, Download,
-  Eye, ExternalLink, AlertCircle, Calendar, Flag, ListChecks, CheckCircle2, ArrowLeft,
+  Eye, ExternalLink, AlertCircle, Calendar, Flag, ListChecks, CheckCircle2, ArrowLeft, Plus,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -13,10 +13,18 @@ import { publicApi } from '@/lib/public-api';
 import { fileUrl } from '@/lib/api';
 import { useTranslations } from 'next-intl';
 import { InlineText } from '@/components/edit-mode/InlineText';
+import { CardEditToolbar } from '@/components/edit-mode/CardEditToolbar';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
+import { usePreviewStore, useEditorRefreshKey } from '@/lib/content/preview-store';
+import { useServerSiteContent } from '@/lib/content/SiteContentProvider';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import {
   ContentKeys,
   TENDER_SERVICE_DEFAULT,
+  boardRequirements,
+  getSiteContent,
+  tri,
+  type BoardRequirement,
   pick,
   raw,
   type Locale,
@@ -96,27 +104,67 @@ const PRIORITY_COLOR: Record<string, string> = {
   urgent: 'bg-red-100 text-red-700 border-red-200',
 };
 
-/** What a bid must carry — mirrors REQUIRED_DOCUMENTS and the DB CHECK constraint. */
-const REQUIREMENT_KEYS = ['rdb', 'tax', 'proposal', 'company', 'deadline'] as const;
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TenderDetailPage() {
   const { locale, slug } = useParams<{ locale: string; slug: string }>();
   const t = useTranslations('tenders');
-  // The "what you need before you start" copy lives in the tender-service namespace.
-  const tReq = useTranslations('services.tender.landing');
 
   /* Hero, section headings, the CTA and the not-found state are admin-managed. The
      field micro-labels and the deadline phrases stay in i18n: those carry `{days}`
      and plural forms, which an editor could silently break. */
-  const { content, setField } = useEditableContent<TenderServiceContent>(
+  const { content, editing, setField } = useEditableContent<TenderServiceContent>(
     ContentKeys.tenderService,
     TENDER_SERVICE_DEFAULT,
   );
   const lang = locale as Locale;
   const dir = locale === 'ar' ? ('rtl' as const) : ('ltr' as const);
   const copy = content.detail;
+
+  /* The requirements list is read UNMERGED — see `boardRequirements`. Merging it by
+     index would leave a deleted entry's seeded translations on its neighbour. */
+  const { bumpSeed } = useEditMode();
+  const store = usePreviewStore();
+  const reqRefreshKey = useEditorRefreshKey();
+  const reqServer = useServerSiteContent<TenderServiceContent>(ContentKeys.tenderService);
+  const [savedTender, setSavedTender] = useState<TenderServiceContent | null>(reqServer.value);
+  const skipReqFetch = useRef(reqServer.provided);
+  useEffect(() => {
+    if (skipReqFetch.current) {
+      skipReqFetch.current = false;
+      return;
+    }
+    let active = true;
+    getSiteContent<TenderServiceContent>(ContentKeys.tenderService)
+      .then((data) => { if (active && data) setSavedTender(data); })
+      .catch(() => { /* keep the seeded requirements */ });
+    return () => { active = false; };
+  }, [reqRefreshKey]);
+
+  const reqDraft =
+    (store?.getOverride(ContentKeys.tenderService) as TenderServiceContent | undefined) ?? savedTender;
+  const requirements = boardRequirements(reqDraft, TENDER_SERVICE_DEFAULT);
+
+  // Every mutation writes the WHOLE array, so the index-merged copy cannot leak in.
+  const writeRequirements = (next: BoardRequirement[]) =>
+    setField((d) => { d.detail.requirements.items = next; });
+
+  const addRequirement = () =>
+    writeRequirements([...requirements, { id: `r${Date.now()}`, title: tri(''), text: tri('') }]);
+
+  const removeRequirement = (i: number) => {
+    writeRequirements(requirements.filter((_, idx) => idx !== i));
+    bumpSeed();
+  };
+
+  const moveRequirement = (i: number, delta: -1 | 1) => {
+    const j = i + delta;
+    if (j < 0 || j >= requirements.length) return;
+    const next = [...requirements];
+    [next[i], next[j]] = [next[j], next[i]];
+    writeRequirements(next);
+    bumpSeed();
+  };
 
   /** One inline-editable heading from the `detail` group. */
   const heading = (key: 'descriptionTitle' | 'attachmentsTitle') => (
@@ -298,24 +346,91 @@ export default function TenderDetailPage() {
                     </div>
                 )}
 
-                  {/* What you need before you start — requirements checklist */}
+                  {/* What you need before you start — admin-managed checklist. Generic
+                      to the service; a tender's OWN files are its attachments above. */}
                   <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-5 sm:p-6">
                     <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-900">
                       <ListChecks className="w-4 h-4 text-rmc-green" />
-                      {tReq('requirementsTitle')}
+                      <InlineText
+                        as="span"
+                        lang={locale}
+                        value={pick(copy.requirements.title, locale)}
+                        editValue={raw(copy.requirements.title, locale)}
+                        onCommit={(v) => setField((d) => { d.detail.requirements.title[lang] = v; })}
+                        dir={dir}
+                        placeholder="Heading"
+                      />
                     </h2>
-                    <p className="mb-4 text-sm text-gray-500">{tReq('requirementsSubtitle')}</p>
+                    <InlineText
+                      as="p"
+                      lang={locale}
+                      value={pick(copy.requirements.subtitle, locale)}
+                      editValue={raw(copy.requirements.subtitle, locale)}
+                      onCommit={(v) => setField((d) => { d.detail.requirements.subtitle[lang] = v; })}
+                      className="mb-4 text-sm text-gray-500"
+                      dir={dir}
+                      placeholder="Subheading"
+                    />
                     <ul className="space-y-4">
-                      {REQUIREMENT_KEYS.map((key) => (
-                        <li key={key} className="flex gap-3">
+                      {requirements.map((req, i) => (
+                        <li key={req.id} className="relative flex gap-3">
                           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-rmc-green" />
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{tReq(`requirements.${key}.title`)}</p>
-                            <p className="text-sm leading-relaxed text-gray-500">{tReq(`requirements.${key}.text`)}</p>
+                          <div className="min-w-0 flex-1">
+                            <InlineText
+                              as="p"
+                              lang={locale}
+                              value={pick(req.title, locale)}
+                              editValue={raw(req.title, locale)}
+                              onCommit={(v) =>
+                                writeRequirements(
+                                  requirements.map((r, idx) =>
+                                    idx === i ? { ...r, title: { ...r.title, [lang]: v } } : r,
+                                  ),
+                                )
+                              }
+                              className="text-sm font-semibold text-gray-900"
+                              dir={dir}
+                              placeholder="Requirement"
+                            />
+                            <InlineText
+                              as="p"
+                              lang={locale}
+                              value={pick(req.text, locale)}
+                              editValue={raw(req.text, locale)}
+                              onCommit={(v) =>
+                                writeRequirements(
+                                  requirements.map((r, idx) =>
+                                    idx === i ? { ...r, text: { ...r.text, [lang]: v } } : r,
+                                  ),
+                                )
+                              }
+                              className="text-sm leading-relaxed text-gray-500"
+                              dir={dir}
+                              placeholder="Description"
+                            />
                           </div>
+                          {editing && (
+                            <CardEditToolbar
+                              canMoveUp={i > 0}
+                              canMoveDown={i < requirements.length - 1}
+                              onMoveUp={() => moveRequirement(i, -1)}
+                              onMoveDown={() => moveRequirement(i, 1)}
+                              onDelete={() => removeRequirement(i)}
+                              className="!right-0 !top-0 scale-90"
+                            />
+                          )}
                         </li>
                       ))}
                     </ul>
+                    {editing && (
+                      <button
+                        type="button"
+                        onClick={addRequirement}
+                        className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2 text-xs font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Add requirement
+                      </button>
+                    )}
                   </div>
                 </div>
 
