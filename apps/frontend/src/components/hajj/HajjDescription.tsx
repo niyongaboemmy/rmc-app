@@ -5,6 +5,7 @@ import {
   ContentKeys, getSiteContent, mergeContent, pick, isRtl,
   HAJJ_DEFAULT, type HajjContent,
 } from '@/lib/content-api';
+import { HajjDescriptionHeading } from './HajjDescriptionHeading';
 
 /**
  * Section: the descriptive block between the About section and the requirements
@@ -42,14 +43,9 @@ export async function HajjDescription() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rmc-green-light text-rmc-green">
                 <BookOpen className="h-4.5 w-4.5" aria-hidden="true" />
               </span>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold">
-                  {pick(content.eyebrow, locale)}
-                </p>
-                <h2 className="text-xl font-bold text-rmc-green-deep md:text-2xl">
-                  {pick(content.title, locale)}
-                </h2>
-              </div>
+              {/* The heading is a client island so it can be edited in place; this
+                  component cannot carry InlineText itself (see the file header). */}
+              <HajjDescriptionHeading />
             </div>
 
             <div
