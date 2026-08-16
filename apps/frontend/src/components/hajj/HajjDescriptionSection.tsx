@@ -3,27 +3,26 @@
 /**
  * The whole "Good to know" block — heading, body, and the in-place editors for both.
  *
- * Why the body needs its own editor rather than an `InlineText`: it is rich HTML —
- * paragraphs, bold runs, links — and `InlineText` edits plain text, so binding it here
- * would flatten the markup on the first keystroke. Clicking "Edit text" opens the same
- * TipTap editor the dashboard uses, which is the only control that preserves it.
+ * The body is rich HTML, so it cannot use `InlineText`, which edits plain text and
+ * would flatten every paragraph, link and bold run on the first keystroke. In Edit
+ * Mode the rendered prose is replaced IN PLACE by the same TipTap editor the dashboard
+ * uses — the paragraph becomes editable where it sits, with its formatting intact,
+ * rather than opening somewhere else.
  *
  * `HajjDescription` stays a server component because sanitising uses
  * isomorphic-dompurify (jsdom, server-only). It hands the SANITISED html down and this
- * island renders it for the public. While editing, the live draft is shown instead so
- * an admin sees their own changes — unsanitised, but it is their own input in their own
- * browser, and every public render passes back through the server sanitiser.
+ * island renders it for the public. While editing, the editor holds the live draft —
+ * unsanitised, but it is the admin's own input in their own browser, and every public
+ * render passes back through the server sanitiser.
  *
  * The section hides itself when the body is empty, EXCEPT while editing: an admin who
- * clears it would otherwise have no way back in from the page.
+ * cleared it would otherwise have no way back in from the page.
  */
 
-import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
-import { BookOpen, Pencil } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { InlineText } from '@/components/edit-mode/InlineText';
-import { RichTextEditor } from '@/components/ui/RichTextEditor';
-import { Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import {
   ContentKeys,
@@ -34,6 +33,16 @@ import {
   type HajjContent,
   type Locale,
 } from '@/lib/content-api';
+
+/**
+ * Loaded on demand. TipTap is a large dependency and only a super-admin in Edit Mode
+ * ever renders it; importing it statically put the whole editor in the bundle every
+ * visitor downloads. `ssr: false` because it is browser-only and never server-renders.
+ */
+const RichTextEditor = dynamic(
+  () => import('@/components/ui/RichTextEditor').then((m) => m.RichTextEditor),
+  { ssr: false },
+);
 
 /** True when the HTML carries no actual words — an empty editor saves "<p></p>". */
 function isBlank(html: string): boolean {
@@ -46,18 +55,13 @@ export function HajjDescriptionSection({ html }: { html: string }) {
     ContentKeys.hajj,
     HAJJ_DEFAULT,
   );
-  const [open, setOpen] = useState(false);
 
   const lang = locale as Locale;
   const rtl = isRtl(locale);
   const dir = rtl ? ('rtl' as const) : ('ltr' as const);
   const copy = content.description;
 
-  // Editing shows the live draft so a change lands immediately; the public render uses
-  // the server-sanitised html it was handed.
-  const shown = editing ? pick(copy.body, locale) : html;
-
-  if (isBlank(shown) && !editing) return null;
+  if (isBlank(html) && !editing) return null;
 
   return (
     <section id="hajj-description" className="relative scroll-mt-24 bg-white pb-12 md:pb-16">
@@ -71,7 +75,7 @@ export function HajjDescriptionSection({ html }: { html: string }) {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rmc-green-light text-rmc-green">
                 <BookOpen className="h-4.5 w-4.5" aria-hidden="true" />
               </span>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0">
                 <InlineText
                   as="p"
                   lang={locale}
@@ -93,60 +97,28 @@ export function HajjDescriptionSection({ html }: { html: string }) {
                   placeholder="Heading"
                 />
               </div>
-              {editing && (
-                <button
-                  type="button"
-                  onClick={() => setOpen(true)}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rmc-green/30 bg-white px-3 py-1.5 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light/40"
-                >
-                  <Pencil className="h-3.5 w-3.5" /> Edit text
-                </button>
-              )}
             </div>
 
-            {isBlank(shown) ? (
-              <p className="text-sm italic text-gray-400">
-                No text yet — use “Edit text” to write this section.
-              </p>
+            {editing ? (
+              /* Keyed by language: the editor seeds its content once, so switching
+                 locale without a remount would leave the previous language in the box. */
+              <RichTextEditor
+                key={lang}
+                value={raw(copy.body, locale)}
+                onChange={(next) => setField((d) => { d.description.body[lang] = next; })}
+                dir={dir}
+                fontClassName={rtl ? 'font-arabic' : ''}
+              />
             ) : (
               <div
                 dir={dir}
                 className={`prose prose-sm md:prose-base max-w-none text-gray-600 prose-headings:text-rmc-green-deep prose-strong:text-gray-900 prose-a:text-rmc-green prose-blockquote:border-rmc-gold ${rtl ? 'font-arabic' : ''}`}
-                dangerouslySetInnerHTML={{ __html: shown }}
+                dangerouslySetInnerHTML={{ __html: html }}
               />
             )}
           </div>
         </div>
       </div>
-
-      <Modal open={open} onClose={() => setOpen(false)} size="lg">
-        <ModalHeader>
-          <ModalTitle>Good to know — body text</ModalTitle>
-        </ModalHeader>
-        <ModalBody>
-          {/* Keyed by language: the editor seeds its content once, so switching locale
-              without a remount would leave the previous language's text in the box. */}
-          <RichTextEditor
-            key={lang}
-            value={raw(copy.body, locale)}
-            onChange={(next) => setField((d) => { d.description.body[lang] = next; })}
-            dir={dir}
-            fontClassName={rtl ? 'font-arabic' : ''}
-          />
-          <p className="mt-3 text-[11px] text-gray-400">
-            Editing the {locale.toUpperCase()} version. Changes are saved when you publish.
-          </p>
-        </ModalBody>
-        <ModalFooter>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
-          >
-            Done
-          </button>
-        </ModalFooter>
-      </Modal>
     </section>
   );
 }
