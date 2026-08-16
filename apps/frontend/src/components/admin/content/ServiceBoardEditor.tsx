@@ -26,7 +26,7 @@ import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
-  ArrowLeft, Save, Loader2, ExternalLink, ListOrdered, Megaphone, HelpCircle, Layers,
+  ArrowLeft, Save, Loader2, ExternalLink, ListOrdered, Megaphone, HelpCircle, Layers, FileText,
   Plus, Trash2, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
@@ -37,7 +37,6 @@ import {
   saveSiteContent,
   mergeContent,
   tri,
-  type BoardStep,
   type ScholarshipServiceContent,
   type ServiceBoardContent,
 } from '@/lib/content-api';
@@ -218,7 +217,7 @@ function ListEditor({
  * Field groups derived from the blob itself, so the step and FAQ lists grow with the
  * content instead of being hard-coded to today's counts.
  */
-function buildGroups(form: ServiceBoardContent): FieldGroup[] {
+function buildGroups(form: ServiceBoardContent, detailFields: FieldDef[]): FieldGroup[] {
   const groups: FieldGroup[] = [
     {
       title: 'Hero',
@@ -248,6 +247,16 @@ function buildGroups(form: ServiceBoardContent): FieldGroup[] {
       stepsEditor: true,
     },
   ];
+
+  /*
+   * The record page — one tender, one opening, one scholarship. Present on every
+   * board but shaped differently, so the caller declares its fields rather than this
+   * guessing them. The record's OWN text (its title, description, deadline) is not
+   * here: that is edited on the record's admin screen.
+   */
+  if (detailFields.length) {
+    groups.push({ title: 'Detail page', icon: FileText, fields: detailFields });
+  }
 
   if (hasExtras(form)) {
     groups.push(
@@ -286,6 +295,11 @@ export interface ServiceBoardEditorProps {
   iconColor: string;
   /** Path of the public page this edits, relative to the locale. */
   publicPath: string;
+  /**
+   * Fields for the record page ("Detail page" group). Declared by the route because
+   * each board's detail copy is shaped differently. Omit for a board without one.
+   */
+  detailFields?: FieldDef[];
   /** What the records on that page are called, for the pointer to their CRUD screen. */
   recordsLabel: string;
   recordsHref: string;
@@ -301,6 +315,7 @@ export function ServiceBoardEditor({
   iconBg,
   iconColor,
   publicPath,
+  detailFields = [],
   recordsLabel,
   recordsHref,
   recordsNote,
@@ -413,7 +428,7 @@ export function ServiceBoardEditor({
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fontClass = lang === 'ar' ? 'font-arabic' : '';
   const inputClass = `w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${fontClass}`;
-  const groups = buildGroups(form);
+  const groups = buildGroups(form, detailFields);
 
   return (
     <div className="space-y-6">

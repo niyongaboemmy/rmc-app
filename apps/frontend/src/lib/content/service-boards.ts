@@ -97,15 +97,70 @@ function faq(id: string, q: Tri, a: Tri): BoardFaq {
   return { id, q, a };
 }
 
+/**
+ * Copy on a single record's page — one tender, one opening, one scholarship.
+ *
+ * Section headings, the closing CTA and the states a detail page can land in. NOT
+ * the record's own fields (its title, description, deadline): those come from the
+ * API and are edited on the record's own admin screen.
+ *
+ * Field micro-labels ("Location", "Salary") and the deadline phrases stay in i18n.
+ * The deadline strings carry `{days}` and plural forms, and an admin who drops the
+ * placeholder would silently print the sentence with no number in it.
+ */
+export interface TenderDetailCopy {
+  eyebrow: Tri;
+  heroTitle: Tri;
+  descriptionTitle: Tri;
+  /** Rendered with the file count appended, so the number never reaches an editor. */
+  attachmentsTitle: Tri;
+  cta: { title: Tri; subtitle: Tri; button: Tri };
+  notFound: { heroTitle: Tri; title: Tri; body: Tri; backLink: Tri };
+}
+
+export interface JobsDetailCopy {
+  eyebrow: Tri;
+  overviewTitle: Tri;
+  aboutTitle: Tri;
+  requirementsTitle: Tri;
+  responsibilitiesTitle: Tri;
+  cta: { title: Tri; subtitle: Tri };
+  notFound: Tri;
+  closed: { title: Tri; body: Tri };
+}
+
+export interface ScholarshipDetailCopy {
+  aboutTitle: Tri;
+  eligibilityTitle: Tri;
+  benefitsTitle: Tri;
+  documentsTitle: Tri;
+  attachmentsTitle: Tri;
+  need: { title: Tri; subtitle: Tri };
+  cta: { title: Tri; body: Tri };
+  notFound: { title: Tri; body: Tri };
+  closedNotice: Tri;
+  notOpenYet: Tri;
+}
+
+/** Tenders and Jobs are the plain board plus their record page. */
+export interface TenderServiceContent extends ServiceBoardContent {
+  detail: TenderDetailCopy;
+}
+
+export interface JobsServiceContent extends ServiceBoardContent {
+  detail: JobsDetailCopy;
+}
+
 /** Scholarships carry an FAQ and a closing call to action on top of the board. */
 export interface ScholarshipServiceContent extends ServiceBoardContent {
   faq: { title: Tri; items: BoardFaq[] };
   cta: { title: Tri; subtitle: Tri; startLabel: Tri; contactLabel: Tri };
+  detail: ScholarshipDetailCopy;
 }
 
 /* ── Tenders ─────────────────────────────────────────────────────────────── */
 
-export const TENDER_SERVICE_DEFAULT: ServiceBoardContent = {
+export const TENDER_SERVICE_DEFAULT: TenderServiceContent = {
   hero: {
     title: tri('Tenders', 'Itumba', 'المناقصات'),
     subtitle: tri(
@@ -163,11 +218,36 @@ export const TENDER_SERVICE_DEFAULT: ServiceBoardContent = {
       ),
     ],
   },
+  detail: {
+    eyebrow: tri('Business Opportunities', "Amahirwe y'Ubucuruzi", 'فرص الأعمال'),
+    heroTitle: tri('Tender Details', "Amakuru y'Umushinga", 'تفاصيل المناقصة'),
+    descriptionTitle: tri('Tender Description', "Ibisobanuro by'Umushinga", 'وصف المناقصة'),
+    attachmentsTitle: tri('Attachments', 'Inyandiko', 'المرفقات'),
+    cta: {
+      title: tri('Interested in this tender?', 'Uzirikana uyu mushinga?', 'مهتم بهذه المناقصة؟'),
+      subtitle: tri(
+        'Submit your bid before the deadline.',
+        "Ohereza ipiganwa ryawe mbere y'igihe ntarengwa.",
+        'قدّم عرضك قبل انتهاء الموعد.',
+      ),
+      button: tri('Submit a bid', 'Tanga ipiganwa', 'قدّم عطاءً'),
+    },
+    notFound: {
+      heroTitle: tri('Not Found', 'Ntabwo Byabonetse', 'غير موجود'),
+      title: tri('Tender not found', 'Umushinga ntuboneka', 'المناقصة غير موجودة'),
+      body: tri(
+        'It may have been removed or the link is invalid.',
+        'Ushobora kuba wakuweho cyangwa uhuze ntabwo ari wo.',
+        'ربما تمت إزالتها أو الرابط غير صحيح.',
+      ),
+      backLink: tri('View all tenders', 'Reba imishinga yose', 'عرض جميع المناقصات'),
+    },
+  },
 };
 
 /* ── Jobs ────────────────────────────────────────────────────────────────── */
 
-export const JOBS_SERVICE_DEFAULT: ServiceBoardContent = {
+export const JOBS_SERVICE_DEFAULT: JobsServiceContent = {
   hero: {
     title: tri('Job Opportunities', "Amahirwe y'Akazi", 'فرص العمل'),
     subtitle: tri(
@@ -233,6 +313,34 @@ export const JOBS_SERVICE_DEFAULT: ServiceBoardContent = {
         ),
       ),
     ],
+  },
+  detail: {
+    eyebrow: tri('Career opportunities', "Amahirwe y'akazi", 'فرص وظيفية'),
+    overviewTitle: tri('Job overview', 'Incamake y’akazi', 'نظرة عامة على الوظيفة'),
+    aboutTitle: tri('About this role', 'Ibyerekeye uyu mwanya', 'عن هذه الوظيفة'),
+    requirementsTitle: tri('Requirements', 'Ibisabwa', 'المتطلبات'),
+    responsibilitiesTitle: tri('Responsibilities', 'Inshingano', 'المسؤوليات'),
+    cta: {
+      title: tri('Interested in this role?', 'Ushishikajwe n’uyu mwanya?', 'مهتم بهذه الوظيفة؟'),
+      subtitle: tri(
+        'Submit your application before the deadline.',
+        'Ohereza ubusabe bwawe mbere y’igihe ntarengwa.',
+        'قدّم طلبك قبل الموعد النهائي.',
+      ),
+    },
+    notFound: tri(
+      'This position is no longer available.',
+      'Uyu mwanya ntukiriho.',
+      'هذه الوظيفة لم تعد متاحة.',
+    ),
+    closed: {
+      title: tri('Applications closed', 'Isaba ryafunzwe', 'انتهى وقت التقديم'),
+      body: tri(
+        'The application deadline for this position has passed.',
+        'Igihe cyo gusaba uyu mwanya cyararangiye.',
+        'انتهى الموعد النهائي للتقديم لهذه الوظيفة.',
+      ),
+    },
   },
 };
 
@@ -362,5 +470,54 @@ export const SCHOLARSHIP_SERVICE_DEFAULT: ScholarshipServiceContent = {
     ),
     startLabel: tri('Start application', 'Tangira ubusabe', 'ابدأ الطلب'),
     contactLabel: tri('Contact us', 'Twandikire', 'تواصل معنا'),
+  },
+  detail: {
+    aboutTitle: tri('About this scholarship', 'Ibyerekeye iyi buruse', 'عن هذه المنحة'),
+    eligibilityTitle: tri('Who may apply', 'Abashobora gusaba', 'من يمكنه التقدّم'),
+    benefitsTitle: tri('What the award covers', 'Ibyo iyi buruse itanga', 'ما تغطيه المنحة'),
+    documentsTitle: tri(
+      'Documents you must attach',
+      'Inyandiko ugomba gushyiraho',
+      'الوثائق المطلوب إرفاقها',
+    ),
+    attachmentsTitle: tri('Attachments', 'Inyandiko zometse', 'المرفقات'),
+    need: {
+      title: tri("What you'll need", 'Ibyo Ukeneye', 'ما الذي تحتاجه'),
+      subtitle: tri(
+        'Have these ready before you start your application.',
+        'Byiteguze mbere yo gutangira ubusabe bwawe.',
+        'جهّز هذه المعلومات قبل بدء طلبك.',
+      ),
+    },
+    cta: {
+      title: tri(
+        'Ready to apply for a scholarship?',
+        'Witeguye gusaba buruse?',
+        'هل أنت مستعد للتقديم على منحة دراسية؟',
+      ),
+      body: tri(
+        'Apply before the deadline. You will get a tracking code to follow your application.',
+        'Saba mbere y’itariki ntarengwa. Uzahabwa kode yo gukurikirana ubusabe bwawe.',
+        'قدّم قبل الموعد النهائي. ستحصل على رمز تتبع لمتابعة طلبك.',
+      ),
+    },
+    notFound: {
+      title: tri('Scholarship not found', 'Buruse ntiyabonetse', 'المنحة غير موجودة'),
+      body: tri(
+        'It may have been withdrawn, or the link is out of date.',
+        'Ishobora kuba yarakuwemo, cyangwa iyi link yarataye igihe.',
+        'ربما تم سحبها، أو أن الرابط قديم.',
+      ),
+    },
+    closedNotice: tri(
+      'This scholarship is closed and is no longer accepting applications.',
+      'Iyi buruse yarafunzwe, ntikiyakira ubusabe.',
+      'هذه المنحة مغلقة ولم تعد تستقبل الطلبات.',
+    ),
+    notOpenYet: tri(
+      'Applications for this scholarship have not opened yet.',
+      'Gusaba iyi buruse ntibiratangira.',
+      'لم يبدأ التقديم على هذه المنحة بعد.',
+    ),
   },
 };
