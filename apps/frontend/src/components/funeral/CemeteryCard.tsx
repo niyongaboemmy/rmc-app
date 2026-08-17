@@ -37,12 +37,12 @@ export function CemeteryCard({
 
   return (
     <div
-      className={`flex flex-col rounded-2xl border bg-white p-5 shadow-sm ring-1 transition-all duration-300 ${
+      className={`flex flex-col rounded-lg border bg-white p-5 shadow-sm ring-1 transition-all duration-300 ${
         active ? 'border-rmc-green ring-rmc-green/30' : 'border-gray-100 ring-black/5 hover:-translate-y-0.5 hover:shadow-md'
       }`}
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rmc-green-light text-rmc-green ring-1 ring-rmc-green/15">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rmc-green-light text-rmc-green ring-1 ring-rmc-green/15">
           <MapPin className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">

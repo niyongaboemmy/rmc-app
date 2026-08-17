@@ -77,6 +77,7 @@ export function CemeteryDirectory({ locale }: { locale: string }) {
         {filtered.length === 0 ? (
           <EmptyState
             icon={MapPin}
+            className="!rounded-lg"
             title={pick(empty.emptyTitle, locale)}
             message={pick(empty.emptyText, locale)}
           />
@@ -103,7 +104,7 @@ export function CemeteryDirectory({ locale }: { locale: string }) {
       <aside className="lg:col-span-2">
         <div
           ref={mapRef}
-          className="h-[22rem] overflow-hidden rounded-2xl border border-gray-100 shadow-sm ring-1 ring-black/5 lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]"
+          className="h-[22rem] overflow-hidden rounded-lg border border-gray-100 shadow-sm ring-1 ring-black/5 lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]"
         >
           <CemeteryMap cemeteries={cemeteries} focus={focus} directionsLabel={t('directions')} />
         </div>
