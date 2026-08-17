@@ -17,6 +17,13 @@ import { FuneralDescription } from '@/components/funeral/FuneralDescription';
 import { FuneralProcessSteps } from '@/components/funeral/FuneralProcessSteps';
 import { FuneralTransportsSection } from '@/components/funeral/FuneralTransportsSection';
 import { HERO_AYAH, HERO_IMAGE } from '@/components/funeral/data';
+import {
+  FuneralHeroCopy,
+  FuneralAyahRef,
+  FuneralQuickHeading,
+  FuneralActionText,
+  FuneralCtaCopy,
+} from '@/components/funeral/FuneralPageCopy';
 import { ContentKeys } from '@/lib/content-api';
 import { fetchSiteContent } from '@/lib/content/server';
 import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
@@ -43,10 +50,13 @@ export default async function FuneralServicesPage({
     getTranslations('services.funeral'),
     fetchSiteContent(PAGE_CONTENT_KEYS),
   ]);
+  // Handed to the one server-rendered section below; the client islands read the
+  // same blob through the provider, so nothing fetches it twice.
+  const funeral = content[ContentKeys.funeral];
   const base = `/${locale}/services/funeral`;
 
   // Quick-action cards.
-  const actions: { key: string; icon: LucideIcon; href: string; tone: Tone }[] = [
+  const actions: { key: 'report' | 'cemetery'; icon: LucideIcon; href: string; tone: Tone }[] = [
     { key: 'report', icon: FileText, href: `${base}/request`, tone: 'green' },
     { key: 'cemetery', icon: Landmark, href: `${base}/cemeteries`, tone: 'slate' },
   ];
@@ -84,11 +94,8 @@ export default async function FuneralServicesPage({
               <p className="mb-1.5 font-arabic text-xl leading-relaxed text-rmc-gold-light drop-shadow md:text-2xl" dir="rtl" lang="ar">
                 {HERO_AYAH}
               </p>
-              <p className="mb-4 text-xs font-medium uppercase tracking-[0.18em] text-white/50">
-                {t('landing.ayahRef')}
-              </p>
-              <h1 className="mb-2 text-3xl font-bold drop-shadow-lg md:text-4xl">{t('title')}</h1>
-              <p className="mx-auto max-w-2xl text-sm leading-relaxed text-white/70 md:text-base">{t('desc')}</p>
+              <FuneralAyahRef className="mb-4 block text-xs font-medium uppercase tracking-[0.18em] text-white/50" />
+              <FuneralHeroCopy />
               </div>
             </div>
 
@@ -100,8 +107,7 @@ export default async function FuneralServicesPage({
             <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" aria-hidden="true" />
             <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
               <div className="mb-6 max-w-2xl">
-                <h2 className="text-2xl font-bold text-gray-900">{t('landing.quickTitle')}</h2>
-                <p className="mt-2 text-sm text-gray-500">{t('landing.quickSub')}</p>
+                <FuneralQuickHeading />
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -111,8 +117,8 @@ export default async function FuneralServicesPage({
                     href={a.href}
                     icon={a.icon}
                     tone={a.tone}
-                    title={t(`landing.actions.${a.key}.title`)}
-                    desc={t(`landing.actions.${a.key}.desc`)}
+                    title={<FuneralActionText card={a.key} field="title" />}
+                    desc={<FuneralActionText card={a.key} field="desc" />}
                   />
                 ))}
               </div>
@@ -120,7 +126,7 @@ export default async function FuneralServicesPage({
           </section>
 
           {/* ── What RMC does for the family (admin-written) ── */}
-          <FuneralDescription />
+          <FuneralDescription saved={funeral} />
 
           {/* ── What happens next: the lifecycle steps families will track ── */}
           <FuneralProcessSteps />
@@ -132,22 +138,10 @@ export default async function FuneralServicesPage({
           <section className="relative overflow-hidden bg-rmc-green-deep py-16 text-center text-white md:py-20">
             <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-15" aria-hidden="true" />
             <div className="relative mx-auto max-w-2xl px-6 sm:px-8 lg:px-12">
-              <h2 className="mb-3 text-2xl font-bold">{t('landing.ctaTitle')}</h2>
-              <p className="mb-7 text-sm leading-relaxed text-white/60">{t('landing.ctaSub')}</p>
-              <div className="flex flex-col justify-center gap-3 sm:flex-row">
-                <Link
-                  href={`${base}/request`}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-rmc-green px-6 py-3 text-sm font-bold text-white shadow-md shadow-black/20 transition-all duration-300 hover:bg-rmc-green-dark"
-                >
-                  {t('landing.ctaReport')} <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-                </Link>
-                <Link
-                  href={`/${locale}/contact`}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20"
-                >
-                  <Phone className="h-4 w-4" aria-hidden="true" /> {t('landing.ctaContact')}
-                </Link>
-              </div>
+              <FuneralCtaCopy
+                reportHref={`${base}/request`}
+                contactHref={`/${locale}/contact`}
+              />
             </div>
           </section>
         </main>

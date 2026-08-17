@@ -9,6 +9,42 @@ import { Tri, tri } from './client';
  * Only the timeline's heading lives in this blob.
  */
 export interface FuneralContent {
+  /**
+   * The page banner. The ayah itself is scripture and is NOT here — only the
+   * reference line under it, which is a citation an editor might reformat.
+   */
+  hero: {
+    title: Tri;
+    subtitle: Tri;
+    ayahRef: Tri;
+  };
+  /**
+   * "How can we help?" — the heading over the two action cards, and the cards.
+   *
+   * Flat rather than nested per card: the admin form addresses fields as
+   * group + key, and there are exactly two cards, fixed — their icons and links
+   * live in the page, so this is a shape an admin grows only by a code change.
+   */
+  quick: {
+    title: Tri;
+    subtitle: Tri;
+    reportTitle: Tri;
+    reportDesc: Tri;
+    cemeteryTitle: Tri;
+    cemeteryDesc: Tri;
+  };
+  /** Heading over the mosque transport list; the mosques themselves are records. */
+  transports: {
+    title: Tri;
+    subtitle: Tri;
+  };
+  /** The closing band. */
+  cta: {
+    title: Tri;
+    subtitle: Tri;
+    reportLabel: Tri;
+    contactLabel: Tri;
+  };
   /** Rich-text block (HTML from the admin editor) — sanitise before rendering. */
   description: {
     eyebrow: Tri;
@@ -36,6 +72,57 @@ export interface FuneralContent {
 
 /** Seeded so the page reads well before an admin has edited anything. */
 export const FUNERAL_DEFAULT: FuneralContent = {
+  hero: {
+    title: tri('Funeral Services', "Serivisi y'Umuryango w'Abapfuye", 'خدمات الجنازة'),
+    subtitle: tri(
+      'Coordination of Islamic burial rites, imam assignment, and logistics support for families.',
+      'Gutegura gushyingura mu Islamimu, guha Imam, no gufasha imiryango.',
+      'تنسيق مراسم الدفن الإسلامية وتعيين الإمام ودعم اللوجستيات للعائلات.',
+    ),
+    ayahRef: tri('Qur’an 2:156', 'Qur’an 2:156', 'القرآن ٢:١٥٦'),
+  },
+  quick: {
+    title: tri('How can we help?', 'Twabafasha dute?', 'كيف يمكننا مساعدتك؟'),
+    subtitle: tri(
+      'From reporting a death to burial, RMC walks with you at every step — with dignity and care.',
+      'Kuva ku kumenyekanisha urupfu kugeza ku ishyingura, RMC iri kumwe namwe muri buri ntambwe, mu cyubahiro no mu rukundo.',
+      'من الإبلاغ عن الوفاة إلى الدفن، يرافقكم مركز المجتمع المسلم في كل خطوة بكرامة ورعاية.',
+    ),
+    reportTitle: tri('Report a Death', 'Menyekanisha urupfu', 'الإبلاغ عن وفاة'),
+    reportDesc: tri(
+      'Notify RMC and begin the arrangements.',
+      'Menyesha RMC utangire gutunganya ibikenewe.',
+      'أبلغ المركز وابدأ الترتيبات.',
+    ),
+    cemeteryTitle: tri('Cemetery Information', 'Amakuru y’amarimbi', 'معلومات المقابر'),
+    cemeteryDesc: tri(
+      'Locations, capacity and contacts.',
+      'Aho ari, ubushobozi n’abo kuvugana.',
+      'المواقع والسعة وجهات الاتصال.',
+    ),
+  },
+  transports: {
+    title: tri(
+      'Available transport means',
+      'Uburyo bwo gutwara umurambo buhari',
+      'وسائل النقل المتاحة',
+    ),
+    subtitle: tri(
+      'Funeral transport offered by our mosques. Contact the one nearest you.',
+      'Ubwikorezi bw’imihango y’umuziro butangwa n’imisigiti yacu. Hamagara uwo hafi yawe.',
+      'نقل الجنازات الذي تقدمه مساجدنا. تواصل مع الأقرب إليك.',
+    ),
+  },
+  cta: {
+    title: tri('We are here for you', 'Turi kumwe namwe', 'نحن معكم'),
+    subtitle: tri(
+      'When a loved one passes, contact us at any hour. The community is ready to help.',
+      'Iyo uwo mukunda yitabye Imana, twandikire igihe icyo ari cyo cyose. Umuryango witeguye kubafasha.',
+      'عند وفاة عزيز، تواصلوا معنا في أي وقت. المجتمع مستعد للمساعدة.',
+    ),
+    reportLabel: tri('Report a Death', 'Menyekanisha urupfu', 'الإبلاغ عن وفاة'),
+    contactLabel: tri('Call the committee', 'Hamagara komite', 'اتصل باللجنة'),
+  },
   description: {
     eyebrow: tri('What we do', 'Icyo dukora', 'ما نقوم به'),
     title: tri(
