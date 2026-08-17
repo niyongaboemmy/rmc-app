@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { ContentKeys, FUNERAL_DEFAULT, pick, type FuneralContent } from '@/lib/content-api';
 import { Search, MapPin } from 'lucide-react';
 import { funeralApi } from '@/lib/funeralApi';
 import type { Cemetery } from './types';
@@ -17,6 +19,11 @@ const CemeteryMap = dynamic(() => import('./CemeteryMap'), {
 
 export function CemeteryDirectory({ locale }: { locale: string }) {
   const t = useTranslations('services.funeral.cemeteryPage');
+
+  /* The empty state is admin-managed. The search box, the field labels and the
+     result count stay in i18n — the last is an ICU plural. */
+  const { content } = useEditableContent<FuneralContent>(ContentKeys.funeral, FUNERAL_DEFAULT);
+  const empty = content.cemeteries;
   const [query, setQuery] = useState('');
   const [cemeteries, setCemeteries] = useState<Cemetery[]>([]);
   const [focus, setFocus] = useState<{ lat: number; lng: number; nonce: number } | null>(null);
@@ -68,7 +75,11 @@ export function CemeteryDirectory({ locale }: { locale: string }) {
         </div>
 
         {filtered.length === 0 ? (
-          <EmptyState icon={MapPin} title={t('emptyTitle')} message={t('emptyText')} />
+          <EmptyState
+            icon={MapPin}
+            title={pick(empty.emptyTitle, locale)}
+            message={pick(empty.emptyText, locale)}
+          />
         ) : (
           <>
             <p className="text-[13px] text-gray-400">{t('resultsCount', { count: filtered.length })}</p>

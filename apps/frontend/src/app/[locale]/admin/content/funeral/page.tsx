@@ -61,6 +61,13 @@ const FIELDS: FieldDef[] = [
   { group: 'steps', key: 'subtitle', label: 'Process timeline — Subheading', rows: 2 },
   { group: 'hotline', key: 'label', label: 'Call bar — Label', rows: 1 },
   { group: 'hotline', key: 'note', label: 'Call bar — Note under the label', rows: 1 },
+  { group: 'cemeteries', key: 'title', label: 'Cemetery page — Heading', rows: 1 },
+  { group: 'cemeteries', key: 'subtitle', label: 'Cemetery page — Subheading', rows: 2 },
+  {
+    group: 'cemeteries', key: 'emptyTitle', label: 'Cemetery page — No results heading', rows: 1,
+    hint: 'Shown when a search matches no cemetery. The cemeteries themselves are managed under Admin → Funeral.',
+  },
+  { group: 'cemeteries', key: 'emptyText', label: 'Cemetery page — No results message', rows: 2 },
   { group: 'transports', key: 'title', label: 'Transport section — Heading', rows: 1 },
   {
     group: 'transports', key: 'subtitle', label: 'Transport section — Subheading', rows: 2,
@@ -75,6 +82,7 @@ const FIELDS: FieldDef[] = [
 const GROUP_LABELS: Record<Group, string> = {
   hero: 'Page hero',
   quick: 'Quick actions',
+  cemeteries: 'Cemetery directory page',
   transports: 'Transport section heading',
   cta: 'Closing band',
   description: 'What we do',

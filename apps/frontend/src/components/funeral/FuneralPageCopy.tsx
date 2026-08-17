@@ -229,3 +229,34 @@ export function FuneralCtaCopy({
     </>
   );
 }
+
+/** The cemetery directory page's heading pair. */
+export function CemeteryPageHeading() {
+  const { content, setField, locale, lang, dir } = useFuneralCopy();
+  const copy = content.cemeteries;
+
+  return (
+    <>
+      <InlineText
+        as="h1"
+        lang={locale}
+        value={pick(copy.title, locale)}
+        editValue={raw(copy.title, locale)}
+        onCommit={(v) => setField((d) => { d.cemeteries.title[lang] = v; })}
+        className="text-2xl font-bold drop-shadow-lg md:text-3xl"
+        dir={dir}
+        placeholder="Page title"
+      />
+      <InlineText
+        as="p"
+        lang={locale}
+        value={pick(copy.subtitle, locale)}
+        editValue={raw(copy.subtitle, locale)}
+        onCommit={(v) => setField((d) => { d.cemeteries.subtitle[lang] = v; })}
+        className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-white/70"
+        dir={dir}
+        placeholder="Short description"
+      />
+    </>
+  );
+}

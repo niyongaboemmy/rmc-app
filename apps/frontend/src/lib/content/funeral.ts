@@ -35,6 +35,17 @@ export interface FuneralContent {
     cemeteryTitle: Tri;
     cemeteryDesc: Tri;
   };
+  /**
+   * The cemetery directory page. The cemeteries themselves are records under
+   * Admin → Funeral; this is the heading and the message shown when a search
+   * matches nothing. The result count stays in i18n — it is an ICU plural.
+   */
+  cemeteries: {
+    title: Tri;
+    subtitle: Tri;
+    emptyTitle: Tri;
+    emptyText: Tri;
+  };
   /** Heading over the mosque transport list; the mosques themselves are records. */
   transports: {
     title: Tri;
@@ -102,6 +113,16 @@ export const FUNERAL_DEFAULT: FuneralContent = {
       'Aho ari, ubushobozi n’abo kuvugana.',
       'المواقع والسعة وجهات الاتصال.',
     ),
+  },
+  cemeteries: {
+    title: tri('Cemetery Directory', 'Urutonde rw’amarimbi', 'دليل المقابر'),
+    subtitle: tri(
+      'Muslim burial grounds across Rwanda — locations, capacity and contacts.',
+      'Amarimbi y’abayisilamu mu Rwanda — aho ari, ubushobozi n’abo kuvugana.',
+      'مقابر المسلمين في رواندا — المواقع والسعة وجهات الاتصال.',
+    ),
+    emptyTitle: tri('No cemeteries found', 'Nta marimbi yabonetse', 'لم يُعثر على مقابر'),
+    emptyText: tri('Try a different search.', 'Gerageza indi shakisha.', 'جرّب بحثاً آخر.'),
   },
   transports: {
     title: tri(

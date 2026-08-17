@@ -6,11 +6,12 @@ import { Landmark } from 'lucide-react';
 import { HeroBackLink } from '@/components/services/HeroBackLink';
 import { HERO_IMAGE } from '@/components/funeral/data';
 import { FuneralCallBar } from '@/components/funeral/FuneralCallBar';
+import { CemeteryPageHeading } from '@/components/funeral/FuneralPageCopy';
 import { ContentKeys } from '@/lib/content-api';
 import { fetchSiteContent } from '@/lib/content/server';
 import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
 
-/** Only the call bar's copy is read here; the rest of this page is i18n. */
+/** The page heading, the empty state and the call bar's copy. */
 const PAGE_CONTENT_KEYS = [ContentKeys.funeral];
 import { CemeteryDirectory } from '@/components/funeral/CemeteryDirectory';
 
@@ -47,8 +48,7 @@ export default async function FuneralCemeteriesPage({
                   <Landmark className="h-6 w-6 text-rmc-gold-light" strokeWidth={1.75} aria-hidden="true" />
                 </span>
               </div>
-              <h1 className="text-2xl font-bold drop-shadow-lg md:text-3xl">{t('title')}</h1>
-              <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-white/70">{t('subtitle')}</p>
+              <CemeteryPageHeading />
             </div>
 
             <HeroBackLink href={`/${locale}/services/funeral`} label={t('back')} />
