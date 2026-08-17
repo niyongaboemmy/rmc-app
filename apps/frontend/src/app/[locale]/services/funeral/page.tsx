@@ -1,16 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
-import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
-import {
-  Moon,
-  ArrowRight,
-  FileText,
-  Landmark,
-  Phone,
-  type LucideIcon,
-} from 'lucide-react';
+import { Moon, FileText, Landmark, type LucideIcon } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
 import { FuneralActionCard } from '@/components/funeral/FuneralActionCard';
 import { FuneralCallBar } from '@/components/funeral/FuneralCallBar';
@@ -47,10 +38,7 @@ export default async function FuneralServicesPage({
 }: {
   params: { locale: string };
 }) {
-  const [t, content] = await Promise.all([
-    getTranslations('services.funeral'),
-    fetchSiteContent(PAGE_CONTENT_KEYS),
-  ]);
+  const content = await fetchSiteContent(PAGE_CONTENT_KEYS);
   // Handed to the one server-rendered section below; the client islands read the
   // same blob through the provider, so nothing fetches it twice.
   const funeral = content[ContentKeys.funeral];
