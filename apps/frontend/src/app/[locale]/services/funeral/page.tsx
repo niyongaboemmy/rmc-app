@@ -99,7 +99,10 @@ export default async function FuneralServicesPage({
                 <FuneralQuickHeading />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Capped to the heading's measure above: the section reads as one
+                  left-aligned column, and two cards across the full 7xl row were
+                  wider than the text introducing them. */}
+              <div className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
                 {actions.map((a) => (
                   <FuneralActionCard
                     key={a.key}
