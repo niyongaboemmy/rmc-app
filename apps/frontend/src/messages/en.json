@@ -764,28 +764,6 @@
         "ayahRef": "Qur’an 2:156",
         "quickTitle": "How can we help?",
         "quickSub": "From reporting a death to burial, RMC walks with you at every step — with dignity and care.",
-        "actions": {
-          "report": {
-            "title": "Report a Death",
-            "desc": "Notify RMC and begin the arrangements."
-          },
-          "request": {
-            "title": "Request Janāzah Services",
-            "desc": "Ghusl, kafan, prayer, transport and burial."
-          },
-          "progress": {
-            "title": "Burial Progress",
-            "desc": "Track the status of a funeral request."
-          },
-          "cemetery": {
-            "title": "Cemetery Information",
-            "desc": "Locations, capacity and contacts."
-          },
-          "support": {
-            "title": "Family Support",
-            "desc": "Counselling, food and financial aid."
-          }
-        },
         "ctaTitle": "We are here for you",
         "ctaSub": "When a loved one passes, contact us at any hour. The community is ready to help.",
         "ctaReport": "Report a Death",

@@ -764,28 +764,6 @@
         "ayahRef": "Qur’an 2:156",
         "quickTitle": "Twabafasha dute?",
         "quickSub": "Kuva ku kumenyekanisha urupfu kugeza ku ishyingura, RMC iri kumwe namwe muri buri ntambwe, mu cyubahiro no mu rukundo.",
-        "actions": {
-          "report": {
-            "title": "Menyekanisha urupfu",
-            "desc": "Menyesha RMC utangire gutunganya ibikenewe."
-          },
-          "request": {
-            "title": "Saba serivisi za Janaza",
-            "desc": "Ghusl, kafan, isengesho, gutwara no gushyingura."
-          },
-          "progress": {
-            "title": "Aho ishyingura rigeze",
-            "desc": "Kurikirana aho isaba ry’ishyingura rigeze."
-          },
-          "cemetery": {
-            "title": "Amakuru y’amarimbi",
-            "desc": "Aho ari, ubushobozi n’abo kuvugana."
-          },
-          "support": {
-            "title": "Ubufasha bw’umuryango",
-            "desc": "Ubujyanama, ibiribwa n’ubufasha bw’amafaranga."
-          }
-        },
         "ctaTitle": "Turi kumwe namwe",
         "ctaSub": "Iyo uwo mukunda yitabye Imana, twandikire igihe icyo ari cyo cyose. Umuryango witeguye kubafasha.",
         "ctaReport": "Menyekanisha urupfu",
