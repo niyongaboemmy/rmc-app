@@ -48,13 +48,10 @@ export default async function DawahPage({
   ]);
 
   // The description body is HTML from the admin rich-text editor, so it is
-  // sanitised before it is ever rendered. An empty editor saves "<p></p>", so
-  // test for actual text rather than a non-empty string — otherwise a cleared
-  // section renders an empty grey box.
+  // sanitised before it is ever rendered. Whether a cleared body hides the section is
+  // decided by `DawahIntro`, not here: it has to stay visible in Edit Mode, and only a
+  // client component knows whether Edit Mode is on.
   const descriptionHtml = sanitizeRichHtml(pick(content.description.body, locale));
-  const hasDescription = Boolean(
-    descriptionHtml.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim(),
-  );
 
   return (
     /* The islands below (`DawahHero`, the landing and about sections) bind to the same
@@ -85,12 +82,10 @@ export default async function DawahPage({
             <HowPracticed />
           </Reveal>
 
-          {/* ── Description — CMS rich text; eyebrow/title inline-editable ───── */}
-          {hasDescription && (
-            <Reveal>
-              <DawahIntro bodyHtml={descriptionHtml} />
-            </Reveal>
-          )}
+          {/* ── Description — CMS rich text, fully inline-editable ──────────── */}
+          <Reveal>
+            <DawahIntro bodyHtml={descriptionHtml} />
+          </Reveal>
 
           {/* ── Outline of courses — live from /dawah/courses/featured ──────── */}
           <Reveal>

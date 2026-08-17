@@ -14,6 +14,7 @@
  * rich-text editor); it is sanitised on the server and passed in as a string.
  */
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -23,6 +24,7 @@ import {
   ContentKeys,
   DAWAH_DEFAULT,
   pick,
+  raw,
   isRtl,
   type DawahContent,
   type Locale,
@@ -30,15 +32,30 @@ import {
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import { InlineText } from '@/components/edit-mode/InlineText';
 
+/**
+ * Loaded on demand. TipTap is a large dependency and only a super-admin in Edit Mode
+ * ever renders it; a static import would put the whole editor in the bundle every
+ * visitor of /dawah downloads. `ssr: false` because it is browser-only.
+ */
+const RichTextEditor = dynamic(
+  () => import('@/components/ui/RichTextEditor').then((m) => m.RichTextEditor),
+  { ssr: false },
+);
+
+/** True when the HTML carries no actual words — an empty editor saves "<p></p>". */
+function isBlank(html: string): boolean {
+  return !html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+}
+
 /** Shared hook: the live dawah copy + a `set(path)` helper for one Tri field. */
 function useDawahCopy() {
   const { locale } = useParams<{ locale: string }>();
   const lang = locale as Locale;
-  const { content, setField } = useEditableContent<DawahContent>(
+  const { content, editing, setField } = useEditableContent<DawahContent>(
     ContentKeys.dawah,
     DAWAH_DEFAULT,
   );
-  return { locale, lang, content, setField };
+  return { locale, lang, content, editing, setField };
 }
 
 // ── Hero ────────────────────────────────────────────────────────────────────
@@ -72,8 +89,14 @@ export function DawahHero() {
 
 // ── Description / intro section (body arrives pre-sanitised from the server) ──
 export function DawahIntro({ bodyHtml }: { bodyHtml: string }) {
-  const { locale, lang, content, setField } = useDawahCopy();
+  const { locale, lang, content, editing, setField } = useDawahCopy();
   const rtl = isRtl(locale);
+
+  // The page used to gate this section on the body having text, which meant an admin
+  // who cleared it lost the section and the only way back into it. The gate lives
+  // here now so it can spare Edit Mode.
+  if (isBlank(bodyHtml) && !editing) return null;
+
   return (
     <section className="bg-white py-14 lg:py-16">
       <div className="mx-auto max-w-5xl px-6 sm:px-8 lg:px-12">
@@ -105,12 +128,26 @@ export function DawahIntro({ bodyHtml }: { bodyHtml: string }) {
               />
             </div>
 
-            {/* Body column — admin rich text, sanitised on the server. */}
-            <div
-              dir={rtl ? 'rtl' : 'ltr'}
-              className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-headings:text-rmc-green-deep prose-strong:text-gray-900 prose-a:text-rmc-green prose-blockquote:border-rmc-gold md:border-s md:border-gray-200/70 md:ps-10"
-              dangerouslySetInnerHTML={{ __html: bodyHtml }}
-            />
+            {/* Body column — admin rich text, sanitised on the server. In Edit Mode
+                the prose is replaced in place by the editor that authored it: it is
+                HTML, so an InlineText here would flatten every paragraph and link. */}
+            {editing ? (
+              /* Keyed by language: the editor seeds its content once, so switching
+                 locale without a remount would leave the previous language in the box. */
+              <RichTextEditor
+                key={lang}
+                value={raw(content.description.body, locale)}
+                onChange={(next) => setField((d) => { d.description.body[lang] = next; })}
+                dir={rtl ? 'rtl' : 'ltr'}
+                fontClassName={rtl ? 'font-arabic' : ''}
+              />
+            ) : (
+              <div
+                dir={rtl ? 'rtl' : 'ltr'}
+                className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-headings:text-rmc-green-deep prose-strong:text-gray-900 prose-a:text-rmc-green prose-blockquote:border-rmc-gold md:border-s md:border-gray-200/70 md:ps-10"
+                dangerouslySetInnerHTML={{ __html: bodyHtml }}
+              />
+            )}
           </div>
         </div>
       </div>
