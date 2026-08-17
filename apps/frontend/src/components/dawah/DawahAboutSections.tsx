@@ -22,6 +22,7 @@ import {
   ContentKeys,
   DAWAH_DEFAULT,
   pick,
+  raw,
   type DawahContent,
   type Locale,
   type Tri,
@@ -77,6 +78,7 @@ function EditableHeading({
         as="p"
         lang={locale}
         value={pick(eyebrow, locale)}
+        editValue={raw(eyebrow, locale)}
         onCommit={onEyebrow}
         className="text-xs font-semibold uppercase tracking-[0.22em] text-rmc-gold"
         placeholder="Eyebrow"
@@ -85,6 +87,7 @@ function EditableHeading({
         as="h2"
         lang={locale}
         value={pick(title, locale)}
+        editValue={raw(title, locale)}
         onCommit={onTitle}
         className="mt-2 text-2xl font-bold text-rmc-green-deep md:text-3xl"
         placeholder="Section title"
@@ -97,6 +100,7 @@ function EditableHeading({
           as="p"
           lang={locale}
           value={pick(subtitle, locale)}
+          editValue={raw(subtitle, locale)}
           onCommit={onSubtitle}
           className="text-sm leading-relaxed text-gray-500 md:text-base"
           placeholder="Subtitle"
@@ -134,6 +138,7 @@ export function WhatIsDawah() {
           as="p"
           lang={locale}
           value={pick(w.lead, locale)}
+          editValue={raw(w.lead, locale)}
           onCommit={(v) => setField((d) => { d.about.what.lead[lang] = v; })}
           className="mx-auto mt-2 max-w-3xl text-center text-base leading-relaxed text-gray-600 md:text-lg"
           placeholder="Lead paragraph"
@@ -148,6 +153,7 @@ export function WhatIsDawah() {
               as="span"
               lang={locale}
               value={pick(w.verse, locale)}
+              editValue={raw(w.verse, locale)}
               onCommit={(v) => setField((d) => { d.about.what.verse[lang] = v; })}
               placeholder="Verse"
             />
@@ -157,6 +163,7 @@ export function WhatIsDawah() {
               as="span"
               lang={locale}
               value={pick(w.verseRef, locale)}
+              editValue={raw(w.verseRef, locale)}
               onCommit={(v) => setField((d) => { d.about.what.verseRef[lang] = v; })}
               placeholder="Reference"
             />
@@ -168,6 +175,7 @@ export function WhatIsDawah() {
             as="p"
             lang={locale}
             value={pick(w.p1, locale)}
+            editValue={raw(w.p1, locale)}
             onCommit={(v) => setField((d) => { d.about.what.p1[lang] = v; })}
             className="text-sm leading-relaxed text-gray-600 md:text-base"
             placeholder="Paragraph one"
@@ -176,6 +184,7 @@ export function WhatIsDawah() {
             as="p"
             lang={locale}
             value={pick(w.p2, locale)}
+            editValue={raw(w.p2, locale)}
             onCommit={(v) => setField((d) => { d.about.what.p2[lang] = v; })}
             className="text-sm leading-relaxed text-gray-600 md:text-base"
             placeholder="Paragraph two"
@@ -221,6 +230,7 @@ export function WhyDawahMatters() {
                   as="h3"
                   lang={locale}
                   value={pick(about.why.cards[key].title, locale)}
+                  editValue={raw(about.why.cards[key].title, locale)}
                   onCommit={(v) => setField((d) => { d.about.why.cards[key].title[lang] = v; })}
                   className="mt-5 text-lg font-bold text-gray-900"
                   placeholder="Card title"
@@ -229,6 +239,7 @@ export function WhyDawahMatters() {
                   as="p"
                   lang={locale}
                   value={pick(about.why.cards[key].body, locale)}
+                  editValue={raw(about.why.cards[key].body, locale)}
                   onCommit={(v) => setField((d) => { d.about.why.cards[key].body[lang] = v; })}
                   className="mt-2.5 text-sm leading-relaxed text-gray-500"
                   placeholder="Card body"
@@ -280,6 +291,7 @@ export function CorePrinciples() {
                   as="h3"
                   lang={locale}
                   value={pick(about.principles.items[key].title, locale)}
+                  editValue={raw(about.principles.items[key].title, locale)}
                   onCommit={(v) => setField((d) => { d.about.principles.items[key].title[lang] = v; })}
                   className="text-base font-bold text-gray-900"
                   placeholder="Principle"
@@ -288,6 +300,7 @@ export function CorePrinciples() {
                   as="p"
                   lang={locale}
                   value={pick(about.principles.items[key].body, locale)}
+                  editValue={raw(about.principles.items[key].body, locale)}
                   onCommit={(v) => setField((d) => { d.about.principles.items[key].body[lang] = v; })}
                   className="mt-1.5 text-sm leading-relaxed text-gray-500"
                   placeholder="Principle body"
@@ -341,6 +354,7 @@ export function HowPracticed() {
                   as="h3"
                   lang={locale}
                   value={pick(about.practices.items[key].title, locale)}
+                  editValue={raw(about.practices.items[key].title, locale)}
                   onCommit={(v) => setField((d) => { d.about.practices.items[key].title[lang] = v; })}
                   className="text-lg font-bold text-gray-900"
                   placeholder="Approach"
@@ -349,6 +363,7 @@ export function HowPracticed() {
                   as="p"
                   lang={locale}
                   value={pick(about.practices.items[key].body, locale)}
+                  editValue={raw(about.practices.items[key].body, locale)}
                   onCommit={(v) => setField((d) => { d.about.practices.items[key].body[lang] = v; })}
                   className="mt-2 text-sm leading-relaxed text-gray-500"
                   placeholder="Approach body"
@@ -392,6 +407,7 @@ export function DawahFaq() {
                   as="span"
                   lang={locale}
                   value={pick(about.faq.items[key].q, locale)}
+                  editValue={raw(about.faq.items[key].q, locale)}
                   onCommit={(v) => setField((d) => { d.about.faq.items[key].q[lang] = v; })}
                   placeholder="Question"
                 />
@@ -403,6 +419,7 @@ export function DawahFaq() {
                 as="p"
                 lang={locale}
                 value={pick(about.faq.items[key].a, locale)}
+                editValue={raw(about.faq.items[key].a, locale)}
                 onCommit={(v) => setField((d) => { d.about.faq.items[key].a[lang] = v; })}
                 className="mt-3 text-sm leading-relaxed text-gray-600"
                 placeholder="Answer"
@@ -431,6 +448,7 @@ export function DawahFinalCta() {
           as="p"
           lang={locale}
           value={pick(c.eyebrow, locale)}
+          editValue={raw(c.eyebrow, locale)}
           onCommit={(v) => setField((d) => { d.about.cta.eyebrow[lang] = v; })}
           className="text-xs font-semibold uppercase tracking-[0.22em] text-rmc-gold"
           placeholder="Eyebrow"
@@ -439,6 +457,7 @@ export function DawahFinalCta() {
           as="h2"
           lang={locale}
           value={pick(c.title, locale)}
+          editValue={raw(c.title, locale)}
           onCommit={(v) => setField((d) => { d.about.cta.title[lang] = v; })}
           className="mt-2 text-2xl font-bold text-white md:text-3xl"
           placeholder="CTA title"
@@ -447,6 +466,7 @@ export function DawahFinalCta() {
           as="p"
           lang={locale}
           value={pick(c.subtitle, locale)}
+          editValue={raw(c.subtitle, locale)}
           onCommit={(v) => setField((d) => { d.about.cta.subtitle[lang] = v; })}
           className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/75 md:text-base"
           placeholder="CTA subtitle"
@@ -460,6 +480,7 @@ export function DawahFinalCta() {
               as="span"
               lang={locale}
               value={pick(c.primary, locale)}
+              editValue={raw(c.primary, locale)}
               onCommit={(v) => setField((d) => { d.about.cta.primary[lang] = v; })}
               placeholder="Primary action"
             />
@@ -473,6 +494,7 @@ export function DawahFinalCta() {
               as="span"
               lang={locale}
               value={pick(c.secondary, locale)}
+              editValue={raw(c.secondary, locale)}
               onCommit={(v) => setField((d) => { d.about.cta.secondary[lang] = v; })}
               placeholder="Secondary action"
             />
