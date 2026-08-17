@@ -5,13 +5,16 @@ import { getTranslations } from 'next-intl/server';
 import { Landmark } from 'lucide-react';
 import { HeroBackLink } from '@/components/services/HeroBackLink';
 import { HERO_IMAGE } from '@/components/funeral/data';
-import { FuneralCallBar } from '@/components/funeral/FuneralCallBar';
 import { CemeteryPageHeading } from '@/components/funeral/FuneralPageCopy';
 import { ContentKeys } from '@/lib/content-api';
 import { fetchSiteContent } from '@/lib/content/server';
 import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
 
-/** The page heading, the empty state and the call bar's copy. */
+/**
+ * The page heading and the directory's empty state. No call bar here — this page is
+ * a reference list someone browses, not a place they land needing to phone anyone,
+ * and the bar covers the map's lower edge.
+ */
 const PAGE_CONTENT_KEYS = [ContentKeys.funeral];
 import { CemeteryDirectory } from '@/components/funeral/CemeteryDirectory';
 
@@ -59,7 +62,6 @@ export default async function FuneralCemeteriesPage({
           </div>
         </main>
         <Footer />
-        <FuneralCallBar />
     </div>
     </SiteContentProvider>
   );
