@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
 import { FuneralActionCard } from '@/components/funeral/FuneralActionCard';
+import { FuneralCallBar } from '@/components/funeral/FuneralCallBar';
 import { FuneralDescription } from '@/components/funeral/FuneralDescription';
 import { FuneralProcessSteps } from '@/components/funeral/FuneralProcessSteps';
 import { FuneralTransportsSection } from '@/components/funeral/FuneralTransportsSection';
@@ -30,14 +31,14 @@ import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
 
 type Tone = 'green' | 'gold' | 'slate';
 
-// The description, the timeline heading and the hotline are read from the CMS on
-// the server, so render per request — an admin's edit must not wait for a rebuild.
+// Every section's copy is read from the CMS on the server, so render per request —
+// an admin's edit must not wait for a rebuild.
 export const dynamic = 'force-dynamic';
 
 /**
- * The one section this page owns. Both consumers — `FuneralDescription` and
- * `FuneralProcessSteps` — are client components, so reading it here is what puts the
- * saved copy in the HTML instead of the seeded defaults.
+ * The one section this page owns. Nearly every consumer is a client island, so
+ * reading it here is what puts the saved copy in the HTML instead of the seeded
+ * defaults; `FuneralDescription` is server-side and takes the blob as a prop.
  */
 const PAGE_CONTENT_KEYS = [ContentKeys.funeral];
 
@@ -146,6 +147,7 @@ export default async function FuneralServicesPage({
           </section>
         </main>
         <Footer />
+        <FuneralCallBar />
       </div>
     </SiteContentProvider>
   );

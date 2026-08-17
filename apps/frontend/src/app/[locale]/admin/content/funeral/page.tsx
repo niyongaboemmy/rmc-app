@@ -153,7 +153,7 @@ function FuneralContentManager() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Funeral Service</h1>
-            <p className="text-xs text-gray-400">The description, the timeline heading and the call bar on the public Funeral page</p>
+            <p className="text-xs text-gray-400">Every heading, blurb and button on the public Funeral pages, plus the sticky call bar</p>
           </div>
         </div>
         <button onClick={handleSave} disabled={saving}

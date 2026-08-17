@@ -3,10 +3,12 @@ import { Tri, tri } from './client';
 /**
  * Funeral services page content (admin-managed in Content → Funeral Service).
  *
- * Prose and the hotline only. The lifecycle steps shown in the "what happens
- * next" timeline are NOT here: they are the same `funeral_steps` records a
- * request's status timeline uses, managed in Content → Funeral Request Steps.
- * Only the timeline's heading lives in this blob.
+ * Every heading, blurb and button on the funeral pages, plus the sticky call bar.
+ *
+ * NOT here: the lifecycle steps shown in the "what happens next" timeline — those
+ * are the same `funeral_steps` records a request's status timeline uses, managed in
+ * Content → Funeral Request Steps, and only the timeline's HEADING lives in this
+ * blob. Nor the cemeteries and transports, which are records under Admin → Funeral.
  */
 export interface FuneralContent {
   /**
