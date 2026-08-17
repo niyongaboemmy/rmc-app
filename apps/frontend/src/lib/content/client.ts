@@ -67,6 +67,7 @@ export const ContentKeys = {
   tendersHome: 'tenders-home',
   // The three service BOARD pages. Distinct from `tendersHome`, which is the home
   // page's tender teaser — the names are close enough that conflating them is easy.
+  marriage: 'marriage',
   tenderService: 'tender-service',
   jobsService: 'jobs-service',
   scholarshipService: 'scholarship-service',
