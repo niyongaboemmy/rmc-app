@@ -244,6 +244,24 @@ export function DiscussionsPageClient() {
                   className="block text-sm leading-relaxed text-gray-500 md:text-base"
                 />
               </div>
+
+              {/* Ask only shows to signed-in members — the form 401s otherwise, and a
+                  button that leads to a wall is a worse offer than no button.
+
+                  Above the columns rather than in the rail: it is the page's one action,
+                  and in a sticky rail it sat below the search box, competing with it and
+                  invisible until a reader looked right. */}
+              {isAuthenticated && (
+                <div className="mt-7 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setAskOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark"
+                  >
+                    <Plus className="h-4 w-4" /> {t('discussions.askCta')}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* ── Two columns: the entries, and a rail that stays with you ── */}
@@ -255,7 +273,20 @@ export function DiscussionsPageClient() {
                 NOT wrapped in <Reveal>: that keeps a transform on the element even once
                 visible, which silently makes `position: sticky` do nothing. */}
             <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr,340px]">
-              <div className="min-w-0">
+              <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+                {/* The panel is labelled with the COUNT, not a heading. The page's own
+                    h1 already says "Discussions"; a second heading saying it again would
+                    be noise, whereas the count describes the list it sits on — and it
+                    used to sit in the rail, away from the thing it counts. */}
+                <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-gray-100 pb-3">
+                  <MessagesSquare className="h-4 w-4 shrink-0 text-rmc-green" aria-hidden />
+                  <span className="text-sm font-bold text-gray-900">
+                    {t('discussions.count', { count: total })}
+                  </span>
+                  {/* Say it plainly that the list is mixed-language — a reader seeing
+                      Arabic on the English page should know it is deliberate. */}
+                  <span className="text-xs text-gray-400">· {t('discussions.otherLanguages')}</span>
+                </div>
             {/* ── The list ───────────────────────────────────────────────── */}
             {failed ? (
               <div className="rounded-lg border border-dashed border-red-200 bg-white p-10 text-center">
@@ -307,6 +338,7 @@ export function DiscussionsPageClient() {
                         locale={locale}
                         open={openIds.has(q.id)}
                         onToggle={() => toggleOpen(q.id)}
+                        showDate
                       />
                       {/* end-10 clears the disclosure chevron, which sits at end-4. An
                           overlay on top of it would both hide the affordance and swallow
@@ -394,13 +426,6 @@ export function DiscussionsPageClient() {
                     />
                   </div>
 
-                  <p className="mt-3 text-xs text-gray-500">
-                    {t('discussions.count', { count: total })}
-                    {/* Say it plainly that the list is mixed-language — a reader seeing
-                        Arabic on the English page should know it is deliberate. */}
-                    <span className="ms-1.5 text-gray-400">· {t('discussions.otherLanguages')}</span>
-                  </p>
-
                   {search && (
                     <button
                       type="button"
@@ -412,23 +437,6 @@ export function DiscussionsPageClient() {
                   )}
                 </div>
 
-                {/* Ask only shows to signed-in members — the form 401s otherwise, and a
-                    button that leads to a wall is a worse offer than no button. */}
-                {isAuthenticated && (
-                  <div className="rounded-lg border border-gray-200 bg-white p-4">
-                    <p className="text-sm font-bold text-gray-900">{t('discussions.askPrompt')}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-gray-500">
-                      {t('discussions.askRailHint')}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setAskOpen(true)}
-                      className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-rmc-green px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> {t('discussions.askCta')}
-                    </button>
-                  </div>
-                )}
               </aside>
             </div>
           </div>

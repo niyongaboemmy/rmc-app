@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { BadgeCheck, ChevronDown, ExternalLink, Eye, UserRound } from 'lucide-react';
+import { BadgeCheck, CalendarDays, ChevronDown, ExternalLink, Eye, UserRound } from 'lucide-react';
 import type { DiscussionQuestion } from '@/lib/dawahApi';
 import { localized } from './localize';
 
@@ -51,6 +51,7 @@ export function DiscussionCard({
   locale,
   open,
   onToggle,
+  showDate = false,
 }: {
   question: DiscussionQuestion;
   locale: string;
@@ -62,6 +63,12 @@ export function DiscussionCard({
    */
   open?: boolean;
   onToggle?: () => void;
+  /**
+   * Show when the answer was published, in the meta row. Off by default: the Dawah
+   * landing shows a handful of recent entries where the date adds nothing, while the
+   * listing is a chronological index where it is how a reader places an answer.
+   */
+  showDate?: boolean;
 }) {
   const t = useTranslations('dawah');
   const category = question.category ? localized(question.category, 'name', locale) : null;
@@ -198,6 +205,17 @@ export function DiscussionCard({
                 <Eye className="h-3.5 w-3.5 text-gray-400" aria-hidden />
                 {t('discussions.views', { count: question.viewCount })}
               </span>
+
+              {/* Answered, else published, else created — the first of those that exists
+                  is the date a reader means by "when was this answered". */}
+              {showDate && (question.answeredAt ?? question.publishedAt ?? question.createdAt) && (
+                <span className="inline-flex items-center gap-1.5 text-gray-500">
+                  <CalendarDays className="h-3.5 w-3.5 text-gray-400" aria-hidden />
+                  {new Date(
+                    (question.answeredAt ?? question.publishedAt ?? question.createdAt) as string,
+                  ).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </span>
+              )}
 
               <Link
                 href={`/${locale}/dawah/discussions/${question.slug}`}
