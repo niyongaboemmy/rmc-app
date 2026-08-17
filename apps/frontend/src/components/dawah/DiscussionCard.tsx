@@ -206,13 +206,15 @@ export function DiscussionCard({
                 {t('discussions.views', { count: question.viewCount })}
               </span>
 
-              {/* Answered, else published, else created — the first of those that exists
-                  is the date a reader means by "when was this answered". */}
-              {showDate && (question.answeredAt ?? question.publishedAt ?? question.createdAt) && (
+              {/* PUBLISHED date, not answered. The listing is ordered by publishedAt —
+                  showing answeredAt instead makes a correctly sorted list read as
+                  unsorted, because a question answered in July can be published in June
+                  and vice versa. The date shown must be the key the list is sorted by. */}
+              {showDate && (question.publishedAt ?? question.createdAt) && (
                 <span className="inline-flex items-center gap-1.5 text-gray-500">
                   <CalendarDays className="h-3.5 w-3.5 text-gray-400" aria-hidden />
                   {new Date(
-                    (question.answeredAt ?? question.publishedAt ?? question.createdAt) as string,
+                    (question.publishedAt ?? question.createdAt) as string,
                   ).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </span>
               )}
