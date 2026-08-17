@@ -14,6 +14,7 @@
  */
 
 import React from 'react';
+import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 
 export type Lang = 'en' | 'rw' | 'ar';
 
@@ -171,5 +172,130 @@ export function FallbackNote() {
       Empty translations fall back to English on the public page. The same copy is
       editable in place on the live page in Edit Mode.
     </p>
+  );
+}
+
+/**
+ * An orderable list of entries, each a couple of `Tri` fields — the steps rail and
+ * the scholarship FAQ are the same widget with different nouns.
+ */
+export function ListEditor({
+  noun,
+  emptyNote,
+  addLabel,
+  ids,
+  basePath,
+  fields,
+  lang,
+  dir,
+  inputClass,
+  read,
+  onFieldChange,
+  onAdd,
+  onRemove,
+  onMove,
+}: {
+  noun: string;
+  emptyNote: string;
+  addLabel: string;
+  /** One entry per list item; only the length and the React keys are used. */
+  ids: (string | undefined)[];
+  basePath: (string | number)[];
+  fields: { key: string; label: string; rows: number }[];
+  lang: Lang;
+  dir: 'ltr' | 'rtl';
+  inputClass: string;
+  read: (path: (string | number)[]) => string;
+  onFieldChange: (path: (string | number)[], value: string) => void;
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onMove: (i: number, delta: -1 | 1) => void;
+}) {
+  const ctrl =
+    'grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30';
+
+  return (
+    <div className="space-y-3 border-t border-gray-50 pt-4">
+      {ids.length === 0 && (
+        <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-xs text-gray-400">
+          {emptyNote}
+        </p>
+      )}
+
+      {ids.map((id, i) => (
+        <div key={id ?? i} className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-xs font-bold text-gray-500">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rmc-green text-[10px] text-white">
+                {i + 1}
+              </span>
+              {noun} {i + 1}
+            </span>
+            <span className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onMove(i, -1)}
+                disabled={i === 0}
+                className={ctrl}
+                aria-label={`Move ${noun.toLowerCase()} up`}
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onMove(i, 1)}
+                disabled={i === ids.length - 1}
+                className={ctrl}
+                aria-label={`Move ${noun.toLowerCase()} down`}
+              >
+                <ArrowDown className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                className="grid h-7 w-7 place-items-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                aria-label={`Remove ${noun.toLowerCase()}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          </div>
+
+          {fields.map((f) => {
+            const path = [...basePath, i, f.key];
+            return (
+              <div key={f.key}>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{f.label}</label>
+                {f.rows === 1 ? (
+                  <input
+                    dir={dir}
+                    type="text"
+                    value={read([...path, lang])}
+                    onChange={(e) => onFieldChange(path, e.target.value)}
+                    className={inputClass}
+                  />
+                ) : (
+                  <textarea
+                    dir={dir}
+                    rows={f.rows}
+                    value={read([...path, lang])}
+                    onChange={(e) => onFieldChange(path, e.target.value)}
+                    className={`${inputClass} resize-none`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={onAdd}
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green"
+      >
+        <Plus className="h-4 w-4" /> {addLabel}
+      </button>
+    </div>
   );
 }

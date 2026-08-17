@@ -22,8 +22,11 @@ import {
   MapPin,
   Wallet,
   Search,
+  Plus,
 } from 'lucide-react';
 import { InlineText } from '@/components/edit-mode/InlineText';
+import { CardEditToolbar } from '@/components/edit-mode/CardEditToolbar';
+import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import { usePreviewStore, useEditorRefreshKey } from '@/lib/content/preview-store';
 import { useServerSiteContent } from '@/lib/content/SiteContentProvider';
@@ -32,6 +35,7 @@ import {
   MARRIAGE_DEFAULT,
   getSiteContent,
   marriageList,
+  tri,
   isRtl,
   pick,
   raw,
@@ -55,7 +59,7 @@ const includeIcons: Record<string, typeof BookOpenCheck> = {
 
 export default function MarriageLanding() {
   const { locale } = useParams<{ locale: string }>();
-  const { content, setField } = useEditableContent<MarriageContent>(
+  const { content, editing, setField } = useEditableContent<MarriageContent>(
     ContentKeys.marriage,
     MARRIAGE_DEFAULT,
   );
@@ -93,6 +97,40 @@ export default function MarriageLanding() {
   const writeSteps = (next: MarriageItem[]) => setField((d) => { d.process.items = next; });
   const writeRequirements = (next: MarriageRequirement[]) => setField((d) => { d.requirements.items = next; });
   const writeFaqs = (next: MarriageFaq[]) => setField((d) => { d.faq.items = next; });
+
+  const { bumpSeed } = useEditMode();
+
+  /**
+   * Reorder and delete, shared by all four lists. `bumpSeed` re-seeds the
+   * index-keyed inline fields onto their new positions — without it the boxes keep
+   * the text that used to sit at each index.
+   */
+  function move<T>(list: T[], write: (next: T[]) => void, i: number, delta: -1 | 1) {
+    const j = i + delta;
+    if (j < 0 || j >= list.length) return;
+    const next = [...list];
+    [next[i], next[j]] = [next[j], next[i]];
+    write(next);
+    bumpSeed();
+  }
+
+  function remove<T>(list: T[], write: (next: T[]) => void, i: number) {
+    write(list.filter((_, idx) => idx !== i));
+    bumpSeed();
+  }
+
+  /** Shared toolbar props for one entry of `list`. */
+  function rowTools<T>(list: T[], write: (next: T[]) => void, i: number) {
+    return {
+      canMoveUp: i > 0,
+      canMoveDown: i < list.length - 1,
+      onMoveUp: () => move(list, write, i, -1),
+      onMoveDown: () => move(list, write, i, 1),
+      onDelete: () => remove(list, write, i),
+    };
+  }
+
+  const addBtn = 'mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green';
 
   return (
     <div className="min-h-screen">
@@ -301,7 +339,7 @@ export default function MarriageLanding() {
                 return (
                   <div
                     key={entry.id}
-                    className="group flex gap-4 bg-white border border-gray-100 rounded-lg p-5 shadow-sm hover:shadow-xl hover:shadow-rmc-green/10 hover:border-rmc-green hover:-translate-y-1 transition-all duration-300"
+                    className="group relative flex gap-4 bg-white border border-gray-100 rounded-lg p-5 shadow-sm hover:shadow-xl hover:shadow-rmc-green/10 hover:border-rmc-green hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-rmc-green to-rmc-green-dark flex items-center justify-center shadow-sm ring-1 ring-white/20 group-hover:scale-110 transition-transform duration-300">
                       <Icon className="w-5 h-5 text-white" strokeWidth={2.25} />
@@ -332,9 +370,21 @@ export default function MarriageLanding() {
                         placeholder="Description"
                       />
                     </div>
+                      {editing && (
+                        <CardEditToolbar {...rowTools(includes, writeIncludes, i)} className="!right-1 !top-1 scale-90" />
+                      )}
                   </div>
                 );
               })}
+              {editing && (
+                <button
+                  type="button"
+                  onClick={() => writeIncludes([...includes, { id: `i${Date.now()}`, title: tri(''), text: tri('') }])}
+                  className={addBtn}
+                >
+                  <Plus className="h-4 w-4" /> Add item
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -397,8 +447,20 @@ export default function MarriageLanding() {
                       />
                       </p>
                     </div>
+                      {editing && (
+                        <CardEditToolbar {...rowTools(steps, writeSteps, i)} className="!right-1 !top-1 scale-90" />
+                      )}
                   </div>
                 ))}
+                {editing && (
+                  <button
+                    type="button"
+                    onClick={() => writeSteps([...steps, { id: `s${Date.now()}`, title: tri(''), text: tri('') }])}
+                    className={addBtn}
+                  >
+                    <Plus className="h-4 w-4" /> Add step
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -444,8 +506,20 @@ export default function MarriageLanding() {
                         placeholder="Requirement"
                       />
                       </span>
+                        {editing && (
+                          <CardEditToolbar {...rowTools(requirements, writeRequirements, i)} className="!right-1 !top-1 scale-90" />
+                        )}
                     </li>
                   ))}
+                  {editing && (
+                    <button
+                      type="button"
+                      onClick={() => writeRequirements([...requirements, { id: `r${Date.now()}`, text: tri('') }])}
+                      className={addBtn}
+                    >
+                      <Plus className="h-4 w-4" /> Add requirement
+                    </button>
+                  )}
                 </ul>
               </div>
             </div>
@@ -517,7 +591,7 @@ export default function MarriageLanding() {
               {faqs.map((entry, i) => (
                 <details
                   key={entry.id}
-                  className="group bg-white border border-gray-100 rounded-lg p-5 hover:border-rmc-green transition-colors duration-200 [&_summary]:list-none"
+                  className="group relative bg-white border border-gray-100 rounded-lg p-5 hover:border-rmc-green transition-colors duration-200 [&_summary]:list-none"
                 >
                   <summary className="flex items-center justify-between cursor-pointer font-bold text-gray-900 text-sm">
                     <InlineText
@@ -548,8 +622,20 @@ export default function MarriageLanding() {
                         placeholder="Answer"
                       />
                   </p>
+                    {editing && (
+                      <CardEditToolbar {...rowTools(faqs, writeFaqs, i)} className="!right-1 !top-1 scale-90" />
+                    )}
                 </details>
               ))}
+              {editing && (
+                <button
+                  type="button"
+                  onClick={() => writeFaqs([...faqs, { id: `f${Date.now()}`, q: tri(''), a: tri('') }])}
+                  className={addBtn}
+                >
+                  <Plus className="h-4 w-4" /> Add question
+                </button>
+              )}
             </div>
           </div>
         </section>

@@ -12,7 +12,7 @@ import {
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
   Compass, ListChecks, CalendarDays, Briefcase, GraduationCap,
-  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins,
+  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -32,6 +32,7 @@ type PageLocation =
   | 'Dawah Pages'
   | 'Welcome to Islam'
   | 'Projects Page'
+  | 'Marriage Page'
   | 'Site-wide';
 
 interface SectionConfig {
@@ -447,6 +448,19 @@ const SECTIONS: SectionConfig[] = [
     accentBar: 'bg-amber-400',
   },
   {
+    id: 'marriage',
+    icon: Heart,
+    title: 'Marriage Page',
+    description: 'Every heading, blurb, list entry and button on the public Marriage page — the hero, overview, what is included, the process steps, requirements, the fee table, the FAQ and the closing call to action.',
+    type: 'edit', itemLabel: null,
+    page: 'Marriage Page', positionOrder: 0,
+    locationLabel: 'Marriage Page · Wording',
+    keywords: ['marriage', 'nikah', 'wedding', 'certificate', 'fees', 'imam', 'ceremony', 'requirements', 'steps', 'faq', 'wording', 'copy'],
+    bg: 'bg-pink-50', iconColor: 'text-pink-600', border: 'border-pink-100',
+    badge: 'bg-pink-100 text-pink-700',
+    accentBar: 'bg-pink-400',
+  },
+  {
     id: 'page-headers',
     icon: Heading1,
     title: 'Page Headers',
@@ -475,6 +489,7 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'Dawah Pages', icon: Library, color: 'text-emerald-600', description: 'Wording on the Library, Courses and Discussions listings' },
   { page: 'Welcome to Islam', icon: Sparkles, color: 'text-rmc-green', description: 'Content on the /new-muslim page' },
   { page: 'Projects Page', icon: HandCoins, color: 'text-amber-600', description: 'Fundraising projects and the section heading' },
+  { page: 'Marriage Page', icon: Heart, color: 'text-pink-600', description: 'Wording on the public marriage page' },
   { page: 'Site-wide', icon: Heading1, color: 'text-rose-600', description: 'Copy that appears across several pages' },
 ];
 
