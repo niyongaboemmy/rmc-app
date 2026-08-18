@@ -91,15 +91,6 @@ export function DiscussionsPageClient() {
   // close another (see DiscussionCard). Deliberately NOT in the URL — an accordion state
   // in the query string makes every toggle a history entry, so Back stops meaning "the
   // previous page" and starts meaning "the last thing I collapsed".
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
-
-  const toggleOpen = useCallback((id: string) => {
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
-  }, []);
 
   // Moderation (edit mode only). `refreshKey` re-runs the fetch after an action
   // drops a question from the published list, without disturbing the URL filters.
@@ -162,9 +153,6 @@ export function DiscussionsPageClient() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    // A new result set means new rows; carrying the open set across would silently
-    // re-expand whatever happened to share an id after paging back and forth.
-    setOpenIds(new Set());
     dawahApi.discussions
       .list({
         category: category || undefined,
@@ -284,7 +272,7 @@ export function DiscussionsPageClient() {
                 search box — and search belongs with the list it filters. With that moved
                 there was no second column left, and a single measured column reads better
                 for question titles than one stretched across the full page width. */}
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-3xl">
               <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
                 {/* The panel is labelled with the COUNT, not a heading. The page's own
                     h1 already says "Discussions"; a second heading saying it again would
@@ -387,8 +375,8 @@ export function DiscussionsPageClient() {
               </div>
             ) : (
               <>
-                {/* One column, not two. An accordion in a 2-up grid shifts its neighbour
-                    down every time a row expands, so the entry you were reading jumps. */}
+                {/* One column, not two: question titles are lines of prose, and a 2-up
+                    grid halves the width each one gets to sit on. */}
                 <div
                   className={`grid gap-2.5 transition-opacity duration-200 ${
                     loading ? 'opacity-50' : 'opacity-100'
@@ -399,8 +387,6 @@ export function DiscussionsPageClient() {
                       <DiscussionCard
                         question={q}
                         locale={locale}
-                        open={openIds.has(q.id)}
-                        onToggle={() => toggleOpen(q.id)}
                         showDate
                       />
                       {/* end-10 clears the disclosure chevron, which sits at end-4. An
