@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Pagination } from '@/components/ui/Pagination';
 import { localized } from './localize';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowLeft, ArrowRight, EyeOff, Loader2, MessagesSquare, Plus, Search, Trash2, X,
+  ArrowLeft, EyeOff, Loader2, MessagesSquare, Plus, Search, Trash2, X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
@@ -424,29 +425,17 @@ export function DiscussionsPageClient() {
                   <p className="mt-8 text-center text-sm text-gray-400">{t('discussions.empty')}</p>
                 )}
 
-                {pages > 1 && (
-                  <div className="mt-8 flex items-center justify-center gap-3">
-                    <button
-                      type="button"
-                      disabled={page <= 1}
-                      onClick={() => setParams({ page: page - 1 })}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
-                    >
-                      <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-                    </button>
-                    <span className="text-xs text-gray-500">
-                      {page} / {pages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={page >= pages}
-                      onClick={() => setParams({ page: page + 1 })}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
-                    >
-                      <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  className="mt-8"
+                  page={page}
+                  pages={pages}
+                  onChange={(p) => setParams({ page: p > 1 ? p : null })}
+                  labels={{
+                    previous: tCommon('pagination.previous'),
+                    next: tCommon('pagination.next'),
+                    nav: tCommon('pagination.nav'),
+                  }}
+                />
               </>
             )}
               </div>

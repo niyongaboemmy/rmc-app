@@ -21,6 +21,11 @@
     "services": "Explore Services"
   },
   "common": {
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "nav": "Pagination"
+    },
     "appName": "RMC Platform",
     "loading": "Loading...",
     "error": "An error occurred",

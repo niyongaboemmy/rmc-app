@@ -21,6 +21,11 @@
     "services": "Reba Serivisi"
   },
   "common": {
+    "pagination": {
+      "previous": "Ibanjirije",
+      "next": "Ikurikira",
+      "nav": "Impapuro"
+    },
     "appName": "Urubuga rwa RMC",
     "loading": "Birategerezwa...",
     "error": "Habaye ikosa",
