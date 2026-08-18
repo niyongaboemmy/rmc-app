@@ -264,15 +264,12 @@ export function DiscussionsPageClient() {
               )}
             </div>
 
-            {/* ── Two columns: the entries, and a rail that stays with you ── */}
-            {/* Same split as the tenders board — content left, controls right. The rail is
-                sticky because search is the primary way through a knowledge base: having
-                to scroll back to the top to refine a query is the one interaction this
-                page must not make expensive.
-
-                NOT wrapped in <Reveal>: that keeps a transform on the element even once
-                visible, which silently makes `position: sticky` do nothing. */}
-            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr,340px]">
+            {/* ── One column ──────────────────────────────────────────────
+                This was a two-column split with a sticky rail, but the rail held only the
+                search box — and search belongs with the list it filters. With that moved
+                there was no second column left, and a single measured column reads better
+                for question titles than one stretched across the full page width. */}
+            <div className="mx-auto max-w-4xl">
               <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
                 {/* The panel is labelled with the COUNT, not a heading. The page's own
                     h1 already says "Discussions"; a second heading saying it again would
@@ -286,6 +283,39 @@ export function DiscussionsPageClient() {
                   {/* Say it plainly that the list is mixed-language — a reader seeing
                       Arabic on the English page should know it is deliberate. */}
                   <span className="text-xs text-gray-400">· {t('discussions.otherLanguages')}</span>
+                </div>
+
+                {/* Search sits with the questions, not in a rail beside them: it filters
+                    this list, and the result it produces is the list directly below. In a
+                    separate column the input and its effect were never in view together. */}
+                <div className="mb-4">
+                  <label htmlFor="discussions-search" className="sr-only">
+                    {t('discussions.searchLabel')}
+                  </label>
+                  <div className="relative">
+                    <Search
+                      className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                      aria-hidden
+                    />
+                    <input
+                      id="discussions-search"
+                      type="search"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder={t('discussions.searchPlaceholder')}
+                      className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                    />
+                  </div>
+
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setParams({ search: null, page: null })}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
+                    >
+                      <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}
+                    </button>
+                  )}
                 </div>
             {/* ── The list ───────────────────────────────────────────────── */}
             {failed ? (
@@ -402,42 +432,6 @@ export function DiscussionsPageClient() {
             )}
               </div>
 
-              {/* ── Rail ─────────────────────────────────────────────────── */}
-              <aside className="space-y-4 lg:sticky lg:top-24">
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <label
-                    htmlFor="discussions-search"
-                    className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400"
-                  >
-                    {t('discussions.searchLabel')}
-                  </label>
-                  <div className="relative">
-                    <Search
-                      className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                      aria-hidden
-                    />
-                    <input
-                      id="discussions-search"
-                      type="search"
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      placeholder={t('discussions.searchPlaceholder')}
-                      className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
-                    />
-                  </div>
-
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setParams({ search: null, page: null })}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
-                    >
-                      <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}
-                    </button>
-                  )}
-                </div>
-
-              </aside>
             </div>
           </div>
         </section>
