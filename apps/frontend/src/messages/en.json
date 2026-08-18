@@ -3803,10 +3803,21 @@
       "answerBadge": "RMC's answer",
       "answeredBy": "Answered by {name}",
       "askPrompt": "Have a question of your own?",
+      "related": {
+        "title": "Related questions"
+      },
+      "rating": {
+        "prompt": "Was this answer helpful?",
+        "yes": "Yes",
+        "no": "No",
+        "thanks": "Thank you for your feedback.",
+        "failed": "Could not record your rating. Please try again."
+      },
       "admin": {
         "title": "Q&A library",
         "subtitle": "Questions and RMC's answers, as the community sees them.",
         "submissionsLink": "Member questions",
+        "ratingHint": "Readers who found this answer helpful / not helpful",
         "newEntry": "New entry",
         "searchPlaceholder": "Search questions…",
         "empty": "No entries yet.",

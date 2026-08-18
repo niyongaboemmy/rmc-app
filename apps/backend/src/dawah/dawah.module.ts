@@ -8,6 +8,7 @@ import { DawahCourseEnrollment } from './entities/dawah-course-enrollment.entity
 import { DawahLessonCompletion } from './entities/dawah-lesson-completion.entity';
 import { DawahBook } from './entities/dawah-book.entity';
 import { DawahQuestion } from './entities/dawah-question.entity';
+import { DawahQuestionRating } from './entities/dawah-question-rating.entity';
 import { DawahAnswer } from './entities/dawah-answer.entity';
 import { DawahReport } from './entities/dawah-report.entity';
 import { DawahModerationLog } from './entities/dawah-moderation-log.entity';
@@ -44,6 +45,7 @@ import { EmailModule } from '../integrations/email/email.module';
       // Phase A reads nothing from them, and an entity for a table nobody queries is
       // dead code that looks like a feature.
       DawahQuestion, DawahAnswer, DawahReport, DawahModerationLog, DawahVote,
+      DawahQuestionRating,
     ]),
     PublicUploadModule,
     EmailModule,

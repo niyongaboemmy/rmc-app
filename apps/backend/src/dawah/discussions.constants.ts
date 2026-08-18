@@ -38,6 +38,15 @@ export const DISCUSSION_LIMITS = {
   MIN_BODY_LENGTH: 20,
 } as const;
 
+/**
+ * How many "related questions" a detail page offers, and the hard ceiling on what the
+ * endpoint will return however it is asked.
+ *
+ * Three. A short list of next steps is a suggestion the reader can take in at a glance;
+ * a long one is a second index competing with the answer they came for.
+ */
+export const RELATED_LIMIT = 3;
+
 /** Reasons a member may cite when reporting. Kept short and closed — a free-text-only
  *  report is harder to triage and easier to abuse. */
 export const REPORT_REASONS = ['spam', 'offensive', 'misinformation', 'off_topic', 'other'] as const;

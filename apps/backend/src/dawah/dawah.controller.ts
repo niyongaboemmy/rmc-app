@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Ip, Param, Post, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -12,9 +12,11 @@ import { QueryCoursesDto } from './dto/query-courses.dto';
 import { QueryBooksDto } from './dto/query-books.dto';
 import { QueryDiscussionsDto } from './dto/query-discussions.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { RateQuestionDto } from './dto/rate-question.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { Public } from '../common/decorators/public.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 /**
  * The public catalogue. Guards are global APP_GUARDs, so every route is
@@ -58,6 +60,44 @@ export class DawahController {
   @ApiOperation({ summary: "One question with RMC's answer." })
   discussionBySlug(@Param('slug') slug: string) {
     return this.discussions.bySlug(slug);
+  }
+
+  /**
+   * Up to three other entries to read next. @Public, like the entry itself.
+   *
+   * Safe to declare after `discussions/:slug` because the paths differ in SEGMENT COUNT —
+   * `:slug` matches one segment and will not swallow `<slug>/related`. Only a same-shape
+   * route (`discussions/:something`) would need to come first.
+   */
+  @Public()
+  @Get('discussions/:slug/related')
+  @ApiOperation({ summary: 'Up to three related published entries.' })
+  relatedDiscussions(@Param('slug') slug: string) {
+    return this.discussions.related(slug);
+  }
+
+  /**
+   * "Was this answer helpful?" — yes or no, from an anonymous reader.
+   *
+   * @Public on purpose. Most readers of a published ruling have no account, so requiring
+   * one would measure the membership instead of the readership. One rating per browser is
+   * enforced by a unique constraint on a hashed client token (see the entity).
+   *
+   * Throttled per IP because the token is client-supplied and therefore forgeable: the
+   * constraint stops honest double-clicks, and this stops a script minting a fresh token
+   * per request. 20/10min is far above a reader browsing several entries and far below
+   * anything that could move a tally.
+   *
+   * 200, not 201 — a re-rate updates a row rather than creating one, and the response is
+   * an acknowledgement with no resource to point at.
+   */
+  @Public()
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 600000 } })
+  @Post('discussions/:slug/rating')
+  @ApiOperation({ summary: 'Rate a published answer as helpful or not (anonymous).' })
+  rateDiscussion(@Param('slug') slug: string, @Body() dto: RateQuestionDto, @Ip() ip: string) {
+    return this.discussions.rate(slug, dto, ip);
   }
 
   /**

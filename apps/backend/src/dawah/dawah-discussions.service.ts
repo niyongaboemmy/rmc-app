@@ -7,17 +7,19 @@ import { DataSource, MoreThan, Repository } from 'typeorm';
 import { DawahQuestion } from './entities/dawah-question.entity';
 import { DawahModerationLog, type ModerationAction } from './entities/dawah-moderation-log.entity';
 import { DawahCategory } from './entities/dawah-category.entity';
+import { DawahQuestionRating } from './entities/dawah-question-rating.entity';
 import { User } from '../users/entities/user.entity';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../integrations/email/email.service';
 import { answeredEmail } from './discussions-notifications';
 import { renderPostMarkdown } from './discussions-markdown';
 import { slugify } from './dawah-slug.util';
-import { DISCUSSION_LIMITS } from './discussions.constants';
+import { DISCUSSION_LIMITS, RELATED_LIMIT } from './discussions.constants';
 import type { QueryDiscussionsDto } from './dto/query-discussions.dto';
 import type { CreateQuestionDto } from './dto/create-question.dto';
 import type { AnswerQuestionDto, CreateEntryDto } from './dto/create-entry.dto';
+import type { RateQuestionDto } from './dto/rate-question.dto';
 
 /** The public shape of the person who answered. */
 export interface PublicAuthor {
@@ -64,6 +66,18 @@ const FTS_VECTOR =
  * The answerer IS named, deliberately. The old code put it well: "Verified by RMC" with
  * nobody behind it is an institution hiding behind itself.
  */
+/**
+ * One-way hash for the values this module stores about an anonymous rater.
+ *
+ * Both the browser token and the IP are identifiers a reader never consented to have
+ * kept, so neither is stored in the clear — a dump of the ratings table has to be
+ * useless as a list of who read what. No pepper: these are dedupe keys compared only
+ * against hashes computed the same way, never secrets that have to survive a guess.
+ */
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
 @Injectable()
 export class DawahDiscussionsService {
   private readonly logger = new Logger(DawahDiscussionsService.name);
@@ -71,6 +85,8 @@ export class DawahDiscussionsService {
   constructor(
     @InjectRepository(DawahQuestion) private readonly questions: Repository<DawahQuestion>,
     @InjectRepository(DawahCategory) private readonly categories: Repository<DawahCategory>,
+    @InjectRepository(DawahQuestionRating)
+    private readonly ratings: Repository<DawahQuestionRating>,
     private readonly dataSource: DataSource,
     private readonly email: EmailService,
     private readonly config: ConfigService,
@@ -202,6 +218,144 @@ export class DawahDiscussionsService {
     void this.questions
       .increment({ id }, 'viewCount', 1)
       .catch((err) => this.logger.warn(`Failed to bump view_count for question ${id}: ${err.message}`));
+  }
+
+  /**
+   * Record "was this answer helpful?" from one browser.
+   *
+   * 404s anything not published, for the same reason `bySlug` does: the status code must
+   * not become a way to probe which slugs exist as unpublished rows.
+   *
+   * ── Why ON CONFLICT rather than find-then-save ──────────────────────────────────────
+   *
+   * A reader who double-clicks, or who changes their mind from yes to no, sends a second
+   * POST against the same (question, voter) pair. Read-then-write loses that race and
+   * surfaces a unique-constraint violation as a 500 on what is a perfectly ordinary
+   * action; the upsert makes the second write update the first. `updated_at` moves so the
+   * change of mind is visible, `created_at` does not so the first rating is still dated.
+   *
+   * Returns only an acknowledgement. The tallies are an editorial signal for RMC, so
+   * nothing here hands a caller a running score it could poll.
+   */
+  async rate(slug: string, dto: RateQuestionDto, ip?: string): Promise<{ recorded: boolean }> {
+    const question = await this.questions.findOne({
+      where: { slug, status: 'published' },
+      select: { id: true },
+    });
+    if (!question) throw new NotFoundException('Question not found');
+
+    await this.ratings
+      .createQueryBuilder()
+      .insert()
+      .values({
+        questionId: question.id,
+        helpful: dto.helpful === 'yes',
+        voterHash: sha256(dto.voterKey),
+        // Absent behind a proxy that strips it; the column is nullable precisely so a
+        // missing IP costs the rating nothing.
+        ipHash: ip ? sha256(ip) : null,
+      })
+      .orUpdate(['helpful', 'ip_hash', 'updated_at'], ['question_id', 'voter_hash'])
+      .execute();
+
+    return { recorded: true };
+  }
+
+  /**
+   * Up to `limit` other published entries to read next.
+   *
+   * Same category first, then most recently published. One query does both, via a CASE
+   * that sorts in-category rows ahead of the rest — which also means the list is never
+   * short: an entry with no category, or the only one in its category, still gets filled
+   * out with recent entries rather than rendering an empty rail.
+   *
+   * ── Why CASE and not `(category_id = :id) DESC` ─────────────────────────────────────
+   *
+   * The boolean form looks equivalent and is not. For a row whose category_id is NULL the
+   * comparison yields NULL, not false, and Postgres sorts NULLs FIRST under DESC — so
+   * uncategorised entries would outrank entries that are genuinely in a different
+   * category. CASE returns a concrete 0 or 1 and has no such trap.
+   *
+   * Not full-text similarity: the corpus is small and hand-curated, and a shared category
+   * is an editorial judgement RMC already made. Ranking by ts_rank against the current
+   * title would surface entries that merely repeat its vocabulary.
+   */
+  async related(slug: string, limit = RELATED_LIMIT) {
+    const question = await this.questions.findOne({
+      where: { slug, status: 'published' },
+      select: { id: true, categoryId: true },
+    });
+    if (!question) throw new NotFoundException('Question not found');
+
+    const take = Math.min(Math.max(1, limit), RELATED_LIMIT);
+
+    const items = await this.questions
+      .createQueryBuilder('q')
+      .leftJoinAndSelect('q.category', 'category')
+      .where('q.status = :status', { status: 'published' })
+      // Never the entry being read. Without this the reader is offered the page they
+      // are already on, and the list silently drops to two.
+      .andWhere('q.id != :id', { id: question.id })
+      .orderBy(
+        'CASE WHEN q.category_id = :categoryId THEN 0 ELSE 1 END',
+        'ASC',
+      )
+      .addOrderBy('q.publishedAt', 'DESC')
+      .setParameter('categoryId', question.categoryId)
+      // limit(), NOT take(). take() wraps the query in a SELECT DISTINCT id subquery for
+      // paginating one-to-many joins, and Postgres rejects a DISTINCT whose ORDER BY
+      // references an expression that is not in the select list — which the CASE above is.
+      // `category` is a to-one join, so no row multiplication and nothing for take() to
+      // protect against; a plain LIMIT is both correct and what the query means.
+      .limit(take)
+      .getMany();
+
+    // A deliberately thin shape: this is a list of links, so it carries no bodies and no
+    // answer HTML. Rendering markdown for three entries nobody may click is work spent on
+    // markup the page throws away.
+    return {
+      items: items.map((q) => ({
+        id: q.id,
+        slug: q.slug,
+        title: q.title,
+        language: q.language,
+        category: q.category ? { id: q.category.id, slug: q.category.slug } : null,
+        publishedAt: q.publishedAt,
+      })),
+    };
+  }
+
+  /**
+   * Helpful / not-helpful counts for a page of entries, in one grouped query.
+   *
+   * Read live rather than kept as counters on `dawah_questions`. A rating can be changed
+   * (yes → no) and a question can be hard-deleted, so a denormalised pair would need
+   * every one of those paths to remember to adjust it, and a counter that has drifted is
+   * worse than no counter — it reads as fact. This is the admin list only, one query per
+   * page of 20, so the aggregate costs nothing worth denormalising for.
+   */
+  private async ratingTallies(
+    ids: string[],
+  ): Promise<Map<string, { helpful: number; notHelpful: number }>> {
+    if (!ids.length) return new Map();
+
+    const rows = await this.ratings
+      .createQueryBuilder('r')
+      .select('r.question_id', 'questionId')
+      .addSelect('COUNT(*) FILTER (WHERE r.helpful)', 'helpful')
+      .addSelect('COUNT(*) FILTER (WHERE NOT r.helpful)', 'notHelpful')
+      .where('r.question_id IN (:...ids)', { ids })
+      .groupBy('r.question_id')
+      .getRawMany<{ questionId: string; helpful: string; notHelpful: string }>();
+
+    // COUNT comes back as a string — Postgres bigint does not fit a JS number, and the
+    // driver refuses to guess. Number() here, not on the far side in the UI.
+    return new Map(
+      rows.map((r) => [
+        r.questionId,
+        { helpful: Number(r.helpful), notHelpful: Number(r.notHelpful) },
+      ]),
+    );
   }
 
   /**
@@ -477,6 +631,8 @@ export class DawahDiscussionsService {
       .take(limit)
       .getManyAndCount();
 
+    const tallies = await this.ratingTallies(items.map((q) => q.id));
+
     return {
       items: items.map((q) => ({
         id: q.id,
@@ -490,6 +646,8 @@ export class DawahDiscussionsService {
         answeredBy: q.answeredBy ? `${q.answeredBy.firstName} ${q.answeredBy.lastName}`.trim() : null,
         publishedAt: q.publishedAt,
         createdAt: q.createdAt,
+        // Readers' "was this helpful?" — an editorial signal, never shown publicly.
+        rating: tallies.get(q.id) ?? { helpful: 0, notHelpful: 0 },
       })),
       total, page, limit,
     };
