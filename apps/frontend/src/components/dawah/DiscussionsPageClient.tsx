@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { localized } from './localize';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -24,6 +26,7 @@ import {
   serverMessage,
   type DiscussionQuestion,
   type Paginated,
+  type DawahCategory,
 } from '@/lib/dawahApi';
 
 const PAGE_SIZE = 12;
@@ -68,12 +71,18 @@ export function DiscussionsPageClient() {
   const { editMode, hasPermission } = useEditMode();
   const moderate = editMode && hasPermission(Permission.DISCUSSIONS_MODERATE);
 
+  const category = searchParams.get('category') ?? '';
   const search = searchParams.get('search') ?? '';
   const page = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
 
   // Typed-but-not-yet-committed search text; mirrors the URL when it changes underneath
   // us (back button, Clear filters).
   const [searchInput, setSearchInput] = useState(search);
+  // Shared with courses and the library — one taxonomy across all three listings.
+  const [categories, setCategories] = useState<DawahCategory[]>([]);
+  useEffect(() => {
+    dawahApi.categories().then(setCategories).catch(() => setCategories([]));
+  }, []);
   const [data, setData] = useState<Paginated<DiscussionQuestion> | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -158,6 +167,7 @@ export function DiscussionsPageClient() {
     setOpenIds(new Set());
     dawahApi.discussions
       .list({
+        category: category || undefined,
         search: search || undefined,
         page,
         limit: PAGE_SIZE,
@@ -176,7 +186,7 @@ export function DiscussionsPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [search, page, refreshKey]);
+  }, [category, search, page, refreshKey]);
 
   // Withdraw an entry straight from the listing. Both actions remove it from the
   // published list, so we refetch on success. Delete is confirmed first.
@@ -199,7 +209,12 @@ export function DiscussionsPageClient() {
     [success, toastError, t],
   );
 
-  const hasFilters = Boolean(search);
+  const hasFilters = Boolean(category || search);
+
+  const categoryOptions = [
+    { value: '', label: t('discussions.allCategories') },
+    ...categories.map((c) => ({ value: c.slug, label: localized(c, 'name', locale) })),
+  ];
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -292,7 +307,12 @@ export function DiscussionsPageClient() {
                   <label htmlFor="discussions-search" className="sr-only">
                     {t('discussions.searchLabel')}
                   </label>
-                  <div className="relative">
+                  {/* Search and category on one row: they narrow the same list, and a
+                      reader combining them should not have to hunt for the second. The
+                      select drops below the input on small screens rather than squeezing
+                      both into a width neither can use. */}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="relative sm:flex-1">
                     <Search
                       className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
                       aria-hidden
@@ -307,10 +327,23 @@ export function DiscussionsPageClient() {
                     />
                   </div>
 
-                  {search && (
+                  <div className="sm:w-56">
+                    <SearchableSelect
+                      value={category}
+                      onChange={(v) => setParams({ category: v || null, page: null })}
+                      options={categoryOptions}
+                      placeholder={t('discussions.allCategories')}
+                      size="md"
+                      triggerClassName="rounded-lg"
+                      zIndex={40}
+                    />
+                  </div>
+                  </div>
+
+                  {hasFilters && (
                     <button
                       type="button"
-                      onClick={() => setParams({ search: null, page: null })}
+                      onClick={() => setParams({ category: null, search: null, page: null })}
                       className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
                     >
                       <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}
