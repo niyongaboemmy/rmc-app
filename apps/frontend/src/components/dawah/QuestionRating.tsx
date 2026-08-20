@@ -51,7 +51,22 @@ function ratedKey(slug: string): string {
   return `rmc.dawah.rated.${slug}`;
 }
 
-export function QuestionRating({ slug }: { slug: string }) {
+export function QuestionRating({
+  slug,
+  copy,
+}: {
+  slug: string;
+  /**
+   * The two editorial strings, resolved by the server page from the CMS.
+   *
+   * Passed in rather than read from a content provider so this component does not drag
+   * the whole discussions blob — every listing string included — into the entry page's
+   * HTML payload for two fields. The rest of its labels are UI grammar and stay in the
+   * i18n messages: "Yes"/"No" name the buttons, and the failure line is a system message,
+   * neither of which is RMC's editorial voice.
+   */
+  copy: { prompt: string; thanks: string };
+}) {
   const t = useTranslations('dawah');
   const [choice, setChoice] = useState<boolean | null>(null);
   const [pending, setPending] = useState<boolean | null>(null);
@@ -110,7 +125,7 @@ export function QuestionRating({ slug }: { slug: string }) {
       <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50/60 p-4 text-center">
         <p className="inline-flex items-center gap-2 text-sm text-gray-600">
           <Check className="h-4 w-4 text-rmc-green" aria-hidden />
-          {t('discussions.rating.thanks')}
+          {copy.thanks}
         </p>
       </div>
     );
@@ -125,7 +140,7 @@ export function QuestionRating({ slug }: { slug: string }) {
           should hear the prompt as their label rather than as loose text above them. */}
       <div role="group" aria-labelledby="rating-prompt">
         <p id="rating-prompt" className="text-sm text-gray-600">
-          {t('discussions.rating.prompt')}
+          {copy.prompt}
         </p>
         <div className="mt-3 flex items-center justify-center gap-2.5">
           <button

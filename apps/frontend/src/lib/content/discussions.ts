@@ -30,6 +30,32 @@ export interface DiscussionsContent {
   error: {
     body: Tri;
   };
+  /**
+   * The ENTRY page (/dawah/discussions/[slug]) — the chrome around one question and
+   * RMC's answer to it.
+   *
+   * The same prose/grammar line as above decides what is here. RMC's own voice — the
+   * badge over the answer, the invitation to ask, the question put to the reader after
+   * they have read it — is editorial and belongs to an editor. The views count, the
+   * "Yes"/"No" on the rating buttons and the rating's failure message are UI grammar and
+   * stay in the i18n messages.
+   *
+   * Dashboard-only, unlike the listing: the entry page is a server component with no Edit
+   * Mode wiring, so there is no in-place editing of these.
+   */
+  detail: {
+    /** Sits over RMC's answer, marking it as the authoritative one. */
+    answerBadge: Tri;
+    /** The rating widget's question, asked after the reader has read the answer. */
+    ratingPrompt: Tri;
+    /** Replaces the buttons once a rating is recorded. */
+    ratingThanks: Tri;
+    /** Heading over the (up to three) entries offered to read next. */
+    relatedTitle: Tri;
+    /** The closing invitation, and its button. */
+    askPrompt: Tri;
+    askCta: Tri;
+  };
 }
 
 export const DISCUSSIONS_DEFAULT: DiscussionsContent = {
@@ -57,5 +83,21 @@ export const DISCUSSIONS_DEFAULT: DiscussionsContent = {
       'Ntitwashoboye gutangiza ibiganiro. Ongera ugerageze.',
       'تعذّر تحميل النقاشات. حاول مرة أخرى.',
     ),
+  },
+  detail: {
+    answerBadge: tri("RMC's answer", 'Igisubizo cya RMC', 'إجابة المجلس'),
+    ratingPrompt: tri(
+      'Was this answer helpful?',
+      'Iki gisubizo cyaragufashije?',
+      'هل كانت هذه الإجابة مفيدة؟',
+    ),
+    ratingThanks: tri(
+      'Thank you for your feedback.',
+      'Urakoze ku bitekerezo byawe.',
+      'شكراً لملاحظاتك.',
+    ),
+    relatedTitle: tri('Related questions', 'Ibibazo bifitanye isano', 'أسئلة ذات صلة'),
+    askPrompt: tri('Have a question of your own?', 'Ufite ikibazo cyawe?', 'لديك سؤال خاص بك؟'),
+    askCta: tri('Ask a question', 'Baza ikibazo', 'اطرح سؤالاً'),
   },
 };

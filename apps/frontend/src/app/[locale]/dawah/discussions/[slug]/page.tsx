@@ -10,6 +10,10 @@ import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
 import { QuestionRating } from '@/components/dawah/QuestionRating';
 import { dawahApi, type DiscussionQuestion, type PostLanguage } from '@/lib/dawahApi';
+import {
+  ContentKeys, DISCUSSIONS_DEFAULT, mergeContent, pick, type DiscussionsContent,
+} from '@/lib/content-api';
+import { fetchSiteContent } from '@/lib/content/server';
 import { ArrowRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -90,9 +94,27 @@ export default async function DiscussionEntryPage({
 }) {
   const t = await getTranslations('dawah');
   // In parallel: the related list resolves the slug independently, so it does not have to
-  // wait on the entry it sits beside.
-  const [entry, related] = await Promise.all([getEntry(slug), getRelated(slug)]);
+  // wait on the entry it sits beside, and the CMS read is a per-request cached hit on the
+  // same whole-store fetch the layout already made.
+  const [entry, related, saved] = await Promise.all([
+    getEntry(slug),
+    getRelated(slug),
+    fetchSiteContent([ContentKeys.discussions]),
+  ]);
   if (!entry) notFound();
+
+  /**
+   * Admin-editable chrome, merged over the seeded defaults.
+   *
+   * Read server-side and rendered directly — no provider, because the only client
+   * component here is the rating widget and it takes the two strings it needs as props.
+   * Handing it the whole blob instead would serialise every listing string into this
+   * page's HTML for two fields.
+   */
+  const cms = mergeContent<DiscussionsContent>(
+    DISCUSSIONS_DEFAULT,
+    saved[ContentKeys.discussions],
+  ).detail;
 
   const category = entry.category ? localized(entry.category, 'name', locale) : null;
 
@@ -163,7 +185,7 @@ export default async function DiscussionEntryPage({
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-rmc-gold/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rmc-gold-light">
                     <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-                    {t('discussions.answerBadge')}
+                    {pick(cms.answerBadge, locale)}
                   </span>
                   {/* Name the person. An institution hiding behind itself is exactly what
                       naming the answerer prevents. */}
@@ -185,7 +207,13 @@ export default async function DiscussionEntryPage({
                 the page: by the time a reader has scrolled past the ask-your-own CTA they
                 have left the answer behind. Outside <Reveal>, whose transform would
                 otherwise animate a control the reader may already be reaching for. */}
-            <QuestionRating slug={slug} />
+            <QuestionRating
+              slug={slug}
+              copy={{
+                prompt: pick(cms.ratingPrompt, locale),
+                thanks: pick(cms.ratingThanks, locale),
+              }}
+            />
 
             {/* Where to go next, before the ask-your-own CTA: a reader whose question was
                 already answered here should meet the neighbouring answers first, and only
@@ -198,7 +226,7 @@ export default async function DiscussionEntryPage({
                     id="related-heading"
                     className="text-sm font-bold uppercase tracking-[0.12em] text-rmc-green-deep"
                   >
-                    {t('discussions.related.title')}
+                    {pick(cms.relatedTitle, locale)}
                   </h2>
                   <ul className="mt-3 space-y-2">
                     {related.map((item) => (
@@ -229,12 +257,12 @@ export default async function DiscussionEntryPage({
 
             <Reveal>
               <div className="mt-8 rounded-lg border border-dashed border-gray-200 p-5 text-center">
-                <p className="text-sm text-gray-500">{t('discussions.askPrompt')}</p>
+                <p className="text-sm text-gray-500">{pick(cms.askPrompt, locale)}</p>
                 <Link
                   href={`/${locale}/dawah/discussions/ask`}
                   className="mt-3 inline-flex items-center rounded-lg bg-rmc-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rmc-green-dark"
                 >
-                  {t('discussions.askCta')}
+                  {pick(cms.askCta, locale)}
                 </Link>
               </div>
             </Reveal>
