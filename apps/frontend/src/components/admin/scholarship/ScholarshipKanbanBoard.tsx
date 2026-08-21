@@ -202,7 +202,7 @@ export function ScholarshipKanbanBoard({ locale, programId, canApprove, onTotalC
                       onDragStart={() => setDrag({ id: app.id, from: app.status })}
                       onDragEnd={() => { setDrag(null); setHoverColumn(null); }}
                       className={cn(
-                        'group rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-shadow',
+                        'group rounded-xl border border-gray-200 bg-white p-2.5 shadow-sm transition-shadow',
                         canApprove && 'cursor-grab active:cursor-grabbing hover:shadow-md',
                         busyId === app.id && 'opacity-50',
                       )}
@@ -214,14 +214,14 @@ export function ScholarshipKanbanBoard({ locale, programId, canApprove, onTotalC
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/${locale}/admin/scholarship/${app.id}`}
-                            className="block truncate text-sm font-semibold text-gray-900 hover:text-rmc-green"
+                            className="block truncate text-[13px] font-semibold leading-tight text-gray-900 hover:text-rmc-green"
                           >
                             {app.fullNames}
                           </Link>
                           <p className="mt-0.5 truncate font-mono text-[10px] text-gray-400">
                             {app.applicationNumber}
                           </p>
-                          <div className="mt-1.5 space-y-0.5 text-[11px] text-gray-500">
+                          <div className="mt-1 space-y-0 text-[11px] leading-tight text-gray-500">
                             <p className="flex items-center gap-1.5 truncate">
                               <School className="h-3 w-3 shrink-0" /> {app.schoolName}
                             </p>
@@ -236,7 +236,7 @@ export function ScholarshipKanbanBoard({ locale, programId, canApprove, onTotalC
                         <button
                           type="button"
                           onClick={() => setMovePicker(app)}
-                          className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-1.5 text-[11px] font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green"
+                          className="mt-1.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-1 text-[11px] font-semibold text-gray-500 transition-colors hover:border-rmc-green hover:text-rmc-green"
                         >
                           <MoveRight className="h-3 w-3" /> Move
                         </button>

@@ -25,7 +25,6 @@ import {
 import { Textarea } from '@/components/ui/Textarea';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
-import { resolveI18n } from '@/lib/tendersApi';
 import type { TenderApplicationStatus } from '@/lib/tenderApplicationApi';
 import {
   tenderApplicationAdminApi,
@@ -638,7 +637,7 @@ function BidCard({
       onDragStart={(e) => onDragStart(e, app)}
       onDragEnd={onDragEnd}
       className={cn(
-        'group relative rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all',
+        'group relative rounded-xl border border-gray-100 bg-white p-2.5 shadow-sm transition-all',
         movable && 'cursor-grab active:cursor-grabbing hover:border-teal-200 hover:shadow',
         isDragging && 'opacity-40',
         isBusy && 'pointer-events-none opacity-60',
@@ -655,19 +654,13 @@ function BidCard({
           >
             {app.applicationNumber}
           </Link>
-          <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{app.companyName}</p>
+          <p className="mt-0.5 truncate text-[13px] font-semibold leading-tight text-gray-900">{app.companyName}</p>
           <p className="truncate text-[11px] text-gray-400">TIN {app.companyTin}</p>
         </div>
         {isBusy && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-teal-500" />}
       </div>
 
-      {app.tender && (
-        <p className="mt-2 line-clamp-2 text-[11px] leading-snug text-gray-500">
-          {resolveI18n(app.tender.titleI18n, app.tender.title, locale)}
-        </p>
-      )}
-
-      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-gray-50 pt-2">
+      <div className="mt-2 flex items-center justify-between gap-2 border-t border-gray-50 pt-1.5">
         <span className="truncate text-[11px] font-semibold text-gray-700">
           {app.bidAmount != null ? `${Number(app.bidAmount).toLocaleString()} RWF` : '—'}
         </span>
@@ -686,10 +679,10 @@ function BidCard({
         </span>
       </div>
 
-      <div className="mt-2 flex gap-1.5">
+      <div className="mt-1.5 flex gap-1.5">
         <Link
           href={`/${locale}/admin/tenders/${app.id}`}
-          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 py-1.5 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
         >
           <Eye className="h-3 w-3" /> Open
         </Link>
@@ -697,7 +690,7 @@ function BidCard({
           <button
             type="button"
             onClick={() => onOpenMovePicker(app)}
-            className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
+            className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
             aria-label={`Move ${app.companyName} to another stage`}
           >
             <Move className="h-3 w-3" /> Move

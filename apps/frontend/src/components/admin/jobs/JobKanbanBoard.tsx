@@ -599,7 +599,7 @@ function ApplicationCard({
       onDragStart={(e) => onDragStart(e, app)}
       onDragEnd={onDragEnd}
       className={cn(
-        'group relative rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all',
+        'group relative rounded-xl border border-gray-100 bg-white p-2.5 shadow-sm transition-all',
         movable && 'cursor-grab active:cursor-grabbing hover:border-teal-200 hover:shadow',
         isDragging && 'opacity-40',
         isBusy && 'pointer-events-none opacity-60',
@@ -616,13 +616,13 @@ function ApplicationCard({
           >
             {app.trackingNumber}
           </Link>
-          <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{app.fullNames}</p>
+          <p className="mt-0.5 truncate text-[13px] font-semibold leading-tight text-gray-900">{app.fullNames}</p>
           <p className="truncate text-[11px] text-gray-400">{app.positionAppliedFor}</p>
         </div>
         {isBusy && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-teal-500" />}
       </div>
 
-      <div className="mt-2 space-y-0.5 border-t border-gray-50 pt-2 text-[11px] text-gray-500">
+      <div className="mt-2 space-y-0 border-t border-gray-50 pt-1.5 text-[11px] leading-tight text-gray-500">
         {app.email && (
           <p className="flex items-center gap-1.5 truncate">
             <Mail className="h-3 w-3 shrink-0 text-gray-400" />
@@ -639,10 +639,10 @@ function ApplicationCard({
         </p>
       </div>
 
-      <div className="mt-2 flex gap-1.5">
+      <div className="mt-1.5 flex gap-1.5">
         <Link
           href={`/${locale}/admin/jobs/${app.id}`}
-          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 py-1.5 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
         >
           <Eye className="h-3 w-3" /> Open
         </Link>
@@ -650,7 +650,7 @@ function ApplicationCard({
           <button
             type="button"
             onClick={() => onOpenMovePicker(app)}
-            className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
+            className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
             aria-label={`Move ${app.fullNames} to another stage`}
           >
             <Move className="h-3 w-3" /> Move
