@@ -29,7 +29,13 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'members',   href: '/admin/members',      icon: UserCheck,       labelKey: 'sidebar.members',   group: 'main',   permission: Permission.MEMBERS_VIEW      },
   { key: 'marriage',  href: '/admin/marriage',     icon: Heart,           labelKey: 'sidebar.marriage',  group: 'main',   permission: Permission.MARRIAGE_VIEW     },
   { key: 'goodConduct', href: '/admin/good-conduct', icon: ShieldCheck,   labelKey: 'sidebar.goodConduct', group: 'main', permission: Permission.GOOD_CONDUCT_VIEW },
-  { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW       },
+  { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW,
+    children: [
+      { key: 'tenders-content',      href: '/admin/content/tenders',  icon: FileText,   labelKey: 'tenders.tabs.content',      group: 'main', permission: Permission.CONTENT_VIEW },
+      { key: 'tenders-applications', href: '/admin/tenders',          icon: Users,      labelKey: 'tenders.tabs.applications',  group: 'main', permission: Permission.TENDER_VIEW  },
+      { key: 'tenders-dashboard',    href: '/admin/tenders/dashboard', icon: BarChart2, labelKey: 'tenders.tabs.dashboard',     group: 'main', permission: Permission.TENDER_REPORTS },
+    ],
+  },
   // Scholarships splits into the three jobs a scholarship administrator does:
   // compose and publish the scholarships, work the applications, report on them.
   // Each child keeps its OWN permission, so a reviewer who may not publish and a
@@ -200,20 +206,24 @@ function SidebarNavGroup({
   item, childrenItems, collapsed, locale, isActive, onMobileClose, mounted,
 }: SidebarNavGroupProps) {
   const t = useTranslations('admin');
-  const anyActive = childrenItems.some((c) => isActive(c.href));
-  const [open, setOpen] = useState(anyActive);
-
   /**
    * Exactly ONE child highlights, even when sibling routes nest.
    *
    * `isActive` is a prefix test, so on `/admin/dawah/discussions/submissions`
    * BOTH "All questions" (`/admin/dawah/discussions`) and "Member questions"
-   * matched, and both lit up. Taking the LONGEST matching sibling picks the most
-   * specific route — the page you are actually on.
+   * matched, and both lit up. The same holds for `/admin/tenders` against
+   * `/admin/tenders/dashboard`. Taking the LONGEST matching sibling picks the
+   * most specific route — the page you are actually on.
+   *
+   * Collapses to `null`, never `undefined`: `anyActive` below tests `!== null`,
+   * so an undefined would read as active and hold every group open.
    */
   const activeChildKey = childrenItems
     .filter((c) => isActive(c.href))
-    .sort((a, b) => b.href.length - a.href.length)[0]?.key;
+    .reduce<NavItem | null>((best, c) => (!best || c.href.length > best.href.length ? c : best), null)
+    ?.key ?? null;
+  const anyActive = activeChildKey !== null;
+  const [open, setOpen] = useState(anyActive);
   // Navigating INTO a child opens the group; a manual collapse while already
   // active is preserved (anyActive doesn't change, so this effect won't re-fire).
   useEffect(() => { if (anyActive) setOpen(true); }, [anyActive]);

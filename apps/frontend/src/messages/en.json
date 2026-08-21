@@ -3012,6 +3012,13 @@
         "label": "Translations",
         "ok": "Complete"
       }
+    },
+    "tenders": {
+      "tabs": {
+        "content": "Tenders Content",
+        "applications": "Manage Applications",
+        "dashboard": "Dashboard & Reports"
+      }
     }
   },
   "galleryPage": {
