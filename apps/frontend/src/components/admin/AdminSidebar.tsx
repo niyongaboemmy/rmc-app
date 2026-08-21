@@ -29,7 +29,13 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'members',   href: '/admin/members',      icon: UserCheck,       labelKey: 'sidebar.members',   group: 'main',   permission: Permission.MEMBERS_VIEW      },
   { key: 'marriage',  href: '/admin/marriage',     icon: Heart,           labelKey: 'sidebar.marriage',  group: 'main',   permission: Permission.MARRIAGE_VIEW     },
   { key: 'goodConduct', href: '/admin/good-conduct', icon: ShieldCheck,   labelKey: 'sidebar.goodConduct', group: 'main', permission: Permission.GOOD_CONDUCT_VIEW },
-  { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW       },
+  { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW,
+    children: [
+      { key: 'tenders-content',      href: '/admin/content/tenders',  icon: FileText,   labelKey: 'tenders.tabs.content',      group: 'main', permission: Permission.CONTENT_VIEW },
+      { key: 'tenders-applications', href: '/admin/tenders',          icon: Users,      labelKey: 'tenders.tabs.applications',  group: 'main', permission: Permission.TENDER_VIEW  },
+      { key: 'tenders-dashboard',    href: '/admin/tenders/dashboard', icon: BarChart2, labelKey: 'tenders.tabs.dashboard',     group: 'main', permission: Permission.TENDER_REPORTS },
+    ],
+  },
   { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW },
   { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
   { key: 'jobs',      href: '/admin/jobs',         icon: Briefcase,       labelKey: 'sidebar.jobs',      group: 'main',   permission: Permission.JOB_APPLICATIONS_VIEW },
@@ -180,7 +186,14 @@ function SidebarNavGroup({
   item, childrenItems, collapsed, locale, isActive, onMobileClose, mounted,
 }: SidebarNavGroupProps) {
   const t = useTranslations('admin');
-  const anyActive = childrenItems.some((c) => isActive(c.href));
+  // Sibling child routes can nest (e.g. `/admin/tenders` and
+  // `/admin/tenders/dashboard`), so a plain `startsWith` match would light up
+  // every ancestor at once. Only the DEEPEST (longest href) match wins.
+  const activeChildKey = childrenItems
+    .filter((c) => isActive(c.href))
+    .reduce<NavItem | null>((best, c) => (!best || c.href.length > best.href.length ? c : best), null)
+    ?.key ?? null;
+  const anyActive = activeChildKey !== null;
   const [open, setOpen] = useState(anyActive);
   // Navigating INTO a child opens the group; a manual collapse while already
   // active is preserved (anyActive doesn't change, so this effect won't re-fire).
@@ -241,7 +254,7 @@ function SidebarNavGroup({
       {open && (
         <ul className="mt-px space-y-px">
           {childrenItems.map((c) => {
-            const active = isActive(c.href);
+            const active = c.key === activeChildKey;
             const CIcon = c.icon;
             return (
               <li key={c.key}>

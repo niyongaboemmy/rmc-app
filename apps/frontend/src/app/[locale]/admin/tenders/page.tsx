@@ -209,7 +209,7 @@ function AdminTendersContent() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="flex flex-col gap-2.5">
           {visible.map((tender) => (
             <AdminTenderCard
               key={tender.id}

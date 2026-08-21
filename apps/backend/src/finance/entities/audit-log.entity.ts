@@ -13,7 +13,7 @@ export class AuditLog {
   @Column({ name: 'entity_id', type: 'uuid' })
   entityId: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 30 })
   action: string;
 
   @Index('IDX_audit_log_actor_id')
