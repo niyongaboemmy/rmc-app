@@ -581,7 +581,7 @@ function MosquesManager() {
                   searchPlaceholder="Search provinces…"
                 />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="District">
                   <SearchableSelect
                     value={form.districtId ?? ''}
@@ -630,7 +630,7 @@ function MosquesManager() {
                   />
                 </div>
                 {geoErr && <p className="mb-2 text-xs text-red-600">{geoErr}</p>}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Latitude
@@ -668,7 +668,7 @@ function MosquesManager() {
 
           {step === 2 && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Capacity">
                   <input
                     type="number"
@@ -731,7 +731,7 @@ function MosquesManager() {
                   />
                 </div>
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Phone">
                   <PhoneInput
                     value={form.phone ?? ''}
