@@ -142,9 +142,15 @@ function AdminTendersContent() {
         )}
       </div>
 
-      {/* Search + lifecycle filter */}
+      {/* Search + lifecycle filter.
+          Capped rather than elastic. `flex-1` sized the field from whatever the lifecycle
+          pills left over, which on a laptop with the sidebar open is a short box; letting
+          it span the row instead made it far wider than a title query needs. A fixed
+          ceiling sits between the two — and because it no longer demands the whole line,
+          the pills still sit beside it wherever there is room and wrap under it when
+          there is not. */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="min-w-[240px] flex-1">
+        <div className="w-full max-w-xl">
           <Input
             placeholder="Search tenders by title…"
             value={query}
