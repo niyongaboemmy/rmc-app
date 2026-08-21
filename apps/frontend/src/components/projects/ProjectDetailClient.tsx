@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
@@ -12,8 +11,6 @@ import { fileUrl } from '@/lib/api';
 import {
   ContentKeys,
   PROJECTS_DEFAULT,
-  getSiteContent,
-  mergeContent,
   pick,
   isRtl,
   projectPct,
@@ -21,6 +18,7 @@ import {
   type ProjectsContent,
   type ProjectItem,
 } from '@/lib/content-api';
+import { usePreviewableContentState } from '@/lib/content/preview-store';
 
 function resolveImg(v?: string): string {
   if (!v) return '';
@@ -45,19 +43,14 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
   const rtl = isRtl(locale);
   const arFont = rtl ? 'font-arabic' : '';
 
-  const [project, setProject] = useState<ProjectItem | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<ProjectsContent>(ContentKeys.projects)
-      .then((data) => {
-        const content = data ? mergeContent(PROJECTS_DEFAULT, data) : PROJECTS_DEFAULT;
-        if (active) setProject(content.items.find((p) => p.slug === slug) ?? null);
-      })
-      .catch(() => { if (active) setProject(null); })
-      .finally(() => { if (active) setLoaded(true); });
-    return () => { active = false; };
-  }, [slug]);
+  // The page reads this section on the server, so the project resolves on the first
+  // render and its copy is in the HTML rather than appearing after the spinner.
+  // Without a provider this falls back to fetching on mount.
+  const { content, ready: loaded } = usePreviewableContentState<ProjectsContent>(
+    ContentKeys.projects,
+    PROJECTS_DEFAULT,
+  );
+  const project: ProjectItem | null = content.items.find((p) => p.slug === slug) ?? null;
 
   // ── Loading ──
   if (!loaded) {

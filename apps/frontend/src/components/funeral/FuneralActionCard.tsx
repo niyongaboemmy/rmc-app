@@ -1,3 +1,4 @@
+import type React from 'react';
 import Link from 'next/link';
 import { ArrowRight, type LucideIcon } from 'lucide-react';
 
@@ -14,8 +15,9 @@ export function FuneralActionCard({
 }: {
   href: string;
   icon: LucideIcon;
-  title: string;
-  desc: string;
+  /** Nodes, not strings — the labels are inline-editable in Edit Mode. */
+  title: React.ReactNode;
+  desc: React.ReactNode;
   tone?: 'green' | 'gold' | 'slate';
 }) {
   const toneTile =

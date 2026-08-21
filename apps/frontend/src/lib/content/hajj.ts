@@ -54,6 +54,31 @@ export interface HajjContent {
     subtitle: Tri;
     items: HajjStep[];
   };
+  /**
+   * "Where to pay" — the heading over the bank accounts. The ACCOUNTS themselves are
+   * records (Content → Hajj Bank Accounts); this is the section around them.
+   *
+   * The per-account field labels (Account name, Account number, SWIFT) and the
+   * copy/copied button states stay in i18n: they are UI, not copy anyone rewrites.
+   */
+  bankAccounts: {
+    eyebrow: Tri;
+    title: Tri;
+    subtitle: Tri;
+    /** Callout under the accounts, about keeping the bank slip. */
+    proofNote: Tri;
+  };
+  /** Heading on /services/hajj/register. The form's own fields stay in i18n. */
+  register: {
+    title: Tri;
+    subtitle: Tri;
+  };
+  /** Heading on /services/hajj/status, plus the button that opens it. */
+  status: {
+    title: Tri;
+    subtitle: Tri;
+    checkLabel: Tri;
+  };
 }
 
 /** One numbered step of the Hajj journey. `icon` is a REQUIREMENT_ICONS name. */
@@ -229,5 +254,40 @@ export const HAJJ_DEFAULT: HajjContent = {
         ),
       },
     ],
+  },
+  bankAccounts: {
+    eyebrow: tri('Where to pay', 'Aho wishyura', 'أين تدفع'),
+    title: tri('Bank Accounts', 'Konti za Banki', 'الحسابات المصرفية'),
+    subtitle: tri(
+      'Pay the Hajj fees into one of the accounts below, then upload your payment receipt with your registration.',
+      'Ishyura amafaranga ya Hija kuri imwe muri konti zikurikira, hanyuma wohereze inyemezabwishyu mu kwiyandikisha kwawe.',
+      'ادفع رسوم الحج في أحد الحسابات أدناه، ثم ارفع إيصال الدفع مع تسجيلك.',
+    ),
+    proofNote: tri(
+      'Keep your bank slip — you will be asked to upload it as proof of payment when you register.',
+      'Bika inyemezabwishyu ya banki — uzasabwa kuyohereza nk’ikimenyetso cy’ubwishyu mu kwiyandikisha.',
+      'احتفظ بإيصال البنك — سيُطلب منك رفعه كإثبات للدفع عند التسجيل.',
+    ),
+  },
+  register: {
+    title: tri('Register for Hajj', 'Iyandikishe kuri Hija', 'التسجيل للحج'),
+    subtitle: tri(
+      'Complete the form below to begin your Hajj registration. Fields marked * are required.',
+      'Uzuza ifishi ikurikira kugira ngo utangire kwiyandikisha kuri Hija. Ibisabwa bifite * birakenewe.',
+      'أكمل النموذج أدناه لبدء تسجيلك للحج. الحقول المميزة بـ * مطلوبة.',
+    ),
+  },
+  status: {
+    title: tri(
+      'Track your Hajj application',
+      'Reba aho ubusabe bwa Hajj bugeze',
+      'تتبع طلب الحج الخاص بك',
+    ),
+    subtitle: tri(
+      "Enter your application number. We'll text a 6-digit code to the phone you registered with.",
+      'Andika nimero y’ubusabe bwawe. Tuzakohereza kode y’imibare 6 kuri telefoni wiyandikishijeho.',
+      'أدخل رقم طلبك. سنرسل رمزًا من 6 أرقام إلى الهاتف الذي سجّلت به.',
+    ),
+    checkLabel: tri('Check status', 'Reba aho bigeze', 'التحقق من الحالة'),
   },
 };

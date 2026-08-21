@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PASSWORD_REGEX, PASSWORD_MESSAGE } from '../../common/utils/password.rule';
 
 export class RegisterDto {
   @ApiProperty({ example: 'ahmed.hassan@example.com' })
@@ -32,10 +33,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(8)
   @MaxLength(50)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_#])[A-Za-z\d@$!%*?&\-_#]{8,}$/, {
-    message:
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-  })
+  @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   password: string;
 
   @ApiProperty({ example: 'Ahmed' })
@@ -52,12 +50,23 @@ export class RegisterDto {
   @IsNotEmpty()
   lastName: string;
 
+  /**
+   * The `''`→`undefined` transforms are load-bearing, not tidying.
+   *
+   * `@IsOptional()` skips validation for `undefined` and `null` and nothing else,
+   * but an untouched `<select>` or `<input type="date">` submits `''`. Without
+   * this, leaving the optional gender dropdown alone — which the form invites,
+   * since it opens on a placeholder — failed registration outright with
+   * "gender must be one of the following values: male, female".
+   */
   @ApiPropertyOptional({ example: '1990-01-15' })
+  @Transform(({ value }: { value: string }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsDateString()
   dateOfBirth?: string;
 
   @ApiPropertyOptional({ enum: ['male', 'female'] })
+  @Transform(({ value }: { value: string }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsIn(['male', 'female'])
   gender?: string;

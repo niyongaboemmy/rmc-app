@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as compression from 'compression';
 import helmet from 'helmet';
@@ -11,7 +12,23 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  /**
+   * Rate limiting and the auth audit log both key on the client IP, which behind
+   * a reverse proxy is the proxy's own address — every user would share one
+   * bucket and lock each other out of login.
+   *
+   * Trusting blindly is the opposite failure: a client can forge X-Forwarded-For
+   * and mint itself a fresh bucket per request, bypassing the limits entirely.
+   * So this is the count of proxies actually in front of the app, and it defaults
+   * to 0 — correct for direct exposure, and it must be set when deploying behind
+   * nginx/Cloudflare/a load balancer.
+   */
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? 0);
+  if (trustProxyHops > 0) {
+    app.set('trust proxy', trustProxyHops);
+  }
 
   /**
    * JSON body limit. Express defaults to 100 kB, which a legitimate rich-text

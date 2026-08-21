@@ -477,6 +477,27 @@ export interface AdminQuestion {
   answeredBy: string | null;
   publishedAt: string | null;
   createdAt: string;
+  /**
+   * Readers' "was this helpful?" tally. Admin-only — the public page shows a reader
+   * nothing but an acknowledgement, so this is the one place the number surfaces.
+   */
+  rating: { helpful: number; notHelpful: number };
+}
+
+/**
+ * A neighbouring entry offered at the foot of a detail page.
+ *
+ * Deliberately thin — a link and what it needs to render as one. No body, no answer HTML:
+ * three entries' worth of rendered markdown for links nobody may click is markup the page
+ * would throw away.
+ */
+export interface RelatedQuestion {
+  id: string;
+  slug: string;
+  title: string;
+  language: PostLanguage;
+  category: { id: string; slug: string } | null;
+  publishedAt: string | null;
 }
 
 /** A member's question waiting for RMC to answer it. */
@@ -585,6 +606,36 @@ export const dawahApi = {
      *  preview cannot diverge from the published entry. */
     preview: (body: string): Promise<{ html: string }> =>
       unwrap(apiClient.post('/dawah/discussions/preview', { body })),
+
+    /**
+     * Up to three entries to read next: same category first, then most recent.
+     *
+     * Public and unauthenticated, so it server-renders with the page — these are real
+     * crawlable links between entries, not a client-side afterthought.
+     */
+    related: (slug: string): Promise<{ items: RelatedQuestion[] }> =>
+      unwrap(publicHttp.get(`/dawah/discussions/${slug}/related`)),
+
+    /**
+     * "Was this answer helpful?" — anonymous, so `publicHttp` and not `apiClient`.
+     *
+     * `voterKey` is the browser's own token (see `voterKey()` in QuestionRating); the
+     * server stores only its hash and uses it to keep one rating per browser. Sending the
+     * same key again updates that rating rather than adding one, which is what lets a
+     * reader change their mind.
+     *
+     * Returns an acknowledgement, never a tally — the counts are for RMC, not readers.
+     */
+    rate: (slug: string, helpful: boolean, voterKey: string): Promise<{ recorded: boolean }> =>
+      unwrap(
+        publicHttp.post(`/dawah/discussions/${slug}/rating`, {
+          // 'yes'/'no', not a boolean: the API takes a string on purpose, because the
+          // backend's global validation pipe coerces booleans with Boolean() and
+          // Boolean("false") is true. See RateQuestionDto.
+          helpful: helpful ? 'yes' : 'no',
+          voterKey,
+        }),
+      ),
   },
 
   courses: {

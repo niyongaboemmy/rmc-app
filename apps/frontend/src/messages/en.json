@@ -21,6 +21,11 @@
     "services": "Explore Services"
   },
   "common": {
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "nav": "Pagination"
+    },
     "appName": "RMC Platform",
     "loading": "Loading...",
     "error": "An error occurred",
@@ -77,7 +82,42 @@
       "submit": "Create Account",
       "alreadyAccount": "Already have an account?",
       "login": "Sign In",
-      "success": "Account created! Please verify your phone number."
+      "success": "Account created! Please verify your phone number.",
+      "redirecting": "Redirecting you to phone verification…"
+    },
+    "verifyPhone": {
+      "title": "Verify Your Phone",
+      "subtitle": "Enter your number to receive a verification code",
+      "subtitleSent": "We sent a 6-digit code to {phone}",
+      "phone": "Phone Number",
+      "phoneHelp": "Format: 7XXXXXXXX",
+      "code": "Verification Code",
+      "codeHelp": "The code expires in 5 minutes",
+      "sendCode": "Send Code",
+      "submit": "Verify Phone",
+      "resend": "Resend code",
+      "resending": "Sending…",
+      "resendIn": "Resend available in {seconds}s",
+      "changeNumber": "Use a different number",
+      "codeSent": "Code sent. Check your messages.",
+      "codeResent": "A new code is on its way.",
+      "success": "Phone verified!",
+      "redirecting": "Redirecting you to sign in…",
+      "later": "Prefer to do this later?",
+      "skip": "Skip for now",
+      "errors": {
+        "badPhone": "Enter a valid Rwanda number: 7XXXXXXXX",
+        "badCode": "Enter the 6-digit code",
+        "notFound": "No code found for this number. Request a new one.",
+        "expired": "That code has expired. Request a new one.",
+        "invalid": "That code is incorrect. Check and try again.",
+        "maxAttempts": "Too many incorrect attempts. Request a new code.",
+        "rateLimited": "Too many requests. Please wait a few minutes.",
+        "alreadyVerified": "This number is already verified. You can sign in.",
+        "unknownPhone": "No account found for this number.",
+        "sendFailed": "Could not send the code. Please try again.",
+        "verifyFailed": "Verification failed. Please try again."
+      }
     },
     "forgotPassword": {
       "title": "Reset Password",
@@ -729,28 +769,6 @@
         "ayahRef": "Qur’an 2:156",
         "quickTitle": "How can we help?",
         "quickSub": "From reporting a death to burial, RMC walks with you at every step — with dignity and care.",
-        "actions": {
-          "report": {
-            "title": "Report a Death",
-            "desc": "Notify RMC and begin the arrangements."
-          },
-          "request": {
-            "title": "Request Janāzah Services",
-            "desc": "Ghusl, kafan, prayer, transport and burial."
-          },
-          "progress": {
-            "title": "Burial Progress",
-            "desc": "Track the status of a funeral request."
-          },
-          "cemetery": {
-            "title": "Cemetery Information",
-            "desc": "Locations, capacity and contacts."
-          },
-          "support": {
-            "title": "Family Support",
-            "desc": "Counselling, food and financial aid."
-          }
-        },
         "ctaTitle": "We are here for you",
         "ctaSub": "When a loved one passes, contact us at any hour. The community is ready to help.",
         "ctaReport": "Report a Death",
@@ -977,6 +995,7 @@
         "noAccount": "Don't have an account?",
         "requestAccess": "Request access",
         "moreInfoNoteLabel": "Reviewer note",
+        "prefillNote": "We filled in your details from your RMC account — change anything that isn't right for this request.",
         "step1Title": "Identity & Contact",
         "step2Title": "Masjid & Reason",
         "fullNames": "Full Names",
@@ -1145,12 +1164,7 @@
           "4": "A guardian's name, phone number, and relationship to you",
           "5": "A short statement on why you need the scholarship"
         },
-        "step": {
-          "1": "Sign in to your RMC account, or create one",
-          "2": "Fill the short 3-step form: personal, education, and guardian details",
-          "3": "Submit and get your application tracking number",
-          "4": "Use your tracking number to check your status anytime"
-        },
+        "step": { "1": "Browse open scholarships and read the eligibility and deadline", "2": "Complete the form: personal, education and guardian details", "3": "Upload the documents that scholarship asks for", "4": "Get a tracking code and follow your application to the decision" },
         "notes": "Applying is free. Reviews take 5–10 business days."
       },
       "title": "Scholarships",
@@ -1174,6 +1188,21 @@
       },
       "detail": {
         "backToServices": "All Services",
+        "backToList": "All scholarships",
+        "aboutTitle": "About this scholarship",
+        "eligibilityTitle": "Who may apply",
+        "benefitsTitle": "What the award covers",
+        "documentsTitle": "Documents you must attach",
+        "attachmentsTitle": "Attachments",
+        "slotsLabel": "Awards available",
+        "opensLabel": "Opens",
+        "referenceLabel": "Reference",
+        "closedNotice": "This scholarship is closed and is no longer accepting applications.",
+        "notOpenYet": "Applications for this scholarship have not opened yet.",
+        "notFoundTitle": "Scholarship not found",
+        "notFoundText": "It may have been withdrawn, or the link is out of date.",
+        "ctaTitle": "Interested in this scholarship?",
+        "ctaText": "Apply before the deadline. You will get a tracking code to follow your application.",
         "needTitle": "What you'll need",
         "needSubtitle": "Have these ready before you start your application.",
         "need": {
@@ -1183,13 +1212,13 @@
           "i4": { "title": "A guardian's contact", "text": "A parent or guardian's name, phone number, and their relationship to you." },
           "i5": { "title": "A short statement", "text": "A brief explanation of why you need this scholarship." }
         },
-        "processTitle": "How it works",
-        "processSubtitle": "From application to tracking, in a few simple steps.",
+        "processTitle": "How to apply",
+        "processSubtitle": "Four steps from opportunity to submitted application.",
         "steps": {
-          "s1": { "title": "Sign in", "text": "Sign in to your RMC account, or create one if you don't have one yet." },
-          "s2": { "title": "Fill in the form", "text": "Complete your personal, education, and guardian details across a short 3-step form." },
-          "s3": { "title": "Submit your application", "text": "Submit and receive a tracking number for your application." },
-          "s4": { "title": "Track your status", "text": "Use your tracking number anytime to check where your application stands." }
+          "browse": { "title": "Browse open scholarships", "text": "Find a scholarship on this page and read its eligibility and deadline." },
+          "form": { "title": "Complete the form", "text": "Give your personal, education and guardian details." },
+          "documents": { "title": "Upload your documents", "text": "Attach the documents that scholarship asks for." },
+          "track": { "title": "Track your application", "text": "Get a tracking code, then follow your application to the decision." }
         },
         "faqTitle": "Frequently asked questions",
         "faqs": {
@@ -1224,6 +1253,10 @@
         "signInPrompt": "You need to be signed in to apply for a scholarship.",
         "noAccount": "Don't have an account?",
         "requestAccess": "Request access",
+        "applyingFor": "Applying for",
+        "deadlineOn": "Deadline: {date}",
+        "viewScholarship": "View scholarship details",
+        "closedError": "This scholarship is no longer accepting applications. Its deadline may have passed.",
         "step1Title": "Personal Information",
         "step1Subtitle": "Tell us who you are and how to reach you",
         "step2Title": "Academic Information",
@@ -1252,6 +1285,7 @@
         "requiredDocuments": "Required documents",
         "supportingDocuments": "Supporting documents",
         "q1Label": "Why do you deserve this scholarship?",
+        "prefillNote": "We filled in your details from your RMC account — change anything that isn't right for this application.",
         "q1Placeholder": "Tell us about yourself, your achievements, your educational goals, and why you believe you should receive this scholarship.",
         "q2Label": "How will this scholarship help you achieve your educational goals?",
         "q2Placeholder": "Explain how this support will make a difference to your studies and future.",
@@ -1296,7 +1330,7 @@
         "subtitle": "Check the status of a scholarship application using your tracking number.",
         "backToService": "Back to Scholarships",
         "idLabel": "Application Tracking Number",
-        "idPlaceholder": "e.g. RMC-SCH-KIC-202607-00001",
+        "idPlaceholder": "Tracking code (e.g. RMC-SCH-2607-A1B2C3D4)",
         "checkButton": "Check Status",
         "checking": "Checking…",
         "notFoundTitle": "Application Not Found",
@@ -1347,6 +1381,8 @@
         "programsEmptyTitle": "No open scholarships right now",
         "programsEmptyText": "Check back soon — new scholarship programs are announced regularly.",
         "programsLoadError": "Couldn't load scholarships. Please try again later.",
+        "filters": { "open": "Open", "closing": "Closing Soon", "closed": "Closed" },
+        "deadline": { "none": "No deadline", "closed": "Closed", "today": "Closes today", "tomorrow": "Closes tomorrow", "inDays": "Closes in {days} days" },
         "deadlineLabel": "Deadline",
         "amountLabel": "Amount",
         "viewAndApply": "View & Apply"
@@ -1489,6 +1525,7 @@
         "requestAccess": "Create one",
         "backToService": "Back to Tenders service",
         "moreInfoNoteLabel": "The evaluator asked for",
+        "prefillNote": "We filled in your contact details from your RMC account — change anything that isn't right for this bid.",
         "progressLabel": "Application progress",
         "step1Title": "Company",
         "step1Subtitle": "Which tender you're bidding on, and who is bidding.",
@@ -1680,10 +1717,26 @@
         "ofLabel": "of",
         "relatedTitle": "Other open positions",
         "closingSoon": "Closing soon",
-        "overview": "Job overview"
+        "overview": "Job overview",
+        "filters": { "all": "All", "open": "Open", "closing": "Closing soon", "closed": "Closed" },
+        "noDeadline": "No deadline",
+        "closesToday": "Closes today",
+        "closesTomorrow": "Closes tomorrow",
+        "closesInDays": "Closes in {days} days",
+        "applicationsClosed": "Applications closed",
+        "remaining": "{pct}% time remaining",
+        "viewAll": "View all positions",
+        "emptyStatusSub": "Try a different filter or check back soon.",
+        "ctaTitle": "Interested in this role?",
+        "ctaSubtitle": "Submit your application before the deadline.",
+        "eyebrow": "Career opportunities",
+        "daysRemaining": "days remaining",
+        "dayRemaining": "day remaining"
       },
       "landing": {
         "backToServices": "Back to services",
+        "browseTitle": "Browse open positions",
+        "browseNote": "Every role currently open at RMC and affiliated organizations. Filter by status or search to find a specific position, then open it for full details.",
         "heroTitle": "Job Opportunities",
         "heroSubtitle": "Apply for open positions at RMC and affiliated organizations, and track your application status.",
         "applyTitle": "Apply for a Job",
@@ -1782,6 +1835,7 @@
         "requirementsHeroSubtitle": "Have your CV, application letter, National ID, criminal record and academic papers ready.",
         "sectionApplicant": "Applicant details",
         "sectionApplicantSub": "Tell us who you are and how to reach you.",
+        "prefillNote": "We filled in your details from your RMC account — change anything that isn't right for this application.",
         "sectionResidence": "Residence",
         "sectionDocuments": "Documents",
         "sectionDocumentsSub": "Upload clear, readable files. The maximum size is shown on each field.",
@@ -2041,6 +2095,7 @@
         "back": "Back to Hajj Services",
         "title": "Track your Hajj application",
         "sub": "Enter your application number. We'll text a 6-digit code to the phone you registered with.",
+        "check": "Check status",
         "codePlaceholder": "Application number (e.g. RMC-HAJ-2607-A1B2C3D4)",
         "codeHint": "The number from your confirmation SMS or email. No need to type your phone — we already have it.",
         "submittedOn": "Submitted on",
@@ -2244,6 +2299,9 @@
       "marriage": "Marriage",
       "drive": "Drive",
       "goodConduct": "Good Conduct",
+      "scholarshipManage": "Manage scholarships",
+      "scholarshipApps": "Applications",
+      "scholarshipReports": "Reports",
       "scholarship": "Scholarships",
       "funeral": "Funeral",
       "hajj": "Hajj",
@@ -2251,8 +2309,11 @@
       "discussionsReview": "Member questions",
       "discussionsAll": "All questions",
       "tenders": "Tenders",
-      "jobs": "Job Applications",
-      "jobPostings": "Job Postings"
+      "jobs": "Jobs",
+      "jobPostings": "Job Postings",
+      "manageJob": "Manage Job",
+      "jobsApplication": "Application",
+      "jobsReport": "Report"
     },
     "topbar": {
       "viewSite": "View site",
@@ -3024,7 +3085,9 @@
       "currency": "Currency"
     },
     "card": {
-      "addToGift": "Donate",
+      "addToGift": "Add to gift",
+      "give": "Donate",
+      "donateNow": "Donate now",
       "addAgain": "Add again",
       "added": "Added",
       "add": "Add",
@@ -3747,10 +3810,21 @@
       "answerBadge": "RMC's answer",
       "answeredBy": "Answered by {name}",
       "askPrompt": "Have a question of your own?",
+      "related": {
+        "title": "Related questions"
+      },
+      "rating": {
+        "prompt": "Was this answer helpful?",
+        "yes": "Yes",
+        "no": "No",
+        "thanks": "Thank you for your feedback.",
+        "failed": "Could not record your rating. Please try again."
+      },
       "admin": {
         "title": "Q&A library",
         "subtitle": "Questions and RMC's answers, as the community sees them.",
         "submissionsLink": "Member questions",
+        "ratingHint": "Readers who found this answer helpful / not helpful",
         "newEntry": "New entry",
         "searchPlaceholder": "Search questions…",
         "empty": "No entries yet.",

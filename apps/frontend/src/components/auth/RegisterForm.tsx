@@ -15,19 +15,15 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { apiClient } from '@/lib/api';
+import { VERIFY_PHONE_KEY } from '@/components/auth/VerifyPhoneForm';
+import { passwordSchema } from '@/lib/password';
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'Minimum 2 characters'),
   lastName:  z.string().min(2, 'Minimum 2 characters'),
   email:     z.string().email('Invalid email address'),
   phone:     z.string().regex(/^7[2389]\d{7}$/, 'Enter a valid Rwanda number: 7XXXXXXXX'),
-  password: z
-    .string()
-    .min(8, 'Minimum 8 characters')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_#])/,
-      'Must include uppercase, lowercase, number & special character',
-    ),
+  password: passwordSchema,
   gender: z.enum(['male', 'female']).optional(),
 });
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -70,9 +66,13 @@ export function RegisterForm() {
     setApiError(null);
     setIsLoading(true);
     try {
-      await apiClient.post('/auth/register', { ...data, phone: toE164(data.phone) });
+      const phone = toE164(data.phone);
+      await apiClient.post('/auth/register', { ...data, phone });
+      // Registration sends the first OTP, so hand the number to the verify screen
+      // instead of dropping the user at sign-in with a code they can't use.
+      sessionStorage.setItem(VERIFY_PHONE_KEY, phone);
       setSuccess(true);
-      setTimeout(() => router.push(`/${locale}/login`), 2500);
+      setTimeout(() => router.push(`/${locale}/verify-phone`), 2500);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setApiError(e?.response?.data?.error?.message || 'Registration failed');
@@ -90,7 +90,7 @@ export function RegisterForm() {
             <CheckIcon />
           </div>
           <h2 className="text-xl font-bold text-gray-900">{t('success')}</h2>
-          <p className="text-gray-400 text-sm">Redirecting you to sign in…</p>
+          <p className="text-gray-400 text-sm">{t('redirecting')}</p>
           <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden mt-4">
             <div
               className="h-full bg-rmc-green rounded-full"

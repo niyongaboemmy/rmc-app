@@ -29,6 +29,8 @@ export function WhoWeAreSection() {
   const suffix = locale === 'rw' ? 'Rw' : locale === 'ar' ? 'Ar' : 'En';
   const editField = (base: string) => (v: string) =>
     setField((d) => { d[`${base}${suffix}`] = v; });
+  /** This locale's own text, unresolved — what the edit box shows (see `editValue`). */
+  const rawField = (base: string) => content[`${base}${suffix}`] ?? '';
 
   const description = pickLang(content, 'description', locale);
 
@@ -57,6 +59,7 @@ export function WhoWeAreSection() {
               as="span"
               lang={locale}
               value={pickLang(content, 'heading', locale)}
+              editValue={rawField('heading')}
               onCommit={editField('heading')}
               placeholder="Heading"
             />{' '}
@@ -64,6 +67,7 @@ export function WhoWeAreSection() {
               as="span"
               lang={locale}
               value={pickLang(content, 'headingHighlight', locale)}
+              editValue={rawField('headingHighlight')}
               onCommit={editField('headingHighlight')}
               className="text-rmc-green"
               placeholder="Highlighted words"
@@ -76,6 +80,7 @@ export function WhoWeAreSection() {
               as="p"
               lang={locale}
               value={pickLang(content, 'verse', locale)}
+              editValue={rawField('verse')}
               onCommit={editField('verse')}
               className="font-arabic text-rmc-green-dark text-lg md:text-xl leading-loose text-center px-2"
               dir="rtl"
@@ -86,6 +91,7 @@ export function WhoWeAreSection() {
             as="p"
             lang={locale}
             value={pickLang(content, 'verseRef', locale)}
+            editValue={rawField('verseRef')}
             onCommit={editField('verseRef')}
             className={`text-rmc-gold text-[11px] font-semibold tracking-wide mb-6 ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
@@ -96,6 +102,7 @@ export function WhoWeAreSection() {
             as="p"
             lang={locale}
             value={description}
+            editValue={rawField('description')}
             onCommit={editField('description')}
             className={`text-gray-500 leading-relaxed text-sm md:text-base max-w-2xl mx-auto ${locale === 'ar' ? 'font-arabic' : ''}`}
             dir={locale === 'ar' ? 'rtl' : 'ltr'}

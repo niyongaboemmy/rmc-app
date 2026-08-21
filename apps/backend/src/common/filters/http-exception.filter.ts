@@ -68,6 +68,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       422: ErrorCode.VALIDATION_ERROR,
       429: ErrorCode.RATE_LIMITED,
       500: ErrorCode.INTERNAL_ERROR,
+      // Same reasoning as 409/429: a health check reporting a dead dependency is not a crash,
+      // and the deploy gate reads this code to tell "Postgres is unreachable" from "the app threw".
+      503: ErrorCode.SERVICE_UNAVAILABLE,
     };
     return map[status] || ErrorCode.INTERNAL_ERROR;
   }

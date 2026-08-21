@@ -26,8 +26,9 @@
  * No public component changes behaviour when rendered outside a provider.
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { getSiteContent, mergeContent } from './client';
+import { useServerSiteContent } from './SiteContentProvider';
 
 type Listener = () => void;
 
@@ -118,15 +119,50 @@ function useStoreTick(store: PreviewStore | null): number {
 /**
  * Blob-section content hook. Drop-in replacement for the manual
  * `useEffect(getSiteContent → mergeContent(DEFAULT, data))` pattern.
+ *
+ * When the page wrapped its tree in a `SiteContentProvider` the saved blob is
+ * already present on the first render — server-side included — so the section's
+ * real copy lands in the server-rendered HTML instead of appearing a beat after
+ * hydration. Without a provider this fetches on mount exactly as it always did.
  */
 export function usePreviewableContent<T>(key: string, defaults: T): T {
+  return usePreviewableContentState(key, defaults).content;
+}
+
+export interface PreviewableContentState<T> {
+  /** Merged section content — always usable, defaults until something better arrives. */
+  content: T;
+  /**
+   * False only while a first client-side read is still in flight. Already true on the
+   * very first render when the page server-rendered this section, which is what lets
+   * a caller drop its loading skeleton instead of flashing one over content it
+   * already has.
+   */
+  ready: boolean;
+}
+
+/**
+ * {@link usePreviewableContent} plus a readiness flag, for sections that render a
+ * skeleton rather than their defaults while loading.
+ */
+export function usePreviewableContentState<T>(key: string, defaults: T): PreviewableContentState<T> {
   const store = usePreviewStore();
   useStoreTick(store); // re-render on override / refresh changes (no-op when public)
 
-  const [fetched, setFetched] = useState<T | null>(null);
+  const server = useServerSiteContent<T>(key);
+  const [fetched, setFetched] = useState<T | null>(server.value);
+  const [ready, setReady] = useState(server.provided);
+  // The server already resolved this section, so the fetch this effect would run on
+  // mount is redundant. Skip that one only — a later refreshKey bump (a publish)
+  // still re-pulls, which is how the editor sees its own save land.
+  const skipMountFetch = useRef(server.provided);
   const refreshKey = store?.getRefreshKey() ?? 0;
 
   useEffect(() => {
+    if (skipMountFetch.current) {
+      skipMountFetch.current = false;
+      return;
+    }
     let active = true;
     getSiteContent<T>(key)
       .then((data) => {
@@ -134,6 +170,11 @@ export function usePreviewableContent<T>(key: string, defaults: T): T {
       })
       .catch(() => {
         /* keep defaults — the section simply hasn't been saved yet */
+      })
+      .finally(() => {
+        // Settled either way: a section that has never been saved is as resolved as
+        // one that loaded, and both should stop showing a skeleton.
+        if (active) setReady(true);
       });
     return () => {
       active = false;
@@ -142,8 +183,10 @@ export function usePreviewableContent<T>(key: string, defaults: T): T {
   }, [key, refreshKey]);
 
   const override = store?.getOverride(key);
-  if (override !== undefined) return mergeContent(defaults, override);
-  return mergeContent(defaults, fetched);
+  const content =
+    override !== undefined ? mergeContent(defaults, override) : mergeContent(defaults, fetched);
+
+  return { content, ready };
 }
 
 /**

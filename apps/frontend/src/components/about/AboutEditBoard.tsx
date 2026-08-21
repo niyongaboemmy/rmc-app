@@ -22,6 +22,7 @@ import { useTranslations } from 'next-intl';
 import { Plus, Trash2, Images, ArrowRight, Mail, Phone } from 'lucide-react';
 import { ContentKeys, type Locale } from '@/lib/content-api';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { PageHero } from '@/components/layout/PageHero';
 import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { InlineImage } from '@/components/edit-mode/InlineImage';
 import { HistoryTimeline } from '@/components/about/HistoryTimeline';
@@ -33,6 +34,8 @@ interface Leader {
   id: string; image: string;
   nameEn: string; nameRw: string; nameAr: string;
   roleEn: string; roleRw: string; roleAr: string;
+  /** Long-form profile. Public site shows it only inside the leader's modal. */
+  bioEn?: string; bioRw?: string; bioAr?: string;
   email?: string; phone?: string;
 }
 
@@ -49,12 +52,6 @@ const LEADERS_DEFAULT: Leader[] = [
   { id: 'm4', image: 'https://i.postimg.cc/Cx0M5wJm/P1180223.jpg', nameEn: 'Sheikh NZANAHAYO Qassim', nameRw: 'Sheikh NZANAHAYO Qassim', nameAr: 'Sheikh NZANAHAYO Qassim', roleEn: 'President of The Majlisi Shuyukh', roleRw: '', roleAr: '' },
   { id: 'm5', image: 'https://i.postimg.cc/Fsym22m4/P1180220.jpg', nameEn: 'Sheikh MBARUSHIMANA Suleiman', nameRw: 'Sheikh MBARUSHIMANA Suleiman', nameAr: 'Sheikh MBARUSHIMANA Suleiman', roleEn: 'Advisor to the Mufti of Rwanda', roleRw: '', roleAr: '' },
   { id: 'm6', image: 'https://i.postimg.cc/YSxyqhck/ES-Salim.jpg', nameEn: 'Mr. SIBOMANA Salim', nameRw: 'Mr. SIBOMANA Salim', nameAr: 'Mr. SIBOMANA Salim', roleEn: 'Executive Secretary', roleRw: '', roleAr: '' },
-];
-
-const HERO_SLIDES = [
-  'https://pbs.twimg.com/media/HEQLxPtaUAADjH2?format=jpg&name=large',
-  'https://pbs.twimg.com/media/HESeGQZWAAAvdtq?format=jpg&name=large',
-  'https://drive.google.com/thumbnail?id=1dNjgzd30RyYQ0_zCLFoqj83HjGh03bwq&sz=w1600',
 ];
 
 // ─── Inline-editable primitive (always editable — the board only renders in edit mode) ───
@@ -132,12 +129,14 @@ export function AboutEditBoard({ initial }: { initial: Record<string, unknown> |
   const addLeader = () =>
     writeLeaders([...leaders, {
       id: crypto.randomUUID(),
-      image: '', nameEn: 'New leader', nameRw: '', nameAr: '', roleEn: 'Role', roleRw: '', roleAr: '', email: '', phone: '',
+      image: '', nameEn: 'New leader', nameRw: '', nameAr: '', roleEn: 'Role', roleRw: '', roleAr: '',
+      bioEn: '', bioRw: '', bioAr: '', email: '', phone: '',
     }]);
   const removeLeader = (id: string) => writeLeaders(leaders.filter((l) => l.id !== id));
 
   const nameKey = `name${sfx}` as keyof Leader;
   const roleKey = `role${sfx}` as keyof Leader;
+  const bioKey = `bio${sfx}` as keyof Leader;
 
   // Gallery preview carousel — same source as the public page.
   const [gallery, setGallery] = useState<{ src: string; alt: string }[]>([]);
@@ -149,14 +148,6 @@ export function AboutEditBoard({ initial }: { initial: Record<string, unknown> |
     return () => { active = false; };
   }, []);
 
-  // Hero background crossfade (mirrors PageHero).
-  const [slide, setSlide] = useState(0);
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = setInterval(() => setSlide((s) => (s + 1) % HERO_SLIDES.length), 6000);
-    return () => clearInterval(id);
-  }, []);
-
   return (
     <div key={`${locale}:${seedVersion}`}>
       {/* Small hint that the board is a super-admin edit surface */}
@@ -165,32 +156,35 @@ export function AboutEditBoard({ initial }: { initial: Record<string, unknown> |
         <span className="text-rmc-green/70">— click any text or image to edit. Publish from the bar below.</span>
       </div>
 
-      {/* 1. HERO */}
-      <section className="relative flex min-h-[40vh] items-center overflow-hidden bg-rmc-green-deep">
-        {HERO_SLIDES.map((src, i) => (
-          <div key={src} className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out" style={{ opacity: i === slide ? 1 : 0 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="" className="h-full w-full object-cover object-center" />
-          </div>
-        ))}
-        <div className="absolute inset-0 bg-black/45" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/30" />
-        <div className="absolute inset-0 pattern-islamic opacity-30" />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-28 pb-10 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-white/75 backdrop-blur-sm sm:text-xs">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" /> About RMC
-            </div>
-            <Editable tag="h1" value={field('title', t('title'))} onChange={(v) => setF('title', v)} dir={dir}
-              placeholder={t('title')} className={`text-3xl font-bold leading-tight text-white drop-shadow-lg md:text-4xl lg:text-5xl ${fontClass}`} />
-            <div className="ornament-divider mx-auto my-4 max-w-xs">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rmc-gold" />
-            </div>
-            <Editable value={field('subtitle', t('subtitle'))} onChange={(v) => setF('subtitle', v)} dir={dir}
-              placeholder={t('subtitle')} className={`mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/75 md:text-base ${fontClass}`} />
-          </div>
-        </div>
-      </section>
+      {/* 1. HERO — the SAME `PageHero` the public page renders, with the editable
+          nodes passed in as its title and subtitle. It used to be a hand-rolled copy
+          "mirroring PageHero", which had drifted: it added an eyebrow pill and an
+          ornament divider the live page never showed, so an admin was editing a hero
+          that did not match the one visitors saw. */}
+      <PageHero
+        paddingClassName="pt-28 pb-10"
+        minHeightClassName="min-h-[40vh]"
+        title={
+          <Editable
+            tag="span"
+            value={field('title', t('title'))}
+            onChange={(v) => setF('title', v)}
+            dir={dir}
+            placeholder={t('title')}
+            className={fontClass}
+          />
+        }
+        subtitle={
+          <Editable
+            tag="span"
+            value={field('subtitle', t('subtitle'))}
+            onChange={(v) => setF('subtitle', v)}
+            dir={dir}
+            placeholder={t('subtitle')}
+            className={fontClass}
+          />
+        }
+      />
 
       {/* 2. WHO WE ARE */}
       <section className="relative overflow-hidden bg-transparent py-12">
@@ -275,6 +269,12 @@ export function AboutEditBoard({ initial }: { initial: Record<string, unknown> |
                     placeholder="Role" className={`inline-flex rounded-lg bg-rmc-green-light px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-rmc-green-dark ${fontClass}`} />
                   <Editable tag="h3" value={(l[nameKey] as string) || ''} onChange={(v) => setLeader(l.id, nameKey, v)} dir={dir}
                     placeholder="Name" className={`mt-2 truncate font-medium text-gray-900 ${fontClass}`} />
+
+                  {/* Profile — public site shows this only inside the leader's
+                      modal, so it is edited here rather than on the card. */}
+                  <Editable value={(l[bioKey] as string) || ''} onChange={(v) => setLeader(l.id, bioKey, v)} dir={dir}
+                    placeholder="Profile / bio (shown in the pop-up)"
+                    className={`mt-2 block whitespace-pre-line text-xs leading-relaxed text-gray-500 ${fontClass}`} />
                   <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
                     <span className="inline-flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5 shrink-0 text-rmc-green/70" />

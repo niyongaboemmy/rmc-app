@@ -130,7 +130,7 @@ function ServiceCard({
         (revealRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
         (tiltRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className={`shimmer-card group relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm overflow-hidden transition-all duration-500 hover:shadow-lg hover:border-gray-200 ${
+      className={`shimmer-card group relative bg-white rounded-lg p-6 border border-gray-100 shadow-sm overflow-hidden transition-all duration-500 hover:shadow-lg hover:border-gray-200 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
       style={{ transitionDelay: `${delay}ms`, transformStyle: 'preserve-3d' }}
@@ -166,7 +166,7 @@ function ViewAllCard({ locale, label }: { locale: string; label: string }) {
     <Link
       ref={ref as unknown as React.Ref<HTMLAnchorElement>}
       href={`/${locale}/services`}
-      className={`group flex flex-col items-center justify-center bg-rmc-green rounded-2xl p-6 text-center shadow-sm hover:bg-rmc-green-dark transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-rmc-green/25 ${
+      className={`group flex flex-col items-center justify-center bg-rmc-green rounded-lg p-6 text-center shadow-sm hover:bg-rmc-green-dark transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-rmc-green/25 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
       style={{ transitionDelay: '560ms' }}

@@ -116,7 +116,7 @@ function PillarCard({ pillar, delay }: { pillar: Pillar; delay: number }) {
         (revealRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
         (tiltRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className={`shimmer-card group relative border rounded-2xl p-6 transition-all duration-500 hover:shadow-lg ${pillar.bgColor} ${
+      className={`shimmer-card group relative border rounded-lg p-6 transition-all duration-500 hover:shadow-lg ${pillar.bgColor} ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
       style={{ transitionDelay: `${delay}ms`, transformStyle: 'preserve-3d' }}

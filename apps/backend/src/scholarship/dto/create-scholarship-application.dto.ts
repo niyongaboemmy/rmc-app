@@ -20,7 +20,12 @@ import {
 const blankToUndefined = Transform(({ value }) => (value === '' ? undefined : value));
 
 export class CreateScholarshipApplicationDto {
-  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsUUID() programId?: string;
+  /**
+   * REQUIRED. An application always targets a specific scholarship — that is the
+   * whole point of the opportunity flow. It used to be optional, and in practice
+   * was always null, which is how applications ended up going into a void.
+   */
+  @ApiProperty() @IsUUID() programId!: string;
 
   @ApiProperty() @IsString() @IsNotEmpty() @Length(3, 150) fullNames!: string;
 

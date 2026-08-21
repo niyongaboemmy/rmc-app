@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
@@ -10,10 +10,11 @@ import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 import {
   ContentKeys,
   SOCIAL_DEFAULT,
-  getSiteContent,
-  mergeContent,
+  CONTACT_DEFAULT,
+  pick,
   type SocialChannel,
 } from '@/lib/content-api';
+import { usePreviewableContent } from '@/lib/content/preview-store';
 
 // Channel key → icon, mirroring the contact page so the footer shows the same
 // platforms and links (sourced from the shared social content store).
@@ -65,17 +66,17 @@ export function Footer() {
 
   // Same social channels (and links) the contact page and home Social Media
   // section show — admin managed in Content → Social Media, so all surfaces
-  // stay in sync. Falls back to seeded defaults until loaded.
-  const [channels, setChannels] = useState<SocialChannel[]>(SOCIAL_DEFAULT.channels);
-  useEffect(() => {
-    let active = true;
-    getSiteContent<Record<string, unknown>>(ContentKeys.social)
-      .then((data) => {
-        if (active && data) setChannels(mergeContent(SOCIAL_DEFAULT, data).channels);
-      })
-      .catch(() => {/* keep defaults */});
-    return () => { active = false; };
-  }, []);
+  // stay in sync.
+  //
+  // Both reads go through `usePreviewableContent`, which is the shared version of
+  // the fetch-then-merge effect these used to run by hand. The locale layout reads
+  // these two sections on the server, so the footer renders the SAVED copy in the
+  // first paint instead of flashing the seeded defaults on all 42 pages that have
+  // it. Without a provider it falls back to fetching on mount, exactly as before.
+  const channels = usePreviewableContent(ContentKeys.social, SOCIAL_DEFAULT).channels;
+  const contact = usePreviewableContent(ContentKeys.contact, CONTACT_DEFAULT);
+
+  const address = pick(contact.address, locale);
 
   const quickLinks = [
     { href: `/${locale}/announcements`, labelKey: 'links.announcements' },
@@ -188,30 +189,38 @@ export function Footer() {
           {/* Contact */}
           <CollapsibleColumn title={t('contact')}>
             <ul className="space-y-2">
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <a href="mailto:rwandamuslimc@gmail.com" className="text-white/55 hover:text-white text-sm transition-colors">rwandamuslimc@gmail.com</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <a href="mailto:islamrwanda18@gmail.com" className="text-white/55 hover:text-white text-sm transition-colors">islamrwanda18@gmail.com</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <Phone className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <a href="tel:+250788308436" className="text-white/55 hover:text-white text-sm transition-colors">(+250) 788 308 436</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
-                  <MapPin className="w-3.5 h-3.5 text-rmc-gold-light" />
-                </span>
-                <span className="text-white/55 text-sm">Kigali, Rwanda</span>
-              </li>
+              {contact.email && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <a href={`mailto:${contact.email}`} className="text-white/55 hover:text-white text-sm transition-colors break-all">{contact.email}</a>
+                </li>
+              )}
+              {contact.email2 && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <Mail className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <a href={`mailto:${contact.email2}`} className="text-white/55 hover:text-white text-sm transition-colors break-all">{contact.email2}</a>
+                </li>
+              )}
+              {contact.phone && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <Phone className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <a href={contact.phoneHref || `tel:${contact.phone.replace(/[^+\d]/g, '')}`} className="text-white/55 hover:text-white text-sm transition-colors">{contact.phone}</a>
+                </li>
+              )}
+              {address && (
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+                    <MapPin className="w-3.5 h-3.5 text-rmc-gold-light" />
+                  </span>
+                  <span className="text-white/55 text-sm">{address}</span>
+                </li>
+              )}
             </ul>
           </CollapsibleColumn>
         </div>

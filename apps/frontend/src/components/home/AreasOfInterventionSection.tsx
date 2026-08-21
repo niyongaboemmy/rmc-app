@@ -74,6 +74,7 @@ function PillarCard({
   const { ref, visible } = useScrollReveal(0.12);
   const Icon = ICONS[item.icon] ?? Globe;
   const rtl = isRtl(locale);
+  const lang = locale as Locale;
   const arFont = locale === 'ar' ? 'font-arabic' : '';
   const show = editing || visible;
 
@@ -152,6 +153,7 @@ function PillarCard({
             as="h3"
             lang={locale}
             value={pick(item.title, locale)}
+            editValue={item.title[lang]}
             onCommit={handlers.onTitle}
             dir={rtl ? 'rtl' : 'ltr'}
             className={`relative mt-1.5 text-xl font-bold text-gray-900 ${arFont}`}
@@ -164,6 +166,7 @@ function PillarCard({
             as="p"
             lang={locale}
             value={pick(item.description, locale)}
+            editValue={item.description[lang]}
             onCommit={handlers.onDescription}
             dir={rtl ? 'rtl' : 'ltr'}
             className={`relative mt-4 text-sm leading-relaxed text-gray-500 ${arFont}`}
@@ -281,6 +284,7 @@ export function AreasOfInterventionSection() {
                   as="span"
                   lang={locale}
                   value={pick(content.title, locale)}
+                  editValue={content.title[lang]}
                   onCommit={(v) => setField((d) => { d.title[lang] = v; })}
                   dir={rtl ? 'rtl' : 'ltr'}
                   placeholder="Title"
@@ -289,6 +293,7 @@ export function AreasOfInterventionSection() {
                   as="span"
                   lang={locale}
                   value={pick(content.titleAccent, locale)}
+                  editValue={content.titleAccent[lang]}
                   onCommit={(v) => setField((d) => { d.titleAccent[lang] = v; })}
                   className="text-rmc-green"
                   dir={rtl ? 'rtl' : 'ltr'}
@@ -312,6 +317,7 @@ export function AreasOfInterventionSection() {
               as="p"
               lang={locale}
               value={pick(content.lede, locale)}
+              editValue={content.lede[lang]}
               onCommit={(v) => setField((d) => { d.lede[lang] = v; })}
               dir={rtl ? 'rtl' : 'ltr'}
               className={`mx-auto max-w-xl text-sm leading-relaxed text-gray-500 md:text-base ${arFont}`}

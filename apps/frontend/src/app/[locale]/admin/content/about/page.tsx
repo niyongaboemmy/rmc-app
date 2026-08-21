@@ -85,6 +85,8 @@ interface Leader {
   image: string;
   nameEn: string; nameRw: string; nameAr: string;
   roleEn: string; roleRw: string; roleAr: string;
+  /** Long-form profile. The public About page shows it only in the leader's pop-up. */
+  bioEn?: string; bioRw?: string; bioAr?: string;
   email?: string;
   phone?: string;
 }
@@ -198,6 +200,7 @@ function AboutRMCManager({ embedded = false }: { embedded?: boolean } = {}) {
     setLeaders((prev) => [...prev, {
       id: crypto.randomUUID(), image: '',
       nameEn: '', nameRw: '', nameAr: '', roleEn: '', roleRw: '', roleAr: '',
+      bioEn: '', bioRw: '', bioAr: '',
       email: '', phone: '',
     }]);
   }, []);
@@ -372,6 +375,7 @@ function AboutRMCManager({ embedded = false }: { embedded?: boolean } = {}) {
               const suffix = lang === 'en' ? 'En' : lang === 'rw' ? 'Rw' : 'Ar';
               const nameKey = `name${suffix}` as keyof Leader;
               const roleKey = `role${suffix}` as keyof Leader;
+              const bioKey = `bio${suffix}` as keyof Leader;
               return (
                 <div key={l.id} className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                   <div className="flex items-start gap-4">
@@ -399,6 +403,16 @@ function AboutRMCManager({ embedded = false }: { embedded?: boolean } = {}) {
                           onChange={(e) => setLeaderField(l.id, roleKey, e.target.value)}
                           className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
                       </div>
+                      {/* Profile — the only field the public card does NOT show;
+                          it appears when a visitor opens the leader's pop-up. */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Profile ({lang.toUpperCase()})</label>
+                        <textarea dir={lang === 'ar' ? 'rtl' : 'ltr'} rows={4} value={(l[bioKey] as string) ?? ''}
+                          onChange={(e) => setLeaderField(l.id, bioKey, e.target.value)}
+                          placeholder="Background, responsibilities, and anything worth knowing. Shown in the pop-up when a visitor clicks this leader."
+                          className={`w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${lang === 'ar' ? 'font-arabic' : ''}`} />
+                      </div>
+
                       {/* Email + phone — shared across languages */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>

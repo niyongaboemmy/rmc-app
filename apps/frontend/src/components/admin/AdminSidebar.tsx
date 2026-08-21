@@ -36,10 +36,30 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'tenders-dashboard',    href: '/admin/tenders/dashboard', icon: BarChart2, labelKey: 'tenders.tabs.dashboard',     group: 'main', permission: Permission.TENDER_REPORTS },
     ],
   },
-  { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW },
+  // Scholarships splits into the three jobs a scholarship administrator does:
+  // compose and publish the scholarships, work the applications, report on them.
+  // Each child keeps its OWN permission, so a reviewer who may not publish and a
+  // finance reader who may not review each land only on pages they can open.
+  // The parent points at the applications list, where most of the work is.
+  { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW,
+    children: [
+      { key: 'scholarshipManage',  href: '/admin/scholarship/programs', icon: FileText,       labelKey: 'sidebar.scholarshipManage',  group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
+      { key: 'scholarshipApps',    href: '/admin/scholarship',          icon: ClipboardCheck, labelKey: 'sidebar.scholarshipApps',    group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
+      { key: 'scholarshipReports', href: '/admin/scholarship/reports',  icon: BarChart2,      labelKey: 'sidebar.scholarshipReports', group: 'main', permission: Permission.SCHOLARSHIP_REPORTS },
+    ],
+  },
   { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
-  { key: 'jobs',      href: '/admin/jobs',         icon: Briefcase,       labelKey: 'sidebar.jobs',      group: 'main',   permission: Permission.JOB_APPLICATIONS_VIEW },
-  { key: 'jobPostings', href: '/admin/job-postings', icon: ClipboardList, labelKey: 'sidebar.jobPostings', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+  // Jobs — mirrors the Tenders/Scholarship group pattern: work the applications
+  // on the board, report on them, and manage the postings. The parent points at
+  // the applications board, where most of the work is; each child keeps its own
+  // permission.
+  { key: 'jobs', href: '/admin/jobs', icon: Briefcase, labelKey: 'sidebar.jobs', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW,
+    children: [
+      { key: 'jobsApplication', href: '/admin/jobs',        icon: ClipboardCheck, labelKey: 'sidebar.jobsApplication', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+      { key: 'jobsReport',      href: '/admin/jobs/reports', icon: BarChart2,      labelKey: 'sidebar.jobsReport',     group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+      { key: 'jobPostings',     href: '/admin/job-postings', icon: ClipboardList,  labelKey: 'sidebar.jobPostings',    group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+    ],
+  },
   { key: 'mosques',   href: '/admin/mosques',      icon: Landmark,        labelKey: 'sidebar.mosques',   group: 'main',   permission: Permission.MOSQUES_VIEW      },
   { key: 'schools',   href: '/admin/schools',      icon: GraduationCap,   labelKey: 'sidebar.schools',   group: 'main',   permission: Permission.SCHOOLS_VIEW      },
   { key: 'prayer',    href: '/admin/prayer-times', icon: Clock,           labelKey: 'sidebar.prayer',    group: 'main',   permission: Permission.PRAYER_TIMES_VIEW },
@@ -186,9 +206,18 @@ function SidebarNavGroup({
   item, childrenItems, collapsed, locale, isActive, onMobileClose, mounted,
 }: SidebarNavGroupProps) {
   const t = useTranslations('admin');
-  // Sibling child routes can nest (e.g. `/admin/tenders` and
-  // `/admin/tenders/dashboard`), so a plain `startsWith` match would light up
-  // every ancestor at once. Only the DEEPEST (longest href) match wins.
+  /**
+   * Exactly ONE child highlights, even when sibling routes nest.
+   *
+   * `isActive` is a prefix test, so on `/admin/dawah/discussions/submissions`
+   * BOTH "All questions" (`/admin/dawah/discussions`) and "Member questions"
+   * matched, and both lit up. The same holds for `/admin/tenders` against
+   * `/admin/tenders/dashboard`. Taking the LONGEST matching sibling picks the
+   * most specific route — the page you are actually on.
+   *
+   * Collapses to `null`, never `undefined`: `anyActive` below tests `!== null`,
+   * so an undefined would read as active and hold every group open.
+   */
   const activeChildKey = childrenItems
     .filter((c) => isActive(c.href))
     .reduce<NavItem | null>((best, c) => (!best || c.href.length > best.href.length ? c : best), null)

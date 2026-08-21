@@ -27,6 +27,8 @@ import {
 } from '@/lib/content-api';
 import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import { InlineText } from '@/components/edit-mode/InlineText';
+import { hasLinkedSlides, resolveSlides } from '@/lib/content/resolve-slides';
+import { scholarshipPublicApi, type ScholarshipProgram } from '@/lib/scholarshipApi';
 
 interface Slide {
   badge: string;
@@ -61,7 +63,26 @@ export function WelcomeCarouselSection() {
 
   const rtl = isRtl(locale);
 
-  const SLIDES: Slide[] = content.items.map((item) => ({
+  // A slide may be bound to a live scholarship, in which case its title, link,
+  // and deadline resolve from the record instead of from authored copy. Fetch
+  // only when at least one slide is bound, so the common all-authored homepage
+  // issues no extra request. `listPrograms` is public and swallows its own
+  // errors, returning [] — an unresolved slide simply renders as authored.
+  const [programs, setPrograms] = useState<ScholarshipProgram[]>([]);
+  const needsPrograms = hasLinkedSlides(content.items);
+
+  useEffect(() => {
+    if (!needsPrograms) return;
+    let active = true;
+    scholarshipPublicApi.listPrograms().then((rows) => {
+      if (active) setPrograms(rows);
+    });
+    return () => {
+      active = false;
+    };
+  }, [needsPrograms]);
+
+  const SLIDES: Slide[] = resolveSlides(content.items, programs).map((item) => ({
     badge: pick(item.badge, locale),
     title: pick(item.title, locale),
     description: pick(item.description, locale),
@@ -146,6 +167,7 @@ export function WelcomeCarouselSection() {
                   as="span"
                   lang={locale}
                   value={pick(content.headingTitle, locale)}
+                  editValue={content.headingTitle[lang]}
                   onCommit={(v) => setField((d) => { d.headingTitle[lang] = v; })}
                   placeholder="Heading"
                 />{' '}
@@ -153,6 +175,7 @@ export function WelcomeCarouselSection() {
                   as="span"
                   lang={locale}
                   value={pick(content.headingAccent, locale)}
+                  editValue={content.headingAccent[lang]}
                   onCommit={(v) => setField((d) => { d.headingAccent[lang] = v; })}
                   className="text-rmc-green"
                   placeholder="Accent"

@@ -14,6 +14,9 @@ import {
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { AccountPrefillNote } from '@/components/services/shared/AccountPrefillNote';
+import { useAuth, type AuthUser } from '@/hooks/useAuth';
+import { accountFullName, toLocalRwandanPhone } from '@/lib/accountPrefill';
 import { publicApi } from '@/lib/public-api';
 import { uploadMedia } from '@/lib/mediaUpload';
 import { goodConductPublicApi } from '@/lib/goodConductApi';
@@ -52,6 +55,19 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+// Prefill from the signed-in account — a starting point, never a lock: an
+// applicant may be filing on someone else's behalf, and every field stays
+// editable.
+function accountDefaults(user: AuthUser | null): Partial<FormData> {
+  return {
+    fullNames: accountFullName(user) || undefined,
+    email: user?.email ?? '',
+    phone: toLocalRwandanPhone(user?.phone),
+    districtId: user?.districtId ?? '',
+    sectorId: user?.sectorId ?? '',
+  };
+}
+
 type District = { id: string; name: string };
 type Sector = { id: string; name: string };
 type GoodConductMode = 'verify' | 'upload';
@@ -64,6 +80,14 @@ export function JobApplicationForm() {
   const t = useTranslations('services.jobs.apply');
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
+  // The parent page renders this form only once auth has settled, so a signed-in
+  // applicant always has their account on hand by first render.
+  const { user } = useAuth();
+
+  // Read once, in the initializer: react-hook-form latches `defaultValues` at
+  // mount, so anything arriving a render later would be silently dropped.
+  const [prefill] = useState(() => accountDefaults(user));
+  const prefilled = !!(prefill.fullNames || prefill.phone || prefill.email);
 
   const {
     register,
@@ -76,6 +100,7 @@ export function JobApplicationForm() {
     resolver: zodResolver(schema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
+    defaultValues: prefill,
   });
 
   const values = watch();
@@ -140,6 +165,25 @@ export function JobApplicationForm() {
     if (!districtId) { setSectors([]); return; }
     publicApi.getSectors(districtId).then(setSectors).catch(() => setSectors([]));
   }, [districtId]);
+
+  // Both selects are uncontrolled and their options arrive an API round-trip
+  // after mount, so a district carried in from the account lands on a list with
+  // no matching <option> and the browser quietly falls back to the placeholder —
+  // still submitted, but not what the applicant is shown. Re-apply once the
+  // option exists.
+  useEffect(() => {
+    if (!prefill.districtId) return;
+    if (!districts.some((d) => d.id === prefill.districtId)) return;
+    setValue('districtId', prefill.districtId);
+  }, [districts, prefill.districtId, setValue]);
+
+  useEffect(() => {
+    // Only while the district is still the one this sector belongs to — picking
+    // a different district clears the sector on purpose.
+    if (!prefill.sectorId || districtId !== prefill.districtId) return;
+    if (!sectors.some((s) => s.id === prefill.sectorId)) return;
+    setValue('sectorId', prefill.sectorId);
+  }, [sectors, districtId, prefill.districtId, prefill.sectorId, setValue]);
 
   const uploadTexts: UploadTexts = useMemo(
     () => ({
@@ -383,6 +427,11 @@ export function JobApplicationForm() {
         </ol>
         <p className="text-[11px] text-gray-400 mt-3 sm:hidden">{t('stepCounter', { current: step + 1, total: STEPS.length })}</p>
       </nav>
+
+      {/* Prefilled contact details are on both of the first two steps. */}
+      {prefilled && (currentStep === 'position' || currentStep === 'residence') && (
+        <AccountPrefillNote text={t('prefillNote')} />
+      )}
 
       {/* ── Step 1: Position & applicant ── */}
       {currentStep === 'position' && (

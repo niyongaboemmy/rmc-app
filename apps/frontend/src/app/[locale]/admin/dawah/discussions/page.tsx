@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
-  ExternalLink, EyeOff, Loader2, Pencil, Plus, RotateCcw, Search, Trash2,
+  ExternalLink, EyeOff, Loader2, Pencil, Plus, RotateCcw, Search, ThumbsDown, ThumbsUp, Trash2,
 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
@@ -177,6 +177,23 @@ function EntryLibrary() {
                   </span>
                   {entry.category && (
                     <span className="text-[11px] text-gray-400">{entry.category.nameEn}</span>
+                  )}
+                  {/* Only once somebody has rated. A "0 / 0" on every unrated entry is
+                      noise that makes the rows with real signal harder to pick out. */}
+                  {entry.rating.helpful + entry.rating.notHelpful > 0 && (
+                    <span
+                      className="inline-flex items-center gap-2 text-[11px] text-gray-400"
+                      title={t('discussions.admin.ratingHint')}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        <ThumbsUp className="h-3 w-3" aria-hidden />
+                        {entry.rating.helpful}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <ThumbsDown className="h-3 w-3" aria-hidden />
+                        {entry.rating.notHelpful}
+                      </span>
+                    </span>
                   )}
                 </div>
                 <p className="mt-1 truncate text-sm font-medium text-gray-900">{entry.title}</p>

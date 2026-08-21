@@ -16,6 +16,9 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { FilePreviewTrigger } from '@/components/ui/FilePreviewOverlay';
+import { AccountPrefillNote } from '@/components/services/shared/AccountPrefillNote';
+import { useAuth, type AuthUser } from '@/hooks/useAuth';
+import { accountFullName, toLocalRwandanPhone } from '@/lib/accountPrefill';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/lib/mediaUpload';
 import {
@@ -23,6 +26,8 @@ import {
   type CreateScholarshipApplicationPayload,
   type ScholarshipApplication,
   type ScholarshipDocumentType,
+  type RequiredDocument,
+  type I18nText,
 } from '@/lib/scholarshipApi';
 
 // Attachments: PDFs and images, up to 10 MB each (matches the file-server limit).
@@ -41,11 +46,6 @@ const HOW_MAX = 300;
 const ELSE_MAX = 200;
 const PROGRAM_MAX = 60;
 const INCOME_MAX = 30;
-
-/** +250781234567 (backend/API format) → 0781234567 (what the user sees/types). */
-function toLocalPhone(e164: string): string {
-  return e164?.startsWith('+250') ? `0${e164.slice(4)}` : e164;
-}
 
 /** 0781234567 (what the user types) → +250781234567 (backend/API format). */
 function toE164Phone(local: string): string {
@@ -95,7 +95,21 @@ const SLOT_DOCTYPE: Record<DocSlotKey, ScholarshipDocumentType> = {
   financial: 'proof',
 };
 
-type DocFiles = Record<DocSlotKey, File | null>;
+/**
+ * One upload the form asks for. Built at runtime, because WHICH documents a
+ * scholarship wants is now the admin's decision (`requiredDocuments`), not a
+ * constant compiled into the wizard.
+ */
+interface DocSlot {
+  key: string;
+  label: string;
+  required: boolean;
+  documentType: ScholarshipDocumentType;
+  /** Set when the slot answers a declared requirement, so the upload records which. */
+  requirementKey?: string;
+}
+
+type DocFiles = Record<string, File | null>;
 const EMPTY_FILES: DocFiles = {
   transcript: null,
   reportCard: null,
@@ -104,6 +118,17 @@ const EMPTY_FILES: DocFiles = {
   certificates: null,
   financial: null,
 };
+
+/** The four values the backend's document_type column accepts. */
+const KNOWN_DOC_TYPES = new Set(['transcript', 'academic_record', 'proof', 'additional']);
+
+/** Reader's language, then English, then the key — same rule as the detail page. */
+function localizedLabel(label: I18nText | undefined, locale: string): string {
+  if (!label) return '';
+  const picked = label[locale as keyof I18nText];
+  if (picked && picked.trim()) return picked;
+  return label.en?.trim() ?? '';
+}
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────────
 
@@ -137,13 +162,39 @@ const step4Schema = z.object({
 });
 type Step4Data = z.infer<typeof step4Schema>;
 
+/**
+ * Prefill from the signed-in account. Only the applicant's own contact details —
+ * the Student ID is a school number, not anything the account holds, and the
+ * guardian in step 4 is by definition someone else.
+ */
+function accountStep1(user: AuthUser | null): Partial<Step1Data> {
+  return {
+    fullNames: accountFullName(user) || undefined,
+    email: user?.email ?? '',
+    phone: toLocalRwandanPhone(user?.phone),
+  };
+}
+
 type WizardPhase = 1 | 2 | 3 | 4 | 'success';
 
 interface Props {
   /** When editing a draft application, pre-fills the form and calls updateDraft instead of createDraft. */
   editRequest?: ScholarshipApplication;
-  /** Retained for route compatibility; the program picker was removed from the form. */
+  /**
+   * The scholarship this application is FOR. Required — an application always
+   * targets one, and the backend rejects a payload without it.
+   *
+   * There is no picker: the applicant chose the scholarship by opening it, so
+   * offering a dropdown here would let them fill a form for one and file it
+   * against another. The wizard shows which one they are applying to instead.
+   */
   initialProgramId?: string;
+  /**
+   * The documents THIS scholarship asks for. When present they replace the
+   * built-in step-2 slots, so the form asks for exactly what the detail page
+   * told the applicant to bring.
+   */
+  requiredDocuments?: RequiredDocument[];
 }
 
 // ─── Shared 4-step progress header ─────────────────────────────────────────────
@@ -190,9 +241,12 @@ function WizardProgress({ phase, t }: { phase: WizardPhase; t: ReturnType<typeof
   );
 }
 
-export function ScholarshipWizard({ editRequest }: Props) {
+export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocuments }: Props) {
   const t = useTranslations('services.scholarship.apply');
   const { locale } = useParams<{ locale: string }>();
+  // Null when nobody is signed in — the page renders this wizard either way, and
+  // the prefill simply does nothing.
+  const { user } = useAuth();
 
   // Lazily seeded from `editRequest` (never a post-mount effect) — react-hook-form
   // only reads `defaultValues` once, at mount. For edited drafts the combined
@@ -206,9 +260,11 @@ export function ScholarshipWizard({ editRequest }: Props) {
           fullNames: editRequest.fullNames,
           studentId: editRequest.nationalId ?? '',
           email: editRequest.email ?? '',
-          phone: toLocalPhone(editRequest.phone),
+          phone: toLocalRwandanPhone(editRequest.phone),
         }
-      : {},
+      : // A saved draft always wins over the account: it is what the applicant
+        // last typed. Account details only fill a form with nothing in it yet.
+        accountStep1(user),
   );
   const [step2Data, setStep2Data] = useState<Partial<Step2Data>>(() =>
     editRequest
@@ -227,12 +283,54 @@ export function ScholarshipWizard({ editRequest }: Props) {
     editRequest
       ? {
           guardianName: editRequest.guardianName,
-          guardianPhone: toLocalPhone(editRequest.guardianPhone),
+          guardianPhone: toLocalRwandanPhone(editRequest.guardianPhone),
           householdIncome: '',
         }
       : {},
   );
   const [files, setFiles] = useState<DocFiles>(EMPTY_FILES);
+
+  /**
+   * What step 2 asks for.
+   *
+   * The scholarship's own `requiredDocuments` when it declares any — the detail
+   * page already promises exactly this list, and asking for something else made
+   * that promise a lie. A scholarship that declares none keeps the original
+   * transcript + report card, so older entries still work unchanged.
+   *
+   * Everything declared is filed as `additional` unless its key happens to name
+   * one of the four backend types; that enum is a loose label (see the entity),
+   * and `requirementKey` is what actually identifies the document now.
+   */
+  const declaredSlots: DocSlot[] = (requiredDocuments ?? []).map((doc) => ({
+    key: `req:${doc.key}`,
+    label: localizedLabel(doc.label, locale) || doc.key,
+    required: doc.required !== false,
+    documentType: (KNOWN_DOC_TYPES.has(doc.key)
+      ? doc.key
+      : 'additional') as ScholarshipDocumentType,
+    requirementKey: doc.key,
+  }));
+
+  /** What step 2 asked for before scholarships declared their own documents. */
+  const fallbackSlots: DocSlot[] = [
+    { key: 'transcript', label: t('docTranscript'), required: true, documentType: 'transcript' },
+    { key: 'reportCard', label: t('docReportCard'), required: true, documentType: 'academic_record' },
+  ];
+
+  const step2Slots: DocSlot[] = declaredSlots.length ? declaredSlots : fallbackSlots;
+
+  /**
+   * Step 4's generic extras. These are NOT scholarship-specific — they are the
+   * things any applicant may usefully attach — so they stay fixed and carry no
+   * requirementKey.
+   */
+  const SUPPORTING_SLOTS: DocSlot[] = [
+    { key: 'studentId',      label: t('docStudentId'),      required: true,  documentType: SLOT_DOCTYPE.studentId },
+    { key: 'recommendation', label: t('docRecommendation'), required: false, documentType: SLOT_DOCTYPE.recommendation },
+    { key: 'certificates',   label: t('docCertificates'),   required: false, documentType: SLOT_DOCTYPE.certificates },
+    { key: 'financial',      label: t('docFinancial'),      required: false, documentType: SLOT_DOCTYPE.financial },
+  ];
   const [declaration, setDeclaration] = useState(false);
 
   const [request, setRequest] = useState<ScholarshipApplication | null>(editRequest ?? null);
@@ -242,7 +340,12 @@ export function ScholarshipWizard({ editRequest }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const setFile = (key: DocSlotKey, f: File | null) =>
+  // Shown while the prefilled fields are on screen, so nobody submits their own
+  // name and number without noticing they were filled in for them.
+  const prefilled =
+    !editRequest && !!(step1Data.fullNames || step1Data.phone || step1Data.email);
+
+  const setFile = (key: string, f: File | null) =>
     setFiles((prev) => ({ ...prev, [key]: f }));
 
   const handleFinalSubmit = async () => {
@@ -250,6 +353,9 @@ export function ScholarshipWizard({ editRequest }: Props) {
     setSubmitError(null);
     try {
       const payload: CreateScholarshipApplicationPayload = {
+        // Which scholarship this is for. Taken from the route, never from a
+        // form field, and fixed for the life of the draft.
+        programId: editRequest?.programId ?? initialProgramId!,
         // Personal
         fullNames: step1Data.fullNames!,
         nationalId: step1Data.studentId || undefined, // Student ID reuses the nationalId column
@@ -283,16 +389,22 @@ export function ScholarshipWizard({ editRequest }: Props) {
       setDraftId(saved.id);
 
       // Upload each attached document, then record it against the draft.
-      const uploads = (Object.keys(files) as DocSlotKey[])
-        .map((key) => ({ key, file: files[key] }))
-        .filter((s): s is { key: DocSlotKey; file: File } => s.file !== null);
+      // Every slot the form actually offered — the scholarship's declared
+      // documents plus the generic supporting ones — paired with its file.
+      const allSlots: DocSlot[] = [...step2Slots, ...SUPPORTING_SLOTS];
+      const uploads = allSlots
+        .map((slot) => ({ slot, file: files[slot.key] ?? null }))
+        .filter((u): u is { slot: DocSlot; file: File } => u.file !== null);
 
       const failed: string[] = [];
-      for (const { key, file } of uploads) {
+      for (const { slot, file } of uploads) {
         try {
           const fileKey = await uploadMedia(file, 'scholarship-docs');
           await scholarshipApi.saveDocument(saved.id, {
-            documentType: SLOT_DOCTYPE[key],
+            documentType: slot.documentType,
+            // Null for the generic slots; set for anything answering a declared
+            // requirement, so a reviewer sees the file under what was asked for.
+            requirementKey: slot.requirementKey,
             fileKey,
             fileName: file.name,
             fileSize: file.size,
@@ -320,7 +432,9 @@ export function ScholarshipWizard({ editRequest }: Props) {
   };
 
   const handleReset = () => {
-    setStep1Data({});
+    // Back to a blank form, which for a signed-in applicant means their account
+    // details again — not emptier than the form they first saw.
+    setStep1Data(accountStep1(user));
     setStep2Data({});
     setStep3Data({});
     setStep4Data({});
@@ -342,6 +456,8 @@ export function ScholarshipWizard({ editRequest }: Props) {
         </div>
       )}
 
+      {prefilled && phase === 1 && <AccountPrefillNote text={t('prefillNote')} />}
+
       {phase === 1 && (
         <Step1Personal
           initialData={step1Data}
@@ -353,6 +469,7 @@ export function ScholarshipWizard({ editRequest }: Props) {
       )}
       {phase === 2 && (
         <Step2Academic
+          slots={step2Slots}
           initialData={step2Data}
           files={files}
           setFile={setFile}
@@ -622,12 +739,15 @@ function Step2Academic({
   initialData,
   files,
   setFile,
+  slots,
   onBack,
   onNext,
 }: {
   initialData: Partial<Step2Data>;
   files: DocFiles;
-  setFile: (key: DocSlotKey, f: File | null) => void;
+  setFile: (key: string, f: File | null) => void;
+  /** What this scholarship asks for — declared by the admin, or the fallback pair. */
+  slots: DocSlot[];
   onBack: () => void;
   onNext: (data: Step2Data) => void;
 }) {
@@ -646,7 +766,8 @@ function Step2Academic({
   });
 
   const submit = (data: Step2Data) => {
-    if (!files.transcript || !files.reportCard) {
+    // Whatever this scholarship declared as required — not a fixed pair.
+    if (slots.some((slot) => slot.required && !files[slot.key])) {
       setDocError(t('docRequiredError'));
       return;
     }
@@ -695,18 +816,15 @@ function Step2Academic({
             {t('requiredDocuments')}
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
-            <UploadSlot
-              label={t('docTranscript')}
-              required
-              file={files.transcript}
-              onChange={(f) => setFile('transcript', f)}
-            />
-            <UploadSlot
-              label={t('docReportCard')}
-              required
-              file={files.reportCard}
-              onChange={(f) => setFile('reportCard', f)}
-            />
+            {slots.map((slot) => (
+              <UploadSlot
+                key={slot.key}
+                label={slot.label}
+                required={slot.required}
+                file={files[slot.key] ?? null}
+                onChange={(f) => setFile(slot.key, f)}
+              />
+            ))}
           </div>
         </div>
 
@@ -818,7 +936,7 @@ function Step4Guardian({
 }: {
   initialData: Partial<Step4Data>;
   files: DocFiles;
-  setFile: (key: DocSlotKey, f: File | null) => void;
+  setFile: (key: string, f: File | null) => void;
   declaration: boolean;
   setDeclaration: (v: boolean) => void;
   submitting: boolean;
@@ -959,9 +1077,13 @@ function SuccessScreen({
   const t = useTranslations('services.scholarship.apply');
   const [copied, setCopied] = useState(false);
 
+  // The tracking code, NOT the application number. The number is the human
+  // reference on correspondence; the code is the credential that opens the
+  // tracker, and it is the only one of the two that does (migration 051). Handing
+  // over the number here would send every applicant to a dead end.
   const copyId = async () => {
     try {
-      await navigator.clipboard.writeText(app.applicationNumber);
+      await navigator.clipboard.writeText(app.trackingCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -983,7 +1105,7 @@ function SuccessScreen({
             {t('applicationIdLabel')}
           </p>
           <div className="flex items-center justify-center gap-2.5">
-            <span className="font-mono text-lg font-bold text-gray-900">{app.applicationNumber}</span>
+            <span className="font-mono text-lg font-bold text-gray-900">{app.trackingCode}</span>
             <button
               type="button"
               onClick={copyId}
@@ -996,8 +1118,11 @@ function SuccessScreen({
           <p className="text-xs text-gray-400 mt-2">{t('saveIdHint')}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+          {/* No `?id=` any more. Tracking needs an OTP to the phone on file, so a
+              prefilled code would buy nothing — and putting the credential in a
+              URL leaves it in history and referrers. Same as hajj. */}
           <Link
-            href={`/${locale}/services/scholarship/status?id=${app.applicationNumber}`}
+            href={`/${locale}/services/scholarship/status`}
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white font-semibold text-sm transition-colors"
           >
             <Search className="w-4 h-4" /> {t('trackApplication')}

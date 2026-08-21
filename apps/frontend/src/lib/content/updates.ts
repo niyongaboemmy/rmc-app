@@ -1,5 +1,21 @@
 import { Tri, tri } from './client';
 
+/**
+ * Binds a slide to a live record so its time-sensitive fields resolve from the
+ * database instead of from copy an admin typed months ago. Resolution happens in
+ * `./resolve-slides`; an unresolvable id falls back to the authored copy below.
+ *
+ * Deliberately ABSENT from `UPDATES_DEFAULT`. `mergeContent` merges the `items`
+ * array element-wise BY INDEX, so a default slide carrying a `source` would
+ * graft that binding onto whatever unrelated slide an admin happens to have
+ * saved at the same position.
+ */
+export interface SlideSource {
+  type: 'scholarship-program';
+  /** `scholarship_programs.id`. */
+  programId: string;
+}
+
 /** One slide in the Welcome carousel (Updates & Programs). */
 export interface UpdateSlide {
   badge: Tri;
@@ -13,15 +29,18 @@ export interface UpdateSlide {
   imageAlt: string;
   statValue: string;
   statLabel: Tri;
+  /** Absent (the default) means every field above is authored copy. */
+  source?: SlideSource;
 }
 
 export interface UpdatesContent {
   /**
-   * Legacy field kept for the admin editor; the carousel does NOT render it.
-   * The visible section header is `headingTitle` + `headingAccent` below.
+   * The carousel header, split so the accent half renders in green. Editable
+   * from Admin → Content → Updates & Programs and in place from Edit Mode.
+   *
+   * Records saved before the split may still carry a legacy `heading` key —
+   * nothing reads it, and no editor writes it any more.
    */
-  heading: Tri;
-  /** The visible carousel header, split so the accent word renders in green. */
   headingTitle: Tri;
   headingAccent: Tri;
   items: UpdateSlide[];
@@ -29,7 +48,6 @@ export interface UpdatesContent {
 
 /** Seeded from the live landing (WelcomeCarouselSection SLIDES) — English canonical. */
 export const UPDATES_DEFAULT: UpdatesContent = {
-  heading: tri('Updates & Programs', "Amakuru n'Gahunda", 'المستجدات والبرامج'),
   headingTitle: tri('Initiatives shaping the', 'Gahunda zubaka', 'مبادرات تبني'),
   headingAccent: tri('Rwandan ummah', 'umat nyarwanda', 'الأمة الرواندية'),
   items: [

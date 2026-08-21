@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull, Not } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as QRCode from 'qrcode';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
@@ -14,6 +14,7 @@ import { User } from '../users/entities/user.entity';
 import { RegisterMemberDto } from './dto/register-member.dto';
 import { ApproveMemberDto, ApprovalAction } from './dto/approve-member.dto';
 import { UpdateMemberStatusDto } from './dto/update-member-status.dto';
+import { allocateMembershipNumber } from '../common/utils/membership-number';
 
 @Injectable()
 export class MembersService {
@@ -23,41 +24,70 @@ export class MembersService {
     private readonly config: ConfigService,
   ) {}
 
-  private generateMembershipNumber(): string {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 90000) + 10000;
-    return `RMC-${year}-${random}`;
-  }
-
+  /**
+   * Completes the member registration form.
+   *
+   * Signup already created a profile row to reserve a membership number, so this
+   * fills that stub in rather than creating a second one — the old code read any
+   * existing profile as "already registered" and threw 409, which every account
+   * triggered, making the endpoint permanently unreachable. `registered_at`
+   * (migration 058) is what actually separates the two states.
+   *
+   * The membership number is never reissued here. It was allocated at signup and
+   * may already have been shown to the member; re-rolling it on submission would
+   * change an identifier they had been given.
+   */
   async register(userId: string, dto: RegisterMemberDto): Promise<MemberProfile> {
-    const existing = await this.profiles.findOne({ where: { userId } });
-    if (existing) throw new ConflictException('Member profile already exists for this user');
-
     if (dto.nationalId) {
       const nationalIdConflict = await this.profiles.findOne({
         where: { nationalId: dto.nationalId },
       });
-      if (nationalIdConflict) throw new ConflictException('National ID already registered');
+      if (nationalIdConflict && nationalIdConflict.userId !== userId) {
+        throw new ConflictException('National ID already registered');
+      }
     }
 
-    let membershipNumber = this.generateMembershipNumber();
-    while (await this.profiles.findOne({ where: { membershipNumber } })) {
-      membershipNumber = this.generateMembershipNumber();
-    }
+    // One transaction: the legacy branch allocates a membership number, and a
+    // number claimed for a submission that then fails must not be burned.
+    return this.profiles.manager.transaction(async (manager) => {
+      const repo = manager.getRepository(MemberProfile);
+      const existing = await repo.findOne({ where: { userId } });
 
-    const profile = this.profiles.create({
-      userId,
-      membershipNumber,
-      joinedDate: new Date(),
-      consentDate: dto.consentGiven ? new Date() : null,
-      approvalStatus: ApprovalStatus.PENDING,
-      memberStatus: MemberStatus.ACTIVE,
-      ...dto,
+      if (existing?.registeredAt) {
+        throw new ConflictException('Member profile already exists for this user');
+      }
+
+      // Accounts predating signup creating a profile still arrive here with none.
+      const profile =
+        existing ??
+        repo.create({
+          userId,
+          membershipNumber: await allocateMembershipNumber(manager),
+          joinedDate: new Date(),
+          approvalStatus: ApprovalStatus.PENDING,
+          memberStatus: MemberStatus.ACTIVE,
+        });
+
+      Object.assign(profile, dto, {
+        registeredAt: new Date(),
+        consentDate: dto.consentGiven ? new Date() : null,
+      });
+
+      return repo.save(profile);
     });
-
-    return this.profiles.save(profile);
   }
 
+  /**
+   * `registered` (the default) lists people who submitted the registration form —
+   * what "members" means everywhere this is shown. Signup reserves a profile row
+   * for every account, so without this filter the list was really a list of user
+   * accounts, and each one carried an Approve button for a form nobody had filled
+   * in.
+   *
+   * `unregistered` is the deliberate view of those stubs — accounts that signed up
+   * and never completed registration, which is a useful follow-up list rather than
+   * something to hide. `all` preserves the old behaviour for anyone who wants it.
+   */
   async findAll(filters: {
     search?: string;
     mosqueId?: string;
@@ -65,6 +95,7 @@ export class MembersService {
     category?: string;
     approvalStatus?: string;
     memberStatus?: string;
+    registrationState?: 'registered' | 'unregistered' | 'all';
     page?: number;
     limit?: number;
   }) {
@@ -78,6 +109,15 @@ export class MembersService {
       .skip(skip)
       .take(limit)
       .orderBy('mp.createdAt', 'DESC');
+
+    // Only the two explicit opt-outs widen the list; anything else — including a
+    // typo'd query param — falls back to registered rather than quietly showing
+    // every account.
+    if (filters.registrationState === 'unregistered') {
+      qb.andWhere('mp.registered_at IS NULL');
+    } else if (filters.registrationState !== 'all') {
+      qb.andWhere('mp.registered_at IS NOT NULL');
+    }
 
     if (filters.search) {
       qb.andWhere(
@@ -114,6 +154,18 @@ export class MembersService {
 
   async approve(id: string, adminId: string, dto: ApproveMemberDto): Promise<MemberProfile> {
     const profile = await this.findById(id);
+
+    /**
+     * A stub reserved at signup is `pending` like a real applicant, so without
+     * this an admin could approve someone who never submitted the form — no
+     * national ID, no mosque, no consent — and the approval would look identical
+     * to a reviewed one. There is nothing to review, so there is nothing to
+     * approve or reject.
+     */
+    if (!profile.registeredAt) {
+      throw new BadRequestException('Member has not submitted a registration yet');
+    }
+
     if (profile.approvalStatus !== ApprovalStatus.PENDING) {
       throw new BadRequestException('Profile is not in pending state');
     }
@@ -253,22 +305,40 @@ export class MembersService {
     return Buffer.from(pdfBytes);
   }
 
+  /**
+   * Counts registered members only. Every one of these numbers previously
+   * included the profile stub created at signup, so `total` was a count of user
+   * accounts and `pending` mixed "waiting for an admin to review" together with
+   * "never applied" — the review queue read as far longer than it was.
+   *
+   * `unregistered` reports the stubs rather than dropping them, so the figures
+   * still reconcile against the account total.
+   */
   getStatistics() {
+    const registered = { registeredAt: Not(IsNull()) };
     return Promise.all([
-      this.profiles.count(),
-      this.profiles.count({ where: { approvalStatus: ApprovalStatus.APPROVED } }),
-      this.profiles.count({ where: { approvalStatus: ApprovalStatus.PENDING } }),
-      this.profiles.count({ where: { approvalStatus: ApprovalStatus.REJECTED } }),
-    ]).then(([total, approved, pending, rejected]) => ({ total, approved, pending, rejected }));
+      this.profiles.count({ where: registered }),
+      this.profiles.count({ where: { ...registered, approvalStatus: ApprovalStatus.APPROVED } }),
+      this.profiles.count({ where: { ...registered, approvalStatus: ApprovalStatus.PENDING } }),
+      this.profiles.count({ where: { ...registered, approvalStatus: ApprovalStatus.REJECTED } }),
+      this.profiles.count({ where: { registeredAt: IsNull() } }),
+    ]).then(([total, approved, pending, rejected, unregistered]) => ({
+      total,
+      approved,
+      pending,
+      rejected,
+      unregistered,
+    }));
   }
 
+  /** Registrations per day, keyed on submission rather than account creation. */
   async getWeeklyStats(): Promise<{ day: string; count: number }[]> {
     const rows = await this.profiles
       .createQueryBuilder('mp')
-      .select("TO_CHAR(mp.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')", 'day')
+      .select("TO_CHAR(mp.registered_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')", 'day')
       .addSelect('COUNT(*)', 'count')
-      .where("mp.created_at >= NOW() - INTERVAL '7 days'")
-      .groupBy("TO_CHAR(mp.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')")
+      .where("mp.registered_at >= NOW() - INTERVAL '7 days'")
+      .groupBy("TO_CHAR(mp.registered_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')")
       .orderBy('day', 'ASC')
       .getRawMany<{ day: string; count: string }>();
     return rows.map((r) => ({ day: r.day, count: parseInt(r.count, 10) }));

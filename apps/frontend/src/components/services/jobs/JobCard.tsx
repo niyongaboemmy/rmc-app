@@ -3,112 +3,149 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import {
-  Briefcase, MapPin, Wallet, CalendarClock, CalendarDays, Users, ArrowRight, Clock,
-} from 'lucide-react';
+import { Briefcase, MapPin, Clock, Users, ArrowRight } from 'lucide-react';
 import { EMPLOYMENT_TYPE_LABELS, type JobPosting } from '@/lib/jobPostingsApi';
-import { formatDate, deadlineInfo, postedDate, canApplyTo } from './jobFormat';
+import { deadlineInfo, statusOf, type JobStatus } from './jobFormat';
+
+// Status drives every accent on a card — bar, dot, chip and deadline pill — so a
+// role's state reads at a glance, mirroring the Tenders listing. Classes are
+// spelled out in full so Tailwind's JIT keeps them.
+const STATUS_STYLES: Record<
+  JobStatus,
+  { bar: string; dot: string; chip: string; deadline: string; hoverBorder: string; titleHover: string }
+> = {
+  open: {
+    bar: 'bg-rmc-green',
+    dot: 'bg-rmc-green',
+    chip: 'bg-rmc-green/10 text-rmc-green',
+    deadline: 'bg-rmc-green/10 text-rmc-green',
+    hoverBorder: 'hover:border-rmc-green/30',
+    titleHover: 'group-hover:text-rmc-green',
+  },
+  closing: {
+    bar: 'bg-amber-500',
+    dot: 'bg-amber-500',
+    chip: 'bg-amber-50 text-amber-600',
+    deadline: 'bg-amber-50 text-amber-600',
+    hoverBorder: 'hover:border-amber-300',
+    titleHover: 'group-hover:text-amber-600',
+  },
+  closed: {
+    bar: 'bg-gray-300',
+    dot: 'bg-gray-400',
+    chip: 'bg-gray-100 text-gray-500',
+    deadline: 'bg-gray-100 text-gray-400',
+    hoverBorder: 'hover:border-gray-300',
+    titleHover: 'group-hover:text-gray-700',
+  },
+};
 
 /**
- * Premium job posting card — shared by the openings listing and the
- * "other open positions" block on the details page. Shows every available
- * field (title, department, type, location, salary, posted date, deadline)
- * and a clear two-action footer (View details + Apply).
+ * Job posting card — status-driven like the Tenders listing card. A single
+ * clickable surface leading to the details page. Shared by the openings
+ * listing and the "other open positions" block on the details page.
  */
-export function JobCard({ posting: p }: { posting: JobPosting }) {
+export function JobCard({ posting: p, index }: { posting: JobPosting; index?: number }) {
   const t = useTranslations('services.jobs.openings');
   const { locale } = useParams<{ locale: string }>();
 
+  const status = statusOf(p);
+  const styles = STATUS_STYLES[status];
   const dl = deadlineInfo(p.applicationDeadline);
-  const applyable = canApplyTo(p);
-
   const detailsHref = `/${locale}/services/jobs/openings/${p.id}`;
-  const applyHref = `/${locale}/services/jobs/apply?job=${p.id}`;
+
+  function deadlineLabel(): string {
+    if (dl.daysLeft === null) return t('noDeadline');
+    if (dl.passed) return t('applicationsClosed');
+    if (dl.daysLeft === 0) return t('closesToday');
+    if (dl.daysLeft === 1) return t('closesTomorrow');
+    return t('closesInDays', { days: dl.daysLeft });
+  }
 
   return (
-    <article className="group relative flex flex-col rounded-2xl bg-white border border-gray-200/80 shadow-sm hover:shadow-lg hover:shadow-rmc-green/10 hover:border-rmc-green/40 transition-all duration-300 hover:-translate-y-0.5 overflow-hidden">
-      <div className="flex flex-col flex-1 p-5">
-        {/* Header: icon + title/department + type badge */}
-        <div className="flex items-start gap-3.5">
-          <span className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center shrink-0 ring-1 ring-rmc-green/10 group-hover:bg-rmc-green group-hover:ring-rmc-green transition-colors duration-300">
-            <Briefcase className="w-5 h-5 text-rmc-green-dark group-hover:text-white transition-colors duration-300" strokeWidth={2} />
+    <Link
+      href={detailsHref}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-gray-200/70 ${styles.hoverBorder}`}
+    >
+      {/* Status accent bar */}
+      <span className={`h-1 w-full shrink-0 ${styles.bar}`} />
+
+      <div className="flex flex-1 flex-col p-6">
+        {/* Top row: status chip + employment type + index */}
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${styles.chip}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`} />
+            {t(`filters.${status}`)}
           </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-gray-900 leading-snug text-[15px] line-clamp-2">
-              <Link href={detailsHref} className="outline-none focus-visible:underline focus-visible:decoration-rmc-green after:absolute after:inset-0 after:content-['']">
-                {p.title}
-              </Link>
-            </h3>
-            {p.department && <p className="text-xs text-gray-500 mt-0.5 truncate">{p.department}</p>}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+              {EMPLOYMENT_TYPE_LABELS[p.employmentType]}
+            </span>
+            {typeof index === 'number' && (
+              <span className="font-mono text-[11px] tracking-widest text-gray-200 tabular-nums group-hover:text-gray-300 transition-colors">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Type + positions chips */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-3">
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-rmc-green-light text-rmc-green-dark">
-            <Briefcase className="w-3 h-3" /> {EMPLOYMENT_TYPE_LABELS[p.employmentType]}
+        {/* Icon + title */}
+        <div className="flex items-start gap-3 mb-2">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 border border-gray-100">
+            <Briefcase className="w-4 h-4 text-gray-400" />
           </span>
-          {p.numberOfPositions > 1 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">
-              <Users className="w-3 h-3" /> {p.numberOfPositions} {t('positions')}
-            </span>
-          )}
-          {dl.soon && !dl.passed && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">
-              <Clock className="w-3 h-3" /> {t('closingSoon')}
-            </span>
-          )}
+          <div className="min-w-0 flex-1">
+            <h3 className={`font-bold text-gray-900 text-[15px] leading-snug line-clamp-2 transition-colors duration-300 ${styles.titleHover}`}>
+              {p.title}
+            </h3>
+            {(p.department || p.location) && (
+              <p className="mt-1 flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-gray-400">
+                {p.department && <span>{p.department}</span>}
+                {p.location && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> {p.location}
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mt-3 flex-1">{p.description}</p>
+        {/* Excerpt */}
+        <p className="text-gray-500 text-[13px] leading-relaxed line-clamp-2 flex-1 mb-5 mt-1">
+          {p.description}
+        </p>
 
-        {/* Meta grid */}
-        <dl className="grid grid-cols-2 gap-x-3 gap-y-2 mt-4 text-xs">
-          {p.location && (
-            <div className="inline-flex items-center gap-1.5 text-gray-600 min-w-0">
-              <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span className="truncate">{p.location}</span>
-            </div>
-          )}
-          {p.salaryRange && (
-            <div className="inline-flex items-center gap-1.5 text-gray-600 min-w-0">
-              <Wallet className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span className="truncate">{p.salaryRange}</span>
-            </div>
-          )}
-          {postedDate(p) && (
-            <div className="inline-flex items-center gap-1.5 text-gray-600 min-w-0">
-              <CalendarDays className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span className="truncate">{t('posted')} {formatDate(postedDate(p), locale)}</span>
-            </div>
-          )}
-          {p.applicationDeadline && (
-            <div className={`inline-flex items-center gap-1.5 min-w-0 ${dl.passed ? 'text-gray-400' : dl.soon ? 'text-amber-700 font-medium' : 'text-gray-600'}`}>
-              <CalendarClock className="w-3.5 h-3.5 shrink-0 opacity-70" />
-              <span className="truncate">{t('deadline')} {formatDate(p.applicationDeadline, locale)}</span>
-            </div>
-          )}
-        </dl>
-      </div>
+        {/* Footer: deadline + positions + view */}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-4 border-t border-gray-100">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold ${styles.deadline}`}>
+            <Clock className="w-3 h-3" />
+            {deadlineLabel()}
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            {p.numberOfPositions > 1 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <Users className="w-2.5 h-2.5" />
+                {p.numberOfPositions}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-gray-400 group-hover:text-rmc-green transition-colors">
+              {t('viewDetails')}
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
+            </span>
+          </div>
+        </div>
 
-      {/* Footer actions — z-10 keeps them clickable above the card's overlay link */}
-      <div className="relative z-10 flex items-center gap-2 px-5 py-3.5 border-t border-gray-100 bg-gray-50/60">
-        <Link
-          href={detailsHref}
-          className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 text-[13px] font-semibold hover:border-rmc-green/40 hover:text-rmc-green transition-colors outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/40 ${applyable ? 'flex-1' : 'w-full'}`}
-        >
-          {t('viewDetails')}
-        </Link>
-        {applyable && (
-          <Link
-            href={applyHref}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-rmc-green text-white text-[13px] font-semibold hover:bg-rmc-green-dark shadow-sm hover:shadow transition-all outline-none focus-visible:ring-2 focus-visible:ring-rmc-green/50 focus-visible:ring-offset-1"
-          >
-            {t('apply')} <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+        {/* Urgency bar for closing-soon roles */}
+        {status === 'closing' && dl.daysLeft !== null && dl.daysLeft >= 0 && (
+          <div className="mt-3 h-1 rounded-full bg-amber-100 overflow-hidden">
+            <div
+              className="h-full bg-amber-400 rounded-full"
+              style={{ width: `${Math.max(5, 100 - (dl.daysLeft / 7) * 100)}%` }}
+            />
+          </div>
         )}
       </div>
-    </article>
+    </Link>
   );
 }

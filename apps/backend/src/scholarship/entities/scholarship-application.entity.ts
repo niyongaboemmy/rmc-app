@@ -39,8 +39,21 @@ export class ScholarshipApplication {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  /**
+   * The human reference: sequential, printed on correspondence, searched in the
+   * admin console. Deliberately NOT a credential — it is enumerable by design.
+   */
   @Column({ name: 'application_number', type: 'varchar', length: 40, nullable: true, unique: true })
   applicationNumber: string | null;
+
+  /**
+   * The credential the applicant tracks with. Crypto-random and unguessable, so
+   * knowing one tells you nothing about any other — unlike `applicationNumber`,
+   * which walking a counter would enumerate. Public tracking resolves by THIS
+   * and nothing else (migration 051).
+   */
+  @Column({ name: 'tracking_code', type: 'varchar', length: 40, unique: true })
+  trackingCode: string;
 
   @Index('IDX_scholarship_app_applicant')
   @Column({ name: 'applicant_id', type: 'uuid' })

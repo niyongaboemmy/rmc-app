@@ -13,16 +13,9 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { apiClient } from '@/lib/api';
+import { passwordSchema } from '@/lib/password';
 
-const schema = z.object({
-  newPassword: z
-    .string()
-    .min(8, 'Minimum 8 characters')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_#])/,
-      'Must include uppercase, lowercase, number & special char',
-    ),
-});
+const schema = z.object({ newPassword: passwordSchema });
 type FormData = { newPassword: string };
 
 const LockIcon = () => (

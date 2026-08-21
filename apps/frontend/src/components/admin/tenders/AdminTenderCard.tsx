@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { resolveI18n, type Tender } from '@/lib/tendersApi';
 import type { TenderApplicationCounts } from '@/lib/tenderApplicationAdminApi';
 import { STATUS_LABELS_SHORT } from '@/lib/tenderWorkflow';
+import { readDeadline, getLifecycle, type Lifecycle } from '@/lib/deadline';
 
 /**
  * A tender as it appears on the admin picker — a single list row rather than a
@@ -16,29 +17,27 @@ import { STATUS_LABELS_SHORT } from '@/lib/tenderWorkflow';
  * how many bids came in, and how long is left to decide.
  */
 
-export type TenderLifecycle = 'open' | 'closing' | 'closed';
-
-export function getDiffDays(expiresAt: string | null): number | null {
-  if (!expiresAt) return null;
-  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
-}
+export type TenderLifecycle = Lifecycle;
 
 /** Same thresholds as the public list: inside a week is "closing". */
-export function getLifecycle(expiresAt: string | null): TenderLifecycle {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'open';
-  if (diff < 0) return 'closed';
-  if (diff <= 7) return 'closing';
-  return 'open';
-}
+export { getLifecycle };
 
 export function deadlineLabel(expiresAt: string | null): string {
-  const diff = getDiffDays(expiresAt);
-  if (diff === null) return 'No deadline';
-  if (diff < 0) return `Closed ${Math.abs(diff)}d ago`;
-  if (diff === 0) return 'Closes today';
-  if (diff === 1) return '1 day left';
-  return `${diff} days left`;
+  const deadline = readDeadline(expiresAt);
+  switch (deadline.state) {
+    case 'none':
+      return 'No deadline';
+    // `days` is the calendar gap, so a tender that lapsed this morning is 0 —
+    // "Closed 0d ago" reads as a bug. Name the day instead.
+    case 'closed':
+      return deadline.days === 0 ? 'Closed today' : `Closed ${Math.abs(deadline.days ?? 0)}d ago`;
+    case 'today':
+      return 'Closes today';
+    case 'tomorrow':
+      return '1 day left';
+    default:
+      return `${deadline.days} days left`;
+  }
 }
 
 const LIFECYCLE_STYLES: Record<

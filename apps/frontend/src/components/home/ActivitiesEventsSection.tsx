@@ -227,6 +227,7 @@ export function ActivitiesEventsSection() {
               as="h2"
               lang={locale}
               value={pick(content.title, locale)}
+              editValue={content.title[lang]}
               onCommit={(v) => setField((d) => { d.title[lang] = v; })}
               className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 ${arFont}`}
               dir={rtl ? 'rtl' : 'ltr'}
@@ -253,6 +254,7 @@ export function ActivitiesEventsSection() {
               as="p"
               lang={locale}
               value={pick(content.lede, locale)}
+              editValue={content.lede[lang]}
               onCommit={(v) => setField((d) => { d.lede[lang] = v; })}
               className={`text-gray-500 max-w-xl mx-auto text-sm md:text-base leading-relaxed ${arFont}`}
               dir={rtl ? 'rtl' : 'ltr'}
@@ -282,6 +284,7 @@ export function ActivitiesEventsSection() {
                       as="h3"
                       lang={locale}
                       value={pick(content.activitiesHeading, locale)}
+                      editValue={content.activitiesHeading[lang]}
                       onCommit={(v) => setField((d) => { d.activitiesHeading[lang] = v; })}
                       className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
                       dir={rtl ? 'rtl' : 'ltr'}
@@ -317,6 +320,10 @@ export function ActivitiesEventsSection() {
                   const title = pick(activity.title, locale);
                   const excerpt = pick(activity.excerpt, locale);
                   const category = pick(activity.category, locale);
+                  // Unresolved active-locale copy, for the edit boxes — see `editValue`.
+                  const rawTitle = activity.title[lang];
+                  const rawExcerpt = activity.excerpt[lang];
+                  const rawCategory = activity.category[lang];
 
                   // Edit Mode: same card, but non-navigating and click-to-edit.
                   if (editing) {
@@ -342,6 +349,7 @@ export function ActivitiesEventsSection() {
                               <InlineText
                                 lang={locale}
                                 value={category}
+                                editValue={rawCategory}
                                 onCommit={(v) => setActivityTri(activityIndex, 'category', v)}
                                 dir={rtl ? 'rtl' : 'ltr'}
                                 placeholder="Category"
@@ -356,6 +364,7 @@ export function ActivitiesEventsSection() {
                             as="h4"
                             lang={locale}
                             value={title}
+                            editValue={rawTitle}
                             onCommit={(v) => setActivityTri(activityIndex, 'title', v)}
                             className={`text-sm sm:text-[15px] font-bold text-gray-900 leading-snug mb-1.5 ${arFont}`}
                             dir={rtl ? 'rtl' : 'ltr'}
@@ -365,6 +374,7 @@ export function ActivitiesEventsSection() {
                             as="p"
                             lang={locale}
                             value={excerpt}
+                            editValue={rawExcerpt}
                             onCommit={(v) => setActivityTri(activityIndex, 'excerpt', v)}
                             className={`text-xs sm:text-[13px] text-gray-500 leading-relaxed ${arFont}`}
                             dir={rtl ? 'rtl' : 'ltr'}
@@ -461,6 +471,7 @@ export function ActivitiesEventsSection() {
                             <InlineText
                               lang={locale}
                               value={pick(event.type, locale)}
+                              editValue={event.type[lang]}
                               onCommit={(v) => setEventTri(eventIndex, 'type', v)}
                               dir={rtl ? 'rtl' : 'ltr'}
                               placeholder="Type"
@@ -475,6 +486,7 @@ export function ActivitiesEventsSection() {
                           as="h4"
                           lang={locale}
                           value={pick(event.title, locale)}
+                          editValue={event.title[lang]}
                           onCommit={(v) => setEventTri(eventIndex, 'title', v)}
                           className={`text-sm sm:text-[15px] font-bold text-gray-900 leading-snug mb-1.5 ${arFont}`}
                           dir={rtl ? 'rtl' : 'ltr'}
@@ -559,6 +571,7 @@ export function ActivitiesEventsSection() {
                       as="h3"
                       lang={locale}
                       value={pick(content.eventsHeading, locale)}
+                      editValue={content.eventsHeading[lang]}
                       onCommit={(v) => setField((d) => { d.eventsHeading[lang] = v; })}
                       className={`text-base md:text-lg font-bold text-gray-900 leading-none ${arFont}`}
                       dir={rtl ? 'rtl' : 'ltr'}
@@ -629,6 +642,7 @@ export function ActivitiesEventsSection() {
                       as="h4"
                       lang={locale}
                       value={pick(featured.title, locale)}
+                      editValue={featured.title[lang]}
                       onCommit={(v) => setEventTri(featuredIndex, 'title', v)}
                       className={`text-[15px] sm:text-base font-bold leading-snug mb-2 ${arFont}`}
                       dir={rtl ? 'rtl' : 'ltr'}
@@ -758,6 +772,7 @@ export function ActivitiesEventsSection() {
                           <InlineText
                             lang={locale}
                             value={pick(event.type, locale)}
+                            editValue={event.type[lang]}
                             onCommit={(v) => setEventTri(eventIndex, 'type', v)}
                             dir={rtl ? 'rtl' : 'ltr'}
                             placeholder="Type"
@@ -767,6 +782,7 @@ export function ActivitiesEventsSection() {
                           as="h4"
                           lang={locale}
                           value={pick(event.title, locale)}
+                          editValue={event.title[lang]}
                           onCommit={(v) => setEventTri(eventIndex, 'title', v)}
                           className={`mt-1.5 text-sm font-bold text-gray-900 leading-snug ${arFont}`}
                           dir={rtl ? 'rtl' : 'ltr'}

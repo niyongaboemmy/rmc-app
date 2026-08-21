@@ -40,6 +40,16 @@ export class JobApplicationsAdminController {
     });
   }
 
+  // Declared before ':id' so "reports" isn't parsed as an application id.
+  @Get('reports')
+  @Permissions(Permission.JOB_APPLICATIONS_VIEW)
+  @ApiOperation({ summary: 'Job application counts by status (admin reports)' })
+  @ApiQuery({ name: 'dateFrom', required: false })
+  @ApiQuery({ name: 'dateTo', required: false })
+  getReports(@Query('dateFrom') dateFrom?: string, @Query('dateTo') dateTo?: string) {
+    return this.service.adminGetReports({ dateFrom, dateTo });
+  }
+
   @Get(':id')
   @Permissions(Permission.JOB_APPLICATIONS_VIEW)
   @ApiOperation({ summary: 'Get full job application detail' })

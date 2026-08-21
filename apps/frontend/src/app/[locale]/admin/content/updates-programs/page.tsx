@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -21,9 +21,10 @@ import {
   type UpdateSlide,
   type UpdatesContent,
 } from '@/lib/content-api';
+import { scholarshipPublicApi, type ScholarshipProgram } from '@/lib/scholarshipApi';
 import {
   Megaphone, ArrowLeft, Plus, Edit2, Trash2,
-  ExternalLink, Link2, Save,
+  ExternalLink, Link2, Save, Zap,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -80,7 +81,8 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
   const { locale } = useParams<{ locale: string }>();
   const { success, error } = useToast();
 
-  const [heading, setHeading] = useState<Tri>(UPDATES_DEFAULT.heading);
+  const [headingTitle, setHeadingTitle] = useState<Tri>(UPDATES_DEFAULT.headingTitle);
+  const [headingAccent, setHeadingAccent] = useState<Tri>(UPDATES_DEFAULT.headingAccent);
   const [items, setItems] = useState<SlideRow[]>(() => withIds(UPDATES_DEFAULT.items));
   const [lang, setLang] = useState<Lang>('en');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,15 +91,7 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<UpdateSlide>(EMPTY_SLIDE);
-
-  // The visible carousel header (`headingTitle`/`headingAccent`) is edited on the
-  // landing page itself, not here. This editor still owns the whole `updates`
-  // record, so it must carry those fields through a save or they would be reset
-  // to the defaults on every slide edit.
-  const sectionHeader = useRef({
-    headingTitle: UPDATES_DEFAULT.headingTitle,
-    headingAccent: UPDATES_DEFAULT.headingAccent,
-  });
+  const [programs, setPrograms] = useState<ScholarshipProgram[]>([]);
 
   // Load any previously saved content; fall back to defaults if none exists.
   useEffect(() => {
@@ -106,12 +100,9 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
       .then((data) => {
         if (active && data) {
           const merged = { ...UPDATES_DEFAULT, ...data };
-          setHeading(merged.heading);
+          setHeadingTitle(merged.headingTitle);
+          setHeadingAccent(merged.headingAccent);
           setItems(withIds(merged.items));
-          sectionHeader.current = {
-            headingTitle: merged.headingTitle,
-            headingAccent: merged.headingAccent,
-          };
         }
       })
       .catch(() => {
@@ -125,12 +116,28 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
     };
   }, []);
 
-  /** Persist the whole UpdatesContent to the store. */
+  // Published scholarships, for the "Live source" picker. Failing to load them
+  // only empties the dropdown — every slide stays editable as authored copy.
+  useEffect(() => {
+    let active = true;
+    scholarshipPublicApi.listPrograms().then((rows) => {
+      if (active) setPrograms(rows);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  /**
+   * Persist the whole UpdatesContent to the store. Every save carries the header
+   * as well as the slides, so a slide edit can never reset a header the admin
+   * (or Edit Mode) set, and vice-versa.
+   */
   const persist = useCallback(
-    async (nextHeading: Tri, nextItems: SlideRow[]) => {
+    async (nextTitle: Tri, nextAccent: Tri, nextItems: SlideRow[]) => {
       const full: UpdatesContent = {
-        heading: nextHeading,
-        ...sectionHeader.current,
+        headingTitle: nextTitle,
+        headingAccent: nextAccent,
         items: nextItems.map(stripId),
       };
       await saveSiteContent(ContentKeys.updates, full);
@@ -164,8 +171,15 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
   );
 
   const handleSave = useCallback(async () => {
-    if (!formData.badge.en.trim() || !formData.title.en.trim() || !formData.cta.en.trim()) {
-      error('English badge, title, and CTA are required.');
+    // A linked slide takes its title from the scholarship, so requiring one here
+    // would make a freshly linked slide impossible to save.
+    const needsTitle = !formData.source;
+    if (!formData.badge.en.trim() || !formData.cta.en.trim() || (needsTitle && !formData.title.en.trim())) {
+      error(
+        needsTitle
+          ? 'English badge, title, and CTA are required.'
+          : 'English badge and CTA are required.',
+      );
       return;
     }
     setSaving(true);
@@ -173,7 +187,7 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
       ? items.map((i) => (i.id === editingItem.id ? { ...formData, id: i.id } : i))
       : [...items, { ...formData, id: newId() }];
     try {
-      await persist(heading, next);
+      await persist(headingTitle, headingAccent, next);
       setItems(next);
       success(editingItem ? 'Item updated successfully.' : 'Item added successfully.');
       setIsModalOpen(false);
@@ -182,14 +196,14 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
     } finally {
       setSaving(false);
     }
-  }, [formData, editingItem, items, heading, persist, success, error]);
+  }, [formData, editingItem, items, headingTitle, headingAccent, persist, success, error]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     setSaving(true);
     const next = items.filter((i) => i.id !== deleteId);
     try {
-      await persist(heading, next);
+      await persist(headingTitle, headingAccent, next);
       setItems(next);
       success('Item deleted.');
       setDeleteId(null);
@@ -198,22 +212,34 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
     } finally {
       setSaving(false);
     }
-  }, [deleteId, items, heading, persist, success, error]);
+  }, [deleteId, items, headingTitle, headingAccent, persist, success, error]);
 
   const handleSaveHeading = useCallback(async () => {
+    // The accent half may be left empty (a one-part heading); the first half may
+    // not, or the section would render headerless.
+    if (!headingTitle.en.trim()) {
+      error('The English heading is required.');
+      return;
+    }
     setSaving(true);
     try {
-      await persist(heading, items);
+      await persist(headingTitle, headingAccent, items);
       success('Section heading saved.');
     } catch {
       error('Could not save heading. Please try again.');
     } finally {
       setSaving(false);
     }
-  }, [heading, items, persist, success, error]);
+  }, [headingTitle, headingAccent, items, persist, success, error]);
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const fc = lang === 'ar' ? 'font-arabic' : '';
+
+  // A linked slide resolves its title and link from the scholarship at render
+  // time, so those inputs are shown but locked — editing them would have no
+  // visible effect. The values stay stored as the fallback used if the
+  // scholarship is later deleted or returned to draft.
+  const linked = !!formData.source;
 
   return (
     <div className="space-y-6">
@@ -247,9 +273,9 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
         </button>
       </div>
 
-      {/* ── Section heading (Tri) ── */}
+      {/* ── Section heading (two Tri halves) ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between gap-4 mb-1">
           <h2 className="text-sm font-bold text-gray-700">Section Heading</h2>
           <button
             onClick={handleSaveHeading}
@@ -260,22 +286,53 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
             {loading ? 'Loading…' : 'Save Heading'}
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {LANGS.map((l) => (
-            <div key={l.key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Heading ({l.label}){l.key === 'en' && <span className="text-red-500"> *</span>}
-              </label>
-              <input
-                dir={l.dir}
-                type="text"
-                value={heading[triKey[l.key]]}
-                onChange={(e) => setHeading((prev) => ({ ...prev, [triKey[l.key]]: e.target.value }))}
-                placeholder="Updates & Programs"
-                className={`${INPUT_CLS} ${l.key === 'ar' ? 'font-arabic' : ''}`}
-              />
-            </div>
-          ))}
+        <p className="text-xs text-gray-400 mb-4">
+          Sits above the carousel as “Heading <span className="text-rmc-green font-semibold">Accent</span>”.
+          The accent half renders in green and may be left empty. The same text is editable
+          in place from Edit Mode on the homepage.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {LANGS.map((l) => {
+            const fcl = l.key === 'ar' ? 'font-arabic' : '';
+            return (
+              <div key={l.key} className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  {l.label}
+                  {l.key === 'en' && <span className="text-red-500"> *</span>}
+                </p>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1" htmlFor={`heading-${l.key}`}>Heading</label>
+                  <input
+                    id={`heading-${l.key}`}
+                    dir={l.dir}
+                    type="text"
+                    value={headingTitle[triKey[l.key]]}
+                    onChange={(e) => setHeadingTitle((prev) => ({ ...prev, [triKey[l.key]]: e.target.value }))}
+                    placeholder="Initiatives shaping the"
+                    className={`${INPUT_CLS} ${fcl}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1" htmlFor={`accent-${l.key}`}>Accent</label>
+                  <input
+                    id={`accent-${l.key}`}
+                    dir={l.dir}
+                    type="text"
+                    value={headingAccent[triKey[l.key]]}
+                    onChange={(e) => setHeadingAccent((prev) => ({ ...prev, [triKey[l.key]]: e.target.value }))}
+                    placeholder="Rwandan ummah"
+                    className={`${INPUT_CLS} ${fcl}`}
+                  />
+                </div>
+                {/* Live preview — `pick` mirrors the landing page, so an untranslated
+                    field shows the English it will actually fall back to. */}
+                <p dir={l.dir} className={`text-xs text-gray-400 truncate ${fcl}`}>
+                  {pick(headingTitle, l.key) || '—'}{' '}
+                  <span className="text-rmc-green font-semibold">{pick(headingAccent, l.key)}</span>
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -291,7 +348,13 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
           </div>
         )}
         {items.map((item) => {
-          const title = pick(item.title, lang);
+          // A linked slide renders the scholarship's title on the homepage, so
+          // show that here too. An unresolvable link (deleted, or back to draft)
+          // falls through to the authored copy, exactly as the carousel does.
+          const linkedProgram = item.source
+            ? programs.find((p) => p.id === item.source?.programId)
+            : undefined;
+          const title = linkedProgram?.title ?? pick(item.title, lang);
           const badge = pick(item.badge, lang);
           const cta = pick(item.cta, lang);
           return (
@@ -315,6 +378,19 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
                   <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-gray-50 text-gray-500 font-medium border border-gray-100">
                     {cta || '—'}
                   </span>
+                  {item.source && (
+                    <span
+                      title={linkedProgram ? `Linked to “${linkedProgram.title}”` : 'Linked scholarship not found — showing the written copy'}
+                      className={`inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-medium border ${
+                        linkedProgram
+                          ? 'bg-rmc-green/10 text-rmc-green border-rmc-green/20'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}
+                    >
+                      <Zap className="w-3 h-3" />
+                      {linkedProgram ? 'Live' : 'Link broken'}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
@@ -353,6 +429,37 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
           <ModalDescription>Provide the slide content in all languages, plus icon, image, link, and stat.</ModalDescription>
         </ModalHeader>
         <ModalBody className="space-y-5">
+          {/* Live source — binds the dated fields to a scholarship record */}
+          <FormField
+            label="Live source"
+            hint={
+              linked
+                ? 'Title and link come from the scholarship. The deadline sentence is appended to the description automatically, so leave dates out of the copy below.'
+                : 'Optional. Link a scholarship to keep this slide’s title, link, and deadline in step with the record.'
+            }
+          >
+            <select
+              value={formData.source?.programId ?? ''}
+              onChange={(e) =>
+                setField(
+                  'source',
+                  e.target.value
+                    ? { type: 'scholarship-program', programId: e.target.value }
+                    : undefined,
+                )
+              }
+              className={INPUT_CLS}
+            >
+              <option value="">None — the copy below is used as written</option>
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                  {p.status === 'closed' ? ' (closed)' : ''}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
           {/* Non-translated fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Icon" required>
@@ -364,9 +471,10 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
                 {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
               </select>
             </FormField>
-            <FormField label="CTA Link (href)">
+            <FormField label="CTA Link (href)" hint={linked ? 'Set by the linked scholarship.' : undefined}>
               <input
                 type="text"
+                disabled={linked}
                 value={formData.ctaHref}
                 onChange={(e) => setField('ctaHref', e.target.value)}
                 placeholder="/services"
@@ -421,10 +529,17 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
               <FormField label={`Badge (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
                 <input dir={dir} type="text" value={formData.badge[triKey[lang]]} onChange={(e) => setTriField('badge', e.target.value)} placeholder="Scholarships 2025" className={`${INPUT_CLS} ${fc}`} />
               </FormField>
-              <FormField label={`Title (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
-                <input dir={dir} type="text" value={formData.title[triKey[lang]]} onChange={(e) => setTriField('title', e.target.value)} placeholder="Apply for the RMC Education Scholarship Program" className={`${INPUT_CLS} ${fc}`} />
+              <FormField
+                label={`Title (${LANGS.find((l) => l.key === lang)?.label})`}
+                required={lang === 'en' && !linked}
+                hint={linked ? 'Set by the linked scholarship; kept as the fallback if that scholarship is removed.' : undefined}
+              >
+                <input dir={dir} type="text" disabled={linked} value={formData.title[triKey[lang]]} onChange={(e) => setTriField('title', e.target.value)} placeholder="Apply for the RMC Education Scholarship Program" className={`${INPUT_CLS} ${fc}`} />
               </FormField>
-              <FormField label={`Description (${LANGS.find((l) => l.key === lang)?.label})`}>
+              <FormField
+                label={`Description (${LANGS.find((l) => l.key === lang)?.label})`}
+                hint={linked ? 'The live deadline is appended to this text — do not write a date here.' : undefined}
+              >
                 <textarea dir={dir} rows={3} value={formData.description[triKey[lang]]} onChange={(e) => setTriField('description', e.target.value)} placeholder="Full and partial scholarships…" className={`${INPUT_CLS} resize-none ${fc}`} />
               </FormField>
               <FormField label={`CTA Label (${LANGS.find((l) => l.key === lang)?.label})`} required={lang === 'en'}>
@@ -462,7 +577,7 @@ function UpdatesProgramsManager({ embedded = false }: { embedded?: boolean } = {
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const INPUT_CLS = 'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent';
+const INPUT_CLS = 'w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
 const CANCEL_BTN = 'px-5 py-2.5 text-sm font-semibold text-gray-600 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors';
 
 function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
@@ -478,13 +593,14 @@ function LanguageTabs({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => v
   );
 }
 
-function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function FormField({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
+      {hint && <p className="mt-1.5 text-xs text-gray-400">{hint}</p>}
     </div>
   );
 }

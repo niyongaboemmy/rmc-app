@@ -20,8 +20,10 @@ import { dawahApi, type DawahCourse, type DiscussionQuestion } from '@/lib/dawah
 export async function getDawahContent(): Promise<DawahContent> {
   try {
     const saved = await getSiteContent<DawahContent>(ContentKeys.dawah);
-    // mergeContent, not a spread: a saved section whose rw/ar are still blank
-    // would otherwise overwrite the seed's translations with empty strings.
+    // mergeContent, not a spread: a saved section that only carries part of the
+    // shape would otherwise blank out every field it omits. Keys it does carry win,
+    // empty translations included — that is how an admin says "no copy in this
+    // locale" and `pick()` falls back to English at render time.
     if (saved) return mergeContent(DAWAH_DEFAULT, saved);
   } catch {
     // Backend unreachable or section unset — fall back to the seeded defaults.

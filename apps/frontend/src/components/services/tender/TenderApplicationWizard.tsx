@@ -19,6 +19,9 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { AccountPrefillNote } from '@/components/services/shared/AccountPrefillNote';
+import { useAuth, type AuthUser } from '@/hooks/useAuth';
+import { accountFullName, toLocalRwandanPhone } from '@/lib/accountPrefill';
 import { publicApi } from '@/lib/public-api';
 import { resolveI18n, type TenderI18n } from '@/lib/tendersApi';
 import { TenderDocumentsStep } from './TenderDocumentsStep';
@@ -33,11 +36,6 @@ import {
 const PHONE_RE = /^07[2389][0-9]{7}$/;
 const TIN_RE = /^[0-9]{9}$/;
 const COVER_NOTE_MAX = 2000;
-
-/** +250781234567 (API format) → 0781234567 (what the user sees/types). */
-function toLocalPhone(e164: string): string {
-  return e164?.startsWith('+250') ? `0${e164.slice(4)}` : e164;
-}
 
 /** 0781234567 (what the user types) → +250781234567 (API format). */
 function toE164Phone(local: string): string {
@@ -64,6 +62,23 @@ const step2Schema = z.object({
   coverNote: z.string().max(COVER_NOTE_MAX).optional().or(z.literal('')),
 });
 type Step2Data = z.infer<typeof step2Schema>;
+
+// ─── Prefill from the signed-in account ────────────────────────────────────────
+// A bidder may put a colleague down as the contact person, or use a company line
+// instead of their personal number — nothing here stops them.
+
+function accountStep1(user: AuthUser | null): Partial<Step1Data> {
+  return { contactName: accountFullName(user) || undefined };
+}
+
+function accountStep2(user: AuthUser | null): Partial<Step2Data> {
+  return {
+    phone: toLocalRwandanPhone(user?.phone),
+    email: user?.email ?? '',
+    districtId: user?.districtId ?? '',
+    sectorId: user?.sectorId ?? '',
+  };
+}
 
 type District = { id: string; name: string };
 type Sector = { id: string; name: string };
@@ -133,6 +148,10 @@ function WizardProgress({
 
 export function TenderApplicationWizard({ editApplication, lockedTenderId }: Props) {
   const t = useTranslations('services.tender.apply');
+  // Both mount points (the apply page and the detail-page modal) render this
+  // wizard only once `isAuthenticated` is true, and that flag is `!!user` — so a
+  // signed-in bidder always has their account on hand by first render.
+  const { user } = useAuth();
 
   // Seeded lazily in the useState initializer, never in a post-mount effect:
   // react-hook-form reads `defaultValues` exactly once, at mount, so a value
@@ -147,12 +166,14 @@ export function TenderApplicationWizard({ editApplication, lockedTenderId }: Pro
           companyTin: editApplication.companyTin,
           contactName: editApplication.contactName,
         }
-      : { tenderId: lockedTenderId ?? '' },
+      : // A saved bid always wins over the account: it is what the bidder last
+        // typed, account details only fill a form that has nothing in it yet.
+        { tenderId: lockedTenderId ?? '', ...accountStep1(user) },
   );
   const [step2Data, setStep2Data] = useState<Partial<Step2Data>>(() =>
     editApplication
       ? {
-          phone: toLocalPhone(editApplication.phone),
+          phone: toLocalRwandanPhone(editApplication.phone),
           email: editApplication.email ?? '',
           districtId: editApplication.districtId ?? '',
           sectorId: editApplication.sectorId ?? '',
@@ -161,8 +182,13 @@ export function TenderApplicationWizard({ editApplication, lockedTenderId }: Pro
           bidAmount: editApplication.bidAmount != null ? String(editApplication.bidAmount) : '',
           coverNote: editApplication.coverNote ?? '',
         }
-      : {},
+      : accountStep2(user),
   );
+
+  // Shown while the prefilled fields are on screen, so nobody submits their own
+  // name and number without noticing they were filled in for them.
+  const prefilled =
+    !editApplication && !!(step1Data.contactName || step2Data.phone || step2Data.email);
 
   const [application, setApplication] = useState<TenderApplication | null>(
     editApplication ?? null,
@@ -223,6 +249,10 @@ export function TenderApplicationWizard({ editApplication, lockedTenderId }: Pro
         </div>
       )}
 
+      {prefilled && phase !== 3 && (
+        <AccountPrefillNote text={t('prefillNote')} className="rounded-lg" />
+      )}
+
       {phase === 1 && (
         <Step1Company
           initialData={step1Data}
@@ -275,6 +305,7 @@ function Step1Company({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -300,6 +331,17 @@ function Step1Company({
       )
       .catch(() => setTenders([]));
   }, []);
+
+  // The <select> is uncontrolled and its options arrive an API round-trip after
+  // mount, so react-hook-form's initial value lands on a list that has no
+  // matching <option> yet and the browser quietly falls back to the placeholder
+  // — the value is still submitted, but the bidder is shown the wrong thing.
+  // Re-apply it once the option exists.
+  useEffect(() => {
+    if (!initialData.tenderId) return;
+    if (!tenders.some((x) => x.id === initialData.tenderId)) return;
+    setValue('tenderId', initialData.tenderId);
+  }, [tenders, initialData.tenderId, setValue]);
 
   const lockedTender = lockedTenderId ? tenders.find((x) => x.id === lockedTenderId) : undefined;
 
@@ -425,6 +467,24 @@ function Step2Contact({
       .then(setSectors)
       .catch(() => setSectors([]));
   }, [districtId]);
+
+  // Same uncontrolled-<select> caveat as the tender picker above: a district
+  // carried in from the account (or a saved bid) has no <option> to select until
+  // the list loads, so re-apply it when it does.
+  useEffect(() => {
+    if (!initialData.districtId) return;
+    if (!districts.some((d) => d.id === initialData.districtId)) return;
+    setValue('districtId', initialData.districtId);
+  }, [districts, initialData.districtId, setValue]);
+
+  useEffect(() => {
+    // Only while the district is still the one this sector belongs to — picking
+    // a different district clears the sector on purpose, and re-applying here
+    // would undo that.
+    if (!initialData.sectorId || districtId !== initialData.districtId) return;
+    if (!sectors.some((s) => s.id === initialData.sectorId)) return;
+    setValue('sectorId', initialData.sectorId);
+  }, [sectors, districtId, initialData.districtId, initialData.sectorId, setValue]);
 
   return (
     <form

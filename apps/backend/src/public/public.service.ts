@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VerseOfDay } from './entities/verse-of-day.entity';
@@ -34,8 +34,47 @@ export class PublicService {
   }
 
   async createVerse(dto: Partial<VerseOfDay>): Promise<VerseOfDay> {
-    const verse = this.verses.create(dto);
-    return this.verses.save(verse);
+    try {
+      const verse = this.verses.create(dto);
+      return await this.verses.save(verse);
+    } catch (e) {
+      throw this.asDateConflict(e);
+    }
+  }
+
+  /** All scheduled verses, newest display date first (admin management view). */
+  async adminListVerses(): Promise<VerseOfDay[]> {
+    return this.verses.find({ order: { displayDate: 'DESC' } });
+  }
+
+  async updateVerse(id: string, dto: Partial<VerseOfDay>): Promise<VerseOfDay> {
+    const verse = await this.verses.findOne({ where: { id } });
+    if (!verse) throw new NotFoundException('Verse not found');
+    // Only persist mutable columns; id/createdBy/createdAt are never client-set.
+    const { id: _id, createdBy: _cb, createdAt: _ca, ...patch } = dto;
+    Object.assign(verse, patch);
+    try {
+      return await this.verses.save(verse);
+    } catch (e) {
+      throw this.asDateConflict(e);
+    }
+  }
+
+  /**
+   * displayDate is unique — one verse per day. Translate the Postgres
+   * unique-violation (23505) into a clean 409 instead of a raw 500.
+   */
+  private asDateConflict(e: unknown): unknown {
+    if ((e as { code?: string })?.code === '23505') {
+      return new ConflictException('A verse is already scheduled for this date.');
+    }
+    return e;
+  }
+
+  async deleteVerse(id: string): Promise<{ success: boolean }> {
+    const result = await this.verses.delete(id);
+    if (!result.affected) throw new NotFoundException('Verse not found');
+    return { success: true };
   }
 
   getActiveAnnouncements(type?: string, limit = 10, includeExpired = false) {
@@ -126,7 +165,11 @@ export class PublicService {
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.category', 'c')
       .where('p.status = :status', { status: 'published' })
-      .orderBy('p.published_at', 'DESC')
+      // Order by the ENTITY property (publishedAt), not the DB column name.
+      // With the category join + take(), TypeORM builds a DISTINCT pagination
+      // sub-query and can only resolve the property alias — the snake_case
+      // column name here made every call throw (500).
+      .orderBy('p.publishedAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
     if (categorySlug) qb.andWhere('c.slug = :slug', { slug: categorySlug });
@@ -146,7 +189,20 @@ export class PublicService {
 
   async createPost(dto: Partial<BlogPost>): Promise<BlogPost> {
     const post = this.posts.create(dto);
+    // slug is NOT NULL + unique; derive a stable one from the title when the
+    // caller omits it so a valid post never fails with a raw 500.
+    if (!post.slug && post.title) post.slug = slugify(post.title);
     return this.posts.save(post);
+  }
+
+  async deletePost(id: string): Promise<{ success: boolean }> {
+    const post = await this.posts.findOne({ where: { id } });
+    if (!post) throw new NotFoundException('Post not found');
+    // Hide, don't destroy: archiving keeps the row (audit/recovery) while
+    // removing it from every public view (which only shows 'published').
+    post.status = 'archived';
+    await this.posts.save(post);
+    return { success: true };
   }
 
   async updatePost(id: string, dto: Partial<BlogPost>): Promise<BlogPost> {

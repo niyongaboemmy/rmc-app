@@ -65,6 +65,21 @@ const FIELDS: FieldDef[] = [
   { group: 'steps', key: 'eyebrow', label: 'Steps — Eyebrow', rows: 1 },
   { group: 'steps', key: 'title', label: 'Steps — Heading', rows: 1 },
   { group: 'steps', key: 'subtitle', label: 'Steps — Subheading', rows: 2 },
+  { group: 'bankAccounts', key: 'eyebrow', label: 'Bank accounts — Eyebrow', rows: 1 },
+  { group: 'bankAccounts', key: 'title', label: 'Bank accounts — Heading', rows: 1 },
+  { group: 'bankAccounts', key: 'subtitle', label: 'Bank accounts — Subheading', rows: 3 },
+  {
+    group: 'bankAccounts', key: 'proofNote', label: 'Bank accounts — Keep-your-slip note', rows: 3,
+    hint: 'The callout under the accounts. The accounts themselves are managed in Content → Hajj Bank Accounts.',
+  },
+  { group: 'register', key: 'title', label: 'Registration page — Heading', rows: 1 },
+  {
+    group: 'register', key: 'subtitle', label: 'Registration page — Subheading', rows: 3,
+    hint: 'Above the registration form. The form fields themselves are not editable here.',
+  },
+  { group: 'status', key: 'title', label: 'Status page — Heading', rows: 1 },
+  { group: 'status', key: 'subtitle', label: 'Status page — Subheading', rows: 3 },
+  { group: 'status', key: 'checkLabel', label: 'Status page — Check button', rows: 1 },
 ];
 
 const GROUP_LABELS: Record<Group, string> = {
@@ -73,6 +88,9 @@ const GROUP_LABELS: Record<Group, string> = {
   description: 'Description section',
   requirements: 'Requirements heading',
   steps: 'Steps heading',
+  bankAccounts: 'Bank accounts section',
+  register: 'Registration page',
+  status: 'Status page',
 };
 
 export default function HajjContentPage() {

@@ -2,6 +2,18 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import {
+  ContentKeys,
+  FUNERAL_DEFAULT,
+  isRtl,
+  pick,
+  raw,
+  type FuneralContent,
+  type Locale,
+} from '@/lib/content-api';
 import { Truck, MapPin, Phone, Landmark, Search } from 'lucide-react';
 import { funeralApi } from '@/lib/funeralApi';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -13,6 +25,16 @@ import type { Transport } from './types';
  */
 export function FuneralTransportsSection() {
   const t = useTranslations('services.funeral.landing.transports');
+
+  /* The heading is admin-managed; the search box and its empty states stay in i18n. */
+  const { locale } = useParams<{ locale: string }>();
+  const { content, setField } = useEditableContent<FuneralContent>(
+    ContentKeys.funeral,
+    FUNERAL_DEFAULT,
+  );
+  const lang = locale as Locale;
+  const dir = isRtl(locale) ? ('rtl' as const) : ('ltr' as const);
+  const copy = content.transports;
 
   const [transports, setTransports] = useState<Transport[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -63,9 +85,27 @@ export function FuneralTransportsSection() {
       <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="mb-6 max-w-2xl">
           <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-            <Truck className="h-6 w-6 text-rmc-green" aria-hidden="true" /> {t('title')}
+            <Truck className="h-6 w-6 text-rmc-green" aria-hidden="true" />
+            <InlineText
+              as="span"
+              lang={locale}
+              value={pick(copy.title, locale)}
+              editValue={raw(copy.title, locale)}
+              onCommit={(v) => setField((d) => { d.transports.title[lang] = v; })}
+              dir={dir}
+              placeholder="Heading"
+            />
           </h2>
-          <p className="mt-2 text-sm text-gray-500">{t('sub')}</p>
+          <InlineText
+            as="p"
+            lang={locale}
+            value={pick(copy.subtitle, locale)}
+            editValue={raw(copy.subtitle, locale)}
+            onCommit={(v) => setField((d) => { d.transports.subtitle[lang] = v; })}
+            className="mt-2 text-sm text-gray-500"
+            dir={dir}
+            placeholder="Subheading"
+          />
         </div>
 
         {/* Controls */}

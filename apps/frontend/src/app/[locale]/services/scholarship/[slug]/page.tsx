@@ -1,0 +1,25 @@
+import ScholarshipDetailClient from '@/components/services/scholarship/ScholarshipDetailClient';
+import { ContentKeys } from '@/lib/content-api';
+import { fetchSiteContent } from '@/lib/content/server';
+import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
+
+/**
+ * A single scholarship. The programme itself is fetched client-side by the component
+ * below — same as the listing, so the page renders even when the backend is not
+ * reachable from the server.
+ *
+ * The page's own copy (section headings, the closing CTA, the not-found and closed
+ * notices) lives in the `scholarship-service` blob's `detail` group and is read here,
+ * so it is in the server-rendered HTML rather than swapped in after hydration.
+ */
+const PAGE_CONTENT_KEYS = [ContentKeys.scholarshipService];
+
+export default async function ScholarshipDetailPage() {
+  const content = await fetchSiteContent(PAGE_CONTENT_KEYS);
+
+  return (
+    <SiteContentProvider content={content}>
+      <ScholarshipDetailClient />
+    </SiteContentProvider>
+  );
+}

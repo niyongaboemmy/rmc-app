@@ -7,9 +7,11 @@ import { funeralApi } from '@/lib/funeralApi';
 import type { FuneralStepConfig } from '@/components/funeral/types';
 import { stepIcon } from '@/components/funeral/stepIcons';
 import {
-  ContentKeys, getSiteContent, mergeContent, pick, isRtl,
-  FUNERAL_DEFAULT, type FuneralContent,
+  ContentKeys, pick, raw, isRtl,
+  FUNERAL_DEFAULT, type FuneralContent, type Locale,
 } from '@/lib/content-api';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 
 /**
  * Section: "what happens next" — the funeral process, start to finish.
@@ -27,8 +29,17 @@ export function FuneralProcessSteps() {
   const rtl = isRtl(locale);
 
   const [steps, setSteps] = useState<FuneralStepConfig[]>([]);
-  const [heading, setHeading] = useState<FuneralContent['steps']>(FUNERAL_DEFAULT.steps);
   const [loading, setLoading] = useState(true);
+
+  // Section heading — read on the server by the page, so it is in the first paint.
+  // The step list itself still comes from its own API below.
+  const { content, setField } = useEditableContent<FuneralContent>(
+    ContentKeys.funeral,
+    FUNERAL_DEFAULT,
+  );
+  const heading = content.steps;
+  const lang = locale as Locale;
+  const dir = isRtl(locale) ? ('rtl' as const) : ('ltr' as const);
 
   useEffect(() => {
     let active = true;
@@ -37,12 +48,6 @@ export function FuneralProcessSteps() {
       .then((res) => { if (active) setSteps(res); })
       .catch(() => { if (active) setSteps([]); })
       .finally(() => { if (active) setLoading(false); });
-
-    getSiteContent<FuneralContent>(ContentKeys.funeral)
-      .then((data) => {
-        if (active && data) setHeading(mergeContent(FUNERAL_DEFAULT, data).steps);
-      })
-      .catch(() => { /* keep the seeded heading */ });
 
     return () => { active = false; };
   }, []);
@@ -54,11 +59,36 @@ export function FuneralProcessSteps() {
       <div className="pointer-events-none absolute inset-0 pattern-light opacity-60" aria-hidden="true" />
       <div className="relative mx-auto max-w-7xl px-6 py-16 sm:px-8 md:py-20 lg:px-12">
         <div className="mb-6 max-w-2xl">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold">
-            {pick(heading.eyebrow, locale)}
-          </p>
-          <h2 className="text-2xl font-bold text-gray-900">{pick(heading.title, locale)}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-gray-500">{pick(heading.subtitle, locale)}</p>
+          <InlineText
+            as="p"
+            lang={locale}
+            value={pick(heading.eyebrow, locale)}
+            editValue={raw(heading.eyebrow, locale)}
+            onCommit={(v) => setField((d) => { d.steps.eyebrow[lang] = v; })}
+            className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-rmc-gold"
+            dir={dir}
+            placeholder="Eyebrow"
+          />
+          <InlineText
+            as="h2"
+            lang={locale}
+            value={pick(heading.title, locale)}
+            editValue={raw(heading.title, locale)}
+            onCommit={(v) => setField((d) => { d.steps.title[lang] = v; })}
+            className="text-2xl font-bold text-gray-900"
+            dir={dir}
+            placeholder="Heading"
+          />
+          <InlineText
+            as="p"
+            lang={locale}
+            value={pick(heading.subtitle, locale)}
+            editValue={raw(heading.subtitle, locale)}
+            onCommit={(v) => setField((d) => { d.steps.subtitle[lang] = v; })}
+            className="mt-2 text-sm leading-relaxed text-gray-500"
+            dir={dir}
+            placeholder="Subheading"
+          />
         </div>
 
         {loading ? (

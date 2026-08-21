@@ -6,13 +6,17 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, In, DataSource } from 'typeorm';
+import { Repository, In, IsNull, Not, DataSource } from 'typeorm';
 import {
   ScholarshipApplication,
   ScholarshipApplicationStatus,
 } from './entities/scholarship-application.entity';
 import { ScholarshipStatusHistory } from './entities/scholarship-status-history.entity';
-import { ScholarshipProgram } from './entities/scholarship-program.entity';
+import {
+  ScholarshipProgram,
+  ScholarshipProgramStatus,
+  type I18nText,
+} from './entities/scholarship-program.entity';
 import { ScholarshipDocument } from './entities/scholarship-document.entity';
 import { CreateScholarshipApplicationDto } from './dto/create-scholarship-application.dto';
 import { CreateScholarshipProgramDto } from './dto/create-scholarship-program.dto';
@@ -23,6 +27,9 @@ import {
   ScholarshipStatusAction,
 } from './dto/update-scholarship-status.dto';
 import { districtCode } from '../common/district-codes';
+import { generateTrackingCode } from '../tracking/tracking-code.util';
+import { slugify } from '../common/slugify.util';
+import type { TrackingSubject } from '../tracking/tracking-verification.service';
 import { User } from '../users/entities/user.entity';
 import { District } from '../locations/entities/district.entity';
 
@@ -56,11 +63,46 @@ export class ScholarshipService {
 
   // ── Programs (public) ────────────────────────────────────────────────────────
 
+  /**
+   * Public catalogue. Filters on `status`, not the legacy `isOpen` — a draft must
+   * never be reachable, and `isOpen` is a derived convenience that a stale row
+   * could still have set to true.
+   *
+   * Closed opportunities are returned too: a scholarship that ran and closed is
+   * evidence the programme is real, and the landing page shows them in an
+   * archive.
+   *
+   * A NULL slug excludes a row outright. The slug is what makes a scholarship
+   * addressable, so a row without one was never announced — which is exactly how
+   * migration 054's synthetic "pre-2026" container holds legacy applications
+   * without ever appearing on the public list.
+   */
   async listPrograms(): Promise<ScholarshipProgram[]> {
     return this.programRepo.find({
-      where: { isOpen: true },
+      where: [
+        { status: ScholarshipProgramStatus.PUBLISHED, slug: Not(IsNull()) },
+        { status: ScholarshipProgramStatus.CLOSED, slug: Not(IsNull()) },
+      ],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  /**
+   * One opportunity, by its public slug.
+   *
+   * A draft 404s rather than 403s — a 403 would confirm that a scholarship by
+   * that name exists and is being prepared, which is RMC's business until they
+   * publish it. Same rule the discussions contract settled on.
+   */
+  async getProgramBySlug(slug: string): Promise<ScholarshipProgram> {
+    const program = await this.programRepo.findOne({
+      where: [
+        { slug, status: ScholarshipProgramStatus.PUBLISHED },
+        { slug, status: ScholarshipProgramStatus.CLOSED },
+      ],
+    });
+    if (!program) throw new NotFoundException('Scholarship not found');
+    return program;
   }
 
   async getProgram(id: string): Promise<ScholarshipProgram> {
@@ -69,30 +111,60 @@ export class ScholarshipService {
     return program;
   }
 
+  /**
+   * The gate every application must pass, checked at BOTH draft creation and
+   * submit.
+   *
+   * Submit is the one that counts. A draft can sit for days, so checking only at
+   * creation would let an application started an hour before the deadline be
+   * submitted a week after it. Creation is checked too, so a member cannot even
+   * begin against a scholarship that is closed — better to say so before they
+   * fill in four steps.
+   *
+   * Refusals are 409, not 400: the request is well-formed, it is the STATE that
+   * refuses it. `ConflictException` maps to the CONFLICT error code the frontend
+   * already distinguishes.
+   */
+  private assertAcceptingApplications(program: ScholarshipProgram): void {
+    if (program.status !== ScholarshipProgramStatus.PUBLISHED) {
+      throw new ConflictException('This scholarship is not open for applications.');
+    }
+    const now = Date.now();
+    if (program.opensAt && +new Date(program.opensAt) > now) {
+      throw new ConflictException('Applications for this scholarship have not opened yet.');
+    }
+    if (program.deadline && +new Date(program.deadline) < now) {
+      throw new ConflictException('The deadline for this scholarship has passed.');
+    }
+  }
+
   // ── Create / Draft ───────────────────────────────────────────────────────────
 
   async createDraft(
     applicantId: string,
     dto: CreateScholarshipApplicationDto,
   ): Promise<ScholarshipApplication> {
+    // An application now always targets a scholarship, so the uniqueness rule is
+    // per scholarship rather than global — a member may hold one live
+    // application against each of several different scholarships.
     const existing = await this.applicationRepo.findOne({
-      where: { applicantId, status: In(ACTIVE_STATUSES) },
+      where: { applicantId, programId: dto.programId, status: In(ACTIVE_STATUSES) },
     });
     if (existing) {
       throw new ConflictException(
-        `You already have an active scholarship application (status: ${existing.status})`,
+        `You already have an active application for this scholarship (status: ${existing.status})`,
       );
     }
 
-    if (dto.programId) {
-      const program = await this.programRepo.findOne({ where: { id: dto.programId } });
-      if (!program) throw new NotFoundException('Scholarship program not found');
-    }
+    const program = await this.programRepo.findOne({ where: { id: dto.programId } });
+    if (!program) throw new NotFoundException('Scholarship not found');
+    this.assertAcceptingApplications(program);
 
     const applicationNumber = await this.generateApplicationNumber(dto.districtId ?? null);
 
     const application = this.applicationRepo.create({
       applicationNumber,
+      trackingCode: generateTrackingCode('RMC-SCH'),
       applicantId,
       programId: dto.programId ?? null,
       fullNames: dto.fullNames,
@@ -139,7 +211,11 @@ export class ScholarshipService {
     }
 
     Object.assign(application, {
-      programId: dto.programId ?? application.programId,
+      // programId is deliberately NOT taken from the DTO. The scholarship an
+      // application targets is fixed when the draft is created: letting an edit
+      // move it would allow an applicant to fill a form against an open
+      // scholarship and then retarget it at one whose deadline has passed,
+      // sidestepping the check in submit().
       fullNames: dto.fullNames ?? application.fullNames,
       dateOfBirth: dto.dateOfBirth ?? application.dateOfBirth,
       gender: dto.gender ?? application.gender,
@@ -168,6 +244,16 @@ export class ScholarshipService {
     const application = await this.findOwn(id, applicantId);
     if (application.status !== ScholarshipApplicationStatus.DRAFT) {
       throw new ForbiddenException('Only draft applications can be submitted');
+    }
+
+    // Re-check the window HERE, not only at creation. This is the check that
+    // decides whether an application counts: the draft may have been started
+    // days ago, and the deadline can have passed or the scholarship been closed
+    // in the meantime.
+    if (application.programId) {
+      const program = await this.programRepo.findOne({ where: { id: application.programId } });
+      if (!program) throw new NotFoundException('Scholarship not found');
+      this.assertAcceptingApplications(program);
     }
 
     const prev = application.status;
@@ -240,6 +326,7 @@ export class ScholarshipService {
     const doc = this.documentRepo.create({
       applicationId: id,
       documentType: dto.documentType,
+      requirementKey: dto.requirementKey ?? null,
       fileKey: dto.fileKey,
       fileName: dto.fileName,
       fileSize: dto.fileSize,
@@ -260,13 +347,64 @@ export class ScholarshipService {
 
   // ── Public status tracking ───────────────────────────────────────────────────
 
-  async getByNumber(applicationNumber: string): Promise<ScholarshipApplication> {
-    const application = await this.applicationRepo.findOne({
-      where: { applicationNumber: applicationNumber.toUpperCase() },
-      relations: ['statusHistory', 'documents'],
+  /**
+   * Resolve a tracking code to the record and the phone an OTP may be sent to.
+   *
+   * By `trackingCode` ONLY — never `applicationNumber`. The numbers are
+   * sequential, so accepting them would let anyone walk the counter and fire an
+   * SMS at each applicant in turn, which is both a disclosure oracle and a way
+   * to spam real people from a public endpoint. Tenders reached the same
+   * conclusion in migration 047; this matches it.
+   *
+   * Returns null rather than throwing: the caller hands null to the tracking
+   * service, which answers identically for "no such code" and "code exists" so
+   * the response cannot be used to test whether a code is real.
+   */
+  async findSubjectByCode(code: string): Promise<TrackingSubject | null> {
+    const value = (code || '').trim().toUpperCase();
+    if (!value) return null;
+    const app = await this.applicationRepo.findOne({
+      where: { trackingCode: value },
+      select: { id: true, phone: true },
     });
-    if (!application) throw new NotFoundException('Application not found');
-    return application;
+    return app ? { id: app.id, phone: app.phone } : null;
+  }
+
+  /**
+   * The ONLY scholarship projection that reaches an unauthenticated caller, and
+   * only after they have proved control of the phone on the record.
+   *
+   * Built field by field on purpose. What this replaced returned the entity —
+   * `nationalId`, `dateOfBirth`, both phone numbers, the guardian's name, the
+   * motivation essay and every document row — to anyone who could guess a
+   * sequential number. An applicant tracking their own case needs to know where
+   * it has got to, not to be read back their own identity documents, so none of
+   * that is here: name and school to confirm they opened the right record,
+   * then status.
+   */
+  async getTrackingInfo(id: string) {
+    const app = await this.applicationRepo.findOne({
+      where: { id },
+      relations: ['statusHistory'],
+    });
+    if (!app) throw new NotFoundException('Application not found');
+    return {
+      trackingCode: app.trackingCode,
+      applicationNumber: app.applicationNumber,
+      fullNames: app.fullNames,
+      schoolName: app.schoolName,
+      educationLevel: app.educationLevel,
+      status: app.status,
+      rejectionReason: app.rejectionReason,
+      submittedAt: app.submittedAt,
+      createdAt: app.createdAt,
+      updatedAt: app.updatedAt,
+      // Dates only — the timeline drives the progress bar. `changedBy` and any
+      // reviewer note stay behind the admin console.
+      statusHistory: (app.statusHistory ?? [])
+        .map((h) => ({ toStatus: h.toStatus, changedAt: h.changedAt }))
+        .sort((a, b) => +new Date(a.changedAt) - +new Date(b.changedAt)),
+    };
   }
 
   // ── Admin: applications ──────────────────────────────────────────────────────
@@ -321,6 +459,36 @@ export class ScholarshipService {
         email: applicant.email,
         phone: applicant.phone,
       };
+    }
+
+    /*
+     * The scholarship this application answers.
+     *
+     * Attached the same ad-hoc way as `applicant` rather than as a relation,
+     * because `saveScalarFields` strips loaded relations before its targeted
+     * `.update()` and a new one would have to be added to that list too.
+     *
+     * `requiredDocuments` comes along deliberately: it is what lets the review
+     * screen show each uploaded file under the requirement it answers, and spot
+     * a required document that never arrived.
+     */
+    if (application.programId) {
+      const program = await this.programRepo.findOne({
+        where: { id: application.programId },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          titleI18n: true,
+          level: true,
+          deadline: true,
+          status: true,
+          requiredDocuments: true,
+        },
+      });
+      if (program) {
+        (application as ScholarshipApplication & { program?: unknown }).program = program;
+      }
     }
     return application;
   }
@@ -401,8 +569,19 @@ export class ScholarshipService {
     return this.adminGetById(applicationId);
   }
 
-  async adminGetReports(filters: { dateFrom?: string; dateTo?: string } = {}) {
+  /**
+   * Applications by status, optionally scoped to ONE scholarship.
+   *
+   * `programId` matters now that every application targets a scholarship: the
+   * service-wide total answers "how busy are we", but the question an
+   * administrator actually asks is "how did the S4 bursary do". Same filter the
+   * CSV export already accepted, so the numbers on screen and the rows in the
+   * download describe the same set.
+   */
+  async adminGetReports(filters: { programId?: string; dateFrom?: string; dateTo?: string } = {}) {
     const qb = this.applicationRepo.createQueryBuilder('app');
+    if (filters.programId)
+      qb.andWhere('app.programId = :programId', { programId: filters.programId });
     if (filters.dateFrom) qb.andWhere('app.createdAt >= :dateFrom', { dateFrom: filters.dateFrom });
     if (filters.dateTo) {
       const end = new Date(filters.dateTo);
@@ -471,12 +650,14 @@ export class ScholarshipService {
 
   async adminCreateProgram(dto: CreateScholarshipProgramDto): Promise<ScholarshipProgram> {
     const program = this.programRepo.create({
+      ...this.programFieldsFromDto(dto),
       title: dto.title,
       description: dto.description,
-      level: dto.level ?? null,
-      amount: dto.amount ?? null,
-      deadline: dto.deadline ? new Date(dto.deadline) : null,
-      isOpen: dto.isOpen ?? true,
+      // Always a draft. Publishing is a separate, validated action so a
+      // half-written scholarship cannot reach the public page by accident.
+      status: ScholarshipProgramStatus.DRAFT,
+      isOpen: false,
+      slug: await this.uniqueProgramSlug(dto.title),
     });
     return this.programRepo.save(program);
   }
@@ -486,20 +667,124 @@ export class ScholarshipService {
     dto: UpdateScholarshipProgramDto,
   ): Promise<ScholarshipProgram> {
     const program = await this.getProgram(id);
-    Object.assign(program, {
-      title: dto.title ?? program.title,
-      description: dto.description ?? program.description,
-      level: dto.level ?? program.level,
-      amount: dto.amount ?? program.amount,
-      deadline: dto.deadline ? new Date(dto.deadline) : program.deadline,
-      isOpen: dto.isOpen ?? program.isOpen,
-    });
+    Object.assign(program, this.programFieldsFromDto(dto, program));
+
+    // The slug is assigned once and then frozen. Re-slugging on every rename
+    // would silently break links already published, printed or shared.
+    if (!program.slug && program.title) {
+      program.slug = await this.uniqueProgramSlug(program.title);
+    }
+    return this.programRepo.save(program);
+  }
+
+  /**
+   * Make an opportunity public.
+   *
+   * A distinct action rather than a writable `status`, because this is the
+   * moment it becomes real to applicants and it is the only place worth
+   * refusing an incomplete record. Idempotent: re-publishing a published
+   * opportunity is a no-op, not an error.
+   */
+  async adminPublishProgram(id: string): Promise<ScholarshipProgram> {
+    const program = await this.getProgram(id);
+    if (program.status === ScholarshipProgramStatus.PUBLISHED) return program;
+
+    const missing: string[] = [];
+    if (!program.title?.trim()) missing.push('title');
+    if (!program.description?.trim()) missing.push('description');
+    if (!program.deadline) missing.push('deadline');
+    if (missing.length) {
+      throw new BadRequestException(
+        `Cannot publish without: ${missing.join(', ')}. An applicant cannot act on an incomplete offer.`,
+      );
+    }
+    if (!program.slug) program.slug = await this.uniqueProgramSlug(program.title);
+
+    program.status = ScholarshipProgramStatus.PUBLISHED;
+    program.isOpen = this.derivedIsOpen(program);
+    return this.programRepo.save(program);
+  }
+
+  /**
+   * Stop accepting applications.
+   *
+   * Applications already submitted are untouched — closing the call does not
+   * abandon the people who answered it; they continue through review.
+   */
+  async adminCloseProgram(id: string): Promise<ScholarshipProgram> {
+    const program = await this.getProgram(id);
+    program.status = ScholarshipProgramStatus.CLOSED;
+    program.isOpen = false;
     return this.programRepo.save(program);
   }
 
   async adminDeleteProgram(id: string): Promise<void> {
     const program = await this.getProgram(id);
+    // Refuse to delete an opportunity people have applied to. The applications
+    // would keep a dangling program_id and the admin console would show rows
+    // whose scholarship no longer exists.
+    const applications = await this.applicationRepo.count({ where: { programId: program.id } });
+    if (applications > 0) {
+      throw new ConflictException(
+        `This scholarship has ${applications} application(s). Close it instead of deleting it.`,
+      );
+    }
     await this.programRepo.softDelete(program.id);
+  }
+
+  // ── Program helpers ─────────────────────────────────────────────────────────
+
+  /** Maps the DTO onto column values, preserving anything the DTO omits. */
+  private programFieldsFromDto(
+    dto: UpdateScholarshipProgramDto,
+    current?: ScholarshipProgram,
+  ): Partial<ScholarshipProgram> {
+    const keep = <T>(incoming: T | undefined, existing: T | undefined): T | undefined =>
+      incoming !== undefined ? incoming : existing;
+
+    return {
+      title: keep(dto.title, current?.title),
+      description: keep(dto.description, current?.description),
+      titleI18n: (keep(dto.titleI18n, current?.titleI18n ?? undefined) ?? null) as I18nText | null,
+      descriptionI18n: (keep(dto.descriptionI18n, current?.descriptionI18n ?? undefined) ??
+        null) as I18nText | null,
+      eligibilityI18n: (keep(dto.eligibilityI18n, current?.eligibilityI18n ?? undefined) ??
+        null) as I18nText | null,
+      benefitsI18n: (keep(dto.benefitsI18n, current?.benefitsI18n ?? undefined) ??
+        null) as I18nText | null,
+      requiredDocuments: (keep(dto.requiredDocuments, current?.requiredDocuments) ??
+        []) as ScholarshipProgram['requiredDocuments'],
+      attachments: keep(dto.attachments, current?.attachments) ?? [],
+      level: keep(dto.level, current?.level ?? undefined) ?? null,
+      amount: keep(dto.amount, current?.amount ?? undefined) ?? null,
+      slots: keep(dto.slots, current?.slots ?? undefined) ?? null,
+      referenceNumber: keep(dto.referenceNumber, current?.referenceNumber ?? undefined) ?? null,
+      opensAt: dto.opensAt ? new Date(dto.opensAt) : (current?.opensAt ?? null),
+      deadline: dto.deadline ? new Date(dto.deadline) : (current?.deadline ?? null),
+    };
+  }
+
+  /**
+   * `isOpen` is derived, never authored — it exists only to keep the pre-existing
+   * admin form and public list working until they are migrated to `status`.
+   */
+  private derivedIsOpen(program: ScholarshipProgram): boolean {
+    if (program.status !== ScholarshipProgramStatus.PUBLISHED) return false;
+    const now = Date.now();
+    if (program.opensAt && +new Date(program.opensAt) > now) return false;
+    if (program.deadline && +new Date(program.deadline) < now) return false;
+    return true;
+  }
+
+  /** Slug from the title, suffixed until free. Soft-deleted rows still hold theirs. */
+  private async uniqueProgramSlug(title: string): Promise<string> {
+    const base = slugify(title || '') || 'scholarship';
+    let slug = base;
+    let n = 2;
+    while (await this.programRepo.count({ where: { slug }, withDeleted: true })) {
+      slug = `${base}-${n++}`;
+    }
+    return slug;
   }
 
   // ── Application Number ──────────────────────────────────────────────────────
@@ -532,13 +817,25 @@ export class ScholarshipService {
    */
   /* eslint-disable @typescript-eslint/no-unused-vars */
   private async saveScalarFields(application: ScholarshipApplication): Promise<void> {
-    // Strip every loaded relation (statusHistory, documents) and the ad-hoc
-    // `applicant` field before the targeted `.update()` — passing a relation
-    // array to `.update()` throws, and the find methods now eager-load these.
+    // Strip every loaded relation (statusHistory, documents) and every ad-hoc
+    // field `adminGetById` attaches (`applicant`, `program`) before the targeted
+    // `.update()` — passing either to `.update()` throws, and the find methods
+    // eager-load them.
+    //
+    // Anything new attached in adminGetById MUST be added here too: an
+    // application loaded through it is handed straight to this method by
+    // `adminUpdateStatus`, so a missed field turns every status change into a
+    // 500. That is exactly what `program` did when it was added.
     const { statusHistory, documents, ...rest } = application as ScholarshipApplication & {
       applicant?: unknown;
+      program?: unknown;
     };
-    const { applicant: _applicant, id, ...columns } = rest as Record<string, unknown>;
+    const {
+      applicant: _applicant,
+      program: _program,
+      id,
+      ...columns
+    } = rest as Record<string, unknown>;
     await this.applicationRepo.update(id as string, columns);
   }
   /* eslint-enable @typescript-eslint/no-unused-vars */

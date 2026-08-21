@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -11,6 +12,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { PhoneOtpVerification } from './entities/phone-otp-verification.entity';
 import { MemberProfile } from '../members/entities/member-profile.entity';
+import { User } from '../users/entities/user.entity';
 import { AuditLog } from '../finance/entities/audit-log.entity';
 import { Role } from '../roles/entities/role.entity';
 import { REDIS_CLIENT } from '../common/decorators/inject-redis.decorator';
@@ -61,8 +63,24 @@ describe('AuthService', () => {
   let refreshTokenRepo: ReturnType<typeof mockRepo>;
   let auditLogRepo: ReturnType<typeof mockRepo>;
   let memberProfileRepo: ReturnType<typeof mockRepo>;
+  let userRepo: ReturnType<typeof mockRepo>;
+  let txManager: { getRepository: jest.Mock; query: jest.Mock };
 
   beforeEach(async () => {
+    // register() now runs inside dataSource.transaction(), writing through the
+    // transaction's EntityManager rather than the injected repositories. The fake
+    // manager routes getRepository() to the same mocks the tests assert on, and
+    // query() stands in for the membership_counters upsert.
+    userRepo = mockRepo();
+    memberProfileRepo = mockRepo();
+    txManager = {
+      getRepository: jest.fn((entity: unknown) => (entity === User ? userRepo : memberProfileRepo)),
+      query: jest.fn().mockResolvedValue([{ last_seq: 1 }]),
+    };
+    const mockDataSource = {
+      transaction: jest.fn((cb: (m: typeof txManager) => Promise<unknown>) => cb(txManager)),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -102,9 +120,10 @@ describe('AuthService', () => {
         { provide: getRepositoryToken(RefreshToken), useFactory: mockRepo },
         { provide: getRepositoryToken(PasswordResetToken), useFactory: mockRepo },
         { provide: getRepositoryToken(PhoneOtpVerification), useFactory: mockRepo },
-        { provide: getRepositoryToken(MemberProfile), useFactory: mockRepo },
+        { provide: getRepositoryToken(MemberProfile), useValue: memberProfileRepo },
         { provide: getRepositoryToken(AuditLog), useFactory: mockRepo },
         { provide: getRepositoryToken(Role), useFactory: mockRepo },
+        { provide: getDataSourceToken(), useValue: mockDataSource },
         { provide: REDIS_CLIENT, useValue: mockRedis },
         {
           provide: NotificationSettingsService,
@@ -121,7 +140,6 @@ describe('AuthService', () => {
     usersService = module.get(UsersService);
     refreshTokenRepo = module.get(getRepositoryToken(RefreshToken));
     auditLogRepo = module.get(getRepositoryToken(AuditLog));
-    memberProfileRepo = module.get(getRepositoryToken(MemberProfile));
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -140,20 +158,19 @@ describe('AuthService', () => {
     it('should create user with hashed password', async () => {
       usersService.findByEmail.mockResolvedValue(null);
       usersService.findByPhone.mockResolvedValue(null);
-      usersService.save.mockResolvedValue(mockUser as never);
+      userRepo.save.mockResolvedValue(mockUser);
       memberProfileRepo.save.mockResolvedValue({});
       auditLogRepo.save.mockResolvedValue({});
-      mockRedis.incr.mockResolvedValue(1);
 
       const result = await service.register(dto);
 
       expect(result.userId).toBe(mockUser.id);
       expect(result.message).toContain('Registration successful');
-      expect(usersService.save).toHaveBeenCalledWith(
+      expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ email: dto.email, phone: dto.phone }),
       );
       // Verify password was hashed
-      const savedCall = (usersService.save as jest.Mock).mock.calls[0][0];
+      const savedCall = (userRepo.save as jest.Mock).mock.calls[0][0];
       const isHashed = await bcrypt.compare(dto.password, savedCall.passwordHash);
       expect(isHashed).toBe(true);
     });
@@ -172,9 +189,9 @@ describe('AuthService', () => {
     it('should generate valid membership number format', async () => {
       usersService.findByEmail.mockResolvedValue(null);
       usersService.findByPhone.mockResolvedValue(null);
-      usersService.save.mockResolvedValue(mockUser as never);
+      userRepo.save.mockResolvedValue(mockUser);
       auditLogRepo.save.mockResolvedValue({});
-      mockRedis.incr.mockResolvedValue(42);
+      txManager.query.mockResolvedValue([{ last_seq: 42 }]);
 
       await service.register(dto);
 
@@ -189,15 +206,54 @@ describe('AuthService', () => {
     it('should write to audit log on successful registration', async () => {
       usersService.findByEmail.mockResolvedValue(null);
       usersService.findByPhone.mockResolvedValue(null);
-      usersService.save.mockResolvedValue(mockUser as never);
+      userRepo.save.mockResolvedValue(mockUser);
       memberProfileRepo.save.mockResolvedValue({});
-      mockRedis.incr.mockResolvedValue(1);
 
       await service.register(dto);
 
       expect(auditLogRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ entityType: 'user', action: 'create' }),
       );
+    });
+
+    it('should allocate the membership number from Postgres, not Redis', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.findByPhone.mockResolvedValue(null);
+      userRepo.save.mockResolvedValue(mockUser);
+      memberProfileRepo.save.mockResolvedValue({});
+
+      await service.register(dto);
+
+      // A Redis INCR would rewind to 1 on a flush and collide with numbers already
+      // issued; the counter must come from the same store as its unique constraint.
+      expect(txManager.query).toHaveBeenCalledWith(expect.stringContaining('membership_counters'), [
+        new Date().getFullYear(),
+      ]);
+      expect(mockRedis.incr).not.toHaveBeenCalled();
+    });
+
+    it('should write both user and member profile through the same transaction', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.findByPhone.mockResolvedValue(null);
+      userRepo.save.mockResolvedValue(mockUser);
+      memberProfileRepo.save.mockResolvedValue({});
+
+      await service.register(dto);
+
+      expect(txManager.getRepository).toHaveBeenCalledWith(User);
+      expect(txManager.getRepository).toHaveBeenCalledWith(MemberProfile);
+    });
+
+    it('should surface a failed profile insert rather than stranding a user', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.findByPhone.mockResolvedValue(null);
+      userRepo.save.mockResolvedValue(mockUser);
+      memberProfileRepo.save.mockRejectedValue(new Error('duplicate membership number'));
+
+      // The user insert is rolled back with it, so the caller can register again;
+      // previously this left an account with no profile and no way to retry.
+      await expect(service.register(dto)).rejects.toThrow('duplicate membership number');
+      expect(auditLogRepo.save).not.toHaveBeenCalled();
     });
   });
 
@@ -339,6 +395,59 @@ describe('AuthService', () => {
 
       const saved = saveSpy.mock.calls[0][0];
       expect(saved.otpHash).toHaveLength(64); // SHA-256
+    });
+
+    it('should send the code by SMS, not just log it', async () => {
+      usersService.findByPhone.mockResolvedValue(mockUser as never);
+      mockRedis.incr.mockResolvedValue(1);
+      jest.spyOn(service['otpRepo'], 'save').mockResolvedValue({} as never);
+
+      await service.sendOtp('+250781234567');
+
+      const sendSms = service['smsService'].sendSms as jest.Mock;
+      expect(sendSms).toHaveBeenCalledWith('+250781234567', expect.stringMatching(/\d{6}/));
+    });
+
+    describe('verifyPhone', () => {
+      const otp = '123456';
+      const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+      const stubOtpRecord = (userId = mockUser.id) => {
+        jest.spyOn(service['otpRepo'], 'findOne').mockResolvedValue({
+          id: 'otp-1',
+          userId,
+          otpHash,
+          attempts: 0,
+          expiresAt: new Date(Date.now() + 60_000),
+        } as never);
+        jest.spyOn(service['otpRepo'], 'update').mockResolvedValue({} as never);
+      };
+
+      it('should promote a pending user to active', async () => {
+        stubOtpRecord();
+        usersService.findByIdRaw.mockResolvedValue({ ...mockUser, status: 'pending' } as never);
+
+        await service.verifyPhone('+250781234567', otp);
+
+        expect(usersService.update).toHaveBeenCalledWith(
+          mockUser.id,
+          expect.objectContaining({ isPhoneVerified: true, status: 'active' }),
+        );
+      });
+
+      it('should not resurrect a suspended account', async () => {
+        stubOtpRecord();
+        usersService.findByIdRaw.mockResolvedValue({ ...mockUser, status: 'suspended' } as never);
+
+        await service.verifyPhone('+250781234567', otp);
+
+        const patch = (usersService.update as jest.Mock).mock.calls[0][1] as Record<
+          string,
+          unknown
+        >;
+        expect(patch.isPhoneVerified).toBe(true);
+        expect(patch).not.toHaveProperty('status');
+      });
     });
   });
 

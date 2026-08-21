@@ -14,6 +14,11 @@ export interface AuthUser {
   permissions: string[];
   status: string;
   profilePhotoUrl?: string | null;
+  /** E.164 (+250…) on the account. Service forms prefill their contact fields from it. */
+  phone?: string | null;
+  /** From the member profile, when the account has one — absent for plain accounts. */
+  districtId?: string | null;
+  sectorId?: string | null;
 }
 
 interface AuthContextValue {

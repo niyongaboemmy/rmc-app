@@ -69,6 +69,7 @@ export function HowToBecomeMuslimSection() {
               as="span"
               lang={locale}
               value={pick(content.title, locale)}
+              editValue={content.title[lang]}
               onCommit={(v) => setField((d) => { d.title[lang] = v; })}
               placeholder="Title"
             />{' '}
@@ -76,6 +77,7 @@ export function HowToBecomeMuslimSection() {
               as="span"
               lang={locale}
               value={pick(content.titleAccent, locale)}
+              editValue={content.titleAccent[lang]}
               onCommit={(v) => setField((d) => { d.titleAccent[lang] = v; })}
               className="text-rmc-green"
               placeholder="Accent"
@@ -90,6 +92,7 @@ export function HowToBecomeMuslimSection() {
             as="p"
             lang={locale}
             value={pick(content.lede, locale)}
+            editValue={content.lede[lang]}
             onCommit={(v) => setField((d) => { d.lede[lang] = v; })}
             className={`text-gray-500 text-sm md:text-base leading-relaxed ${isAr ? 'font-arabic' : ''}`}
             dir={isAr ? 'rtl' : 'ltr'}
@@ -111,6 +114,7 @@ export function HowToBecomeMuslimSection() {
                 as="p"
                 lang={locale}
                 value={pick(content.shahadaLabel, locale)}
+                editValue={content.shahadaLabel[lang]}
                 onCommit={(v) => setField((d) => { d.shahadaLabel[lang] = v; })}
                 className={`text-rmc-gold text-[11px] font-semibold uppercase tracking-[0.18em] mb-4 ${isAr ? 'font-arabic' : ''}`}
                 placeholder="Shahada label"
@@ -140,6 +144,7 @@ export function HowToBecomeMuslimSection() {
                 as="p"
                 lang={locale}
                 value={pick(content.shahadaTranslation, locale)}
+                editValue={content.shahadaTranslation[lang]}
                 onCommit={(v) => setField((d) => { d.shahadaTranslation[lang] = v; })}
                 className={`text-gray-500 text-sm leading-relaxed ${isAr ? 'font-arabic' : ''}`}
                 dir={isAr ? 'rtl' : 'ltr'}
@@ -154,6 +159,7 @@ export function HowToBecomeMuslimSection() {
               as="h3"
               lang={locale}
               value={pick(content.linksHeading, locale)}
+              editValue={content.linksHeading[lang]}
               onCommit={(v) => setField((d) => { d.linksHeading[lang] = v; })}
               className={`text-lg md:text-xl font-bold text-gray-900 mb-6 ${isAr ? 'font-arabic' : ''}`}
               dir={isAr ? 'rtl' : 'ltr'}

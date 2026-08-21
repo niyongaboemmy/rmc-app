@@ -1,10 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Pagination } from '@/components/ui/Pagination';
+import { localized } from './localize';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowLeft, ArrowRight, EyeOff, Loader2, MessagesSquare, Plus, Search, Trash2, X,
+  ArrowLeft, EyeOff, Loader2, MessagesSquare, Plus, Search, Trash2, X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
@@ -24,6 +27,7 @@ import {
   serverMessage,
   type DiscussionQuestion,
   type Paginated,
+  type DawahCategory,
 } from '@/lib/dawahApi';
 
 const PAGE_SIZE = 12;
@@ -68,12 +72,18 @@ export function DiscussionsPageClient() {
   const { editMode, hasPermission } = useEditMode();
   const moderate = editMode && hasPermission(Permission.DISCUSSIONS_MODERATE);
 
+  const category = searchParams.get('category') ?? '';
   const search = searchParams.get('search') ?? '';
   const page = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
 
   // Typed-but-not-yet-committed search text; mirrors the URL when it changes underneath
   // us (back button, Clear filters).
   const [searchInput, setSearchInput] = useState(search);
+  // Shared with courses and the library — one taxonomy across all three listings.
+  const [categories, setCategories] = useState<DawahCategory[]>([]);
+  useEffect(() => {
+    dawahApi.categories().then(setCategories).catch(() => setCategories([]));
+  }, []);
   const [data, setData] = useState<Paginated<DiscussionQuestion> | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -82,15 +92,6 @@ export function DiscussionsPageClient() {
   // close another (see DiscussionCard). Deliberately NOT in the URL — an accordion state
   // in the query string makes every toggle a history entry, so Back stops meaning "the
   // previous page" and starts meaning "the last thing I collapsed".
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
-
-  const toggleOpen = useCallback((id: string) => {
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
-  }, []);
 
   // Moderation (edit mode only). `refreshKey` re-runs the fetch after an action
   // drops a question from the published list, without disturbing the URL filters.
@@ -153,11 +154,9 @@ export function DiscussionsPageClient() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    // A new result set means new rows; carrying the open set across would silently
-    // re-expand whatever happened to share an id after paging back and forth.
-    setOpenIds(new Set());
     dawahApi.discussions
       .list({
+        category: category || undefined,
         search: search || undefined,
         page,
         limit: PAGE_SIZE,
@@ -176,7 +175,7 @@ export function DiscussionsPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [search, page, refreshKey]);
+  }, [category, search, page, refreshKey]);
 
   // Withdraw an entry straight from the listing. Both actions remove it from the
   // published list, so we refetch on success. Delete is confirmed first.
@@ -199,7 +198,12 @@ export function DiscussionsPageClient() {
     [success, toastError, t],
   );
 
-  const hasFilters = Boolean(search);
+  const hasFilters = Boolean(category || search);
+
+  const categoryOptions = [
+    { value: '', label: t('discussions.allCategories') },
+    ...categories.map((c) => ({ value: c.slug, label: localized(c, 'name', locale) })),
+  ];
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -246,16 +250,77 @@ export function DiscussionsPageClient() {
               </div>
             </div>
 
-            {/* ── Two columns: the entries, and a rail that stays with you ── */}
-            {/* Same split as the tenders board — content left, controls right. The rail is
-                sticky because search is the primary way through a knowledge base: having
-                to scroll back to the top to refine a query is the one interaction this
-                page must not make expensive.
+            {/* ── One column ──────────────────────────────────────────────
+                This was a two-column split with a sticky rail, but the rail held only the
+                search box — and search belongs with the list it filters. With that moved
+                there was no second column left, and a single measured column reads better
+                for question titles than one stretched across the full page width. */}
+            <div className="mx-auto max-w-3xl">
+              <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+                {/* The panel is labelled with the COUNT, not a heading. The page's own
+                    h1 already says "Discussions"; a second heading saying it again would
+                    be noise, whereas the count describes the list it sits on — and it
+                    used to sit in the rail, away from the thing it counts. */}
+                <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-gray-100 pb-3">
+                  <MessagesSquare className="h-4 w-4 shrink-0 text-rmc-green" aria-hidden />
+                  <span className="text-sm font-bold text-gray-900">
+                    {t('discussions.count', { count: total })}
+                  </span>
+                  {/* Say it plainly that the list is mixed-language — a reader seeing
+                      Arabic on the English page should know it is deliberate. */}
+                  <span className="text-xs text-gray-400">· {t('discussions.otherLanguages')}</span>
+                </div>
 
-                NOT wrapped in <Reveal>: that keeps a transform on the element even once
-                visible, which silently makes `position: sticky` do nothing. */}
-            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr,340px]">
-              <div className="min-w-0">
+                {/* Search sits with the questions, not in a rail beside them: it filters
+                    this list, and the result it produces is the list directly below. In a
+                    separate column the input and its effect were never in view together. */}
+                <div className="mb-4">
+                  <label htmlFor="discussions-search" className="sr-only">
+                    {t('discussions.searchLabel')}
+                  </label>
+                  {/* Search and category on one row: they narrow the same list, and a
+                      reader combining them should not have to hunt for the second. The
+                      select drops below the input on small screens rather than squeezing
+                      both into a width neither can use. */}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="relative sm:flex-1">
+                    <Search
+                      className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                      aria-hidden
+                    />
+                    <input
+                      id="discussions-search"
+                      type="search"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder={t('discussions.searchPlaceholder')}
+                      className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                    />
+                  </div>
+
+                  <div className="sm:w-56">
+                    <SearchableSelect
+                      value={category}
+                      onChange={(v) => setParams({ category: v || null, page: null })}
+                      options={categoryOptions}
+                      placeholder={t('discussions.allCategories')}
+                      size="md"
+                      triggerClassName="rounded-lg"
+                      zIndex={40}
+                    />
+                  </div>
+                  </div>
+
+                  {hasFilters && (
+                    <button
+                      type="button"
+                      onClick={() => setParams({ category: null, search: null, page: null })}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
+                    >
+                      <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}
+                    </button>
+                  )}
+                </div>
             {/* ── The list ───────────────────────────────────────────────── */}
             {failed ? (
               <div className="rounded-lg border border-dashed border-red-200 bg-white p-10 text-center">
@@ -293,8 +358,8 @@ export function DiscussionsPageClient() {
               </div>
             ) : (
               <>
-                {/* One column, not two. An accordion in a 2-up grid shifts its neighbour
-                    down every time a row expands, so the entry you were reading jumps. */}
+                {/* One column, not two: question titles are lines of prose, and a 2-up
+                    grid halves the width each one gets to sit on. */}
                 <div
                   className={`grid gap-2.5 transition-opacity duration-200 ${
                     loading ? 'opacity-50' : 'opacity-100'
@@ -305,8 +370,7 @@ export function DiscussionsPageClient() {
                       <DiscussionCard
                         question={q}
                         locale={locale}
-                        open={openIds.has(q.id)}
-                        onToggle={() => toggleOpen(q.id)}
+                        showDate
                       />
                       {/* end-10 clears the disclosure chevron, which sits at end-4. An
                           overlay on top of it would both hide the affordance and swallow
@@ -343,93 +407,40 @@ export function DiscussionsPageClient() {
                   <p className="mt-8 text-center text-sm text-gray-400">{t('discussions.empty')}</p>
                 )}
 
-                {pages > 1 && (
-                  <div className="mt-8 flex items-center justify-center gap-3">
-                    <button
-                      type="button"
-                      disabled={page <= 1}
-                      onClick={() => setParams({ page: page - 1 })}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
-                    >
-                      <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-                    </button>
-                    <span className="text-xs text-gray-500">
-                      {page} / {pages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={page >= pages}
-                      onClick={() => setParams({ page: page + 1 })}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
-                    >
-                      <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  className="mt-8"
+                  page={page}
+                  pages={pages}
+                  onChange={(p) => setParams({ page: p > 1 ? p : null })}
+                  labels={{
+                    previous: tCommon('pagination.previous'),
+                    next: tCommon('pagination.next'),
+                    nav: tCommon('pagination.nav'),
+                  }}
+                />
               </>
             )}
               </div>
 
-              {/* ── Rail ─────────────────────────────────────────────────── */}
-              <aside className="space-y-4 lg:sticky lg:top-24">
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <label
-                    htmlFor="discussions-search"
-                    className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400"
+              {/* Ask only shows to signed-in members — the form 401s otherwise, and a
+                  button that leads to a wall is a worse offer than no button.
+
+                  Below the list, not above it: a reader arrives to find out whether their
+                  question has already been answered, and asking is what they do once it
+                  has not been. Offered before the list, it interrupts that with the one
+                  action that makes the reading redundant. */}
+              {isAuthenticated && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setAskOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark"
                   >
-                    {t('discussions.searchLabel')}
-                  </label>
-                  <div className="relative">
-                    <Search
-                      className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                      aria-hidden
-                    />
-                    <input
-                      id="discussions-search"
-                      type="search"
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      placeholder={t('discussions.searchPlaceholder')}
-                      className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pe-4 ps-9 text-sm text-gray-900 outline-none transition-colors focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
-                    />
-                  </div>
-
-                  <p className="mt-3 text-xs text-gray-500">
-                    {t('discussions.count', { count: total })}
-                    {/* Say it plainly that the list is mixed-language — a reader seeing
-                        Arabic on the English page should know it is deliberate. */}
-                    <span className="ms-1.5 text-gray-400">· {t('discussions.otherLanguages')}</span>
-                  </p>
-
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setParams({ search: null, page: null })}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green-light"
-                    >
-                      <X className="h-3.5 w-3.5" /> {t('discussions.clearFilters')}
-                    </button>
-                  )}
+                    <Plus className="h-4 w-4" /> {t('discussions.askCta')}
+                  </button>
                 </div>
+              )}
 
-                {/* Ask only shows to signed-in members — the form 401s otherwise, and a
-                    button that leads to a wall is a worse offer than no button. */}
-                {isAuthenticated && (
-                  <div className="rounded-lg border border-gray-200 bg-white p-4">
-                    <p className="text-sm font-bold text-gray-900">{t('discussions.askPrompt')}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-gray-500">
-                      {t('discussions.askRailHint')}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setAskOpen(true)}
-                      className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-rmc-green px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> {t('discussions.askCta')}
-                    </button>
-                  </div>
-                )}
-              </aside>
             </div>
           </div>
         </section>

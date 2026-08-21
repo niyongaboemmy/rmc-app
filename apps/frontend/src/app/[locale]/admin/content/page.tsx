@@ -11,13 +11,29 @@ import {
   Bell, BarChart3, Handshake, Building2, ArrowRight,
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
-  Compass, ListChecks, CalendarDays,
+  Compass, ListChecks, CalendarDays, Briefcase, GraduationCap,
+  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
 type SectionType = 'crud' | 'edit';
-type PageLocation = 'Homepage' | 'About Page' | 'Blog Page' | 'Contact Page' | 'Funeral Service' | 'Hajj Service';
+type PageLocation =
+  | 'Homepage'
+  | 'About Page'
+  | 'Blog Page'
+  | 'Contact Page'
+  | 'Funeral Service'
+  | 'Hajj Service'
+  | 'Tenders Page'
+  | 'Jobs Page'
+  | 'Scholarships Page'
+  | 'Services Page'
+  | 'Dawah Pages'
+  | 'Welcome to Islam'
+  | 'Projects Page'
+  | 'Marriage Page'
+  | 'Site-wide';
 
 interface SectionConfig {
   id: string;
@@ -250,7 +266,7 @@ const SECTIONS: SectionConfig[] = [
     id: 'funeral',
     icon: Moon,
     title: 'Funeral Service',
-    description: 'The "what we do" description, the process-timeline heading and the sticky call bar on the public Funeral page.',
+    description: 'All the wording on the public Funeral pages — hero, quick actions, the "what we do" description, the timeline and transport headings, the closing band, and the sticky call bar.',
     type: 'edit', itemLabel: null,
     page: 'Funeral Service', positionOrder: 0,
     locationLabel: 'Funeral Service · Landing page',
@@ -265,7 +281,7 @@ const SECTIONS: SectionConfig[] = [
     title: 'Funeral Request Steps',
     description: 'Add, edit, reorder and customise (colour + icon) the funeral request lifecycle steps shown on the public status/detail timeline.',
     type: 'crud', itemLabel: 'steps',
-    page: 'Funeral Service', positionOrder: 0,
+    page: 'Funeral Service', positionOrder: 1,
     locationLabel: 'Funeral Service · Status timeline',
     keywords: ['funeral', 'janazah', 'burial', 'ghusl', 'kafan', 'steps', 'stages', 'timeline', 'status', 'lifecycle', 'request', 'deceased', 'reorder', 'color', 'icon'],
     bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
@@ -311,6 +327,152 @@ const SECTIONS: SectionConfig[] = [
     badge: 'bg-amber-100 text-amber-700',
     accentBar: 'bg-amber-400',
   },
+  /* The three service boards. Each entry edits the WORDING of its page; the records
+     the page lists (tenders, postings, programmes) have their own screens, which the
+     editors link across to. */
+  {
+    id: 'tender-service',
+    icon: Briefcase,
+    title: 'Tenders Page',
+    description: 'Hero, the heading above the board and the how-to-apply steps on the public Tenders page. The tenders themselves are managed under Tenders.',
+    type: 'edit', itemLabel: null,
+    page: 'Tenders Page', positionOrder: 0,
+    locationLabel: 'Tenders Page · Wording',
+    keywords: ['tender', 'tenders', 'bid', 'procurement', 'board', 'hero', 'heading', 'steps', 'how to apply', 'wording', 'copy'],
+    bg: 'bg-teal-50', iconColor: 'text-teal-600', border: 'border-teal-100',
+    badge: 'bg-teal-100 text-teal-700',
+    accentBar: 'bg-teal-400',
+  },
+  {
+    id: 'jobs-service',
+    icon: Briefcase,
+    title: 'Jobs Page',
+    description: 'Hero, the heading above the board and the how-to-apply steps on the public Jobs page. The openings themselves are managed under Job Postings.',
+    type: 'edit', itemLabel: null,
+    page: 'Jobs Page', positionOrder: 0,
+    locationLabel: 'Jobs Page · Wording',
+    keywords: ['job', 'jobs', 'vacancy', 'opening', 'career', 'employment', 'board', 'hero', 'heading', 'steps', 'how to apply', 'wording', 'copy'],
+    bg: 'bg-indigo-50', iconColor: 'text-indigo-600', border: 'border-indigo-100',
+    badge: 'bg-indigo-100 text-indigo-700',
+    accentBar: 'bg-indigo-400',
+  },
+  {
+    id: 'scholarship-service',
+    icon: GraduationCap,
+    title: 'Scholarships Page',
+    description: 'Hero, board heading, how-to-apply steps, the FAQ and the closing call to action on the public Scholarships page. The programmes themselves are managed under Scholarship Programs.',
+    type: 'edit', itemLabel: null,
+    page: 'Scholarships Page', positionOrder: 0,
+    locationLabel: 'Scholarships Page · Wording',
+    keywords: ['scholarship', 'scholarships', 'bursary', 'student', 'education', 'faq', 'cta', 'hero', 'heading', 'steps', 'how to apply', 'wording', 'copy'],
+    bg: 'bg-violet-50', iconColor: 'text-violet-600', border: 'border-violet-100',
+    badge: 'bg-violet-100 text-violet-700',
+    accentBar: 'bg-violet-400',
+  },
+  {
+    id: 'services',
+    icon: LayoutGrid,
+    title: 'Services Page',
+    description: 'The name, description and detail modal for each service listed on the public Services page.',
+    type: 'edit', itemLabel: null,
+    page: 'Services Page', positionOrder: 0,
+    locationLabel: 'Services Page · Service cards',
+    keywords: ['service', 'services', 'marriage', 'funeral', 'conduct', 'hajj', 'card', 'modal', 'requirements', 'steps', 'wording', 'copy'],
+    bg: 'bg-cyan-50', iconColor: 'text-cyan-600', border: 'border-cyan-100',
+    badge: 'bg-cyan-100 text-cyan-700',
+    accentBar: 'bg-cyan-400',
+  },
+  {
+    id: 'library',
+    icon: Library,
+    title: 'Library Page',
+    description: 'Heading and the empty / error messages on the public Dawah Library listing. The books themselves are managed under Dawah → Library.',
+    type: 'edit', itemLabel: null,
+    page: 'Dawah Pages', positionOrder: 0,
+    locationLabel: 'Dawah · Library listing',
+    keywords: ['library', 'books', 'dawah', 'reading', 'heading', 'empty', 'error', 'wording', 'copy'],
+    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
+    badge: 'bg-emerald-100 text-emerald-700',
+    accentBar: 'bg-emerald-400',
+  },
+  {
+    id: 'courses',
+    icon: GraduationCap,
+    title: 'Courses Page',
+    description: 'Heading and the empty / error messages on the public Dawah Courses listing. The courses themselves are managed under Dawah → Courses.',
+    type: 'edit', itemLabel: null,
+    page: 'Dawah Pages', positionOrder: 1,
+    locationLabel: 'Dawah · Courses listing',
+    keywords: ['courses', 'learning', 'dawah', 'lessons', 'heading', 'empty', 'error', 'wording', 'copy'],
+    bg: 'bg-sky-50', iconColor: 'text-sky-600', border: 'border-sky-100',
+    badge: 'bg-sky-100 text-sky-700',
+    accentBar: 'bg-sky-400',
+  },
+  {
+    id: 'discussions',
+    icon: MessagesSquare,
+    title: 'Discussions Page',
+    description: 'Heading and the empty / no-results / error messages on the public Dawah Discussions listing. The questions themselves are managed under Dawah → Discussions.',
+    type: 'edit', itemLabel: null,
+    page: 'Dawah Pages', positionOrder: 2,
+    locationLabel: 'Dawah · Discussions listing',
+    keywords: ['discussions', 'questions', 'answers', 'ask', 'dawah', 'heading', 'empty', 'error', 'wording', 'copy'],
+    bg: 'bg-orange-50', iconColor: 'text-orange-600', border: 'border-orange-100',
+    badge: 'bg-orange-100 text-orange-700',
+    accentBar: 'bg-orange-400',
+  },
+  {
+    id: 'new-muslim',
+    icon: Sparkles,
+    title: 'Welcome to Islam Page',
+    description: 'First steps, the essential duas, the mosque finder labels and the mentor form on the public Welcome to Islam page.',
+    type: 'edit', itemLabel: null,
+    page: 'Welcome to Islam', positionOrder: 0,
+    locationLabel: 'Welcome to Islam · Page sections',
+    keywords: ['new muslim', 'revert', 'convert', 'shahada', 'dua', 'duas', 'arabic', 'mentor', 'mosque', 'steps', 'welcome', 'islam'],
+    bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
+    badge: 'bg-rmc-green-light text-rmc-green-dark',
+    accentBar: 'bg-rmc-green',
+  },
+  {
+    id: 'projects',
+    icon: HandCoins,
+    title: 'Projects',
+    description: 'The section heading and the fundraising projects on the public Projects page — funding targets, status, cover image and description.',
+    type: 'crud', itemLabel: 'projects',
+    page: 'Projects Page', positionOrder: 0,
+    locationLabel: 'Projects Page · Projects',
+    keywords: ['project', 'projects', 'fundraising', 'donate', 'mosque', 'construction', 'funding', 'target', 'raised', 'progress', 'image'],
+    bg: 'bg-amber-50', iconColor: 'text-amber-600', border: 'border-amber-100',
+    badge: 'bg-amber-100 text-amber-700',
+    accentBar: 'bg-amber-400',
+  },
+  {
+    id: 'marriage',
+    icon: Heart,
+    title: 'Marriage Page',
+    description: 'Every heading, blurb, list entry and button on the public Marriage page — the hero, overview, what is included, the process steps, requirements, the fee table, the FAQ and the closing call to action.',
+    type: 'edit', itemLabel: null,
+    page: 'Marriage Page', positionOrder: 0,
+    locationLabel: 'Marriage Page · Wording',
+    keywords: ['marriage', 'nikah', 'wedding', 'certificate', 'fees', 'imam', 'ceremony', 'requirements', 'steps', 'faq', 'wording', 'copy'],
+    bg: 'bg-pink-50', iconColor: 'text-pink-600', border: 'border-pink-100',
+    badge: 'bg-pink-100 text-pink-700',
+    accentBar: 'bg-pink-400',
+  },
+  {
+    id: 'page-headers',
+    icon: Heading1,
+    title: 'Page Headers',
+    description: 'The banner copy at the top of the Services, Contact, Membership, Welcome to Islam and Gallery pages, plus the About timeline header. Two or three fields each, gathered on one screen.',
+    type: 'edit', itemLabel: null,
+    page: 'Site-wide', positionOrder: 0,
+    locationLabel: 'Site-wide · Page banners',
+    keywords: ['header', 'headers', 'hero', 'banner', 'title', 'subtitle', 'eyebrow', 'contact', 'services', 'gallery', 'membership', 'register', 'welcome', 'timeline', 'about'],
+    bg: 'bg-rose-50', iconColor: 'text-rose-600', border: 'border-rose-100',
+    badge: 'bg-rose-100 text-rose-700',
+    accentBar: 'bg-rose-400',
+  },
 ];
 
 const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string; description: string }[] = [
@@ -320,6 +482,15 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'Contact Page', icon: Mail, color: 'text-teal-600', description: 'Content on the /contact page' },
   { page: 'Funeral Service', icon: Moon, color: 'text-rmc-green', description: 'Content on the funeral service pages' },
   { page: 'Hajj Service', icon: Compass, color: 'text-amber-600', description: 'Content on the Hajj service pages' },
+  { page: 'Tenders Page', icon: Briefcase, color: 'text-teal-600', description: 'Wording on the public tenders board' },
+  { page: 'Jobs Page', icon: Briefcase, color: 'text-indigo-600', description: 'Wording on the public jobs board' },
+  { page: 'Scholarships Page', icon: GraduationCap, color: 'text-violet-600', description: 'Wording on the public scholarships board' },
+  { page: 'Services Page', icon: LayoutGrid, color: 'text-cyan-600', description: 'The service cards and their detail modals' },
+  { page: 'Dawah Pages', icon: Library, color: 'text-emerald-600', description: 'Wording on the Library, Courses and Discussions listings' },
+  { page: 'Welcome to Islam', icon: Sparkles, color: 'text-rmc-green', description: 'Content on the /new-muslim page' },
+  { page: 'Projects Page', icon: HandCoins, color: 'text-amber-600', description: 'Fundraising projects and the section heading' },
+  { page: 'Marriage Page', icon: Heart, color: 'text-pink-600', description: 'Wording on the public marriage page' },
+  { page: 'Site-wide', icon: Heading1, color: 'text-rose-600', description: 'Copy that appears across several pages' },
 ];
 
 type Tab = 'sections' | 'gallery';

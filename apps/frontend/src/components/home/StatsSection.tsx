@@ -155,6 +155,7 @@ export function StatsSection() {
               as="span"
               lang={locale}
               value={pick(content.title, locale)}
+              editValue={content.title[lang]}
               onCommit={(v) => setField((d) => { d.title[lang] = v; })}
               placeholder="Title"
             />{' '}
@@ -162,6 +163,7 @@ export function StatsSection() {
               as="span"
               lang={locale}
               value={pick(content.titleAccent, locale)}
+              editValue={content.titleAccent[lang]}
               onCommit={(v) => setField((d) => { d.titleAccent[lang] = v; })}
               className="text-emerald-400"
               placeholder="Accent"
@@ -174,6 +176,7 @@ export function StatsSection() {
             as="p"
             lang={locale}
             value={pick(content.subtitle, locale)}
+            editValue={content.subtitle[lang]}
             onCommit={(v) => setField((d) => { d.subtitle[lang] = v; })}
             className={`text-white/40 text-sm ${rtl ? 'font-arabic' : ''}`}
             placeholder="Subtitle"

@@ -52,6 +52,8 @@ interface Leader {
   id: string; image: string;
   nameEn: string; nameRw: string; nameAr: string;
   roleEn: string; roleRw: string; roleAr: string;
+  /** Long-form profile. The public About page shows it only in the leader's pop-up. */
+  bioEn?: string; bioRw?: string; bioAr?: string;
   email?: string; phone?: string;
 }
 
@@ -183,7 +185,8 @@ export function AboutLiveEditor() {
   }, []);
   const addLeader = () => setLeaders((prev) => [...prev, {
     id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `l${prev.length}-${Date.now()}`,
-    image: '', nameEn: 'New leader', nameRw: '', nameAr: '', roleEn: 'Role', roleRw: '', roleAr: '', email: '', phone: '',
+    image: '', nameEn: 'New leader', nameRw: '', nameAr: '', roleEn: 'Role', roleRw: '', roleAr: '',
+    bioEn: '', bioRw: '', bioAr: '', email: '', phone: '',
   }]);
   const removeLeader = (id: string) => setLeaders((prev) => prev.filter((l) => l.id !== id));
 
@@ -201,6 +204,7 @@ export function AboutLiveEditor() {
 
   const nameKey = `name${sfx}` as keyof Leader;
   const roleKey = `role${sfx}` as keyof Leader;
+  const bioKey = `bio${sfx}` as keyof Leader;
   const langLabel = LANGS.find((l) => l.key === lang)?.label;
 
   return (
@@ -346,6 +350,11 @@ export function AboutLiveEditor() {
                     <span aria-hidden className="my-3 block h-px w-12 rounded-full bg-gradient-to-r from-rmc-green via-rmc-gold to-rmc-green" />
                     <Editable value={(l[roleKey] as string) || ''} onChange={(v) => setLeader(l.id, roleKey, v)} dir={dir}
                       placeholder="Role" className={`text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold ${fontClass}`} />
+                    {/* Profile — not on the public card; it appears when a
+                        visitor opens this leader's pop-up. */}
+                    <Editable value={(l[bioKey] as string) || ''} onChange={(v) => setLeader(l.id, bioKey, v)} dir={dir}
+                      placeholder="Profile / bio (shown in the pop-up)"
+                      className={`mt-3 whitespace-pre-line text-xs leading-relaxed text-gray-500 ${fontClass}`} />
                   </div>
                 ))}
                 <button onClick={addLeader}

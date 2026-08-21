@@ -38,6 +38,18 @@ interface FieldDef {
 }
 
 const FIELDS: FieldDef[] = [
+  { group: 'hero', key: 'title', label: 'Hero — Title', rows: 1 },
+  { group: 'hero', key: 'subtitle', label: 'Hero — Standfirst', rows: 3 },
+  {
+    group: 'hero', key: 'ayahRef', label: 'Hero — Ayah reference', rows: 1,
+    hint: 'The citation under the ayah. The ayah itself is scripture and is not editable.',
+  },
+  { group: 'quick', key: 'title', label: 'Quick actions — Heading', rows: 1 },
+  { group: 'quick', key: 'subtitle', label: 'Quick actions — Subheading', rows: 3 },
+  { group: 'quick', key: 'reportTitle', label: 'Card 1 — Title', rows: 1 },
+  { group: 'quick', key: 'reportDesc', label: 'Card 1 — Description', rows: 2 },
+  { group: 'quick', key: 'cemeteryTitle', label: 'Card 2 — Title', rows: 1 },
+  { group: 'quick', key: 'cemeteryDesc', label: 'Card 2 — Description', rows: 2 },
   { group: 'description', key: 'eyebrow', label: 'Description — Eyebrow', rows: 1 },
   { group: 'description', key: 'title', label: 'Description — Heading', rows: 1 },
   {
@@ -49,9 +61,30 @@ const FIELDS: FieldDef[] = [
   { group: 'steps', key: 'subtitle', label: 'Process timeline — Subheading', rows: 2 },
   { group: 'hotline', key: 'label', label: 'Call bar — Label', rows: 1 },
   { group: 'hotline', key: 'note', label: 'Call bar — Note under the label', rows: 1 },
+  { group: 'cemeteries', key: 'title', label: 'Cemetery page — Heading', rows: 1 },
+  { group: 'cemeteries', key: 'subtitle', label: 'Cemetery page — Subheading', rows: 2 },
+  {
+    group: 'cemeteries', key: 'emptyTitle', label: 'Cemetery page — No results heading', rows: 1,
+    hint: 'Shown when a search matches no cemetery. The cemeteries themselves are managed under Admin → Funeral.',
+  },
+  { group: 'cemeteries', key: 'emptyText', label: 'Cemetery page — No results message', rows: 2 },
+  { group: 'transports', key: 'title', label: 'Transport section — Heading', rows: 1 },
+  {
+    group: 'transports', key: 'subtitle', label: 'Transport section — Subheading', rows: 2,
+    hint: 'The mosques listed under it are records, not copy.',
+  },
+  { group: 'cta', key: 'title', label: 'Closing band — Heading', rows: 1 },
+  { group: 'cta', key: 'subtitle', label: 'Closing band — Message', rows: 3 },
+  { group: 'cta', key: 'reportLabel', label: 'Closing band — Report button', rows: 1 },
+  { group: 'cta', key: 'contactLabel', label: 'Closing band — Contact button', rows: 1 },
 ];
 
 const GROUP_LABELS: Record<Group, string> = {
+  hero: 'Page hero',
+  quick: 'Quick actions',
+  cemeteries: 'Cemetery directory page',
+  transports: 'Transport section heading',
+  cta: 'Closing band',
   description: 'What we do',
   steps: 'Process timeline heading',
   hotline: 'Sticky call bar',
@@ -128,7 +161,7 @@ function FuneralContentManager() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Funeral Service</h1>
-            <p className="text-xs text-gray-400">The description, the timeline heading and the call bar on the public Funeral page</p>
+            <p className="text-xs text-gray-400">Every heading, blurb and button on the public Funeral pages, plus the sticky call bar</p>
           </div>
         </div>
         <button onClick={handleSave} disabled={saving}

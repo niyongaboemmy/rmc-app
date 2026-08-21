@@ -36,6 +36,14 @@ export class ScholarshipDocument {
   @Column({ name: 'document_type', type: 'varchar', length: 50 })
   documentType: ScholarshipDocumentType;
 
+  /**
+   * Which of the scholarship's `required_documents` this file answers — matches
+   * the `key` in that array. Null for a generic upload, or for anything filed
+   * before scholarships declared their own requirements (migration 055).
+   */
+  @Column({ name: 'requirement_key', type: 'varchar', length: 40, nullable: true })
+  requirementKey: string | null;
+
   @Column({ name: 'file_key', type: 'varchar', length: 500 })
   fileKey: string;
 
