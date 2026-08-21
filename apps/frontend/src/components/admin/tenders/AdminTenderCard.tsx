@@ -42,35 +42,23 @@ export function deadlineLabel(expiresAt: string | null): string {
 
 const LIFECYCLE_STYLES: Record<
   TenderLifecycle,
-  { dot: string; chip: string; deadline: string; hoverBorder: string; titleHover: string }
+  { deadline: string; hoverBorder: string; titleHover: string }
 > = {
   open: {
-    dot: 'bg-rmc-green',
-    chip: 'bg-rmc-green/10 text-rmc-green',
     deadline: 'bg-rmc-green/10 text-rmc-green',
     hoverBorder: 'hover:border-rmc-green/30',
     titleHover: 'group-hover:text-rmc-green',
   },
   closing: {
-    dot: 'bg-amber-500',
-    chip: 'bg-amber-50 text-amber-600',
     deadline: 'bg-amber-50 text-amber-600',
     hoverBorder: 'hover:border-amber-300',
     titleHover: 'group-hover:text-amber-600',
   },
   closed: {
-    dot: 'bg-gray-400',
-    chip: 'bg-gray-100 text-gray-500',
     deadline: 'bg-gray-100 text-gray-400',
     hoverBorder: 'hover:border-gray-300',
     titleHover: 'group-hover:text-gray-700',
   },
-};
-
-const LIFECYCLE_LABELS: Record<TenderLifecycle, string> = {
-  open: 'Open',
-  closing: 'Closing soon',
-  closed: 'Closed',
 };
 
 /** The pipeline stages worth surfacing on a card — the rest live on the board. */
@@ -122,72 +110,67 @@ export function AdminTenderCard({
             </span>
           )}
         </div>
-        <div className="mt-1 flex items-center gap-2">
+        {/* One wrapping meta line instead of three breakpoint-gated groups. The bid
+            count and the deadline are the two numbers this row exists to report, and
+            they used to vanish below sm — the width where an admin is most likely to be
+            triaging from a phone. Wrapping costs a second line on a narrow screen;
+            hiding them cost the answer. */}
+        <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-semibold">
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold',
-              styles.chip,
+              'inline-flex items-center gap-1',
+              applied > 0 ? 'text-teal-700' : 'text-gray-400',
             )}
           >
-            <span className={cn('h-1.5 w-1.5 rounded-full', styles.dot)} />
-            {LIFECYCLE_LABELS[lifecycle]}
+            <Users className="h-3 w-3" />
+            {applied} {applied === 1 ? 'bid' : 'bids'}
           </span>
+
+          {/* The deadline carries the lifecycle colour the status chip used to. The chip
+              said "Closing soon" directly above a pill reading "3 days left" — the same
+              fact twice, in two shapes. The colour is the part that was doing work. */}
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
+              styles.deadline,
+            )}
+          >
+            <Clock className="h-3 w-3" />
+            {deadlineLabel(tender.expiresAt)}
+          </span>
+
           {attachCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-400">
+            <span className="inline-flex items-center gap-1 text-gray-400">
               <Paperclip className="h-2.5 w-2.5" />
               {attachCount}
             </span>
           )}
+
+          {/* Stage counts sit inline now rather than in an lg-only group. Only the
+              decisions, and only once they exist. */}
+          {applied > 0 &&
+            HIGHLIGHT_STATUSES.map((status) => {
+              const n = counts?.byStatus?.[status] ?? 0;
+              if (!n) return null;
+              return (
+                <span
+                  key={status}
+                  className={cn(
+                    'rounded-md px-1.5 py-0.5 text-[10px]',
+                    status === 'awarded'
+                      ? 'bg-green-50 text-green-700'
+                      : 'bg-teal-50 text-teal-700',
+                  )}
+                >
+                  {n} {STATUS_LABELS_SHORT[status].toLowerCase()}
+                </span>
+              );
+            })}
         </div>
       </div>
 
-      {/* The two numbers this row exists for: bids in, and time left. */}
-      <div className="hidden shrink-0 items-center gap-2 sm:flex">
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold',
-            applied > 0 ? 'bg-teal-50 text-teal-700' : 'bg-gray-50 text-gray-400',
-          )}
-        >
-          <Users className="h-3.5 w-3.5" />
-          {applied} applied
-        </span>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold',
-            styles.deadline,
-          )}
-        >
-          <Clock className="h-3 w-3" />
-          {deadlineLabel(tender.expiresAt)}
-        </span>
-      </div>
-
-      {/* Stage breakdown — only the decisions, and only once they exist. */}
-      {applied > 0 && (
-        <div className="hidden shrink-0 flex-wrap gap-1.5 lg:flex">
-          {HIGHLIGHT_STATUSES.map((status) => {
-            const n = counts?.byStatus?.[status] ?? 0;
-            if (!n) return null;
-            return (
-              <span
-                key={status}
-                className={cn(
-                  'rounded-md px-2 py-0.5 text-[10px] font-semibold',
-                  status === 'awarded'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-teal-50 text-teal-700',
-                )}
-              >
-                {n} {STATUS_LABELS_SHORT[status].toLowerCase()}
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-gray-400 transition-colors group-hover:text-rmc-green">
-        Open board
+      <span className="inline-flex shrink-0 items-center gap-0.5 self-center text-[11px] font-semibold text-gray-400 transition-colors group-hover:text-rmc-green">
+        <span className="hidden sm:inline">Open board</span>
         <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
       </span>
     </Link>
