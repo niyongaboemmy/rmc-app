@@ -36,5 +36,7 @@ export enum ErrorCode {
   CONFLICT = 'CONFLICT',
   /** 429 — rate limited. Distinct from AUTH_TOO_MANY_ATTEMPTS, which is login-specific. */
   RATE_LIMITED = 'RATE_LIMITED',
+  /** 503 — a dependency the request needs is unreachable. The server is fine; it can't serve. */
+  SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }

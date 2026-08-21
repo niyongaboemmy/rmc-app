@@ -145,9 +145,51 @@ jobs:
             pm2 reload ecosystem.config.js --update-env
 
             echo "==> Health checks..."
-            sleep 5
-            curl -sf http://localhost:3000/api/v1/health || (pm2 logs rmc-backend --lines 50 && exit 1)
-            curl -sf -o /dev/null -w "%{http_code}" http://localhost:3001 | grep -qE "^(200|307)" || (pm2 logs rmc-frontend --lines 50 && exit 1)
+
+            # `pm2 reload` returns as soon as the process is respawned, but Nest binds the
+            # port only after ~40 modules initialise and several hundred routes map. The old
+            # fixed `sleep 5` raced that boot and failed deploys on a backend that was
+            # seconds away from ready.
+            backend_ready=""
+            for i in $(seq 1 30); do
+              if curl -sf -o /tmp/rmc-health.json http://localhost:3000/api/v1/health; then
+                backend_ready="yes"
+                echo "✅ Backend healthy after ${i}s"
+                break
+              fi
+              sleep 1
+            done
+            if [ -z "$backend_ready" ]; then
+              echo "❌ Backend health check failed after 30s"
+              # --nostream: `pm2 logs` tails forever by default, so the old failure path hung
+              # this step until the SSH action timed out instead of exiting non-zero.
+              pm2 logs rmc-backend --lines 50 --nostream || true
+              exit 1
+            fi
+
+            # The loop above already fails the deploy on 503 (Postgres unreachable). A 200 can
+            # still report `degraded` — Redis down takes OTP login, MFA setup and rate limiting
+            # with it, which is worth shouting about but not worth blocking a deploy over.
+            if grep -q '"redis": *"error"' /tmp/rmc-health.json; then
+              echo "⚠️  WARNING: Redis unreachable — OTP login, 2FA setup and rate limiting are down."
+            fi
+
+            frontend_ready=""
+            for i in $(seq 1 30); do
+              code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001 || true)
+              if echo "$code" | grep -qE "^(200|307)$"; then
+                frontend_ready="yes"
+                echo "✅ Frontend healthy after ${i}s (HTTP $code)"
+                break
+              fi
+              sleep 1
+            done
+            if [ -z "$frontend_ready" ]; then
+              echo "❌ Frontend health check failed after 30s"
+              pm2 logs rmc-frontend --lines 50 --nostream || true
+              exit 1
+            fi
+
             echo "✅ All health checks passed"
 
             pm2 save
