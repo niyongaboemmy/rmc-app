@@ -213,6 +213,10 @@
       "title": "Our Partners"
     }
   },
+  "areas": {
+    "pillar": "Pillar {number}",
+    "backTo": "Back to {section}"
+  },
   "about": {
     "title": "About RMC",
     "subtitle": "Rwanda Muslim Community — Building a United Ummah",

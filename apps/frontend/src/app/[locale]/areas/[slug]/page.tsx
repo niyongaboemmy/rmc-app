@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { ArrowLeft, BookOpen, Heart, GraduationCap, Globe, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -34,6 +35,8 @@ export default async function AreaDetailPage({
   params: { locale: string; slug: string };
 }) {
   const { locale, slug } = params;
+  const t = await getTranslations('areas');
+  const tNav = await getTranslations('nav');
 
   // Dawah is consolidated with the full Dawah section — old /areas/dawah links
   // (and prev/next / other-pillar nav) lead to the real dawah pages.
@@ -60,6 +63,17 @@ export default async function AreaDetailPage({
    */
   const richHtml = DOMPurify.sanitize(item.richContent ? pick(item.richContent, locale) : '');
 
+  /**
+   * The section's own name, taken from the CMS rather than hard-coded.
+   *
+   * `title` + `titleAccent` are the two halves the home page renders as one heading, and
+   * they are already translated and admin-editable — so the eyebrow and the back link say
+   * whatever the section is currently called, in the reader's language. This page used to
+   * spell "Areas of Intervention" in English regardless of locale.
+   */
+  const sectionName = `${pick(content.title, locale)} ${pick(content.titleAccent, locale)}`.trim();
+  const pillarLabel = t('pillar', { number: String(pillarIndex).padStart(2, '0') });
+
   // Hero background: use the area's hero image + gallery images, fall back to default slides
   const heroImages: string[] = [];
   if (item.imageKey) heroImages.push(fileUrl(item.imageKey));
@@ -74,17 +88,16 @@ export default async function AreaDetailPage({
           HERO — full-bleed photo background, pillar badge, title, description
       ═══════════════════════════════════════════════════════════════════ */}
       <PageHero
-        eyebrow={`Pillar ${String(pillarIndex).padStart(2, '0')} · Areas of Intervention`}
+        eyebrow={`${pillarLabel} · ${sectionName}`}
         title={title}
-        titleClassName="text-3xl md:text-4xl lg:text-5xl"
+        titleClassName="text-2xl md:text-3xl lg:text-4xl"
         subtitle={description}
         backHref={`/${locale}#areas`}
-        backLabel="Back to Areas of Intervention"
+        backLabel={t('backTo', { section: sectionName })}
         images={finalHeroImages}
         align="left"
-        ornament={false}
-        minHeightClassName="min-h-[58vh]"
-        paddingClassName="pt-36 pb-16"
+        minHeightClassName="min-h-[42vh]"
+        paddingClassName="pt-28 pb-10"
       />
 
       {/* ═══════════════════════════════════════════════════════════════════
@@ -93,9 +106,9 @@ export default async function AreaDetailPage({
       <div className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center gap-1.5 h-11 text-[11px] text-gray-400" aria-label="Breadcrumb">
-            <Link href={`/${locale}`} className="hover:text-rmc-green transition-colors">Home</Link>
+            <Link href={`/${locale}`} className="hover:text-rmc-green transition-colors">{tNav('home')}</Link>
             <ChevronRight className="w-3 h-3 shrink-0" />
-            <Link href={`/${locale}#areas`} className="hover:text-rmc-green transition-colors">Areas of Intervention</Link>
+            <Link href={`/${locale}#areas`} className="hover:text-rmc-green transition-colors">{sectionName}</Link>
             <ChevronRight className="w-3 h-3 shrink-0" />
             <span className="text-gray-600 font-semibold">{title}</span>
           </nav>
@@ -138,7 +151,7 @@ export default async function AreaDetailPage({
                     ); })()
                   )}
                   <div>
-                    <p className="text-[10px] text-rmc-gold font-semibold uppercase tracking-wide">Pillar {String(pillarIndex).padStart(2, '0')}</p>
+                    <p className="text-[10px] text-rmc-gold font-semibold uppercase tracking-wide">{pillarLabel}</p>
                     <p className="font-bold text-gray-900 text-sm">{title}</p>
                   </div>
                 </div>
@@ -172,7 +185,7 @@ export default async function AreaDetailPage({
                             </span>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] text-rmc-gold font-semibold">Pillar {String(areaIndex).padStart(2, '0')}</p>
+                            <p className="text-[10px] text-rmc-gold font-semibold">{t('pillar', { number: String(areaIndex).padStart(2, '0') })}</p>
                             <p className="text-sm font-semibold text-gray-700 group-hover:text-rmc-green transition-colors truncate">{areaTitle}</p>
                           </div>
                           <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-rmc-green group-hover:translate-x-0.5 transition-all shrink-0" />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import { BookOpen, Heart, GraduationCap, Globe, X, ChevronLeft, ChevronRight, ZoomIn, type LucideIcon } from 'lucide-react';
 import { InlineText } from '@/components/edit-mode/InlineText';
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export function AreaDetail({ item, locale, pillarIndex, richHtml }: Props) {
+  const t = useTranslations('areas');
   const { content, editing, setField } = useEditableContent<AreasContent>(
     ContentKeys.areas,
     AREAS_DEFAULT,
@@ -85,7 +87,7 @@ export function AreaDetail({ item, locale, pillarIndex, richHtml }: Props) {
           </span>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-rmc-gold">
-              Pillar {String(pillarIndex).padStart(2, '0')}
+              {t('pillar', { number: String(pillarIndex).padStart(2, '0') })}
             </p>
             <InlineText
               as="h1"

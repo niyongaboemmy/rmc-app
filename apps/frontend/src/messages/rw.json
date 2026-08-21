@@ -213,6 +213,10 @@
       "title": "Inshuti Zacu"
     }
   },
+  "areas": {
+    "pillar": "Inkingi {number}",
+    "backTo": "Subira kuri {section}"
+  },
   "about": {
     "title": "Ibyerekeye RMC",
     "subtitle": "Umuryango w'Abasilamu bo mu Rwanda",
