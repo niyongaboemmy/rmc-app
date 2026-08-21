@@ -95,7 +95,6 @@ export default async function AreaDetailPage({
         backHref={`/${locale}#areas`}
         backLabel={t('backTo', { section: sectionName })}
         images={finalHeroImages}
-        align="left"
         minHeightClassName="min-h-[42vh]"
         paddingClassName="pt-28 pb-10"
       />
