@@ -42,7 +42,18 @@ export class HajjRequirements1786000000021 implements MigrationInterface {
     );
 
     // key, titleEn, titleRw, titleAr, descEn, descRw, descAr, amountRwf, sort, icon
-    const seed: [string, string, string, string, string, string, string, number | null, number, string][] = [
+    const seed: [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      number | null,
+      number,
+      string,
+    ][] = [
       [
         'passport',
         'Valid Passport',

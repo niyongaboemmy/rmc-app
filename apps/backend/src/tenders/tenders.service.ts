@@ -884,10 +884,17 @@ export class TendersService {
       .addGroupBy('app.status')
       .getRawMany<{ tenderId: string; status: string; count: string }>();
 
-    const byTender = new Map<string, { tenderId: string; total: number; byStatus: Record<string, number> }>();
+    const byTender = new Map<
+      string,
+      { tenderId: string; total: number; byStatus: Record<string, number> }
+    >();
     for (const row of rows) {
       const count = Number(row.count);
-      const entry = byTender.get(row.tenderId) ?? { tenderId: row.tenderId, total: 0, byStatus: {} };
+      const entry = byTender.get(row.tenderId) ?? {
+        tenderId: row.tenderId,
+        total: 0,
+        byStatus: {},
+      };
       entry.total += count;
       entry.byStatus[row.status] = count;
       byTender.set(row.tenderId, entry);

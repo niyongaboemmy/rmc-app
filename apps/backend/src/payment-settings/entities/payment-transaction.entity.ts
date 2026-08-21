@@ -21,7 +21,7 @@ export enum PaymentTransactionDirection {
   DEPOSIT = 'deposit',
 }
 
-/** Records every payment attempt made through the IntouchPay gateway. */
+/** Records every payment attempt made through any configured payment gateway. */
 @Entity('payment_transactions')
 export class PaymentTransaction {
   @PrimaryGeneratedColumn('uuid')
@@ -54,8 +54,34 @@ export class PaymentTransaction {
   @Column({ type: 'varchar', length: 3, default: 'RWF' })
   currency: string;
 
-  @Column({ name: 'mobile_phone', type: 'varchar', length: 30 })
-  mobilePhone: string;
+  /** Null for card and bank payers, who have no MSISDN. */
+  @Column({ name: 'mobile_phone', type: 'varchar', length: 30, nullable: true })
+  mobilePhone: string | null;
+
+  /** Which gateway handled this transaction: 'intouchpay' | 'irembopay'. */
+  @Column({ type: 'varchar', length: 30, default: 'intouchpay' })
+  provider: string;
+
+  /** IremboPay invoice number — their key for this payable. */
+  @Index('IDX_ptx_invoice_number')
+  @Column({ name: 'invoice_number', type: 'varchar', length: 50, nullable: true })
+  invoiceNumber: string | null;
+
+  /** Shareable "pay later" URL, when the provider issues one. */
+  @Column({ name: 'payment_link_url', type: 'text', nullable: true })
+  paymentLinkUrl: string | null;
+
+  /** Channel the payer actually used (MTN_MOMO, ONLINE_CARD, BK, …). Free string. */
+  @Column({ name: 'provider_payment_method', type: 'varchar', length: 30, nullable: true })
+  providerPaymentMethod: string | null;
+
+  /** Amount settled so far — differs from `amount` under partial payments. */
+  @Column({ name: 'paid_amount', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  paidAmount: number | null;
+
+  /** Amount still outstanding under a partial payment plan. */
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  balance: number | null;
 
   @Index('IDX_ptx_status')
   @Column({ type: 'varchar', length: 20, default: PaymentTransactionStatus.PENDING })

@@ -20,7 +20,8 @@ import { RedisModule } from '../redis/redis.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('TRACKING_TOKEN_SECRET') || config.get<string>('JWT_ACCESS_SECRET'),
+        secret:
+          config.get<string>('TRACKING_TOKEN_SECRET') || config.get<string>('JWT_ACCESS_SECRET'),
       }),
     }),
     TypeOrmModule.forFeature([TrackingOtp]),

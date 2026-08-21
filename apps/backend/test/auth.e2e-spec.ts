@@ -42,13 +42,19 @@ beforeAll(async () => {
 
   app = moduleFixture.createNestApplication();
   app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor(new Reflector()));
   await app.init();
 
   // Clear mailhog
-  try { await axios.delete(MAILHOG_DELETE); } catch { /* ignore */ }
+  try {
+    await axios.delete(MAILHOG_DELETE);
+  } catch {
+    /* ignore */
+  }
 });
 
 afterAll(async () => {
@@ -57,7 +63,9 @@ afterAll(async () => {
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
-async function registerTestUser(overrides: Partial<typeof TEST_USER> = {}): Promise<request.Response> {
+async function registerTestUser(
+  overrides: Partial<typeof TEST_USER> = {},
+): Promise<request.Response> {
   return request(app.getHttpServer())
     .post('/api/v1/auth/register')
     .send({ ...TEST_USER, ...overrides });
@@ -85,17 +93,29 @@ describe('POST /api/v1/auth/register', () => {
   });
 
   it('400 — rejects weak password (no uppercase)', async () => {
-    const res = await registerTestUser({ email: 'other1@test.com', phone: '+250700000099', password: 'alllower1!' });
+    const res = await registerTestUser({
+      email: 'other1@test.com',
+      phone: '+250700000099',
+      password: 'alllower1!',
+    });
     expect(res.status).toBe(400);
   });
 
   it('400 — rejects weak password (no special character)', async () => {
-    const res = await registerTestUser({ email: 'other2@test.com', phone: '+250700000098', password: 'NoSpecial1' });
+    const res = await registerTestUser({
+      email: 'other2@test.com',
+      phone: '+250700000098',
+      password: 'NoSpecial1',
+    });
     expect(res.status).toBe(400);
   });
 
   it('400 — rejects weak password (too short)', async () => {
-    const res = await registerTestUser({ email: 'other3@test.com', phone: '+250700000097', password: 'Sh1!' });
+    const res = await registerTestUser({
+      email: 'other3@test.com',
+      phone: '+250700000097',
+      password: 'Sh1!',
+    });
     expect(res.status).toBe(400);
   });
 
@@ -190,8 +210,12 @@ describe('POST /api/v1/auth/refresh', () => {
       .send({ identifier: TEST_USER.email, password: TEST_USER.password });
     const oldToken = loginRes.body.data.refreshToken;
 
-    await request(app.getHttpServer()).post('/api/v1/auth/refresh').send({ refreshToken: oldToken });
-    const reuse = await request(app.getHttpServer()).post('/api/v1/auth/refresh').send({ refreshToken: oldToken });
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: oldToken });
+    const reuse = await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: oldToken });
     expect(reuse.status).toBe(401);
   });
 });
@@ -240,9 +264,13 @@ describe('POST /api/v1/auth/send-otp + verify-phone', () => {
   });
 
   it('400 — rejects expired OTP (manipulate DB expires_at)', async () => {
-    const otpRepo: Repository<PhoneOtpVerification> = app
-      .get(getRepositoryToken(PhoneOtpVerification));
-    const record = await otpRepo.findOne({ where: { phone: TEST_USER.phone }, order: { createdAt: 'DESC' } });
+    const otpRepo: Repository<PhoneOtpVerification> = app.get(
+      getRepositoryToken(PhoneOtpVerification),
+    );
+    const record = await otpRepo.findOne({
+      where: { phone: TEST_USER.phone },
+      order: { createdAt: 'DESC' },
+    });
     if (record) {
       await otpRepo.update(record.id, { expiresAt: new Date(Date.now() - 1000) });
     }
@@ -280,7 +308,9 @@ describe('POST /api/v1/auth/forgot-password + reset-password', () => {
       .post('/api/v1/auth/reset-password')
       .send({ token: 'fake-token-uuid', newPassword: 'NewPass1!' });
     expect(res.status).toBe(400);
-    expect(['AUTH_RESET_TOKEN_INVALID', 'AUTH_RESET_TOKEN_EXPIRED']).toContain(res.body.error?.code);
+    expect(['AUTH_RESET_TOKEN_INVALID', 'AUTH_RESET_TOKEN_EXPIRED']).toContain(
+      res.body.error?.code,
+    );
   });
 });
 
@@ -394,7 +424,9 @@ describe('Rate limiting', () => {
     const fixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
     throttledApp = fixture.createNestApplication();
     throttledApp.setGlobalPrefix('api/v1');
-    throttledApp.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+    throttledApp.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+    );
     throttledApp.useGlobalFilters(new HttpExceptionFilter());
     await throttledApp.init();
   });

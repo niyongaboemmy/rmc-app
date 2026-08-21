@@ -141,10 +141,7 @@ export class JobApplicationsService {
     return application;
   }
 
-  async listOwn(
-    applicantId: string,
-    filters: { status?: string } = {},
-  ): Promise<JobApplication[]> {
+  async listOwn(applicantId: string, filters: { status?: string } = {}): Promise<JobApplication[]> {
     return this.applicationRepo.find({
       where: {
         applicantId,
@@ -404,8 +401,11 @@ export class JobApplicationsService {
    * out the FK of any child row not in the (stale) in-memory array.
    */
   private async saveScalarFields(application: JobApplication): Promise<void> {
-    const { statusHistory: _statusHistory, id, ...columns } = application as JobApplication &
-      Record<string, unknown>;
+    const {
+      statusHistory: _statusHistory,
+      id,
+      ...columns
+    } = application as JobApplication & Record<string, unknown>;
     void _statusHistory;
     await this.applicationRepo.update(id as string, columns);
   }
@@ -430,7 +430,10 @@ export class JobApplicationsService {
   // ── Notifications (SMS + email; fire-and-forget, never throw) ──────────────────
 
   private esc(s: string | null | undefined): string {
-    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   private statusUrl(): string {
@@ -459,7 +462,8 @@ export class JobApplicationsService {
   private notifySubmission(app: JobApplication): void {
     const url = this.statusUrl();
     const msg = `RMC Jobs: Your application for "${app.positionAppliedFor}" was received. Tracking number: ${app.trackingCode}. Track it at ${url}`;
-    if (this.notifSettings.isSmsEnabled('jobApplications.submission')) this.dispatchSms(app.phone, msg);
+    if (this.notifSettings.isSmsEnabled('jobApplications.submission'))
+      this.dispatchSms(app.phone, msg);
     if (this.notifSettings.isEmailEnabled('jobApplications.submission')) {
       this.dispatchEmail(
         app.email,
@@ -475,7 +479,8 @@ export class JobApplicationsService {
   private notifyMoreInfo(app: JobApplication): void {
     const url = this.statusUrl();
     const msg = `RMC Jobs: More information is needed for your application ${app.trackingCode}. Please sign in to respond: ${url}`;
-    if (this.notifSettings.isSmsEnabled('jobApplications.more_info')) this.dispatchSms(app.phone, msg);
+    if (this.notifSettings.isSmsEnabled('jobApplications.more_info'))
+      this.dispatchSms(app.phone, msg);
     if (this.notifSettings.isEmailEnabled('jobApplications.more_info')) {
       this.dispatchEmail(
         app.email,
@@ -501,7 +506,11 @@ export class JobApplicationsService {
       const bodyHtml = accepted
         ? `<p>Dear ${this.esc(app.fullNames)},</p><p>Congratulations — your application for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingCode)}) has been <strong>accepted</strong>. Our team will contact you with the next steps.</p>`
         : `<p>Dear ${this.esc(app.fullNames)},</p><p>Thank you for applying for <strong>${this.esc(app.positionAppliedFor)}</strong> (${this.esc(app.trackingCode)}). After review, your application was not selected this time.${app.rejectionReason ? `<br/><em>${this.esc(app.rejectionReason)}</em>` : ''}</p>`;
-      this.dispatchEmail(app.email, subject, this.emailShell(accepted ? 'Application accepted' : 'Application update', bodyHtml));
+      this.dispatchEmail(
+        app.email,
+        subject,
+        this.emailShell(accepted ? 'Application accepted' : 'Application update', bodyHtml),
+      );
     }
   }
 }

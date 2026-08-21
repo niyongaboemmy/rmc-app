@@ -30,9 +30,7 @@ export class HajjMoreInfoRequested1790000000049 implements MigrationInterface {
     `);
 
     if (check?.name) {
-      await queryRunner.query(
-        `ALTER TABLE "hajj_applications" DROP CONSTRAINT "${check.name}"`,
-      );
+      await queryRunner.query(`ALTER TABLE "hajj_applications" DROP CONSTRAINT "${check.name}"`);
       await queryRunner.query(`
         ALTER TABLE "hajj_applications" ADD CONSTRAINT "${check.name}"
         CHECK ("status" IN ('submitted','under_review','more_info_requested','approved','rejected'))
@@ -59,9 +57,7 @@ export class HajjMoreInfoRequested1790000000049 implements MigrationInterface {
     `);
 
     if (check?.name) {
-      await queryRunner.query(
-        `ALTER TABLE "hajj_applications" DROP CONSTRAINT "${check.name}"`,
-      );
+      await queryRunner.query(`ALTER TABLE "hajj_applications" DROP CONSTRAINT "${check.name}"`);
       await queryRunner.query(`
         ALTER TABLE "hajj_applications" ADD CONSTRAINT "${check.name}"
         CHECK ("status" IN ('submitted','under_review','approved','rejected'))

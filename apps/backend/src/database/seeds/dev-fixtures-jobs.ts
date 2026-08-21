@@ -69,8 +69,7 @@ const POSTINGS: PostingSpec[] = [
     positions: 2,
     salaryRange: '350,000 – 450,000 RWF / month',
     deadlineInDays: 14,
-    description:
-      'Teach Arabic language and Islamic studies to secondary students, S1 to S6.',
+    description: 'Teach Arabic language and Islamic studies to secondary students, S1 to S6.',
     responsibilities:
       'Plan and deliver lessons to the national curriculum.\nSet and mark termly assessments.\n' +
       'Report on each learner’s progress to parents.',
@@ -167,7 +166,8 @@ const POSTINGS: PostingSpec[] = [
     salaryRange: '280,000 RWF / month',
     deadlineInDays: -12, // closed and past — the archive state on the listing
     description: 'Care for the collection and help readers find what they need.',
-    responsibilities: 'Catalogue new acquisitions.\nRun the lending desk.\nHost a weekly reading hour.',
+    responsibilities:
+      'Catalogue new acquisitions.\nRun the lending desk.\nHost a weekly reading hour.',
     requirements: 'Library qualification or equivalent experience.',
   },
   {

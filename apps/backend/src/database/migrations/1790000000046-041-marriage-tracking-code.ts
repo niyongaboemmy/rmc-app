@@ -16,7 +16,9 @@ export class MarriageTrackingCode1790000000046 implements MigrationInterface {
   name = 'MarriageTrackingCode1790000000046';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "marriage_applications" ADD COLUMN "tracking_code" varchar(40)`);
+    await queryRunner.query(
+      `ALTER TABLE "marriage_applications" ADD COLUMN "tracking_code" varchar(40)`,
+    );
 
     const rows: { id: string; created_at: Date }[] = await queryRunner.query(
       `SELECT id, created_at FROM "marriage_applications"`,
@@ -28,10 +30,15 @@ export class MarriageTrackingCode1790000000046 implements MigrationInterface {
         code = generateCode(row.created_at);
       } while (used.has(code));
       used.add(code);
-      await queryRunner.query(`UPDATE "marriage_applications" SET "tracking_code" = $1 WHERE "id" = $2`, [code, row.id]);
+      await queryRunner.query(
+        `UPDATE "marriage_applications" SET "tracking_code" = $1 WHERE "id" = $2`,
+        [code, row.id],
+      );
     }
 
-    await queryRunner.query(`ALTER TABLE "marriage_applications" ALTER COLUMN "tracking_code" SET NOT NULL`);
+    await queryRunner.query(
+      `ALTER TABLE "marriage_applications" ALTER COLUMN "tracking_code" SET NOT NULL`,
+    );
     await queryRunner.query(
       `CREATE UNIQUE INDEX "IDX_marriage_applications_tracking_code" ON "marriage_applications" ("tracking_code")`,
     );
@@ -39,6 +46,8 @@ export class MarriageTrackingCode1790000000046 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_marriage_applications_tracking_code"`);
-    await queryRunner.query(`ALTER TABLE "marriage_applications" DROP COLUMN IF EXISTS "tracking_code"`);
+    await queryRunner.query(
+      `ALTER TABLE "marriage_applications" DROP COLUMN IF EXISTS "tracking_code"`,
+    );
   }
 }

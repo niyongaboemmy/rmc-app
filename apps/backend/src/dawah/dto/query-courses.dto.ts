@@ -1,10 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min,
-} from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
-  COURSE_LANGUAGES, ContentStatus, CourseLevel, type CourseLanguage,
+  COURSE_LANGUAGES,
+  ContentStatus,
+  CourseLevel,
+  type CourseLanguage,
 } from '../entities/dawah-course.entity';
 
 /** Filters for both the public course listing and the admin one. */

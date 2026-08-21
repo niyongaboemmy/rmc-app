@@ -17,7 +17,14 @@ import { FuneralAdminController } from './funeral-admin.controller';
 @Module({
   imports: [
     PublicUploadModule,
-    TypeOrmModule.forFeature([FuneralRequest, FuneralStatusHistory, Cemetery, FuneralStep, FuneralTransport, Mosque]),
+    TypeOrmModule.forFeature([
+      FuneralRequest,
+      FuneralStatusHistory,
+      Cemetery,
+      FuneralStep,
+      FuneralTransport,
+      Mosque,
+    ]),
   ],
   providers: [FuneralService, CemeteryService, FuneralStepService, FuneralTransportService],
   controllers: [FuneralController, FuneralAdminController],

@@ -1,5 +1,8 @@
 import {
-  BadRequestException, ForbiddenException, Injectable, Logger,
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -119,9 +122,7 @@ export class DawahBookService {
   }
 
   private filteredQuery(query: QueryBooksDto) {
-    const qb = this.books
-      .createQueryBuilder('book')
-      .leftJoinAndSelect('book.category', 'category');
+    const qb = this.books.createQueryBuilder('book').leftJoinAndSelect('book.category', 'category');
 
     if (query.category) {
       // Slug or id — the public URL carries ?category=fiqh, the admin UI has

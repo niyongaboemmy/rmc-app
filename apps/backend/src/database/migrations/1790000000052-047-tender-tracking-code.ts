@@ -52,6 +52,8 @@ export class TenderTrackingCode1790000000052 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_tender_app_tracking_code"`);
-    await queryRunner.query(`ALTER TABLE "tender_applications" DROP COLUMN IF EXISTS "tracking_code"`);
+    await queryRunner.query(
+      `ALTER TABLE "tender_applications" DROP COLUMN IF EXISTS "tracking_code"`,
+    );
   }
 }

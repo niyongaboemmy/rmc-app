@@ -1,5 +1,14 @@
 import {
-  Controller, Get, Post, Param, Body, Query, ParseUUIDPipe, Ip, Headers, HttpCode,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Query,
+  ParseUUIDPipe,
+  Ip,
+  Headers,
+  HttpCode,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -77,7 +86,7 @@ export class JobApplicationsController {
   }
 
   @Post(':id/respond')
-  @ApiOperation({ summary: 'Reply to a reviewer\'s request for more information' })
+  @ApiOperation({ summary: "Reply to a reviewer's request for more information" })
   respond(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,

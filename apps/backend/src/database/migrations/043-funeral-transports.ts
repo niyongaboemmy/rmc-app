@@ -20,7 +20,9 @@ export class FuneralTransports1786000000016 implements MigrationInterface {
         CONSTRAINT "PK_funeral_transports" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_funeral_transport_mosque" ON "funeral_transports" ("mosque_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_funeral_transport_mosque" ON "funeral_transports" ("mosque_id")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

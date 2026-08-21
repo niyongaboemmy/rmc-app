@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Res, UploadedFile, UseInterceptors,  } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -160,7 +173,9 @@ export class DawahAdminController {
 
   @Get('courses')
   @Permissions(Permission.DAWAH_VIEW)
-  @ApiOperation({ summary: 'List courses in every status — same filters as the public list, plus ?status' })
+  @ApiOperation({
+    summary: 'List courses in every status — same filters as the public list, plus ?status',
+  })
   listCourses(@Query() query: QueryCoursesDto) {
     return this.courses.adminList(query);
   }
@@ -189,7 +204,8 @@ export class DawahAdminController {
   @Post('courses/:id/lessons/reorder')
   @Permissions(Permission.DAWAH_MANAGE)
   @ApiOperation({
-    summary: 'Reorder a course outline — ids must be the COMPLETE lesson set, or the request is rejected',
+    summary:
+      'Reorder a course outline — ids must be the COMPLETE lesson set, or the request is rejected',
   })
   reorderLessons(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReorderLessonsDto) {
     return this.courses.reorderLessons(id, dto.ids);
@@ -215,7 +231,9 @@ export class DawahAdminController {
    */
   @Patch('courses/:id/status')
   @Permissions(Permission.DAWAH_MANAGE)
-  @ApiOperation({ summary: 'Publish / unpublish / archive a course (stamps published_at on first publish)' })
+  @ApiOperation({
+    summary: 'Publish / unpublish / archive a course (stamps published_at on first publish)',
+  })
   setCourseStatus(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCourseStatusDto) {
     return this.courses.setStatus(id, dto.status);
   }
@@ -248,14 +266,19 @@ export class DawahAdminController {
 
   @Get('books')
   @Permissions(Permission.DAWAH_VIEW)
-  @ApiOperation({ summary: 'List books in every status — same filters as the public list, plus ?status' })
+  @ApiOperation({
+    summary: 'List books in every status — same filters as the public list, plus ?status',
+  })
   listBooks(@Query() query: QueryBooksDto) {
     return this.books.adminList(query);
   }
 
   @Post('books')
   @Permissions(Permission.DAWAH_MANAGE)
-  @ApiOperation({ summary: 'Create a book from an uploaded file (fileKey/fileName/fileSize come from the upload endpoint)' })
+  @ApiOperation({
+    summary:
+      'Create a book from an uploaded file (fileKey/fileName/fileSize come from the upload endpoint)',
+  })
   createBook(@Body() dto: CreateDawahBookDto) {
     return this.books.create(dto);
   }
@@ -276,7 +299,9 @@ export class DawahAdminController {
   @Post('books/upload')
   @Permissions(Permission.DAWAH_MANAGE)
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload a book PDF (max 25 MB) → { fileKey, fileName, fileSize, mimeType }' })
+  @ApiOperation({
+    summary: 'Upload a book PDF (max 25 MB) → { fileKey, fileName, fileSize, mimeType }',
+  })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: BOOK_MAX_BYTES } }))
   uploadBookFile(@UploadedFile() file: UploadedDocument | undefined) {
     return this.books.uploadFile(file);
@@ -291,7 +316,9 @@ export class DawahAdminController {
   @Post('media/upload')
   @Permissions(Permission.DAWAH_MANAGE)
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload lesson audio (max 90 MB) → { fileKey, fileName, fileSize, mimeType }' })
+  @ApiOperation({
+    summary: 'Upload lesson audio (max 90 MB) → { fileKey, fileName, fileSize, mimeType }',
+  })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MEDIA_MAX_BYTES } }))
   uploadLessonMedia(@UploadedFile() file: UploadedDocument | undefined) {
     return this.courses.uploadMedia(file);
@@ -306,17 +333,11 @@ export class DawahAdminController {
   @Get('books/:id/file')
   @Permissions(Permission.DAWAH_VIEW)
   @ApiOperation({ summary: 'Inline-stream a book PDF for admin proofing (any status)' })
-  async bookFile(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Res() res: Response,
-  ): Promise<void> {
+  async bookFile(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response): Promise<void> {
     const file = await this.books.getAdminFile(id);
     res.setHeader('Content-Type', file.mimeType);
     res.setHeader('Content-Length', file.buffer.length);
-    res.setHeader(
-      'Content-Disposition',
-      `inline; filename="${file.fileName.replace(/"/g, '')}"`,
-    );
+    res.setHeader('Content-Disposition', `inline; filename="${file.fileName.replace(/"/g, '')}"`);
     res.setHeader('Cache-Control', 'private, no-store');
     res.end(file.buffer);
   }

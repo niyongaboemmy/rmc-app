@@ -100,8 +100,12 @@ export class DawahDiscussions1786000000027 implements MigrationInterface {
       CREATE INDEX "IDX_dawah_questions_status_activity"
         ON "dawah_questions" ("status", "last_activity_at" DESC)
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_dawah_questions_category" ON "dawah_questions" ("category_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_dawah_questions_author" ON "dawah_questions" ("author_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_dawah_questions_category" ON "dawah_questions" ("category_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_dawah_questions_author" ON "dawah_questions" ("author_id")`,
+    );
 
     // ── dawah_answers ────────────────────────────────────────────────────────────────
     await queryRunner.query(`
@@ -243,7 +247,9 @@ export class DawahDiscussions1786000000027 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Reverse order of creation. The FK on questions.verified_answer_id must go before
     // dawah_answers, or the drop is refused.
-    await queryRunner.query(`ALTER TABLE "dawah_questions" DROP CONSTRAINT IF EXISTS "FK_dawah_questions_verified_answer"`);
+    await queryRunner.query(
+      `ALTER TABLE "dawah_questions" DROP CONSTRAINT IF EXISTS "FK_dawah_questions_verified_answer"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "dawah_moderation_log"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "dawah_reports"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "dawah_votes"`);

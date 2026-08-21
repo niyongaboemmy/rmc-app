@@ -1,11 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, IsUUID,
-  Matches, Max, MaxLength, Min,
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
-  COURSE_LANGUAGES, ContentStatus, CourseFormat, CourseLevel,
+  COURSE_LANGUAGES,
+  ContentStatus,
+  CourseFormat,
+  CourseLevel,
   type CourseLanguage,
 } from '../entities/dawah-course.entity';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, MessageSquare, Send, History, Bell, Sparkles, CreditCard, Zap, Upload } from 'lucide-react';
+import { Settings, MessageSquare, Send, History, Bell, Sparkles, CreditCard, Zap, Upload, Package } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,7 @@ import { PaymentMethodsTab } from './_components/payment/PaymentMethodsTab';
 import { PaymentTypesTab } from './_components/payment/PaymentTypesTab';
 import { PaymentMethodSettingsTab } from './_components/payment/PaymentMethodSettingsTab';
 import PaymentTestingTab from './_components/payment/PaymentTestingTab';
+import { IremboPayProductsTab } from './_components/payment/IremboPayProductsTab';
 import { paymentSettingsApi, PaymentMethod, PaymentType } from '@/lib/paymentSettingsApi';
 import { UploadSettingsTab } from './_components/UploadSettingsTab';
 
@@ -55,6 +56,7 @@ const PAYMENT_SUBTABS: SubTab[] = [
   { key: 'methods',       label: 'Payment Methods', icon: CreditCard, permission: Permission.PAYMENT_SETTINGS_VIEW   },
   { key: 'service-areas', label: 'Service Areas',   icon: Settings,   permission: Permission.PAYMENT_SETTINGS_VIEW   },
   { key: 'credentials',   label: 'Credentials',     icon: Settings,   permission: Permission.PAYMENT_SETTINGS_MANAGE },
+  { key: 'irembopay',     label: 'IremboPay',       icon: Package,    permission: Permission.PAYMENT_SETTINGS_VIEW   },
   { key: 'testing',       label: 'Testing',         icon: Zap,        permission: Permission.PAYMENT_SETTINGS_MANAGE },
 ];
 
@@ -182,6 +184,7 @@ function PaymentSettingsSection() {
           methods={allMethods}
         />
       )}
+      {active === 'irembopay' && <IremboPayProductsTab />}
       {active === 'testing' && (
         <PaymentTestingTab methods={allMethods} types={allTypes} />
       )}

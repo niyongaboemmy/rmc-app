@@ -24,8 +24,12 @@ export class FuneralSkills1786000000010 implements MigrationInterface {
         CONSTRAINT "PK_funeral_skills" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE UNIQUE INDEX "IDX_funeral_skill_key" ON "funeral_skills" ("key")`);
-    await queryRunner.query(`CREATE INDEX "IDX_funeral_skill_sort" ON "funeral_skills" ("sort_order")`);
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_funeral_skill_key" ON "funeral_skills" ("key")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_funeral_skill_sort" ON "funeral_skills" ("sort_order")`,
+    );
 
     const seed: [string, string, string, string, number][] = [
       ['ghusl', 'Ghusl', 'Koga umurambo', 'الغُسل', 0],

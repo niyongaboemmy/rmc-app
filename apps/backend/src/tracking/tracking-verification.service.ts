@@ -139,7 +139,8 @@ export class TrackingVerificationService {
   private notFound() {
     return new BadRequestException({
       code: 'TRACKING_CODE_NOT_FOUND',
-      message: "We couldn't find an application with that tracking code. Please check it and try again.",
+      message:
+        "We couldn't find an application with that tracking code. Please check it and try again.",
     });
   }
 
@@ -166,7 +167,10 @@ export class TrackingVerificationService {
     const expiresAt = new Date(Date.now() + ttlMin * 60 * 1000);
     const phone = subject.phone;
 
-    const otp = crypto.randomInt(0, 10 ** OTP_LENGTH).toString().padStart(OTP_LENGTH, '0');
+    const otp = crypto
+      .randomInt(0, 10 ** OTP_LENGTH)
+      .toString()
+      .padStart(OTP_LENGTH, '0');
     await this.otpRepo.save({
       subjectType,
       subjectId: subject.id,
@@ -181,7 +185,9 @@ export class TrackingVerificationService {
     // With the bypass on there is no gateway to talk to, and an unhandled
     // rejection from a missing SMS provider would be noise on every request.
     if (!bypass) this.smsService.sendSms(phone, msg);
-    this.logger.log(`[tracking] request OK type=${subjectType} id=${subject.id} phone=${this.maskPhone(this.normalizePhone(phone))} ip=${ip}`);
+    this.logger.log(
+      `[tracking] request OK type=${subjectType} id=${subject.id} phone=${this.maskPhone(this.normalizePhone(phone))} ip=${ip}`,
+    );
     if (process.env.NODE_ENV !== 'production') {
       this.logger.log(`[tracking] DEV code type=${subjectType} id=${subject.id}: ${otp}`);
       if (bypass) this.logger.warn(`[tracking] DEV BYPASS — "${bypass}" also works here`);
@@ -214,9 +220,7 @@ export class TrackingVerificationService {
     // real OTP would — it only removes the SMS leg.
     const bypass = this.devBypassCode();
     if (bypass && otp.trim() === bypass) {
-      this.logger.warn(
-        `[tracking] DEV BYPASS used type=${subjectType} id=${subject.id} ip=${ip}`,
-      );
+      this.logger.warn(`[tracking] DEV BYPASS used type=${subjectType} id=${subject.id} ip=${ip}`);
       // Consume any outstanding real code so the two paths can't both be live.
       await this.otpRepo.update(
         { subjectType, subjectId: subject.id, consumedAt: IsNull() },
@@ -241,10 +245,16 @@ export class TrackingVerificationService {
     }
 
     if (record.expiresAt < new Date()) {
-      throw new BadRequestException({ code: 'TRACKING_OTP_EXPIRED', message: 'This code has expired. Request a new one.' });
+      throw new BadRequestException({
+        code: 'TRACKING_OTP_EXPIRED',
+        message: 'This code has expired. Request a new one.',
+      });
     }
     if (record.attempts >= MAX_VERIFY_ATTEMPTS) {
-      throw new BadRequestException({ code: 'TRACKING_OTP_MAX_ATTEMPTS', message: 'Too many incorrect attempts. Request a new code.' });
+      throw new BadRequestException({
+        code: 'TRACKING_OTP_MAX_ATTEMPTS',
+        message: 'Too many incorrect attempts. Request a new code.',
+      });
     }
     if (this.hashOtp(otp) !== record.otpHash) {
       await this.otpRepo.update(record.id, { attempts: record.attempts + 1 });
@@ -257,7 +267,10 @@ export class TrackingVerificationService {
     await this.otpRepo.update(record.id, { consumedAt: new Date() });
     this.logger.log(`[tracking] verified OK type=${subjectType} id=${subject.id} ip=${ip}`);
 
-    const token = this.jwtService.sign({ sub: subject.id, type: subjectType, scope: TOKEN_SCOPE }, { expiresIn: '15m' });
+    const token = this.jwtService.sign(
+      { sub: subject.id, type: subjectType, scope: TOKEN_SCOPE },
+      { expiresIn: '15m' },
+    );
     return { token, subjectId: subject.id };
   }
 
@@ -271,7 +284,10 @@ export class TrackingVerificationService {
       }
       return payload.sub;
     } catch {
-      throw new UnauthorizedException({ code: 'TRACKING_SESSION_INVALID', message: 'Your tracking session is invalid or has expired.' });
+      throw new UnauthorizedException({
+        code: 'TRACKING_SESSION_INVALID',
+        message: 'Your tracking session is invalid or has expired.',
+      });
     }
   }
 }

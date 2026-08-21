@@ -24,9 +24,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * writing every empty leaf in this table is a translation key, so nothing else is
  * touched today; the narrow rule is what keeps that true for later rows.
  */
-export class SiteContentDropPlaceholderTranslations1790000000063
-  implements MigrationInterface
-{
+export class SiteContentDropPlaceholderTranslations1790000000063 implements MigrationInterface {
   name = 'SiteContentDropPlaceholderTranslations1790000000063';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

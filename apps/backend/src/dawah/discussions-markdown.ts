@@ -37,11 +37,19 @@ import * as sanitizeHtml from 'sanitize-html';
 
 /** Tags a member may produce. Everything else is stripped, text kept. */
 const ALLOWED_TAGS = [
-  'p', 'br', 'strong', 'em', 'del',
-  'ul', 'ol', 'li',
+  'p',
+  'br',
+  'strong',
+  'em',
+  'del',
+  'ul',
+  'ol',
+  'li',
   'blockquote',
-  'code', 'pre',
-  'h3', 'h4', // h1/h2 belong to the page, not to a post inside it
+  'code',
+  'pre',
+  'h3',
+  'h4', // h1/h2 belong to the page, not to a post inside it
   'a',
   'hr',
 ];

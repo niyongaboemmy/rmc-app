@@ -49,5 +49,11 @@ export const RELATED_LIMIT = 3;
 
 /** Reasons a member may cite when reporting. Kept short and closed — a free-text-only
  *  report is harder to triage and easier to abuse. */
-export const REPORT_REASONS = ['spam', 'offensive', 'misinformation', 'off_topic', 'other'] as const;
+export const REPORT_REASONS = [
+  'spam',
+  'offensive',
+  'misinformation',
+  'off_topic',
+  'other',
+] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];

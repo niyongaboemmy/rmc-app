@@ -82,12 +82,22 @@ export class CreateJobApplicationDto {
   // required when no jobPostingId is given (legacy/free-text path).
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsUUID() jobPostingId?: string;
 
-  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsString() @Length(2, 150) positionAppliedFor?: string;
+  @ApiPropertyOptional()
+  @blankToUndefined
+  @IsOptional()
+  @IsString()
+  @Length(2, 150)
+  positionAppliedFor?: string;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsUUID() districtId?: string;
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsUUID() sectorId?: string;
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsString() @Length(1, 100) cell?: string;
-  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsString() @Length(1, 100) village?: string;
+  @ApiPropertyOptional()
+  @blankToUndefined
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  village?: string;
 
   @ApiProperty({ type: JobApplicationDocumentsDto })
   @ValidateNested()

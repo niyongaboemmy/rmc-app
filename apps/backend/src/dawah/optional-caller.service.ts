@@ -52,7 +52,9 @@ export class OptionalCallerService {
       return payload?.sub ?? null;
     } catch {
       // Expired or malformed. Treat as anonymous — see the class comment.
-      this.logger.debug('Optional auth: bearer token present but not valid — treating as anonymous');
+      this.logger.debug(
+        'Optional auth: bearer token present but not valid — treating as anonymous',
+      );
       return null;
     }
   }

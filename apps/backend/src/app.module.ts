@@ -36,6 +36,7 @@ import { SocialModule } from './social/social.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { PaymentSettingsModule } from './payment-settings/payment-settings.module';
+import { PaymentsModule } from './payments/payments.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { DriveModule } from './drive/drive.module';
 import { UploadSettingsModule } from './upload-settings/upload-settings.module';
@@ -87,6 +88,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     ContactMessagesModule,
     IntegrationsModule,
     PaymentSettingsModule,
+    PaymentsModule,
     WebhooksModule,
     DriveModule,
     UploadSettingsModule,

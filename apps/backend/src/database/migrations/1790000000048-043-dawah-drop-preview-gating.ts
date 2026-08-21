@@ -21,18 +21,14 @@ export class DawahDropPreviewGating1790000000048 implements MigrationInterface {
   name = 'DawahDropPreviewGating1790000000048';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "dawah_course_lessons" DROP COLUMN "is_preview"`,
-    );
+    await queryRunner.query(`ALTER TABLE "dawah_course_lessons" DROP COLUMN "is_preview"`);
     // Dropping the column also drops CHK_dawah_book_visibility.
     await queryRunner.query(`ALTER TABLE "dawah_books" DROP COLUMN "visibility"`);
     await queryRunner.query(`ALTER TABLE "dawah_books" DROP COLUMN "preview_file_key"`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "dawah_books" ADD COLUMN "preview_file_key" varchar(500)`,
-    );
+    await queryRunner.query(`ALTER TABLE "dawah_books" ADD COLUMN "preview_file_key" varchar(500)`);
     await queryRunner.query(
       `ALTER TABLE "dawah_books" ADD COLUMN "visibility" varchar(20) NOT NULL DEFAULT 'public'`,
     );

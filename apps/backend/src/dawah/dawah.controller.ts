@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Ip, Param, Post, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Ip,
+  Param,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -139,7 +150,9 @@ export class DawahController {
 
   @Get('categories')
   @Public()
-  @ApiOperation({ summary: 'Active Dawah categories, in display order (courses + library share one taxonomy)' })
+  @ApiOperation({
+    summary: 'Active Dawah categories, in display order (courses + library share one taxonomy)',
+  })
   listCategories() {
     return this.categories.listPublic();
   }
@@ -149,7 +162,8 @@ export class DawahController {
   @Get('courses')
   @Public()
   @ApiOperation({
-    summary: 'Paginated published courses — filter by ?category (slug or id), level, language, search',
+    summary:
+      'Paginated published courses — filter by ?category (slug or id), level, language, search',
   })
   listCourses(@Query() query: QueryCoursesDto) {
     return this.courses.listPublic(query);
@@ -171,8 +185,7 @@ export class DawahController {
   @Get('courses/:slug')
   @Public()
   @ApiOperation({
-    summary:
-      'One published course with its lesson outline, in order (includes enrollment_count)',
+    summary: 'One published course with its lesson outline, in order (includes enrollment_count)',
   })
   findCourse(@Param('slug') slug: string) {
     return this.courses.findBySlugPublic(slug);
@@ -252,10 +265,7 @@ export class DawahController {
   @Get('books/:slug/preview')
   @Public()
   @ApiOperation({ summary: 'Read a book inline (full PDF)' })
-  async previewBook(
-    @Param('slug') slug: string,
-    @Res() res: Response,
-  ): Promise<void> {
+  async previewBook(@Param('slug') slug: string, @Res() res: Response): Promise<void> {
     const file = await this.books.getPreviewFile(slug);
     this.sendPdf(res, file, 'inline');
   }
@@ -264,10 +274,7 @@ export class DawahController {
   @Get('books/:slug/download')
   @Public()
   @ApiOperation({ summary: 'Download the full book PDF (403 if downloads are disabled)' })
-  async downloadBook(
-    @Param('slug') slug: string,
-    @Res() res: Response,
-  ): Promise<void> {
+  async downloadBook(@Param('slug') slug: string, @Res() res: Response): Promise<void> {
     const file = await this.books.getDownloadFile(slug);
     this.sendPdf(res, file, 'attachment');
   }

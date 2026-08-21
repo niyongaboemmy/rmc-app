@@ -47,7 +47,10 @@ const COURSES = [
     sortOrder: 1,
     lessons: [
       ['Introduction to Tajweed', 'Why recitation has rules, and what they protect.'],
-      ['The Articulation Points (Makharij)', 'Where each letter is formed in the mouth and throat.'],
+      [
+        'The Articulation Points (Makharij)',
+        'Where each letter is formed in the mouth and throat.',
+      ],
       ['Noon and Meem Sakinah', 'Idgham, ikhfa, iqlab and izhar in practice.'],
       ['The Rules of Madd', 'Recognising and measuring the lengthenings.'],
     ],

@@ -64,7 +64,9 @@ export class CreateCampaignDto {
   @IsDateString()
   endDate?: string | null;
 
-  @ApiPropertyOptional({ description: 'Full URL, absolute path, or file-server key (no whitespace)' })
+  @ApiPropertyOptional({
+    description: 'Full URL, absolute path, or file-server key (no whitespace)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)

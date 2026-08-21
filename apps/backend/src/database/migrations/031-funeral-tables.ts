@@ -56,7 +56,9 @@ export class FuneralTables1786000000004 implements MigrationInterface {
         CONSTRAINT "UQ_funeral_requests_reference" UNIQUE ("reference")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_funeral_req_reference" ON "funeral_requests" ("reference")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_funeral_req_reference" ON "funeral_requests" ("reference")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_funeral_req_stage" ON "funeral_requests" ("stage")`);
 
     await queryRunner.query(`
@@ -73,7 +75,9 @@ export class FuneralTables1786000000004 implements MigrationInterface {
           REFERENCES "funeral_requests" ("id") ON DELETE CASCADE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_funeral_history_request" ON "funeral_status_history" ("request_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_funeral_history_request" ON "funeral_status_history" ("request_id")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

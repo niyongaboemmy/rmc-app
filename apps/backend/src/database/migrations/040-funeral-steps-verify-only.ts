@@ -18,18 +18,65 @@ export class FuneralStepsVerifyOnly1786000000013 implements MigrationInterface {
         ('verified', 'Verified', 'Byemejwe', 'تم التحقق', 'The report has been verified by an administrator.', 1, true, '#16a34a', 'ShieldCheck')
     `);
     // Any request past the initial report becomes "verified".
-    await queryRunner.query(`UPDATE "funeral_requests" SET "stage" = 'verified' WHERE "stage" <> 'reported'`);
+    await queryRunner.query(
+      `UPDATE "funeral_requests" SET "stage" = 'verified' WHERE "stage" <> 'reported'`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DELETE FROM "funeral_steps"`);
     const seed: [string, string, string, string, string, number, string, string][] = [
-      ['reported', 'Death reported', 'Urupfu rwamenyekanishijwe', 'تم الإبلاغ عن الوفاة', 'The death has been reported to the committee and a case opened.', 0, '#64748b', 'FileText'],
-      ['verification', 'Verification', 'Kugenzura', 'التحقق', 'Documents and details are verified before arrangements begin.', 1, '#6366f1', 'ShieldCheck'],
-      ['family_contacted', 'Family contacted', 'Umuryango wamenyeshejwe', 'تم الاتصال بالأسرة', '', 2, '#0ea5e9', 'Phone'],
-      ['ghusl', 'Ghusl scheduled', 'Ghusl yateganyijwe', 'تحديد موعد الغُسل', '', 3, '#06b6d4', 'Droplets'],
+      [
+        'reported',
+        'Death reported',
+        'Urupfu rwamenyekanishijwe',
+        'تم الإبلاغ عن الوفاة',
+        'The death has been reported to the committee and a case opened.',
+        0,
+        '#64748b',
+        'FileText',
+      ],
+      [
+        'verification',
+        'Verification',
+        'Kugenzura',
+        'التحقق',
+        'Documents and details are verified before arrangements begin.',
+        1,
+        '#6366f1',
+        'ShieldCheck',
+      ],
+      [
+        'family_contacted',
+        'Family contacted',
+        'Umuryango wamenyeshejwe',
+        'تم الاتصال بالأسرة',
+        '',
+        2,
+        '#0ea5e9',
+        'Phone',
+      ],
+      [
+        'ghusl',
+        'Ghusl scheduled',
+        'Ghusl yateganyijwe',
+        'تحديد موعد الغُسل',
+        '',
+        3,
+        '#06b6d4',
+        'Droplets',
+      ],
       ['kafan', 'Kafan prepared', 'Kafan yateguwe', 'تجهيز الكفن', '', 4, '#14b8a6', 'Package'],
-      ['janazah', 'Janāzah prayer scheduled', 'Isengesho rya Janaza ryateganyijwe', 'تحديد موعد صلاة الجنازة', '', 5, '#8b5cf6', 'Users'],
+      [
+        'janazah',
+        'Janāzah prayer scheduled',
+        'Isengesho rya Janaza ryateganyijwe',
+        'تحديد موعد صلاة الجنازة',
+        '',
+        5,
+        '#8b5cf6',
+        'Users',
+      ],
       ['transportation', 'Transportation', 'Gutwara umurambo', 'النقل', '', 6, '#f59e0b', 'Truck'],
       ['burial', 'Burial', 'Ishyingura', 'الدفن', '', 7, '#0d3d24', 'Landmark'],
       ['completed', 'Completed', 'Byarangiye', 'اكتمل', '', 8, '#16a34a', 'CheckCircle2'],

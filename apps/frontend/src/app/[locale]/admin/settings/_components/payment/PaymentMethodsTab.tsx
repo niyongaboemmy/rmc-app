@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import {
-  Smartphone, Building2, CreditCard, Banknote,
+  Smartphone, Building2, CreditCard, Banknote, Globe,
   CheckCircle2, XCircle, Settings2, RefreshCw,
 } from 'lucide-react';
 import { Permission } from '@/lib/permissions';
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 
 const METHOD_ICONS: Record<PaymentMethodCode, React.ElementType> = {
   MOMO_INTOUCH:  Smartphone,
+  IREMBOPAY:     Globe,
   BANK_TRANSFER: Building2,
   CARD:          CreditCard,
   CASH:          Banknote,
@@ -24,6 +25,7 @@ const METHOD_ICONS: Record<PaymentMethodCode, React.ElementType> = {
 
 const METHOD_COLORS: Record<PaymentMethodCode, string> = {
   MOMO_INTOUCH:  'from-yellow-400 to-orange-400',
+  IREMBOPAY:     'from-sky-500 to-cyan-500',
   BANK_TRANSFER: 'from-blue-500 to-blue-600',
   CARD:          'from-purple-500 to-purple-600',
   CASH:          'from-green-500 to-green-600',

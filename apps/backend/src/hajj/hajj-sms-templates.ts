@@ -28,17 +28,13 @@ export const HajjSmsTemplates = {
    * Trimmed to 70 chars so the whole message stays inside one 160-char frame.
    */
   moreInfoRequested(appNo: string, request?: string | null): string {
-    const ask = request
-      ? ` Needed: ${request.slice(0, 70)}`
-      : ' Contact hajj@rmc.rw for details.';
+    const ask = request ? ` Needed: ${request.slice(0, 70)}` : ' Contact hajj@rmc.rw for details.';
     return `RMC Hajj | App ${appNo}: more info needed.${ask} Upload it on the tracking page.`;
   },
 
   /** Final decision — rejected. The reason always travels with it. */
   rejected(appNo: string, reason?: string | null): string {
-    const suffix = reason
-      ? ` Reason: ${reason.slice(0, 60)}`
-      : ' Contact hajj@rmc.rw for details.';
+    const suffix = reason ? ` Reason: ${reason.slice(0, 60)}` : ' Contact hajj@rmc.rw for details.';
     return `RMC Hajj | App ${appNo}: NOT APPROVED.${suffix}`;
   },
 };

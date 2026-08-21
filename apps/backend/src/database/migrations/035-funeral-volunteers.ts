@@ -24,8 +24,12 @@ export class FuneralVolunteers1786000000008 implements MigrationInterface {
         CONSTRAINT "PK_funeral_volunteers" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_volunteer_mosque" ON "funeral_volunteers" ("mosque_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_volunteer_assigned_request" ON "funeral_volunteers" ("assigned_request_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_volunteer_mosque" ON "funeral_volunteers" ("mosque_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_volunteer_assigned_request" ON "funeral_volunteers" ("assigned_request_id")`,
+    );
 
     // Seed a roster, registering each under a real mosque (by name order).
     const seeds: [string, string, number, string][] = [

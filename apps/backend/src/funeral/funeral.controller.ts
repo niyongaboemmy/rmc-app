@@ -1,6 +1,4 @@
-import {
-  Controller, Get, Post, Body, UseInterceptors, UploadedFile,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';

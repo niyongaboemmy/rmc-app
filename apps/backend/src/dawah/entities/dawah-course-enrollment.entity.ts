@@ -1,7 +1,13 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, Index, Unique,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+  Unique,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { DawahCourse } from './dawah-course.entity';
 import { User } from '../../users/entities/user.entity';

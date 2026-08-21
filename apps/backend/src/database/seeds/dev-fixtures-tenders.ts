@@ -61,8 +61,18 @@ const TENDERS: SeedTender[] = [
     priority: 'high',
     expiresInDays: 30,
     attachments: [
-      { key: 'tender-seed/wall-boq.pdf', name: 'Bill of Quantities.pdf', mimeType: 'application/pdf', size: 284_100 },
-      { key: 'tender-seed/wall-drawings.pdf', name: 'Architectural Drawings.pdf', mimeType: 'application/pdf', size: 1_204_880 },
+      {
+        key: 'tender-seed/wall-boq.pdf',
+        name: 'Bill of Quantities.pdf',
+        mimeType: 'application/pdf',
+        size: 284_100,
+      },
+      {
+        key: 'tender-seed/wall-drawings.pdf',
+        name: 'Architectural Drawings.pdf',
+        mimeType: 'application/pdf',
+        size: 1_204_880,
+      },
     ],
   },
   {
@@ -93,7 +103,12 @@ const TENDERS: SeedTender[] = [
     priority: 'urgent',
     expiresInDays: 4,
     attachments: [
-      { key: 'tender-seed/eid-menu-spec.pdf', name: 'Menu Specification.pdf', mimeType: 'application/pdf', size: 96_400 },
+      {
+        key: 'tender-seed/eid-menu-spec.pdf',
+        name: 'Menu Specification.pdf',
+        mimeType: 'application/pdf',
+        size: 96_400,
+      },
     ],
   },
   {
@@ -151,7 +166,9 @@ async function main(): Promise<void> {
     'SELECT id FROM users ORDER BY created_at ASC LIMIT 1',
   );
   if (!owner?.id) {
-    console.log('[fixtures] No user found for created_by — run `npm run seed` first. Nothing done.');
+    console.log(
+      '[fixtures] No user found for created_by — run `npm run seed` first. Nothing done.',
+    );
     await AppDataSource.destroy();
     return;
   }

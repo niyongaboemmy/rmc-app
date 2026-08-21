@@ -123,12 +123,18 @@ export class FuneralService {
     if (deceased.dateOfDeath && deceased.dateOfDeath.slice(0, 10) > today) {
       throw new BadRequestException('Date of death cannot be in the future');
     }
-    if (deceased.dateOfBirth && deceased.dateOfDeath
-      && deceased.dateOfBirth.slice(0, 10) > deceased.dateOfDeath.slice(0, 10)) {
+    if (
+      deceased.dateOfBirth &&
+      deceased.dateOfDeath &&
+      deceased.dateOfBirth.slice(0, 10) > deceased.dateOfDeath.slice(0, 10)
+    ) {
       throw new BadRequestException('Date of birth must be before the date of death');
     }
-    if (arrangements.preferredBurialDate && deceased.dateOfDeath
-      && arrangements.preferredBurialDate.slice(0, 10) < deceased.dateOfDeath.slice(0, 10)) {
+    if (
+      arrangements.preferredBurialDate &&
+      deceased.dateOfDeath &&
+      arrangements.preferredBurialDate.slice(0, 10) < deceased.dateOfDeath.slice(0, 10)
+    ) {
       throw new BadRequestException('Burial date cannot be before the date of death');
     }
 
@@ -141,7 +147,10 @@ export class FuneralService {
       return d.startsWith('250') ? `0${d.slice(3)}` : d;
     };
     // New requests start at the first active lifecycle step.
-    const first = await this.steps.findOne({ where: { isActive: true }, order: { sortOrder: 'ASC' } });
+    const first = await this.steps.findOne({
+      where: { isActive: true },
+      order: { sortOrder: 'ASC' },
+    });
     const initialStage = first?.key ?? 'reported';
 
     const entity = this.requests.create({
@@ -170,14 +179,17 @@ export class FuneralService {
       stage: initialStage,
     });
     const saved = await this.requests.save(entity);
-    await this.history.save(this.history.create({ requestId: saved.id, stage: initialStage, notes: 'Request received.' }));
+    await this.history.save(
+      this.history.create({ requestId: saved.id, stage: initialStage, notes: 'Request received.' }),
+    );
 
     return { id: saved.id, status: 'received' };
   }
 
   /** Admin list (newest first) with optional stage/search filters. */
   async findAll(filters: ListFilters = {}) {
-    const qb = this.requests.createQueryBuilder('r')
+    const qb = this.requests
+      .createQueryBuilder('r')
       .leftJoinAndSelect('r.statusHistory', 'h')
       .orderBy('r.created_at', 'DESC');
 
@@ -266,13 +278,15 @@ export class FuneralService {
 
     entity.stage = dto.stage;
     await this.requests.save(entity);
-    await this.history.save(this.history.create({
-      requestId: entity.id,
-      stage: dto.stage,
-      notes: dto.notes ?? null,
-      assignedVolunteer: dto.assignedVolunteer ?? null,
-      changedBy: userId ?? null,
-    }));
+    await this.history.save(
+      this.history.create({
+        requestId: entity.id,
+        stage: dto.stage,
+        notes: dto.notes ?? null,
+        assignedVolunteer: dto.assignedVolunteer ?? null,
+        changedBy: userId ?? null,
+      }),
+    );
 
     return this.findOne(id);
   }
@@ -298,7 +312,12 @@ export class FuneralService {
   }
 
   /** Map an entity to the shape the frontend expects (nested + computed timeline). */
-  private toDto(r: FuneralRequest, steps: FuneralStep[], mosqueNames?: Map<string, string>, cemeteryNames?: Map<string, string>) {
+  private toDto(
+    r: FuneralRequest,
+    steps: FuneralStep[],
+    mosqueNames?: Map<string, string>,
+    cemeteryNames?: Map<string, string>,
+  ) {
     // Timeline = active steps, plus the request's current step if it has since
     // been deactivated/removed (so progress is always shown), in sort order.
     const timelineSteps = steps
@@ -309,14 +328,23 @@ export class FuneralService {
 
     // Latest history entry per stage, for timestamps/notes on the timeline.
     const latest = new Map<string, FuneralStatusHistory>();
-    for (const h of (r.statusHistory ?? []).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt))) {
+    for (const h of (r.statusHistory ?? []).sort(
+      (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt),
+    )) {
       latest.set(h.stage, h);
     }
 
     const timeline = timelineSteps.map((s, i) => {
-      const status = currentIdx === -1
-        ? 'pending'
-        : i < currentIdx ? 'done' : i === currentIdx ? (i === lastIdx ? 'done' : 'active') : 'pending';
+      const status =
+        currentIdx === -1
+          ? 'pending'
+          : i < currentIdx
+            ? 'done'
+            : i === currentIdx
+              ? i === lastIdx
+                ? 'done'
+                : 'active'
+              : 'pending';
       const h = latest.get(s.key);
       return {
         stage: s.key,
@@ -355,9 +383,15 @@ export class FuneralService {
       arrangements: {
         // Stored value is the mosque id; expose the resolved name for display
         // (falling back to the raw value for legacy/free-text data) plus the id.
-        preferredMosque: (r.arrPreferredMosque && mosqueNames?.get(r.arrPreferredMosque)) ?? r.arrPreferredMosque ?? undefined,
+        preferredMosque:
+          (r.arrPreferredMosque && mosqueNames?.get(r.arrPreferredMosque)) ??
+          r.arrPreferredMosque ??
+          undefined,
         preferredMosqueId: r.arrPreferredMosque ?? undefined,
-        preferredCemetery: (r.arrPreferredCemetery && cemeteryNames?.get(r.arrPreferredCemetery)) ?? r.arrPreferredCemetery ?? undefined,
+        preferredCemetery:
+          (r.arrPreferredCemetery && cemeteryNames?.get(r.arrPreferredCemetery)) ??
+          r.arrPreferredCemetery ??
+          undefined,
         preferredCemeteryId: r.arrPreferredCemetery ?? undefined,
         preferredBurialDate: r.arrPreferredBurialDate ?? undefined,
         preferredBurialTime: r.arrPreferredBurialTime ?? undefined,

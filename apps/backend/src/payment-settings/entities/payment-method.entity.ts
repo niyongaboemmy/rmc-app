@@ -8,6 +8,7 @@ import {
 
 export enum PaymentMethodCode {
   MOMO_INTOUCH = 'MOMO_INTOUCH',
+  IREMBOPAY = 'IREMBOPAY',
   BANK_TRANSFER = 'BANK_TRANSFER',
   CARD = 'CARD',
   CASH = 'CASH',

@@ -1,7 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min,
-} from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LessonContentType } from '../entities/dawah-course-lesson.entity';
 

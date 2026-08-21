@@ -114,8 +114,7 @@ export class PublicUploadService {
     // made by the client, and renaming evil.exe to book.pdf costs nothing.
     if (!mimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        rules.typeErrorMessage ??
-          'The file must be an image (JPG, PNG, WEBP) or a PDF.',
+        rules.typeErrorMessage ?? 'The file must be an image (JPG, PNG, WEBP) or a PDF.',
       );
     }
 

@@ -1,7 +1,12 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
-  OneToMany, Index,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  OneToMany,
+  Index,
 } from 'typeorm';
 import { FuneralStatusHistory } from './funeral-status-history.entity';
 

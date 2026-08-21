@@ -54,7 +54,10 @@ export class PublicController {
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   createVerse(@CurrentUser('id') userId: string, @Body() dto: CreateVerseDto) {
-    return this.service.createVerse({ ...dto, createdBy: userId } as unknown as Partial<VerseOfDay>);
+    return this.service.createVerse({
+      ...dto,
+      createdBy: userId,
+    } as unknown as Partial<VerseOfDay>);
   }
 
   @Put('verse-of-day/:id')
@@ -123,7 +126,10 @@ export class PublicController {
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   createAnnouncement(@CurrentUser('id') userId: string, @Body() dto: CreateAnnouncementDto) {
-    return this.service.createAnnouncement({ ...dto, createdBy: userId } as unknown as Partial<Announcement>);
+    return this.service.createAnnouncement({
+      ...dto,
+      createdBy: userId,
+    } as unknown as Partial<Announcement>);
   }
 
   @Put('announcements/:id')
@@ -210,7 +216,10 @@ export class PublicController {
   @ApiBearerAuth()
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   addGalleryItem(@CurrentUser('id') userId: string, @Body() dto: CreateGalleryItemDto) {
-    return this.service.addGalleryItem({ ...dto, uploadedBy: userId } as unknown as Partial<GalleryItem>);
+    return this.service.addGalleryItem({
+      ...dto,
+      uploadedBy: userId,
+    } as unknown as Partial<GalleryItem>);
   }
 
   @Put('gallery/:id')

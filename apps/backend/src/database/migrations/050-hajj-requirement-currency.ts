@@ -14,9 +14,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *
  * Existing rows are RWF, which is what the DEFAULT backfills them to.
  */
-export class HajjRequirementCurrency1786000000023
-  implements MigrationInterface
-{
+export class HajjRequirementCurrency1786000000023 implements MigrationInterface {
   name = 'HajjRequirementCurrency1786000000023';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -43,9 +41,7 @@ export class HajjRequirementCurrency1786000000023
     await queryRunner.query(
       `ALTER TABLE "hajj_requirements" DROP CONSTRAINT "CHK_hajj_requirement_currency"`,
     );
-    await queryRunner.query(
-      `ALTER TABLE "hajj_requirements" DROP COLUMN "currency"`,
-    );
+    await queryRunner.query(`ALTER TABLE "hajj_requirements" DROP COLUMN "currency"`);
     await queryRunner.query(
       `ALTER TABLE "hajj_requirements" RENAME COLUMN "amount" TO "amount_rwf"`,
     );

@@ -1,6 +1,10 @@
 import {
-  ForbiddenException, HttpException, HttpStatus,
-  Injectable, Logger, NotFoundException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, MoreThan, Repository } from 'typeorm';
@@ -38,8 +42,7 @@ export interface PublicAuthor {
  * `q` is the query-builder alias for dawah_questions; the migration spells the same
  * expression with bare column names.
  */
-const FTS_VECTOR =
-  `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, ''))`;
+const FTS_VECTOR = `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, ''))`;
 
 /**
  * Dawah Q&A — an editorial knowledge base, not a forum.
@@ -217,7 +220,9 @@ export class DawahDiscussionsService {
   private bumpViewCount(id: string): void {
     void this.questions
       .increment({ id }, 'viewCount', 1)
-      .catch((err) => this.logger.warn(`Failed to bump view_count for question ${id}: ${err.message}`));
+      .catch((err) =>
+        this.logger.warn(`Failed to bump view_count for question ${id}: ${err.message}`),
+      );
   }
 
   /**
@@ -296,10 +301,7 @@ export class DawahDiscussionsService {
       // Never the entry being read. Without this the reader is offered the page they
       // are already on, and the list silently drops to two.
       .andWhere('q.id != :id', { id: question.id })
-      .orderBy(
-        'CASE WHEN q.category_id = :categoryId THEN 0 ELSE 1 END',
-        'ASC',
-      )
+      .orderBy('CASE WHEN q.category_id = :categoryId THEN 0 ELSE 1 END', 'ASC')
       .addOrderBy('q.publishedAt', 'DESC')
       .setParameter('categoryId', question.categoryId)
       // limit(), NOT take(). take() wraps the query in a SELECT DISTINCT id subquery for
@@ -516,7 +518,10 @@ export class DawahDiscussionsService {
     const question = await this.questions.findOne({ where: { id } });
     if (!question) throw new NotFoundException('Question not found');
     if (question.status === 'published') {
-      throw new HttpException('This entry is already published — edit it instead.', HttpStatus.CONFLICT);
+      throw new HttpException(
+        'This entry is already published — edit it instead.',
+        HttpStatus.CONFLICT,
+      );
     }
 
     const now = new Date();
@@ -643,13 +648,17 @@ export class DawahDiscussionsService {
         hasAnswer: q.answerBody.length > 0,
         category: q.category ? { id: q.category.id, nameEn: q.category.nameEn } : null,
         author: q.author ? `${q.author.firstName} ${q.author.lastName}`.trim() : null,
-        answeredBy: q.answeredBy ? `${q.answeredBy.firstName} ${q.answeredBy.lastName}`.trim() : null,
+        answeredBy: q.answeredBy
+          ? `${q.answeredBy.firstName} ${q.answeredBy.lastName}`.trim()
+          : null,
         publishedAt: q.publishedAt,
         createdAt: q.createdAt,
         // Readers' "was this helpful?" — an editorial signal, never shown publicly.
         rating: tallies.get(q.id) ?? { helpful: 0, notHelpful: 0 },
       })),
-      total, page, limit,
+      total,
+      page,
+      limit,
     };
   }
 

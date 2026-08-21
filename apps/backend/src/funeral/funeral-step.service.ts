@@ -28,7 +28,10 @@ export class FuneralStepService {
   async create(dto: CreateFuneralStepDto) {
     const existing = await this.steps.findOne({ where: { key: dto.key }, withDeleted: true });
     if (existing) throw new BadRequestException(`A step with key "${dto.key}" already exists`);
-    const max = await this.steps.createQueryBuilder('s').select('MAX(s.sort_order)', 'm').getRawOne<{ m: number | null }>();
+    const max = await this.steps
+      .createQueryBuilder('s')
+      .select('MAX(s.sort_order)', 'm')
+      .getRawOne<{ m: number | null }>();
     const entity = this.steps.create({
       key: dto.key,
       titleEn: dto.titleEn,
@@ -37,7 +40,7 @@ export class FuneralStepService {
       descriptionEn: dto.descriptionEn ?? '',
       descriptionRw: dto.descriptionRw ?? '',
       descriptionAr: dto.descriptionAr ?? '',
-      sortOrder: dto.sortOrder ?? (Number(max?.m ?? -1) + 1),
+      sortOrder: dto.sortOrder ?? Number(max?.m ?? -1) + 1,
       isActive: dto.isActive ?? true,
       color: dto.color ?? null,
       icon: dto.icon ?? null,
@@ -80,7 +83,10 @@ export class FuneralStepService {
     const updated: FuneralStep[] = [];
     ids.forEach((id, index) => {
       const row = byId.get(id);
-      if (row) { row.sortOrder = index; updated.push(row); }
+      if (row) {
+        row.sortOrder = index;
+        updated.push(row);
+      }
     });
     await this.steps.save(updated);
     return this.findAllDto(false);

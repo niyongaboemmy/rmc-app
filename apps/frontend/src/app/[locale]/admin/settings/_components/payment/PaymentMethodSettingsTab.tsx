@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 
 const METHOD_ICONS: Record<PaymentMethodCode, React.ElementType> = {
   MOMO_INTOUCH:  Smartphone,
+  IREMBOPAY:     Globe,
   BANK_TRANSFER: Building2,
   CARD:          CreditCard,
   CASH:          Banknote,

@@ -9,7 +9,8 @@ export class FuneralPermissions1786000000005 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     for (const slug of ['superadmin', 'admin']) {
-      await queryRunner.query(`
+      await queryRunner.query(
+        `
         UPDATE roles
         SET permissions = (
           SELECT jsonb_agg(DISTINCT val)
@@ -19,7 +20,9 @@ export class FuneralPermissions1786000000005 implements MigrationInterface {
         ),
         updated_at = now()
         WHERE slug = $1
-      `, [slug]);
+      `,
+        [slug],
+      );
     }
   }
 

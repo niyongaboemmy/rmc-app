@@ -137,7 +137,10 @@ export class UsersService {
 
     // Email uniqueness check (include soft-deleted rows — the DB constraint does)
     if (dto.email && dto.email.toLowerCase() !== user.email.toLowerCase()) {
-      const existing = await this.userRepo.findOne({ where: { email: dto.email.toLowerCase() }, withDeleted: true });
+      const existing = await this.userRepo.findOne({
+        where: { email: dto.email.toLowerCase() },
+        withDeleted: true,
+      });
       if (existing) throw new ConflictException('Email already in use by another account');
     }
 
@@ -146,7 +149,10 @@ export class UsersService {
     if (dto.phone) {
       normalizedPhone = dto.phone.startsWith('07') ? `+250${dto.phone.slice(1)}` : dto.phone;
       if (normalizedPhone !== user.phone) {
-        const existing = await this.userRepo.findOne({ where: { phone: normalizedPhone }, withDeleted: true });
+        const existing = await this.userRepo.findOne({
+          where: { phone: normalizedPhone },
+          withDeleted: true,
+        });
         if (existing) throw new ConflictException('Phone number already in use by another account');
       }
     }

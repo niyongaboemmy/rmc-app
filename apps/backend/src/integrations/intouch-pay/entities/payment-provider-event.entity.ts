@@ -1,7 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
 /** Which provider call produced the event. */
-export type PaymentOperation = 'request_payment' | 'get_status' | 'get_balance' | 'deposit';
+export type PaymentOperation =
+  // IntouchPay
+  | 'request_payment'
+  | 'get_status'
+  | 'get_balance'
+  | 'deposit'
+  // IremboPay
+  | 'create_invoice'
+  | 'get_invoice'
+  | 'initiate_push'
+  | 'update_invoice';
 
 /**
  * HTTP-level outcome of a single provider attempt — deliberately separate from

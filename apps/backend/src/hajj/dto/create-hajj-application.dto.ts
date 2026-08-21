@@ -56,20 +56,27 @@ export class HajjDocumentDto {
 }
 
 export class CreateHajjApplicationDto {
-  @IsString() @IsNotEmpty() @MaxLength(150)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(150)
   fullName: string;
 
   @Matches(RW_PHONE, { message: 'phone must be a 10-digit Rwandan number' })
   phone: string;
 
   @ValidateIf((o) => o.email !== undefined && o.email !== null && o.email !== '')
-  @IsEmail() @MaxLength(150)
+  @IsEmail()
+  @MaxLength(150)
   email?: string;
 
-  @IsString() @IsNotEmpty() @MaxLength(100)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   district: string;
 
-  @IsString() @IsNotEmpty() @MaxLength(100)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   sector: string;
 
   @Matches(PASSPORT, { message: 'passportNumber must be 5–15 alphanumeric characters' })

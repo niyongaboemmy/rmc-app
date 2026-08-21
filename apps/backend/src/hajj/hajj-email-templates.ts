@@ -32,9 +32,13 @@ export const HajjEmailTemplates = {
       subject: `Hajj application ${app.trackingCode} received`,
       html:
         p(`Assalamu alaikum ${app.fullName},`) +
-        p('We have received your Hajj application. Our team will verify your details and payment proofs, and you will be notified at every step until a final decision is made.') +
+        p(
+          'We have received your Hajj application. Our team will verify your details and payment proofs, and you will be notified at every step until a final decision is made.',
+        ) +
         refBox(app.trackingCode) +
-        p('Keep this number safe — with your phone number it is how you check your status at any time.'),
+        p(
+          'Keep this number safe — with your phone number it is how you check your status at any time.',
+        ),
     };
   },
 
@@ -43,9 +47,13 @@ export const HajjEmailTemplates = {
       subject: `Hajj application ${app.trackingCode} is under review`,
       html:
         p(`Assalamu alaikum ${app.fullName},`) +
-        p('Your Hajj application is now <strong>under review</strong>. Our team is verifying your passport details and payment proofs.') +
+        p(
+          'Your Hajj application is now <strong>under review</strong>. Our team is verifying your passport details and payment proofs.',
+        ) +
         refBox(app.trackingCode) +
-        p('No action is needed from you right now. We will email and text you as soon as a decision is made.'),
+        p(
+          'No action is needed from you right now. We will email and text you as soon as a decision is made.',
+        ),
     };
   },
 
@@ -54,9 +62,13 @@ export const HajjEmailTemplates = {
       subject: `Hajj application ${app.trackingCode} approved`,
       html:
         p(`Assalamu alaikum ${app.fullName},`) +
-        p('We are pleased to inform you that your Hajj application has been <strong style="color:#1a7a4a;">APPROVED</strong>.') +
+        p(
+          'We are pleased to inform you that your Hajj application has been <strong style="color:#1a7a4a;">APPROVED</strong>.',
+        ) +
         refBox(app.trackingCode) +
-        p('Our team will contact you shortly with the next steps regarding travel and preparation. Mabrook!'),
+        p(
+          'Our team will contact you shortly with the next steps regarding travel and preparation. Mabrook!',
+        ),
     };
   },
 
@@ -76,11 +88,17 @@ export const HajjEmailTemplates = {
       subject: `Hajj application ${app.trackingCode} — more information needed`,
       html:
         p(`Assalamu alaikum ${app.fullName},`) +
-        p('We have reviewed your Hajj application and need <strong>a little more from you</strong> before we can continue.') +
+        p(
+          'We have reviewed your Hajj application and need <strong>a little more from you</strong> before we can continue.',
+        ) +
         ask +
         refBox(app.trackingCode) +
-        p('Please upload what is listed above on the Hajj tracking page — enter this application number, confirm the code we text to the phone on your application, and you can add the document there.') +
-        p('Your application stays open in the meantime; it returns to review as soon as you upload.'),
+        p(
+          'Please upload what is listed above on the Hajj tracking page — enter this application number, confirm the code we text to the phone on your application, and you can add the document there.',
+        ) +
+        p(
+          'Your application stays open in the meantime; it returns to review as soon as you upload.',
+        ),
     };
   },
 
@@ -95,10 +113,14 @@ export const HajjEmailTemplates = {
       subject: `Hajj application ${app.trackingCode} — decision`,
       html:
         p(`Assalamu alaikum ${app.fullName},`) +
-        p('After review, your Hajj application has <strong style="color:#b91c1c;">not been approved</strong>.') +
+        p(
+          'After review, your Hajj application has <strong style="color:#b91c1c;">not been approved</strong>.',
+        ) +
         refBox(app.trackingCode) +
         reason +
-        p('If you believe this was in error, or you would like guidance on reapplying, please contact the Hajj desk and quote your application number.'),
+        p(
+          'If you believe this was in error, or you would like guidance on reapplying, please contact the Hajj desk and quote your application number.',
+        ),
     };
   },
 };

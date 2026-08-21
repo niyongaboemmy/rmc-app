@@ -1,5 +1,13 @@
 import {
-  IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { HAJJ_CURRENCIES, type HajjCurrency } from '../entities/hajj-requirement.entity';
@@ -8,7 +16,8 @@ export class CreateHajjRequirementDto {
   /** Stable slug — lowercase, no spaces. Cannot be changed once created. */
   @IsString()
   @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/, {
-    message: 'key must be alphanumeric (dashes/underscores allowed) and start with a letter or digit',
+    message:
+      'key must be alphanumeric (dashes/underscores allowed) and start with a letter or digit',
   })
   @MaxLength(40)
   key: string;

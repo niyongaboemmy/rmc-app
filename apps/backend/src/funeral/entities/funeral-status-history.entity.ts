@@ -1,6 +1,11 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  ManyToOne, JoinColumn, Index,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
 } from 'typeorm';
 import { FuneralRequest } from './funeral-request.entity';
 

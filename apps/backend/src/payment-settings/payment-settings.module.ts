@@ -5,9 +5,12 @@ import { PaymentType } from './entities/payment-type.entity';
 import { PaymentTypeRate } from './entities/payment-type-rate.entity';
 import { PaymentMethodSettings } from './entities/payment-method-settings.entity';
 import { PaymentTransaction } from './entities/payment-transaction.entity';
+import { PaymentTypeProviderProduct } from './entities/payment-type-provider-product.entity';
 import { PaymentSettingsService } from './payment-settings.service';
 import { PaymentSettingsController } from './payment-settings.controller';
 import { PaymentEventsService } from './payment-events.service';
+import { ProviderProductsService } from './provider-products.service';
+import { SettingsCacheBus } from './settings-cache.bus';
 import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module';
 
 @Module({
@@ -18,11 +21,22 @@ import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module
       PaymentTypeRate,
       PaymentMethodSettings,
       PaymentTransaction,
+      PaymentTypeProviderProduct,
     ]),
     IntouchPayModule,
   ],
-  providers: [PaymentSettingsService, PaymentEventsService],
+  providers: [
+    PaymentSettingsService,
+    PaymentEventsService,
+    ProviderProductsService,
+    SettingsCacheBus,
+  ],
   controllers: [PaymentSettingsController],
-  exports: [PaymentSettingsService, PaymentEventsService],
+  exports: [
+    PaymentSettingsService,
+    PaymentEventsService,
+    ProviderProductsService,
+    SettingsCacheBus,
+  ],
 })
 export class PaymentSettingsModule {}

@@ -26,7 +26,9 @@ export class FuneralAnnouncements1786000000007 implements MigrationInterface {
         CONSTRAINT "PK_funeral_announcements" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_announcement_prayer_time" ON "funeral_announcements" ("prayer_time")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_announcement_prayer_time" ON "funeral_announcements" ("prayer_time")`,
+    );
 
     await queryRunner.query(`
       INSERT INTO "funeral_announcements"

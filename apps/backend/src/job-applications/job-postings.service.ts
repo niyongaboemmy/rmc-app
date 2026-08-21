@@ -18,12 +18,13 @@ export class JobPostingsService {
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
   private slugify(title: string): string {
-    const base = title
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 190) || 'job';
+    const base =
+      title
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 190) || 'job';
     const suffix = Math.random().toString(36).slice(2, 8);
     return `${base}-${suffix}`;
   }
@@ -31,7 +32,10 @@ export class JobPostingsService {
   /** True when a posting is open AND its deadline (if any) hasn't passed. */
   isAcceptingApplications(posting: JobPosting): boolean {
     if (posting.status !== JobPostingStatus.OPEN) return false;
-    if (posting.applicationDeadline && new Date(posting.applicationDeadline).getTime() < Date.now()) {
+    if (
+      posting.applicationDeadline &&
+      new Date(posting.applicationDeadline).getTime() < Date.now()
+    ) {
       return false;
     }
     return true;
@@ -44,7 +48,10 @@ export class JobPostingsService {
     if (posting.status !== JobPostingStatus.OPEN) {
       throw new BadRequestException('This position is not currently open for applications');
     }
-    if (posting.applicationDeadline && new Date(posting.applicationDeadline).getTime() < Date.now()) {
+    if (
+      posting.applicationDeadline &&
+      new Date(posting.applicationDeadline).getTime() < Date.now()
+    ) {
       throw new BadRequestException('The application deadline for this position has passed');
     }
     return posting;
@@ -57,12 +64,16 @@ export class JobPostingsService {
     const qb = this.postingRepo
       .createQueryBuilder('p')
       .where('p.status = :status', { status: JobPostingStatus.OPEN })
-      .andWhere('(p.applicationDeadline IS NULL OR p.applicationDeadline >= :now)', { now: new Date().toISOString() })
+      .andWhere('(p.applicationDeadline IS NULL OR p.applicationDeadline >= :now)', {
+        now: new Date().toISOString(),
+      })
       .orderBy('p.publishedAt', 'DESC')
       .addOrderBy('p.createdAt', 'DESC');
 
-    if (filters.search) qb.andWhere('(p.title ILIKE :q OR p.department ILIKE :q)', { q: `%${filters.search}%` });
-    if (filters.employmentType) qb.andWhere('p.employmentType = :et', { et: filters.employmentType });
+    if (filters.search)
+      qb.andWhere('(p.title ILIKE :q OR p.department ILIKE :q)', { q: `%${filters.search}%` });
+    if (filters.employmentType)
+      qb.andWhere('p.employmentType = :et', { et: filters.employmentType });
     if (filters.districtId) qb.andWhere('p.districtId = :d', { d: filters.districtId });
 
     return qb.getMany();
@@ -81,7 +92,8 @@ export class JobPostingsService {
   async adminList(filters: { status?: string; search?: string } = {}) {
     const qb = this.postingRepo.createQueryBuilder('p').orderBy('p.createdAt', 'DESC');
     if (filters.status) qb.andWhere('p.status = :status', { status: filters.status });
-    if (filters.search) qb.andWhere('(p.title ILIKE :q OR p.department ILIKE :q)', { q: `%${filters.search}%` });
+    if (filters.search)
+      qb.andWhere('(p.title ILIKE :q OR p.department ILIKE :q)', { q: `%${filters.search}%` });
     const items = await qb.getMany();
     return this.withCounts(items);
   }

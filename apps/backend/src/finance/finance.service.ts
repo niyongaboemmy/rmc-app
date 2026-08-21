@@ -110,7 +110,7 @@ export class FinanceService {
         ref: txnRef(d.id),
         // An anonymous donor is hidden on screen; naming them in a file would leak
         // exactly what the flag exists to protect.
-        payer: d.isAnonymous ? 'Anonymous' : (d.donorName?.trim() || 'Unknown'),
+        payer: d.isAnonymous ? 'Anonymous' : d.donorName?.trim() || 'Unknown',
         detail: d.campaign?.title ?? (meta.fund ? `General Fund (${meta.fund})` : 'General Fund'),
         amount: Number(d.amount),
         currency: d.currency,
@@ -124,22 +124,22 @@ export class FinanceService {
   private async marriageEntries(): Promise<LedgerEntry[]> {
     const applications = await this.marriages.find();
 
-    return applications
-      // Only applications money has actually moved on — an unpaid application is
-      // not a payment, and listing it would inflate the ledger. Mirrors the UI.
-      .filter(
-        (a) => Number(a.amountPaid) > 0 || a.paymentStatus === PaymentStatus.PROCESSING,
-      )
-      .map((a) => ({
-        source: 'marriage',
-        ref: a.applicationNumber,
-        payer: `${a.groomName} & ${a.brideName}`,
-        detail: 'Marriage service',
-        amount: Number(a.amountPaid) || Number(a.amountDue),
-        currency: 'RWF',
-        method: a.paymentMethod ?? '',
-        status: a.paymentStatus,
-        date: a.updatedAt ?? a.createdAt,
-      }));
+    return (
+      applications
+        // Only applications money has actually moved on — an unpaid application is
+        // not a payment, and listing it would inflate the ledger. Mirrors the UI.
+        .filter((a) => Number(a.amountPaid) > 0 || a.paymentStatus === PaymentStatus.PROCESSING)
+        .map((a) => ({
+          source: 'marriage',
+          ref: a.applicationNumber,
+          payer: `${a.groomName} & ${a.brideName}`,
+          detail: 'Marriage service',
+          amount: Number(a.amountPaid) || Number(a.amountDue),
+          currency: 'RWF',
+          method: a.paymentMethod ?? '',
+          status: a.paymentStatus,
+          date: a.updatedAt ?? a.createdAt,
+        }))
+    );
   }
 }

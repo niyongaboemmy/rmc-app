@@ -15,7 +15,13 @@ interface Built {
   text: string;
 }
 
-function shell(frontendUrl: string, heading: string, body: string, ctaHref: string, ctaLabel: string): string {
+function shell(
+  frontendUrl: string,
+  heading: string,
+  body: string,
+  ctaHref: string,
+  ctaLabel: string,
+): string {
   return `<!doctype html><html><body style="margin:0;background:#f5f7f6;font-family:system-ui,Arial,sans-serif">
     <div style="max-width:520px;margin:0 auto;padding:24px">
       <div style="background:#0D3D24;color:#fff;padding:16px 20px;border-radius:12px 12px 0 0;font-weight:700">
@@ -39,19 +45,30 @@ function shell(frontendUrl: string, heading: string, body: string, ctaHref: stri
  * "a scholar verified your answer" — both described a community forum: members answering
  * each other, and a scholar blessing one of those answers. Neither event exists now.
  */
-export function answeredEmail(frontendUrl: string, locale: string, questionTitle: string, questionSlug: string): Built {
+export function answeredEmail(
+  frontendUrl: string,
+  locale: string,
+  questionTitle: string,
+  questionSlug: string,
+): Built {
   const href = `/${locale}/dawah/discussions/${questionSlug}`;
   return {
     subject: `Answered: ${questionTitle}`.slice(0, 120),
-    html: shell(frontendUrl, 'Your question has been answered',
+    html: shell(
+      frontendUrl,
+      'Your question has been answered',
       `RMC has answered your question, <strong>${escapeHtml(questionTitle)}</strong>, and published it for the community.`,
-      href, 'Read the answer'),
+      href,
+      'Read the answer',
+    ),
     text: `RMC has answered your question "${questionTitle}". Read it: ${frontendUrl}${href}`,
   };
 }
 
 /** Minimal HTML escape for the one place user text enters the email (the title). */
 function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
+  );
 }

@@ -21,10 +21,12 @@ import {
   IntouchPayService,
   INTOUCH_RESPONSE_CODES,
 } from '../integrations/intouch-pay/intouch-pay.service';
+import { SettingsCacheBus } from './settings-cache.bus';
 import * as crypto from 'crypto';
 
 const SENSITIVE_FIELDS: Partial<Record<PaymentMethodCode, string[]>> = {
   [PaymentMethodCode.MOMO_INTOUCH]: ['partnerPassword'],
+  [PaymentMethodCode.IREMBOPAY]: ['secretKey'],
   [PaymentMethodCode.CARD]: ['secretKey', 'webhookSecret'],
 };
 
@@ -52,6 +54,7 @@ export class PaymentSettingsService {
 
     private readonly intouchPay: IntouchPayService,
     private readonly configService: ConfigService,
+    private readonly cacheBus: SettingsCacheBus,
   ) {}
 
   // ── Payment Methods ────────────────────────────────────────────────────────
@@ -231,23 +234,54 @@ export class PaymentSettingsService {
     if (dto.isTestMode !== undefined) record.isTestMode = dto.isTestMode;
     record.isConfigured = this.checkConfigured(merged, method.code);
 
-    return this.settingsRepo.save(record);
+    const saved = await this.settingsRepo.save(record);
+
+    // Provider config caches read these values; without this a saved key would
+    // not take effect until the cache expired, and the admin would conclude the
+    // save had not worked.
+    this.cacheBus.emitMethodSettingsChanged(method.code as PaymentMethodCode);
+
+    return saved;
   }
 
-  /** Raw (unmasked) credentials for a method — for internal service use only. */
-  async getRawSettings(methodCode: PaymentMethodCode): Promise<Record<string, string> | null> {
-    const method = await this.methodRepo.findOne({ where: { code: methodCode, isActive: true } });
+  /**
+   * Raw (unmasked) credentials for a method — for internal service use only.
+   *
+   * `requireActive` defaults to true, which is right for *starting* a payment:
+   * a disabled method must not take new money. It must be passed `false` when
+   * settling money that is already in flight — verifying a webhook signature or
+   * reconciling an issued invoice. Deactivating a method is how this system
+   * rolls a provider back, and callbacks for invoices issued before the rollback
+   * keep arriving afterwards; refusing to read the key then would silently drop
+   * real payments.
+   */
+  async getRawSettings(
+    methodCode: PaymentMethodCode,
+    requireActive = true,
+  ): Promise<Record<string, string> | null> {
+    const method = await this.findMethodForSettings(methodCode, requireActive);
     if (!method) return null;
     const s = await this.settingsRepo.findOne({ where: { paymentMethodId: method.id } });
     return s?.settings ?? null;
   }
 
+  /** See `getRawSettings` for what `requireActive` means and when to pass false. */
   async getMethodSettingsRecord(
     methodCode: PaymentMethodCode,
+    requireActive = true,
   ): Promise<PaymentMethodSettings | null> {
-    const method = await this.methodRepo.findOne({ where: { code: methodCode, isActive: true } });
+    const method = await this.findMethodForSettings(methodCode, requireActive);
     if (!method) return null;
     return this.settingsRepo.findOne({ where: { paymentMethodId: method.id } });
+  }
+
+  private findMethodForSettings(
+    methodCode: PaymentMethodCode,
+    requireActive: boolean,
+  ): Promise<PaymentMethod | null> {
+    return this.methodRepo.findOne({
+      where: requireActive ? { code: methodCode, isActive: true } : { code: methodCode },
+    });
   }
 
   // ── Test Payment ───────────────────────────────────────────────────────────
@@ -518,6 +552,13 @@ export class PaymentSettingsService {
       this.logger.warn('[AutoDeposit] Skipped — IntouchPay credentials not configured');
       return;
     }
+    // Card and bank collections carry no MSISDN, so there is nowhere to deposit back to.
+    if (!sourceTx.mobilePhone) {
+      this.logger.warn(
+        `[AutoDeposit] Skipped for ${sourceTx.requestTransactionId} — no mobile number on the source transaction`,
+      );
+      return;
+    }
 
     const requestTxnId = `TESTDEP-${crypto.randomUUID().replace(/-/g, '').slice(0, 17).toUpperCase()}`;
 
@@ -571,6 +612,7 @@ export class PaymentSettingsService {
   private checkConfigured(settings: Record<string, string>, code: string): boolean {
     const required: Partial<Record<PaymentMethodCode, string[]>> = {
       [PaymentMethodCode.MOMO_INTOUCH]: ['username', 'partnerPassword', 'accountNo'],
+      [PaymentMethodCode.IREMBOPAY]: ['secretKey', 'publicKey', 'paymentAccountIdentifier'],
       [PaymentMethodCode.BANK_TRANSFER]: ['bankName', 'accountName', 'accountNumber'],
       [PaymentMethodCode.CARD]: ['provider', 'publishableKey', 'secretKey'],
       [PaymentMethodCode.CASH]: [],

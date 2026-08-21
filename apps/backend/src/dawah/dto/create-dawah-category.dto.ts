@@ -1,7 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsBoolean, IsInt, IsOptional, IsString, Matches, MaxLength, Min,
-} from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 /** Payload for a Dawah category — the taxonomy shared by courses and the library. */

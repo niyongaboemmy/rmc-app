@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import { IncomingMessage } from 'http';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as compression from 'compression';
@@ -38,7 +39,23 @@ async function bootstrap(): Promise<void> {
    * 2 MB is ample for prose (media itself is uploaded separately, never inlined
    * into JSON) while still bounding the request size.
    */
-  app.use(json({ limit: '2mb' }));
+  /**
+   * IremboPay signs its webhooks over the RAW request bytes. Re-serialising the
+   * parsed object cannot reproduce them — key order, whitespace and number
+   * formatting all differ from the wire — so the buffer is captured here, before
+   * the parser discards it. Scoped to the webhook path: retaining a 2 MB buffer
+   * on every request would be a memory cost for nothing.
+   */
+  app.use(
+    json({
+      limit: '2mb',
+      verify: (req: IncomingMessage & { rawBody?: Buffer }, _res, buf: Buffer) => {
+        if ((req as { originalUrl?: string }).originalUrl?.includes('/webhooks/irembopay')) {
+          req.rawBody = Buffer.from(buf);
+        }
+      },
+    }),
+  );
   app.use(urlencoded({ limit: '2mb', extended: true }));
 
   // Security

@@ -2,33 +2,47 @@ import { IsBoolean, IsHexColor, IsInt, IsOptional, IsString, MaxLength } from 'c
 
 /** Everything editable on a step. `key` is immutable, so it is not accepted here. */
 export class UpdateFuneralStepDto {
-  @IsOptional() @IsString() @MaxLength(120)
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
   titleEn?: string;
 
-  @IsOptional() @IsString() @MaxLength(120)
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
   titleRw?: string;
 
-  @IsOptional() @IsString() @MaxLength(120)
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
   titleAr?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   descriptionEn?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   descriptionRw?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   descriptionAr?: string;
 
-  @IsOptional() @IsInt()
+  @IsOptional()
+  @IsInt()
   sortOrder?: number;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional() @IsHexColor()
+  @IsOptional()
+  @IsHexColor()
   color?: string;
 
-  @IsOptional() @IsString() @MaxLength(40)
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
   icon?: string;
 }

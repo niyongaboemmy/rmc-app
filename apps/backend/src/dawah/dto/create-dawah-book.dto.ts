@@ -1,7 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, IsUUID,
-  Matches, Max, MaxLength, Min,
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BOOK_LANGUAGES, type BookLanguage } from '../entities/dawah-book.entity';
@@ -19,7 +28,9 @@ import { ContentStatus } from '../entities/dawah-course.entity';
  * and forbidNonWhitelisted 400s a client that tries to set them.
  */
 export class CreateDawahBookDto {
-  @ApiPropertyOptional({ description: 'Derived from titleEn when omitted. Immutable once published.' })
+  @ApiPropertyOptional({
+    description: 'Derived from titleEn when omitted. Immutable once published.',
+  })
   @IsOptional()
   @IsString()
   @Matches(/^[a-z0-9][a-z0-9-]*$/, { message: 'slug must be lowercase alphanumeric with hyphens' })
@@ -85,7 +96,8 @@ export class CreateDawahBookDto {
   coverImageKey?: string | null;
 
   @ApiProperty({
-    description: 'file-server key under the PROTECTED dawah-library/ prefix. From the upload endpoint. Never returned on a public route.',
+    description:
+      'file-server key under the PROTECTED dawah-library/ prefix. From the upload endpoint. Never returned on a public route.',
   })
   @IsString()
   @MaxLength(500)
@@ -118,7 +130,8 @@ export class CreateDawahBookDto {
 
   @ApiPropertyOptional({
     default: true,
-    description: 'False hides the Download button AND 403s the download route. A deterrent, not DRM.',
+    description:
+      'False hides the Download button AND 403s the download route. A deterrent, not DRM.',
   })
   @IsOptional()
   @IsBoolean()

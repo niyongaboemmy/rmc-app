@@ -1,11 +1,22 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 export type ModerationAction =
-  | 'auto_hide' | 'hide' | 'restore' | 'lock' | 'unlock' | 'delete' | 'policy_change';
+  | 'auto_hide'
+  | 'hide'
+  | 'restore'
+  | 'lock'
+  | 'unlock'
+  | 'delete'
+  | 'policy_change';
 
 /**
  * Append-only record of every moderation act. NOT optional: hiding a member's religious

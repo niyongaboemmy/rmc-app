@@ -1,5 +1,14 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseUUIDPipe, Res,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  ParseUUIDPipe,
+  Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { IsBoolean } from 'class-validator';
@@ -68,10 +77,7 @@ export class HajjAdminController {
   @Patch('requirements/:id')
   @Permissions(Permission.HAJJ_MANAGE)
   @ApiOperation({ summary: 'Update a Hajj requirement' })
-  updateRequirement(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateHajjRequirementDto,
-  ) {
+  updateRequirement(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateHajjRequirementDto) {
     return this.requirements.update(id, dto);
   }
 
@@ -110,10 +116,7 @@ export class HajjAdminController {
   @Patch('bank-accounts/:id')
   @Permissions(Permission.HAJJ_MANAGE)
   @ApiOperation({ summary: 'Update a Hajj bank account' })
-  updateBankAccount(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateHajjBankAccountDto,
-  ) {
+  updateBankAccount(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateHajjBankAccountDto) {
     return this.bankAccounts.update(id, dto);
   }
 

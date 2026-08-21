@@ -182,9 +182,7 @@ export class DawahTables1786000000025 implements MigrationInterface {
         CONSTRAINT "CHK_dawah_book_status" CHECK ("status" IN ('draft', 'published', 'archived'))
       )
     `);
-    await queryRunner.query(
-      `CREATE INDEX "IDX_dawah_books_status" ON "dawah_books" ("status")`,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_dawah_books_status" ON "dawah_books" ("status")`);
     await queryRunner.query(
       `CREATE INDEX "IDX_dawah_books_category" ON "dawah_books" ("category_id")`,
     );

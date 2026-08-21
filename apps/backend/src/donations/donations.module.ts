@@ -13,6 +13,7 @@ import { DonationCategoriesController } from './donation-categories.controller';
 import { DonationCategoriesAdminController } from './donation-categories-admin.controller';
 import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module';
 import { PaymentSettingsModule } from '../payment-settings/payment-settings.module';
+import { PaymentsModule } from '../payments/payments.module';
 import { SmsModule } from '../integrations/sms/sms.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { SmsModule } from '../integrations/sms/sms.module';
     TypeOrmModule.forFeature([Donation, DonationCampaign, DonationCategory, DonationSubFund]),
     IntouchPayModule,
     PaymentSettingsModule,
+    PaymentsModule,
     SmsModule,
   ],
   providers: [DonationsService, DonationCategoriesService, DonationReconciliationService],

@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource, Brackets } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -114,9 +109,7 @@ export class HajjService {
     const types = dto.documents.map((d) => d.documentType);
     for (const required of REQUIRED_HAJJ_DOCUMENTS) {
       if (types.filter((t) => t === required).length !== 1) {
-        throw new BadRequestException(
-          `Exactly one "${required}" receipt is required.`,
-        );
+        throw new BadRequestException(`Exactly one "${required}" receipt is required.`);
       }
     }
 
@@ -362,9 +355,7 @@ export class HajjService {
    * can't collide (mirrors the marriage application number).
    */
   private async generateApplicationNumber(): Promise<string> {
-    const result = await this.dataSource.query(
-      `SELECT nextval('hajj_application_seq') AS seq`,
-    );
+    const result = await this.dataSource.query(`SELECT nextval('hajj_application_seq') AS seq`);
     const seq = String(result[0].seq).padStart(5, '0');
     const now = new Date();
     const year = now.getFullYear();

@@ -4,8 +4,7 @@ import type { Response } from 'express';
 /** A single exported row: column header → cell value. */
 export type XlsxRow = Record<string, string | number>;
 
-const XLSX_MIME =
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 /**
  * Send a report as a dated .xlsx download, e.g. "donations-2026-07-12.xlsx".
@@ -29,11 +28,7 @@ export function sendXlsx(res: Response, buffer: Buffer, baseName: string): void 
  * result set would otherwise produce a headerless, blank file that gives no hint
  * of what was exported (and json_to_sheet([]) drops the header row entirely).
  */
-export function toXlsxBuffer(
-  sheetName: string,
-  columns: string[],
-  rows: XlsxRow[],
-): Buffer {
+export function toXlsxBuffer(sheetName: string, columns: string[], rows: XlsxRow[]): Buffer {
   const sheet = rows.length
     ? XLSX.utils.json_to_sheet(rows, { header: columns })
     : XLSX.utils.aoa_to_sheet([columns]);

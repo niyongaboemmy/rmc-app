@@ -129,7 +129,12 @@ export class MarriageController {
   @ApiOperation({ summary: 'Verify the OTP; returns a short-lived token + status' })
   async verifyTrackingOtp(@Body() dto: VerifyTrackingOtpDto, @Ip() ip: string) {
     const subject = await this.service.findSubjectByCode(dto.trackingCode);
-    const { token, subjectId } = await this.tracking.verifyOtp(MARRIAGE_SUBJECT, subject, dto.otp, ip);
+    const { token, subjectId } = await this.tracking.verifyOtp(
+      MARRIAGE_SUBJECT,
+      subject,
+      dto.otp,
+      ip,
+    );
     const info = await this.service.getTrackingInfo(subjectId);
     return { token, ...info };
   }

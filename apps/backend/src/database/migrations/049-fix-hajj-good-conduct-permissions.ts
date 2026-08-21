@@ -28,9 +28,7 @@ const PERMISSIONS = [
  *
  * Matches on slug, like 032-funeral-permissions (the one that worked).
  */
-export class FixHajjGoodConductPermissions1786000000022
-  implements MigrationInterface
-{
+export class FixHajjGoodConductPermissions1786000000022 implements MigrationInterface {
   name = 'FixHajjGoodConductPermissions1786000000022';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

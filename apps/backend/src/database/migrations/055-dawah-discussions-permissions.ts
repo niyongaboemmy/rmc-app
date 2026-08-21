@@ -37,7 +37,8 @@ export class DawahDiscussionsPermissions1786000000028 implements MigrationInterf
     // ── The Scholar role ─────────────────────────────────────────────────────────────
     // Holds `discussions:verify` and nothing else. A scholar has no business in the
     // members table. is_system = false: RMC appoints and removes scholars themselves.
-    await queryRunner.query(`
+    await queryRunner.query(
+      `
       INSERT INTO "roles" ("name", "slug", "description", "permissions", "is_system")
       VALUES (
         'Scholar',
@@ -47,12 +48,15 @@ export class DawahDiscussionsPermissions1786000000028 implements MigrationInterf
         false
       )
       ON CONFLICT ("name") DO NOTHING
-    `, [JSON.stringify(['discussions:verify'])]);
+    `,
+      [JSON.stringify(['discussions:verify'])],
+    );
 
     // ── The Moderator role ───────────────────────────────────────────────────────────
     // Holds `discussions:moderate` only, so a trusted community member can work the
     // report queue without admin access (§10-Q4, answered 16 July).
-    await queryRunner.query(`
+    await queryRunner.query(
+      `
       INSERT INTO "roles" ("name", "slug", "description", "permissions", "is_system")
       VALUES (
         'Moderator',
@@ -62,7 +66,9 @@ export class DawahDiscussionsPermissions1786000000028 implements MigrationInterf
         false
       )
       ON CONFLICT ("name") DO NOTHING
-    `, [JSON.stringify(['discussions:moderate'])]);
+    `,
+      [JSON.stringify(['discussions:moderate'])],
+    );
 
     // ── Grant moderation (NOT verification) to the admin roles ───────────────────────
     // So the report queue is never unstaffed on day one, before a Moderator exists.

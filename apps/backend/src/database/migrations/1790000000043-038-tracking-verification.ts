@@ -18,7 +18,9 @@ export class TrackingVerification1790000000043 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // 1) Add the unguessable public tracking code (nullable while we backfill).
-    await queryRunner.query(`ALTER TABLE "job_applications" ADD COLUMN "tracking_code" varchar(40)`);
+    await queryRunner.query(
+      `ALTER TABLE "job_applications" ADD COLUMN "tracking_code" varchar(40)`,
+    );
 
     // 2) Backfill EVERY existing row with a random, unique code so nothing stays enumerable.
     const rows: { id: string; created_at: Date }[] = await queryRunner.query(
@@ -31,11 +33,16 @@ export class TrackingVerification1790000000043 implements MigrationInterface {
         code = generateCode(row.created_at);
       } while (used.has(code));
       used.add(code);
-      await queryRunner.query(`UPDATE "job_applications" SET "tracking_code" = $1 WHERE "id" = $2`, [code, row.id]);
+      await queryRunner.query(
+        `UPDATE "job_applications" SET "tracking_code" = $1 WHERE "id" = $2`,
+        [code, row.id],
+      );
     }
 
     // 3) Enforce NOT NULL + uniqueness now that every row has a value.
-    await queryRunner.query(`ALTER TABLE "job_applications" ALTER COLUMN "tracking_code" SET NOT NULL`);
+    await queryRunner.query(
+      `ALTER TABLE "job_applications" ALTER COLUMN "tracking_code" SET NOT NULL`,
+    );
     await queryRunner.query(
       `CREATE UNIQUE INDEX "IDX_job_applications_tracking_code" ON "job_applications" ("tracking_code")`,
     );

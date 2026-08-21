@@ -1,7 +1,14 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Index,
-  ManyToOne, OneToMany, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  Index,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { DawahCategory } from './dawah-category.entity';
 import { DawahCourseLesson } from './dawah-course-lesson.entity';

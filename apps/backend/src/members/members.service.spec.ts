@@ -112,14 +112,13 @@ describe('MembersService', () => {
 
       const result = await service.register('user-1', dto());
 
-      expect(txManager.query).toHaveBeenCalledWith(
-        expect.stringContaining('membership_counters'),
-        [new Date().getFullYear()],
-      );
+      expect(txManager.query).toHaveBeenCalledWith(expect.stringContaining('membership_counters'), [
+        new Date().getFullYear(),
+      ]);
       expect(result.membershipNumber).toBe(`RMC-${new Date().getFullYear()}-000042`);
     });
 
-    it("rejects a national ID already held by someone else", async () => {
+    it('rejects a national ID already held by someone else', async () => {
       profiles.findOne.mockResolvedValue({ userId: 'someone-else' });
 
       await expect(service.register('user-1', dto())).rejects.toBeInstanceOf(ConflictException);
@@ -173,8 +172,7 @@ describe('MembersService', () => {
   });
 
   describe('findAll', () => {
-    const whereClauses = (): string[] =>
-      qb.andWhere.mock.calls.map((c: unknown[]) => String(c[0]));
+    const whereClauses = (): string[] => qb.andWhere.mock.calls.map((c: unknown[]) => String(c[0]));
 
     it('lists only submitted registrations by default', async () => {
       await service.findAll({});

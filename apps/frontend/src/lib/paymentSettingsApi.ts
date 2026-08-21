@@ -2,7 +2,7 @@ import { apiClient } from './api';
 
 // ── Enums (mirrored from backend) ──────────────────────────────────────────────
 
-export type PaymentMethodCode = 'MOMO_INTOUCH' | 'BANK_TRANSFER' | 'CARD' | 'CASH';
+export type PaymentMethodCode = 'MOMO_INTOUCH' | 'IREMBOPAY' | 'BANK_TRANSFER' | 'CARD' | 'CASH';
 
 export type PaymentTypeKey =
   | 'DONATION'
@@ -127,6 +127,62 @@ export interface TestDepositResult {
   message: string;
 }
 
+// ── IremboPay ─────────────────────────────────────────────────────────────────
+
+export interface ProviderProductRow {
+  paymentTypeId: string;
+  paymentTypeKey: string;
+  paymentTypeName: string;
+  paymentTypeRateId: string | null;
+  rateCode: string | null;
+  rateName: string | null;
+  amount: number | null;
+  productCode: string | null;
+  paymentAccountIdentifier: string | null;
+  /** True when a charge for this row would fail for want of a product code. */
+  unmapped: boolean;
+}
+
+export interface UpsertProviderProductPayload {
+  paymentTypeId: string;
+  paymentTypeRateId?: string | null;
+  productCode: string;
+  paymentAccountIdentifier?: string | null;
+}
+
+export interface IremboPayStatus {
+  configured: boolean;
+  isTestMode: boolean;
+  apiBaseUrl: string;
+  widgetScriptUrl: string;
+  apiVersion: string;
+  publicKey: string;
+  paymentAccountIdentifier: string;
+  invoiceExpiryMinutes: number;
+  defaultLanguage: 'EN' | 'FR' | 'RW';
+  signatureToleranceSeconds: number;
+  unmappedPaymentTypes: number;
+}
+
+export interface IremboPayTestPayload {
+  amount?: number;
+  paymentTypeKey?: string;
+  mobilePhone?: string;
+  locale?: 'EN' | 'FR' | 'RW';
+  paymentProvider?: 'MTN' | 'AIRTEL';
+}
+
+export interface IremboPayTestResult {
+  transactionId: string;
+  invoiceNumber: string;
+  paymentLinkUrl?: string;
+  status: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
+  responseCode?: string;
+  message?: string;
+  publicKey?: string;
+  widgetScriptUrl?: string;
+}
+
 export interface UpdatePaymentMethodPayload {
   name?: string;
   description?: string;
@@ -158,6 +214,38 @@ export const PAYMENT_METHOD_FIELDS: Record<PaymentMethodCode, SettingField[]> = 
     { key: 'gatewayUrl',      label: 'Gateway URL',      placeholder: 'https://www.intouchpay.co.rw/api/requestpayment/',
       hint: 'Leave empty to use the default IntouchPay endpoint', type: 'url' },
   ],
+  IREMBOPAY: [
+    { key: 'secretKey', label: 'Secret Key', required: true, sensitive: true,
+      placeholder: 'From Portal → Integration Details → View Token' },
+    { key: 'publicKey', label: 'Public Key', required: true,
+      hint: 'Used by the inline payment widget in the browser' },
+    { key: 'paymentAccountIdentifier', label: 'Payment Account (RWF)', required: true,
+      placeholder: 'e.g. TST-RWF', hint: 'Determines the invoice currency' },
+    { key: 'paymentAccountIdentifierUsd', label: 'Payment Account (USD)', placeholder: 'optional' },
+    { key: 'apiBaseUrl', label: 'API Base URL', type: 'url',
+      placeholder: 'https://api.sandbox.irembopay.com',
+      hint: 'Leave empty to derive from the Test mode toggle' },
+    { key: 'widgetScriptUrl', label: 'Widget Script URL', type: 'url',
+      placeholder: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
+      hint: 'Leave empty to derive from the Test mode toggle' },
+    { key: 'apiVersion', label: 'API Version', type: 'select',
+      options: [
+        { value: '3', label: 'v3 (partial payments)' },
+        { value: '2', label: 'v2' },
+        { value: '1', label: 'v1' },
+      ] },
+    { key: 'callbackUrl', label: 'Callback URL', type: 'url',
+      placeholder: 'https://api.isengesho.com/api/v1/webhooks/irembopay',
+      hint: 'Copy this into the IremboPay portal — we do not send it per request' },
+    { key: 'invoiceExpiryMinutes', label: 'Invoice Expiry (minutes)', placeholder: '1440' },
+    { key: 'defaultLanguage', label: 'Invoice Language', type: 'select',
+      options: [
+        { value: 'EN', label: 'English' },
+        { value: 'RW', label: 'Kinyarwanda' },
+        { value: 'FR', label: 'French' },
+      ] },
+    { key: 'signatureToleranceSeconds', label: 'Signature Tolerance (seconds)', placeholder: '300' },
+  ],
   BANK_TRANSFER: [
     { key: 'bankName',      label: 'Bank Name',       placeholder: 'e.g. Bank of Kigali',  required: true },
     { key: 'accountName',   label: 'Account Name',    placeholder: 'Rwanda Muslim Community', required: true },
@@ -184,6 +272,7 @@ export const PAYMENT_METHOD_FIELDS: Record<PaymentMethodCode, SettingField[]> = 
 
 export const METHOD_LABELS: Record<PaymentMethodCode, string> = {
   MOMO_INTOUCH:  'Mobile Money',
+  IREMBOPAY:     'IremboPay',
   BANK_TRANSFER: 'Bank Transfer',
   CARD:          'Card Payment',
   CASH:          'Cash',
@@ -304,6 +393,50 @@ export const paymentSettingsApi = {
 
   getBalance: async (): Promise<{ balance: string; success: boolean; message?: string }> => {
     const { data } = await apiClient.get('/admin/payment-settings/balance');
+    return data.data ?? data;
+  },
+
+  // ── IremboPay ───────────────────────────────────────────────────────────────
+
+  getIremboPayStatus: async (): Promise<IremboPayStatus> => {
+    const { data } = await apiClient.get('/admin/payment-settings/irembopay/status');
+    return data.data ?? data;
+  },
+
+  listProviderProducts: async (provider = 'irembopay'): Promise<ProviderProductRow[]> => {
+    const { data } = await apiClient.get(`/admin/payment-settings/providers/${provider}/products`);
+    return data.data ?? data;
+  },
+
+  upsertProviderProduct: async (
+    payload: UpsertProviderProductPayload,
+    provider = 'irembopay',
+  ): Promise<{ id: string }> => {
+    const { data } = await apiClient.put(
+      `/admin/payment-settings/providers/${provider}/products`,
+      payload,
+    );
+    return data.data ?? data;
+  },
+
+  deleteProviderProduct: async (id: string, provider = 'irembopay'): Promise<void> => {
+    await apiClient.delete(`/admin/payment-settings/providers/${provider}/products/${id}`);
+  },
+
+  testIremboPayInvoice: async (payload: IremboPayTestPayload = {}): Promise<IremboPayTestResult> => {
+    const { data } = await apiClient.post('/admin/payment-settings/test/irembopay/invoice', payload);
+    return data.data ?? data;
+  },
+
+  testIremboPayPush: async (payload: IremboPayTestPayload = {}): Promise<IremboPayTestResult> => {
+    const { data } = await apiClient.post('/admin/payment-settings/test/irembopay/push', payload);
+    return data.data ?? data;
+  },
+
+  recheckIremboPayInvoice: async (reference: string): Promise<{ status: string; message?: string }> => {
+    const { data } = await apiClient.post(
+      `/admin/payment-settings/test/irembopay/recheck/${encodeURIComponent(reference)}`,
+    );
     return data.data ?? data;
   },
 };

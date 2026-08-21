@@ -12,7 +12,10 @@ export class TestDepositDto {
   @Min(1)
   amount: number;
 
-  @ApiPropertyOptional({ example: 'RMC test deposit', description: 'Reason shown to the recipient' })
+  @ApiPropertyOptional({
+    example: 'RMC test deposit',
+    description: 'Reason shown to the recipient',
+  })
   @IsOptional()
   @IsString()
   reason?: string;

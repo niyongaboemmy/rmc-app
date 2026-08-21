@@ -78,7 +78,9 @@ export class TrackingVerificationService {
   }
 
   private async findByCode(trackingCode: string): Promise<JobApplication | null> {
-    return this.applicationRepo.findOne({ where: { trackingCode: (trackingCode || '').trim().toUpperCase() } });
+    return this.applicationRepo.findOne({
+      where: { trackingCode: (trackingCode || '').trim().toUpperCase() },
+    });
   }
 
   // ── Step 1: request an OTP ────────────────────────────────────────────────────
@@ -86,7 +88,8 @@ export class TrackingVerificationService {
   private notFound() {
     return new BadRequestException({
       code: 'TRACKING_CODE_NOT_FOUND',
-      message: "We couldn't find an application with that tracking code. Please check it and try again.",
+      message:
+        "We couldn't find an application with that tracking code. Please check it and try again.",
     });
   }
 
@@ -97,7 +100,10 @@ export class TrackingVerificationService {
    * plainly; per-IP + per-application rate limits block brute-force and SMS
    * bombing.
    */
-  async requestOtp(trackingCode: string, ip: string): Promise<{ expiresAt: Date; phoneHint: string }> {
+  async requestOtp(
+    trackingCode: string,
+    ip: string,
+  ): Promise<{ expiresAt: Date; phoneHint: string }> {
     await this.enforceRateLimit(`trk_req_ip:${ip}`, REQ_PER_IP);
 
     const application = await this.findByCode(trackingCode);
@@ -107,7 +113,10 @@ export class TrackingVerificationService {
     const ttlMin = this.ttlMinutes();
     const expiresAt = new Date(Date.now() + ttlMin * 60 * 1000);
 
-    const otp = crypto.randomInt(0, 10 ** OTP_LENGTH).toString().padStart(OTP_LENGTH, '0');
+    const otp = crypto
+      .randomInt(0, 10 ** OTP_LENGTH)
+      .toString()
+      .padStart(OTP_LENGTH, '0');
     await this.verificationRepo.save({
       applicationId: application.id,
       phone: application.phone,
@@ -118,7 +127,9 @@ export class TrackingVerificationService {
     });
     const msg = `RMC Jobs: your tracking verification code is ${otp}. It expires in ${ttlMin} minutes. Do not share it with anyone.`;
     this.smsService.sendSms(application.phone, msg);
-    this.logger.log(`[track-otp] request OK app=${application.id} phone=${this.maskPhone(this.normalizePhone(application.phone))} ip=${ip}`);
+    this.logger.log(
+      `[track-otp] request OK app=${application.id} phone=${this.maskPhone(this.normalizePhone(application.phone))} ip=${ip}`,
+    );
     if (process.env.NODE_ENV !== 'production') {
       this.logger.log(`[track-otp] DEV code for ${application.trackingCode}: ${otp}`);
     }
@@ -129,7 +140,11 @@ export class TrackingVerificationService {
   // ── Step 2: verify the OTP ────────────────────────────────────────────────────
 
   /** Verifies the OTP and, on success, returns a short-lived signed tracking token. */
-  async verifyOtp(trackingCode: string, otp: string, ip: string): Promise<{ token: string; applicationId: string }> {
+  async verifyOtp(
+    trackingCode: string,
+    otp: string,
+    ip: string,
+  ): Promise<{ token: string; applicationId: string }> {
     await this.enforceRateLimit(`trk_verify_ip:${ip}`, VERIFY_PER_IP);
 
     const application = await this.findByCode(trackingCode);
@@ -147,10 +162,16 @@ export class TrackingVerificationService {
     }
 
     if (record.expiresAt < new Date()) {
-      throw new BadRequestException({ code: 'TRACKING_OTP_EXPIRED', message: 'This code has expired. Request a new one.' });
+      throw new BadRequestException({
+        code: 'TRACKING_OTP_EXPIRED',
+        message: 'This code has expired. Request a new one.',
+      });
     }
     if (record.attempts >= MAX_VERIFY_ATTEMPTS) {
-      throw new BadRequestException({ code: 'TRACKING_OTP_MAX_ATTEMPTS', message: 'Too many incorrect attempts. Request a new code.' });
+      throw new BadRequestException({
+        code: 'TRACKING_OTP_MAX_ATTEMPTS',
+        message: 'Too many incorrect attempts. Request a new code.',
+      });
     }
     if (this.hashOtp(otp) !== record.otpHash) {
       await this.verificationRepo.update(record.id, { attempts: record.attempts + 1 });
@@ -179,7 +200,10 @@ export class TrackingVerificationService {
       if (payload.scope !== TOKEN_SCOPE || !payload.sub) throw new Error('bad scope');
       return payload.sub;
     } catch {
-      throw new UnauthorizedException({ code: 'TRACKING_SESSION_INVALID', message: 'Your tracking session is invalid or has expired.' });
+      throw new UnauthorizedException({
+        code: 'TRACKING_SESSION_INVALID',
+        message: 'Your tracking session is invalid or has expired.',
+      });
     }
   }
 }

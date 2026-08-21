@@ -39,9 +39,7 @@ export class JobPostings1790000000042 implements MigrationInterface {
     await queryRunner.query(
       `CREATE UNIQUE INDEX "IDX_job_postings_slug" ON "job_postings" ("slug")`,
     );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_job_postings_status" ON "job_postings" ("status")`,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_job_postings_status" ON "job_postings" ("status")`);
 
     // Link applications to postings.
     await queryRunner.query(`ALTER TABLE "job_applications" ADD COLUMN "job_posting_id" uuid`);
@@ -59,7 +57,9 @@ export class JobPostings1790000000042 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "job_applications" DROP CONSTRAINT IF EXISTS "FK_job_applications_posting"`,
     );
-    await queryRunner.query(`ALTER TABLE "job_applications" DROP COLUMN IF EXISTS "job_posting_id"`);
+    await queryRunner.query(
+      `ALTER TABLE "job_applications" DROP COLUMN IF EXISTS "job_posting_id"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "job_postings"`);
   }
 }

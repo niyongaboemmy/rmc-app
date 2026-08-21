@@ -73,7 +73,10 @@ export class UpdateGalleryItemDto extends PartialType(CreateGalleryItemDto) {}
 export class CreateBlogPostDto {
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(255) title: string;
   @ApiPropertyOptional({ description: 'URL slug; derived from title when omitted' })
-  @IsOptional() @IsString() @MaxLength(280) slug?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(280)
+  slug?: string;
   @ApiProperty() @IsString() @IsNotEmpty() content: string;
   @ApiPropertyOptional() @IsOptional() @IsString() excerpt?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(500) featuredImage?: string | null;

@@ -39,12 +39,20 @@ import { EmailModule } from '../integrations/email/email.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      DawahCategory, DawahCourse, DawahCourseLesson, DawahBook,
-      DawahCourseEnrollment, DawahLessonCompletion,
+      DawahCategory,
+      DawahCourse,
+      DawahCourseLesson,
+      DawahBook,
+      DawahCourseEnrollment,
+      DawahLessonCompletion,
       // Discussions. Votes/reports/moderation_log have tables but no entities yet —
       // Phase A reads nothing from them, and an entity for a table nobody queries is
       // dead code that looks like a feature.
-      DawahQuestion, DawahAnswer, DawahReport, DawahModerationLog, DawahVote,
+      DawahQuestion,
+      DawahAnswer,
+      DawahReport,
+      DawahModerationLog,
+      DawahVote,
       DawahQuestionRating,
     ]),
     PublicUploadModule,

@@ -13,14 +13,56 @@ import { DawahCategory } from '../../dawah/entities/dawah-category.entity';
  * the rw column in the admin UI.
  */
 const CATEGORIES = [
-  { slug: 'quran-studies', nameEn: 'Qur’an Studies', nameRw: '', nameAr: 'علوم القرآن', icon: 'BookOpen', sortOrder: 1 },
+  {
+    slug: 'quran-studies',
+    nameEn: 'Qur’an Studies',
+    nameRw: '',
+    nameAr: 'علوم القرآن',
+    icon: 'BookOpen',
+    sortOrder: 1,
+  },
   { slug: 'hadith', nameEn: 'Hadith', nameRw: '', nameAr: 'الحديث', icon: 'Scroll', sortOrder: 2 },
   { slug: 'fiqh', nameEn: 'Fiqh', nameRw: '', nameAr: 'الفقه', icon: 'Scale', sortOrder: 3 },
-  { slug: 'aqeedah', nameEn: 'Aqeedah', nameRw: '', nameAr: 'العقيدة', icon: 'Compass', sortOrder: 4 },
-  { slug: 'seerah', nameEn: 'Seerah', nameRw: '', nameAr: 'السيرة النبوية', icon: 'Sparkles', sortOrder: 5 },
-  { slug: 'arabic-language', nameEn: 'Arabic Language', nameRw: '', nameAr: 'اللغة العربية', icon: 'Languages', sortOrder: 6 },
-  { slug: 'new-muslims', nameEn: 'New Muslims', nameRw: '', nameAr: 'المسلمون الجدد', icon: 'Heart', sortOrder: 7 },
-  { slug: 'family-life', nameEn: 'Family Life', nameRw: '', nameAr: 'الحياة الأسرية', icon: 'Users', sortOrder: 8 },
+  {
+    slug: 'aqeedah',
+    nameEn: 'Aqeedah',
+    nameRw: '',
+    nameAr: 'العقيدة',
+    icon: 'Compass',
+    sortOrder: 4,
+  },
+  {
+    slug: 'seerah',
+    nameEn: 'Seerah',
+    nameRw: '',
+    nameAr: 'السيرة النبوية',
+    icon: 'Sparkles',
+    sortOrder: 5,
+  },
+  {
+    slug: 'arabic-language',
+    nameEn: 'Arabic Language',
+    nameRw: '',
+    nameAr: 'اللغة العربية',
+    icon: 'Languages',
+    sortOrder: 6,
+  },
+  {
+    slug: 'new-muslims',
+    nameEn: 'New Muslims',
+    nameRw: '',
+    nameAr: 'المسلمون الجدد',
+    icon: 'Heart',
+    sortOrder: 7,
+  },
+  {
+    slug: 'family-life',
+    nameEn: 'Family Life',
+    nameRw: '',
+    nameAr: 'الحياة الأسرية',
+    icon: 'Users',
+    sortOrder: 8,
+  },
 ];
 
 export async function seedDawahCategories(dataSource: DataSource): Promise<void> {

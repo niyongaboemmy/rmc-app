@@ -10,6 +10,7 @@ import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
+import { PaymentGatewayService } from '../payments/payment-gateway.service';
 import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { SmsService } from '../integrations/sms/sms.service';
 import { DonationSmsTemplates } from './donation-sms-templates';
@@ -89,6 +90,7 @@ export class DonationsService {
     @InjectRepository(DonationCampaign)
     private readonly campaigns: Repository<DonationCampaign>,
     private readonly intouchPay: IntouchPayService,
+    private readonly paymentGateway: PaymentGatewayService,
     private readonly paymentSettings: PaymentSettingsService,
     private readonly smsService: SmsService,
     private readonly configService: ConfigService,
@@ -141,11 +143,12 @@ export class DonationsService {
       campaignId = campaign?.id ?? null;
     }
 
-    const creds =
-      dto.paymentMethod === 'momo' && dto.donorPhone
-        ? await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH)
-        : null;
-    const useGateway = !!(creds?.username && creds?.partnerPassword && creds?.accountNo);
+    // Ask the gateway, not one named provider. Keying this on IntouchPay's
+    // credentials meant that switching the active provider to IremboPay made
+    // every donation fall through to "no gateway available, assume paid" —
+    // recording money as received that nobody had been asked for.
+    const useGateway =
+      dto.paymentMethod === 'momo' && !!dto.donorPhone && (await this.paymentGateway.canCharge());
 
     const donation = this.donations.create({
       campaignId,
@@ -164,26 +167,32 @@ export class DonationsService {
     });
     const saved = await this.donations.save(donation);
 
-    if (useGateway && creds) {
+    if (useGateway) {
       const requestTxnId = `DON-${saved.id.slice(0, 8)}-${Date.now()}`;
-      const fallbackCallback = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
+      // callback URL is resolved by the gateway from the provider's settings
 
-      const result = await this.intouchPay.requestPayment({
-        username: creds.username,
-        partnerPassword: creds.partnerPassword,
-        accountNo: creds.accountNo,
-        amount: Number(saved.amount),
-        mobilePhone: dto.donorPhone as string,
+      // Routed through the gateway port rather than a hardwired provider, so
+      // switching to IremboPay is a settings change rather than a deploy. The
+      // `DON-` prefix is preserved either way — the webhook services match on it.
+      const result = await this.paymentGateway.charge({
         transactionId: requestTxnId,
-        reason: 'RMC Donation – Rwanda Muslim Council',
-        callbackUrl: creds.callbackUrl || fallbackCallback,
-        gatewayUrl: creds.gatewayUrl || undefined,
+        amount: Number(saved.amount),
+        currency: saved.currency,
+        paymentTypeKey: 'DONATION',
+        referenceId: saved.id,
+        payer: {
+          name: saved.donorName ?? undefined,
+          phone: dto.donorPhone as string,
+          email: saved.donorEmail ?? undefined,
+        },
+        description: 'RMC Donation – Rwanda Muslim Council',
+        pushProvider: 'MTN',
       });
 
-      // Store requestTxnId and gateway txnId separated by | for status polling
-      saved.paymentReference = result.transactionId
-        ? `${requestTxnId}|${result.transactionId}`
-        : requestTxnId;
+      // `providerReference` already carries the format each provider's webhook
+      // matching expects — `requestTxnId|gatewayTxnId` for IntouchPay, the
+      // invoice number for IremboPay.
+      saved.paymentReference = result.providerReference || requestTxnId;
       saved.gatewayResponseCode = result.responseCode || null;
       saved.gatewayMessage = result.message || null;
 
@@ -333,7 +342,7 @@ export class DonationsService {
         Date: formatDateTime(d.donatedAt),
         // An anonymous donor's identity is hidden in the UI; a spreadsheet that
         // names them anyway would leak exactly what the flag exists to protect.
-        Donor: d.isAnonymous ? 'Anonymous' : (d.donorName?.trim() || 'Unknown'),
+        Donor: d.isAnonymous ? 'Anonymous' : d.donorName?.trim() || 'Unknown',
         'Donor Email': d.isAnonymous ? '' : (d.donorEmail ?? ''),
         'Donor Phone': d.isAnonymous ? '' : (d.donorPhone ?? ''),
         Anonymous: d.isAnonymous ? 'Yes' : 'No',

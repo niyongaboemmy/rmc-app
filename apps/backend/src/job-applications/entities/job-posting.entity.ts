@@ -37,7 +37,12 @@ export class JobPosting {
   @Column({ type: 'varchar', length: 150, nullable: true })
   department: string | null;
 
-  @Column({ name: 'employment_type', type: 'varchar', length: 30, default: EmploymentType.FULL_TIME })
+  @Column({
+    name: 'employment_type',
+    type: 'varchar',
+    length: 30,
+    default: EmploymentType.FULL_TIME,
+  })
   employmentType: EmploymentType;
 
   @Column({ type: 'varchar', length: 150, nullable: true })

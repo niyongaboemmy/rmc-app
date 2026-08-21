@@ -16,16 +16,18 @@
  * separator — "nai-ve", not "naive". So the marks are stripped explicitly.
  */
 export function slugify(input: string): string {
-  return input
-    .normalize('NFKD')
-    // Drop combining diacritical marks left behind by the decomposition, so the
-    // base letter survives instead of being split around them.
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    // Typographic apostrophes are common here — "Qur’an" must slug to "quran",
-    // not "qur-an". Delete them rather than treat them as a separator.
-    .replace(/['’`]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 130);
+  return (
+    input
+      .normalize('NFKD')
+      // Drop combining diacritical marks left behind by the decomposition, so the
+      // base letter survives instead of being split around them.
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      // Typographic apostrophes are common here — "Qur’an" must slug to "quran",
+      // not "qur-an". Delete them rather than treat them as a separator.
+      .replace(/['’`]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 130)
+  );
 }

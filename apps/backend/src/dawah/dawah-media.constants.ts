@@ -28,21 +28,36 @@ export const MEDIA_MAX_BYTES = 90 * 1024 * 1024;
  * (for `pdf` lessons). Video is a URL, never uploaded — no video types here.
  */
 export const MEDIA_MIME_TYPES = [
-  'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/ogg', 'audio/wav',
-  'audio/x-m4a', 'audio/x-wav',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/aac',
+  'audio/ogg',
+  'audio/wav',
+  'audio/x-m4a',
+  'audio/x-wav',
   'application/pdf',
 ];
 
 /** A general https URL check for `link` lessons (any host, unlike video). */
 export function isHttpsUrl(raw: string): boolean {
-  try { return new URL(raw.trim()).protocol === 'https:'; } catch { return false; }
+  try {
+    return new URL(raw.trim()).protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 // ── External video URL allowlist + canonical embed derivation ────────────────
 const MEDIA_URL_HOSTS = new Set([
-  'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be',
-  'youtube-nocookie.com', 'www.youtube-nocookie.com',
-  'vimeo.com', 'www.vimeo.com', 'player.vimeo.com',
+  'youtube.com',
+  'www.youtube.com',
+  'm.youtube.com',
+  'youtu.be',
+  'youtube-nocookie.com',
+  'www.youtube-nocookie.com',
+  'vimeo.com',
+  'www.vimeo.com',
+  'player.vimeo.com',
 ]);
 
 export interface MediaEmbed {
@@ -54,7 +69,11 @@ export interface MediaEmbed {
 
 function youtube(id: string): MediaEmbed | null {
   if (!/^[\w-]{6,20}$/.test(id)) return null;
-  return { provider: 'youtube', id, embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0` };
+  return {
+    provider: 'youtube',
+    id,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+  };
 }
 function vimeo(id: string): MediaEmbed | null {
   if (!/^\d+$/.test(id)) return null;
@@ -69,7 +88,11 @@ function vimeo(id: string): MediaEmbed | null {
  */
 export function parseMediaEmbed(raw: string): MediaEmbed | null {
   let u: URL;
-  try { u = new URL(raw.trim()); } catch { return null; }
+  try {
+    u = new URL(raw.trim());
+  } catch {
+    return null;
+  }
   if (u.protocol !== 'https:') return null;
   const host = u.hostname.toLowerCase();
   if (!MEDIA_URL_HOSTS.has(host)) return null;

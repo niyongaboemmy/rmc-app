@@ -267,16 +267,12 @@ export class DawahCourseService {
       level: dto.level ?? course.level,
       language: dto.language ?? course.language,
       format: dto.format ?? course.format,
-      coverImageKey:
-        dto.coverImageKey !== undefined ? dto.coverImageKey : course.coverImageKey,
-      instructorName:
-        dto.instructorName !== undefined ? dto.instructorName : course.instructorName,
+      coverImageKey: dto.coverImageKey !== undefined ? dto.coverImageKey : course.coverImageKey,
+      instructorName: dto.instructorName !== undefined ? dto.instructorName : course.instructorName,
       instructorTitle:
         dto.instructorTitle !== undefined ? dto.instructorTitle : course.instructorTitle,
       instructorPhotoKey:
-        dto.instructorPhotoKey !== undefined
-          ? dto.instructorPhotoKey
-          : course.instructorPhotoKey,
+        dto.instructorPhotoKey !== undefined ? dto.instructorPhotoKey : course.instructorPhotoKey,
       durationMinutes:
         dto.durationMinutes !== undefined ? dto.durationMinutes : course.durationMinutes,
       isFeatured: dto.isFeatured ?? course.isFeatured,
