@@ -87,8 +87,10 @@ export default async function AreaDetailPage({
       {/* ═══════════════════════════════════════════════════════════════════
           HERO — full-bleed photo background, pillar badge, title, description
       ═══════════════════════════════════════════════════════════════════ */}
+      {/* No eyebrow badge: the pillar number and section name are both already on the
+          page — in the breadcrumb directly below and on the sidebar's pillar card — so the
+          badge repeated them a third time above the title it was introducing. */}
       <PageHero
-        eyebrow={`${pillarLabel} · ${sectionName}`}
         title={title}
         titleClassName="text-2xl md:text-3xl lg:text-4xl"
         subtitle={description}
