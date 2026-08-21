@@ -248,24 +248,6 @@ export function DiscussionsPageClient() {
                   className="block text-sm leading-relaxed text-gray-500 md:text-base"
                 />
               </div>
-
-              {/* Ask only shows to signed-in members — the form 401s otherwise, and a
-                  button that leads to a wall is a worse offer than no button.
-
-                  Above the columns rather than in the rail: it is the page's one action,
-                  and in a sticky rail it sat below the search box, competing with it and
-                  invisible until a reader looked right. */}
-              {isAuthenticated && (
-                <div className="mt-7 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setAskOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark"
-                  >
-                    <Plus className="h-4 w-4" /> {t('discussions.askCta')}
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* ── One column ──────────────────────────────────────────────
@@ -439,6 +421,25 @@ export function DiscussionsPageClient() {
               </>
             )}
               </div>
+
+              {/* Ask only shows to signed-in members — the form 401s otherwise, and a
+                  button that leads to a wall is a worse offer than no button.
+
+                  Below the list, not above it: a reader arrives to find out whether their
+                  question has already been answered, and asking is what they do once it
+                  has not been. Offered before the list, it interrupts that with the one
+                  action that makes the reading redundant. */}
+              {isAuthenticated && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setAskOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark"
+                  >
+                    <Plus className="h-4 w-4" /> {t('discussions.askCta')}
+                  </button>
+                </div>
+              )}
 
             </div>
           </div>
