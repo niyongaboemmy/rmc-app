@@ -1,9 +1,29 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { BookOpen, Heart, GraduationCap, Globe, X, ChevronLeft, ChevronRight, ZoomIn, type LucideIcon } from 'lucide-react';
-import { pick, isRtl, type AreaItem } from '@/lib/content-api';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import {
+  AREAS_DEFAULT, ContentKeys, isRtl, pick, raw, tri,
+  type AreaItem, type AreasContent, type Locale,
+} from '@/lib/content-api';
 import { fileUrl } from '@/lib/api';
+
+/**
+ * Loaded on demand — TipTap is large and only a super-admin in Edit Mode ever renders
+ * it. `ssr: false` because it is browser-only. Same treatment as the Hajj description.
+ */
+const RichTextEditor = dynamic(
+  () => import('@/components/ui/RichTextEditor').then((m) => m.RichTextEditor),
+  { ssr: false },
+);
+
+/** True when the HTML carries no actual words — an empty editor saves "<p></p>". */
+function isBlank(html: string): boolean {
+  return !html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+}
 
 const ICONS: Record<string, LucideIcon> = { BookOpen, Heart, GraduationCap, Globe };
 
@@ -11,16 +31,44 @@ interface Props {
   item: AreaItem;
   locale: string;
   pillarIndex: number;
+  /**
+   * `richContent` for the active locale, ALREADY SANITISED by the server page.
+   *
+   * Sanitising happens there because isomorphic-dompurify pulls in jsdom and is
+   * server-only. While editing, the TipTap draft is rendered instead — unsanitised, but
+   * it is the admin's own input in their own browser, and every public render comes back
+   * through the server.
+   */
+  richHtml: string;
 }
 
-export function AreaDetail({ item, locale, pillarIndex }: Props) {
-  const Icon = ICONS[item.icon] ?? Globe;
+export function AreaDetail({ item, locale, pillarIndex, richHtml }: Props) {
+  const { content, editing, setField } = useEditableContent<AreasContent>(
+    ContentKeys.areas,
+    AREAS_DEFAULT,
+  );
+
+  // Located by SLUG, not by the index the page happened to render at: the slug is this
+  // page's identity, and an admin reordering the pillars in the dashboard would otherwise
+  // make every edit here land on a different area.
+  const idx = content.items.findIndex((a) => a.slug === item.slug);
+  /** Live draft when the store carries this area, else the server-rendered row. */
+  const live = idx >= 0 ? content.items[idx] : item;
+
+  /** Guarded so an edit can never write to items[-1] and create a stray entry. */
+  const editItem = (mutate: (draft: AreaItem) => void) => {
+    if (idx < 0) return;
+    setField((d) => { mutate(d.items[idx]); });
+  };
+
+  const lang = locale as Locale;
+  const Icon = ICONS[live.icon] ?? Globe;
   const rtl = isRtl(locale);
+  const dir = rtl ? ('rtl' as const) : ('ltr' as const);
   const arFont = locale === 'ar' ? 'font-arabic' : 'font-latin';
-  const title = pick(item.title, locale);
-  const description = pick(item.description, locale);
-  const richContent = item.richContent ? pick(item.richContent, locale) : null;
-  const gallery = item.galleryImages?.filter(Boolean) ?? [];
+  const title = pick(live.title, locale);
+  const description = pick(live.description, locale);
+  const gallery = live.galleryImages?.filter(Boolean) ?? [];
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const prev = () => setLightboxIndex((i) => (i !== null ? (i - 1 + gallery.length) % gallery.length : null));
@@ -39,7 +87,18 @@ export function AreaDetail({ item, locale, pillarIndex }: Props) {
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-rmc-gold">
               Pillar {String(pillarIndex).padStart(2, '0')}
             </p>
-            <h1 className={`text-xl md:text-2xl font-bold text-gray-900 leading-tight ${arFont}`}>{title}</h1>
+            <InlineText
+              as="h1"
+              lang={locale}
+              value={title}
+              // editValue is this locale's OWN text, so an untranslated field opens empty
+              // rather than pre-filled with the English it currently falls back to.
+              editValue={raw(live.title, locale)}
+              onCommit={(v) => editItem((a) => { a.title[lang] = v; })}
+              dir={dir}
+              placeholder="Area title"
+              className={`text-xl md:text-2xl font-bold text-gray-900 leading-tight ${arFont}`}
+            />
           </div>
         </div>
 
@@ -47,13 +106,41 @@ export function AreaDetail({ item, locale, pillarIndex }: Props) {
         <span className="block h-1 w-14 rounded-full bg-gradient-to-r from-rmc-gold to-rmc-gold-light mb-6" />
 
         {/* Description lead */}
-        <p className={`text-sm md:text-base text-gray-600 leading-relaxed mb-8 ${arFont}`}>{description}</p>
+        <InlineText
+          as="p"
+          lang={locale}
+          value={description}
+          editValue={raw(live.description, locale)}
+          onCommit={(v) => editItem((a) => { a.description[lang] = v; })}
+          dir={dir}
+          placeholder="Short description"
+          className={`text-sm md:text-base text-gray-600 leading-relaxed mb-8 ${arFont}`}
+        />
 
-        {/* Rich HTML content */}
-        {richContent ? (
+        {/* Rich HTML content. In Edit Mode the prose is replaced IN PLACE by the same
+            TipTap editor the dashboard uses — the body becomes editable where it sits,
+            formatting intact. InlineText cannot serve here: it edits plain text and would
+            flatten every paragraph, link and bold run on the first keystroke. */}
+        {editing ? (
+          /* Keyed by language: the editor seeds its content once, so switching locale
+             without a remount would leave the previous language in the box. */
+          <div className="mb-10">
+            <RichTextEditor
+              key={lang}
+              value={raw(live.richContent, locale)}
+              onChange={(next) => editItem((a) => {
+                // The field is optional in the shape, so an area that never had a body
+                // needs the Tri created before a locale can be written into it.
+                a.richContent = { ...(a.richContent ?? tri('')), [lang]: next };
+              })}
+              dir={dir}
+              fontClassName={rtl ? 'font-arabic' : ''}
+            />
+          </div>
+        ) : !isBlank(richHtml) ? (
           <div
             className={`prose prose-green prose-sm max-w-none text-gray-700 leading-relaxed mb-10 ${arFont}`}
-            dangerouslySetInnerHTML={{ __html: richContent }}
+            dangerouslySetInnerHTML={{ __html: richHtml }}
           />
         ) : (
           <div className="rounded-2xl border border-rmc-green/10 bg-rmc-green-light/30 p-6 text-sm text-rmc-green-dark/70 mb-10">

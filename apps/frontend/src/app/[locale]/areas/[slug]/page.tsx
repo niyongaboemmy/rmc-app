@@ -14,6 +14,7 @@ import {
   type AreasContent,
 } from '@/lib/content-api';
 import { fileUrl } from '@/lib/api';
+import DOMPurify from 'isomorphic-dompurify';
 
 const ICONS: Record<string, LucideIcon> = { BookOpen, Heart, GraduationCap, Globe };
 
@@ -48,6 +49,16 @@ export default async function AreaDetailPage({
   const title = pick(item.title, locale);
   const description = pick(item.description, locale);
   const otherAreas = content.items.filter((a) => a.slug !== slug);
+
+  /**
+   * The body, sanitised HERE rather than in the client island.
+   *
+   * isomorphic-dompurify bundles jsdom and is server-only, which is why every rich-text
+   * section in the app sanitises on the server and hands the HTML down. This block was
+   * previously rendered straight into `dangerouslySetInnerHTML` with no sanitising at all
+   * — the only admin-authored HTML in the app that was not cleaned before rendering.
+   */
+  const richHtml = DOMPurify.sanitize(item.richContent ? pick(item.richContent, locale) : '');
 
   // Hero background: use the area's hero image + gallery images, fall back to default slides
   const heroImages: string[] = [];
@@ -105,7 +116,7 @@ export default async function AreaDetailPage({
 
             {/* ── Left: main content ── */}
             <div className="lg:col-span-2">
-              <AreaDetail item={item} locale={locale} pillarIndex={pillarIndex} />
+              <AreaDetail item={item} locale={locale} pillarIndex={pillarIndex} richHtml={richHtml} />
             </div>
 
             {/* ── Right: sticky sidebar ── */}
