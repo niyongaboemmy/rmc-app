@@ -1928,6 +1928,7 @@
       "status": {
           "requestedDocsTitle": "Inyandiko zisabwa kohereza",
           "requestedDocsOther": "Ikindi kintu — reba ubutumwa hejuru",
+          "requestedDocsSignIn": "Injira ukoresheje konti wasabishije kugira ngo wohereze izi nyandiko.",
         "heroTitle": "Aho Isaba Rigeze",
         "backToService": "Subira ku Kazi",
         "signInPrompt": "Injira kugira ngo urebe amasaba y'akazi yawe.",

@@ -224,7 +224,10 @@ function TrackingResult({
           {/* Read-only here: replying needs a signed-in applicant, and this path is
               reached with a tracking code and an SMS code. Showing the list is still
               worth it — it is how someone tracking by number learns what to bring. */}
-          <RequestedDocuments documents={result.moreInfoDocuments} />
+          <RequestedDocuments
+            documents={result.moreInfoDocuments}
+            signInHref={`/${locale}/login?redirect=/services/jobs/status`}
+          />
         </>
       )}
 

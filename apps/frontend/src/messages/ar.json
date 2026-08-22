@@ -1928,6 +1928,7 @@
       "status": {
           "requestedDocsTitle": "المستندات المطلوب رفعها",
           "requestedDocsOther": "شيء آخر — راجع الرسالة أعلاه",
+          "requestedDocsSignIn": "سجّل الدخول بالحساب الذي قدّمت به الطلب لرفع هذه المستندات.",
         "heroTitle": "حالة الطلب",
         "backToService": "العودة إلى الوظائف",
         "signInPrompt": "سجّل الدخول لعرض طلبات التوظيف الخاصة بك.",

@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { FileText } from 'lucide-react';
+import { FileText, LogIn } from 'lucide-react';
 
 /**
  * The documents a reviewer asked this applicant to upload.
@@ -32,7 +33,21 @@ const APPLY_LABEL_KEYS: Record<string, string> = {
   employerRecommendation: 'employerRecommendation',
 };
 
-export function RequestedDocuments({ documents }: { documents?: string[] | null }) {
+export function RequestedDocuments({
+  documents,
+  signInHref,
+}: {
+  documents?: string[] | null;
+  /**
+   * Where to send someone who cannot act from here.
+   *
+   * Passed only by the track-by-number path. Uploading requires a signed-in applicant, so
+   * that path can show the list but not the reply form — and a checklist headed "documents
+   * to upload" with no way to upload is a dead end. The member portal omits it: the form
+   * is directly below.
+   */
+  signInHref?: string;
+}) {
   const t = useTranslations('services.jobs.status');
   const tApply = useTranslations('services.jobs.apply');
 
@@ -54,6 +69,19 @@ export function RequestedDocuments({ documents }: { documents?: string[] | null 
           </li>
         ))}
       </ul>
+
+      {signInHref && (
+        <div className="mt-3 border-t border-amber-200/70 pt-3">
+          <p className="text-xs text-amber-900/90">{t('requestedDocsSignIn')}</p>
+          <Link
+            href={signInHref}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-rmc-green-dark"
+          >
+            <LogIn className="h-3.5 w-3.5" aria-hidden />
+            {t('signIn')}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

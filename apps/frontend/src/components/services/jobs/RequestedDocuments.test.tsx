@@ -52,6 +52,21 @@ describe('RequestedDocuments', () => {
     expect(screen.queryByText('somethingNew')).not.toBeInTheDocument();
   });
 
+  it('offers no sign-in link by default — the member portal has the form below it', () => {
+    render(<RequestedDocuments documents={['cv']} />);
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('offers a sign-in link where replying is not possible', () => {
+    // Track-by-number can show the request but not answer it: uploading needs a signed-in
+    // applicant. A checklist headed "documents to upload" with no way to upload is a dead
+    // end, so that path passes a destination.
+    render(<RequestedDocuments documents={['cv']} signInHref="/en/login?redirect=/services/jobs/status" />);
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/en/login?redirect=/services/jobs/status');
+    expect(screen.getByText(`${STATUS}.requestedDocsSignIn`)).toBeInTheDocument();
+  });
+
   it('lists every requested document, in the order given', () => {
     render(<RequestedDocuments documents={['nationalId', 'cv', 'academicPapers']} />);
     const items = screen.getAllByRole('listitem').map((li) => li.textContent);

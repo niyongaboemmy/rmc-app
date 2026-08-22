@@ -1928,6 +1928,7 @@
       "status": {
           "requestedDocsTitle": "Documents to upload",
           "requestedDocsOther": "Something else — see the message above",
+          "requestedDocsSignIn": "Sign in with the account you applied with to upload these documents.",
         "heroTitle": "Application Status",
         "backToService": "Back to Jobs",
         "signInPrompt": "Sign in to view your job applications.",
