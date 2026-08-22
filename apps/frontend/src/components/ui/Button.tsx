@@ -3,7 +3,16 @@
 import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'link';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'outline'
+  | 'ghost'
+  /** Irreversible approval — accept an applicant, award a tender. Distinct from
+   *  `primary`, which advances a workflow without deciding it. */
+  | 'success'
+  | 'danger'
+  | 'link';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -24,6 +33,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
     'border-2 border-rmc-green text-rmc-green bg-transparent hover:bg-rmc-green-light active:scale-[0.98] focus:ring-rmc-green',
   ghost:
     'bg-transparent text-gray-700 hover:bg-gray-100 active:scale-[0.98] focus:ring-gray-300',
+  success:
+    'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98] focus:ring-green-500 shadow-sm',
   danger:
     'bg-red-600 text-white hover:bg-red-700 active:scale-[0.98] focus:ring-red-500 shadow-sm',
   link:

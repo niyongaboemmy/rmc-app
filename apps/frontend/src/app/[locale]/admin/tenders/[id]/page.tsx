@@ -399,6 +399,7 @@ function AdminTenderDetailContent() {
             {application.status === 'shortlisted' && (
               <Button
                 size="sm"
+                variant="success"
                 leftIcon={<Trophy className="w-4 h-4" />}
                 isLoading={acting === 'award'}
                 onClick={() => setConfirmAction('award')}

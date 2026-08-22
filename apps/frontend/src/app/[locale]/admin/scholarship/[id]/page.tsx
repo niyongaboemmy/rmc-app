@@ -15,6 +15,7 @@ import { scholarshipAdminApi } from '@/lib/scholarshipAdminApi';
 import { publicApi } from '@/lib/public-api';
 import { fileUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
@@ -464,43 +465,47 @@ function AdminScholarshipDetailContent() {
             <Section title="Review Decision" icon={<AlertTriangle className="w-4 h-4" />}>
               <div className="flex flex-wrap gap-3">
                 {needsReview && (
-                  <button
-                    onClick={() => handleStatusUpdate('start_review')}
+                  <Button
+                    variant="primary"
+                    isLoading={activeAction === 'start_review'}
                     disabled={actionLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                    leftIcon={<Search className="w-4 h-4" />}
+                    onClick={() => handleStatusUpdate('start_review')}
                   >
-                    {activeAction === 'start_review' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                     Start Review
-                  </button>
+                  </Button>
                 )}
                 {needsDecision && (
                   <>
-                    <button
+                    <Button
+                      variant="success"
+                      isLoading={activeAction === 'approve'}
+                      disabled={actionLoading}
+                      leftIcon={<CheckCircle2 className="w-4 h-4" />}
                       onClick={() => handleStatusUpdate('approve')}
-                      disabled={actionLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
                     >
-                      {activeAction === 'approve' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                       Approve
-                    </button>
-                    <button
-                      onClick={() => setModal('reject')}
+                    </Button>
+                    <Button
+                      variant="danger"
                       disabled={actionLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                      leftIcon={<XCircle className="w-4 h-4" />}
+                      onClick={() => setModal('reject')}
                     >
-                      <XCircle className="w-4 h-4" /> Reject
-                    </button>
+                      Reject
+                    </Button>
                   </>
                 )}
                 {canConfirm && (
-                  <button
-                    onClick={() => handleStatusUpdate('confirm')}
+                  <Button
+                    variant="primary"
+                    isLoading={activeAction === 'confirm'}
                     disabled={actionLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                    leftIcon={<Award className="w-4 h-4" />}
+                    onClick={() => handleStatusUpdate('confirm')}
                   >
-                    {activeAction === 'confirm' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
                     Confirm Scholarship
-                  </button>
+                  </Button>
                 )}
               </div>
             </Section>

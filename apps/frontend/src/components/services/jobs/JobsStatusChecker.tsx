@@ -356,8 +356,15 @@ function MoreInfoResponse({
   const addDoc = () => setDocs((prev) => [...prev, null]);
   const removeDoc = (i: number) => setDocs((prev) => prev.filter((_, idx) => idx !== i));
 
+  /** Requested documents still without a file. Empty means the reply is complete. */
+  const missing = slots.filter((slot) => !slotFiles[slot]);
+
   const submit = async () => {
     if (!message.trim()) { setError(t('respondMessageRequired')); return; }
+    // Every requested document must be attached. A partial reply returns the application
+    // to the review queue looking answered, and the reviewer only discovers what is still
+    // missing by opening it — so the check belongs here, before it is sent.
+    if (missing.length) { setError(t('respondDocsRequired')); return; }
     setSubmitting(true);
     setError(null);
     try {
@@ -419,6 +426,7 @@ function MoreInfoResponse({
           {slots.map((slot) => (
             <DocumentField
               key={slot}
+              required
               /* Labelled with the same string the checklist above used, so the box and
                  the request name each other. */
               label={label(slot)}

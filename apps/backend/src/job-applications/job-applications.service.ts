@@ -216,6 +216,28 @@ export class JobApplicationsService {
       throw new BadRequestException('This application is not awaiting more information');
     }
 
+    /**
+     * A reply must answer the whole request.
+     *
+     * Enforced here and not only in the form, because a partial reply moves the
+     * application back to the review queue looking answered — the reviewer discovers what
+     * is still missing only by opening it, and the applicant has no signal that anything
+     * was wrong. Refusing it keeps the status honest.
+     *
+     * `other` is excluded: it names no document slot, so there is no file that could
+     * satisfy it — it is answered by the message.
+     */
+    const required = (application.moreInfoDocuments ?? []).filter((k) => k !== 'other');
+    if (required.length) {
+      const supplied = new Set((dto.documents ?? []).map((d) => d.slot).filter(Boolean));
+      const missing = required.filter((slot) => !supplied.has(slot));
+      if (missing.length) {
+        throw new BadRequestException(
+          `Attach every requested document before replying. Still missing: ${missing.join(', ')}`,
+        );
+      }
+    }
+
     if (dto.documents?.length) {
       const existing = application.documents.additionalDocuments ?? [];
       // Appended with the slot each one answers, NOT written over
@@ -235,11 +257,10 @@ export class JobApplicationsService {
 
     const prev = application.status;
     application.status = JobApplicationStatus.UNDER_REVIEW;
-    // The checklist deliberately SURVIVES the reply. A reply may be partial — an
-    // applicant with two of the three documents to hand should be able to send those —
-    // so clearing it here would destroy the record of what is still missing. The
-    // reviewer's view ticks off each entry that a reply document names, and the next
-    // request replaces the list wholesale.
+    // The checklist deliberately SURVIVES the reply. It is the record of what was asked,
+    // and the reviewer's view ticks off each entry a reply document names — so it reads
+    // as confirmation that the right files arrived, against the list that was sent. A
+    // fresh request replaces it wholesale.
     await this.saveScalarFields(application);
     await this.recordStatusChange(
       application.id,

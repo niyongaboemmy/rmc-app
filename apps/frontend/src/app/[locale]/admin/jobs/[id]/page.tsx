@@ -16,6 +16,7 @@ import { REQUESTABLE_JOB_DOCUMENTS, requestedDocumentLabel } from '@/lib/jobWork
 import { resolveMediaUrl } from '@/lib/mediaUpload';
 import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';
+import { Button, type ButtonVariant } from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
@@ -155,22 +156,19 @@ interface ActionSpec {
   note?: { label: string; placeholder: string; field: 'notes' | 'reason' };
 }
 
-const TONES: Record<ActionTone, { solid: string; soft: string; ring: string }> = {
-  primary: {
-    solid: 'bg-rmc-green hover:bg-rmc-green-dark text-white',
-    soft: 'border-gray-200 text-gray-700 hover:border-rmc-green hover:text-rmc-green',
-    ring: 'bg-rmc-green/10 text-rmc-green',
-  },
-  positive: {
-    solid: 'bg-green-600 hover:bg-green-700 text-white',
-    soft: 'border-gray-200 text-gray-700 hover:border-green-500 hover:text-green-600',
-    ring: 'bg-green-50 text-green-600',
-  },
-  danger: {
-    solid: 'bg-red-600 hover:bg-red-700 text-white',
-    soft: 'border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-600',
-    ring: 'bg-red-50 text-red-600',
-  },
+/**
+ * Each tone maps onto a shared Button variant plus the ring behind the dialog's icon.
+ *
+ * The buttons themselves are `@/components/ui/Button`, not hand-rolled Tailwind — the
+ * tenders admin page already used it, scholarship hand-rolled its own, and this page had
+ * a third set. Three mechanisms for the same five buttons is how "Reject" ends up a
+ * different red on each page. Only the ring is local, because no shared component owns
+ * the icon badge in a confirm dialog.
+ */
+const TONES: Record<ActionTone, { variant: ButtonVariant; ring: string }> = {
+  primary: { variant: 'primary', ring: 'bg-rmc-green/10 text-rmc-green' },
+  positive: { variant: 'success', ring: 'bg-green-50 text-green-600' },
+  danger: { variant: 'danger', ring: 'bg-red-50 text-red-600' },
 };
 
 const ACTIONS: Record<string, ActionSpec> = {
@@ -207,30 +205,27 @@ function ActionButton({
   onPick,
   busy,
   active,
-  variant = 'solid',
+  variant,
 }: {
   spec: ActionSpec;
   onPick: (spec: ActionSpec) => void;
   busy: boolean;
   active: string | null;
-  variant?: 'solid' | 'soft';
+  /** Override the tone's variant — Reject reads as an outline under the rule. */
+  variant?: ButtonVariant;
 }) {
-  const tone = TONES[spec.tone];
   const Icon = spec.icon;
-  const running = active === spec.action;
   return (
-    <button
-      type="button"
-      onClick={() => onPick(spec)}
+    <Button
+      fullWidth
+      variant={variant ?? TONES[spec.tone].variant}
+      isLoading={active === spec.action}
       disabled={busy}
-      className={cn(
-        'inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50',
-        variant === 'solid' ? tone.solid : cn('border', tone.soft),
-      )}
+      leftIcon={<Icon className="h-4 w-4" />}
+      onClick={() => onPick(spec)}
     >
-      {running ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
       {spec.label}
-    </button>
+    </Button>
   );
 }
 
@@ -305,12 +300,12 @@ function ConfirmActionDialog({
         {error && <p className="mb-3 text-xs text-red-600">{error}</p>}
 
         <div className="flex gap-3">
-          <button onClick={onClose} disabled={loading} className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50">
+          <Button fullWidth variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
-          </button>
-          <button onClick={submit} disabled={loading} className={cn('flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50', tone.solid)}>
-            {loading ? 'Processing…' : spec.confirmCta}
-          </button>
+          </Button>
+          <Button fullWidth variant={tone.variant} onClick={submit} isLoading={loading}>
+            {spec.confirmCta}
+          </Button>
         </div>
       </div>
     </div>,
@@ -430,12 +425,12 @@ function RequestMoreInfoDialog({
         {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
 
         <div className="mt-5 flex gap-3">
-          <button onClick={onClose} disabled={loading} className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50">
+          <Button fullWidth variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
-          </button>
-          <button onClick={submit} disabled={loading} className="flex-1 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-rmc-green-dark disabled:opacity-50">
-            {loading ? 'Sending…' : picked.length ? `Send request (${picked.length} document${picked.length === 1 ? '' : 's'})` : 'Send request'}
-          </button>
+          </Button>
+          <Button fullWidth variant="primary" onClick={submit} isLoading={loading}>
+            {picked.length ? `Send request (${picked.length} document${picked.length === 1 ? '' : 's'})` : 'Send request'}
+          </Button>
         </div>
       </div>
     </div>,
@@ -620,7 +615,7 @@ function AdminJobDetailContent() {
                         a solid red block the same size and weight as Accept directly above
                         it — two irreversible opposites competing for the same glance. */}
                     <div className="border-t border-gray-100 pt-3">
-                      <ActionButton spec={ACTIONS.reject} onPick={setPending} busy={actionLoading} active={activeAction} variant="soft" />
+                      <ActionButton spec={ACTIONS.reject} onPick={setPending} busy={actionLoading} active={activeAction} variant="outline" />
                     </div>
                   </>
                 )}
@@ -642,9 +637,9 @@ function AdminJobDetailContent() {
                 {app.moreInfoDocuments && app.moreInfoDocuments.length > 0 && (
                   <ul className="mt-2 space-y-1">
                     {app.moreInfoDocuments.map((key) => {
-                      // Answered when a reply document carries this slot. The applicant
-                      // may send them one at a time, so the list shows what is still
-                      // outstanding rather than assuming a reply settles everything.
+                      // Answered when a reply document carries this slot. A reply must
+                      // cover every request, so after one lands these all tick — the value
+                      // is confirming WHICH files arrived against what was asked.
                       const answered = (app.documents.additionalDocuments ?? []).some(
                         (d) => d.slot === key,
                       );
