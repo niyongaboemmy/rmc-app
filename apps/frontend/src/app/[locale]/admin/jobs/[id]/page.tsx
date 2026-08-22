@@ -217,6 +217,7 @@ function ActionButton({
   const Icon = spec.icon;
   return (
     <Button
+      fullWidth
       size={size}
       variant={TONES[spec.tone].variant}
       isLoading={active === spec.action}
@@ -590,14 +591,15 @@ function AdminJobDetailContent() {
             ) : !canStartReview && !canDecide ? (
               <p className="text-xs text-gray-400">This application is {STATUS_LABELS[app.status]?.toLowerCase()} — no further action needed.</p>
             ) : (
-              /* Buttons size to their label rather than stretching to the panel. Full
-                 width made a four-item stack read as four equally weighty blocks; at
-                 content width the eye gets the labels, and the panel stops looking like
-                 the heaviest thing beside the application it belongs to. `items-start`
-                 keeps them left-aligned so the stack still reads as a column. */
-              <div className="space-y-3">
+              /* One width for the whole stack, set here rather than per button.
+                 Stretching to the full panel made four equally weighty blocks; sizing each
+                 to its own label fixed the weight but left every button a different
+                 length, which is worse in a column you scan down. A capped column gives
+                 both — uniform edges, and narrower than the panel. w-52 clears the longest
+                 label ("Request More Info" with its icon) at this size. */
+              <div className="w-52 max-w-full space-y-3">
                 {/* Advancing actions: the common path, so they carry the solid fill. */}
-                <div className="flex flex-col items-start gap-2">
+                <div className="space-y-2">
                   {canStartReview && <ActionButton spec={ACTIONS.start_review} onPick={setPending} busy={actionLoading} active={activeAction} />}
                   {canShortlist && <ActionButton spec={ACTIONS.shortlist} onPick={setPending} busy={actionLoading} active={activeAction} />}
                   {canDecide && <ActionButton spec={ACTIONS.accept} onPick={setPending} busy={actionLoading} active={activeAction} />}
@@ -605,11 +607,12 @@ function AdminJobDetailContent() {
 
                 {canDecide && (
                   <>
-                    {/* Asking for more is not a decision: same size, no fill. Wrapped so
-                        it is a block in the stack — `space-y-*` spaces block siblings, and
-                        the button itself is inline-flex. */}
-                    <div className="flex">
+                    {/* Asking for more is not a decision: same size as the actions, no
+                        fill. Wrapped so the stack spaces a block rather than an
+                        inline-flex button sitting on a text baseline. */}
+                    <div>
                       <Button
+                        fullWidth
                         size="sm"
                         variant="ghost"
                         disabled={actionLoading}
@@ -625,7 +628,7 @@ function AdminJobDetailContent() {
                         design system, so it read as a mild approval. Demoted by size and a
                         rule above it instead of by colour: a step smaller than Accept, so
                         the two irreversible opposites no longer carry equal weight. */}
-                    <div className="flex border-t border-gray-100 pt-3">
+                    <div className="border-t border-gray-100 pt-3">
                       <ActionButton
                         spec={ACTIONS.reject}
                         onPick={setPending}
