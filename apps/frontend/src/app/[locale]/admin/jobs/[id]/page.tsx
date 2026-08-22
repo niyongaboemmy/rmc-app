@@ -205,7 +205,7 @@ function ActionButton({
   onPick,
   busy,
   active,
-  size = 'md',
+  size = 'sm',
 }: {
   spec: ActionSpec;
   onPick: (spec: ActionSpec) => void;
@@ -595,8 +595,7 @@ function AdminJobDetailContent() {
                  stack of part-width buttons in a narrow column reads as ragged. Width
                  being constant, hierarchy is carried by weight and height instead. */
               <div className="space-y-3">
-                {/* Advancing actions: the common path, so they keep the readable md size
-                    and a solid fill. */}
+                {/* Advancing actions: the common path, so they carry the solid fill. */}
                 <div className="space-y-2">
                   {canStartReview && <ActionButton spec={ACTIONS.start_review} onPick={setPending} busy={actionLoading} active={activeAction} />}
                   {canShortlist && <ActionButton spec={ACTIONS.shortlist} onPick={setPending} busy={actionLoading} active={activeAction} />}
@@ -608,6 +607,7 @@ function AdminJobDetailContent() {
                     {/* Asking for more is not a decision: same size, no fill. */}
                     <Button
                       fullWidth
+                      size="sm"
                       variant="ghost"
                       disabled={actionLoading}
                       leftIcon={<Send className="h-4 w-4" />}
@@ -619,15 +619,15 @@ function AdminJobDetailContent() {
                     {/* Reject stays RED — it is a rejection, and an admin scanning for it
                         looks for red. It was briefly `outline`, which is rmc-green in this
                         design system, so it read as a mild approval. Demoted by size and a
-                        rule above it instead of by colour: smaller than Accept, so the two
-                        irreversible opposites no longer carry equal weight. */}
+                        rule above it instead of by colour: a step smaller than Accept, so
+                        the two irreversible opposites no longer carry equal weight. */}
                     <div className="border-t border-gray-100 pt-3">
                       <ActionButton
                         spec={ACTIONS.reject}
                         onPick={setPending}
                         busy={actionLoading}
                         active={activeAction}
-                        size="sm"
+                        size="xs"
                       />
                     </div>
                   </>
