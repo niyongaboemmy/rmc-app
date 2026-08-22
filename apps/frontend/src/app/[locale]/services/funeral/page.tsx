@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { Moon, FileText, Landmark, type LucideIcon } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
 import { FuneralActionCard } from '@/components/funeral/FuneralActionCard';
-import { FuneralCallBar } from '@/components/funeral/FuneralCallBar';
 import { FuneralDescription } from '@/components/funeral/FuneralDescription';
 import { FuneralProcessSteps } from '@/components/funeral/FuneralProcessSteps';
 import { FuneralTransportsSection } from '@/components/funeral/FuneralTransportsSection';
@@ -138,7 +137,6 @@ export default async function FuneralServicesPage({
           </section>
         </main>
         <Footer />
-        <FuneralCallBar />
       </div>
     </SiteContentProvider>
   );
