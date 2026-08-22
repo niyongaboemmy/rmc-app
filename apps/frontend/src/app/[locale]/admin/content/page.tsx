@@ -270,7 +270,7 @@ const SECTIONS: SectionConfig[] = [
     type: 'edit', itemLabel: null,
     page: 'Funeral Service', positionOrder: 0,
     locationLabel: 'Funeral Service · Landing page',
-    keywords: ['funeral', 'janazah', 'burial', 'ghusl', 'kafan', 'description', 'rich text', 'hotline', 'phone', 'call', 'emergency', 'timeline', 'heading'],
+    keywords: ['funeral', 'janazah', 'burial', 'ghusl', 'kafan', 'description', 'rich text', 'timeline', 'heading'],
     bg: 'bg-rmc-green-light', iconColor: 'text-rmc-green', border: 'border-rmc-green-light',
     badge: 'bg-rmc-green-light text-rmc-green-dark',
     accentBar: 'bg-rmc-green',

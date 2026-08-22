@@ -3,7 +3,7 @@ import { Tri, tri } from './client';
 /**
  * Funeral services page content (admin-managed in Content → Funeral Service).
  *
- * Every heading, blurb and button on the funeral pages, plus the sticky call bar.
+ * Every heading, blurb and button on the funeral pages.
  *
  * NOT here: the lifecycle steps shown in the "what happens next" timeline — those
  * are the same `funeral_steps` records a request's status timeline uses, managed in
@@ -69,17 +69,6 @@ export interface FuneralContent {
     eyebrow: Tri;
     title: Tri;
     subtitle: Tri;
-  };
-  /**
-   * The number the sticky call bar dials. `phone` is what a visitor reads,
-   * `phoneHref` what the browser dials — kept apart so the display can carry
-   * spaces and parentheses (same split as the Contact page).
-   */
-  hotline: {
-    label: Tri;
-    note: Tri;
-    phone: string;
-    phoneHref: string;
   };
 }
 
@@ -171,11 +160,5 @@ export const FUNERAL_DEFAULT: FuneralContent = {
       'Buri busabe bunyura muri izi ntambwe. Ushobora gukurikirana ubwawe igihe cyose ukoresheje inomero tukoherereza.',
       'يمر كل طلب بهذه المراحل. يمكنك متابعة طلبك في أي وقت باستخدام الرقم المرجعي الذي نرسله إليك.',
     ),
-  },
-  hotline: {
-    label: tri('Call the funeral committee', 'Hamagara komite y’imihango', 'اتصل بلجنة الجنائز'),
-    note: tri('Available at any hour', 'Iboneka igihe cyose', 'متاح في أي ساعة'),
-    phone: '(+250) 788 308 436',
-    phoneHref: 'tel:+250788308436',
   },
 };

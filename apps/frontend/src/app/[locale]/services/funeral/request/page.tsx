@@ -5,7 +5,6 @@ import { getTranslations } from 'next-intl/server';
 import { Moon } from 'lucide-react';
 import { HeroBackLink } from '@/components/services/HeroBackLink';
 import { HERO_IMAGE } from '@/components/funeral/data';
-import { FuneralCallBar } from '@/components/funeral/FuneralCallBar';
 import { ContentKeys } from '@/lib/content-api';
 import { fetchSiteContent } from '@/lib/content/server';
 import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
@@ -57,7 +56,6 @@ export default async function FuneralRequestPage({
           <FuneralRequestForm locale={locale} />
         </main>
         <Footer />
-        <FuneralCallBar />
     </div>
     </SiteContentProvider>
   );

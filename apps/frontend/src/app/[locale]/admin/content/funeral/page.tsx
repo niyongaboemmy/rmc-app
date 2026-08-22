@@ -12,7 +12,7 @@ import {
   FUNERAL_DEFAULT, type FuneralContent,
 } from '@/lib/content-api';
 import {
-  Moon, ArrowLeft, Save, HandHeart, Phone, ListChecks, Loader2,
+  Moon, ArrowLeft, Save, HandHeart, ListChecks, Loader2,
 } from 'lucide-react';
 
 type Lang = 'en' | 'rw' | 'ar';
@@ -23,7 +23,7 @@ const LANGS: { key: Lang; label: string; flag: string }[] = [
   { key: 'ar', label: 'Arabic', flag: 'AR' },
 ];
 
-/** The tri-lingual groups; `hotline.phone`/`phoneHref` are plain strings, edited apart. */
+/** The tri-lingual groups. */
 type Group = keyof FuneralContent;
 
 interface FieldDef {
@@ -59,8 +59,6 @@ const FIELDS: FieldDef[] = [
   { group: 'steps', key: 'eyebrow', label: 'Process timeline — Eyebrow', rows: 1 },
   { group: 'steps', key: 'title', label: 'Process timeline — Heading', rows: 1 },
   { group: 'steps', key: 'subtitle', label: 'Process timeline — Subheading', rows: 2 },
-  { group: 'hotline', key: 'label', label: 'Call bar — Label', rows: 1 },
-  { group: 'hotline', key: 'note', label: 'Call bar — Note under the label', rows: 1 },
   { group: 'cemeteries', key: 'title', label: 'Cemetery page — Heading', rows: 1 },
   { group: 'cemeteries', key: 'subtitle', label: 'Cemetery page — Subheading', rows: 2 },
   {
@@ -87,7 +85,6 @@ const GROUP_LABELS: Record<Group, string> = {
   cta: 'Closing band',
   description: 'What we do',
   steps: 'Process timeline heading',
-  hotline: 'Sticky call bar',
 };
 
 export default function FuneralContentPage() {
@@ -120,10 +117,6 @@ function FuneralContentManager() {
       const field = section[key] as Record<string, string>;
       return { ...prev, [group]: { ...section, [key]: { ...field, [l]: value } } };
     });
-  }, []);
-
-  const setHotline = useCallback((key: 'phone' | 'phoneHref', value: string) => {
-    setForm((prev) => ({ ...prev, hotline: { ...prev.hotline, [key]: value } }));
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -187,39 +180,6 @@ function FuneralContentManager() {
         </span>
       </Link>
 
-      {/* Phone number (shared across languages) */}
-      <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
-        <h2 className="flex items-center gap-2 border-b border-gray-50 pb-3 text-sm font-bold text-gray-700">
-          <Phone className="h-4 w-4 text-rmc-green" />
-          Hotline number <span className="font-normal text-gray-400">— shared across all languages</span>
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Number as displayed</label>
-            <input
-              type="text"
-              value={form.hotline.phone}
-              onChange={(e) => setHotline('phone', e.target.value)}
-              placeholder="(+250) 788 308 436"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green"
-            />
-            <p className="mt-1 text-[11px] text-gray-400">Clearing this hides the call bar entirely.</p>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Number as dialled</label>
-            <input
-              type="text"
-              value={form.hotline.phoneHref}
-              onChange={(e) => setHotline('phoneHref', e.target.value)}
-              placeholder="tel:+250788308436"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rmc-green"
-            />
-            <p className="mt-1 text-[11px] text-gray-400">
-              What the phone actually dials, e.g. <span className="font-mono">tel:+250788308436</span>.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Language tabs */}
       <div className="flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
@@ -236,7 +196,6 @@ function FuneralContentManager() {
         <div key={group} className="space-y-5 rounded-2xl border border-gray-100 bg-white p-6">
           <h2 className="flex items-center gap-2 border-b border-gray-50 pb-3 text-sm font-bold text-gray-700">
             {group === 'description' && <HandHeart className="h-4 w-4 text-rmc-green" />}
-            {group === 'hotline' && <Phone className="h-4 w-4 text-rmc-green" />}
             {GROUP_LABELS[group]}
             <span className="font-normal text-gray-400">
               — {LANGS.find((l) => l.key === lang)?.label}
