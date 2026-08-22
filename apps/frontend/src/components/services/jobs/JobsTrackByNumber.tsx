@@ -13,6 +13,7 @@ import {
   type JobApplicationStatus,
 } from '@/lib/jobsApi';
 import { cn } from '@/lib/utils';
+import { RequestedDocuments } from './RequestedDocuments';
 
 const PUBLIC_FLOW = ['submitted', 'review', 'shortlisted', 'decision'] as const;
 const STAGE_TO_STATUS: Record<(typeof PUBLIC_FLOW)[number], string> = {
@@ -217,7 +218,15 @@ function TrackingResult({
 
       {result.status === 'rejected' && <Note tone="red" icon={<XCircle className="w-5 h-5" />} title={t('banner.rejectedTitle')} text={result.rejectionReason || t('banner.rejectedText')} />}
       {result.status === 'cancelled' && <Note tone="gray" icon={<Ban className="w-5 h-5" />} title={t('banner.cancelledTitle')} text={t('banner.cancelledText')} />}
-      {result.status === 'more_info_requested' && <Note tone="amber" icon={<AlertTriangle className="w-5 h-5" />} title={t('banner.moreInfoTitle')} text={result.moreInfoRequested || t('banner.moreInfoText')} />}
+      {result.status === 'more_info_requested' && (
+        <>
+          <Note tone="amber" icon={<AlertTriangle className="w-5 h-5" />} title={t('banner.moreInfoTitle')} text={result.moreInfoRequested || t('banner.moreInfoText')} />
+          {/* Read-only here: replying needs a signed-in applicant, and this path is
+              reached with a tracking code and an SMS code. Showing the list is still
+              worth it — it is how someone tracking by number learns what to bring. */}
+          <RequestedDocuments documents={result.moreInfoDocuments} />
+        </>
+      )}
 
       {!isTerminal && (
         <ol className="relative pt-1">

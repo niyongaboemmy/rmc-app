@@ -1926,6 +1926,8 @@
         "backToJobs": "Subira ku Kazi"
       },
       "status": {
+          "requestedDocsTitle": "Inyandiko zisabwa kohereza",
+          "requestedDocsOther": "Ikindi kintu — reba ubutumwa hejuru",
         "heroTitle": "Aho Isaba Rigeze",
         "backToService": "Subira ku Kazi",
         "signInPrompt": "Injira kugira ngo urebe amasaba y'akazi yawe.",

@@ -1926,6 +1926,8 @@
         "backToJobs": "Back to Jobs"
       },
       "status": {
+          "requestedDocsTitle": "Documents to upload",
+          "requestedDocsOther": "Something else — see the message above",
         "heroTitle": "Application Status",
         "backToService": "Back to Jobs",
         "signInPrompt": "Sign in to view your job applications.",

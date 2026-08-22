@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { uploadMedia } from '@/lib/mediaUpload';
 import { DocumentField, type UploadTexts } from '@/components/services/shared/DocumentField';
+import { RequestedDocuments } from './RequestedDocuments';
 import {
   jobsApi,
   JOB_STATUS_COLORS,
@@ -201,6 +202,10 @@ function ApplicationDetail({
             title={t('banner.moreInfoTitle')}
             text={application.moreInfoRequested || t('banner.moreInfoText')}
           />
+          {/* The checklist sits between the reviewer's message and the reply form, which
+              is the order the applicant reads in: what was said, what is wanted, then the
+              box to answer in. */}
+          <RequestedDocuments documents={application.moreInfoDocuments} />
           <MoreInfoResponse applicationId={application.id} onDone={onChanged} />
         </>
       )}

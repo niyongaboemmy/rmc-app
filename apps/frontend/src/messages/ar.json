@@ -1926,6 +1926,8 @@
         "backToJobs": "العودة إلى الوظائف"
       },
       "status": {
+          "requestedDocsTitle": "المستندات المطلوب رفعها",
+          "requestedDocsOther": "شيء آخر — راجع الرسالة أعلاه",
         "heroTitle": "حالة الطلب",
         "backToService": "العودة إلى الوظائف",
         "signInPrompt": "سجّل الدخول لعرض طلبات التوظيف الخاصة بك.",
