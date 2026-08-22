@@ -21,7 +21,7 @@ import { FileText, LogIn } from 'lucide-react';
  */
 
 /** Requested-document key → its key under `services.jobs.apply`. */
-const APPLY_LABEL_KEYS: Record<string, string> = {
+export const APPLY_LABEL_KEYS: Record<string, string> = {
   applicationLetter: 'applicationLetter',
   cv: 'cv',
   nationalId: 'nationalId',
@@ -32,6 +32,20 @@ const APPLY_LABEL_KEYS: Record<string, string> = {
   goodConductCertificate: 'goodConductFile',
   employerRecommendation: 'employerRecommendation',
 };
+
+/**
+ * The label for a requested document, in the reader's language.
+ *
+ * Exported so the reply form names its upload slots with exactly the same strings this
+ * list uses. Two maps would drift, and an applicant told to send a "Criminal record"
+ * then shown a box labelled something else has to guess whether they are the same thing.
+ */
+export function useRequestedDocumentLabel(): (key: string) => string {
+  const t = useTranslations('services.jobs.status');
+  const tApply = useTranslations('services.jobs.apply');
+  return (key: string) =>
+    APPLY_LABEL_KEYS[key] ? tApply(APPLY_LABEL_KEYS[key]) : t('requestedDocsOther');
+}
 
 export function RequestedDocuments({
   documents,
@@ -49,7 +63,7 @@ export function RequestedDocuments({
   signInHref?: string;
 }) {
   const t = useTranslations('services.jobs.status');
-  const tApply = useTranslations('services.jobs.apply');
+  const label = useRequestedDocumentLabel();
 
   if (!documents?.length) return null;
 
@@ -63,9 +77,7 @@ export function RequestedDocuments({
             {/* `other` has no slot on the application, so it has no apply-form label —
                 it points the reader back at the reviewer's message instead. An unknown
                 key falls through the same way rather than rendering a raw identifier. */}
-            <span>
-              {APPLY_LABEL_KEYS[key] ? tApply(APPLY_LABEL_KEYS[key]) : t('requestedDocsOther')}
-            </span>
+            <span>{label(key)}</span>
           </li>
         ))}
       </ul>

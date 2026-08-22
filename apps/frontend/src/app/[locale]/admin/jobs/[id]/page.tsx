@@ -635,17 +635,36 @@ function AdminJobDetailContent() {
                 <p className="text-xs text-amber-700">
                   <strong>Info requested:</strong> {app.moreInfoRequested}
                 </p>
-                {/* The checklist the applicant was given, so a reviewer returning to this
-                    page can see what is outstanding without reopening the dialog. Cleared
-                    server-side once they respond. */}
+                {/* The checklist the applicant was given, ticked off as replies arrive.
+                    It outlives the reply on purpose: a reply may be partial, so this is
+                    what shows a reviewer which of the documents they asked for are still
+                    missing. A fresh request replaces the list. */}
                 {app.moreInfoDocuments && app.moreInfoDocuments.length > 0 && (
                   <ul className="mt-2 space-y-1">
-                    {app.moreInfoDocuments.map((key) => (
-                      <li key={key} className="flex items-center gap-1.5 text-[11px] text-amber-700">
-                        <FileText className="h-3 w-3 shrink-0" />
-                        {requestedDocumentLabel(key)}
-                      </li>
-                    ))}
+                    {app.moreInfoDocuments.map((key) => {
+                      // Answered when a reply document carries this slot. The applicant
+                      // may send them one at a time, so the list shows what is still
+                      // outstanding rather than assuming a reply settles everything.
+                      const answered = (app.documents.additionalDocuments ?? []).some(
+                        (d) => d.slot === key,
+                      );
+                      return (
+                        <li
+                          key={key}
+                          className={cn(
+                            'flex items-center gap-1.5 text-[11px]',
+                            answered ? 'text-green-700' : 'text-amber-700',
+                          )}
+                        >
+                          {answered
+                            ? <CheckCircle2 className="h-3 w-3 shrink-0" />
+                            : <FileText className="h-3 w-3 shrink-0" />}
+                          <span className={answered ? 'line-through decoration-green-700/40' : undefined}>
+                            {requestedDocumentLabel(key)}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

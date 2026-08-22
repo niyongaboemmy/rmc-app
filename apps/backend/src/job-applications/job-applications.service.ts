@@ -218,17 +218,28 @@ export class JobApplicationsService {
 
     if (dto.documents?.length) {
       const existing = application.documents.additionalDocuments ?? [];
+      // Appended with the slot each one answers, NOT written over
+      // `documents.cv` and friends. The original is the copy the reviewer read before
+      // asking, and overwriting it would erase the evidence for that request.
+      const stamped = dto.documents.map((d) => ({
+        key: d.key,
+        name: d.name,
+        ...(d.slot ? { slot: d.slot } : {}),
+        uploadedAt: new Date().toISOString(),
+      }));
       application.documents = {
         ...application.documents,
-        additionalDocuments: [...existing, ...dto.documents],
+        additionalDocuments: [...existing, ...stamped],
       };
     }
 
     const prev = application.status;
     application.status = JobApplicationStatus.UNDER_REVIEW;
-    // The request has been answered, so the checklist goes with it. Left in place it
-    // would still read as outstanding on the reviewer's next visit.
-    application.moreInfoDocuments = null;
+    // The checklist deliberately SURVIVES the reply. A reply may be partial — an
+    // applicant with two of the three documents to hand should be able to send those —
+    // so clearing it here would destroy the record of what is still missing. The
+    // reviewer's view ticks off each entry that a reply document names, and the next
+    // request replaces the list wholesale.
     await this.saveScalarFields(application);
     await this.recordStatusChange(
       application.id,

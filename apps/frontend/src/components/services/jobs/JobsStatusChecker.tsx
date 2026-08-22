@@ -12,13 +12,13 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { uploadMedia } from '@/lib/mediaUpload';
 import { DocumentField, type UploadTexts } from '@/components/services/shared/DocumentField';
-import { RequestedDocuments } from './RequestedDocuments';
+import { RequestedDocuments, useRequestedDocumentLabel } from './RequestedDocuments';
 import {
   jobsApi,
   JOB_STATUS_COLORS,
   type JobApplication,
   type JobApplicationStatus,
-  type JobDocument,
+  type JobResponseDocument,
 } from '@/lib/jobsApi';
 
 // Public-facing linear flow — collapses the backend states into four milestones.
@@ -206,7 +206,11 @@ function ApplicationDetail({
               is the order the applicant reads in: what was said, what is wanted, then the
               box to answer in. */}
           <RequestedDocuments documents={application.moreInfoDocuments} />
-          <MoreInfoResponse applicationId={application.id} onDone={onChanged} />
+          <MoreInfoResponse
+            applicationId={application.id}
+            requested={application.moreInfoDocuments}
+            onDone={onChanged}
+          />
         </>
       )}
       {application.status === 'rejected' && (
@@ -311,11 +315,31 @@ function ApplicationDetail({
 const RESPONSE_MIME =
   'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png';
 
-function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; onDone: () => void }) {
+function MoreInfoResponse({
+  applicationId,
+  requested,
+  onDone,
+}: {
+  applicationId: string;
+  /** The reviewer's checklist. Each entry gets its own labelled upload slot. */
+  requested?: string[] | null;
+  onDone: () => void;
+}) {
   const t = useTranslations('services.jobs.status');
   const tu = useTranslations('services.jobs.apply');
+  const label = useRequestedDocumentLabel();
   const [message, setMessage] = useState('');
   const [docs, setDocs] = useState<(File | null)[]>([]);
+  /**
+   * One file per requested slot, keyed by the slot.
+   *
+   * Separate from `docs`, which stays the free-form list: `other` has no slot to fill,
+   * and an applicant may attach something nobody asked for. Keying by slot is what lets
+   * the reply say WHICH request each file answers — the whole point of the checklist.
+   */
+  const [slotFiles, setSlotFiles] = useState<Record<string, File | null>>({});
+  // 'other' is a pointer back to the message, not a document, so it gets no upload box.
+  const slots = (requested ?? []).filter((k) => k !== 'other');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -337,10 +361,20 @@ function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; on
     setSubmitting(true);
     setError(null);
     try {
-      const files = docs.filter((f): f is File => f !== null);
-      const uploaded: JobDocument[] = await Promise.all(
-        files.map(async (f) => ({ key: await uploadMedia(f, 'job-applications'), name: f.name })),
+      // Slot uploads carry the request they answer; the free-form ones do not.
+      const slotEntries = Object.entries(slotFiles).filter(
+        (e): e is [string, File] => e[1] !== null,
       );
+      const uploaded: JobResponseDocument[] = await Promise.all([
+        ...slotEntries.map(async ([slot, f]) => ({
+          key: await uploadMedia(f, 'job-applications'),
+          name: f.name,
+          slot,
+        })),
+        ...docs
+          .filter((f): f is File => f !== null)
+          .map(async (f) => ({ key: await uploadMedia(f, 'job-applications'), name: f.name })),
+      ]);
       await jobsApi.respondMoreInfo(applicationId, {
         message: message.trim(),
         documents: uploaded.length ? uploaded : undefined,
@@ -379,6 +413,24 @@ function MoreInfoResponse({ applicationId, onDone }: { applicationId: string; on
         maxLength={2000}
         className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
       />
+
+      {slots.length > 0 && (
+        <div className="space-y-4">
+          {slots.map((slot) => (
+            <DocumentField
+              key={slot}
+              /* Labelled with the same string the checklist above used, so the box and
+                 the request name each other. */
+              label={label(slot)}
+              accept={RESPONSE_MIME}
+              maxMb={10}
+              file={slotFiles[slot] ?? null}
+              onChange={(f) => setSlotFiles((prev) => ({ ...prev, [slot]: f }))}
+              texts={uploadTexts}
+            />
+          ))}
+        </div>
+      )}
 
       {docs.length > 0 && (
         <div className="grid sm:grid-cols-2 gap-4">

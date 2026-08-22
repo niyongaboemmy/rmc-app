@@ -28,6 +28,13 @@ export interface JobDocument {
   name: string;
 }
 
+/** A document sent in reply to a request, tagged with the slot it answers. */
+export interface JobResponseDocument extends JobDocument {
+  /** Which requested document this answers; absent for an unprompted attachment. */
+  slot?: string;
+  uploadedAt?: string;
+}
+
 export interface JobApplicationDocuments {
   applicationLetter: JobDocument;
   cv: JobDocument;
@@ -40,8 +47,11 @@ export interface JobApplicationDocuments {
   goodConductCertificate?: JobDocument;
   /** Optional employer recommendation letter. */
   employerRecommendation?: JobDocument;
-  /** Extra documents the applicant uploads when responding to a more-info request. */
-  additionalDocuments?: JobDocument[];
+  /**
+   * Documents uploaded in reply to a more-info request. Appended beside the originals
+   * rather than replacing them, each tagged with the slot it answers.
+   */
+  additionalDocuments?: JobResponseDocument[];
 }
 
 export interface JobApplication {
@@ -169,7 +179,7 @@ export const jobsApi = {
 
   respondMoreInfo: async (
     id: string,
-    payload: { message: string; documents?: JobDocument[] },
+    payload: { message: string; documents?: JobResponseDocument[] },
   ): Promise<JobApplication> => {
     const { data } = await apiClient.post(`/job-applications/${id}/respond`, payload);
     return data.data ?? data;

@@ -26,6 +26,14 @@ export interface JobDocument {
   name: string;
 }
 
+/** A document sent in reply to a request, tagged with the slot it answers. */
+export interface JobResponseDocument extends JobDocument {
+  /** Which requested document this answers; absent for an unprompted attachment. */
+  slot?: string;
+  /** ISO timestamp, so the reviewer can see the order replies arrived in. */
+  uploadedAt?: string;
+}
+
 export interface JobApplicationDocuments {
   applicationLetter: JobDocument;
   cv: JobDocument;
@@ -37,8 +45,15 @@ export interface JobApplicationDocuments {
   /** …or an uploaded good-conduct certificate file. */
   goodConductCertificate?: JobDocument;
   employerRecommendation?: JobDocument;
-  /** Extra documents the applicant uploads when responding to a more-info request. */
-  additionalDocuments?: JobDocument[];
+  /**
+   * Documents uploaded in reply to a more-info request.
+   *
+   * Appended, never merged into the slot they answer: the original stays exactly as the
+   * reviewer first saw it, and the reply sits beside it. So a re-uploaded CV does not
+   * erase the one that prompted the request — which is the copy any earlier decision was
+   * made against.
+   */
+  additionalDocuments?: JobResponseDocument[];
 }
 
 @Entity('job_applications')
