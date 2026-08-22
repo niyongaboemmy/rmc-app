@@ -217,7 +217,6 @@ function ActionButton({
   const Icon = spec.icon;
   return (
     <Button
-      fullWidth
       size={size}
       variant={TONES[spec.tone].variant}
       isLoading={active === spec.action}
@@ -591,12 +590,14 @@ function AdminJobDetailContent() {
             ) : !canStartReview && !canDecide ? (
               <p className="text-xs text-gray-400">This application is {STATUS_LABELS[app.status]?.toLowerCase()} — no further action needed.</p>
             ) : (
-              /* The panel sits in a third of the page, so every button is full-width — a
-                 stack of part-width buttons in a narrow column reads as ragged. Width
-                 being constant, hierarchy is carried by weight and height instead. */
+              /* Buttons size to their label rather than stretching to the panel. Full
+                 width made a four-item stack read as four equally weighty blocks; at
+                 content width the eye gets the labels, and the panel stops looking like
+                 the heaviest thing beside the application it belongs to. `items-start`
+                 keeps them left-aligned so the stack still reads as a column. */
               <div className="space-y-3">
                 {/* Advancing actions: the common path, so they carry the solid fill. */}
-                <div className="space-y-2">
+                <div className="flex flex-col items-start gap-2">
                   {canStartReview && <ActionButton spec={ACTIONS.start_review} onPick={setPending} busy={actionLoading} active={activeAction} />}
                   {canShortlist && <ActionButton spec={ACTIONS.shortlist} onPick={setPending} busy={actionLoading} active={activeAction} />}
                   {canDecide && <ActionButton spec={ACTIONS.accept} onPick={setPending} busy={actionLoading} active={activeAction} />}
@@ -604,24 +605,27 @@ function AdminJobDetailContent() {
 
                 {canDecide && (
                   <>
-                    {/* Asking for more is not a decision: same size, no fill. */}
-                    <Button
-                      fullWidth
-                      size="sm"
-                      variant="ghost"
-                      disabled={actionLoading}
-                      leftIcon={<Send className="h-4 w-4" />}
-                      onClick={() => setMoreInfoOpen(true)}
-                    >
-                      Request More Info
-                    </Button>
+                    {/* Asking for more is not a decision: same size, no fill. Wrapped so
+                        it is a block in the stack — `space-y-*` spaces block siblings, and
+                        the button itself is inline-flex. */}
+                    <div className="flex">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={actionLoading}
+                        leftIcon={<Send className="h-4 w-4" />}
+                        onClick={() => setMoreInfoOpen(true)}
+                      >
+                        Request More Info
+                      </Button>
+                    </div>
 
                     {/* Reject stays RED — it is a rejection, and an admin scanning for it
                         looks for red. It was briefly `outline`, which is rmc-green in this
                         design system, so it read as a mild approval. Demoted by size and a
                         rule above it instead of by colour: a step smaller than Accept, so
                         the two irreversible opposites no longer carry equal weight. */}
-                    <div className="border-t border-gray-100 pt-3">
+                    <div className="flex border-t border-gray-100 pt-3">
                       <ActionButton
                         spec={ACTIONS.reject}
                         onPick={setPending}
