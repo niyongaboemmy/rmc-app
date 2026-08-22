@@ -62,6 +62,8 @@ export interface JobApplication {
   reviewNotes: string | null;
   rejectionReason: string | null;
   moreInfoRequested: string | null;
+  /** Which documents the reviewer asked for. Null when they wanted information, not files. */
+  moreInfoDocuments: string[] | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -102,6 +104,8 @@ export interface JobApplicationPublicStatus {
   positionAppliedFor: string;
   status: JobApplicationStatus;
   moreInfoRequested: string | null;
+  /** Which documents the reviewer asked for. Null when they wanted information, not files. */
+  moreInfoDocuments: string[] | null;
   rejectionReason: string | null;
   submittedAt: string | null;
   createdAt: string;

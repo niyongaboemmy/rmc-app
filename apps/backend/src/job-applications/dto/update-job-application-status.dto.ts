@@ -1,4 +1,5 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { REQUESTABLE_JOB_DOCUMENTS } from '../requestable-documents';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum JobApplicationStatusAction {
@@ -23,4 +24,18 @@ export class UpdateJobApplicationStatusDto {
   @IsOptional()
   @IsString()
   reason?: string;
+
+  /**
+   * Which documents the applicant must supply, for `request_more_info`.
+   *
+   * Validated against the known slots rather than accepted as free text: the applicant's
+   * form renders an upload control per entry, so an unrecognised key would be a request
+   * they had no way to answer.
+   */
+  @ApiPropertyOptional({ enum: REQUESTABLE_JOB_DOCUMENTS, isArray: true })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(REQUESTABLE_JOB_DOCUMENTS.length)
+  @IsIn(REQUESTABLE_JOB_DOCUMENTS as unknown as string[], { each: true })
+  documents?: string[];
 }

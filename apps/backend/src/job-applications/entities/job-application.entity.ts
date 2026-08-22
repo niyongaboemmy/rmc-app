@@ -116,6 +116,18 @@ export class JobApplication {
   @Column({ name: 'more_info_requested', type: 'text', nullable: true })
   moreInfoRequested: string | null;
 
+  /**
+   * Which documents the reviewer asked for, alongside the message above.
+   *
+   * Separate from `more_info_requested` rather than described inside it: the applicant's
+   * form renders an upload control per entry, and a checklist they tick off is a far
+   * clearer instruction than a paragraph they have to parse. Null means the reviewer
+   * asked only for information, not files. Cleared when the applicant responds, so a
+   * stale checklist cannot outlive the request it belongs to.
+   */
+  @Column({ name: 'more_info_documents', type: 'jsonb', nullable: true })
+  moreInfoDocuments: string[] | null;
+
   @Column({ name: 'submitted_at', type: 'timestamptz', nullable: true })
   submittedAt: Date | null;
 

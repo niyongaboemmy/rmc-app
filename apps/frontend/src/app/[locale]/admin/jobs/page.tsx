@@ -126,7 +126,10 @@ function AdminJobsContent() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="w-[200px]">
+            {/* Wider than the 200px it was: this box takes a name, a position or a
+                phone number, and 200px truncated all three. Capped rather than elastic so
+                it does not crowd the status select and the view toggle beside it. */}
+            <div className="w-full sm:w-[340px]">
               <Input
                 placeholder="Name, position, phone…"
                 value={search}

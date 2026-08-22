@@ -169,3 +169,29 @@ export function jobApiError(err: unknown, fallback = 'Something went wrong.'): s
   if (Array.isArray(message)) return message.join(', ');
   return message || fallback;
 }
+
+/**
+ * The documents a reviewer can ask a job applicant to (re-)upload.
+ *
+ * Mirrors REQUESTABLE_JOB_DOCUMENTS in the backend
+ * (apps/backend/src/job-applications/requestable-documents.ts), which VALIDATES what the
+ * API accepts — keep the two lists in step. The keys match the slots on
+ * `JobApplicationDocuments`, so a request names a real place the file will land; the
+ * labels are the same words the detail page already uses for those documents, so a
+ * reviewer ticking "Criminal record" and an applicant reading it see one name for it.
+ */
+export const REQUESTABLE_JOB_DOCUMENTS: { key: string; label: string }[] = [
+  { key: 'applicationLetter', label: 'Application letter' },
+  { key: 'cv', label: 'Curriculum Vitae (CV)' },
+  { key: 'nationalId', label: 'National ID' },
+  { key: 'criminalRecord', label: 'Criminal record' },
+  { key: 'academicPapers', label: 'Academic papers' },
+  { key: 'goodConductCertificate', label: 'Good conduct certificate' },
+  { key: 'employerRecommendation', label: 'Employer recommendation' },
+  { key: 'other', label: 'Something else (described in the message)' },
+];
+
+/** Label for a requested-document key, falling back to the key when unknown. */
+export function requestedDocumentLabel(key: string): string {
+  return REQUESTABLE_JOB_DOCUMENTS.find((d) => d.key === key)?.label ?? key;
+}

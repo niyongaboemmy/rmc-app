@@ -8,9 +8,11 @@ import {
   ArrowLeft, Briefcase, User, Phone, Mail, MapPin, FileText,
   CheckCircle2, XCircle, AlertTriangle, Clock, RefreshCw, Send, X,
   Star, Search, ShieldCheck, ExternalLink, Download,
+  type LucideIcon,
 } from 'lucide-react';
 import { type JobApplication, JOB_STATUS_COLORS, type JobApplicationStatus } from '@/lib/jobsApi';
 import { jobsAdminApi, type JobStatusAction } from '@/lib/jobsAdminApi';
+import { REQUESTABLE_JOB_DOCUMENTS, requestedDocumentLabel } from '@/lib/jobWorkflow';
 import { resolveMediaUrl } from '@/lib/mediaUpload';
 import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';
@@ -128,28 +130,137 @@ function DocLink({ label, name, docKey }: { label: string; name?: string; docKey
   );
 }
 
-interface ActionModalProps {
-  title: string;
-  placeholder: string;
-  confirmLabel: string;
-  confirmClass: string;
-  onClose: () => void;
-  onConfirm: (text: string) => Promise<void>;
+/**
+ * Every status change goes through one dialog.
+ *
+ * There used to be three ways to commit an action: `start_review` and `shortlist` fired
+ * straight from the button, `accept` opened a hand-rolled confirm portal, and `reject` /
+ * `more_info` opened a notes modal. So two of the five were irreversible on a single
+ * mis-click, and the other three each looked different at the moment of deciding.
+ *
+ * `note` is what separates them now — a spec that declares one collects a required
+ * message in the same step; a spec without one is a plain "are you sure".
+ */
+type ActionTone = 'primary' | 'positive' | 'danger';
+
+interface ActionSpec {
+  action: JobStatusAction;
+  label: string;
+  icon: LucideIcon;
+  tone: ActionTone;
+  confirmTitle: string;
+  confirmBody: string;
+  confirmCta: string;
+  /** Collect a required note in the confirm step, sent as this field. */
+  note?: { label: string; placeholder: string; field: 'notes' | 'reason' };
 }
 
-function ActionModal({ title, placeholder, confirmLabel, confirmClass, onClose, onConfirm }: ActionModalProps) {
+const TONES: Record<ActionTone, { solid: string; soft: string; ring: string }> = {
+  primary: {
+    solid: 'bg-rmc-green hover:bg-rmc-green-dark text-white',
+    soft: 'border-gray-200 text-gray-700 hover:border-rmc-green hover:text-rmc-green',
+    ring: 'bg-rmc-green/10 text-rmc-green',
+  },
+  positive: {
+    solid: 'bg-green-600 hover:bg-green-700 text-white',
+    soft: 'border-gray-200 text-gray-700 hover:border-green-500 hover:text-green-600',
+    ring: 'bg-green-50 text-green-600',
+  },
+  danger: {
+    solid: 'bg-red-600 hover:bg-red-700 text-white',
+    soft: 'border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-600',
+    ring: 'bg-red-50 text-red-600',
+  },
+};
+
+const ACTIONS: Record<string, ActionSpec> = {
+  start_review: {
+    action: 'start_review', label: 'Start Review', icon: Search, tone: 'primary',
+    confirmTitle: 'Start reviewing this application?',
+    confirmBody: 'It moves out of the submitted queue and into review. The applicant is not notified.',
+    confirmCta: 'Start review',
+  },
+  shortlist: {
+    action: 'shortlist', label: 'Shortlist', icon: Star, tone: 'primary',
+    confirmTitle: 'Shortlist this applicant?',
+    confirmBody: 'They move to the shortlist column. You can still accept or reject them afterwards.',
+    confirmCta: 'Shortlist',
+  },
+  accept: {
+    action: 'accept', label: 'Accept / Approve', icon: CheckCircle2, tone: 'positive',
+    confirmTitle: 'Accept this applicant?',
+    confirmBody: 'This is the final decision and the applicant is notified. It cannot be undone from here.',
+    confirmCta: 'Accept applicant',
+  },
+  reject: {
+    action: 'reject', label: 'Reject', icon: XCircle, tone: 'danger',
+    confirmTitle: 'Reject this application?',
+    confirmBody: 'The applicant is notified, and the reason below is sent to them.',
+    confirmCta: 'Reject',
+    note: { label: 'Reason for rejection', placeholder: 'Explain why this application was not successful…', field: 'reason' },
+  },
+};
+
+/** One action button. Never commits — it only opens the confirm step. */
+function ActionButton({
+  spec,
+  onPick,
+  busy,
+  active,
+  variant = 'solid',
+}: {
+  spec: ActionSpec;
+  onPick: (spec: ActionSpec) => void;
+  busy: boolean;
+  active: string | null;
+  variant?: 'solid' | 'soft';
+}) {
+  const tone = TONES[spec.tone];
+  const Icon = spec.icon;
+  const running = active === spec.action;
+  return (
+    <button
+      type="button"
+      onClick={() => onPick(spec)}
+      disabled={busy}
+      className={cn(
+        'inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50',
+        variant === 'solid' ? tone.solid : cn('border', tone.soft),
+      )}
+    >
+      {running ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+      {spec.label}
+    </button>
+  );
+}
+
+/** The single confirm step. Renders a note field only when the spec asks for one. */
+function ConfirmActionDialog({
+  spec,
+  onClose,
+  onConfirm,
+}: {
+  spec: ActionSpec;
+  onClose: () => void;
+  onConfirm: (payload: { notes?: string; reason?: string }) => Promise<void>;
+}) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const tone = TONES[spec.tone];
+  const Icon = spec.icon;
 
-  const handleConfirm = async () => {
-    if (!text.trim()) { setError('This field is required.'); return; }
+  const submit = async () => {
+    if (spec.note && !text.trim()) { setError('This field is required.'); return; }
     setLoading(true);
     try {
-      await onConfirm(text);
+      await onConfirm(spec.note ? { [spec.note.field]: text } : {});
       onClose();
     } catch (err: unknown) {
-      setError((err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Action failed');
+      setError(
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+          ?? 'Action failed',
+      );
     } finally {
       setLoading(false);
     }
@@ -157,26 +268,173 @@ function ActionModal({ title, placeholder, confirmLabel, confirmClass, onClose, 
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-900">{title}</h3>
-          <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
-            <X className="w-4 h-4" />
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={() => !loading && onClose()}
+      className="fixed inset-0 z-[99990] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    >
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-start gap-3">
+          <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full', tone.ring)}>
+            <Icon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-gray-900">{spec.confirmTitle}</h3>
+            <p className="mt-1 text-sm text-gray-500">{spec.confirmBody}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-gray-100">
+            <X className="h-4 w-4" />
           </button>
         </div>
+
+        {spec.note && (
+          <div className="mb-4">
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{spec.note.label}</label>
+            <textarea
+              rows={4}
+              value={text}
+              autoFocus
+              onChange={(e) => { setText(e.target.value); setError(''); }}
+              placeholder={spec.note.placeholder}
+              className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
+            />
+          </div>
+        )}
+
+        {error && <p className="mb-3 text-xs text-red-600">{error}</p>}
+
+        <div className="flex gap-3">
+          <button onClick={onClose} disabled={loading} className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={submit} disabled={loading} className={cn('flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50', tone.solid)}>
+            {loading ? 'Processing…' : spec.confirmCta}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * "Request more info", as a checklist rather than a paragraph.
+ *
+ * The old modal was one free-text box, so "please send your CV and a criminal record"
+ * arrived as prose the applicant had to parse, against a reply form with a single generic
+ * attachment slot — nothing tied a file to the thing that was missing. Ticking the
+ * documents here gives their form one upload control per item, and gives the reviewer a
+ * list to check the reply against.
+ *
+ * The message stays required: a checklist says WHAT is missing but never why, and
+ * "Academic papers" alone does not tell someone their scan was unreadable.
+ */
+function RequestMoreInfoDialog({
+  onClose,
+  onConfirm,
+}: {
+  onClose: () => void;
+  onConfirm: (payload: { notes: string; documents: string[] }) => Promise<void>;
+}) {
+  const [notes, setNotes] = useState('');
+  const [picked, setPicked] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const toggle = (key: string) =>
+    setPicked((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
+
+  const submit = async () => {
+    if (!notes.trim()) { setError('Tell the applicant what is needed.'); return; }
+    setLoading(true);
+    try {
+      await onConfirm({ notes, documents: picked });
+      onClose();
+    } catch (err: unknown) {
+      setError(
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+          ?? 'Action failed',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={() => !loading && onClose()}
+      className="fixed inset-0 z-[99990] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    >
+      <div onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rmc-green/10 text-rmc-green">
+            <Send className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-gray-900">Request more information</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              The applicant is notified and the application moves to “More info requested”.
+            </p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-gray-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+          What is needed? <span className="text-red-500">*</span>
+        </label>
         <textarea
-          rows={4}
-          value={text}
-          onChange={(e) => { setText(e.target.value); setError(''); }}
-          placeholder={placeholder}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
+          rows={3}
+          value={notes}
+          autoFocus
+          onChange={(e) => { setNotes(e.target.value); setError(''); }}
+          placeholder="e.g. Your CV is missing the last two years, and the ID scan is unreadable."
+          className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
         />
-        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
-        <div className="flex gap-3 mt-4">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-          <button onClick={handleConfirm} disabled={loading} className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50', confirmClass)}>
-            {loading ? 'Processing…' : confirmLabel}
+
+        <fieldset className="mt-4">
+          <legend className="text-sm font-medium text-gray-700">
+            Documents to upload <span className="font-normal text-gray-400">— optional</span>
+          </legend>
+          <p className="mb-2 mt-0.5 text-xs text-gray-400">
+            Tick any file the applicant must send. Their form shows one upload box per tick.
+          </p>
+          <div className="space-y-1">
+            {REQUESTABLE_JOB_DOCUMENTS.map((doc) => (
+              <label
+                key={doc.key}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors',
+                  picked.includes(doc.key)
+                    ? 'border-rmc-green bg-rmc-green/5 text-gray-900'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300',
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={picked.includes(doc.key)}
+                  onChange={() => toggle(doc.key)}
+                  className="h-4 w-4 rounded border-gray-300 text-rmc-green focus:ring-rmc-green"
+                />
+                {doc.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+
+        <div className="mt-5 flex gap-3">
+          <button onClick={onClose} disabled={loading} className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={submit} disabled={loading} className="flex-1 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-rmc-green-dark disabled:opacity-50">
+            {loading ? 'Sending…' : picked.length ? `Send request (${picked.length} document${picked.length === 1 ? '' : 's'})` : 'Send request'}
           </button>
         </div>
       </div>
@@ -194,8 +452,9 @@ function AdminJobDetailContent() {
   const [app, setApp] = useState<JobApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeAction, setActiveAction] = useState<string | null>(null);
-  const [modal, setModal] = useState<'reject' | 'more_info' | null>(null);
-  const [confirmAccept, setConfirmAccept] = useState(false);
+  /** The action awaiting confirmation. One dialog serves every one of them. */
+  const [pending, setPending] = useState<ActionSpec | null>(null);
+  const [moreInfoOpen, setMoreInfoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [districtName, setDistrictName] = useState<string | null>(null);
@@ -221,7 +480,10 @@ function AdminJobDetailContent() {
     }).catch(() => setDistrictName(null));
   }, [app?.districtId]);
 
-  const doAction = async (action: JobStatusAction, payload: { notes?: string; reason?: string } = {}) => {
+  const doAction = async (
+    action: JobStatusAction,
+    payload: { notes?: string; reason?: string; documents?: string[] } = {},
+  ) => {
     setActiveAction(action);
     setError(null);
     try {
@@ -333,33 +595,33 @@ function AdminJobDetailContent() {
             ) : !canStartReview && !canDecide ? (
               <p className="text-xs text-gray-400">This application is {STATUS_LABELS[app.status]?.toLowerCase()} — no further action needed.</p>
             ) : (
-              <div className="space-y-2.5">
-                {canStartReview && (
-                  <button onClick={() => doAction('start_review')} disabled={actionLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
-                    {activeAction === 'start_review' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Start Review
-                  </button>
-                )}
-                {canShortlist && (
-                  <button onClick={() => doAction('shortlist')} disabled={actionLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
-                    {activeAction === 'shortlist' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />} Shortlist
-                  </button>
-                )}
+              <div className="space-y-3">
+                {/* Advancing actions first, as one group. These move the application
+                    forward and are the common path. */}
+                <div className="space-y-2">
+                  {canStartReview && <ActionButton spec={ACTIONS.start_review} onPick={setPending} busy={actionLoading} active={activeAction} />}
+                  {canShortlist && <ActionButton spec={ACTIONS.shortlist} onPick={setPending} busy={actionLoading} active={activeAction} />}
+                  {canDecide && <ActionButton spec={ACTIONS.accept} onPick={setPending} busy={actionLoading} active={activeAction} />}
+                </div>
+
                 {canDecide && (
                   <>
-                    <button onClick={() => setConfirmAccept(true)} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
-                      {activeAction === 'accept' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Accept / Approve
+                    {/* Asking for more is not a decision, so it reads as secondary. */}
+                    <button
+                      type="button"
+                      onClick={() => setMoreInfoOpen(true)}
+                      disabled={actionLoading}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-rmc-green hover:text-rmc-green disabled:opacity-50"
+                    >
+                      <Send className="h-4 w-4" /> Request More Info
                     </button>
-                    <button onClick={() => setModal('reject')} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
-                      <XCircle className="w-4 h-4" /> Reject
-                    </button>
-                    <button onClick={() => setModal('more_info')} disabled={actionLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors">
-                      <Send className="w-4 h-4" /> Request More Info
-                    </button>
+
+                    {/* Reject sits under a rule and is outlined, not filled. It used to be
+                        a solid red block the same size and weight as Accept directly above
+                        it — two irreversible opposites competing for the same glance. */}
+                    <div className="border-t border-gray-100 pt-3">
+                      <ActionButton spec={ACTIONS.reject} onPick={setPending} busy={actionLoading} active={activeAction} variant="soft" />
+                    </div>
                   </>
                 )}
               </div>
@@ -369,66 +631,42 @@ function AdminJobDetailContent() {
               <p className="text-xs text-red-600 mt-3"><strong>Rejection reason:</strong> {app.rejectionReason}</p>
             )}
             {app.moreInfoRequested && (
-              <p className="text-xs text-amber-600 mt-3"><strong>Info requested:</strong> {app.moreInfoRequested}</p>
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                <p className="text-xs text-amber-700">
+                  <strong>Info requested:</strong> {app.moreInfoRequested}
+                </p>
+                {/* The checklist the applicant was given, so a reviewer returning to this
+                    page can see what is outstanding without reopening the dialog. Cleared
+                    server-side once they respond. */}
+                {app.moreInfoDocuments && app.moreInfoDocuments.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {app.moreInfoDocuments.map((key) => (
+                      <li key={key} className="flex items-center gap-1.5 text-[11px] text-amber-700">
+                        <FileText className="h-3 w-3 shrink-0" />
+                        {requestedDocumentLabel(key)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {modal === 'reject' && (
-        <ActionModal
-          title="Reject Application"
-          placeholder="Reason for rejection (required)"
-          confirmLabel="Reject"
-          confirmClass="bg-red-600 hover:bg-red-700"
-          onClose={() => setModal(null)}
-          onConfirm={(reason) => doAction('reject', { reason })}
-        />
-      )}
-      {modal === 'more_info' && (
-        <ActionModal
-          title="Request More Information"
-          placeholder="What information is needed? (required)"
-          confirmLabel="Send Request"
-          confirmClass="bg-rmc-green hover:bg-rmc-green-dark"
-          onClose={() => setModal(null)}
-          onConfirm={(notes) => doAction('request_more_info', { notes })}
+      {moreInfoOpen && (
+        <RequestMoreInfoDialog
+          onClose={() => setMoreInfoOpen(false)}
+          onConfirm={({ notes, documents }) => doAction('request_more_info', { notes, documents })}
         />
       )}
 
-      {confirmAccept && createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          onClick={() => !actionLoading && setConfirmAccept(false)}
-          className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-        >
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <span className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-              </span>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900">Approve this application?</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  This marks <strong>{app.fullNames}</strong>&apos;s application for <strong>{app.positionAppliedFor}</strong> as <strong>Accepted</strong> and notifies the applicant.
-                </p>
-              </div>
-              <button onClick={() => setConfirmAccept(false)} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center shrink-0">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmAccept(false)} disabled={actionLoading} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
-                Cancel
-              </button>
-              <button onClick={() => { setConfirmAccept(false); doAction('accept'); }} disabled={actionLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
-                <CheckCircle2 className="w-4 h-4" /> Approve
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
+      {pending && (
+        <ConfirmActionDialog
+          spec={pending}
+          onClose={() => setPending(null)}
+          onConfirm={(payload) => doAction(pending.action, payload)}
+        />
       )}
     </div>
   );

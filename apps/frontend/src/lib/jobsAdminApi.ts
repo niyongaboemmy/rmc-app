@@ -18,6 +18,8 @@ export type JobStatusAction =
 
 export interface UpdateJobStatusPayload {
   action: JobStatusAction;
+  /** Requested document keys, for `request_more_info`. */
+  documents?: string[];
   notes?: string;
   reason?: string;
 }

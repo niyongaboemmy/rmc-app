@@ -169,6 +169,7 @@ export class JobApplicationsService {
       positionAppliedFor: application.positionAppliedFor,
       status: application.status,
       moreInfoRequested: application.moreInfoRequested,
+      moreInfoDocuments: application.moreInfoDocuments,
       rejectionReason: application.rejectionReason,
       submittedAt: application.submittedAt,
       createdAt: application.createdAt,
@@ -225,6 +226,9 @@ export class JobApplicationsService {
 
     const prev = application.status;
     application.status = JobApplicationStatus.UNDER_REVIEW;
+    // The request has been answered, so the checklist goes with it. Left in place it
+    // would still read as outstanding on the reviewer's next visit.
+    application.moreInfoDocuments = null;
     await this.saveScalarFields(application);
     await this.recordStatusChange(
       application.id,
@@ -338,6 +342,10 @@ export class JobApplicationsService {
           throw new BadRequestException('Notes are required when requesting more info');
         }
         application.moreInfoRequested = dto.notes;
+        // Null, not [], when nothing was ticked — the column's "no documents wanted"
+        // state. Storing an empty array would make the applicant's form render an empty
+        // checklist header for a request that is purely a question.
+        application.moreInfoDocuments = dto.documents?.length ? dto.documents : null;
         toStatus = JobApplicationStatus.MORE_INFO_REQUESTED;
         break;
       default:
