@@ -192,6 +192,18 @@ export function formatCurrency(currency: string, amount: number): string {
 
 // ── API ─────────────────────────────────────────────────────────────────────────
 
+export interface DonationCartResult {
+  donations: Donation[];
+  /** Our idempotency key; poll `/payments/status/:transactionId` with it. */
+  transactionId: string;
+  /** Null on providers without a hosted widget. */
+  invoiceNumber: string | null;
+  paymentLinkUrl: string | null;
+  publicKey: string | null;
+  widgetScriptUrl: string | null;
+  message: string;
+}
+
 export const donationsApi = {
   // Public
   listCampaigns: async (): Promise<PublicCampaign[]> => {
@@ -201,6 +213,21 @@ export const donationsApi = {
 
   donate: async (payload: CreateDonationPayload): Promise<Donation> => {
     const { data } = await apiClient.post('/donations', payload);
+    return data.data ?? data;
+  },
+
+  /**
+   * Records the whole basket as one payment.
+   *
+   * Preferred over calling {@link donate} per item: a single payment means one
+   * MoMo prompt instead of several, and it is the only way to offer card or
+   * bank — a hosted widget settles one invoice, not one per basket line.
+   */
+  donateCart: async (
+    items: CreateDonationPayload[],
+    channel: 'momo' | 'card' = 'momo',
+  ): Promise<DonationCartResult> => {
+    const { data } = await apiClient.post('/donations/cart', { items, channel });
     return data.data ?? data;
   },
 

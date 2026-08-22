@@ -23,6 +23,9 @@ import {
   SaveDocumentPayload,
   MarriageFees,
 } from '@/lib/marriageApi';
+import { paymentSettingsApi } from '@/lib/paymentSettingsApi';
+import { IremboPayWidget } from '@/components/payments/IremboPayWidget';
+import { IremboInvoiceHandle } from '@/hooks/useIremboPayment';
 import { FILE_SERVER_URL } from '@/lib/api';
 import axios from 'axios';
 import { Button } from '@/components/ui/Button';
@@ -258,6 +261,7 @@ function SuccessScreen({ app, locale, onReset }: { app: MarriageApplication; loc
 
 function PaymentWaitingScreen({
   applicationNumber, phone, amount, onCancel, onResend, isResending,
+  invoice, onPayByCard, cardBusy, locale,
 }: {
   applicationNumber: string;
   phone: string;
@@ -265,6 +269,12 @@ function PaymentWaitingScreen({
   onCancel: () => void;
   onResend: () => void;
   isResending: boolean;
+  /** Set once a card/bank invoice exists for this application. */
+  invoice?: IremboInvoiceHandle | null;
+  /** Asks the backend to issue a card/bank invoice. Absent when unsupported. */
+  onPayByCard?: () => void;
+  cardBusy?: boolean;
+  locale?: 'EN' | 'FR' | 'RW';
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
@@ -319,6 +329,38 @@ function PaymentWaitingScreen({
           : <><RefreshCw className="w-4 h-4" /> Resend MoMo prompt</>
         }
       </button>
+
+      {/* Card / bank — only when the configured gateway offers a widget. The
+          MoMo prompt above stays live; whichever the payer completes first wins,
+          because both settle the same invoice. */}
+      {(onPayByCard || invoice) && (
+        <div className="w-full max-w-sm pt-2 border-t border-gray-100 space-y-3">
+          <p className="text-xs text-gray-400">Prefer to pay by card or bank?</p>
+
+          {invoice ? (
+            <IremboPayWidget
+              invoice={invoice}
+              amount={amount}
+              currency="RWF"
+              locale={locale}
+              checkStatus={(txn) =>
+                paymentSettingsApi.getPaymentStatus(txn).then((r) => r.status)
+              }
+            />
+          ) : (
+            <button
+              onClick={onPayByCard}
+              disabled={cardBusy}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            >
+              {cardBusy
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <CreditCard className="w-4 h-4" />}
+              Pay by card or bank
+            </button>
+          )}
+        </div>
+      )}
 
       <button onClick={onCancel}
         className="text-xs text-gray-400 underline underline-offset-2 hover:text-gray-600 transition-colors">
@@ -483,9 +525,25 @@ export function MarriageWizard() {
 
   const [paymentPhase, setPaymentPhase]       = useState<PaymentPhase>('idle');
   const [pendingDraftApp, setPendingDraftApp] = useState<MarriageApplication | null>(null);
+  const [cardInvoice, setCardInvoice]         = useState<IremboInvoiceHandle | null>(null);
+  const [cardBusy, setCardBusy]               = useState(false);
+  const [widgetSupported, setWidgetSupported] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Persistence helpers ───────────────────────────────────────────────────
+
+  // Whether to offer card/bank at all is the gateway's answer, not ours — with
+  // IntouchPay active there is no widget and the button must not appear.
+  useEffect(() => {
+    let alive = true;
+    paymentSettingsApi
+      .getPublicPaymentConfig()
+      .then((c) => alive && setWidgetSupported(c.supportsWidget))
+      .catch(() => alive && setWidgetSupported(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const persist = useCallback((
     s: number,
@@ -682,6 +740,42 @@ export function MarriageWizard() {
     }
   }, [formData, draftId, startPolling, updateData]);
 
+  /**
+   * Issues a card/bank invoice for the application already awaiting payment.
+   *
+   * The MoMo prompt stays live alongside it — both channels settle the same
+   * invoice, so whichever the payer completes first wins, and the existing
+   * status polling confirms either.
+   */
+  const handlePayByCard = useCallback(async () => {
+    if (!pendingDraftApp) return;
+    setCardBusy(true);
+    try {
+      const result = await marriageApi.initiateUserMomoPayment(
+        pendingDraftApp.id,
+        formData.mobilePhone ?? '',
+        'card',
+      );
+      if (result.invoiceNumber) {
+        setCardInvoice({
+          transactionId: result.transactionId,
+          invoiceNumber: result.invoiceNumber,
+          publicKey: result.publicKey ?? undefined,
+          widgetScriptUrl: result.widgetScriptUrl ?? undefined,
+          paymentLinkUrl: result.paymentLinkUrl ?? undefined,
+        });
+      } else {
+        // The active provider has no widget — say so rather than leaving a
+        // button that silently does nothing.
+        setSubmitError('Card payment is not available right now. Please use Mobile Money.');
+      }
+    } catch (err) {
+      setSubmitError(extractMsg(err));
+    } finally {
+      setCardBusy(false);
+    }
+  }, [pendingDraftApp, formData.mobilePhone]);
+
   const handleResend = useCallback(async () => {
     if (!pendingDraftApp || !formData.mobilePhone) return;
     setIsResending(true);
@@ -752,6 +846,12 @@ export function MarriageWizard() {
           onCancel={handleCancelPayment}
           onResend={handleResend}
           isResending={isResending}
+          invoice={cardInvoice}
+          onPayByCard={widgetSupported ? handlePayByCard : undefined}
+          cardBusy={cardBusy}
+          locale={
+            locale?.toUpperCase() === 'RW' ? 'RW' : locale?.toUpperCase() === 'FR' ? 'FR' : 'EN'
+          }
         />
       </div>
     );

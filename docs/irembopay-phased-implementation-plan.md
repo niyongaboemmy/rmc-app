@@ -27,12 +27,12 @@ Nine phases, each independently shippable and independently revertable. Each pha
 
 **Known unknowns to resolve during Phase 3** (the IremboPay docs contradict themselves):
 
-| Question | Conflicting claims | How to resolve |
-| --- | --- | --- |
-| MoMo phone format | request table says `07########`; `BAD_PHONE_NUMBER` says "more or less than 12 digits" (i.e. `250788123456`) | Call sandbox with both against test MSISDN `0781234567`; keep whichever returns 200 |
-| Initiate-payment verb | page header says `GET`, body says `Method: POST` | POST (a body is required) — confirm with sandbox |
-| Header casing | `irembopay-secretKey` vs `irembopay-secretkey` | Irrelevant — HTTP headers are case-insensitive (RFC 7230). Send `irembopay-secretKey` |
-| Auth on initiate | "This API does not require authentication" while listing auth headers | Send the headers |
+| Question              | Conflicting claims                                                                                           | How to resolve                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| MoMo phone format     | request table says `07########`; `BAD_PHONE_NUMBER` says "more or less than 12 digits" (i.e. `250788123456`) | Call sandbox with both against test MSISDN `0781234567`; keep whichever returns 200   |
+| Initiate-payment verb | page header says `GET`, body says `Method: POST`                                                             | POST (a body is required) — confirm with sandbox                                      |
+| Header casing         | `irembopay-secretKey` vs `irembopay-secretkey`                                                               | Irrelevant — HTTP headers are case-insensitive (RFC 7230). Send `irembopay-secretKey` |
+| Auth on initiate      | "This API does not require authentication" while listing auth headers                                        | Send the headers                                                                      |
 
 ---
 
@@ -53,18 +53,18 @@ POST /api/v1/webhooks/intouch-pay  ──►  PaymentSettingsService     (jsonb 
 
 Key facts you need and might otherwise waste time discovering:
 
-| Fact | Location |
-| --- | --- |
-| Credentials live in a **jsonb bag**, not columns — new provider = new keys, no migration | [payment-method-settings.entity.ts](apps/backend/src/payment-settings/entities/payment-method-settings.entity.ts) |
-| Sensitive fields masked with `••••••••` via a `SENSITIVE_FIELDS` map | [payment-settings.service.ts:26](apps/backend/src/payment-settings/payment-settings.service.ts#L26) |
-| `isTestMode` boolean already on the settings entity — use it for sandbox/prod | same entity |
-| Frontend credential form is **generated from a field descriptor array** | [paymentSettingsApi.ts:151](apps/frontend/src/lib/paymentSettingsApi.ts#L151) |
-| Admin SSE stream already exists at `GET /admin/payment-settings/events` | [payment-settings.controller.ts:216](apps/backend/src/payment-settings/payment-settings.controller.ts#L216) |
-| Migrations are hand-written, named `<timestamp>-<seq>-<slug>.ts`, class `Name<timestamp>` | [database/migrations/](apps/backend/src/database/migrations/) |
-| Latest migration is `1790000000056-051-audit-log-action-length.ts` | → yours is `1790000000057-052-…` |
-| `main.ts` calls `NestFactory.create(AppModule)` with `app.use(json({limit:'2mb'}))` — **raw body is discarded** | [main.ts:14](apps/backend/src/main.ts#L14) |
-| Permissions enum: `PAYMENT_SETTINGS_VIEW` / `_MANAGE` | [permissions.enum.ts:120](apps/backend/src/common/types/permissions.enum.ts#L120) |
-| `PaymentTypeKey` enum lacks funeral/hajj/tender keys | [payment-type.entity.ts:12](apps/backend/src/payment-settings/entities/payment-type.entity.ts#L12) |
+| Fact                                                                                                            | Location                                                                                                          |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Credentials live in a **jsonb bag**, not columns — new provider = new keys, no migration                        | [payment-method-settings.entity.ts](apps/backend/src/payment-settings/entities/payment-method-settings.entity.ts) |
+| Sensitive fields masked with `••••••••` via a `SENSITIVE_FIELDS` map                                            | [payment-settings.service.ts:26](apps/backend/src/payment-settings/payment-settings.service.ts#L26)               |
+| `isTestMode` boolean already on the settings entity — use it for sandbox/prod                                   | same entity                                                                                                       |
+| Frontend credential form is **generated from a field descriptor array**                                         | [paymentSettingsApi.ts:151](apps/frontend/src/lib/paymentSettingsApi.ts#L151)                                     |
+| Admin SSE stream already exists at `GET /admin/payment-settings/events`                                         | [payment-settings.controller.ts:216](apps/backend/src/payment-settings/payment-settings.controller.ts#L216)       |
+| Migrations are hand-written, named `<timestamp>-<seq>-<slug>.ts`, class `Name<timestamp>`                       | [database/migrations/](apps/backend/src/database/migrations/)                                                     |
+| Latest migration is `1790000000056-051-audit-log-action-length.ts`                                              | → yours is `1790000000057-052-…`                                                                                  |
+| `main.ts` calls `NestFactory.create(AppModule)` with `app.use(json({limit:'2mb'}))` — **raw body is discarded** | [main.ts:14](apps/backend/src/main.ts#L14)                                                                        |
+| Permissions enum: `PAYMENT_SETTINGS_VIEW` / `_MANAGE`                                                           | [permissions.enum.ts:120](apps/backend/src/common/types/permissions.enum.ts#L120)                                 |
+| `PaymentTypeKey` enum lacks funeral/hajj/tender keys                                                            | [payment-type.entity.ts:12](apps/backend/src/payment-settings/entities/payment-type.entity.ts#L12)                |
 
 ---
 
@@ -99,9 +99,9 @@ export interface PaymentChargeRequest {
   /** Our idempotency key. Deterministic per domain record — never random on retry. */
   transactionId: string;
   amount: number;
-  currency: string;                    // 'RWF' unless the caller says otherwise
-  paymentTypeKey: string;              // DONATION | MARRIAGE_FEE | …
-  referenceId?: string;                // domain record id (donation.id, application.id)
+  currency: string; // 'RWF' unless the caller says otherwise
+  paymentTypeKey: string; // DONATION | MARRIAGE_FEE | …
+  referenceId?: string; // domain record id (donation.id, application.id)
   payer: { name?: string; phone?: string; email?: string };
   locale?: 'EN' | 'FR' | 'RW';
   description?: string;
@@ -111,15 +111,15 @@ export interface PaymentChargeRequest {
 }
 
 export interface PaymentChargeResult {
-  provider: string;                    // 'intouchpay' | 'irembopay'
+  provider: string; // 'intouchpay' | 'irembopay'
   status: GatewayStatus;
   /** invoiceNumber (IremboPay) or gateway transaction id (IntouchPay). */
   providerReference: string;
   /** Our transactionId, echoed for correlation. */
   transactionId: string;
-  paymentLinkUrl?: string;             // IremboPay
-  publicKey?: string;                  // IremboPay widget
-  widgetScriptUrl?: string;            // IremboPay widget
+  paymentLinkUrl?: string; // IremboPay
+  publicKey?: string; // IremboPay widget
+  widgetScriptUrl?: string; // IremboPay widget
   responseCode?: string;
   message?: string;
   raw?: Record<string, unknown>;
@@ -131,7 +131,7 @@ export interface PaymentStatusResult {
   paidAt?: Date;
   paidAmount?: number;
   balance?: number;
-  providerPaymentMethod?: string;      // MTN_MOMO | ONLINE_CARD | BK | …
+  providerPaymentMethod?: string; // MTN_MOMO | ONLINE_CARD | BK | …
   responseCode?: string;
   message?: string;
 }
@@ -314,13 +314,14 @@ CREATE apps/backend/src/integrations/irembo-pay/irembo-pay.service.spec.ts
 
 ```ts
 export interface IremboPayConfig {
-  secretKey: string; publicKey: string;
+  secretKey: string;
+  publicKey: string;
   paymentAccountIdentifier: string;
-  apiBaseUrl: string;        // resolved: override ?? (isTestMode ? sandbox : prod)
-  widgetScriptUrl: string;   // resolved the same way
-  apiVersion: string;        // default '3'
-  invoiceExpiryMinutes: number;   // default 1440
-  defaultLanguage: 'EN'|'FR'|'RW';
+  apiBaseUrl: string; // resolved: override ?? (isTestMode ? sandbox : prod)
+  widgetScriptUrl: string; // resolved the same way
+  apiVersion: string; // default '3'
+  invoiceExpiryMinutes: number; // default 1440
+  defaultLanguage: 'EN' | 'FR' | 'RW';
   signatureToleranceSeconds: number; // default 300
   isTestMode: boolean;
 }
@@ -342,12 +343,12 @@ export interface IremboPayConfig {
 
 **3.3 `irembo-pay.service.ts`** — four typed methods:
 
-| Method | Call |
-| --- | --- |
-| `createInvoice(input)` | `POST /payments/invoices` |
-| `getInvoice(ref)` | `GET /payments/invoices/{ref}` — `ref` = invoiceNumber **or** our transactionId |
-| `initiateMomoPush(input)` | `POST /payments/transactions/initiate` |
-| `updateInvoice(num, input)` | `PUT /payments/invoices/{num}` (partial payments) |
+| Method                      | Call                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------- |
+| `createInvoice(input)`      | `POST /payments/invoices`                                                       |
+| `getInvoice(ref)`           | `GET /payments/invoices/{ref}` — `ref` = invoiceNumber **or** our transactionId |
+| `initiateMomoPush(input)`   | `POST /payments/transactions/initiate`                                          |
+| `updateInvoice(num, input)` | `PUT /payments/invoices/{num}` (partial payments)                               |
 
 Details that will bite you:
 
@@ -437,12 +438,14 @@ CREATE apps/backend/src/webhooks/irembo-pay-webhook.service.ts
 **5.1 Raw body — do this first or nothing else works.** The HMAC covers the **exact bytes received**. `main.ts` currently does `app.use(json({ limit: '2mb' }))`, which discards them. Add a `verify` hook:
 
 ```ts
-app.use(json({
-  limit: '2mb',
-  verify: (req: any, _res, buf) => {
-    if (req.originalUrl?.includes('/webhooks/irembopay')) req.rawBody = Buffer.from(buf);
-  },
-}));
+app.use(
+  json({
+    limit: '2mb',
+    verify: (req: any, _res, buf) => {
+      if (req.originalUrl?.includes('/webhooks/irembopay')) req.rawBody = Buffer.from(buf);
+    },
+  }),
+);
 ```
 
 Scoped to the webhook path so we don't retain a 2 MB buffer on every request. Re-serialising the parsed object will **not** work: key order, whitespace and number formatting all differ from the wire bytes.
@@ -451,12 +454,15 @@ Scoped to the webhook path so we don't retain a 2 MB buffer on every request. Re
 
 ```ts
 export function verifyIremboSignature(
-  secretKey: string, rawBody: Buffer | string, header: string, toleranceSeconds = 300,
-): { valid: boolean; reason?: string }
+  secretKey: string,
+  rawBody: Buffer | string,
+  header: string,
+  toleranceSeconds = 300,
+): { valid: boolean; reason?: string };
 ```
 
 1. Parse `t=<ms>,s=<hex>` — split on `,` then on the **first** `=`.
-2. `signedPayload = `${t}#${rawBody}``.
+2. `signedPayload =`${t}#${rawBody}``.
 3. `expected = createHmac('sha256', secretKey).update(signedPayload).digest('hex')`.
 4. **Compare lengths before `timingSafeEqual`** — it throws on unequal buffers, and an uncaught throw here becomes a 500 that tells an attacker their guess was the wrong length.
 5. Reject if `Math.abs(Date.now() - Number(t)) > toleranceSeconds * 1000`. Note `t` is **milliseconds**.
@@ -675,18 +681,18 @@ Phases 2 and 3 can run in parallel with 1. Phase 6 can start once 2 lands. **Pha
 
 ## Estimate
 
-| Phase | Days |
-| --- | --- |
-| 1 — Gateway abstraction | 1.5 |
-| 2 — Schema | 0.5 |
-| 3 — HTTP client | 2 |
-| 4 — Provider | 1 |
-| 5 — Signed webhook | 1.5 |
-| 6 — Settings UI | 2.5 |
-| 7 — Reconciliation | 0.5 |
-| 8 — Domain migration | 1.5 |
-| 9 — Widget | 1.5 |
-| **Total** | **≈ 12.5 days** |
+| Phase                   | Days            |
+| ----------------------- | --------------- |
+| 1 — Gateway abstraction | 1.5             |
+| 2 — Schema              | 0.5             |
+| 3 — HTTP client         | 2               |
+| 4 — Provider            | 1               |
+| 5 — Signed webhook      | 1.5             |
+| 6 — Settings UI         | 2.5             |
+| 7 — Reconciliation      | 0.5             |
+| 8 — Domain migration    | 1.5             |
+| 9 — Widget              | 1.5             |
+| **Total**               | **≈ 12.5 days** |
 
 ---
 

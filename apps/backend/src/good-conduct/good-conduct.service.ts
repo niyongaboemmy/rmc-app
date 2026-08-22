@@ -28,6 +28,7 @@ import { PaymentSettingsService } from '../payment-settings/payment-settings.ser
 import { PaymentTypeKey } from '../payment-settings/entities/payment-type.entity';
 import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
+import { PaymentGatewayService } from '../payments/payment-gateway.service';
 import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
 import { SmsService } from '../integrations/sms/sms.service';
 import { EmailService } from '../integrations/email/email.service';
@@ -67,6 +68,7 @@ export class GoodConductService {
     private readonly paymentSettings: PaymentSettingsService,
     private readonly configService: ConfigService,
     private readonly intouchPay: IntouchPayService,
+    private readonly paymentGateway: PaymentGatewayService,
     private readonly notifSettings: NotificationSettingsService,
     private readonly smsService: SmsService,
     private readonly emailService: EmailService,
@@ -200,16 +202,29 @@ export class GoodConductService {
 
   // ── Payment (IntouchPay) ─────────────────────────────────────────────────────
 
+  /**
+   * Starts a fee payment for the applicant's own request.
+   *
+   * `channel` picks how the payer settles, not which provider collects:
+   * 'momo' pushes a prompt, 'card' issues a payable invoice for the hosted
+   * widget. Which provider handles either is a settings choice.
+   */
   async initiateMomoPayment(
     id: string,
     applicantId: string,
     mobilePhone: string,
+    channel: 'momo' | 'card' = 'momo',
   ): Promise<{
     request: GoodConductRequest;
     transaction: GoodConductTransaction;
     gatewayRef: string | null;
     responseCode: string;
     message: string;
+    transactionId: string;
+    invoiceNumber: string | null;
+    paymentLinkUrl: string | null;
+    publicKey: string | null;
+    widgetScriptUrl: string | null;
   }> {
     const request = await this.findOwn(id, applicantId);
 
@@ -220,9 +235,10 @@ export class GoodConductService {
       throw new BadRequestException('Request must be in draft status to initiate payment');
     }
 
-    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException('MoMo (IntouchPay) credentials are not configured');
+    // Ask the gateway rather than one named provider, so this keeps working
+    // when the active provider changes.
+    if (!(await this.paymentGateway.canCharge())) {
+      throw new BadRequestException('No payment gateway is configured. Please contact RMC.');
     }
 
     // ── Duplicate-charge guard ────────────────────────────────────────────────
@@ -248,6 +264,14 @@ export class GoodConductService {
             check.paymentStatus === 'paid'
               ? 'Payment already completed for this request.'
               : 'A payment is already being processed for this request. Please wait a moment, then check your status.',
+          // No widget handle: this path deliberately does not start a new
+          // charge, so there is no fresh invoice to open. The caller polls the
+          // in-flight one instead.
+          transactionId: inflight.providerRef ?? '',
+          invoiceNumber: null,
+          paymentLinkUrl: null,
+          publicKey: null,
+          widgetScriptUrl: null,
         };
       }
       // The prior charge definitively failed → safe to start a fresh one.
@@ -255,17 +279,20 @@ export class GoodConductService {
     }
 
     const requestTxnId = `GC-${request.id}-${Date.now()}`;
-    const fallbackCallback = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
 
-    const result = await this.intouchPay.requestPayment({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      amount: Number(request.amountDue),
-      mobilePhone,
+    // The `GC-` prefix is preserved across providers — the webhook services
+    // match domain records on it.
+    const result = await this.paymentGateway.charge({
       transactionId: requestTxnId,
-      callbackUrl: creds.callbackUrl || fallbackCallback,
-      gatewayUrl: creds.gatewayUrl || undefined,
+      amount: Number(request.amountDue),
+      currency: 'RWF',
+      paymentTypeKey: 'GOOD_CONDUCT_FEE',
+      referenceId: request.id,
+      payer: { name: request.fullNames ?? undefined, phone: mobilePhone },
+      description: `Good conduct certificate — ${request.fullNames ?? request.id}`,
+      // Card/bank payers settle in the widget; a prompt as well would ask them
+      // to pay the same invoice twice.
+      pushProvider: channel === 'momo' ? 'MTN' : undefined,
     });
 
     request.paymentStatus = PaymentStatus.PROCESSING;
@@ -283,7 +310,7 @@ export class GoodConductService {
             ? 'failed'
             : 'pending',
       metadata: {
-        gatewayTransactionId: result.transactionId,
+        gatewayTransactionId: result.providerReference,
         responseCode: result.responseCode,
         mobilePhone,
       },
@@ -302,9 +329,16 @@ export class GoodConductService {
     return {
       request,
       transaction: savedTx,
-      gatewayRef: result.transactionId ?? null,
-      responseCode: result.responseCode,
-      message: result.message,
+      gatewayRef: result.domainReference ?? null,
+      responseCode: result.responseCode ?? '',
+      message: result.message ?? '',
+      // What the browser needs to open the hosted widget; null on providers
+      // that have none, so the caller falls back to the MoMo prompt.
+      transactionId: requestTxnId,
+      invoiceNumber: result.provider === 'irembopay' ? result.providerReference : null,
+      paymentLinkUrl: result.paymentLinkUrl ?? null,
+      publicKey: result.publicKey ?? null,
+      widgetScriptUrl: result.widgetScriptUrl ?? null,
     };
   }
 

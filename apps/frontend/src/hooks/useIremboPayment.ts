@@ -33,15 +33,59 @@ export interface UseIremboPaymentOptions {
   pollIntervalMs?: number;
 }
 
+interface IremboWidgetError {
+  message?: string;
+  /** Present on the structured `{success:false, errors:[…]}` shape. */
+  errors?: Array<{ code?: string; detail?: string }>;
+  code?: string;
+}
+
 interface IremboGlobal {
   initiate: (options: {
     publicKey: string;
     invoiceNumber: string;
     locale?: unknown;
-    callback: (err?: { message?: string }, resp?: unknown) => void;
+    callback: (err?: IremboWidgetError, resp?: unknown) => void;
   }) => void;
   locale?: Record<string, unknown>;
   closeModal?: () => void;
+}
+
+/**
+ * Widget error codes, per the v3 "Javascript widget integration" docs.
+ *
+ * The widget hands back a machine code; a payer needs a sentence that tells
+ * them whether to retry, wait, or stop. Note that several of these are not
+ * failures at all from the payer's point of view — `BAD_INVOICES_PAID` means
+ * the money already arrived — so the copy must not tell them to try again.
+ */
+const WIDGET_ERROR_MESSAGES: Record<string, string> = {
+  INVALID_KEY: 'This payment page is misconfigured. Please contact RMC — do not retry.',
+  INVOICE_NOT_FOUND: 'We could not find this payment. Please start again.',
+  INVOICE_MISSING: 'We could not find this payment. Please start again.',
+  BAD_INVOICES_PAID: 'This payment has already been completed. No further action is needed.',
+  BAD_INVOICES_PAYMENT_EXPIRED:
+    'This payment link has expired. Please start a new payment.',
+  BAD_INVOICES_IN_BATCH:
+    'This payment is part of a group and cannot be paid on its own.',
+  BAD_LOCALE: 'This payment page could not load in your language. Please try again in English.',
+};
+
+/** True when the "error" actually means the payment succeeded. */
+function isAlreadyPaid(code?: string): boolean {
+  return code === 'BAD_INVOICES_PAID';
+}
+
+function describeWidgetError(err: IremboWidgetError): { message: string; code?: string } {
+  const code = err.code ?? err.errors?.[0]?.code;
+  if (code && WIDGET_ERROR_MESSAGES[code]) return { message: WIDGET_ERROR_MESSAGES[code], code };
+  return {
+    message:
+      err.errors?.[0]?.detail ??
+      err.message ??
+      'The payment was not completed. You can try again.',
+    code,
+  };
 }
 
 declare global {
@@ -184,9 +228,19 @@ export function useIremboPayment(options: UseIremboPaymentOptions) {
           locale: irembo.locale?.[locale] ?? locale,
           callback: (err) => {
             if (err) {
+              const { message, code } = describeWidgetError(err);
+
+              // "Already paid" is a success wearing an error's clothing — the
+              // money is in. Confirm it with the backend rather than telling the
+              // payer something went wrong.
+              if (isAlreadyPaid(code)) {
+                void confirm(invoice.transactionId);
+                return;
+              }
+
               // The invoice stays payable — this is a UX message, not a verdict.
               setPhase('awaiting-payer');
-              setError(err.message ?? 'The payment was not completed. You can try again.');
+              setError(message);
               return;
             }
             void confirm(invoice.transactionId);

@@ -238,6 +238,21 @@ export const STATUS_COLORS: Record<MarriageApplicationStatus, string> = {
 
 // ── Member API ────────────────────────────────────────────────────────────────
 
+export interface MarriagePaymentInitiation {
+  application: MarriageApplication;
+  transaction: { id: string; status: string; providerRef: string | null };
+  gatewayRef: string | null;
+  responseCode: string;
+  message: string;
+  /** Our idempotency key — poll `/payments/status/:transactionId` with it. */
+  transactionId: string;
+  /** Null on providers without a hosted widget. */
+  invoiceNumber: string | null;
+  paymentLinkUrl: string | null;
+  publicKey: string | null;
+  widgetScriptUrl: string | null;
+}
+
 export const marriageApi = {
   createDraft: async (payload: CreateMarriageApplicationPayload): Promise<MarriageApplication> => {
     const { data } = await apiClient.post('/marriage/applications/draft', payload);
@@ -289,17 +304,20 @@ export const marriageApi = {
     return data.data ?? data;
   },
 
+  /**
+   * Starts a fee payment. `channel` 'momo' pushes a prompt to the phone;
+   * 'card' issues a payable invoice for the hosted widget and returns the
+   * handle needed to open it.
+   */
   initiateUserMomoPayment: async (
     id: string,
     mobilePhone: string,
-  ): Promise<{
-    application: MarriageApplication;
-    transaction: { id: string; status: string; providerRef: string | null };
-    gatewayRef: string | null;
-    responseCode: string;
-    message: string;
-  }> => {
-    const { data } = await apiClient.post(`/marriage/applications/${id}/payment/initiate-momo`, { mobilePhone });
+    channel: 'momo' | 'card' = 'momo',
+  ): Promise<MarriagePaymentInitiation> => {
+    const { data } = await apiClient.post(`/marriage/applications/${id}/payment/initiate-momo`, {
+      mobilePhone,
+      channel,
+    });
     return data.data ?? data;
   },
 

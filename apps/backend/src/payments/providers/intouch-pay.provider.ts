@@ -68,6 +68,9 @@ export class IntouchPayProvider implements PaymentGatewayProvider {
       providerReference: result.transactionId
         ? `${req.transactionId}|${result.transactionId}`
         : req.transactionId,
+      domainReference: result.transactionId
+        ? `${req.transactionId}|${result.transactionId}`
+        : req.transactionId,
       transactionId: req.transactionId,
       responseCode: result.responseCode,
       message: result.message,

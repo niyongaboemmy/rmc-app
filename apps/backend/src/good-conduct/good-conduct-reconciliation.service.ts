@@ -18,6 +18,7 @@ import { GoodConductService } from './good-conduct.service';
 export class GoodConductReconciliationService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(GoodConductReconciliationService.name);
   private timer: ReturnType<typeof setInterval> | null = null;
+  private startupTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly RUN_INTERVAL_MS = 3 * 60 * 1000;
   private readonly MIN_AGE_MS = 3 * 60 * 1000;
@@ -30,7 +31,9 @@ export class GoodConductReconciliationService implements OnModuleInit, OnModuleD
   ) {}
 
   onModuleInit(): void {
-    setTimeout(() => void this.tick(), 45_000);
+    // Held so shutdown can cancel it — a process that closes within 45s would
+    // otherwise die querying a connection that is already gone.
+    this.startupTimer = setTimeout(() => void this.tick(), 45_000);
     this.timer = setInterval(() => void this.tick(), this.RUN_INTERVAL_MS);
   }
 
@@ -45,6 +48,7 @@ export class GoodConductReconciliationService implements OnModuleInit, OnModuleD
   }
 
   onModuleDestroy(): void {
+    if (this.startupTimer) clearTimeout(this.startupTimer);
     if (this.timer) clearInterval(this.timer);
   }
 

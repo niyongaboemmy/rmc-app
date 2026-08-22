@@ -4,6 +4,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { DonationsService } from './donations.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
+import { CreateDonationCartDto } from './dto/create-donation-cart.dto';
 
 @ApiTags('Donations')
 @Controller('donations')
@@ -22,6 +23,15 @@ export class DonationsController {
   @ApiOperation({ summary: 'Record a donation made from the public donate page' })
   create(@Body() dto: CreateDonationDto, @CurrentUser('id') userId: string | undefined) {
     return this.service.create(dto, userId ?? null);
+  }
+
+  @Post('cart')
+  @Public()
+  @ApiOperation({
+    summary: 'Record a basket of donations settled by a single payment (enables card/bank)',
+  })
+  createCart(@Body() dto: CreateDonationCartDto, @CurrentUser('id') userId: string | undefined) {
+    return this.service.createCart(dto.items, userId ?? null, dto.channel ?? 'momo');
   }
 
   @Get(':id/status')

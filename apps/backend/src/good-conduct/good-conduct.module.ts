@@ -12,6 +12,7 @@ import { NotificationSettingsModule } from '../integrations/notifications/notifi
 import { SmsModule } from '../integrations/sms/sms.module';
 import { EmailModule } from '../integrations/email/email.module';
 import { PaymentSettingsModule } from '../payment-settings/payment-settings.module';
+import { PaymentsModule } from '../payments/payments.module';
 import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module';
 import { MosquesModule } from '../mosques/mosques.module';
 import { LocationsModule } from '../locations/locations.module';
@@ -22,6 +23,7 @@ import { LocationsModule } from '../locations/locations.module';
     SmsModule,
     EmailModule,
     PaymentSettingsModule,
+    PaymentsModule,
     IntouchPayModule,
     MosquesModule,
     LocationsModule,

@@ -3,6 +3,23 @@ import { PaymentMethodCode } from '../payment-settings/entities/payment-method.e
 /** Business outcome of a gateway call, normalised across providers. */
 export type GatewayStatus = 'PENDING' | 'SUCCESSFUL' | 'FAILED';
 
+/**
+ * One line on a multi-item charge — a single cart entry, for instance.
+ *
+ * Providers that have no concept of items (IntouchPay) charge the request's
+ * total and ignore these; providers that do (IremboPay) turn them into one
+ * invoice with several payment items, which is what lets a whole cart be paid
+ * in a single transaction.
+ */
+export interface PaymentLineItem {
+  paymentTypeKey: string;
+  paymentTypeRateId?: string;
+  /** Unit amount. The line total is `amount × quantity`. */
+  amount: number;
+  quantity?: number;
+  description?: string;
+}
+
 export interface PaymentChargeRequest {
   /** Our idempotency key. Deterministic per domain record — never random on retry. */
   transactionId: string;
@@ -21,6 +38,14 @@ export interface PaymentChargeRequest {
   expiresAt?: Date;
   /** MoMo push only. Omit to create a payable invoice without pushing. */
   pushProvider?: 'MTN' | 'AIRTEL';
+  /**
+   * Several lines settled by one payment. When omitted the charge is a single
+   * line of `amount` against `paymentTypeKey`.
+   *
+   * The request's `amount` must still equal the sum of the lines — it is what
+   * non-itemised providers charge, and what the ledger records.
+   */
+  items?: PaymentLineItem[];
   /** Marks the transaction as a staff test rather than a real payment. */
   isTest?: boolean;
   /** User id that triggered the charge, when it came from the admin UI. */
@@ -33,6 +58,16 @@ export interface PaymentChargeResult {
   status: GatewayStatus;
   /** invoiceNumber (IremboPay) or gateway transaction id (IntouchPay). */
   providerReference: string;
+  /**
+   * What a domain record must persist so the webhook can find it again.
+   *
+   * Always begins with our `transactionId`, because that is what every
+   * provider's callback carries back and what the domain webhook services match
+   * on. `providerReference` is NOT interchangeable: IremboPay's is an invoice
+   * number the callback never mentions, so persisting it silently breaks
+   * settlement — the payment succeeds and the record stays pending forever.
+   */
+  domainReference: string;
   /** Our transactionId, echoed for correlation. */
   transactionId: string;
   paymentLinkUrl?: string;

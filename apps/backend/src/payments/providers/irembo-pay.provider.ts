@@ -52,15 +52,39 @@ export class IremboPayProvider implements PaymentGatewayProvider {
     const cfg = await this.config.get();
     const currency = req.currency ?? 'RWF';
 
+    // One invoice can carry several payment items, which is how a whole cart is
+    // settled by a single payment rather than one invoice per line.
+    const lines =
+      req.items && req.items.length > 0
+        ? req.items
+        : [
+            {
+              paymentTypeKey: req.paymentTypeKey,
+              paymentTypeRateId: req.paymentTypeRateId,
+              amount: req.amount,
+              quantity: 1,
+            },
+          ];
+
     // Throws a BadRequest naming the Products tab when unmapped — an admin can
     // act on that, where a generic 500 only produces a support ticket.
-    const product = await this.products.resolveForCharge(
-      IREMBOPAY_PROVIDER_KEY,
-      req.paymentTypeKey,
-      req.paymentTypeRateId,
+    const resolved = await Promise.all(
+      lines.map(async (line) => ({
+        line,
+        product: await this.products.resolveForCharge(
+          IREMBOPAY_PROVIDER_KEY,
+          line.paymentTypeKey,
+          line.paymentTypeRateId,
+        ),
+      })),
     );
+
+    // A mixed-account invoice is not a thing IremboPay supports — the account
+    // fixes the currency — so the first line's override wins and the rest fall
+    // back to the method-level account.
     const paymentAccount =
-      product.paymentAccountIdentifier || (await this.config.accountForCurrency(currency));
+      resolved.find((r) => r.product.paymentAccountIdentifier)?.product.paymentAccountIdentifier ||
+      (await this.config.accountForCurrency(currency));
 
     const expiryAt = req.expiresAt
       ? this.irembo.formatExpiry(req.expiresAt)
@@ -71,7 +95,11 @@ export class IremboPayProvider implements PaymentGatewayProvider {
       invoice = await this.irembo.createInvoice({
         transactionId: req.transactionId,
         paymentAccountIdentifier: paymentAccount,
-        paymentItems: [{ code: product.productCode, quantity: 1, unitAmount: req.amount }],
+        paymentItems: resolved.map(({ line, product }) => ({
+          code: product.productCode,
+          quantity: line.quantity ?? 1,
+          unitAmount: line.amount,
+        })),
         expiryAt,
         description: req.description,
         language: req.locale ?? cfg.defaultLanguage,
@@ -120,6 +148,9 @@ export class IremboPayProvider implements PaymentGatewayProvider {
       provider: IREMBOPAY_PROVIDER_KEY,
       status,
       providerReference: invoice.invoiceNumber,
+      // Our id, not the invoice number: the callback carries `transactionId`,
+      // so this is what the domain webhook services can actually match on.
+      domainReference: req.transactionId,
       transactionId: req.transactionId,
       paymentLinkUrl: invoice.paymentLinkUrl ?? stored.paymentLinkUrl ?? undefined,
       publicKey: cfg.publicKey,

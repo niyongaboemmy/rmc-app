@@ -20,6 +20,7 @@ import { IremboPayApiError } from './irembo-pay.types';
 export class IremboPayReconciliationService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(IremboPayReconciliationService.name);
   private timer: ReturnType<typeof setInterval> | null = null;
+  private startupTimer: ReturnType<typeof setTimeout> | null = null;
   private running = false;
 
   private readonly RUN_INTERVAL_MS = 10 * 60 * 1000;
@@ -38,12 +39,16 @@ export class IremboPayReconciliationService implements OnModuleInit, OnModuleDes
   ) {}
 
   onModuleInit(): void {
-    // Let the app finish starting before the first sweep.
-    setTimeout(() => void this.reconcile(), 60_000);
+    // Let the app finish starting before the first sweep. Held so shutdown can
+    // cancel it: a short-lived process (a CLI script, a test) closes the app
+    // before this fires, and an uncancelled sweep then queries a closed
+    // connection and crashes the process on its way out.
+    this.startupTimer = setTimeout(() => void this.reconcile(), 60_000);
     this.timer = setInterval(() => void this.reconcile(), this.RUN_INTERVAL_MS);
   }
 
   onModuleDestroy(): void {
+    if (this.startupTimer) clearTimeout(this.startupTimer);
     if (this.timer) clearInterval(this.timer);
   }
 

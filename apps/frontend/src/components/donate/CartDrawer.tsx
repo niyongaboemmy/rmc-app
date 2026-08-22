@@ -9,6 +9,10 @@ import {
   CreditCard, Landmark, Wallet,
 } from 'lucide-react';
 import { PhoneInput, toE164 } from '@/components/ui/PhoneInput';
+import { cn } from '@/lib/utils';
+import { paymentSettingsApi } from '@/lib/paymentSettingsApi';
+import { IremboPayWidget } from '@/components/payments/IremboPayWidget';
+import { IremboInvoiceHandle } from '@/hooks/useIremboPayment';
 import { money, type CartItem } from './donateData';
 import { donationsApi } from '@/lib/donationsApi';
 import { buildDonationMessage } from '@/lib/donationMeta';
@@ -16,7 +20,7 @@ import type { DonationSummary } from './SuccessState';
 
 type Phase = 'form' | 'waiting' | 'timeout' | 'failed';
 
-const DISABLED_METHODS = ['card', 'bank', 'paypal'];
+const DISABLED_METHODS = ['bank', 'paypal'];
 
 const METHOD_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   momo: Smartphone,
@@ -332,6 +336,23 @@ export function CartDrawer({
   const [confirmedTotal, setConfirmedTotal] = useState(0);
   const [checkCount, setCheckCount] = useState(0);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [method, setMethod] = useState<'momo' | 'card'>('momo');
+  const [widgetSupported, setWidgetSupported] = useState(false);
+  const [cardInvoice, setCardInvoice] = useState<IremboInvoiceHandle | null>(null);
+  const [cardBusy, setCardBusy] = useState(false);
+
+  // Whether card/bank is on offer is the gateway's answer, not ours — with
+  // IntouchPay active there is no widget and the option must stay hidden.
+  useEffect(() => {
+    let alive = true;
+    paymentSettingsApi
+      .getPublicPaymentConfig()
+      .then((c) => alive && setWidgetSupported(c.supportsWidget))
+      .catch(() => alive && setWidgetSupported(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Lock body scroll while drawer is open
   useEffect(() => {
@@ -394,6 +415,24 @@ export function CartDrawer({
     tick();
   }, []);
 
+  /** The basket as API payloads. Shared by checkout and resend so they cannot drift. */
+  const buildCartItems = useCallback(
+    (e164Phone: string) =>
+      items.map((it) => ({
+        campaignSlug: it.campaignSlug,
+        amount: it.amount,
+        currency,
+        frequency: (recurring ? 'monthly' : 'once') as 'monthly' | 'once',
+        paymentMethod: 'momo',
+        donorName: anonymous ? undefined : name.trim() || undefined,
+        donorEmail: email.includes('@') ? email.trim() : undefined,
+        donorPhone: e164Phone,
+        isAnonymous: anonymous,
+        message: buildDonationMessage({ niyyah, category: it.category, fund: it.fundKey }),
+      })),
+    [items, currency, recurring, anonymous, name, email, niyyah],
+  );
+
   const initiatePayment = useCallback(async () => {
     if (total <= 0 || submitting) return;
     if (!phone.trim()) { setError(t('cart.phoneRequired')); return; }
@@ -402,22 +441,10 @@ export function CartDrawer({
     setError('');
     try {
       const e164Phone = toE164(phone.trim());
-      const donations = await Promise.all(
-        items.map((it) =>
-          donationsApi.donate({
-            campaignSlug: it.campaignSlug,
-            amount: it.amount,
-            currency,
-            frequency: recurring ? 'monthly' : 'once',
-            paymentMethod: 'momo',
-            donorName: anonymous ? undefined : name.trim() || undefined,
-            donorEmail: email.includes('@') ? email.trim() : undefined,
-            donorPhone: e164Phone,
-            isAnonymous: anonymous,
-            message: buildDonationMessage({ niyyah, category: it.category, fund: it.fundKey }),
-          }),
-        ),
-      );
+      // One payment for the whole basket: a single MoMo prompt rather than one
+      // per item, and the only shape a card/bank widget can settle.
+      const cart = await donationsApi.donateCart(buildCartItems(e164Phone), 'momo');
+      const donations = cart.donations;
 
       const pending = donations.filter((d) => d.status === 'pending').map((d) => d.id);
       const anyImmediateFailure = donations.some((d) => d.status === 'failed' || d.status === 'refunded');
@@ -444,7 +471,41 @@ export function CartDrawer({
     } finally {
       setSubmitting(false);
     }
-  }, [total, submitting, phone, items, currency, recurring, name, email, anonymous, niyyah, t, startPolling]);
+  }, [total, submitting, phone, t, startPolling, buildCartItems]);
+
+  /**
+   * Checks out the basket for card/bank.
+   *
+   * Creates the same donations as the MoMo path but asks for no prompt; the
+   * payer settles the single invoice in the hosted widget instead. Confirmation
+   * still comes from the backend, never from the widget's callback.
+   */
+  const payByCard = useCallback(async () => {
+    if (total <= 0 || cardBusy) return;
+    setCardBusy(true);
+    setError('');
+    try {
+      const e164Phone = phone.trim() ? toE164(phone.trim()) : '';
+      const cart = await donationsApi.donateCart(buildCartItems(e164Phone), 'card');
+
+      if (!cart.invoiceNumber) {
+        setError('Card payment is unavailable right now. Please use Mobile Money.');
+        return;
+      }
+      setCardInvoice({
+        transactionId: cart.transactionId,
+        invoiceNumber: cart.invoiceNumber,
+        publicKey: cart.publicKey ?? undefined,
+        widgetScriptUrl: cart.widgetScriptUrl ?? undefined,
+        paymentLinkUrl: cart.paymentLinkUrl ?? undefined,
+      });
+      setPendingIds(cart.donations.map((d) => d.id));
+    } catch {
+      setError(t('cart.error'));
+    } finally {
+      setCardBusy(false);
+    }
+  }, [total, cardBusy, phone, buildCartItems, t]);
 
   const handleResend = async () => {
     if (isResending || submitting) return;
@@ -456,22 +517,8 @@ export function CartDrawer({
       // Re-create a fresh IntouchPay payment request by calling donate() again.
       // Old pending donation records stay in the DB but will never complete.
       const e164Phone = toE164(phone.trim());
-      const donations = await Promise.all(
-        items.map((it) =>
-          donationsApi.donate({
-            campaignSlug: it.campaignSlug,
-            amount: it.amount,
-            currency,
-            frequency: recurring ? 'monthly' : 'once',
-            paymentMethod: 'momo',
-            donorName: anonymous ? undefined : name.trim() || undefined,
-            donorEmail: email.includes('@') ? email.trim() : undefined,
-            donorPhone: e164Phone,
-            isAnonymous: anonymous,
-            message: buildDonationMessage({ niyyah, category: it.category, fund: it.fundKey }),
-          }),
-        ),
-      );
+      const cart = await donationsApi.donateCart(buildCartItems(e164Phone), 'momo');
+      const donations = cart.donations;
       const pending = donations.filter((d) => d.status === 'pending').map((d) => d.id);
       const anyImmediateFailure = donations.some((d) => d.status === 'failed' || d.status === 'refunded');
       setPendingIds(pending);
@@ -726,15 +773,43 @@ export function CartDrawer({
                   <div>
                     <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400">{t('cart.paymentMethod')}</p>
                     <div className="grid grid-cols-2 gap-2">
-                      {/* MoMo — active */}
+                      {/* MoMo */}
                       <button
                         type="button"
-                        aria-pressed
-                        className="flex flex-col items-center gap-1.5 rounded-lg border border-rmc-green bg-rmc-green-light/40 p-3 text-center ring-1 ring-rmc-green/30"
+                        aria-pressed={method === 'momo'}
+                        onClick={() => setMethod('momo')}
+                        className={cn(
+                          'flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center',
+                          method === 'momo'
+                            ? 'border-rmc-green bg-rmc-green-light/40 ring-1 ring-rmc-green/30'
+                            : 'border-gray-200 hover:border-gray-300',
+                        )}
                       >
-                        <Smartphone className="h-5 w-5 text-rmc-green" />
+                        <Smartphone
+                          className={cn('h-5 w-5', method === 'momo' ? 'text-rmc-green' : 'text-gray-400')}
+                        />
                         <span className="text-[11px] font-bold text-gray-900">{METHOD_LABELS.momo}</span>
                       </button>
+
+                      {/* Card — offered only when the active gateway has a widget */}
+                      {widgetSupported && (
+                        <button
+                          type="button"
+                          aria-pressed={method === 'card'}
+                          onClick={() => setMethod('card')}
+                          className={cn(
+                            'flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center',
+                            method === 'card'
+                              ? 'border-rmc-green bg-rmc-green-light/40 ring-1 ring-rmc-green/30'
+                              : 'border-gray-200 hover:border-gray-300',
+                          )}
+                        >
+                          <CreditCard
+                            className={cn('h-5 w-5', method === 'card' ? 'text-rmc-green' : 'text-gray-400')}
+                          />
+                          <span className="text-[11px] font-bold text-gray-900">Card / Bank</span>
+                        </button>
+                      )}
 
                       {/* Disabled methods */}
                       {DISABLED_METHODS.map((key) => {
@@ -757,14 +832,47 @@ export function CartDrawer({
                   </div>
 
                   {/* MoMo phone input */}
-                  <div>
-                    <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400">Mobile number</p>
-                    <PhoneInput
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      hint={t('cart.phoneHint')}
-                    />
-                  </div>
+                  {method === 'momo' && (
+                    <div>
+                      <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400">Mobile number</p>
+                      <PhoneInput
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        hint={t('cart.phoneHint')}
+                      />
+                    </div>
+                  )}
+
+                  {/* Card / bank — one invoice for the whole basket */}
+                  {method === 'card' && (
+                    <div className="space-y-3">
+                      {cardInvoice ? (
+                        <IremboPayWidget
+                          invoice={cardInvoice}
+                          amount={total}
+                          currency={currency}
+                          checkStatus={(txn) =>
+                            paymentSettingsApi.getPaymentStatus(txn).then((r) => r.status)
+                          }
+                          onConfirmed={() => setShowPopup(true)}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => void payByCard()}
+                          disabled={cardBusy || total <= 0}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-rmc-green px-4 py-2.5 text-sm font-semibold text-white hover:bg-rmc-green/90 disabled:opacity-60"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          {cardBusy ? 'Preparing…' : 'Continue to card payment'}
+                        </button>
+                      )}
+                      <p className="text-[11px] text-gray-500">
+                        Visa, Mastercard and Rwandan bank channels. Your whole basket is paid at
+                        once.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Error */}
                   {(error || phase === 'failed') && (

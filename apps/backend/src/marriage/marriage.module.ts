@@ -12,6 +12,7 @@ import { User } from '../users/entities/user.entity';
 import { NotificationSettingsModule } from '../integrations/notifications/notification-settings.module';
 import { SmsModule } from '../integrations/sms/sms.module';
 import { PaymentSettingsModule } from '../payment-settings/payment-settings.module';
+import { PaymentsModule } from '../payments/payments.module';
 import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module';
 import { TrackingModule } from '../tracking/tracking.module';
 
@@ -20,6 +21,7 @@ import { TrackingModule } from '../tracking/tracking.module';
     NotificationSettingsModule,
     SmsModule,
     PaymentSettingsModule,
+    PaymentsModule,
     IntouchPayModule,
     TrackingModule,
     TypeOrmModule.forFeature([

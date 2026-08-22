@@ -127,6 +127,43 @@ describe('IremboPayProvider', () => {
     });
   });
 
+  /**
+   * Regression: donations persisted `providerReference` — IremboPay's invoice
+   * number — but the callback carries our `transactionId`, so the webhook never
+   * matched and paid donations stayed pending forever.
+   */
+  it('returns our transactionId as the domain reference, not the invoice number', async () => {
+    const { provider } = build();
+
+    const result = await provider.charge(REQUEST);
+
+    expect(result.domainReference).toBe('DON-abc12345-1');
+    expect(result.domainReference).not.toBe(result.providerReference);
+  });
+
+  it('bills a multi-line cart as one invoice with one payment item per line', async () => {
+    const { provider, irembo } = build();
+
+    await provider.charge({
+      ...REQUEST,
+      amount: 10000,
+      items: [
+        { paymentTypeKey: 'DONATION', amount: 5000, quantity: 1 },
+        { paymentTypeKey: 'DONATION', amount: 3000, quantity: 1 },
+        { paymentTypeKey: 'DONATION', amount: 2000, quantity: 2 },
+      ],
+    });
+
+    const body = irembo.createInvoice.mock.calls[0][0];
+    expect(body.paymentItems).toEqual([
+      { code: 'PI-3e5fe23f2d', quantity: 1, unitAmount: 5000 },
+      { code: 'PI-3e5fe23f2d', quantity: 1, unitAmount: 3000 },
+      { code: 'PI-3e5fe23f2d', quantity: 2, unitAmount: 2000 },
+    ]);
+    // Never a total — IremboPay computes Σ(unitAmount × quantity) itself.
+    expect(body.amount).toBeUndefined();
+  });
+
   it('recovers the existing invoice on DUPLICATE_TRANSACTION_ID instead of failing', async () => {
     const createInvoice = jest
       .fn()

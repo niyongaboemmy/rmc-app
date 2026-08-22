@@ -23,6 +23,7 @@ import { DonationsService } from './donations.service';
 export class DonationReconciliationService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DonationReconciliationService.name);
   private timer: ReturnType<typeof setInterval> | null = null;
+  private startupTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly RUN_INTERVAL_MS = 3 * 60 * 1000; // every 3 minutes
   private readonly MIN_AGE_MINUTES = 3; // skip donations < 3 min old
@@ -35,12 +36,15 @@ export class DonationReconciliationService implements OnModuleInit, OnModuleDest
   ) {}
 
   onModuleInit() {
-    // Initial run after a short delay (let the app finish starting up)
-    setTimeout(() => void this.reconcile(), 30_000);
+    // Initial run after a short delay (let the app finish starting up). Held so
+    // shutdown can cancel it — otherwise a process that closes within 30s dies
+    // with "Driver not Connected" when this fires against a closed connection.
+    this.startupTimer = setTimeout(() => void this.reconcile(), 30_000);
     this.timer = setInterval(() => void this.reconcile(), this.RUN_INTERVAL_MS);
   }
 
   onModuleDestroy() {
+    if (this.startupTimer) clearTimeout(this.startupTimer);
     if (this.timer) clearInterval(this.timer);
   }
 

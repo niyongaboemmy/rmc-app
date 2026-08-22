@@ -37,42 +37,53 @@ export class DonationWebhookService {
 
     if (!isSuccess && !isFailed) return; // still pending — nothing to update
 
-    // Match "DON-xxx" (exact) or "DON-xxx|gatewayTxnId" (normal case)
-    const donation = await this.repo.findOne({
+    // Match "DON-xxx" (exact) or "DON-xxx|gatewayTxnId" (normal case).
+    //
+    // `find`, not `findOne`: a cart is several donations settled by one payment,
+    // so they all share this reference. Updating only the first would leave the
+    // rest pending forever while the donor's money had already arrived.
+    const donations = await this.repo.find({
       where: [{ paymentReference: requestTxnId }, { paymentReference: Like(`${requestTxnId}|%`) }],
     });
 
-    if (!donation) {
+    if (donations.length === 0) {
       this.logger.warn(`[DonationWebhook] No donation found for requestTxnId=${requestTxnId}`);
       return;
     }
 
-    // Idempotent — skip if already resolved
-    if (donation.status !== DonationStatus.PENDING) {
+    // Idempotent — a repeated notification must not re-credit anything.
+    const pending = donations.filter((d) => d.status === DonationStatus.PENDING);
+    if (pending.length === 0) {
       this.logger.log(
-        `[DonationWebhook] Donation ${donation.id} already ${donation.status} — skipping`,
+        `[DonationWebhook] ${donations.length} donation(s) for ${requestTxnId} already resolved — skipping`,
       );
       return;
     }
 
-    const previousStatus = donation.status;
-    donation.status = isSuccess ? DonationStatus.COMPLETED : DonationStatus.FAILED;
-    donation.gatewayResponseCode = rc || null;
-    donation.gatewayMessage = payload['message'] || null;
-    await this.repo.save(donation);
+    for (const donation of pending) {
+      donation.status = isSuccess ? DonationStatus.COMPLETED : DonationStatus.FAILED;
+      donation.gatewayResponseCode = rc || null;
+      donation.gatewayMessage = payload['message'] || null;
+    }
+    await this.repo.save(pending);
 
     this.logger.log(
-      `[DonationWebhook] Donation ${donation.id} ${previousStatus} → ${donation.status} (rc=${rc}, message="${donation.gatewayMessage}")`,
+      `[DonationWebhook] ${pending.length} donation(s) for ${requestTxnId} → ${
+        isSuccess ? 'completed' : 'failed'
+      } (rc=${rc})`,
     );
 
-    if (isSuccess && donation.donorPhone) {
-      const amountStr = Number(donation.amount).toLocaleString('en-US');
+    // One payment, one SMS — the donor paid once and should be thanked once,
+    // for the full amount rather than per basket line.
+    const first = pending[0];
+    if (isSuccess && first.donorPhone) {
+      const total = pending.reduce((sum, d) => sum + Number(d.amount), 0);
       const msg = DonationSmsTemplates.paymentConfirmed(
-        amountStr,
-        donation.currency,
-        donation.donorName,
+        total.toLocaleString('en-US'),
+        first.currency,
+        first.donorName,
       );
-      void this.smsService.sendSms(donation.donorPhone, msg);
+      void this.smsService.sendSms(first.donorPhone, msg);
     }
   }
 }

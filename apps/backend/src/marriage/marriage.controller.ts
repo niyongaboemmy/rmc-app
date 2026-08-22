@@ -66,13 +66,20 @@ export class MarriageController {
 
   @Post('applications/:id/payment/initiate-momo')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Initiate MoMo (IntouchPay) payment for a draft application' })
+  @ApiOperation({
+    summary: 'Start a fee payment for a draft application (MoMo prompt or card/bank invoice)',
+  })
   initiateMomoPayment(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: { mobilePhone: string },
+    @Body() dto: { mobilePhone: string; channel?: 'momo' | 'card' },
   ) {
-    return this.service.initiateUserMomoPayment(id, user.id, dto.mobilePhone);
+    return this.service.initiateUserMomoPayment(
+      id,
+      user.id,
+      dto.mobilePhone,
+      dto.channel ?? 'momo',
+    );
   }
 
   @Post('applications/:id/payment/dev-complete')

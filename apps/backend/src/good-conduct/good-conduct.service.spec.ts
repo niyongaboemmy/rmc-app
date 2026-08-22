@@ -25,6 +25,7 @@ import { District } from '../locations/entities/district.entity';
 import { Sector } from '../locations/entities/sector.entity';
 import { ConfigService } from '@nestjs/config';
 import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
+import { PaymentGatewayService } from '../payments/payment-gateway.service';
 import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
 import { SmsService } from '../integrations/sms/sms.service';
 import { EmailService } from '../integrations/email/email.service';
@@ -73,6 +74,7 @@ describe('GoodConductService', () => {
   let paymentSettings: { getActiveRates: jest.Mock; getRawSettings: jest.Mock };
   let configService: { get: jest.Mock };
   let intouchPay: { requestPayment: jest.Mock; getTransactionStatus: jest.Mock };
+  let paymentGateway: { charge: jest.Mock; canCharge: jest.Mock };
   let notifSettings: { isSmsEnabled: jest.Mock; isEmailEnabled: jest.Mock };
   let smsService: { sendSms: jest.Mock };
   let emailService: { sendEmail: jest.Mock };
@@ -112,6 +114,17 @@ describe('GoodConductService', () => {
     };
     configService = { get: jest.fn().mockReturnValue('http://localhost:3000') };
     intouchPay = { requestPayment: jest.fn(), getTransactionStatus: jest.fn() };
+    paymentGateway = {
+      canCharge: jest.fn().mockResolvedValue(true),
+      charge: jest.fn().mockResolvedValue({
+        provider: 'intouchpay',
+        status: 'PENDING',
+        providerReference: 'GC-1|GW-1',
+        transactionId: 'GC-1',
+        responseCode: '1000',
+        message: 'Pending',
+      }),
+    };
     notifSettings = {
       isSmsEnabled: jest.fn().mockReturnValue(true),
       isEmailEnabled: jest.fn().mockReturnValue(true),
@@ -134,6 +147,7 @@ describe('GoodConductService', () => {
         { provide: PaymentSettingsService, useValue: paymentSettings },
         { provide: ConfigService, useValue: configService },
         { provide: IntouchPayService, useValue: intouchPay },
+        { provide: PaymentGatewayService, useValue: paymentGateway },
         { provide: NotificationSettingsService, useValue: notifSettings },
         { provide: SmsService, useValue: smsService },
         { provide: EmailService, useValue: emailService },
@@ -596,8 +610,10 @@ describe('GoodConductService', () => {
   describe('initiateMomoPayment', () => {
     it('advances draft -> submitted when the gateway confirms immediately', async () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status: GoodConductStatus.DRAFT }));
-      intouchPay.requestPayment.mockResolvedValue({
-        transactionId: 'gw-1',
+      paymentGateway.charge.mockResolvedValue({
+        provider: 'intouchpay',
+        providerReference: 'gw-1',
+        transactionId: 'GC-1',
         status: 'SUCCESSFUL',
         responseCode: '01',
         message: 'OK',
@@ -620,8 +636,10 @@ describe('GoodConductService', () => {
 
     it('leaves the request in draft with payment processing while the gateway push is pending', async () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status: GoodConductStatus.DRAFT }));
-      intouchPay.requestPayment.mockResolvedValue({
-        transactionId: 'gw-2',
+      paymentGateway.charge.mockResolvedValue({
+        provider: 'intouchpay',
+        providerReference: 'gw-2',
+        transactionId: 'GC-1',
         status: 'PENDING',
         responseCode: '1000',
         message: 'Pending',
@@ -640,8 +658,10 @@ describe('GoodConductService', () => {
 
     it('records a failed transaction without touching the request status when the gateway rejects immediately', async () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status: GoodConductStatus.DRAFT }));
-      intouchPay.requestPayment.mockResolvedValue({
-        transactionId: 'gw-3',
+      paymentGateway.charge.mockResolvedValue({
+        provider: 'intouchpay',
+        providerReference: 'gw-3',
+        transactionId: 'GC-1',
         status: 'FAILED',
         responseCode: '1008',
         message: 'General Failure',
@@ -671,12 +691,16 @@ describe('GoodConductService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('rejects when IntouchPay credentials are not configured', async () => {
+    it('rejects when no payment gateway is configured', async () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status: GoodConductStatus.DRAFT }));
-      paymentSettings.getRawSettings.mockResolvedValue({});
+      // Nothing active and configured — the gateway, not one named provider,
+      // is what decides whether a charge can be started at all.
+      paymentGateway.canCharge.mockResolvedValue(false);
+
       await expect(
         service.initiateMomoPayment('req-uuid-1', 'applicant-1', '+250781234567'),
       ).rejects.toThrow(BadRequestException);
+      expect(paymentGateway.charge).not.toHaveBeenCalled();
     });
   });
 

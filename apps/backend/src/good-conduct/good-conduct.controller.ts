@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsIn } from 'class-validator';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { GoodConductService } from './good-conduct.service';
 import { CreateGoodConductRequestDto } from './dto/create-good-conduct-request.dto';
@@ -11,6 +11,11 @@ class InitiateMomoDto {
   @IsString()
   @IsNotEmpty()
   mobilePhone: string;
+
+  /** 'momo' pushes a prompt; 'card' issues an invoice for the hosted widget. */
+  @IsOptional()
+  @IsIn(['momo', 'card'])
+  channel?: 'momo' | 'card';
 }
 
 @ApiTags('Good Conduct — Member')
@@ -59,13 +64,13 @@ export class GoodConductController {
 
   @Post('requests/:id/pay')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Initiate MoMo payment request via IntouchPay' })
+  @ApiOperation({ summary: 'Start a fee payment (MoMo prompt or card/bank invoice)' })
   pay(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: InitiateMomoDto,
   ) {
-    return this.service.initiateMomoPayment(id, user.id, dto.mobilePhone);
+    return this.service.initiateMomoPayment(id, user.id, dto.mobilePhone, dto.channel ?? 'momo');
   }
 
   @Post('requests/:id/pay/bank-notice')

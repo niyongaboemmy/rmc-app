@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Not, IsNull } from 'typeorm';
@@ -192,7 +192,7 @@ export class DonationsService {
       // `providerReference` already carries the format each provider's webhook
       // matching expects — `requestTxnId|gatewayTxnId` for IntouchPay, the
       // invoice number for IremboPay.
-      saved.paymentReference = result.providerReference || requestTxnId;
+      saved.paymentReference = result.domainReference || requestTxnId;
       saved.gatewayResponseCode = result.responseCode || null;
       saved.gatewayMessage = result.message || null;
 
@@ -208,6 +208,127 @@ export class DonationsService {
     }
 
     return saved;
+  }
+
+  /**
+   * Records a whole cart as one payment.
+   *
+   * The cart is several donations — one per campaign the donor chose — but the
+   * donor should be asked for money once. So every donation in the basket
+   * shares a single `paymentReference`, and the gateway is given one charge
+   * carrying a line per donation. On IremboPay that becomes a single invoice
+   * with several payment items, which is what makes card and bank payment
+   * possible for a multi-item cart: a hosted widget settles one invoice, not
+   * three.
+   *
+   * The webhook settles every donation sharing the reference — see
+   * `DonationWebhookService`.
+   */
+  async createCart(
+    dtos: CreateDonationDto[],
+    donorId: string | null,
+    channel: 'momo' | 'card' = 'momo',
+  ): Promise<{
+    donations: Donation[];
+    transactionId: string;
+    invoiceNumber: string | null;
+    paymentLinkUrl: string | null;
+    publicKey: string | null;
+    widgetScriptUrl: string | null;
+    message: string;
+  }> {
+    if (dtos.length === 0) throw new BadRequestException('The cart is empty');
+
+    const phone = dtos.find((d) => d.donorPhone)?.donorPhone;
+    const useGateway =
+      dtos.every((d) => d.paymentMethod === 'momo') &&
+      !!phone &&
+      (await this.paymentGateway.canCharge());
+
+    const saved: Donation[] = [];
+    for (const dto of dtos) {
+      let campaignId: string | null = null;
+      if (dto.campaignSlug) {
+        const campaign = await this.campaigns.findOne({ where: { slug: dto.campaignSlug } });
+        campaignId = campaign?.id ?? null;
+      }
+      saved.push(
+        await this.donations.save(
+          this.donations.create({
+            campaignId,
+            donorId,
+            donorName: dto.isAnonymous ? null : (dto.donorName ?? null),
+            donorEmail: dto.donorEmail ?? null,
+            donorPhone: dto.donorPhone ?? null,
+            isAnonymous: dto.isAnonymous ?? false,
+            amount: dto.amount,
+            currency: dto.currency ?? 'RWF',
+            frequency: dto.frequency ?? DonationFrequency.ONCE,
+            paymentMethod: dto.paymentMethod ?? null,
+            status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
+            message: dto.message ?? null,
+            donatedAt: new Date(),
+          }),
+        ),
+      );
+    }
+
+    if (!useGateway) {
+      return {
+        donations: saved,
+        transactionId: '',
+        invoiceNumber: null,
+        paymentLinkUrl: null,
+        publicKey: null,
+        widgetScriptUrl: null,
+        message: 'Recorded without an online payment.',
+      };
+    }
+
+    // One id for the basket. Keeps the `DON-` prefix the webhook matching needs.
+    const requestTxnId = `DON-${saved[0].id.slice(0, 8)}-${Date.now()}`;
+    const total = saved.reduce((sum, d) => sum + Number(d.amount), 0);
+
+    const result = await this.paymentGateway.charge({
+      transactionId: requestTxnId,
+      amount: total,
+      currency: saved[0].currency,
+      paymentTypeKey: 'DONATION',
+      referenceId: saved[0].id,
+      payer: {
+        name: saved[0].donorName ?? undefined,
+        phone,
+        email: saved[0].donorEmail ?? undefined,
+      },
+      description: 'RMC Donation – Rwanda Muslim Council',
+      items: saved.map((d) => ({
+        paymentTypeKey: 'DONATION',
+        amount: Number(d.amount),
+        quantity: 1,
+        description: d.message ?? undefined,
+      })),
+      pushProvider: channel === 'momo' ? 'MTN' : undefined,
+    });
+
+    // Every donation in the basket points at the same payment.
+    for (const donation of saved) {
+      donation.paymentReference = result.domainReference || requestTxnId;
+      donation.gatewayResponseCode = result.responseCode || null;
+      donation.gatewayMessage = result.message || null;
+      if (result.status === 'SUCCESSFUL') donation.status = DonationStatus.COMPLETED;
+      else if (result.status === 'FAILED') donation.status = DonationStatus.FAILED;
+    }
+    await this.donations.save(saved);
+
+    return {
+      donations: saved,
+      transactionId: requestTxnId,
+      invoiceNumber: result.provider === 'irembopay' ? result.providerReference : null,
+      paymentLinkUrl: result.paymentLinkUrl ?? null,
+      publicKey: result.publicKey ?? null,
+      widgetScriptUrl: result.widgetScriptUrl ?? null,
+      message: result.message ?? '',
+    };
   }
 
   /**

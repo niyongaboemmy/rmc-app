@@ -39,6 +39,7 @@ import { PaymentSettingsService } from '../payment-settings/payment-settings.ser
 import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { PaymentTypeKey } from '../payment-settings/entities/payment-type.entity';
 import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
+import { PaymentGatewayService } from '../payments/payment-gateway.service';
 
 // Fallback constants — used if DB rates are not yet configured
 const MOSQUE_FEE_FALLBACK = 30000;
@@ -70,6 +71,7 @@ export class MarriageService {
     private readonly smsService: SmsService,
     private readonly paymentSettings: PaymentSettingsService,
     private readonly intouchPay: IntouchPayService,
+    private readonly paymentGateway: PaymentGatewayService,
   ) {}
 
   // ── Marriage Fee Lookup ────────────────────────────────────────────────────
@@ -359,16 +361,31 @@ export class MarriageService {
     return saved;
   }
 
+  /**
+   * Starts a fee payment for the applicant's own draft.
+   *
+   * `channel` decides how the payer settles, not which provider collects:
+   * 'momo' pushes a prompt to their phone, 'card' issues a payable invoice for
+   * the hosted widget. Card requires a provider that supports it — with
+   * IntouchPay active the caller only ever offers 'momo', because
+   * `GET /payments/config` reports no widget support.
+   */
   async initiateUserMomoPayment(
     id: string,
     applicantId: string,
     mobilePhone: string,
+    channel: 'momo' | 'card' = 'momo',
   ): Promise<{
     application: MarriageApplication;
     transaction: MarriageTransaction;
     gatewayRef: string | null;
     responseCode: string;
     message: string;
+    transactionId: string;
+    invoiceNumber: string | null;
+    paymentLinkUrl: string | null;
+    publicKey: string | null;
+    widgetScriptUrl: string | null;
   }> {
     const app = await this.findOwnApplication(id, applicantId);
 
@@ -382,27 +399,26 @@ export class MarriageService {
       throw new BadRequestException('Application must be in draft status to initiate payment');
     }
 
-    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException('MoMo (IntouchPay) credentials are not configured');
-    }
-
     const requestTxnId = `MAR-${app.applicationNumber}-${Date.now()}`;
-    const fallbackCallback = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
 
-    const result = await this.intouchPay.requestPayment({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      amount: Number(app.amountDue),
-      mobilePhone,
+    // Routed through the gateway port, so which provider collects this fee is a
+    // settings choice. The `MAR-` prefix is preserved for both providers — the
+    // webhook services match domain records on it.
+    const result = await this.paymentGateway.charge({
       transactionId: requestTxnId,
-      callbackUrl: creds.callbackUrl || fallbackCallback,
-      gatewayUrl: creds.gatewayUrl || undefined,
+      amount: Number(app.amountDue),
+      currency: 'RWF',
+      paymentTypeKey: 'MARRIAGE_FEE',
+      referenceId: app.id,
+      payer: { name: app.groomName ?? undefined, phone: mobilePhone },
+      description: `Marriage application ${app.applicationNumber}`,
+      // Card/bank payers settle in the widget; pushing a MoMo prompt as well
+      // would ask them to pay the same invoice twice.
+      pushProvider: channel === 'momo' ? 'MTN' : undefined,
     });
 
     app.paymentStatus = PaymentStatus.PROCESSING;
-    app.paymentMethod = 'momo';
+    app.paymentMethod = channel === 'card' ? 'card' : 'momo';
     await this.applicationRepo.save(app);
 
     const tx = this.transactionRepo.create({
@@ -417,7 +433,7 @@ export class MarriageService {
             ? 'failed'
             : 'pending',
       metadata: {
-        gatewayTransactionId: result.transactionId,
+        gatewayTransactionId: result.providerReference,
         responseCode: result.responseCode,
         mobilePhone,
       },
@@ -436,9 +452,18 @@ export class MarriageService {
     return {
       application: app,
       transaction: savedTx,
-      gatewayRef: result.transactionId ?? null,
-      responseCode: result.responseCode,
-      message: result.message,
+      gatewayRef: result.domainReference ?? null,
+      // The port makes these optional (a provider may return neither); this
+      // method's contract does not, so fall back rather than widen it.
+      responseCode: result.responseCode ?? '',
+      message: result.message ?? '',
+      // What the browser needs to open the hosted widget. Null on providers
+      // that have no widget — the caller falls back to the MoMo prompt.
+      transactionId: requestTxnId,
+      invoiceNumber: result.provider === 'irembopay' ? result.providerReference : null,
+      paymentLinkUrl: result.paymentLinkUrl ?? null,
+      publicKey: result.publicKey ?? null,
+      widgetScriptUrl: result.widgetScriptUrl ?? null,
     };
   }
 
@@ -856,23 +881,17 @@ export class MarriageService {
       throw new BadRequestException('Payment has already been completed for this application');
     }
 
-    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException('MoMo (IntouchPay) credentials are not configured');
-    }
-
     const requestTxnId = `MAR-${app.applicationNumber}-${Date.now()}`;
-    const callbackUrl = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
 
-    const result = await this.intouchPay.requestPayment({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      amount: Number(app.amountDue),
-      mobilePhone,
+    const result = await this.paymentGateway.charge({
       transactionId: requestTxnId,
-      callbackUrl: creds.callbackUrl || callbackUrl,
-      gatewayUrl: creds.gatewayUrl || undefined,
+      amount: Number(app.amountDue),
+      currency: 'RWF',
+      paymentTypeKey: 'MARRIAGE_FEE',
+      referenceId: app.id,
+      payer: { name: app.groomName ?? undefined, phone: mobilePhone },
+      description: `Marriage application ${app.applicationNumber}`,
+      pushProvider: 'MTN',
     });
 
     // Update application payment status to processing
@@ -893,7 +912,7 @@ export class MarriageService {
             ? 'failed'
             : 'pending',
       metadata: {
-        gatewayTransactionId: result.transactionId,
+        gatewayTransactionId: result.providerReference,
         responseCode: result.responseCode,
         mobilePhone,
         initiatedBy: adminId,

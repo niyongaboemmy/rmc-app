@@ -183,6 +183,15 @@ export interface IremboPayTestResult {
   widgetScriptUrl?: string;
 }
 
+/** Payer-facing gateway capabilities. Contains no secrets by construction. */
+export interface PublicPaymentConfig {
+  provider: 'irembopay' | 'intouchpay' | null;
+  supportsWidget: boolean;
+  supportsMomoPush: boolean;
+  publicKey?: string;
+  widgetScriptUrl?: string;
+}
+
 export interface UpdatePaymentMethodPayload {
   name?: string;
   description?: string;
@@ -430,6 +439,20 @@ export const paymentSettingsApi = {
 
   testIremboPayPush: async (payload: IremboPayTestPayload = {}): Promise<IremboPayTestResult> => {
     const { data } = await apiClient.post('/admin/payment-settings/test/irembopay/push', payload);
+    return data.data ?? data;
+  },
+
+  // ── Payer-facing (public, no auth) ─────────────────────────────────────────
+
+  getPublicPaymentConfig: async (): Promise<PublicPaymentConfig> => {
+    const { data } = await apiClient.get('/payments/config');
+    return data.data ?? data;
+  },
+
+  getPaymentStatus: async (
+    transactionId: string,
+  ): Promise<{ status: 'PENDING' | 'SUCCESSFUL' | 'FAILED' }> => {
+    const { data } = await apiClient.get(`/payments/status/${encodeURIComponent(transactionId)}`);
     return data.data ?? data;
   },
 
