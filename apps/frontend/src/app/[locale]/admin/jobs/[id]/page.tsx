@@ -16,7 +16,7 @@ import { REQUESTABLE_JOB_DOCUMENTS, requestedDocumentLabel } from '@/lib/jobWork
 import { resolveMediaUrl } from '@/lib/mediaUpload';
 import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';
-import { Button, type ButtonVariant } from '@/components/ui/Button';
+import { Button, type ButtonSize, type ButtonVariant } from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
@@ -205,20 +205,21 @@ function ActionButton({
   onPick,
   busy,
   active,
-  variant,
+  size = 'md',
 }: {
   spec: ActionSpec;
   onPick: (spec: ActionSpec) => void;
   busy: boolean;
   active: string | null;
-  /** Override the tone's variant — Reject reads as an outline under the rule. */
-  variant?: ButtonVariant;
+  /** Demote a button without changing what it means — see Reject. */
+  size?: ButtonSize;
 }) {
   const Icon = spec.icon;
   return (
     <Button
       fullWidth
-      variant={variant ?? TONES[spec.tone].variant}
+      size={size}
+      variant={TONES[spec.tone].variant}
       isLoading={active === spec.action}
       disabled={busy}
       leftIcon={<Icon className="h-4 w-4" />}
@@ -590,9 +591,12 @@ function AdminJobDetailContent() {
             ) : !canStartReview && !canDecide ? (
               <p className="text-xs text-gray-400">This application is {STATUS_LABELS[app.status]?.toLowerCase()} — no further action needed.</p>
             ) : (
+              /* The panel sits in a third of the page, so every button is full-width — a
+                 stack of part-width buttons in a narrow column reads as ragged. Width
+                 being constant, hierarchy is carried by weight and height instead. */
               <div className="space-y-3">
-                {/* Advancing actions first, as one group. These move the application
-                    forward and are the common path. */}
+                {/* Advancing actions: the common path, so they keep the readable md size
+                    and a solid fill. */}
                 <div className="space-y-2">
                   {canStartReview && <ActionButton spec={ACTIONS.start_review} onPick={setPending} busy={actionLoading} active={activeAction} />}
                   {canShortlist && <ActionButton spec={ACTIONS.shortlist} onPick={setPending} busy={actionLoading} active={activeAction} />}
@@ -601,21 +605,30 @@ function AdminJobDetailContent() {
 
                 {canDecide && (
                   <>
-                    {/* Asking for more is not a decision, so it reads as secondary. */}
-                    <button
-                      type="button"
-                      onClick={() => setMoreInfoOpen(true)}
+                    {/* Asking for more is not a decision: same size, no fill. */}
+                    <Button
+                      fullWidth
+                      variant="ghost"
                       disabled={actionLoading}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-rmc-green hover:text-rmc-green disabled:opacity-50"
+                      leftIcon={<Send className="h-4 w-4" />}
+                      onClick={() => setMoreInfoOpen(true)}
                     >
-                      <Send className="h-4 w-4" /> Request More Info
-                    </button>
+                      Request More Info
+                    </Button>
 
-                    {/* Reject sits under a rule and is outlined, not filled. It used to be
-                        a solid red block the same size and weight as Accept directly above
-                        it — two irreversible opposites competing for the same glance. */}
+                    {/* Reject stays RED — it is a rejection, and an admin scanning for it
+                        looks for red. It was briefly `outline`, which is rmc-green in this
+                        design system, so it read as a mild approval. Demoted by size and a
+                        rule above it instead of by colour: smaller than Accept, so the two
+                        irreversible opposites no longer carry equal weight. */}
                     <div className="border-t border-gray-100 pt-3">
-                      <ActionButton spec={ACTIONS.reject} onPick={setPending} busy={actionLoading} active={activeAction} variant="outline" />
+                      <ActionButton
+                        spec={ACTIONS.reject}
+                        onPick={setPending}
+                        busy={actionLoading}
+                        active={activeAction}
+                        size="sm"
+                      />
                     </div>
                   </>
                 )}
