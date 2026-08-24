@@ -131,7 +131,6 @@ function ContactPageInner() {
         <EditablePageHero
           contentKey={ContentKeys.contactHero}
           defaults={CONTACT_HERO_DEFAULT}
-          ornament
           minHeightClassName="min-h-[40vh]"
           paddingClassName="pt-28 pb-10"
         />
