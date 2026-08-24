@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Building2, Target, TrendingUp, Layers } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { PageHero } from '@/components/layout/PageHero';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import {
   ContentKeys,
@@ -62,38 +63,33 @@ export function ProjectsListClient() {
     <div className="flex min-h-screen flex-col bg-[#fbfcfb]">
       <Navbar />
 
-      {/* ── Hero ── */}
-      <section className="relative flex min-h-[46vh] items-center overflow-hidden bg-rmc-green-deep">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={HERO_IMAGE} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-        <div className="absolute inset-0 bg-gradient-to-r from-rmc-green-deep/95 via-rmc-green-deep/80 to-black/50" />
-        <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-20" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/50 to-transparent" />
-
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-36 pb-14 sm:px-6 lg:px-8">
-          <div className="max-w-2xl animate-fade-up">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-white/75 backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-rmc-gold" />
-              {pick(content.eyebrow, locale)}
-            </span>
-            <h1 className={`text-3xl font-bold leading-tight text-white drop-shadow-lg md:text-5xl ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
-              {pick(content.title, locale)}
-            </h1>
-            <p className={`mt-4 max-w-xl text-sm leading-relaxed text-white/75 md:text-base ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
-              {pick(content.lede, locale)}
-            </p>
-
-            {/* Stats — only once we have projects */}
-            {loaded && items.length > 0 && (
-              <div className="mt-7 flex flex-wrap gap-3">
-                <StatPill icon={Layers} label={pick({ en: 'Projects', rw: 'Imishinga', ar: 'مشاريع' }, locale)} value={String(stats.count)} />
-                <StatPill icon={TrendingUp} label={pick({ en: 'Raised', rw: 'Byakusanyijwe', ar: 'تم جمعه' }, locale)} value={projectMoneyShort(stats.currency, stats.raised)} />
-                <StatPill icon={Target} label={pick({ en: 'Goal', rw: 'Intego', ar: 'الهدف' }, locale)} value={projectMoneyShort(stats.currency, stats.goal)} />
-              </div>
-            )}
+      {/* ── Hero ──
+          PageHero, not a hand-rolled copy of it. This section used to restate the
+          component's whole chrome — dark panel, background image, gradient, islamic
+          pattern, gold hairline, eyebrow pill — which is how it drifted to 46vh and
+          pt-36 pb-14 while every other landing hero settled at 40vh and pt-28 pb-10.
+          The stat pills are the one thing genuinely local to this page, and they go in
+          as children. */}
+      <PageHero
+        eyebrow={pick(content.eyebrow, locale)}
+        title={pick(content.title, locale)}
+        subtitle={pick(content.lede, locale)}
+        images={[HERO_IMAGE]}
+        align="left"
+        titleClassName={`text-3xl font-bold md:text-5xl ${arFont}`}
+        subtitleClassName={arFont}
+        minHeightClassName="min-h-[40vh]"
+        paddingClassName="pt-28 pb-10"
+      >
+        {/* Stats — only once we have projects. */}
+        {loaded && items.length > 0 && (
+          <div className="mt-7 flex flex-wrap gap-3">
+            <StatPill icon={Layers} label={pick({ en: 'Projects', rw: 'Imishinga', ar: 'مشاريع' }, locale)} value={String(stats.count)} />
+            <StatPill icon={TrendingUp} label={pick({ en: 'Raised', rw: 'Byakusanyijwe', ar: 'تم جمعه' }, locale)} value={projectMoneyShort(stats.currency, stats.raised)} />
+            <StatPill icon={Target} label={pick({ en: 'Goal', rw: 'Intego', ar: 'الهدف' }, locale)} value={projectMoneyShort(stats.currency, stats.goal)} />
           </div>
-        </div>
-      </section>
+        )}
+      </PageHero>
 
       {/* ── Body ── */}
       <main className="flex-1">
