@@ -11,11 +11,14 @@ import {
   ContentKeys,
   PROJECTS_DEFAULT,
   pick,
+  raw,
   isRtl,
   projectMoneyShort,
   type ProjectsContent,
 } from '@/lib/content-api';
 import { usePreviewableContentState } from '@/lib/content/preview-store';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import { InlineText } from '@/components/edit-mode/InlineText';
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&q=80';
 
@@ -41,7 +44,14 @@ export function ProjectsListClient() {
   // The page reads this section on the server, so `ready` is already true on the
   // first render and the saved copy is in the HTML — no skeleton, no flash of the
   // seeded defaults. Without a provider this falls back to fetching on mount.
-  const { content, ready: loaded } = usePreviewableContentState<ProjectsContent>(
+  const { ready: loaded } = usePreviewableContentState<ProjectsContent>(
+    ContentKeys.projects,
+    PROJECTS_DEFAULT,
+  );
+  // Content comes from the editable hook rather than the read-only one, so a heading
+  // being typed in Edit Mode re-renders here as it is typed. Same key, same merge —
+  // the read-only call above is kept only for `ready`, which gates the card skeleton.
+  const { content, setField } = useEditableContent<ProjectsContent>(
     ContentKeys.projects,
     PROJECTS_DEFAULT,
   );
@@ -72,8 +82,28 @@ export function ProjectsListClient() {
           The stat pills are the one thing genuinely local to this page, and they go in
           as children. */}
       <PageHero
-        title={pick(content.title, locale)}
-        subtitle={pick(content.lede, locale)}
+        title={
+          <InlineText
+            lang={locale}
+            value={pick(content.title, locale)}
+            // This locale's OWN text, so an untranslated heading opens empty instead of
+            // showing the English it falls back to as though it were a translation.
+            editValue={raw(content.title, locale)}
+            onCommit={(v) => setField((d) => { d.title[locale as 'en' | 'rw' | 'ar'] = v; })}
+            dir={rtl ? 'rtl' : 'ltr'}
+            placeholder="Page heading"
+          />
+        }
+        subtitle={
+          <InlineText
+            lang={locale}
+            value={pick(content.lede, locale)}
+            editValue={raw(content.lede, locale)}
+            onCommit={(v) => setField((d) => { d.lede[locale as 'en' | 'rw' | 'ar'] = v; })}
+            dir={rtl ? 'rtl' : 'ltr'}
+            placeholder="Intro paragraph"
+          />
+        }
         images={[HERO_IMAGE]}
         titleClassName={`text-3xl font-bold md:text-5xl ${arFont}`}
         subtitleClassName={arFont}
