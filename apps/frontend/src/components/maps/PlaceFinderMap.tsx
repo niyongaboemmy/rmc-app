@@ -71,11 +71,11 @@ export function PlaceFinderMap<T extends MapPlace>({
   const [status, setStatus] = useState<DirectionsStatus>('idle');
   const [info, setInfo] = useState<DualRoute | null>(null);
 
-  // Asked for on mount: highlighting the nearest place is the point of this screen.
-  // But a browser that denies, or simply never answers the prompt, used to leave the map
-  // looking ordinary with nothing to say the feature existed — so `locate` is also
-  // offered as a button, and `locateStatus` reports what happened.
-  const { position, status: locateStatus, locate, isLocating } = useUserLocation({ auto: true });
+  // NOT asked for on mount. Opening a map is not consent to be located, and a browser
+  // permission prompt that appears unbidden is usually dismissed — which left the page
+  // having spent its one good chance to ask. The button asks at the moment the reader
+  // has said what they want, which is also when a prompt is most likely to be granted.
+  const { position, status: locateStatus, locate, isLocating } = useUserLocation();
 
   const nearest = useMemo(() => nearestTo(position, places), [position, places]);
   const nearestId = nearest?.id ?? null;
@@ -170,10 +170,11 @@ export function PlaceFinderMap<T extends MapPlace>({
         </div>
       )}
 
-      {/* "Find near me" — the visible half of a feature that was previously silent.
-          Hidden once a position is known: the nearest pin is already highlighted and
-          the camera has flown to it, so the button has nothing left to do. */}
-      {!position && (
+      {/* "Find near me" — the only thing that triggers locating, now that nothing asks
+          on mount. Hidden once a position is known, because the nearest pin is already
+          highlighted and the camera has flown to it; and hidden while directions are up,
+          because the distance badge occupies this same spot. */}
+      {!position && !directionsTarget && (
         <div className="absolute bottom-3 left-1/2 z-[1000] -translate-x-1/2">
           <button
             type="button"
