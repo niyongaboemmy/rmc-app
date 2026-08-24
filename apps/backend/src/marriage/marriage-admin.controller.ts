@@ -125,7 +125,7 @@ export class MarriageAdminController {
 
   @Post('applications/:id/payment/initiate-momo')
   @Permissions(Permission.MARRIAGE_MANAGE)
-  @ApiOperation({ summary: 'Initiate MoMo payment request via IntouchPay' })
+  @ApiOperation({ summary: 'Initiate a MoMo payment request through the gateway' })
   initiateMomo(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
@@ -136,7 +136,7 @@ export class MarriageAdminController {
 
   @Get('applications/:id/payment/:txId/status')
   @Permissions(Permission.MARRIAGE_VIEW)
-  @ApiOperation({ summary: 'Check MoMo payment status from IntouchPay' })
+  @ApiOperation({ summary: 'Check MoMo payment status with the gateway' })
   checkMomoStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('txId', ParseUUIDPipe) txId: string,

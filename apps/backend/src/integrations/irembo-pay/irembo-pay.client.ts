@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import {
   PaymentProviderEvent,
   PaymentEventOutcome,
-} from '../intouch-pay/entities/payment-provider-event.entity';
+} from '../../payments/entities/payment-provider-event.entity';
 import { IremboPayConfigService } from './irembo-pay.config.service';
 import { IremboEnvelope, IremboPayApiError, describeIremboError } from './irembo-pay.types';
 

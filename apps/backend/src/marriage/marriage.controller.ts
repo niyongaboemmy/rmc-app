@@ -59,7 +59,7 @@ export class MarriageController {
 
   @Get('applications/:id/payment/check')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Poll IntouchPay gateway for payment status and sync DB' })
+  @ApiOperation({ summary: 'Poll the payment gateway for payment status and sync DB' })
   checkPaymentStatus(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.checkUserMomoPaymentStatus(id, user.id);
   }

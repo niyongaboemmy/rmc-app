@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 /**
  * Provider behaviour the simulator forces (DEV/TEST ONLY):
- *  - off:         use the real IntouchPay gateway (default)
+ *  - off:         use the real payment gateway (default)
  *  - slow:        respond after `delayMs` then succeed (exercises latency logging
  *                 + the frontend "taking longer" state while still resolving)
  *  - timeout:     never usable in time → the timeout/degraded PENDING path

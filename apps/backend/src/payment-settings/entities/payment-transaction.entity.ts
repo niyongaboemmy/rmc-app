@@ -27,16 +27,17 @@ export class PaymentTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  /** Our internal transaction ID sent to IntouchPay as requesttransactionid. */
+  /** Our internal transaction ID, echoed back by the gateway as `requesttransactionid`. */
   @Index('IDX_ptx_request_txn_id')
   @Column({ name: 'request_transaction_id', type: 'varchar', length: 100 })
   requestTransactionId: string;
 
-  /** Transaction ID assigned by IntouchPay gateway. */
+  /** Transaction ID assigned by the gateway (IremboPay: the invoice number). */
   @Column({ name: 'gateway_transaction_id', type: 'varchar', length: 200, nullable: true })
   gatewayTransactionId: string | null;
 
-  /** Payment method code used (MOMO_INTOUCH, etc.). */
+  /** Payment method code used (IREMBOPAY, BANK_TRANSFER, …). Historical rows may
+   *  carry the retired MOMO_INTOUCH code — this is a plain string, not an FK. */
   @Column({ name: 'payment_method_code', type: 'varchar', length: 50 })
   paymentMethodCode: string;
 
@@ -58,8 +59,8 @@ export class PaymentTransaction {
   @Column({ name: 'mobile_phone', type: 'varchar', length: 30, nullable: true })
   mobilePhone: string | null;
 
-  /** Which gateway handled this transaction: 'intouchpay' | 'irembopay'. */
-  @Column({ type: 'varchar', length: 30, default: 'intouchpay' })
+  /** Which gateway handled this transaction. Historical rows read 'intouchpay'. */
+  @Column({ type: 'varchar', length: 30, default: 'irembopay' })
   provider: string;
 
   /** IremboPay invoice number — their key for this payable. */
@@ -101,7 +102,7 @@ export class PaymentTransaction {
   @Column({ type: 'text', nullable: true })
   message: string | null;
 
-  /** Raw JSON callback payload received from IntouchPay webhook. */
+  /** Raw JSON callback payload received from the gateway webhook. */
   @Column({ name: 'callback_payload', type: 'jsonb', nullable: true })
   callbackPayload: Record<string, unknown> | null;
 

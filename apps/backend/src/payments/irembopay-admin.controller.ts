@@ -5,12 +5,15 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -25,6 +28,11 @@ import {
 import { IremboPayConfigService } from '../integrations/irembo-pay/irembo-pay.config.service';
 import { IremboPayInvoiceService } from '../integrations/irembo-pay/irembopay-invoice.service';
 import { IremboPayProvider, IREMBOPAY_PROVIDER_KEY } from './providers/irembo-pay.provider';
+import { PaymentGatewayService } from './payment-gateway.service';
+import {
+  PaymentTransaction,
+  PaymentTransactionStatus,
+} from '../payment-settings/entities/payment-transaction.entity';
 
 /**
  * IremboPay's slice of the payments admin API.
@@ -42,6 +50,9 @@ export class IremboPayAdminController {
     private readonly provider: IremboPayProvider,
     private readonly config: IremboPayConfigService,
     private readonly invoices: IremboPayInvoiceService,
+    private readonly gateway: PaymentGatewayService,
+    @InjectRepository(PaymentTransaction)
+    private readonly txRepo: Repository<PaymentTransaction>,
   ) {}
 
   // ── Product mapping ────────────────────────────────────────────────────────
@@ -122,6 +133,42 @@ export class IremboPayAdminController {
   })
   recheck(@Param('reference') reference: string) {
     return this.provider.getStatus(reference);
+  }
+
+  /**
+   * Re-check one recorded transaction against the gateway and return its
+   * refreshed row. Drives the "Check status" button in the admin test panel.
+   *
+   * It deliberately does not write the transaction itself: `getStatus()` routes
+   * through the port, and on IremboPay that re-applies the invoice state to the
+   * ledger — so the row is re-read afterwards rather than written twice with
+   * two different ideas of the truth.
+   *
+   * Lives on this controller rather than `PaymentSettingsController` for the
+   * same reason the rest of these routes do: the gateway depends on the
+   * settings module, so the settings controller cannot reach it without the two
+   * modules importing each other. The route path is unchanged either way — both
+   * controllers share the `admin/payment-settings` prefix.
+   */
+  @Get('test/payment/:txId/status')
+  @Permissions(Permission.PAYMENT_SETTINGS_VIEW)
+  @ApiOperation({ summary: 'Re-check one transaction against the gateway' })
+  async checkTransactionStatus(@Param('txId', ParseUUIDPipe) txId: string) {
+    const tx = await this.txRepo.findOne({ where: { id: txId } });
+    if (!tx) throw new NotFoundException('Transaction not found');
+
+    if (tx.status !== PaymentTransactionStatus.PENDING) {
+      return { transaction: tx, gatewayStatus: tx.status, message: tx.message ?? '' };
+    }
+
+    const result = await this.gateway.getStatus(tx.requestTransactionId);
+    const refreshed = (await this.txRepo.findOne({ where: { id: txId } })) ?? tx;
+
+    return {
+      transaction: refreshed,
+      gatewayStatus: result.status,
+      message: result.message ?? '',
+    };
   }
 
   @Get('irembopay/invoices/:reference')

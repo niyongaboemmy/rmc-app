@@ -36,10 +36,9 @@ import { SaveDocumentDto } from './dto/save-document.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { ScheduleCeremonyDto } from './dto/schedule-ceremony.dto';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
-import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { PaymentTypeKey } from '../payment-settings/entities/payment-type.entity';
-import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
 import { PaymentGatewayService } from '../payments/payment-gateway.service';
+import { PaymentStatusResult, gatewayReference } from '../payments/payment-gateway.port';
 
 // Fallback constants — used if DB rates are not yet configured
 const MOSQUE_FEE_FALLBACK = 30000;
@@ -70,7 +69,6 @@ export class MarriageService {
     private readonly notifSettings: NotificationSettingsService,
     private readonly smsService: SmsService,
     private readonly paymentSettings: PaymentSettingsService,
-    private readonly intouchPay: IntouchPayService,
     private readonly paymentGateway: PaymentGatewayService,
   ) {}
 
@@ -332,7 +330,7 @@ export class MarriageService {
       );
     }
 
-    // MoMo payments must be confirmed by IntouchPay callback before submission
+    // MoMo payments must be confirmed by the gateway callback before submission
     if (app.paymentMethod === 'momo' && app.paymentStatus !== PaymentStatus.PAID) {
       throw new BadRequestException(
         'Mobile Money payment must be completed before submitting the application.',
@@ -366,9 +364,9 @@ export class MarriageService {
    *
    * `channel` decides how the payer settles, not which provider collects:
    * 'momo' pushes a prompt to their phone, 'card' issues a payable invoice for
-   * the hosted widget. Card requires a provider that supports it — with
-   * IntouchPay active the caller only ever offers 'momo', because
-   * `GET /payments/config` reports no widget support.
+   * the hosted widget. Card requires a provider that supports it, which the
+   * caller learns from `GET /payments/config` — a gateway that reports no widget
+   * support leaves 'momo' as the only channel offered.
    */
   async initiateUserMomoPayment(
     id: string,
@@ -469,7 +467,7 @@ export class MarriageService {
 
   /**
    * DEV ONLY — mark a draft application's payment as completed WITHOUT calling
-   * the IntouchPay gateway, so local development can skip the MoMo push and go
+   * the payment gateway, so local development can skip the MoMo push and go
    * straight to the provisional certificate. Hard-blocked in production: the
    * NODE_ENV guard runs before any DB mutation, so it can never fire on a real
    * deployment (which always sets NODE_ENV=production). Produces the same DB
@@ -933,7 +931,16 @@ export class MarriageService {
     return { application: app, transaction: savedTx, gatewayResponse: result };
   }
 
-  /** Polls IntouchPay gateway directly and updates DB — used by the applicant's waiting screen. */
+  /**
+   * Polls the payment gateway and syncs the DB — the applicant's waiting screen.
+   *
+   * Goes through `PaymentGatewayService`, so it follows whichever provider the
+   * admin has active rather than naming one. Note that the port's `getStatus()`
+   * is itself a reconciliation trigger on IremboPay (it re-applies the invoice
+   * state to the ledger), which is why the local writes below are guarded on
+   * the transaction still being pending — the ledger write must not be applied
+   * twice.
+   */
   async checkUserMomoPaymentStatus(
     id: string,
     applicantId: string,
@@ -977,24 +984,22 @@ export class MarriageService {
       };
     }
 
-    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+    let statusResult: PaymentStatusResult;
+    try {
+      statusResult = await this.paymentGateway.getStatus(gatewayReference(tx.providerRef));
+    } catch (err) {
+      // No gateway active/configured, or the provider is unreachable. The
+      // waiting screen keeps polling; the reconciliation cron is the backstop.
+      this.logger.warn(
+        `[Marriage] Status check failed for application ${app.id}: ${(err as Error).message}`,
+      );
       return {
         paymentStatus: app.paymentStatus,
         gatewayStatus: 'PENDING',
         responseCode: '',
-        message: 'Credentials not configured',
+        message: 'Payment status is not available right now. Please try again shortly.',
       };
     }
-
-    const statusResult = await this.intouchPay.getTransactionStatus({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      requestTransactionId: tx.providerRef ?? '',
-      transactionId: String((tx.metadata as Record<string, unknown>)?.gatewayTransactionId ?? ''),
-      gatewayBaseUrl: creds.gatewayUrl,
-    });
 
     if (statusResult.status !== 'PENDING') {
       tx.status = statusResult.status === 'SUCCESSFUL' ? 'completed' : 'failed';
@@ -1015,8 +1020,8 @@ export class MarriageService {
     return {
       paymentStatus: app.paymentStatus,
       gatewayStatus: statusResult.status,
-      responseCode: statusResult.responseCode,
-      message: statusResult.message,
+      responseCode: statusResult.responseCode ?? '',
+      message: statusResult.message ?? '',
     };
   }
 
@@ -1030,19 +1035,7 @@ export class MarriageService {
     });
     if (!tx) throw new NotFoundException('Transaction not found');
 
-    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException('IntouchPay credentials not configured');
-    }
-
-    const statusResult = await this.intouchPay.getTransactionStatus({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      requestTransactionId: tx.providerRef ?? '',
-      transactionId: String((tx.metadata as Record<string, unknown>)?.gatewayTransactionId ?? ''),
-      gatewayBaseUrl: creds.gatewayUrl,
-    });
+    const statusResult = await this.paymentGateway.getStatus(gatewayReference(tx.providerRef));
 
     // Update records if status changed
     if (statusResult.status !== 'PENDING' && tx.status === 'pending') {
@@ -1063,8 +1056,8 @@ export class MarriageService {
 
     return {
       status: statusResult.status,
-      responseCode: statusResult.responseCode,
-      message: statusResult.message,
+      responseCode: statusResult.responseCode ?? '',
+      message: statusResult.message ?? '',
     };
   }
 

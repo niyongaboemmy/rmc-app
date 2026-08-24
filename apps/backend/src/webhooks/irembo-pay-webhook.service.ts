@@ -114,9 +114,9 @@ export class IremboPayWebhookService {
    * Fans the settled invoice out to the domain services and the admin SSE
    * stream.
    *
-   * The domain services key off IntouchPay's `requesttransactionid` prefixes
-   * (`DON-`, …), so IremboPay charges reuse the same transactionId prefixes and
-   * the matching logic stays shared rather than duplicated per provider.
+   * The domain services key off `requesttransactionid` prefixes (`DON-`, `MAR-`,
+   * `GC-`), so charges reuse those prefixes and the matching logic stays shared
+   * rather than duplicated per domain.
    *
    * `PARTIALLY_PAID` deliberately does not reach the domain services: the
    * balance is recorded, but a half-paid invoice must not fulfil an order.
@@ -148,8 +148,11 @@ export class IremboPayWebhookService {
       return;
     }
 
-    // Translated into the IntouchPay-shaped payload the domain services already
-    // parse, so both providers share one set of domain handlers.
+    // The domain handlers still parse the flat, lower-cased callback shape the
+    // original gateway defined — including its `Successfull` spelling. It is a
+    // fossil now that only one provider remains, but it is also the code path
+    // that credits money, so replacing it belongs in its own change with its
+    // own tests rather than in a provider migration.
     const payload: Record<string, string> = {
       requesttransactionid: invoice.transactionId,
       transactionid: invoice.invoiceNumber ?? '',

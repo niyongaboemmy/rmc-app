@@ -341,8 +341,9 @@ export function CartDrawer({
   const [cardInvoice, setCardInvoice] = useState<IremboInvoiceHandle | null>(null);
   const [cardBusy, setCardBusy] = useState(false);
 
-  // Whether card/bank is on offer is the gateway's answer, not ours — with
-  // IntouchPay active there is no widget and the option must stay hidden.
+  // Whether card/bank is on offer is the gateway's answer, not ours: a gateway
+  // with no hosted widget — or none configured at all — must not show a card
+  // option the payer cannot actually complete.
   useEffect(() => {
     let alive = true;
     paymentSettingsApi
@@ -404,8 +405,8 @@ export function CartDrawer({
         setPhase('failed');
         setError('Payment failed. Please check your MoMo balance and try again.');
       } else if (attempts >= MAX_POLL_ATTEMPTS) {
-        // IntouchPay hasn't resolved in 90s — show timeout state.
-        // The backend reconciliation job will update the record when IntouchPay responds.
+        // The gateway hasn't resolved in 90s — show the timeout state.
+        // The backend reconciliation job updates the record when it does.
         stopPolling();
         setPhase('timeout');
       }
@@ -459,7 +460,7 @@ export function CartDrawer({
           setPhase('failed');
           setError(t('cart.error'));
         } else {
-          // IntouchPay confirmed synchronously (or gateway not configured in dev).
+          // The gateway confirmed synchronously (or none is configured in dev).
           setShowPopup(true);
         }
       } else {
@@ -514,7 +515,7 @@ export function CartDrawer({
     setError('');
     stopPolling();
     try {
-      // Re-create a fresh IntouchPay payment request by calling donate() again.
+      // Re-create a fresh payment request by calling donate() again.
       // Old pending donation records stay in the DB but will never complete.
       const e164Phone = toE164(phone.trim());
       const cart = await donationsApi.donateCart(buildCartItems(e164Phone), 'momo');

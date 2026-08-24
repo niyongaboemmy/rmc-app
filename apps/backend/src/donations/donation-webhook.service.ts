@@ -6,13 +6,13 @@ import { SmsService } from '../integrations/sms/sms.service';
 import { DonationSmsTemplates } from './donation-sms-templates';
 
 /**
- * Processes IntouchPay payment callbacks for Donation records.
+ * Processes gateway payment callbacks for Donation records.
  *
  * Donation payment references are stored as either:
  *   "DON-{shortId}-{timestamp}"                    (gateway unreachable at initiation)
  *   "DON-{shortId}-{timestamp}|{gatewayTxnId}"     (normal flow)
  *
- * The IntouchPay callback carries `requesttransactionid = "DON-{shortId}-{timestamp}"`,
+ * The callback carries `requesttransactionid = "DON-{shortId}-{timestamp}"`,
  * so we match on the prefix of the stored reference.
  */
 @Injectable()

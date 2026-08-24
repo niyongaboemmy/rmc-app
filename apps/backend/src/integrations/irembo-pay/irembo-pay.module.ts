@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PaymentProviderEvent } from '../intouch-pay/entities/payment-provider-event.entity';
+import { PaymentProviderEvent } from '../../payments/entities/payment-provider-event.entity';
 import { IremboPayInvoice } from './entities/irembopay-invoice.entity';
 import { IremboPayClient } from './irembo-pay.client';
 import { IremboPayConfigService } from './irembo-pay.config.service';

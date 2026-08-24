@@ -1,7 +1,7 @@
 /**
  * Wire types and error vocabulary for the IremboPay REST API (v3).
  *
- * Mirrors the shape of `INTOUCH_RESPONSE_CODES` in the IntouchPay service: the
+ * A code → human-explanation map, the same shape the retired gateway used: the
  * provider returns machine codes, and the operator reading the admin UI needs a
  * sentence. Anything not in the map falls back to the provider's own `detail`.
  */

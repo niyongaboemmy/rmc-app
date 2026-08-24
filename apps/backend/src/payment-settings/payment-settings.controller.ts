@@ -23,12 +23,8 @@ import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
 import { UpsertPaymentMethodSettingsDto } from './dto/upsert-payment-method-settings.dto';
 import { UpsertPaymentTypeRateDto } from './dto/upsert-payment-type-rate.dto';
-import { TestPaymentDto } from './dto/test-payment.dto';
-import { TestDepositDto } from './dto/test-deposit.dto';
 import { Permissions } from '../common/decorators/permissions.decorator';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permission } from '../common/types/permissions.enum';
-import { User } from '../users/entities/user.entity';
 
 @ApiTags('Payment Settings — Admin')
 @Controller('admin/payment-settings')
@@ -153,29 +149,6 @@ export class PaymentSettingsController {
     return this.service.upsertMethodSettings(id, dto);
   }
 
-  // ── Test Payment ───────────────────────────────────────────────────────────
-
-  @Post('test/payment')
-  @Permissions(Permission.PAYMENT_SETTINGS_MANAGE)
-  @ApiOperation({ summary: 'Send a test payment request via IntouchPay MoMo' })
-  testPayment(@CurrentUser() user: User, @Body() dto: TestPaymentDto) {
-    return this.service.testPayment(dto, user.id);
-  }
-
-  @Get('test/payment/:txId/status')
-  @Permissions(Permission.PAYMENT_SETTINGS_VIEW)
-  @ApiOperation({ summary: 'Check payment status for a transaction' })
-  checkPaymentStatus(@Param('txId', ParseUUIDPipe) txId: string) {
-    return this.service.checkTransactionStatus(txId);
-  }
-
-  @Post('test/deposit')
-  @Permissions(Permission.PAYMENT_SETTINGS_MANAGE)
-  @ApiOperation({ summary: 'Send a test deposit (send money) via IntouchPay RequestDeposit' })
-  testDeposit(@CurrentUser() user: User, @Body() dto: TestDepositDto) {
-    return this.service.testDeposit(dto, user.id);
-  }
-
   // ── Transaction History ────────────────────────────────────────────────────
 
   @Get('transactions')
@@ -200,15 +173,6 @@ export class PaymentSettingsController {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });
-  }
-
-  // ── Balance ────────────────────────────────────────────────────────────────
-
-  @Get('balance')
-  @Permissions(Permission.PAYMENT_SETTINGS_VIEW)
-  @ApiOperation({ summary: 'Query IntouchPay account balance' })
-  getBalance() {
-    return this.service.getAccountBalance();
   }
 
   // ── Server-Sent Events ─────────────────────────────────────────────────────

@@ -66,16 +66,22 @@ describe('PaymentsPublicController', () => {
       expect(serialised).not.toContain('secretKey');
     });
 
-    it('offers MoMo only when IntouchPay is the active provider', async () => {
+    /**
+     * `resolve()` is settings-driven, so it can in principle hand back a code
+     * this controller has no widget credentials for. Reporting IremboPay's
+     * public key for some other gateway would point the payer's browser at the
+     * wrong provider, so an unrecognised code reads as "no gateway" instead.
+     */
+    it('reports no gateway when the resolved provider is not IremboPay', async () => {
       const resolve = jest
         .fn()
-        .mockResolvedValue({ code: PaymentMethodCode.MOMO_INTOUCH, providerName: 'IntouchPay' });
+        .mockResolvedValue({ code: 'FAKE_GATEWAY', providerName: 'Fake Gateway' });
       const { controller } = build({ resolve });
 
       await expect(controller.config()).resolves.toEqual({
-        provider: 'intouchpay',
+        provider: null,
         supportsWidget: false,
-        supportsMomoPush: true,
+        supportsMomoPush: false,
       });
     });
 

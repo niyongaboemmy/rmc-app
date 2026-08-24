@@ -532,8 +532,9 @@ export function MarriageWizard() {
 
   // ── Persistence helpers ───────────────────────────────────────────────────
 
-  // Whether to offer card/bank at all is the gateway's answer, not ours — with
-  // IntouchPay active there is no widget and the button must not appear.
+  // Whether to offer card/bank at all is the gateway's answer, not ours: a
+  // gateway with no hosted widget — or none configured at all — must not show a
+  // button the payer cannot actually complete.
   useEffect(() => {
     let alive = true;
     paymentSettingsApi

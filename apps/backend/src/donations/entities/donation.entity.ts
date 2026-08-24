@@ -77,7 +77,7 @@ export class Donation {
   @Column({ type: 'varchar', length: 20, default: DonationStatus.PENDING })
   status: DonationStatus;
 
-  // Raw IntouchPay response code/message for the last payment/status check —
+  // Raw gateway response code/message for the last payment/status check —
   // lets admins see why a "failed" donation actually failed.
   @Column({ name: 'gateway_response_code', type: 'varchar', length: 20, nullable: true })
   gatewayResponseCode: string | null;

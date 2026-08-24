@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
-import { Public } from '../../common/decorators/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { PaymentSimulatorService, SimulatorMode } from './payment-simulator.service';
-import { PaymentEventsService } from './payment-events.service';
+import { PaymentProviderEventsService } from './payment-provider-events.service';
 
 const SIMULATOR_MODES = ['off', 'slow', 'timeout', 'unavailable', 'success', 'fail'] as const;
 
@@ -40,7 +40,7 @@ class SetSimulatorDto {
 export class PaymentDiagnosticsController {
   constructor(
     private readonly simulator: PaymentSimulatorService,
-    private readonly events: PaymentEventsService,
+    private readonly events: PaymentProviderEventsService,
   ) {}
 
   private assertNotProduction(): void {

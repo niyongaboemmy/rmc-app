@@ -15,7 +15,7 @@ import { GatewayStatus } from './payment-gateway.port';
 
 /** What the browser needs to render the right payment UI. Never any secret. */
 export interface PublicPaymentConfig {
-  /** 'irembopay' | 'intouchpay', or null when nothing is active and configured. */
+  /** The active gateway's key, e.g. 'irembopay', or null when none is usable. */
   provider: string | null;
   /** True when the payer can settle by card or bank through the hosted widget. */
   supportsWidget: boolean;
@@ -63,8 +63,12 @@ export class PaymentsPublicController {
       return { provider: null, supportsWidget: false, supportsMomoPush: false };
     }
 
+    // A resolved provider that is not IremboPay cannot happen while IremboPay is
+    // the only one registered — but `resolve()` is settings-driven, so treat an
+    // unexpected code as "no gateway" rather than reporting IremboPay's widget
+    // credentials for something else entirely.
     if (provider.code !== PaymentMethodCode.IREMBOPAY) {
-      return { provider: 'intouchpay', supportsWidget: false, supportsMomoPush: true };
+      return { provider: null, supportsWidget: false, supportsMomoPush: false };
     }
 
     const cfg = await this.iremboConfig.get();
