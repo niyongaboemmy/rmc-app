@@ -32,11 +32,9 @@ import {
 } from '@/lib/content-api';
 import { usePreviewableContent } from '@/lib/content/preview-store';
 import {
-  ContactInlineProvider,
   useContactContent,
   EditableTri,
   EditablePlain,
-  ContactEditToolbar,
   type PlainField,
 } from '@/components/contact/ContactInlineEdit';
 
@@ -60,16 +58,6 @@ const buildContactSchema = (t: (key: string) => string) =>
 type ContactFormData = z.infer<ReturnType<typeof buildContactSchema>>;
 
 export default function ContactPage() {
-  // The provider owns loading + inline-editing state for the page's content.
-  return (
-    <ContactInlineProvider>
-      <ContactPageInner />
-      <ContactEditToolbar />
-    </ContactInlineProvider>
-  );
-}
-
-function ContactPageInner() {
   const t = useTranslations('contact');
   const locale = useLocale();
   const { content, editing } = useContactContent();

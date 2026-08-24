@@ -1,43 +1,41 @@
 'use client';
 
 /**
- * Inline content editing for the Contact page.
+ * Contact-page editing, on the site-wide Edit Mode.
  *
- * An admin with `content:edit` gets a floating toolbar to edit the page's text
- * in place — in all three languages — and save it to the same content store the
- * admin form uses (`saveSiteContent('contact', …)`). Everyone else sees the page
- * exactly as normal, with no editing controls.
+ * This page used to run an editing system of its own — its own provider, its own
+ * draft/save/cancel, its own floating toolbar, and its own trigger in the Navbar via
+ * `PageEditContext`. That put TWO edit buttons in the navbar on this page and nowhere
+ * else, driving two mechanisms that could not see each other: the page-local one owned
+ * these rows, while the hero (an `EditablePageHero`) answered only to the global one. An
+ * admin had to know which button edited which half.
+ *
+ * What is left here is a thin adapter so the page's call sites keep reading the same:
+ * `useEditableContent` supplies the content and the editing flag, and `InlineText` does
+ * the editing, exactly as on the areas, funeral, hajj and service-board pages.
+ *
+ * ── The plain fields are not editable in place ─────────────────────────────────────
+ *
+ * Phone, phone link and the two emails are dashboard-only (Content → Contact), which is
+ * the same call the funeral call bar makes about its number: a phone number is not prose,
+ * and a mistyped one fails silently — nothing on the page looks wrong, the link simply
+ * stops reaching anyone. The dashboard puts the displayed number beside the `tel:` link
+ * it must agree with, which is where that edit belongs.
  */
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
-import { createPortal } from 'react-dom';
 import { useLocale } from 'next-intl';
-import { Check, X, Loader2, Globe } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { PageEditContext, type PageEditController } from '@/contexts/PageEditContext';
-import { Permission } from '@/lib/permissions';
+import { InlineText } from '@/components/edit-mode/InlineText';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import {
-  ContentKeys,
-  getSiteContent,
-  saveSiteContent,
-  mergeContent,
-  pick,
   CONTACT_DEFAULT,
+  ContentKeys,
+  pick,
+  raw,
   type ContactContent,
+  type Locale,
 } from '@/lib/content-api';
-import { useServerSiteContent } from '@/lib/content/SiteContentProvider';
 
-type Lang = 'en' | 'rw' | 'ar';
-
-// Fields that carry a translation ({ en, rw, ar }) vs. plain shared strings.
+/** Fields carrying a translation. The plain strings are dashboard-only — see above. */
 export type TriField =
   | 'title'
   | 'subtitle'
@@ -50,293 +48,82 @@ export type TriField =
   | 'findMosqueSubtitle';
 export type PlainField = 'phone' | 'phoneHref' | 'email' | 'email2';
 
-const LANGS: { key: Lang; label: string }[] = [
-  { key: 'en', label: 'English' },
-  { key: 'rw', label: 'Kinyarwanda' },
-  { key: 'ar', label: 'Arabic' },
-];
-
-interface InlineCtx {
-  content: ContactContent; // saved copy — used for normal (view) rendering
-  draft: ContactContent; // working copy — edited in place
-  canEdit: boolean;
-  editing: boolean;
-  lang: Lang;
-  saving: boolean;
-  dirty: boolean;
-  error: string | null;
-  setLang: (l: Lang) => void;
-  startEdit: () => void;
-  cancel: () => void;
-  save: () => void;
-  setTri: (field: TriField, value: string) => void;
-  setPlain: (field: PlainField, value: string) => void;
-}
-
-const Ctx = createContext<InlineCtx | null>(null);
-
-export function ContactInlineProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, hasPermission } = useAuth();
-  const canEdit = isAuthenticated && hasPermission(Permission.CONTENT_EDIT);
-
-  // The locale layout reads this section on the server (the footer needs it too), so
-  // the saved copy is in hand on the very first render — the contact details are in
-  // the server HTML instead of replacing the seeded defaults after hydration. This
-  // editor keeps its own `content`/`draft` because it saves directly rather than
-  // through the edit-mode store, so the server value seeds that state.
-  const server = useServerSiteContent<Record<string, unknown>>(ContentKeys.contact);
-  const seed = () =>
-    server.value ? mergeContent(CONTACT_DEFAULT, server.value) : CONTACT_DEFAULT;
-
-  const [content, setContent] = useState<ContactContent>(seed);
-  const [draft, setDraft] = useState<ContactContent>(seed);
-  const [editing, setEditing] = useState(false);
-  const [lang, setLang] = useState<Lang>('en');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Nothing to fetch when the page already server-rendered this section.
-    if (server.provided) return;
-    let active = true;
-    getSiteContent<Record<string, unknown>>(ContentKeys.contact)
-      .then((data) => {
-        if (!active || !data) return;
-        const merged = mergeContent(CONTACT_DEFAULT, data);
-        setContent(merged);
-        setDraft(merged);
-      })
-      .catch(() => {
-        /* keep defaults */
-      });
-    return () => {
-      active = false;
-    };
-  }, [server.provided]);
-
-  const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(content), [draft, content]);
-
-  const startEdit = useCallback(() => {
-    setDraft(content);
-    setError(null);
-    setEditing(true);
-  }, [content]);
-
-  const cancel = useCallback(() => {
-    setDraft(content);
-    setError(null);
-    setEditing(false);
-  }, [content]);
-
-  const setTri = useCallback(
-    (field: TriField, value: string) => {
-      setDraft((d) => ({ ...d, [field]: { ...d[field], [lang]: value } }));
-    },
-    [lang],
-  );
-
-  const setPlain = useCallback((field: PlainField, value: string) => {
-    setDraft((d) => ({ ...d, [field]: value }));
-  }, []);
-
-  const save = useCallback(async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      const saved = await saveSiteContent(ContentKeys.contact, draft);
-      // Merge the response over defaults so blank translations keep their fallback.
-      const merged = mergeContent(CONTACT_DEFAULT, saved);
-      setContent(merged);
-      setDraft(merged);
-      setEditing(false);
-    } catch {
-      setError('Could not save. Please check your connection and try again.');
-    } finally {
-      setSaving(false);
-    }
-  }, [draft]);
-
-  const value: InlineCtx = {
-    content,
-    draft,
-    canEdit,
-    editing,
-    lang,
-    saving,
-    dirty,
-    error,
-    setLang,
-    startEdit,
-    cancel,
-    save,
-    setTri,
-    setPlain,
-  };
-
-  // Exposed to shared chrome (the Navbar) so it can render the "Edit" trigger.
-  const pageController: PageEditController = useMemo(
-    () => ({ canEdit, editing, saving, dirty, lang, setLang, startEdit, cancel, save }),
-    [canEdit, editing, saving, dirty, lang, setLang, startEdit, cancel, save],
-  );
-
-  return (
-    <Ctx.Provider value={value}>
-      <PageEditContext.Provider value={pageController}>{children}</PageEditContext.Provider>
-    </Ctx.Provider>
-  );
-}
-
-export function useContactContent(): InlineCtx {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error('useContactContent must be used within ContactInlineProvider');
-  return ctx;
-}
-
-// ── Editable field components ──────────────────────────────────────────────────
-
-const INPUT_CLASS =
-  'w-full rounded-md border border-rmc-green/40 bg-white text-gray-900 text-sm leading-snug ' +
-  'px-2.5 py-1.5 outline-none transition-shadow placeholder:text-gray-400 placeholder:italic ' +
-  'focus:border-rmc-green focus:ring-2 focus:ring-rmc-green/25';
-
 type Tag = keyof JSX.IntrinsicElements;
 
-/** A translated text field: shows the active-locale text normally, an input per-language while editing. */
+/** The page's content plus whether Edit Mode is on, from the site-wide store. */
+export function useContactContent(): { content: ContactContent; editing: boolean } {
+  const { content, editing } = useEditableContent<ContactContent>(
+    ContentKeys.contact,
+    CONTACT_DEFAULT,
+  );
+  return { content, editing };
+}
+
+/**
+ * A translated field, edited in place in the language being viewed.
+ *
+ * The old control offered en/rw/ar tabs on one screen. Edit Mode instead edits the locale
+ * you are looking at — you switch language to translate, and see the result as a reader
+ * of that language would. That is how every other editable page in the app behaves.
+ */
 export function EditableTri({
   field,
   as = 'span',
   className = '',
-  multiline = false,
+  multiline: _multiline = false,
   bare = false,
 }: {
   field: TriField;
   as?: Tag;
   className?: string;
+  /** Accepted for the page's row loop; InlineText is contentEditable, so long text
+   *  wraps without needing a textarea variant. */
   multiline?: boolean;
   bare?: boolean;
 }) {
-  const { content, draft, editing, lang, setTri } = useContactContent();
+  void _multiline;
   const locale = useLocale();
+  const lang = locale as Locale;
+  const { content, setField } = useEditableContent<ContactContent>(
+    ContentKeys.contact,
+    CONTACT_DEFAULT,
+  );
 
-  if (editing) {
-    const value = draft[field][lang] ?? '';
-    // When translating a non-English field, show the English text as a hint.
-    const hint = lang !== 'en' ? draft[field].en : undefined;
-    const shared = {
-      value,
-      dir: lang === 'ar' ? ('rtl' as const) : ('ltr' as const),
-      placeholder: hint || 'Enter text…',
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-        setTri(field, e.target.value),
-      className: INPUT_CLASS,
-    };
-    const control = multiline ? (
-      <textarea rows={2} {...shared} />
-    ) : (
-      <input type="text" {...shared} />
-    );
-    return bare ? control : <div className={className}>{control}</div>;
-  }
-
-  const display = pick(content[field], locale);
-  if (bare) return <>{display}</>;
-  const As = as as Tag;
-  return <As className={className}>{display}</As>;
+  return (
+    <InlineText
+      as={bare ? 'span' : (as as 'span')}
+      lang={locale}
+      value={pick(content[field], locale)}
+      // This locale's OWN text, so an untranslated field opens empty rather than
+      // pre-filled with the English it currently falls back to.
+      editValue={raw(content[field], locale)}
+      onCommit={(v) => setField((d) => { d[field][lang] = v; })}
+      className={className}
+      dir={locale === 'ar' ? 'rtl' : 'ltr'}
+      placeholder="Enter text…"
+    />
+  );
 }
 
-/** A plain (non-translated) string field such as phone or email. */
+/**
+ * A plain shared string — phone, phone link, email. Rendered, never edited here.
+ *
+ * Kept as a component so the page's row loop stays symmetric with `EditableTri`, and so
+ * there is one place to look when asking why these are not editable in place.
+ */
 export function EditablePlain({
   field,
   as = 'span',
   className = '',
-  placeholder,
-  inputType = 'text',
 }: {
   field: PlainField;
   as?: Tag;
   className?: string;
+  /** Accepted and ignored — the old inline input took one. */
   placeholder?: string;
   inputType?: string;
 }) {
-  const { content, draft, editing, setPlain } = useContactContent();
-
-  if (editing) {
-    return (
-      <input
-        type={inputType}
-        value={draft[field]}
-        placeholder={placeholder}
-        onChange={(e) => setPlain(field, e.target.value)}
-        className={INPUT_CLASS}
-      />
-    );
-  }
+  const { content } = useContactContent();
   const As = as as Tag;
   return <As className={className}>{content[field]}</As>;
-}
-
-// ── Floating admin toolbar ──────────────────────────────────────────────────────
-
-/**
- * The editing controls (language tabs + Save / Cancel), shown as a slim bar only
- * while an admin is actually editing. The trigger to ENTER edit mode lives in the
- * Navbar (the "Edit" button), so there is nothing to show when not editing.
- */
-export function ContactEditToolbar() {
-  const { editing, lang, setLang, cancel, save, saving, dirty, error } = useContactContent();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted || !editing) return null;
-
-  const bar = (
-    <div className="fixed inset-x-0 bottom-4 z-[3000] flex justify-center px-4 pointer-events-none">
-      <div className="pointer-events-auto flex flex-col items-stretch gap-2 rounded-2xl border border-gray-200 bg-white/95 p-2.5 shadow-2xl shadow-black/10 backdrop-blur max-w-[95vw]">
-        {error && (
-          <p className="px-1 text-xs font-medium text-red-600" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 pl-1 pr-1 text-xs font-semibold text-gray-500">
-            <Globe className="h-3.5 w-3.5" /> Editing
-          </span>
-          <div className="flex rounded-lg bg-gray-100 p-0.5">
-            {LANGS.map((l) => (
-              <button
-                key={l.key}
-                type="button"
-                onClick={() => setLang(l.key)}
-                className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
-                  lang === l.key ? 'bg-white text-rmc-green shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-          <span className="hidden sm:block h-5 w-px bg-gray-200" />
-          <button
-            type="button"
-            onClick={cancel}
-            disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-          >
-            <X className="h-3.5 w-3.5" /> Cancel
-          </button>
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving || !dirty}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-rmc-green px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-rmc-green-dark disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            {saving ? 'Saving…' : 'Save changes'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return createPortal(bar, document.body);
 }

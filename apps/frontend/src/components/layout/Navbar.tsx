@@ -8,7 +8,6 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { VERSES } from '@/data/verses';
 import { publicApi } from '@/lib/public-api';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePageEdit } from '@/contexts/PageEditContext';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { EditModeToggle } from '@/components/edit-mode/EditModeToggle';
 import { Permission } from '@/lib/permissions';
@@ -16,7 +15,7 @@ import Image from 'next/image';
 import { useScrollProgress } from '@/hooks/useScrollProgress';
 import {
   Menu, X, ChevronDown, User, LayoutDashboard,
-  Lock, Users, Shield, LogOut, Heart, Pencil,
+  Lock, Users, Shield, LogOut, Heart,
   Compass, GraduationCap, Library, MessagesSquare,
   LayoutGrid, Moon, FileText, Briefcase,
   type LucideIcon,
@@ -81,8 +80,6 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
   const isHome = pathname === '/' || pathname === `/${locale}` || pathname === `/${locale}/`;
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
-  // Present only on pages that expose inline editing (e.g. Contact) — null elsewhere.
-  const pageEdit = usePageEdit();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   // WHICH dropdown is open, keyed by the parent's href — not a boolean. There is
@@ -475,18 +472,6 @@ export function Navbar({ solid = false }: NavbarProps = {}) {
               <Heart className="w-3.5 h-3.5 shrink-0" />
               {t('donate')}
             </Link>
-
-            {/* Inline "Edit" — only where the page offers it (Contact) and the user may edit. */}
-            {pageEdit?.canEdit && !pageEdit.editing && (
-              <button
-                type="button"
-                onClick={pageEdit.startEdit}
-                className="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-medium px-3 py-1.5 rounded-lg border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 transition-all duration-200 text-white/80 hover:text-white"
-              >
-                <Pencil className="w-3.5 h-3.5 shrink-0" />
-                Edit
-              </button>
-            )}
 
             {isAuthenticated && user ? (
               <div className="hidden lg:flex items-center gap-2">
