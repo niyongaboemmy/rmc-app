@@ -68,14 +68,13 @@ export function ProjectsListClient() {
           component's whole chrome — dark panel, background image, gradient, islamic
           pattern, gold hairline, eyebrow pill — which is how it drifted to 46vh and
           pt-36 pb-14 while every other landing hero settled at 40vh and pt-28 pb-10.
+          Centred and without an eyebrow, matching About, Gallery, Dawah and Contact.
           The stat pills are the one thing genuinely local to this page, and they go in
           as children. */}
       <PageHero
-        eyebrow={pick(content.eyebrow, locale)}
         title={pick(content.title, locale)}
         subtitle={pick(content.lede, locale)}
         images={[HERO_IMAGE]}
-        align="left"
         titleClassName={`text-3xl font-bold md:text-5xl ${arFont}`}
         subtitleClassName={arFont}
         minHeightClassName="min-h-[40vh]"
@@ -83,7 +82,7 @@ export function ProjectsListClient() {
       >
         {/* Stats — only once we have projects. */}
         {loaded && items.length > 0 && (
-          <div className="mt-7 flex flex-wrap gap-3">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             <StatPill icon={Layers} label={pick({ en: 'Projects', rw: 'Imishinga', ar: 'مشاريع' }, locale)} value={String(stats.count)} />
             <StatPill icon={TrendingUp} label={pick({ en: 'Raised', rw: 'Byakusanyijwe', ar: 'تم جمعه' }, locale)} value={projectMoneyShort(stats.currency, stats.raised)} />
             <StatPill icon={Target} label={pick({ en: 'Goal', rw: 'Intego', ar: 'الهدف' }, locale)} value={projectMoneyShort(stats.currency, stats.goal)} />

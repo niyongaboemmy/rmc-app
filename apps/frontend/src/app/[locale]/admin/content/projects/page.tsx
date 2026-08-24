@@ -217,9 +217,8 @@ function ProjectsManager() {
       <TriFieldCard
         group={{
           title: 'Section heading',
-          note: 'Sits above the grid of projects.',
+          note: 'Sits above the grid of projects. The hero shows no eyebrow.',
           fields: [
-            { path: ['eyebrow'], label: 'Eyebrow', rows: 1 },
             { path: ['title'], label: 'Heading', rows: 1 },
             { path: ['lede'], label: 'Intro paragraph', rows: 3 },
           ],
