@@ -124,13 +124,17 @@ function ContactPageInner() {
       <Navbar />
       <main>
         {/* Header */}
+        {/* Sized like the other landing heroes — About, Gallery, Announcements are all
+            40vh at pt-28 pb-10. This one asked for 25vh but kept pt-36 pb-8, and ~176px
+            of padding alone clears a quarter of most viewports, so the declared height
+            never applied and the hero was taller than the number suggested. */}
         <EditablePageHero
           contentKey={ContentKeys.contactHero}
           defaults={CONTACT_HERO_DEFAULT}
           showEyebrow
           ornament
-          minHeightClassName="min-h-[25vh]"
-          paddingClassName="pt-36 pb-8"
+          minHeightClassName="min-h-[40vh]"
+          paddingClassName="pt-28 pb-10"
         />
 
         {/* ===================================================================
