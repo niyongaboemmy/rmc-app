@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { GeoJSON, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { Feature, FeatureCollection } from 'geojson';
-import { Car, Footprints, Navigation, X } from 'lucide-react';
+import { Car, Footprints, LocateFixed, Navigation, X } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { RwandaMap } from './RwandaMap';
 import { DirectionsLayer, type DirectionsStatus, type DualRoute } from './DirectionsLayer';
 import { FitToProvince, FlyToFocus, FlyToOnce, type Focus } from './controls';
@@ -63,12 +65,17 @@ export function PlaceFinderMap<T extends MapPlace>({
   renderPopup,
   overlay,
 }: Props<T>) {
+  // Read here rather than threaded through every caller: mosques, schools and
+  // cemeteries all say the same thing, so `labels` stays the per-finder vocabulary.
+  const tCommon = useTranslations('common');
   const [status, setStatus] = useState<DirectionsStatus>('idle');
   const [info, setInfo] = useState<DualRoute | null>(null);
 
-  // Asked for on mount: highlighting the nearest place is the point of this
-  // screen. Denial just leaves every pin green.
-  const { position } = useUserLocation({ auto: true });
+  // Asked for on mount: highlighting the nearest place is the point of this screen.
+  // But a browser that denies, or simply never answers the prompt, used to leave the map
+  // looking ordinary with nothing to say the feature existed — so `locate` is also
+  // offered as a button, and `locateStatus` reports what happened.
+  const { position, status: locateStatus, locate, isLocating } = useUserLocation({ auto: true });
 
   const nearest = useMemo(() => nearestTo(position, places), [position, places]);
   const nearestId = nearest?.id ?? null;
@@ -160,6 +167,30 @@ export function PlaceFinderMap<T extends MapPlace>({
           >
             <X className="h-3.5 w-3.5" />
           </button>
+        </div>
+      )}
+
+      {/* "Find near me" — the visible half of a feature that was previously silent.
+          Hidden once a position is known: the nearest pin is already highlighted and
+          the camera has flown to it, so the button has nothing left to do. */}
+      {!position && (
+        <div className="absolute bottom-3 left-1/2 z-[1000] -translate-x-1/2">
+          <button
+            type="button"
+            onClick={locate}
+            disabled={isLocating}
+            className="inline-flex items-center gap-1.5 rounded-full border border-gray-100 bg-white/95 px-3.5 py-1.5 text-xs font-semibold text-gray-700 shadow-lg ring-1 ring-black/5 backdrop-blur transition-colors hover:text-rmc-green disabled:opacity-60"
+          >
+            <LocateFixed className={cn('h-3.5 w-3.5 text-rmc-green', isLocating && 'animate-pulse')} />
+            {isLocating ? tCommon('findNearMeLocating') : tCommon('findNearMe')}
+          </button>
+          {/* Denial is not an error state to shout about, but saying nothing at all is
+              what made this look broken. */}
+          {locateStatus === 'error' && (
+            <p className="mt-1.5 max-w-[15rem] text-center text-[11px] leading-snug text-gray-500">
+              {tCommon('findNearMeDenied')}
+            </p>
+          )}
         </div>
       )}
 

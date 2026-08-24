@@ -21,6 +21,9 @@
     "services": "Explore Services"
   },
   "common": {
+    "findNearMe": "Find near me",
+    "findNearMeLocating": "Finding you…",
+    "findNearMeDenied": "Location unavailable — showing every location instead.",
     "pagination": {
       "previous": "Previous",
       "next": "Next",

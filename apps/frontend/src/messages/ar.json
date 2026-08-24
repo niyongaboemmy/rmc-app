@@ -21,6 +21,9 @@
     "services": "استكشف الخدمات"
   },
   "common": {
+    "findNearMe": "ابحث بالقرب مني",
+    "findNearMeLocating": "جارٍ تحديد موقعك…",
+    "findNearMeDenied": "الموقع غير متاح — يتم عرض جميع المواقع.",
     "pagination": {
       "previous": "السابق",
       "next": "التالي",

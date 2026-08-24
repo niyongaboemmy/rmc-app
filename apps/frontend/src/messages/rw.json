@@ -21,6 +21,9 @@
     "services": "Reba Serivisi"
   },
   "common": {
+    "findNearMe": "Shakisha hafi yanjye",
+    "findNearMeLocating": "Turagushakisha…",
+    "findNearMeDenied": "Aho uri ntibiboneka — turerekana ahantu hose.",
     "pagination": {
       "previous": "Ibanjirije",
       "next": "Ikurikira",
