@@ -72,9 +72,9 @@ const SECTIONS: HeaderSection[] = [
   {
     key: ContentKeys.contactHero,
     title: 'Contact page',
-    note: '/contact — the banner above the contact form.',
+    note: '/contact — the banner above the contact form; heading only, no eyebrow.',
     defaults: CONTACT_HERO_DEFAULT,
-    fields: heroFields(true),
+    fields: heroFields(false),
   },
   {
     key: ContentKeys.registerHero,
