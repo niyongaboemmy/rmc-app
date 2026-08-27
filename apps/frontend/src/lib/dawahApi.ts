@@ -468,6 +468,12 @@ export interface AdminQuestion {
   language: PostLanguage;
   status: QuestionStatus;
   hasAnswer: boolean;
+  /**
+   * Which path produced the entry: RMC wrote both halves ('scholar'), or somebody asked
+   * and a scholar answered — or has yet to ('member'). Admin-only, like the rest of this
+   * shape; the public API never says who asked.
+   */
+  origin: 'scholar' | 'member';
   category: { id: string; nameEn: string } | null;
   /** The real name of whoever asked. Admins are trusted; this is review, not publication. */
   author: string | null;
