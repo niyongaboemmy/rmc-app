@@ -82,7 +82,7 @@ export class GoodConductController {
 
   @Get('requests/:id/pay/status')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Poll MoMo payment status from IntouchPay' })
+  @ApiOperation({ summary: 'Poll the payment gateway for MoMo payment status' })
   payStatus(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.checkMomoPaymentStatus(id, user.id);
   }

@@ -11,7 +11,6 @@ import { PaymentSettingsController } from './payment-settings.controller';
 import { PaymentEventsService } from './payment-events.service';
 import { ProviderProductsService } from './provider-products.service';
 import { SettingsCacheBus } from './settings-cache.bus';
-import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module';
 
 @Module({
   imports: [
@@ -23,7 +22,6 @@ import { IntouchPayModule } from '../integrations/intouch-pay/intouch-pay.module
       PaymentTransaction,
       PaymentTypeProviderProduct,
     ]),
-    IntouchPayModule,
   ],
   providers: [
     PaymentSettingsService,

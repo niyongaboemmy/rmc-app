@@ -1,11 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { GoodConductService } from './good-conduct.service';
 import {
   GoodConductRequest,
@@ -24,7 +19,6 @@ import { Mosque } from '../mosques/entities/mosque.entity';
 import { District } from '../locations/entities/district.entity';
 import { Sector } from '../locations/entities/sector.entity';
 import { ConfigService } from '@nestjs/config';
-import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
 import { PaymentGatewayService } from '../payments/payment-gateway.service';
 import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
 import { SmsService } from '../integrations/sms/sms.service';
@@ -73,8 +67,7 @@ describe('GoodConductService', () => {
   let dataSource: { query: jest.Mock };
   let paymentSettings: { getActiveRates: jest.Mock; getRawSettings: jest.Mock };
   let configService: { get: jest.Mock };
-  let intouchPay: { requestPayment: jest.Mock; getTransactionStatus: jest.Mock };
-  let paymentGateway: { charge: jest.Mock; canCharge: jest.Mock };
+  let paymentGateway: { charge: jest.Mock; canCharge: jest.Mock; getStatus: jest.Mock };
   let notifSettings: { isSmsEnabled: jest.Mock; isEmailEnabled: jest.Mock };
   let smsService: { sendSms: jest.Mock };
   let emailService: { sendEmail: jest.Mock };
@@ -113,17 +106,18 @@ describe('GoodConductService', () => {
       }),
     };
     configService = { get: jest.fn().mockReturnValue('http://localhost:3000') };
-    intouchPay = { requestPayment: jest.fn(), getTransactionStatus: jest.fn() };
     paymentGateway = {
       canCharge: jest.fn().mockResolvedValue(true),
       charge: jest.fn().mockResolvedValue({
-        provider: 'intouchpay',
+        provider: 'irembopay',
         status: 'PENDING',
-        providerReference: 'GC-1|GW-1',
+        providerReference: 'INV-880099',
+        domainReference: 'GC-1',
         transactionId: 'GC-1',
-        responseCode: '1000',
-        message: 'Pending',
+        responseCode: 'NEW',
+        message: 'Invoice INV-880099 created',
       }),
+      getStatus: jest.fn(),
     };
     notifSettings = {
       isSmsEnabled: jest.fn().mockReturnValue(true),
@@ -146,7 +140,6 @@ describe('GoodConductService', () => {
         { provide: getDataSourceToken(), useValue: dataSource },
         { provide: PaymentSettingsService, useValue: paymentSettings },
         { provide: ConfigService, useValue: configService },
-        { provide: IntouchPayService, useValue: intouchPay },
         { provide: PaymentGatewayService, useValue: paymentGateway },
         { provide: NotificationSettingsService, useValue: notifSettings },
         { provide: SmsService, useValue: smsService },
@@ -183,29 +176,33 @@ describe('GoodConductService', () => {
       expect(result.amountDue).toBe(3500);
     });
 
-    it('rejects a new draft when an active request already exists', async () => {
-      requestRepo.findOne.mockResolvedValue(
-        makeRequest({ status: GoodConductStatus.UNDER_REVIEW }),
-      );
-
-      await expect(service.createDraft('applicant-1', baseDto)).rejects.toThrow(ConflictException);
-    });
-
+    /**
+     * There is deliberately no "one active request per applicant" rule: one
+     * account — an officer's, typically — submits on behalf of several people,
+     * so concurrent requests are the normal case, not a duplicate.
+     *
+     * These cases previously asserted a `ConflictException`. That block was
+     * removed on purpose in 2026-07 and the tests were simply never updated;
+     * they now pin down the behaviour the service actually documents.
+     */
     it.each([
       GoodConductStatus.DRAFT,
       GoodConductStatus.SUBMITTED,
       GoodConductStatus.UNDER_REVIEW,
       GoodConductStatus.MORE_INFO_REQUESTED,
       GoodConductStatus.APPROVED,
-    ])('blocks duplicate creation while an existing request is %s', async (status) => {
+    ])('allows a new draft while an existing request is %s', async (status) => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status }));
-      await expect(service.createDraft('applicant-1', baseDto)).rejects.toThrow(ConflictException);
+
+      const result = await service.createDraft('applicant-1', baseDto);
+
+      expect(result.status).toBe(GoodConductStatus.DRAFT);
+      expect(result.paymentStatus).toBe(PaymentStatus.UNPAID);
     });
 
     it.each([GoodConductStatus.REJECTED, GoodConductStatus.CANCELLED, GoodConductStatus.CLOSED])(
       'allows a new draft when the only prior request is %s',
       async (_status) => {
-        // findOne with In(ACTIVE_STATUSES) would not match a non-active status — simulate that by returning null
         requestRepo.findOne.mockResolvedValue(null);
         const result = await service.createDraft('applicant-1', baseDto);
         expect(result.status).toBe(GoodConductStatus.DRAFT);
@@ -611,12 +608,13 @@ describe('GoodConductService', () => {
     it('advances draft -> submitted when the gateway confirms immediately', async () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status: GoodConductStatus.DRAFT }));
       paymentGateway.charge.mockResolvedValue({
-        provider: 'intouchpay',
-        providerReference: 'gw-1',
+        provider: 'irembopay',
+        providerReference: 'INV-1',
+        domainReference: 'GC-1',
         transactionId: 'GC-1',
         status: 'SUCCESSFUL',
-        responseCode: '01',
-        message: 'OK',
+        responseCode: 'PAID',
+        message: 'Paid via MTN_MOMO',
       });
 
       const result = await service.initiateMomoPayment(
@@ -637,12 +635,13 @@ describe('GoodConductService', () => {
     it('leaves the request in draft with payment processing while the gateway push is pending', async () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status: GoodConductStatus.DRAFT }));
       paymentGateway.charge.mockResolvedValue({
-        provider: 'intouchpay',
-        providerReference: 'gw-2',
+        provider: 'irembopay',
+        providerReference: 'INV-2',
+        domainReference: 'GC-1',
         transactionId: 'GC-1',
         status: 'PENDING',
-        responseCode: '1000',
-        message: 'Pending',
+        responseCode: 'NEW',
+        message: 'Invoice INV-2 created',
       });
 
       const result = await service.initiateMomoPayment(
@@ -659,12 +658,13 @@ describe('GoodConductService', () => {
     it('records a failed transaction without touching the request status when the gateway rejects immediately', async () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ status: GoodConductStatus.DRAFT }));
       paymentGateway.charge.mockResolvedValue({
-        provider: 'intouchpay',
-        providerReference: 'gw-3',
+        provider: 'irembopay',
+        providerReference: 'INV-3',
+        domainReference: 'GC-1',
         transactionId: 'GC-1',
         status: 'FAILED',
-        responseCode: '1008',
-        message: 'General Failure',
+        responseCode: 'EXPIRED',
+        message: 'Invoice expired before payment',
       });
 
       const result = await service.initiateMomoPayment(
@@ -731,7 +731,7 @@ describe('GoodConductService', () => {
       requestRepo.findOne.mockResolvedValue(makeRequest({ paymentStatus: PaymentStatus.PAID }));
       const result = await service.checkMomoPaymentStatus('req-uuid-1', 'applicant-1');
       expect(result.paymentStatus).toBe('paid');
-      expect(intouchPay.getTransactionStatus).not.toHaveBeenCalled();
+      expect(paymentGateway.getStatus).not.toHaveBeenCalled();
     });
 
     it('resolves a successful gateway status and advances draft -> submitted', async () => {
@@ -744,10 +744,11 @@ describe('GoodConductService', () => {
           metadata: {},
         }),
       );
-      intouchPay.getTransactionStatus.mockResolvedValue({
+      paymentGateway.getStatus.mockResolvedValue({
         status: 'SUCCESSFUL',
-        responseCode: '01',
-        message: 'OK',
+        providerReference: 'INV-880099',
+        responseCode: 'PAID',
+        message: 'Paid via MTN_MOMO',
       });
 
       const result = await service.checkMomoPaymentStatus('req-uuid-1', 'applicant-1');
@@ -768,10 +769,11 @@ describe('GoodConductService', () => {
           metadata: {},
         }),
       );
-      intouchPay.getTransactionStatus.mockResolvedValue({
+      paymentGateway.getStatus.mockResolvedValue({
         status: 'FAILED',
-        responseCode: '1008',
-        message: 'General Failure',
+        providerReference: 'INV-880099',
+        responseCode: 'EXPIRED',
+        message: 'Invoice expired before payment',
       });
 
       const result = await service.checkMomoPaymentStatus('req-uuid-1', 'applicant-1');
@@ -783,7 +785,7 @@ describe('GoodConductService', () => {
       transactionRepo.findOne.mockResolvedValue(null);
       const result = await service.checkMomoPaymentStatus('req-uuid-1', 'applicant-1');
       expect(result.gatewayStatus).toBe('PENDING');
-      expect(intouchPay.getTransactionStatus).not.toHaveBeenCalled();
+      expect(paymentGateway.getStatus).not.toHaveBeenCalled();
     });
   });
 

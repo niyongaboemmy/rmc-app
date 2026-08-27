@@ -2,6 +2,10 @@ import { apiClient } from './api';
 
 // ── Enums (mirrored from backend) ──────────────────────────────────────────────
 
+/**
+ * `MOMO_INTOUCH` is retired (2026-08) but stays in the union: historical
+ * transactions carry the code, and admin listings must still render them.
+ */
 export type PaymentMethodCode = 'MOMO_INTOUCH' | 'IREMBOPAY' | 'BANK_TRANSFER' | 'CARD' | 'CASH';
 
 export type PaymentTypeKey =
@@ -82,19 +86,6 @@ export interface UpsertPaymentMethodSettingsPayload {
   isTestMode?: boolean;
 }
 
-export interface TestPaymentPayload {
-  mobilePhone: string;
-  amount: number;
-  paymentTypeKey?: PaymentTypeKey;
-  currency?: string;
-}
-
-export interface TestDepositPayload {
-  mobilePhone: string;
-  amount: number;
-  reason?: string;
-}
-
 export interface PaymentTransaction {
   id: string;
   requestTransactionId: string;
@@ -106,25 +97,12 @@ export interface PaymentTransaction {
   currency: string;
   mobilePhone: string;
   status: 'pending' | 'successful' | 'failed' | 'cancelled';
-  direction: 'collect' | 'deposit';
   responseCode: string | null;
   message: string | null;
   isTest: boolean;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface TestPaymentResult {
-  transaction: PaymentTransaction;
-  responseCode: string;
-  message: string;
-}
-
-export interface TestDepositResult {
-  transaction: PaymentTransaction;
-  responseCode: string;
-  message: string;
 }
 
 // ── IremboPay ─────────────────────────────────────────────────────────────────
@@ -185,7 +163,7 @@ export interface IremboPayTestResult {
 
 /** Payer-facing gateway capabilities. Contains no secrets by construction. */
 export interface PublicPaymentConfig {
-  provider: 'irembopay' | 'intouchpay' | null;
+  provider: 'irembopay' | null;
   supportsWidget: boolean;
   supportsMomoPush: boolean;
   publicKey?: string;
@@ -213,16 +191,11 @@ export interface SettingField {
   hint?: string;
 }
 
-export const PAYMENT_METHOD_FIELDS: Record<PaymentMethodCode, SettingField[]> = {
-  MOMO_INTOUCH: [
-    { key: 'username',        label: 'Username',         placeholder: 'e.g. testa004',                     required: true },
-    { key: 'partnerPassword', label: 'Partner Password', placeholder: 'Partner password from IntouchPay',  required: true, sensitive: true },
-    { key: 'accountNo',       label: 'Account No.',      placeholder: 'e.g. 250260008866',                 required: true },
-    { key: 'callbackUrl',     label: 'Callback URL',     placeholder: 'https://api.isengesho.com/api/v1/webhooks/intouch-pay', type: 'url',
-      hint: 'IntouchPay will POST the transaction status to this URL after confirmation' },
-    { key: 'gatewayUrl',      label: 'Gateway URL',      placeholder: 'https://www.intouchpay.co.rw/api/requestpayment/',
-      hint: 'Leave empty to use the default IntouchPay endpoint', type: 'url' },
-  ],
+/**
+ * `MOMO_INTOUCH` has no entry: the gateway is retired, so there is nothing left
+ * to configure. `Partial` rather than `Record` so the type says that out loud.
+ */
+export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingField[]>> = {
   IREMBOPAY: [
     { key: 'secretKey', label: 'Secret Key', required: true, sensitive: true,
       placeholder: 'From Portal → Integration Details → View Token' },
@@ -280,7 +253,8 @@ export const PAYMENT_METHOD_FIELDS: Record<PaymentMethodCode, SettingField[]> = 
 // ── Display helpers ────────────────────────────────────────────────────────────
 
 export const METHOD_LABELS: Record<PaymentMethodCode, string> = {
-  MOMO_INTOUCH:  'Mobile Money',
+  // Retired 2026-08 — kept so historical transactions still show a method name.
+  MOMO_INTOUCH:  'Mobile Money (IntouchPay — retired)',
   IREMBOPAY:     'IremboPay',
   BANK_TRANSFER: 'Bank Transfer',
   CARD:          'Card Payment',
@@ -374,16 +348,6 @@ export const paymentSettingsApi = {
   },
 
   // Payment Testing
-  testPayment: async (payload: TestPaymentPayload): Promise<TestPaymentResult> => {
-    const { data } = await apiClient.post('/admin/payment-settings/test/payment', payload);
-    return data.data ?? data;
-  },
-
-  testDeposit: async (payload: TestDepositPayload): Promise<TestDepositResult> => {
-    const { data } = await apiClient.post('/admin/payment-settings/test/deposit', payload);
-    return data.data ?? data;
-  },
-
   checkTransactionStatus: async (txId: string): Promise<{ transaction: PaymentTransaction; gatewayStatus: string; message: string }> => {
     const { data } = await apiClient.get(`/admin/payment-settings/test/payment/${txId}/status`);
     return data.data ?? data;
@@ -397,11 +361,6 @@ export const paymentSettingsApi = {
     limit?: number;
   }): Promise<{ items: PaymentTransaction[]; total: number; page: number; limit: number }> => {
     const { data } = await apiClient.get('/admin/payment-settings/transactions', { params: filters });
-    return data.data ?? data;
-  },
-
-  getBalance: async (): Promise<{ balance: string; success: boolean; message?: string }> => {
-    const { data } = await apiClient.get('/admin/payment-settings/balance');
     return data.data ?? data;
   },
 

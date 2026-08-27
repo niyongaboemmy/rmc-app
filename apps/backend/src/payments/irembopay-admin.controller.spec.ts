@@ -1,5 +1,7 @@
+import { NotFoundException } from '@nestjs/common';
 import { IremboPayAdminController } from './irembopay-admin.controller';
 import { IremboPayConfig } from '../integrations/irembo-pay/irembo-pay.config.service';
+import { PaymentTransactionStatus } from '../payment-settings/entities/payment-transaction.entity';
 import { User } from '../users/entities/user.entity';
 
 const SECRET = 'sk_test_MUST_NEVER_LEAVE_THE_SERVER';
@@ -25,7 +27,7 @@ const ADMIN = {
   email: 'amina@example.rw',
 } as User;
 
-function build(rows: unknown[] = []) {
+function build(rows: unknown[] = [], txRows: unknown[] = []) {
   const products = {
     listRows: jest.fn().mockResolvedValue(rows),
     upsert: jest.fn().mockResolvedValue({ id: 'map-1' }),
@@ -55,16 +57,35 @@ function build(rows: unknown[] = []) {
     findByTransactionId: jest.fn().mockResolvedValue({ transactionId: 'TEST-1' }),
   };
 
+  const gateway = {
+    getStatus: jest.fn().mockResolvedValue({
+      status: 'SUCCESSFUL',
+      providerReference: '880519183280',
+      message: 'Paid via MTN_MOMO',
+    }),
+  };
+
+  // findOne returns the rows in order, so a test can hand back the pending row
+  // first and the row as the invoice service left it on the re-read.
+  const queue = [...txRows];
+  const txRepo = {
+    findOne: jest.fn().mockImplementation(() => Promise.resolve(queue.shift() ?? null)),
+  };
+
   return {
     controller: new IremboPayAdminController(
       products as never,
       provider as never,
       config as never,
       invoices as never,
+      gateway as never,
+      txRepo as never,
     ),
     products,
     provider,
     invoices,
+    gateway,
+    txRepo,
   };
 }
 
@@ -217,6 +238,77 @@ describe('IremboPayAdminController', () => {
       expect(invoices.findByInvoiceNumber).toHaveBeenCalledWith('TEST-1');
       expect(invoices.findByTransactionId).toHaveBeenCalledWith('TEST-1');
       expect(found).toMatchObject({ transactionId: 'TEST-1' });
+    });
+  });
+
+  describe('checkTransactionStatus', () => {
+    const pending = {
+      id: 'tx-1',
+      requestTransactionId: 'DON-abc12345-1',
+      status: PaymentTransactionStatus.PENDING,
+      message: null,
+    };
+
+    it('404s on an unknown transaction', async () => {
+      const { controller } = build([], []);
+
+      await expect(controller.checkTransactionStatus('tx-missing')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    /** A settled transaction is final — re-querying the provider buys nothing. */
+    it('returns a terminal transaction without calling the gateway', async () => {
+      const settled = {
+        ...pending,
+        status: PaymentTransactionStatus.SUCCESSFUL,
+        message: 'Paid via MTN_MOMO',
+      };
+      const { controller, gateway } = build([], [settled]);
+
+      const result = await controller.checkTransactionStatus('tx-1');
+
+      expect(gateway.getStatus).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        transaction: settled,
+        gatewayStatus: PaymentTransactionStatus.SUCCESSFUL,
+        message: 'Paid via MTN_MOMO',
+      });
+    });
+
+    it('re-checks a pending transaction against the gateway by our own id', async () => {
+      const { controller, gateway } = build([], [pending, pending]);
+
+      await controller.checkTransactionStatus('tx-1');
+
+      // Our transaction id, not the provider's reference — it is the value every
+      // domain record stores and the one the callback carries back.
+      expect(gateway.getStatus).toHaveBeenCalledWith('DON-abc12345-1');
+    });
+
+    /**
+     * `getStatus()` re-applies the invoice state to the ledger on IremboPay, so
+     * the row is re-read rather than written here. Writing it in both places is
+     * how a transaction ends up with two different ideas of the truth.
+     */
+    it('returns the row as the invoice service left it, not a locally patched copy', async () => {
+      const settled = { ...pending, status: PaymentTransactionStatus.SUCCESSFUL };
+      const { controller, txRepo } = build([], [pending, settled]);
+
+      const result = await controller.checkTransactionStatus('tx-1');
+
+      expect(txRepo.findOne).toHaveBeenCalledTimes(2);
+      expect(result.transaction).toBe(settled);
+      expect(result.gatewayStatus).toBe('SUCCESSFUL');
+    });
+
+    /** A vanished row must not blank out the response the caller already has. */
+    it('falls back to the pre-check row if the re-read comes back empty', async () => {
+      const { controller } = build([], [pending]);
+
+      const result = await controller.checkTransactionStatus('tx-1');
+
+      expect(result.transaction).toBe(pending);
     });
   });
 });

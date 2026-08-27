@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 
 const METHOD_ICONS: Record<PaymentMethodCode, React.ElementType> = {
+  // Retired — kept so historical rows still render.
   MOMO_INTOUCH:  Smartphone,
   IREMBOPAY:     Globe,
   BANK_TRANSFER: Building2,

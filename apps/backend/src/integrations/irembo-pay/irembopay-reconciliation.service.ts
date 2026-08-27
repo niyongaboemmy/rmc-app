@@ -7,7 +7,7 @@ import { IremboPayApiError } from './irembo-pay.types';
 /**
  * Re-checks open IremboPay invoices so a lost callback never means a lost payment.
  *
- * This matters more here than it does for IntouchPay. A MoMo push either
+ * This matters more for invoices than for a bare MoMo push. A MoMo push either
  * succeeds or fails within a minute; a bank or branch payment legitimately
  * completes hours later — "paid at a BK branch on Saturday" is a normal event,
  * not an edge case. Without this sweep those payments would sit PENDING until

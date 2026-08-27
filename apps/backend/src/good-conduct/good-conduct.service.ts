@@ -27,8 +27,8 @@ import { EmailTemplates } from './email-templates';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
 import { PaymentTypeKey } from '../payment-settings/entities/payment-type.entity';
 import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
-import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
 import { PaymentGatewayService } from '../payments/payment-gateway.service';
+import { PaymentStatusResult, gatewayReference } from '../payments/payment-gateway.port';
 import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
 import { SmsService } from '../integrations/sms/sms.service';
 import { EmailService } from '../integrations/email/email.service';
@@ -67,7 +67,6 @@ export class GoodConductService {
     private readonly dataSource: DataSource,
     private readonly paymentSettings: PaymentSettingsService,
     private readonly configService: ConfigService,
-    private readonly intouchPay: IntouchPayService,
     private readonly paymentGateway: PaymentGatewayService,
     private readonly notifSettings: NotificationSettingsService,
     private readonly smsService: SmsService,
@@ -200,7 +199,7 @@ export class GoodConductService {
     return request;
   }
 
-  // ── Payment (IntouchPay) ─────────────────────────────────────────────────────
+  // ── Payment ──────────────────────────────────────────────────────────────────
 
   /**
    * Starts a fee payment for the applicant's own request.
@@ -366,7 +365,14 @@ export class GoodConductService {
     return request;
   }
 
-  /** Polls IntouchPay gateway directly and updates DB — used by the applicant's waiting screen. */
+  /**
+   * Polls the payment gateway and syncs the DB — the applicant's waiting screen.
+   *
+   * Routed through `PaymentGatewayService` so it follows whichever provider is
+   * active. The port's `getStatus()` also re-applies the invoice state to the
+   * ledger on IremboPay, so the local writes below stay guarded on the
+   * transaction still being pending — the settlement must not be applied twice.
+   */
   async checkMomoPaymentStatus(
     id: string,
     applicantId: string,
@@ -433,24 +439,22 @@ export class GoodConductService {
       };
     }
 
-    const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
+    let statusResult: PaymentStatusResult;
+    try {
+      statusResult = await this.paymentGateway.getStatus(gatewayReference(tx.providerRef));
+    } catch (err) {
+      // No gateway active/configured, or the provider is unreachable. The
+      // waiting screen keeps polling; the reconciliation cron is the backstop.
+      this.logger.warn(
+        `[GoodConduct] Status check failed for request ${request.id}: ${(err as Error).message}`,
+      );
       return {
         paymentStatus: request.paymentStatus,
         gatewayStatus: 'PENDING',
         responseCode: '',
-        message: 'Credentials not configured',
+        message: 'Payment status is not available right now. Please try again shortly.',
       };
     }
-
-    const statusResult = await this.intouchPay.getTransactionStatus({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      requestTransactionId: tx.providerRef ?? '',
-      transactionId: String((tx.metadata as Record<string, unknown>)?.gatewayTransactionId ?? ''),
-      gatewayBaseUrl: creds.gatewayUrl,
-    });
 
     if (statusResult.status !== 'PENDING') {
       tx.status = statusResult.status === 'SUCCESSFUL' ? 'completed' : 'failed';
@@ -472,8 +476,8 @@ export class GoodConductService {
     return {
       paymentStatus: request.paymentStatus,
       gatewayStatus: statusResult.status,
-      responseCode: statusResult.responseCode,
-      message: statusResult.message,
+      responseCode: statusResult.responseCode ?? '',
+      message: statusResult.message ?? '',
     };
   }
 

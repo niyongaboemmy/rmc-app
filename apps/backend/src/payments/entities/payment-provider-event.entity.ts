@@ -1,8 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
-/** Which provider call produced the event. */
+/**
+ * Which provider call produced the event.
+ *
+ * The first four are legacy: no code emits them any more, but historical rows
+ * written while IntouchPay was the gateway contain them, so the union must keep
+ * accepting them or reading the archive stops type-checking.
+ */
 export type PaymentOperation =
-  // IntouchPay
+  // Legacy (retired provider) — read-only, never written
   | 'request_payment'
   | 'get_status'
   | 'get_balance'
@@ -21,15 +27,19 @@ export type PaymentOperation =
 export type PaymentEventOutcome = 'success' | 'timeout' | 'error';
 
 /**
- * One row per provider request attempt. Lets us answer "how often is IntouchPay
- * slow or down?" without trawling logs — query by outcome/latency/time window.
+ * One row per provider request attempt. Lets us answer "how often is the payment
+ * gateway slow or down?" without trawling logs — query by outcome/latency/time
+ * window.
+ *
+ * Provider-neutral: it lives in `payments/` rather than under any one
+ * integration, and `provider` names which gateway produced the row.
  */
 @Entity('payment_provider_events')
 export class PaymentProviderEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 30, default: 'intouchpay' })
+  @Column({ type: 'varchar', length: 30, default: 'irembopay' })
   provider: string;
 
   @Index('IDX_payment_event_operation')

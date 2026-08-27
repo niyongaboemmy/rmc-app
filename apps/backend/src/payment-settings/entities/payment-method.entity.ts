@@ -7,6 +7,11 @@ import {
 } from 'typeorm';
 
 export enum PaymentMethodCode {
+  /**
+   * @deprecated Retired 2026-08 with the IntouchPay decommissioning. Kept because
+   * historical `payment_transactions` rows carry this code and admin reporting
+   * joins on it — removing the member breaks every read of the archive.
+   */
   MOMO_INTOUCH = 'MOMO_INTOUCH',
   IREMBOPAY = 'IREMBOPAY',
   BANK_TRANSFER = 'BANK_TRANSFER',

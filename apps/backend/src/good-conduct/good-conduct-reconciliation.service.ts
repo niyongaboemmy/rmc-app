@@ -6,7 +6,7 @@ import { GoodConductService } from './good-conduct.service';
 
 /**
  * Periodically settles Good Conduct MoMo payments left in PENDING — the
- * "queue for later confirmation" safety net for when IntouchPay was slow or
+ * "queue for later confirmation" safety net for when the gateway was slow or
  * unavailable at charge time (so the request degraded to PENDING instead of
  * failing). Mirrors DonationReconciliationService.
  *

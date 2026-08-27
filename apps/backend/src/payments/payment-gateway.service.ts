@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
-import { IntouchPayProvider } from './providers/intouch-pay.provider';
 import { IremboPayProvider } from './providers/irembo-pay.provider';
 import {
   PaymentChargeRequest,
@@ -28,11 +27,9 @@ export class PaymentGatewayService {
   private readonly providers = new Map<PaymentMethodCode, PaymentGatewayProvider>();
 
   constructor(
-    intouch: IntouchPayProvider,
     irembo: IremboPayProvider,
     private readonly paymentSettings: PaymentSettingsService,
   ) {
-    this.register(intouch);
     this.register(irembo);
   }
 

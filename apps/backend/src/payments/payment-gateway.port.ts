@@ -6,10 +6,10 @@ export type GatewayStatus = 'PENDING' | 'SUCCESSFUL' | 'FAILED';
 /**
  * One line on a multi-item charge — a single cart entry, for instance.
  *
- * Providers that have no concept of items (IntouchPay) charge the request's
- * total and ignore these; providers that do (IremboPay) turn them into one
- * invoice with several payment items, which is what lets a whole cart be paid
- * in a single transaction.
+ * Providers that have no concept of items charge the request's total and ignore
+ * these; providers that do (IremboPay) turn them into one invoice with several
+ * payment items, which is what lets a whole cart be paid in a single
+ * transaction.
  */
 export interface PaymentLineItem {
   paymentTypeKey: string;
@@ -53,10 +53,10 @@ export interface PaymentChargeRequest {
 }
 
 export interface PaymentChargeResult {
-  /** 'intouchpay' | 'irembopay' */
+  /** The gateway that handled the charge, e.g. 'irembopay'. */
   provider: string;
   status: GatewayStatus;
-  /** invoiceNumber (IremboPay) or gateway transaction id (IntouchPay). */
+  /** The provider's own handle on the charge — an invoiceNumber for IremboPay. */
   providerReference: string;
   /**
    * What a domain record must persist so the webhook can find it again.
@@ -88,6 +88,19 @@ export interface PaymentStatusResult {
   providerPaymentMethod?: string;
   responseCode?: string;
   message?: string;
+}
+
+/**
+ * Normalises a stored domain payment reference into something `getStatus()` can
+ * resolve.
+ *
+ * Records written by the retired IntouchPay provider stored the pair
+ * `"requestTxnId|gatewayTxnId"`; everything written since stores our own
+ * transaction id alone. Dropping the legacy suffix makes both forms resolve, so
+ * historical records stay queryable after the provider is gone.
+ */
+export function gatewayReference(stored: string | null | undefined): string {
+  return (stored ?? '').split('|')[0];
 }
 
 /** The contract every payment gateway satisfies. */

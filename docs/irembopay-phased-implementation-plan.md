@@ -5,6 +5,13 @@
 **Date:** 2026-08-21
 **Repo:** `rmc-app` — backend `apps/backend`, frontend `apps/frontend`
 
+> **Superseded on 2026-08-22 — IntouchPay has been decommissioned.** This
+> document describes adding IremboPay *alongside* IntouchPay, and its statements
+> about IntouchPay remaining as a fallback are no longer true. IremboPay is now
+> the sole payment gateway. See
+> [intouchpay-decommissioning-plan.md](intouchpay-decommissioning-plan.md) for
+> what was removed and what was deliberately kept.
+
 ---
 
 ## How to use this document
@@ -704,4 +711,4 @@ Phases 2 and 3 can run in parallel with 1. Phase 6 can start once 2 lands. **Pha
 4. **The webhook is the only source of truth** for payment success. Not the widget callback, not the push response.
 5. **Never retry a 4xx.**
 6. **Verify the doc's ambiguities against sandbox** and encode the answers as tests.
-7. **IntouchPay stays working** throughout. This is additive; nothing is decommissioned.
+7. ~~**IntouchPay stays working** throughout. This is additive; nothing is decommissioned.~~ **Superseded:** true while this plan was executed, but IntouchPay was decommissioned on 2026-08-22.

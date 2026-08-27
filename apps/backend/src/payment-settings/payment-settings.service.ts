@@ -1,31 +1,18 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
 import { PaymentMethod, PaymentMethodCode } from './entities/payment-method.entity';
 import { PaymentType } from './entities/payment-type.entity';
 import { PaymentTypeRate } from './entities/payment-type-rate.entity';
 import { PaymentMethodSettings } from './entities/payment-method-settings.entity';
-import {
-  PaymentTransaction,
-  PaymentTransactionStatus,
-  PaymentTransactionDirection,
-} from './entities/payment-transaction.entity';
+import { PaymentTransaction } from './entities/payment-transaction.entity';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
 import { UpsertPaymentMethodSettingsDto } from './dto/upsert-payment-method-settings.dto';
 import { UpsertPaymentTypeRateDto } from './dto/upsert-payment-type-rate.dto';
-import { TestPaymentDto } from './dto/test-payment.dto';
-import { TestDepositDto } from './dto/test-deposit.dto';
-import {
-  IntouchPayService,
-  INTOUCH_RESPONSE_CODES,
-} from '../integrations/intouch-pay/intouch-pay.service';
 import { SettingsCacheBus } from './settings-cache.bus';
-import * as crypto from 'crypto';
 
 const SENSITIVE_FIELDS: Partial<Record<PaymentMethodCode, string[]>> = {
-  [PaymentMethodCode.MOMO_INTOUCH]: ['partnerPassword'],
   [PaymentMethodCode.IREMBOPAY]: ['secretKey'],
   [PaymentMethodCode.CARD]: ['secretKey', 'webhookSecret'],
 };
@@ -52,8 +39,6 @@ export class PaymentSettingsService {
     @InjectRepository(PaymentTransaction)
     private readonly txRepo: Repository<PaymentTransaction>,
 
-    private readonly intouchPay: IntouchPayService,
-    private readonly configService: ConfigService,
     private readonly cacheBus: SettingsCacheBus,
   ) {}
 
@@ -284,169 +269,6 @@ export class PaymentSettingsService {
     });
   }
 
-  // ── Test Payment ───────────────────────────────────────────────────────────
-
-  async testPayment(
-    dto: TestPaymentDto,
-    userId: string,
-  ): Promise<{
-    transaction: PaymentTransaction;
-    responseCode: string;
-    message: string;
-  }> {
-    const creds = await this.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException(
-        'MoMo (IntouchPay) credentials are not configured. Go to Credentials tab to set them up.',
-      );
-    }
-
-    const requestTxnId = `TEST-${crypto.randomUUID().replace(/-/g, '').slice(0, 20).toUpperCase()}`;
-    const settingsRecord = await this.getMethodSettingsRecord(PaymentMethodCode.MOMO_INTOUCH);
-
-    const callbackUrl = `${this.configService.get('app.url', 'http://localhost:3000')}/api/v1/webhooks/intouch-pay`;
-
-    const result = await this.intouchPay.requestPayment({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      amount: dto.amount,
-      mobilePhone: dto.mobilePhone,
-      transactionId: requestTxnId,
-      callbackUrl: creds.callbackUrl || callbackUrl,
-      gatewayUrl: creds.gatewayUrl || undefined,
-    });
-
-    const tx = this.txRepo.create({
-      requestTransactionId: requestTxnId,
-      gatewayTransactionId: result.transactionId || null,
-      paymentMethodCode: PaymentMethodCode.MOMO_INTOUCH,
-      paymentTypeKey: dto.paymentTypeKey ?? null,
-      amount: dto.amount,
-      currency: dto.currency ?? 'RWF',
-      mobilePhone: dto.mobilePhone,
-      status:
-        result.status === 'SUCCESSFUL'
-          ? PaymentTransactionStatus.SUCCESSFUL
-          : result.status === 'FAILED'
-            ? PaymentTransactionStatus.FAILED
-            : PaymentTransactionStatus.PENDING,
-      responseCode: result.responseCode,
-      message: result.message,
-      isTest: settingsRecord?.isTestMode ?? true,
-      initiatedBy: userId,
-      completedAt: result.status !== 'PENDING' ? new Date() : null,
-    });
-
-    const saved = await this.txRepo.save(tx);
-
-    return {
-      transaction: saved,
-      responseCode: result.responseCode,
-      message: result.message,
-    };
-  }
-
-  // ── Test Deposit (§3 — send money to a subscriber) ─────────────────────────
-
-  async testDeposit(
-    dto: TestDepositDto,
-    userId: string,
-  ): Promise<{
-    transaction: PaymentTransaction;
-    responseCode: string;
-    message: string;
-  }> {
-    const creds = await this.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException(
-        'MoMo (IntouchPay) credentials are not configured. Go to Credentials tab to set them up.',
-      );
-    }
-
-    const requestTxnId = `TESTDEP-${crypto.randomUUID().replace(/-/g, '').slice(0, 17).toUpperCase()}`;
-    const settingsRecord = await this.getMethodSettingsRecord(PaymentMethodCode.MOMO_INTOUCH);
-
-    const result = await this.intouchPay.requestDeposit({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      amount: dto.amount,
-      mobilePhone: dto.mobilePhone,
-      transactionId: requestTxnId,
-      reason: dto.reason,
-    });
-
-    const tx = this.txRepo.create({
-      requestTransactionId: requestTxnId,
-      gatewayTransactionId: result.referenceId || null,
-      paymentMethodCode: PaymentMethodCode.MOMO_INTOUCH,
-      direction: PaymentTransactionDirection.DEPOSIT,
-      amount: dto.amount,
-      currency: 'RWF',
-      mobilePhone: dto.mobilePhone,
-      status:
-        result.status === 'SUCCESSFUL'
-          ? PaymentTransactionStatus.SUCCESSFUL
-          : PaymentTransactionStatus.FAILED,
-      responseCode: result.responseCode,
-      message: result.message,
-      isTest: settingsRecord?.isTestMode ?? true,
-      initiatedBy: userId,
-      completedAt: new Date(),
-    });
-
-    const saved = await this.txRepo.save(tx);
-
-    return {
-      transaction: saved,
-      responseCode: result.responseCode,
-      message: result.message,
-    };
-  }
-
-  // ── Check transaction status ───────────────────────────────────────────────
-
-  async checkTransactionStatus(txId: string): Promise<{
-    transaction: PaymentTransaction;
-    gatewayStatus: string;
-    message: string;
-  }> {
-    const tx = await this.txRepo.findOne({ where: { id: txId } });
-    if (!tx) throw new NotFoundException('Transaction not found');
-
-    if (tx.status !== PaymentTransactionStatus.PENDING) {
-      return { transaction: tx, gatewayStatus: tx.status, message: tx.message ?? '' };
-    }
-
-    const creds = await this.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException('IntouchPay credentials not configured');
-    }
-
-    const statusResult = await this.intouchPay.getTransactionStatus({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      requestTransactionId: tx.requestTransactionId,
-      transactionId: tx.gatewayTransactionId ?? '',
-      gatewayBaseUrl: creds.gatewayUrl,
-    });
-
-    if (statusResult.status !== 'PENDING') {
-      tx.status =
-        statusResult.status === 'SUCCESSFUL'
-          ? PaymentTransactionStatus.SUCCESSFUL
-          : PaymentTransactionStatus.FAILED;
-      tx.responseCode = statusResult.responseCode;
-      tx.message = statusResult.message;
-      tx.completedAt = new Date();
-      await this.txRepo.save(tx);
-    }
-
-    return { transaction: tx, gatewayStatus: statusResult.status, message: statusResult.message };
-  }
-
   // ── List test transactions ─────────────────────────────────────────────────
 
   async listTransactions(filters: {
@@ -471,133 +293,6 @@ export class PaymentSettingsService {
     return { items, total, page, limit };
   }
 
-  // ── Balance Inquiry ────────────────────────────────────────────────────────
-
-  async getAccountBalance(): Promise<{ balance: string; success: boolean; message?: string }> {
-    const creds = await this.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      throw new BadRequestException('IntouchPay credentials not configured');
-    }
-    return this.intouchPay.getBalance({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      gatewayBaseUrl: creds.gatewayUrl,
-    });
-  }
-
-  // ── Webhook: update transaction from callback ──────────────────────────────
-
-  async handleIntouchCallback(payload: Record<string, string>): Promise<{
-    requestTransactionId: string;
-    transactionId: string;
-    resolvedStatus: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
-    responseCode: string;
-    message: string;
-  } | null> {
-    const requestTxnId = payload['requesttransactionid'];
-    const txnId = payload['transactionid'] ?? '';
-    const rc = payload['responsecode'] ?? '';
-    const status = payload['status'] ?? '';
-    const statusDesc = payload['statusdesc'] ?? '';
-
-    if (!requestTxnId) return null;
-
-    const tx = await this.txRepo.findOne({ where: { requestTransactionId: requestTxnId } });
-    if (!tx) return null;
-
-    tx.gatewayTransactionId = txnId || tx.gatewayTransactionId;
-    tx.responseCode = rc || tx.responseCode;
-    tx.message = statusDesc || INTOUCH_RESPONSE_CODES[rc] || status;
-    tx.callbackPayload = payload as Record<string, unknown>;
-
-    const resolvedStatus = this.intouchPay.resolveStatus(rc, status);
-    if (resolvedStatus !== 'PENDING') {
-      tx.status =
-        resolvedStatus === 'SUCCESSFUL'
-          ? PaymentTransactionStatus.SUCCESSFUL
-          : PaymentTransactionStatus.FAILED;
-      tx.completedAt = new Date();
-    }
-
-    await this.txRepo.save(tx);
-
-    // Test-flow automation: once a test collection is confirmed successful,
-    // automatically fire the matching RequestDeposit (§3) so the collect →
-    // callback → deposit cycle can be verified end-to-end without a manual
-    // second step. Scoped to isTest to avoid ever auto-sending real money.
-    if (
-      tx.isTest &&
-      tx.direction === PaymentTransactionDirection.COLLECT &&
-      resolvedStatus === 'SUCCESSFUL'
-    ) {
-      this.autoTriggerTestDeposit(tx).catch((err) =>
-        this.logger.error(`[AutoDeposit] Failed to trigger for tx ${tx.id}: ${err}`),
-      );
-    }
-
-    return {
-      requestTransactionId: requestTxnId,
-      transactionId: txnId,
-      resolvedStatus,
-      responseCode: rc,
-      message: tx.message ?? '',
-    };
-  }
-
-  /** Fires a RequestDeposit back to the same subscriber after a successful test collection. */
-  private async autoTriggerTestDeposit(sourceTx: PaymentTransaction): Promise<void> {
-    const creds = await this.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-    if (!creds?.username || !creds?.partnerPassword || !creds?.accountNo) {
-      this.logger.warn('[AutoDeposit] Skipped — IntouchPay credentials not configured');
-      return;
-    }
-    // Card and bank collections carry no MSISDN, so there is nowhere to deposit back to.
-    if (!sourceTx.mobilePhone) {
-      this.logger.warn(
-        `[AutoDeposit] Skipped for ${sourceTx.requestTransactionId} — no mobile number on the source transaction`,
-      );
-      return;
-    }
-
-    const requestTxnId = `TESTDEP-${crypto.randomUUID().replace(/-/g, '').slice(0, 17).toUpperCase()}`;
-
-    this.logger.log(
-      `[AutoDeposit] Collection ${sourceTx.requestTransactionId} confirmed — sending deposit back to ${sourceTx.mobilePhone}`,
-    );
-
-    const result = await this.intouchPay.requestDeposit({
-      username: creds.username,
-      partnerPassword: creds.partnerPassword,
-      accountNo: creds.accountNo,
-      amount: sourceTx.amount,
-      mobilePhone: sourceTx.mobilePhone,
-      transactionId: requestTxnId,
-      reason: `Auto deposit for ${sourceTx.requestTransactionId}`,
-    });
-
-    const tx = this.txRepo.create({
-      requestTransactionId: requestTxnId,
-      gatewayTransactionId: result.referenceId || null,
-      paymentMethodCode: PaymentMethodCode.MOMO_INTOUCH,
-      direction: PaymentTransactionDirection.DEPOSIT,
-      referenceId: sourceTx.id,
-      amount: sourceTx.amount,
-      currency: sourceTx.currency,
-      mobilePhone: sourceTx.mobilePhone,
-      status:
-        result.status === 'SUCCESSFUL'
-          ? PaymentTransactionStatus.SUCCESSFUL
-          : PaymentTransactionStatus.FAILED,
-      responseCode: result.responseCode,
-      message: result.message,
-      isTest: true,
-      completedAt: new Date(),
-    });
-
-    await this.txRepo.save(tx);
-  }
-
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private maskSettings(settings: Record<string, string>, code: string): Record<string, string> {
@@ -611,7 +306,6 @@ export class PaymentSettingsService {
 
   private checkConfigured(settings: Record<string, string>, code: string): boolean {
     const required: Partial<Record<PaymentMethodCode, string[]>> = {
-      [PaymentMethodCode.MOMO_INTOUCH]: ['username', 'partnerPassword', 'accountNo'],
       [PaymentMethodCode.IREMBOPAY]: ['secretKey', 'publicKey', 'paymentAccountIdentifier'],
       [PaymentMethodCode.BANK_TRANSFER]: ['bankName', 'accountName', 'accountNumber'],
       [PaymentMethodCode.CARD]: ['provider', 'publishableKey', 'secretKey'],

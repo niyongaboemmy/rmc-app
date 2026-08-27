@@ -7,11 +7,11 @@ import { DonationsService } from './donations.service';
 /**
  * Periodically re-checks donations that are stuck in PENDING.
  *
- * IntouchPay's getTransactionStatus API can lag several minutes behind MTN's
+ * A gateway's status API can lag several minutes behind MTN's
  * actual outcome. Without this job, a donation stays PENDING forever when:
  *   - The callback URL is unreachable (localhost, firewall, etc.)
- *   - IntouchPay hasn't yet received MTN's failure/success notification
- *   - The frontend polling window (90 s) closed before IntouchPay updated
+ *   - The gateway hasn't yet received MTN's failure/success notification
+ *   - The frontend polling window (90 s) closed before the gateway updated
  *
  * Runs every 3 minutes. Only touches donations that are:
  *   - status = 'pending'

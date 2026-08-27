@@ -77,7 +77,7 @@ export class GoodConductWebhookService {
           prevStatus,
           GoodConductStatus.SUBMITTED,
           null,
-          'Payment confirmed via IntouchPay — request submitted',
+          'Payment confirmed — request submitted',
         );
         this.sendSubmissionSms(request);
       }

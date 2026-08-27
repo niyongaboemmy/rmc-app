@@ -24,6 +24,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter, ModalTitle } from '@/compon
 import { cn } from '@/lib/utils';
 
 const METHOD_ICONS: Record<PaymentMethodCode, React.ElementType> = {
+  // Retired — the icon stays so historical rows still render.
   MOMO_INTOUCH:  Smartphone,
   IREMBOPAY:     Globe,
   BANK_TRANSFER: Building2,
@@ -360,12 +361,12 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
               )}
             </div>
 
-            {/* IntouchPay notes */}
+            {/* Retired gateway — historical transactions only, nothing to set up. */}
             {selectedMethod.code === 'MOMO_INTOUCH' && (
-              <div className="rounded-xl bg-blue-50 border border-blue-100 px-5 py-4 text-xs text-blue-700 space-y-1.5">
-                <p className="font-semibold text-blue-800">How IntouchPay works</p>
-                <p>The gateway password is computed per-request as <code className="bg-blue-100 px-1 rounded font-mono">SHA256(username + accountno + partnerpassword + timestamp)</code> — never stored as the final password.</p>
-                <p>Enable <strong>Test Mode</strong> to route payments through the sandbox. Disable it only when you have live credentials from IntouchPay.</p>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 px-5 py-4 text-xs text-slate-600 space-y-1.5">
+                <p className="font-semibold text-slate-700">This gateway is retired</p>
+                <p>IntouchPay was decommissioned in August 2026 and no longer takes payments. The method is kept so historical transactions keep their name in reports.</p>
+                <p>Use <strong>IremboPay</strong> for all new payments.</p>
               </div>
             )}
           </>

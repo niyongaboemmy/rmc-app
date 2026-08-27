@@ -8,6 +8,8 @@ import {
 } from './entities/payment-provider-event.entity';
 
 export interface RecordEventInput {
+  /** Which gateway produced the attempt. Defaults to the only live one. */
+  provider?: string;
   operation: PaymentOperation;
   outcome: PaymentEventOutcome;
   latencyMs: number;
@@ -22,12 +24,17 @@ export interface RecordEventInput {
 /**
  * Records one row per payment-provider request attempt for monitoring.
  *
+ * Provider-neutral. Named `PaymentProviderEventsService` and not
+ * `PaymentEventsService` because `payment-settings/payment-events.service.ts`
+ * already owns that name for the admin SSE bus — two same-named injectables in
+ * one container is how the wrong one gets injected.
+ *
  * Fire-and-forget by design: a logging failure must NEVER break a payment. All
  * writes are best-effort and swallow their own errors.
  */
 @Injectable()
-export class PaymentEventsService {
-  private readonly logger = new Logger(PaymentEventsService.name);
+export class PaymentProviderEventsService {
+  private readonly logger = new Logger(PaymentProviderEventsService.name);
 
   constructor(
     @InjectRepository(PaymentProviderEvent)
@@ -38,7 +45,7 @@ export class PaymentEventsService {
     // Do not await — the caller (a payment flow) must not block on monitoring.
     void this.repo
       .insert({
-        provider: 'intouchpay',
+        provider: input.provider ?? 'irembopay',
         operation: input.operation,
         outcome: input.outcome,
         latencyMs: input.latencyMs,

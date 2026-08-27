@@ -8,10 +8,8 @@ import { CreateDonationDto } from './dto/create-donation.dto';
 import { UpdateDonationDto } from './dto/update-donation.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
-import { IntouchPayService } from '../integrations/intouch-pay/intouch-pay.service';
-import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
 import { PaymentGatewayService } from '../payments/payment-gateway.service';
-import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
+import { PaymentStatusResult } from '../payments/payment-gateway.port';
 import { SmsService } from '../integrations/sms/sms.service';
 import { DonationSmsTemplates } from './donation-sms-templates';
 import { parseDonationMeta } from './donation-meta';
@@ -89,9 +87,7 @@ export class DonationsService {
     private readonly donations: Repository<Donation>,
     @InjectRepository(DonationCampaign)
     private readonly campaigns: Repository<DonationCampaign>,
-    private readonly intouchPay: IntouchPayService,
     private readonly paymentGateway: PaymentGatewayService,
-    private readonly paymentSettings: PaymentSettingsService,
     private readonly smsService: SmsService,
     private readonly configService: ConfigService,
   ) {}
@@ -143,8 +139,8 @@ export class DonationsService {
       campaignId = campaign?.id ?? null;
     }
 
-    // Ask the gateway, not one named provider. Keying this on IntouchPay's
-    // credentials meant that switching the active provider to IremboPay made
+    // Ask the gateway, not one named provider. Keying this on a single
+    // provider's credentials meant that switching the active provider made
     // every donation fall through to "no gateway available, assume paid" —
     // recording money as received that nobody had been asked for.
     const useGateway =
@@ -189,9 +185,8 @@ export class DonationsService {
         pushProvider: 'MTN',
       });
 
-      // `providerReference` already carries the format each provider's webhook
-      // matching expects — `requestTxnId|gatewayTxnId` for IntouchPay, the
-      // invoice number for IremboPay.
+      // `domainReference` is the value the provider's callback carries back —
+      // our own transaction id — which is what the webhook services match on.
       saved.paymentReference = result.domainReference || requestTxnId;
       saved.gatewayResponseCode = result.responseCode || null;
       saved.gatewayMessage = result.message || null;
@@ -345,42 +340,47 @@ export class DonationsService {
     if (!donation) throw new NotFoundException('Donation not found');
 
     if (donation.status === DonationStatus.PENDING && donation.paymentReference) {
-      const creds = await this.paymentSettings.getRawSettings(PaymentMethodCode.MOMO_INTOUCH);
-      if (creds?.username && creds?.partnerPassword && creds?.accountNo) {
-        // paymentReference is stored as "requestTxnId|gatewayTxnId" (gatewayTxnId may be absent)
-        const [requestTxnId, gatewayTxnId] = donation.paymentReference.split('|');
-        const result = await this.intouchPay.getTransactionStatus({
-          username: creds.username,
-          partnerPassword: creds.partnerPassword,
-          accountNo: creds.accountNo,
-          requestTransactionId: requestTxnId,
-          transactionId: gatewayTxnId || requestTxnId,
-          gatewayBaseUrl: creds.gatewayUrl || undefined,
-        });
+      // `paymentReference` is our own transaction id, which is what the gateway
+      // port resolves against. Historical rows written by the retired provider
+      // stored it as "requestTxnId|gatewayTxnId"; take the leading half so those
+      // still resolve rather than 404-ing at the provider.
+      const reference = donation.paymentReference.split('|')[0];
 
-        donation.gatewayResponseCode = result.responseCode || null;
-        donation.gatewayMessage = result.message || null;
+      let result: PaymentStatusResult;
+      try {
+        result = await this.paymentGateway.getStatus(reference);
+      } catch (err) {
+        // No gateway active/configured, or the provider is unreachable. A
+        // refresh is a read — it must never fail the caller's request, and the
+        // reconciliation cron will pick the donation up regardless.
+        this.logger.warn(
+          `[Donations] Status refresh failed for donation ${donation.id}: ${(err as Error).message}`,
+        );
+        return donation;
+      }
 
-        if (result.status === 'SUCCESSFUL') {
-          donation.status = DonationStatus.COMPLETED;
-        } else if (result.status === 'FAILED') {
-          donation.status = DonationStatus.FAILED;
-          this.logger.warn(
-            `[Donations] Payment failed for donation ${donation.id}: rc=${result.responseCode} message="${result.message}"`,
+      donation.gatewayResponseCode = result.responseCode || null;
+      donation.gatewayMessage = result.message || null;
+
+      if (result.status === 'SUCCESSFUL') {
+        donation.status = DonationStatus.COMPLETED;
+      } else if (result.status === 'FAILED') {
+        donation.status = DonationStatus.FAILED;
+        this.logger.warn(
+          `[Donations] Payment failed for donation ${donation.id}: rc=${result.responseCode} message="${result.message}"`,
+        );
+      }
+
+      if (result.status !== 'PENDING') {
+        await this.donations.save(donation);
+        if (donation.status === DonationStatus.COMPLETED && donation.donorPhone) {
+          const amountStr = Number(donation.amount).toLocaleString('en-US');
+          const msg = DonationSmsTemplates.paymentConfirmed(
+            amountStr,
+            donation.currency,
+            donation.donorName,
           );
-        }
-
-        if (result.status !== 'PENDING') {
-          await this.donations.save(donation);
-          if (donation.status === DonationStatus.COMPLETED && donation.donorPhone) {
-            const amountStr = Number(donation.amount).toLocaleString('en-US');
-            const msg = DonationSmsTemplates.paymentConfirmed(
-              amountStr,
-              donation.currency,
-              donation.donorName,
-            );
-            void this.smsService.sendSms(donation.donorPhone, msg);
-          }
+          void this.smsService.sendSms(donation.donorPhone, msg);
         }
       }
     }

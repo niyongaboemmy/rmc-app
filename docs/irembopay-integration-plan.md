@@ -5,6 +5,13 @@
 **Status:** Proposal — sandbox merchant account available; API keys to be pulled from the portal
 **Scope:** Add IremboPay as a first-class payment method alongside the existing IntouchPay (MoMo) gateway, fully configurable from **Admin → Settings → Payments** without redeploys.
 
+> **Superseded on 2026-08-22 — IntouchPay has been decommissioned.** This
+> document describes adding IremboPay *alongside* IntouchPay, and its statements
+> about IntouchPay remaining as a fallback are no longer true. IremboPay is now
+> the sole payment gateway. See
+> [intouchpay-decommissioning-plan.md](intouchpay-decommissioning-plan.md) for
+> what was removed and what was deliberately kept.
+
 ---
 
 ## 0. Sandbox access & credential handling
@@ -391,7 +398,7 @@ Because routing is a DB setting, we migrate one service at a time and can roll b
 1. **Donations** (highest volume, lowest per-transaction risk, already has reconciliation) — sandbox → 10% → 100%.
 2. **Marriage & Good Conduct** (fixed fees, existing webhook services).
 3. **Funeral transport, Hajj, Tenders, Scholarship** — Hajj gains native instalments.
-4. Decommission nothing: IntouchPay stays as fallback behind the same port.
+4. ~~Decommission nothing: IntouchPay stays as fallback behind the same port.~~ **Superseded:** IntouchPay was decommissioned on 2026-08-22. The port survives; the provider does not.
 
 ---
 

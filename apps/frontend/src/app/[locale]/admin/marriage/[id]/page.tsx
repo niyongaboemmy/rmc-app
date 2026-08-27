@@ -1160,7 +1160,7 @@ function AdminMarriageDetailContent() {
             {app.paymentStatus !== 'paid' && permManage && (
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                  <Smartphone className="w-3.5 h-3.5 text-violet-500" /> MoMo Payment (IntouchPay)
+                  <Smartphone className="w-3.5 h-3.5 text-violet-500" /> MoMo Payment
                 </p>
                 <div className="space-y-2">
                   <div className="relative">

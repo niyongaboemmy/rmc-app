@@ -4,8 +4,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Phone, Zap, RefreshCw, CheckCircle2, XCircle, Clock,
-  ChevronDown, AlertCircle, Activity, Wallet, X,
-  ArrowDownToLine, ArrowUpFromLine,
+  ChevronDown, AlertCircle, Activity, X, ExternalLink,
+  FileText, Smartphone, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
@@ -14,9 +14,9 @@ import {
   PaymentMethod,
   PaymentType,
   PaymentTransaction,
-  TestPaymentPayload,
-  TestPaymentResult,
-  TestDepositPayload,
+  IremboPayStatus,
+  IremboPayTestPayload,
+  IremboPayTestResult,
 } from '@/lib/paymentSettingsApi';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -384,6 +384,9 @@ interface Props {
   types: PaymentType[];
 }
 
+/** Invoice only, or invoice plus a MoMo prompt pushed to the payer's phone. */
+type TestMode = 'invoice' | 'push';
+
 export default function PaymentTestingTab({ methods, types }: Props) {
   const toast = useToast();
 
@@ -391,21 +394,23 @@ export default function PaymentTestingTab({ methods, types }: Props) {
   const activeMethods = methods.filter((m) => m.isActive);
   const activeTypes   = types.filter((t) => t.isActive);
 
-  const [selectedMethodId,  setSelectedMethodId]  = useState(activeMethods[0]?.id ?? '');
-  const [selectedTypeKey,   setSelectedTypeKey]   = useState<string>(activeTypes[0]?.key ?? '');
-  const [mobilePhone,       setMobilePhone]        = useState('');
-  const [amount,            setAmount]             = useState('100');
-  const [currency]                                  = useState('RWF');
-  const [direction,         setDirection]          = useState<'collect' | 'deposit'>('collect');
+  const [selectedMethodId, setSelectedMethodId] = useState(activeMethods[0]?.id ?? '');
+  const [selectedTypeKey,  setSelectedTypeKey]  = useState<string>(activeTypes[0]?.key ?? '');
+  const [mobilePhone,      setMobilePhone]      = useState('');
+  const [amount,           setAmount]           = useState('100');
+  const [testMode,         setTestMode]         = useState<TestMode>('push');
+  const [pushProvider,     setPushProvider]     = useState<'MTN' | 'AIRTEL'>('MTN');
 
   // ── Runtime state ────────────────────────────────────────────────────────
   const [sending,        setSending]        = useState(false);
-  const [lastResult,     setLastResult]     = useState<TestPaymentResult | null>(null);
+  const [lastResult,     setLastResult]     = useState<IremboPayTestResult | null>(null);
+  const [lastTx,         setLastTx]         = useState<PaymentTransaction | null>(null);
   const [polling,        setPolling]        = useState(false);
+  const [rechecking,     setRechecking]     = useState(false);
   const [transactions,   setTransactions]   = useState<PaymentTransaction[]>([]);
   const [loadingTxns,    setLoadingTxns]    = useState(false);
-  const [balance,        setBalance]        = useState<{ balance: string; success: boolean } | null>(null);
-  const [loadingBalance, setLoadingBalance] = useState(false);
+  const [gatewayStatus,  setGatewayStatus]  = useState<IremboPayStatus | null>(null);
+  const [loadingStatus,  setLoadingStatus]  = useState(false);
 
   // ── Popup state ──────────────────────────────────────────────────────────
   const [callbackEvent, setCallbackEvent] = useState<PaymentCallbackEvent | null>(null);
@@ -415,27 +420,38 @@ export default function PaymentTestingTab({ methods, types }: Props) {
     setLoadingTxns(true);
     try {
       const res = await paymentSettingsApi.listTransactions({ isTest: true, limit: 20 });
-      setTransactions(Array.isArray(res) ? res : (res.items ?? []));
-    } catch { /* silent */ }
-    finally { setLoadingTxns(false); }
+      const items = Array.isArray(res) ? res : (res.items ?? []);
+      setTransactions(items);
+      return items;
+    } catch {
+      return [];
+    } finally {
+      setLoadingTxns(false);
+    }
   }, []);
 
-  const loadBalance = useCallback(async () => {
-    setLoadingBalance(true);
+  /**
+   * Replaces the old merchant-balance banner. IremboPay is a collections
+   * gateway with no balance API, and a balance was never what an admin needed
+   * before sending a test anyway — whether the gateway is configured, which
+   * environment it points at, and whether any payment type is still unmapped
+   * are the three things that actually make a test fail.
+   */
+  const loadGatewayStatus = useCallback(async () => {
+    setLoadingStatus(true);
     try {
-      const res = await paymentSettingsApi.getBalance();
-      setBalance(res);
+      setGatewayStatus(await paymentSettingsApi.getIremboPayStatus());
     } catch {
-      setBalance(null);
+      setGatewayStatus(null);
     } finally {
-      setLoadingBalance(false);
+      setLoadingStatus(false);
     }
   }, []);
 
   useEffect(() => {
     loadTransactions();
-    loadBalance();
-  }, [loadTransactions, loadBalance]);
+    loadGatewayStatus();
+  }, [loadTransactions, loadGatewayStatus]);
 
   // ── Background auto-poll while a pending transaction is active ───────────
   const autoPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -449,6 +465,19 @@ export default function PaymentTestingTab({ methods, types }: Props) {
     pendingTxIdRef.current = null;
   }, []);
 
+  const settle = useCallback((tx: PaymentTransaction) => {
+    setLastTx(tx);
+    setTransactions((prev) => prev.map((t) => (t.id === tx.id ? tx : t)));
+    setCallbackEvent({
+      type: tx.status === 'successful' ? 'payment.confirmed' : 'payment.failed',
+      requestTransactionId: tx.requestTransactionId,
+      transactionId: tx.gatewayTransactionId ?? '',
+      status: tx.status,
+      responseCode: tx.responseCode ?? '',
+      message: tx.message ?? '',
+    });
+  }, []);
+
   const startAutoPoll = useCallback((txId: string) => {
     stopAutoPoll();
     pendingTxIdRef.current = txId;
@@ -459,95 +488,72 @@ export default function PaymentTestingTab({ methods, types }: Props) {
         const tx = updated.transaction ?? (updated as unknown as PaymentTransaction);
         if (tx.status !== 'pending') {
           stopAutoPoll();
-          setLastResult((prev) => prev ? { ...prev, transaction: tx } : null);
-          setTransactions((prev) => prev.map((t) => (t.id === tx.id ? tx : t)));
-          setCallbackEvent({
-            type: tx.status === 'successful' ? 'payment.confirmed' : 'payment.failed',
-            requestTransactionId: tx.requestTransactionId,
-            transactionId: tx.gatewayTransactionId ?? '',
-            status: tx.status,
-            responseCode: tx.responseCode ?? '',
-            message: tx.message ?? '',
-          });
+          settle(tx);
           loadTransactions();
         }
       } catch { /* keep polling */ }
     }, 5000);
-  }, [stopAutoPoll, loadTransactions]);
+  }, [stopAutoPoll, loadTransactions, settle]);
 
   useEffect(() => () => stopAutoPoll(), [stopAutoPoll]);
 
-  // ── SSE subscription — fires when webhook callback arrives ───────────────
+  // ── SSE subscription — fires when the gateway callback arrives ───────────
   usePaymentEvents(useCallback((event: PaymentCallbackEvent) => {
     stopAutoPoll();
     setCallbackEvent(event);
-    setLastResult((prev) => {
-      if (!prev || prev.transaction.requestTransactionId !== event.requestTransactionId) return prev;
-      return {
-        ...prev,
-        transaction: {
-          ...prev.transaction,
-          status: event.status.toLowerCase() as PaymentTransaction['status'],
-          responseCode: event.responseCode,
-          message: event.message,
-        },
-      } satisfies TestPaymentResult;
-    });
     loadTransactions();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopAutoPoll, loadTransactions]));
 
-  // ── Send payment ─────────────────────────────────────────────────────────
+  // ── Send test ────────────────────────────────────────────────────────────
   const handleSend = async () => {
-    if (!mobilePhone.trim() || !amount) {
-      toast.error('Enter phone and amount.');
-      return;
-    }
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount < 1) {
       toast.error('Amount must be at least 1 RWF.');
       return;
     }
+    // An invoice is payable by card, bank or link, so it needs no phone number.
+    // A MoMo push is a prompt to a specific handset and cannot work without one.
+    if (testMode === 'push' && !mobilePhone.trim()) {
+      toast.error('Enter a phone number to push a MoMo prompt to.');
+      return;
+    }
 
     setSending(true);
     setLastResult(null);
+    setLastTx(null);
     setCallbackEvent(null);
     stopAutoPoll();
     try {
-      if (direction === 'deposit') {
-        const payload: TestDepositPayload = {
-          mobilePhone: mobilePhone.replace(/\s/g, ''),
-          amount:      numAmount,
-        };
-        const result = await paymentSettingsApi.testDeposit(payload);
-        setLastResult(result);
-        toast.success(`Deposit ${result.transaction.status}.`);
-        setCallbackEvent({
-          type: result.transaction.status === 'successful' ? 'payment.confirmed' : 'payment.failed',
-          requestTransactionId: result.transaction.requestTransactionId,
-          transactionId: result.transaction.gatewayTransactionId ?? '',
-          status: result.transaction.status,
-          responseCode: result.responseCode,
-          message: result.message,
-        });
+      const payload: IremboPayTestPayload = {
+        amount: numAmount,
+        ...(mobilePhone.trim() ? { mobilePhone: mobilePhone.replace(/\s/g, '') } : {}),
+        ...(selectedTypeKey ? { paymentTypeKey: selectedTypeKey } : {}),
+        ...(testMode === 'push' ? { paymentProvider: pushProvider } : {}),
+      };
+
+      const result = testMode === 'push'
+        ? await paymentSettingsApi.testIremboPayPush(payload)
+        : await paymentSettingsApi.testIremboPayInvoice(payload);
+
+      setLastResult(result);
+
+      // The test endpoints return the invoice, not the ledger row — the row is
+      // written by the same call, so it is found by our transaction id here and
+      // its uuid is what the status poller needs.
+      const items = await loadTransactions();
+      const tx = items.find((t) => t.requestTransactionId === result.transactionId) ?? null;
+      setLastTx(tx);
+
+      if (result.status === 'SUCCESSFUL') {
+        toast.success('Payment already settled.');
+      } else if (testMode === 'push') {
+        toast.success('Invoice created and MoMo prompt sent — approve it on the phone.');
+        if (tx) startAutoPoll(tx.id);
       } else {
-        const payload: TestPaymentPayload = {
-          mobilePhone: mobilePhone.replace(/\s/g, ''),
-          amount:      numAmount,
-          currency,
-          ...(selectedTypeKey ? { paymentTypeKey: selectedTypeKey as never } : {}),
-        };
-        const result = await paymentSettingsApi.testPayment(payload);
-        setLastResult(result);
-        if (result.transaction.status === 'pending') {
-          toast.success('Request sent — subscriber will receive a USSD prompt to confirm.');
-          // Start polling every 5 s until confirmed or failed
-          startAutoPoll(result.transaction.id);
-        } else {
-          toast.success(`Payment ${result.transaction.status}.`);
-        }
+        toast.success('Invoice created — payable by card, bank or the payment link.');
+        if (tx) startAutoPoll(tx.id);
       }
-      await loadTransactions();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Request failed';
       toast.error(msg);
@@ -561,21 +567,13 @@ export default function PaymentTestingTab({ methods, types }: Props) {
     setPolling(true);
     try {
       const updated = await paymentSettingsApi.checkTransactionStatus(txId);
-      const tx = updated.transaction ?? updated;
-      setLastResult((prev) => prev ? { ...prev, transaction: tx } : null);
-      setTransactions((prev) => prev.map((t) => (t.id === txId ? tx : t)));
+      const tx = updated.transaction ?? (updated as unknown as PaymentTransaction);
       if (tx.status !== 'pending') {
         stopAutoPoll();
-        setCallbackEvent({
-          type: tx.status === 'successful' ? 'payment.confirmed' : 'payment.failed',
-          requestTransactionId: tx.requestTransactionId,
-          transactionId: tx.gatewayTransactionId ?? '',
-          status: tx.status,
-          responseCode: tx.responseCode ?? '',
-          message: tx.message ?? '',
-        });
+        settle(tx);
       } else {
-        toast.success('Still pending — subscriber has not confirmed yet.');
+        setLastTx((prev) => (prev?.id === tx.id ? tx : prev));
+        toast.success('Still pending — the payer has not confirmed yet.');
       }
     } catch {
       toast.error('Status check failed');
@@ -583,6 +581,36 @@ export default function PaymentTestingTab({ methods, types }: Props) {
       setPolling(false);
     }
   };
+
+  /**
+   * The admin recovery for a callback that never arrived: re-query IremboPay for
+   * one invoice and re-apply whatever it says to the ledger. Without this, a
+   * dropped webhook can only be fixed by waiting for the reconciliation cron.
+   */
+  const handleRecheck = async (reference: string) => {
+    setRechecking(true);
+    try {
+      const result = await paymentSettingsApi.recheckIremboPayInvoice(reference);
+      toast.success(`Invoice is ${result.status}${result.message ? ` — ${result.message}` : ''}`);
+      const items = await loadTransactions();
+      const tx = items.find((t) => t.requestTransactionId === lastResult?.transactionId);
+      if (tx) {
+        setLastTx(tx);
+        if (tx.status !== 'pending') {
+          stopAutoPoll();
+          settle(tx);
+        }
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Re-check failed';
+      toast.error(msg);
+    } finally {
+      setRechecking(false);
+    }
+  };
+
+  const configured = gatewayStatus?.configured ?? false;
+  const unmapped   = gatewayStatus?.unmappedPaymentTypes ?? 0;
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
@@ -597,25 +625,48 @@ export default function PaymentTestingTab({ methods, types }: Props) {
 
       <div className="space-y-6">
 
-        {/* Balance banner */}
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-rmc-green-light to-teal-50 border border-rmc-green">
-          <Wallet className="w-5 h-5 text-rmc-green shrink-0" />
+        {/* Gateway readiness banner */}
+        <div
+          className={cn(
+            'flex items-center gap-3 p-4 rounded-xl border',
+            configured
+              ? 'bg-gradient-to-r from-rmc-green-light to-teal-50 border-rmc-green'
+              : 'bg-amber-50 border-amber-200',
+          )}
+        >
+          {configured
+            ? <ShieldCheck className="w-5 h-5 text-rmc-green shrink-0" />
+            : <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />}
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-rmc-green-dark font-medium uppercase tracking-wide">IntouchPay Account Balance</p>
-            {loadingBalance ? (
+            <p className={cn(
+              'text-xs font-medium uppercase tracking-wide',
+              configured ? 'text-rmc-green-dark' : 'text-amber-700',
+            )}>
+              IremboPay
+            </p>
+            {loadingStatus ? (
               <p className="text-sm text-slate-400 mt-0.5">Loading…</p>
-            ) : balance?.success ? (
-              <p className="text-lg font-bold text-rmc-green-dark">{balance.balance} RWF</p>
+            ) : gatewayStatus ? (
+              <p className={cn('text-sm mt-0.5', configured ? 'text-rmc-green-dark' : 'text-amber-700')}>
+                {configured ? 'Configured' : 'Not configured — add credentials in the Credentials tab'}
+                {' · '}
+                <span className="font-semibold">{gatewayStatus.isTestMode ? 'Test mode' : 'LIVE mode'}</span>
+                {unmapped > 0 && (
+                  <> · <span className="font-semibold text-amber-700">
+                    {unmapped} payment type{unmapped === 1 ? '' : 's'} unmapped
+                  </span></>
+                )}
+              </p>
             ) : (
-              <p className="text-sm text-slate-500 mt-0.5">Could not retrieve balance</p>
+              <p className="text-sm text-slate-500 mt-0.5">Could not read the gateway status</p>
             )}
           </div>
           <button
-            onClick={loadBalance}
-            disabled={loadingBalance}
-            className="shrink-0 p-2 rounded-lg hover:bg-rmc-green-light text-rmc-green transition-colors"
+            onClick={loadGatewayStatus}
+            disabled={loadingStatus}
+            className="shrink-0 p-2 rounded-lg hover:bg-white/60 text-slate-600 transition-colors"
           >
-            <RefreshCw className={cn('w-4 h-4', loadingBalance && 'animate-spin')} />
+            <RefreshCw className={cn('w-4 h-4', loadingStatus && 'animate-spin')} />
           </button>
         </div>
 
@@ -626,41 +677,47 @@ export default function PaymentTestingTab({ methods, types }: Props) {
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/60">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-violet-600" />
-                <h3 className="font-semibold text-slate-800 text-sm">Send Test {direction === 'deposit' ? 'Deposit' : 'Payment'}</h3>
+                <h3 className="font-semibold text-slate-800 text-sm">
+                  Send Test {testMode === 'push' ? 'MoMo Prompt' : 'Invoice'}
+                </h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">All test transactions are flagged with isTest=true in the database.</p>
             </div>
 
             <div className="p-5 space-y-4">
-              {/* Direction */}
+              {/* Test mode */}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">Direction</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">What to send</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setDirection('collect')}
+                    onClick={() => setTestMode('push')}
                     className={cn(
                       'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
-                      direction === 'collect'
-                        ? 'bg-rmc-green border-violet-600 text-white'
+                      testMode === 'push'
+                        ? 'bg-rmc-green border-rmc-green text-white'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
                     )}
                   >
-                    <ArrowDownToLine className="w-3.5 h-3.5" /> Collect (RequestPayment)
+                    <Smartphone className="w-3.5 h-3.5" /> Invoice + MoMo push
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDirection('deposit')}
+                    onClick={() => setTestMode('invoice')}
                     className={cn(
                       'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
-                      direction === 'deposit'
-                        ? 'bg-rmc-green border-violet-600 text-white'
+                      testMode === 'invoice'
+                        ? 'bg-rmc-green border-rmc-green text-white'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
                     )}
                   >
-                    <ArrowUpFromLine className="w-3.5 h-3.5" /> Send (RequestDeposit)
+                    <FileText className="w-3.5 h-3.5" /> Invoice only
                   </button>
                 </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  An invoice is payable by card, bank or its payment link. A push additionally
+                  prompts the phone below.
+                </p>
               </div>
 
               {/* Payment Method */}
@@ -681,31 +738,56 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                 </div>
               </div>
 
-              {/* Payment Type — not applicable to deposits */}
-              {direction === 'collect' && (
+              {/* Payment Type — decides which provider product the invoice uses */}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  Payment Type <span className="text-slate-400">(optional)</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedTypeKey}
+                    onChange={(e) => setSelectedTypeKey(e.target.value)}
+                    className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-rmc-green"
+                  >
+                    <option value="">— None —</option>
+                    {activeTypes.map((t) => (
+                      <option key={t.id} value={t.key}>{t.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* MoMo provider — only meaningful for a push */}
+              {testMode === 'push' && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Payment Type <span className="text-slate-400">(optional)</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={selectedTypeKey}
-                      onChange={(e) => setSelectedTypeKey(e.target.value)}
-                      className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-rmc-green"
-                    >
-                      <option value="">— None —</option>
-                      {activeTypes.map((t) => (
-                        <option key={t.id} value={t.key}>{t.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">MoMo Provider</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['MTN', 'AIRTEL'] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPushProvider(p)}
+                        className={cn(
+                          'py-2 rounded-lg border text-xs font-semibold transition-colors',
+                          pushProvider === p
+                            ? 'bg-rmc-green border-rmc-green text-white'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                        )}
+                      >
+                        {p === 'MTN' ? 'MTN MoMo' : 'Airtel Money'}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Mobile Phone */}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">Mobile Phone</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  Mobile Phone{' '}
+                  {testMode === 'invoice' && <span className="text-slate-400">(optional)</span>}
+                </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -727,14 +809,12 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                   <input
                     type="number"
                     min={1}
-                    max={100}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="100"
                     className="w-full pl-12 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
                   />
                 </div>
-                <p className="text-xs text-slate-400 mt-1">Test account maximum: 100 RWF</p>
               </div>
 
               <button
@@ -750,7 +830,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                 {sending ? (
                   <><RefreshCw className="w-4 h-4 animate-spin" /> Sending…</>
                 ) : (
-                  <><Zap className="w-4 h-4" /> {direction === 'deposit' ? 'Send Deposit Request' : 'Send Payment Request'}</>
+                  <><Zap className="w-4 h-4" /> {testMode === 'push' ? 'Create Invoice & Push' : 'Create Invoice'}</>
                 )}
               </button>
 
@@ -776,41 +856,63 @@ export default function PaymentTestingTab({ methods, types }: Props) {
               {!lastResult ? (
                 <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-sm">
                   <Zap className="w-8 h-8 mb-2 opacity-30" />
-                  Send a payment to see the response here
+                  Send a test to see the response here
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <StatusBadge status={lastResult.transaction.status} />
-                    {lastResult.transaction.status === 'pending' && (
+                  <div className="flex items-center justify-between gap-2">
+                    <StatusBadge status={lastTx?.status ?? lastResult.status.toLowerCase()} />
+                    <div className="flex items-center gap-2">
+                      {lastTx && lastTx.status === 'pending' && (
+                        <button
+                          onClick={() => handlePollStatus(lastTx.id)}
+                          disabled={polling}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                        >
+                          <RefreshCw className={cn('w-3.5 h-3.5', polling && 'animate-spin')} />
+                          Check Status
+                        </button>
+                      )}
                       <button
-                        onClick={() => handlePollStatus(lastResult.transaction.id)}
-                        disabled={polling}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                        onClick={() => handleRecheck(lastResult.invoiceNumber || lastResult.transactionId)}
+                        disabled={rechecking}
+                        title="Re-query IremboPay and re-apply the result — use when a callback never arrived"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-50 hover:bg-violet-100 text-violet-700 transition-colors"
                       >
-                        <RefreshCw className={cn('w-3.5 h-3.5', polling && 'animate-spin')} />
-                        Check Status
+                        <RefreshCw className={cn('w-3.5 h-3.5', rechecking && 'animate-spin')} />
+                        Re-check Invoice
                       </button>
-                    )}
+                    </div>
                   </div>
 
-                  {lastResult.transaction.status === 'pending' && (
+                  {lastTx?.status === 'pending' && (
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
                       <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin" />
                       <span>
-                        Checking every 5 s for confirmation — a popup will appear automatically once the subscriber approves.
+                        Checking every 5 s for confirmation — a popup will appear automatically once the payer settles.
                       </span>
                     </div>
                   )}
 
+                  {lastResult.paymentLinkUrl && (
+                    <a
+                      href={lastResult.paymentLinkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-800"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Open the payment link
+                    </a>
+                  )}
+
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {[
-                      { label: 'Transaction ID', value: lastResult.transaction.requestTransactionId },
-                      { label: 'Gateway Ref',    value: lastResult.transaction.gatewayTransactionId ?? '—' },
-                      { label: 'Amount',         value: fmt(lastResult.transaction.amount) },
-                      { label: 'Phone',          value: lastResult.transaction.mobilePhone },
-                      { label: 'Response Code',  value: lastResult.responseCode ?? lastResult.transaction.responseCode ?? '—' },
-                      { label: 'Message',        value: lastResult.message ?? lastResult.transaction.message ?? '—' },
+                      { label: 'Transaction ID', value: lastResult.transactionId },
+                      { label: 'Invoice Number', value: lastResult.invoiceNumber || '—' },
+                      { label: 'Amount',         value: lastTx ? fmt(lastTx.amount) : `${amount} RWF` },
+                      { label: 'Phone',          value: lastTx?.mobilePhone || mobilePhone || '—' },
+                      { label: 'Response Code',  value: lastResult.responseCode ?? lastTx?.responseCode ?? '—' },
+                      { label: 'Message',        value: lastResult.message ?? lastTx?.message ?? '—' },
                     ].map(({ label, value }) => (
                       <div key={label} className="bg-slate-50 rounded-lg p-2.5">
                         <p className="text-slate-400 text-[10px] uppercase tracking-wide">{label}</p>
@@ -863,7 +965,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                   {transactions.map((tx) => (
                     <tr key={tx.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-4 py-3 font-mono text-slate-600 max-w-[160px] truncate">{tx.requestTransactionId}</td>
-                      <td className="px-4 py-3 text-slate-700">{tx.mobilePhone}</td>
+                      <td className="px-4 py-3 text-slate-700">{tx.mobilePhone || '—'}</td>
                       <td className="px-4 py-3 text-slate-700 font-medium">{fmt(tx.amount)}</td>
                       <td className="px-4 py-3 text-slate-500">{tx.paymentTypeKey ?? '—'}</td>
                       <td className="px-4 py-3"><StatusBadge status={tx.status} /></td>
