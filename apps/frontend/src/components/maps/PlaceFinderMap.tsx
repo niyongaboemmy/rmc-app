@@ -171,14 +171,24 @@ export function PlaceFinderMap<T extends MapPlace>({
       )}
 
       {/* "Find near me" — the only thing that triggers locating, now that nothing asks
-          on mount. Top-left is the one free corner: Leaflet's zoom sits top-right and the
-          schools legend bottom-left. It no longer needs to hide while directions are up,
-          since the distance badge is bottom-centre and they cannot overlap.
+          on mount.
+
+          Sits beside the finder's filter panel, level with its top. That panel is
+          `sm:left-3.5 sm:top-3.5 sm:w-72 md:w-80` in BOTH finders, so the offsets here
+          are its left edge plus its width plus a gap — 0.875 + 18 + 0.5, and again at
+          md with 20. Change the panel's width and this has to follow; it is the price of
+          aligning to a box the map does not own.
+
+          Below sm the panel is static above the map rather than floating over it, so the
+          corner is free and the button takes it.
+
+          Nothing else contends: Leaflet's zoom is top-right, the schools legend
+          bottom-left, the directions badge bottom-centre.
 
           Still hidden once a position is known — the nearest pin is highlighted and the
           camera has flown to it, so the button has nothing left to do. */}
       {!position && (
-        <div className="absolute left-3 top-3 z-[1000]">
+        <div className="absolute left-3 top-3 z-[1000] sm:left-[19.375rem] sm:top-3.5 md:left-[21.375rem]">
           <button
             type="button"
             onClick={locate}
