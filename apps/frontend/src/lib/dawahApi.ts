@@ -63,9 +63,6 @@ export interface DawahCategory {
   icon: string | null;
   sortOrder: number;
   isActive: boolean;
-  /** Discussions only: whether answers here are held for scholar review. Absent on
-   *  category lists that predate the column; treat missing as 'scholar_review'. */
-  answerPolicy?: 'scholar_review' | 'open';
   createdAt: string;
   updatedAt: string;
 }
