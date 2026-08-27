@@ -2045,6 +2045,7 @@
         "loading": "Gutegura ibisabwa"
       },
       "register": {
+        "prefillNote": "Twuzuje amakuru yawe avuye kuri konti yawe ya RMC — ushobora guhindura ibitajyanye n'ubu iyandikwa.",
         "title": "Iyandikishe kuri Hija",
         "subtitle": "Uzuza ifishi ikurikira kugira ngo utangire kwiyandikisha kuri Hija. Ibisabwa bifite * birakenewe.",
         "back": "Subira kuri Serivisi za Hija",
