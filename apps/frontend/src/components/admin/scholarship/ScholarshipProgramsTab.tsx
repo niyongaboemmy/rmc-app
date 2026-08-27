@@ -11,6 +11,7 @@ import {
   scholarshipAdminApi, type CreateScholarshipProgramPayload,
 } from '@/lib/scholarshipAdminApi';
 import { cn } from '@/lib/utils';
+import { ModalPortal } from '@/components/ui/Modal';
 
 /**
  * Composing and publishing scholarships — extracted from the admin page when
@@ -181,7 +182,13 @@ function ProgramModal({
   };
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    /* Portaled to <body>. Rendered in place it stayed inside the admin shell's scrolling
+       <main>, so its backdrop covered the content column rather than the viewport, and
+       its z-index was resolved against whatever stacking context an ancestor happened to
+       create rather than against the page. Every other modal in this area already
+       portals — this one was the exception. */
+    <ModalPortal>
+      <div role="dialog" aria-modal="true" className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -383,10 +390,11 @@ function ProgramModal({
             className="flex-1 px-4 py-2.5 rounded-lg bg-rmc-green hover:bg-rmc-green-dark text-white text-sm font-medium disabled:opacity-50 transition-colors"
           >
             {saving ? 'Saving…' : 'Save'}
-          </button>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
