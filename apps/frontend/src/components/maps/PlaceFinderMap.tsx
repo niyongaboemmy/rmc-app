@@ -171,11 +171,14 @@ export function PlaceFinderMap<T extends MapPlace>({
       )}
 
       {/* "Find near me" — the only thing that triggers locating, now that nothing asks
-          on mount. Hidden once a position is known, because the nearest pin is already
-          highlighted and the camera has flown to it; and hidden while directions are up,
-          because the distance badge occupies this same spot. */}
-      {!position && !directionsTarget && (
-        <div className="absolute bottom-3 left-1/2 z-[1000] -translate-x-1/2">
+          on mount. Top-left is the one free corner: Leaflet's zoom sits top-right and the
+          schools legend bottom-left. It no longer needs to hide while directions are up,
+          since the distance badge is bottom-centre and they cannot overlap.
+
+          Still hidden once a position is known — the nearest pin is highlighted and the
+          camera has flown to it, so the button has nothing left to do. */}
+      {!position && (
+        <div className="absolute left-3 top-3 z-[1000]">
           <button
             type="button"
             onClick={locate}
@@ -188,7 +191,7 @@ export function PlaceFinderMap<T extends MapPlace>({
           {/* Denial is not an error state to shout about, but saying nothing at all is
               what made this look broken. */}
           {locateStatus === 'error' && (
-            <p className="mt-1.5 max-w-[15rem] text-center text-[11px] leading-snug text-gray-500">
+            <p className="mt-1.5 max-w-[15rem] rounded-lg bg-white/90 px-2 py-1 text-[11px] leading-snug text-gray-600 shadow-sm backdrop-blur">
               {tCommon('findNearMeDenied')}
             </p>
           )}
