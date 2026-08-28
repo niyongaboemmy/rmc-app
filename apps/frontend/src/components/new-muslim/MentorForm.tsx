@@ -96,14 +96,8 @@ export function MentorForm() {
             <form
               onSubmit={submit}
               dir={dir}
-              className="relative overflow-hidden rounded-lg border border-gray-200/70 bg-white p-8 shadow-sm md:p-10"
+              className="overflow-hidden rounded-lg border border-gray-200/70 bg-white p-8 shadow-sm md:p-10"
             >
-              {/* Gold hairline across the top — the same accent the hero uses. */}
-              <span
-                className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-rmc-gold to-transparent"
-                aria-hidden
-              />
-
               <div className="space-y-3">
                 <input
                   type="text"
