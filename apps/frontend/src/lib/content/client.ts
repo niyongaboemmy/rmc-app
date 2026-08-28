@@ -71,6 +71,7 @@ export const ContentKeys = {
   tenderService: 'tender-service',
   jobsService: 'jobs-service',
   scholarshipService: 'scholarship-service',
+  goodConduct: 'good-conduct',
 } as const;
 
 // ─── Tri-lingual text helpers ───────────────────────────────────────────────────

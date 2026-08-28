@@ -40,3 +40,4 @@ export * from './content/page-heroes';
 export * from './content/tenders-home';
 export * from './content/service-boards';
 export * from './content/marriage';
+export * from './content/good-conduct';
