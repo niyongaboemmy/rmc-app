@@ -253,16 +253,24 @@
 }
 
 /* --------------------------------------------------------
-   Islamic geometric patterns
--------------------------------------------------------- */
-.pattern-islamic {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L33.5 19 L47 19 L36.5 27.5 L40 42 L30 33.5 L20 42 L23.5 27.5 L13 19 L26.5 19 Z' fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.12'/%3E%3C/svg%3E");
-  background-size: 60px 60px;
-}
+   Islamic geometric patterns — retired
 
+   `.pattern-islamic` and `.pattern-light` tiled the same five-pointed star, white at 12%
+   and green at 6%. Across a full-width section the thin outlines read as scattered
+   crosses rather than as a motif, so the tile has been dropped everywhere.
+
+   The classes are kept as no-ops ON PURPOSE. They appear in roughly a hundred places
+   across seventy files, most of them mixed into longer className strings, and stripping
+   every one by hand is a large edit with a real chance of breaking a layout for a purely
+   decorative change. Neutralising them here removes the pattern from every page at once
+   and is reversible in a single edit.
+
+   Nothing new should use them. If the markup is ever swept, delete these two rules with
+   it — a class that exists but does nothing is worse than no class at all.
+-------------------------------------------------------- */
+.pattern-islamic,
 .pattern-light {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L33.5 19 L47 19 L36.5 27.5 L40 42 L30 33.5 L20 42 L23.5 27.5 L13 19 L26.5 19 Z' fill='none' stroke='%231a7a4a' stroke-width='0.6' opacity='0.06'/%3E%3C/svg%3E");
-  background-size: 60px 60px;
+  background-image: none;
 }
 
 /* --------------------------------------------------------
