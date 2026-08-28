@@ -18,6 +18,7 @@ import {
   IremboPayTestPayload,
   IremboPayTestResult,
 } from '@/lib/paymentSettingsApi';
+import { IremboPayWidget } from '@/components/payments/IremboPayWidget';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -894,15 +895,38 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     </div>
                   )}
 
-                  {lastResult.paymentLinkUrl && (
-                    <a
-                      href={lastResult.paymentLinkUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-800"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" /> Open the payment link
-                    </a>
+                  {/*
+                    The same widget the donate page uses, so an admin tests the
+                    payer's actual experience rather than a link. It is not
+                    auto-opened here: "Invoice only" is a deliberate test mode,
+                    and a modal appearing on every run would fight it.
+                  */}
+                  {lastResult.invoiceNumber && lastResult.publicKey ? (
+                    <IremboPayWidget
+                      autoOpen
+                      invoice={{
+                        transactionId: lastResult.transactionId,
+                        invoiceNumber: lastResult.invoiceNumber,
+                        publicKey: lastResult.publicKey,
+                        widgetScriptUrl: lastResult.widgetScriptUrl,
+                        paymentLinkUrl: lastResult.paymentLinkUrl,
+                      }}
+                      amount={parseFloat(amount) || 0}
+                      checkStatus={(txn: string) =>
+                        paymentSettingsApi.getPaymentStatus(txn).then((r) => r.status)
+                      }
+                    />
+                  ) : (
+                    lastResult.paymentLinkUrl && (
+                      <a
+                        href={lastResult.paymentLinkUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-800"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Open the payment link
+                      </a>
+                    )
                   )}
 
                   <div className="grid grid-cols-2 gap-2 text-xs">

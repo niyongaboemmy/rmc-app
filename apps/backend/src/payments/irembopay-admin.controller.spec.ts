@@ -61,6 +61,8 @@ function build(rows: unknown[] = [], txRows: unknown[] = []) {
   };
 
   const gateway = {
+    // The test panel routes through the gateway now, so the stub carries both.
+    charge: provider.charge,
     getStatus: jest.fn().mockResolvedValue({
       status: 'SUCCESSFUL',
       providerReference: '880519183280',
@@ -78,7 +80,6 @@ function build(rows: unknown[] = [], txRows: unknown[] = []) {
   return {
     controller: new IremboPayAdminController(
       products as never,
-      provider as never,
       config as never,
       invoices as never,
       gateway as never,
@@ -177,12 +178,14 @@ describe('IremboPayAdminController', () => {
 
   describe('test panel', () => {
     it('creates a 100 RWF test invoice with no MoMo prompt', async () => {
-      const { controller, provider } = build();
+      const { controller, gateway } = build();
 
       const result = await controller.testInvoice(ADMIN, {});
 
-      expect(provider.charge).toHaveBeenCalledWith(
+      expect(gateway.charge).toHaveBeenCalledWith(
         expect.objectContaining({ amount: 100, isTest: true, pushProvider: undefined }),
+        'IREMBOPAY',
+        { allowInactive: true },
       );
       expect(result).toMatchObject({
         invoiceNumber: '880519183280',
@@ -191,46 +194,53 @@ describe('IremboPayAdminController', () => {
     });
 
     it('pushes MoMo on the push test, defaulting to MTN', async () => {
-      const { controller, provider } = build();
+      const { controller, gateway } = build();
 
       await controller.testPush(ADMIN, { mobilePhone: '0781234567' });
 
-      expect(provider.charge).toHaveBeenCalledWith(
+      expect(gateway.charge).toHaveBeenCalledWith(
         expect.objectContaining({
           pushProvider: 'MTN',
           payer: expect.objectContaining({ phone: '0781234567' }),
         }),
+        'IREMBOPAY',
+        { allowInactive: true },
       );
     });
 
     it('honours an explicit Airtel push and a custom amount', async () => {
-      const { controller, provider } = build();
+      const { controller, gateway } = build();
 
       await controller.testPush(ADMIN, { paymentProvider: 'AIRTEL', amount: 250 });
 
-      expect(provider.charge).toHaveBeenCalledWith(
+      expect(gateway.charge).toHaveBeenCalledWith(
         expect.objectContaining({ pushProvider: 'AIRTEL', amount: 250 }),
+        'IREMBOPAY',
+        { allowInactive: true },
       );
     });
 
     it('marks every test charge as a test so it never pollutes live figures', async () => {
-      const { controller, provider } = build();
+      const { controller, gateway } = build();
 
       await controller.testInvoice(ADMIN, {});
       await controller.testPush(ADMIN, {});
 
-      for (const call of provider.charge.mock.calls) {
+      for (const call of gateway.charge.mock.calls) {
         expect(call[0].isTest).toBe(true);
         expect(call[0].transactionId).toMatch(/^TEST-/);
       }
     });
 
     it('re-checks one invoice against the provider — the lost-callback recovery', async () => {
-      const { controller, provider } = build();
+      const { controller, gateway } = build();
 
       await controller.recheck('880519183280');
 
-      expect(provider.getStatus).toHaveBeenCalledWith('880519183280');
+      // Routed, not called directly — so a second provider resolves correctly.
+      expect(gateway.getStatus).toHaveBeenCalledWith('880519183280', 'IREMBOPAY', {
+        allowInactive: true,
+      });
     });
 
     it('falls back to our transactionId when looking up a local invoice', async () => {

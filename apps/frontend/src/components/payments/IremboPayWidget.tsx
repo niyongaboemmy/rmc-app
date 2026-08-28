@@ -69,12 +69,18 @@ export function IremboPayWidget({
   const [copied, setCopied] = useState(false);
   const { phase, error, pay } = useIremboPayment({ checkStatus, locale, onConfirmed });
 
-  // Guarded by a ref, not by `phase`: the sheet must open exactly once. A payer
-  // who closes it gets the button back rather than a modal that reopens itself.
-  const opened = useRef(false);
+  /*
+   * Opens once per invoice, not once per mount.
+   *
+   * Keyed on the invoice number so closing the sheet does not reopen it, while
+   * a *new* invoice — a second run of the settings test panel, which keeps this
+   * component mounted and swaps the result underneath it — still opens.
+   */
+  const openedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (!autoOpen || opened.current || !invoice.invoiceNumber) return;
-    opened.current = true;
+    if (!autoOpen || !invoice.invoiceNumber) return;
+    if (openedFor.current === invoice.invoiceNumber) return;
+    openedFor.current = invoice.invoiceNumber;
     void pay(invoice);
   }, [autoOpen, invoice, pay]);
 
