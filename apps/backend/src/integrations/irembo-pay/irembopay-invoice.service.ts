@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IremboPayInvoice, IremboInvoiceStatus } from './entities/irembopay-invoice.entity';
-import { IremboInvoice } from './irembo-pay.types';
+import { IremboInvoice, parseIremboDate } from './irembo-pay.types';
 import {
   PaymentTransaction,
   PaymentTransactionStatus,
@@ -175,7 +175,7 @@ export class IremboPayInvoiceService {
     const status = remote.paymentStatus ?? local.paymentStatus;
     if (status === 'PAID' || status === 'PARTIALLY_PAID') return status;
 
-    const expiry = remote.expiryAt ? new Date(remote.expiryAt) : local.expiryAt;
+    const expiry = parseIremboDate(remote.expiryAt) ?? local.expiryAt;
     if (expiry && expiry.getTime() < Date.now()) return 'EXPIRED';
     return status ?? 'NEW';
   }
@@ -190,8 +190,8 @@ export class IremboPayInvoiceService {
     invoice.paymentMethod = remote.paymentMethod ?? invoice.paymentMethod ?? null;
     invoice.paymentReference = remote.paymentReference ?? invoice.paymentReference ?? null;
     invoice.paymentLinkUrl = remote.paymentLinkUrl ?? invoice.paymentLinkUrl ?? null;
-    invoice.expiryAt = remote.expiryAt ? new Date(remote.expiryAt) : invoice.expiryAt;
-    invoice.paidAt = remote.paidAt ? new Date(remote.paidAt) : invoice.paidAt;
+    invoice.expiryAt = parseIremboDate(remote.expiryAt) ?? invoice.expiryAt;
+    invoice.paidAt = parseIremboDate(remote.paidAt) ?? invoice.paidAt;
     if (remote.partialPaymentEnabled !== undefined) {
       invoice.partialPaymentEnabled = remote.partialPaymentEnabled;
     }

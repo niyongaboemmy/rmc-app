@@ -7,6 +7,48 @@
  */
 
 export type IremboLanguage = 'EN' | 'FR' | 'RW';
+
+/**
+ * Parses a timestamp as IremboPay actually sends it.
+ *
+ * Their responses carry an hours-only UTC offset — `2026-08-29T17:26:54.099+02`
+ * — which `new Date()` cannot parse (ISO 8601 wants `+02:00` or `+0200`), so it
+ * yields `Invalid Date`. Writing that to a timestamptz column fails the insert
+ * with `invalid input syntax ... "0NaN-NaN-NaN..."`, which loses an invoice that
+ * IremboPay has already created and the payer can already pay.
+ *
+ * Returns `undefined` rather than an invalid Date: a missing expiry is
+ * recoverable, a NaN one poisons every write it reaches.
+ */
+export function parseIremboDate(value: string | Date | undefined | null): Date | undefined {
+  if (!value) return undefined;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? undefined : value;
+
+  // `+02` / `-05` at the very end → `+02:00`. Offsets that already carry
+  // minutes, and a trailing `Z`, are left exactly as they are.
+  const normalised = value.trim().replace(/([+-]\d{2})$/, '$1:00');
+
+  const parsed = new Date(normalised);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+/**
+ * What a simulated payer does with an invoice. Lives here rather than beside
+ * the sandbox service because the config service needs it too, and importing it
+ * from there would put a cycle between the two.
+ *
+ *  - `off`     — not simulating; every call goes to the real IremboPay.
+ *  - `success` — the payer approves after the configured delay; invoice -> PAID.
+ *  - `fail`    — the payer never approves and the invoice expires -> FAILED.
+ *  - `pending` — nothing ever happens, which is what a real abandoned payment
+ *                looks like and the only way to exercise the timeout UI.
+ */
+export type IremboSimulatorMode = 'off' | 'success' | 'fail' | 'pending';
+
+export const IREMBO_SIMULATOR_MODES: IremboSimulatorMode[] = ['off', 'success', 'fail', 'pending'];
+
+/** Long enough that the pending UI is actually visible before it resolves. */
+export const DEFAULT_SIMULATOR_DELAY_MS = 5_000;
 export type IremboPushProvider = 'MTN' | 'AIRTEL';
 export type IremboPaymentStatus = 'NEW' | 'PAID' | 'PARTIALLY_PAID' | 'EXPIRED';
 

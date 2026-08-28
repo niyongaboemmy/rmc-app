@@ -16,6 +16,8 @@ const CONFIG: IremboPayConfig = {
   invoiceExpiryMinutes: 1440,
   defaultLanguage: 'EN',
   signatureToleranceSeconds: 300,
+  simulatorMode: 'off' as const,
+  simulatorDelayMs: 5000,
   isTestMode: true,
 };
 
@@ -45,7 +47,10 @@ function build(configOverrides: Partial<IremboPayConfig> = {}) {
   } as never;
 
   const client = new IremboPayClient(config, eventRepo);
-  const service = new IremboPayService(client, config);
+  // These cases pin down the wire protocol, so the sandbox is held off: every
+  // call must reach the mocked HTTP layer.
+  const sandbox = { isActive: async () => false } as never;
+  const service = new IremboPayService(client, config, sandbox);
   return { client, service, config, events: saved };
 }
 
@@ -66,9 +71,13 @@ describe('IremboPay client', () => {
 
   /** Advances fake timers as the retry backoff schedules them. */
   async function settle<T>(promise: Promise<T>): Promise<T> {
+    // Flush several microtasks between timer advances rather than one: the
+    // request path awaits a few promises before it ever arms a backoff timer,
+    // so a single flush per advance can step the clock past a timer that has
+    // not been scheduled yet and stall the retry loop.
     const tick = async () => {
-      for (let i = 0; i < 12; i++) {
-        await Promise.resolve();
+      for (let i = 0; i < 40; i++) {
+        for (let j = 0; j < 8; j++) await Promise.resolve();
         jest.advanceTimersByTime(5_000);
       }
     };

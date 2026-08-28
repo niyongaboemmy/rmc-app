@@ -16,6 +16,8 @@ const CONFIG: IremboPayConfig = {
   invoiceExpiryMinutes: 1440,
   defaultLanguage: 'EN',
   signatureToleranceSeconds: 300,
+  simulatorMode: 'off' as const,
+  simulatorDelayMs: 5000,
   isTestMode: true,
 };
 
