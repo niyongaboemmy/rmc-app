@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, ArrowRight, FileText, Search } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
+import { GoodConductDetails } from '@/components/services/good-conduct/GoodConductDetails';
 import {
   ContentKeys,
   GOOD_CONDUCT_DEFAULT,
@@ -69,8 +70,11 @@ export default async function GoodConductServicePage({
           <BackToServices locale={locale} />
         </section>
 
+        {/* What it is, what you need, and what happens next — all inline-editable. */}
+        <GoodConductDetails />
+
         {/* CTA cards */}
-        <section className="bg-gray-50/60 pattern-light py-14 px-4 sm:px-6 lg:px-8">
+        <section className="bg-white py-14 px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-5">
             <Link
               href={`/${locale}/services/good-conduct/apply`}
