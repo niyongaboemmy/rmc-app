@@ -99,7 +99,6 @@ export function SocialMediaSection() {
 
   return (
     <section className="relative bg-transparent py-12 md:py-16 overflow-hidden">
-      <div className="absolute inset-0 pattern-light" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" dir={rtl ? 'rtl' : 'ltr'}>
         {/* Header */}

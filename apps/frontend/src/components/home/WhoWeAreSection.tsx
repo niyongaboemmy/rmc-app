@@ -37,7 +37,6 @@ export function WhoWeAreSection() {
   return (
     <section className="relative bg-transparent py-12 md:py-16 overflow-hidden">
       {/* Faint Islamic geometric texture — echoes the hero's pattern overlay */}
-      <div className="absolute inset-0 pattern-light opacity-70 pointer-events-none" />
       {/* Soft ambient light wash */}
       <div className="absolute top-0 right-0 w-[520px] h-[520px] bg-rmc-green-light rounded-full -translate-y-1/2 translate-x-1/3 opacity-50 blur-[90px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[420px] h-[420px] bg-rmc-gold/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-[90px] pointer-events-none" />

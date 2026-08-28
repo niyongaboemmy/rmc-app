@@ -146,7 +146,6 @@ export function WelcomeCarouselSection() {
       aria-label="Updates and programs"
     >
       {/* Light Islamic geometry + symmetric gold hairlines — matches the sibling light sections */}
-      <div aria-hidden className="absolute inset-0 pattern-light opacity-50 pointer-events-none" />
       <div aria-hidden className="absolute -top-24 left-1/3 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-rmc-green-light/50 blur-3xl pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 md:py-16">
