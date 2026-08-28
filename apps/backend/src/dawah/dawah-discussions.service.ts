@@ -410,7 +410,6 @@ export class DawahDiscussionsService {
         // Explicit even though it matches the column default — the two writers should
         // read the same way, and a default is not a statement of intent.
         origin: 'member',
-        lastActivityAt: new Date(),
       }),
     );
 
@@ -506,7 +505,6 @@ export class DawahDiscussionsService {
         // Set here rather than left to the column default: this is the one path that
         // produces a scholar-authored entry, and the default is deliberately 'member'.
         origin: 'scholar',
-        lastActivityAt: now,
       }),
     );
 
@@ -542,7 +540,6 @@ export class DawahDiscussionsService {
       ...(dto.categoryId !== undefined
         ? { categoryId: (await this.resolveCategory(dto.categoryId))?.id ?? null }
         : {}),
-      lastActivityAt: now,
     });
 
     this.notifyAnswered(id, admin.id);

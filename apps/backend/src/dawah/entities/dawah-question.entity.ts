@@ -158,10 +158,6 @@ export class DawahQuestion {
   @Column({ name: 'view_count', type: 'int', default: 0 })
   viewCount: number;
 
-  /** Retained from the forum model; no longer a sort key. See `publishedAt`. */
-  @Column({ name: 'last_activity_at', type: 'timestamptz', default: () => 'now()' })
-  lastActivityAt: Date;
-
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
