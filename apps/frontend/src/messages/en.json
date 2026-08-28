@@ -21,6 +21,7 @@
     "services": "Explore Services"
   },
   "common": {
+    "openInMaps": "Open in Maps",
     "findNearMe": "Find near me",
     "findNearMeLocating": "Finding you…",
     "findNearMeDenied": "Location unavailable — showing every location instead.",

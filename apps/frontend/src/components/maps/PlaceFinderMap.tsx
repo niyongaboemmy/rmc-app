@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { GeoJSON, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { Feature, FeatureCollection } from 'geojson';
-import { Car, Footprints, LocateFixed, Navigation, X } from 'lucide-react';
+import { Car, ExternalLink, Footprints, LocateFixed, Navigation, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { RwandaMap } from './RwandaMap';
@@ -134,6 +134,26 @@ export function PlaceFinderMap<T extends MapPlace>({
                 >
                   <Navigation className="h-3 w-3" /> {labels.directions}
                 </button>
+                {/* Hands the destination to whatever the device uses for maps.
+                    `/maps/dir/` with a destination is a universal link: Android and iOS
+                    open their installed maps app on it, and a desktop browser opens
+                    Google Maps in a tab. The button above draws the route on THIS map,
+                    which is the right answer while choosing between places; this one is
+                    for actually setting off, where turn-by-turn and a live position
+                    belong to the phone rather than to us.
+
+                    Only when we have coordinates — the URL would otherwise point at
+                    "undefined,undefined" and open an empty map. */}
+                {place.gpsLat != null && place.gpsLng != null && (
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${place.gpsLat},${place.gpsLng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-rmc-green hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" /> {tCommon('openInMaps')}
+                  </a>
+                )}
               </Popup>
             </Marker>
           );

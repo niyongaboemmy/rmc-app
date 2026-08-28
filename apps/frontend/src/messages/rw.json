@@ -21,6 +21,7 @@
     "services": "Reba Serivisi"
   },
   "common": {
+    "openInMaps": "Fungura muri Maps",
     "findNearMe": "Shakisha hafi yanjye",
     "findNearMeLocating": "Turagushakisha…",
     "findNearMeDenied": "Aho uri ntibiboneka — turerekana ahantu hose.",

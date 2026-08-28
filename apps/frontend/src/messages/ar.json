@@ -21,6 +21,7 @@
     "services": "استكشف الخدمات"
   },
   "common": {
+    "openInMaps": "افتح في الخرائط",
     "findNearMe": "ابحث بالقرب مني",
     "findNearMeLocating": "جارٍ تحديد موقعك…",
     "findNearMeDenied": "الموقع غير متاح — يتم عرض جميع المواقع.",
