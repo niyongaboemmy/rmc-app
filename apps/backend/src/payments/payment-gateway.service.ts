@@ -11,6 +11,19 @@ import {
 
 const SETTINGS_PAGE = 'Admin → Settings → Payments';
 
+/** Routing overrides. The default — no options — is the production path. */
+export interface GatewayRouteOptions {
+  /**
+   * Route to a provider that is configured but not yet switched on.
+   *
+   * Exists for one caller: the settings test panel, which has to prove a set of
+   * credentials works *before* an admin activates the method. Everything that
+   * takes money from a real payer leaves this unset, so the active toggle still
+   * governs live charges.
+   */
+  allowInactive?: boolean;
+}
+
 /**
  * Routes a neutral charge request to whichever gateway is configured.
  *
@@ -42,7 +55,10 @@ export class PaymentGatewayService {
     return [...this.providers.keys()];
   }
 
-  async resolve(methodCode?: PaymentMethodCode | string): Promise<PaymentGatewayProvider> {
+  async resolve(
+    methodCode?: PaymentMethodCode | string,
+    opts: GatewayRouteOptions = {},
+  ): Promise<PaymentGatewayProvider> {
     const methods = await this.paymentSettings.findAllMethods();
 
     if (methodCode) {
@@ -57,7 +73,7 @@ export class PaymentGatewayService {
       // lets in-flight invoices settle after a rollback — so "configured" is no
       // longer sufficient on its own to authorise taking new money.
       const method = methods.find((m) => m.code === provider.code);
-      if (!method?.isActive) {
+      if (!method?.isActive && !opts.allowInactive) {
         throw new BadRequestException(
           `${provider.providerName} is not active. Enable it in ${SETTINGS_PAGE}.`,
         );
@@ -100,8 +116,9 @@ export class PaymentGatewayService {
   async charge(
     req: PaymentChargeRequest,
     methodCode?: PaymentMethodCode | string,
+    opts: GatewayRouteOptions = {},
   ): Promise<PaymentChargeResult> {
-    const provider = await this.resolve(methodCode);
+    const provider = await this.resolve(methodCode, opts);
 
     if (!(await provider.isConfigured())) {
       throw new BadRequestException(
@@ -119,8 +136,9 @@ export class PaymentGatewayService {
   async getStatus(
     reference: string,
     methodCode?: PaymentMethodCode | string,
+    opts: GatewayRouteOptions = {},
   ): Promise<PaymentStatusResult> {
-    const provider = await this.resolve(methodCode);
+    const provider = await this.resolve(methodCode, opts);
     return provider.getStatus(reference);
   }
 }

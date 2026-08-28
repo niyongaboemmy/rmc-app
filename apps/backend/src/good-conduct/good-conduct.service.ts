@@ -277,7 +277,13 @@ export class GoodConductService {
       Object.assign(request, refreshed);
     }
 
-    const requestTxnId = `GC-${request.id}-${Date.now()}`;
+    // IremboPay rejects a transactionId over 50 characters, and the full UUID
+    // form (`GC-` + 36 + `-` + 13 = 53) exceeded it on every single charge — so
+    // no good-conduct fee could be collected at all. Eight hex characters plus
+    // the epoch is what donations already use, and the webhook matches on the
+    // stored `providerRef` rather than by parsing this string, so shortening it
+    // changes nothing downstream.
+    const requestTxnId = `GC-${request.id.slice(0, 8)}-${Date.now()}`;
 
     // The `GC-` prefix is preserved across providers — the webhook services
     // match domain records on it.
