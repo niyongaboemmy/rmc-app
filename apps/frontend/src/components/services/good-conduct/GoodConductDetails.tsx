@@ -20,7 +20,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { ClipboardCheck, ListChecks } from 'lucide-react';
+import { ArrowRight, ClipboardCheck, ListChecks } from 'lucide-react';
 import { InlineText } from '@/components/edit-mode/InlineText';
 import { AddCardTile } from '@/components/edit-mode/AddCardTile';
 import { CardEditToolbar } from '@/components/edit-mode/CardEditToolbar';
@@ -42,6 +42,102 @@ import {
   type Tri,
   type Locale,
 } from '@/lib/content-api';
+
+/**
+ * The hero's heading and lede, as an editable island.
+ *
+ * Deliberately NOT a `PageHero`. The tender, jobs and scholarship landings all keep this
+ * same hand-rolled hero — full-bleed photo, gradient, centred icon badge — and lift only
+ * the text into a client island (`BoardHeroCopy`). Good conduct already had the identical
+ * markup, so matching the service-landing convention meant making its text editable, not
+ * swapping the hero out. Replacing it would have made this the ONLY service landing using
+ * PageHero.
+ */
+export function GoodConductHeroCopy() {
+  const { locale } = useParams<{ locale: string }>();
+  const lang = locale as Locale;
+  const dir = locale === 'ar' ? ('rtl' as const) : ('ltr' as const);
+  const { content, setField } = useEditableContent<GoodConductContent>(
+    ContentKeys.goodConduct,
+    GOOD_CONDUCT_DEFAULT,
+  );
+
+  return (
+    <>
+      <InlineText
+        as="h1"
+        lang={locale}
+        value={pick(content.hero.title, locale)}
+        editValue={raw(content.hero.title, locale)}
+        onCommit={(v) => setField((d) => { d.hero.title[lang] = v; })}
+        className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg"
+        dir={dir}
+        placeholder="Page title"
+      />
+      <InlineText
+        as="p"
+        lang={locale}
+        value={pick(content.hero.lede, locale)}
+        editValue={raw(content.hero.lede, locale)}
+        onCommit={(v) => setField((d) => { d.hero.lede[lang] = v; })}
+        className="text-white/75 text-base max-w-2xl mx-auto leading-relaxed"
+        dir={dir}
+        placeholder="Short description"
+      />
+    </>
+  );
+}
+
+/** One of the two cards at the foot of the page, with its copy editable in place. */
+export function GoodConductCtaCopy({ card }: { card: 'apply' | 'status' }) {
+  const { locale } = useParams<{ locale: string }>();
+  const lang = locale as Locale;
+  const dir = locale === 'ar' ? ('rtl' as const) : ('ltr' as const);
+  const { content, setField } = useEditableContent<GoodConductContent>(
+    ContentKeys.goodConduct,
+    GOOD_CONDUCT_DEFAULT,
+  );
+  const titleKey = card === 'apply' ? 'applyTitle' : 'statusTitle';
+  const textKey = card === 'apply' ? 'applyText' : 'statusText';
+  const ctaKey = card === 'apply' ? 'applyCta' : 'statusCta';
+
+  return (
+    <>
+      <InlineText
+        as="p"
+        lang={locale}
+        value={pick(content.cta[titleKey], locale)}
+        editValue={raw(content.cta[titleKey], locale)}
+        onCommit={(v) => setField((d) => { d.cta[titleKey][lang] = v; })}
+        className="font-bold text-gray-900"
+        dir={dir}
+        placeholder="Card title"
+      />
+      <InlineText
+        as="p"
+        lang={locale}
+        value={pick(content.cta[textKey], locale)}
+        editValue={raw(content.cta[textKey], locale)}
+        onCommit={(v) => setField((d) => { d.cta[textKey][lang] = v; })}
+        className="text-sm text-gray-500 flex-1"
+        dir={dir}
+        placeholder="Card description"
+      />
+      <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
+        <InlineText
+          as="span"
+          lang={locale}
+          value={pick(content.cta[ctaKey], locale)}
+          editValue={raw(content.cta[ctaKey], locale)}
+          onCommit={(v) => setField((d) => { d.cta[ctaKey][lang] = v; })}
+          dir={dir}
+          placeholder="Link text"
+        />
+        <ArrowRight className="w-4 h-4" />
+      </span>
+    </>
+  );
+}
 
 export function GoodConductDetails() {
   const { locale } = useParams<{ locale: string }>();

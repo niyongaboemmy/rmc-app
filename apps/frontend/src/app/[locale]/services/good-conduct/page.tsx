@@ -2,16 +2,14 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck, ArrowRight, FileText, Search } from 'lucide-react';
+import { ShieldCheck, FileText, Search } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
-import { GoodConductDetails } from '@/components/services/good-conduct/GoodConductDetails';
 import {
-  ContentKeys,
-  GOOD_CONDUCT_DEFAULT,
-  mergeContent,
-  pick,
-  type GoodConductContent,
-} from '@/lib/content-api';
+  GoodConductCtaCopy,
+  GoodConductDetails,
+  GoodConductHeroCopy,
+} from '@/components/services/good-conduct/GoodConductDetails';
+import { ContentKeys } from '@/lib/content-api';
 import { fetchSiteContent } from '@/lib/content/server';
 import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
 
@@ -20,6 +18,11 @@ import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
  * without a deploy — the same move the tender, jobs and scholarship boards already made.
  * The defaults are the exact strings this page used to read from `services.conduct`, so
  * nothing changes for a visitor until an admin edits something.
+ *
+ * The page stays a SERVER component and keeps the layout, imagery and links. Only the
+ * text is lifted into client islands, exactly as the three board pages do it — which is
+ * also why the hero here is still hand-rolled rather than a PageHero: all four service
+ * landings share this markup, and swapping one would break the set.
  */
 const PAGE_CONTENT_KEYS = [ContentKeys.goodConduct];
 
@@ -28,11 +31,9 @@ export default async function GoodConductServicePage({
 }: {
   params: { locale: string };
 }) {
+  // Fetched here so the copy is in the server HTML; the islands below read it from the
+  // provider rather than merging it again.
   const saved = await fetchSiteContent(PAGE_CONTENT_KEYS);
-  const content = mergeContent<GoodConductContent>(
-    GOOD_CONDUCT_DEFAULT,
-    saved[ContentKeys.goodConduct],
-  );
 
   return (
     <SiteContentProvider content={saved}>
@@ -62,8 +63,7 @@ export default async function GoodConductServicePage({
                   <ShieldCheck className="w-7 h-7 text-white" strokeWidth={2.25} />
                 </div>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{pick(content.hero.title, locale)}</h1>
-              <p className="text-white/75 text-base max-w-2xl mx-auto leading-relaxed">{pick(content.hero.lede, locale)}</p>
+              <GoodConductHeroCopy />
             </div>
           </div>
 
@@ -83,11 +83,7 @@ export default async function GoodConductServicePage({
               <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
                 <FileText className="w-5 h-5 text-rmc-green-dark" />
               </div>
-              <p className="font-bold text-gray-900">{pick(content.cta.applyTitle, locale)}</p>
-              <p className="text-sm text-gray-500 flex-1">{pick(content.cta.applyText, locale)}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                {pick(content.cta.applyCta, locale)} <ArrowRight className="w-4 h-4" />
-              </span>
+              <GoodConductCtaCopy card="apply" />
             </Link>
 
             <Link
@@ -97,11 +93,7 @@ export default async function GoodConductServicePage({
               <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
                 <Search className="w-5 h-5 text-rmc-green-dark" />
               </div>
-              <p className="font-bold text-gray-900">{pick(content.cta.statusTitle, locale)}</p>
-              <p className="text-sm text-gray-500 flex-1">{pick(content.cta.statusText, locale)}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                {pick(content.cta.statusCta, locale)} <ArrowRight className="w-4 h-4" />
-              </span>
+              <GoodConductCtaCopy card="status" />
             </Link>
           </div>
         </section>
