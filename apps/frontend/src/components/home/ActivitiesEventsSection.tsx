@@ -217,7 +217,6 @@ export function ActivitiesEventsSection() {
     <section className="relative bg-transparent py-12 md:py-16 overflow-hidden">
       {/* Faint geometric texture + single gold hairline at the top */}
       <div className="absolute inset-0 pattern-light opacity-70 pointer-events-none" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/40 to-transparent pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* ── Header ── */}

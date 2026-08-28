@@ -262,8 +262,6 @@ export function AreasOfInterventionSection() {
     <section className="relative overflow-hidden bg-transparent py-12 md:py-16">
       {/* Light Islamic geometry + symmetric gold hairline seams to the darker neighbouring sections */}
       <div aria-hidden className="absolute inset-0 pattern-light opacity-60" />
-      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
-      <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
       {/* Airy brand glow anchors — subtle, never heavy */}
       <div aria-hidden className="absolute -top-24 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-rmc-green-light/50 blur-3xl" />
       <div aria-hidden className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-rmc-gold/5 blur-3xl" />
