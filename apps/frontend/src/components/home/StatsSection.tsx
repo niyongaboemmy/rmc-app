@@ -136,7 +136,9 @@ export function StatsSection() {
 
   return (
     <section className="relative bg-rmc-green-deep py-12 md:py-16 overflow-hidden">
-      <div className="absolute inset-0 pattern-islamic" />
+      {/* No `pattern-islamic` here: its tiled star sits directly behind the counters,
+          and a moving number over a repeating motif is harder to read than over flat
+          colour. The class stays in use on sections whose content is prose. */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
       <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rmc-gold/35 to-transparent" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-rmc-green/15 rounded-full blur-[80px] pointer-events-none" />
