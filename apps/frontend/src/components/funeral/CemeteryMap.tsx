@@ -44,8 +44,13 @@ export default function CemeteryMap({
           <Popup>
             <span className="block font-semibold text-gray-900">{c.name}</span>
             <span className="mt-0.5 block text-xs text-gray-500">{c.address}</span>
+            {/* `/maps/dir/` with a destination, not `/maps/search/`. The label has always
+                said "directions" while the link merely dropped a pin on the cemetery and
+                left the reader to ask for a route themselves. This asks for the route,
+                from wherever they are. Universal: Android and iOS open their maps app on
+                it, a desktop browser opens Google Maps in a tab. */}
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}`}
+              href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-1.5 flex items-center gap-1 text-xs font-medium text-rmc-green hover:underline"
