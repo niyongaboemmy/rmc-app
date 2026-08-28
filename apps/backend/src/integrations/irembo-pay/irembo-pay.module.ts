@@ -5,6 +5,7 @@ import { IremboPayInvoice } from './entities/irembopay-invoice.entity';
 import { IremboPayClient } from './irembo-pay.client';
 import { IremboPayConfigService } from './irembo-pay.config.service';
 import { IremboPayService } from './irembo-pay.service';
+import { IremboPaySandboxService } from './irembopay-sandbox.service';
 import { IremboPayInvoiceService } from './irembopay-invoice.service';
 import { IremboPayReconciliationService } from './irembopay-reconciliation.service';
 import { InvoiceSettlementBus } from './invoice-settlement.bus';
@@ -23,6 +24,7 @@ import { PaymentSettingsModule } from '../../payment-settings/payment-settings.m
   providers: [
     IremboPayConfigService,
     IremboPayClient,
+    IremboPaySandboxService,
     IremboPayService,
     IremboPayInvoiceService,
     IremboPayReconciliationService,
@@ -31,6 +33,7 @@ import { PaymentSettingsModule } from '../../payment-settings/payment-settings.m
   exports: [
     IremboPayConfigService,
     IremboPayClient,
+    IremboPaySandboxService,
     IremboPayService,
     IremboPayInvoiceService,
     IremboPayReconciliationService,

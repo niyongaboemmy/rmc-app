@@ -12,6 +12,7 @@ import {
   IremboPayApiError,
   describeIremboError,
   isValidMsisdn,
+  parseIremboDate,
 } from '../../integrations/irembo-pay/irembo-pay.types';
 import {
   PaymentChargeRequest,
@@ -170,7 +171,7 @@ export class IremboPayProvider implements PaymentGatewayProvider {
     return {
       status,
       providerReference: invoice.invoiceNumber ?? reference,
-      paidAt: invoice.paidAt ? new Date(invoice.paidAt) : undefined,
+      paidAt: parseIremboDate(invoice.paidAt),
       paidAmount: invoice.paidAmount !== undefined ? Number(invoice.paidAmount) : undefined,
       balance: invoice.balance !== undefined ? Number(invoice.balance) : undefined,
       providerPaymentMethod: invoice.paymentMethod,

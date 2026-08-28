@@ -130,6 +130,10 @@ export interface UpsertProviderProductPayload {
 
 export interface IremboPayStatus {
   configured: boolean;
+  /** Payments are being answered locally — no money moves and no call is made. */
+  simulated: boolean;
+  simulatorMode: 'off' | 'success' | 'fail' | 'pending';
+  simulatorDelayMs: number;
   isTestMode: boolean;
   apiBaseUrl: string;
   widgetScriptUrl: string;
@@ -227,6 +231,16 @@ export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingFie
         { value: 'FR', label: 'French' },
       ] },
     { key: 'signatureToleranceSeconds', label: 'Signature Tolerance (seconds)', placeholder: '300' },
+    { key: 'simulatorMode', label: 'Simulated payments', type: 'select',
+      options: [
+        { value: 'off',     label: 'Off — call the real IremboPay' },
+        { value: 'success', label: 'Simulate — payment succeeds' },
+        { value: 'fail',    label: 'Simulate — payment fails' },
+        { value: 'pending', label: 'Simulate — payer never responds' },
+      ],
+      hint: 'Answer payments locally so the flow can be exercised with no credentials. Test mode only — always off in production.' },
+    { key: 'simulatorDelayMs', label: 'Simulated approval delay (ms)', placeholder: '5000',
+      hint: 'How long the simulated payer takes to approve.' },
   ],
   BANK_TRANSFER: [
     { key: 'bankName',      label: 'Bank Name',       placeholder: 'e.g. Bank of Kigali',  required: true },

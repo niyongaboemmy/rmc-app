@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IremboPayClient } from './irembo-pay.client';
 import { IremboPayConfigService } from './irembo-pay.config.service';
+import { IremboPaySandboxService } from './irembopay-sandbox.service';
 import {
   CreateInvoiceInput,
   InitiatePushInput,
@@ -25,6 +26,7 @@ export class IremboPayService {
   constructor(
     private readonly client: IremboPayClient,
     private readonly config: IremboPayConfigService,
+    private readonly sandbox: IremboPaySandboxService,
   ) {}
 
   isConfigured(): Promise<boolean> {
@@ -33,6 +35,8 @@ export class IremboPayService {
 
   /** `POST /payments/invoices` */
   async createInvoice(input: CreateInvoiceInput): Promise<IremboInvoice> {
+    if (await this.sandbox.isActive()) return this.sandbox.createInvoice(input);
+
     const body: CreateInvoiceInput = {
       ...input,
       customer: input.customer
@@ -59,6 +63,8 @@ export class IremboPayService {
 
   /** `GET /payments/invoices/{ref}` — `ref` is an invoiceNumber *or* our transactionId. */
   async getInvoice(ref: string): Promise<IremboInvoice> {
+    if (await this.sandbox.isActive()) return this.sandbox.getInvoice(ref);
+
     return this.client.request<IremboInvoice>('get_invoice', {
       method: 'GET',
       path: `/payments/invoices/${encodeURIComponent(ref)}`,
@@ -74,6 +80,8 @@ export class IremboPayService {
    * authenticated like every other call.
    */
   async initiateMomoPush(input: InitiatePushInput): Promise<IremboPushResult> {
+    if (await this.sandbox.isActive()) return this.sandbox.initiateMomoPush(input);
+
     const body: InitiatePushInput = {
       ...input,
       accountIdentifier: normalizeMsisdn(input.accountIdentifier),
@@ -93,6 +101,8 @@ export class IremboPayService {
 
   /** `PUT /payments/invoices/{invoiceNumber}` — used to enable partial payments. */
   async updateInvoice(invoiceNumber: string, input: UpdateInvoiceInput): Promise<IremboInvoice> {
+    if (await this.sandbox.isActive()) return this.sandbox.updateInvoice(invoiceNumber, input);
+
     return this.client.request<IremboInvoice>('update_invoice', {
       method: 'PUT',
       path: `/payments/invoices/${encodeURIComponent(invoiceNumber)}`,

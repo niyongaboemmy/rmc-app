@@ -17,6 +17,8 @@ const CONFIG: IremboPayConfig = {
   invoiceExpiryMinutes: 1440,
   defaultLanguage: 'EN',
   signatureToleranceSeconds: 300,
+  simulatorMode: 'off' as const,
+  simulatorDelayMs: 5000,
   isTestMode: true,
 };
 
@@ -51,6 +53,7 @@ function build(rows: unknown[] = [], txRows: unknown[] = []) {
   const config = {
     get: jest.fn().mockResolvedValue(CONFIG),
     isConfigured: jest.fn().mockResolvedValue(true),
+    isSimulated: jest.fn().mockResolvedValue(false),
   };
   const invoices = {
     findByInvoiceNumber: jest.fn().mockResolvedValue(null),

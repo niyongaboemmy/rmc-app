@@ -97,6 +97,11 @@ export class IremboPayAdminController {
 
     return {
       configured: await this.config.isConfigured(),
+      // Surfaced so the admin panel can say "these payments are simulated"
+      // rather than showing a green light that means something else entirely.
+      simulated: await this.config.isSimulated(),
+      simulatorMode: cfg.simulatorMode,
+      simulatorDelayMs: cfg.simulatorDelayMs,
       isTestMode: cfg.isTestMode,
       apiBaseUrl: cfg.apiBaseUrl,
       widgetScriptUrl: cfg.widgetScriptUrl,
