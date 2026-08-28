@@ -32,18 +32,16 @@ export default async function NewMuslimPage() {
       <div className="min-h-screen bg-white">
         <Navbar />
 
-        {/* Sized like the other landing heroes — about, contact, gallery and projects are
-            all 40vh at pt-28 pb-10. This one passed no geometry at all and so took
-            PageHero's 50vh / pt-36 pb-14 defaults, making it the tallest hero in the app.
+        {/* Sized and stripped like the other landing heroes — about, contact, gallery and
+            projects are all 40vh at pt-28 pb-10 with no eyebrow and no divider. This one
+            passed no geometry at all and so took PageHero's 50vh / pt-36 pb-14 defaults,
+            making it the tallest hero in the app.
 
-            The eyebrow and ornament stay. Elsewhere they were dropped for restating the
-            heading, but "Welcome to Islam" over "Your Journey Begins Here" is a greeting
-            to someone who has just taken shahada, not a label repeating the title. */}
+            The heading and lede carry the welcome on their own: "Your Journey Begins
+            Here", then a paragraph addressed to someone who has just taken shahada. */}
         <EditablePageHero
           contentKey={ContentKeys.newMuslimHero}
           defaults={NEW_MUSLIM_HERO_DEFAULT}
-          showEyebrow
-          ornament
           minHeightClassName="min-h-[40vh]"
           paddingClassName="pt-28 pb-10"
         />
