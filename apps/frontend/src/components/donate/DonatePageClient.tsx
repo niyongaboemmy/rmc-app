@@ -24,7 +24,7 @@ export function DonatePageClient() {
 
   // Cart, currency and niyyah live in a persisted context (survives page
   // navigation and reloads); donor details in the checkout drawer stay ephemeral.
-  const { cart, currency, niyyah, total, addItem, removeItem, clear, setCurrency, setNiyyah } =
+  const { cart, currency, niyyah, total, addItem, removeItem, updateAmount, clear, setCurrency, setNiyyah } =
     useDonationCart();
   const [cartOpen, setCartOpen] = useState(false);
   const [summary, setSummary] = useState<DonationSummary | null>(null);
@@ -229,6 +229,9 @@ export function DonatePageClient() {
         // Removing the only line of a direct gift means "never mind" — there is
         // nothing left to pay for, so back out rather than sit on an empty drawer.
         onRemove={directItem ? closeCheckout : removeItem}
+        // A direct gift has no cart line to update, so its amount stays fixed —
+        // the donor picked it on the card they came from.
+        onAmountChange={directItem ? undefined : updateAmount}
         onSuccess={handleSuccess}
       />
     </div>
