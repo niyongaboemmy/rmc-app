@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository, EntityManager } from 'typeorm';
 import { IremboPayInvoice, IremboInvoiceStatus } from './entities/irembopay-invoice.entity';
 import { IremboInvoice, parseIremboDate } from './irembo-pay.types';
 import {
@@ -40,6 +40,8 @@ export class IremboPayInvoiceService {
     @InjectRepository(PaymentTransaction)
     private readonly txRepo: Repository<PaymentTransaction>,
     private readonly settlements: InvoiceSettlementBus,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   findByTransactionId(transactionId: string): Promise<IremboPayInvoice | null> {
@@ -102,68 +104,112 @@ export class IremboPayInvoiceService {
    * Terminal states are sticky: once an invoice is PAID, a repeated PAID
    * payload is acknowledged and dropped. IremboPay's portal can re-push
    * notifications, and double-crediting a donation is the worst outcome here.
+   *
+   * That guard alone is not enough against *concurrent* deliveries: two
+   * webhook calls (a genuine re-push, or a race with the reconciliation sweep)
+   * can both read the row before either writes it, both see `previousStatus:
+   * NEW`, and both conclude `changed: true` — which fires the settlement bus
+   * twice for one payment. Confirmed live: five concurrent identical callbacks
+   * against one invoice produced four duplicate status-history rows and four
+   * duplicate SMS sends. `SELECT ... FOR UPDATE` inside a transaction closes
+   * the window — the second caller's read blocks until the first's write
+   * commits, so it sees the row already PAID and takes the sticky-state path
+   * above instead of a second `changed: true`.
+   *
+   * The settlement bus is emitted *after* the transaction commits, not from
+   * inside it. `dispatch()` fans out to three domain handlers, each doing its
+   * own DB writes; running that chain while still holding the row lock only
+   * lengthens the window every other concurrent delivery for this invoice sits
+   * blocked in, for no benefit — the lock's job is done once this row is
+   * written, and nothing downstream needs it held any longer.
    */
   async applyInvoiceState(
     remote: IremboInvoice,
     source: 'webhook' | 'reconciliation',
     rawPayload?: Record<string, unknown>,
   ): Promise<InvoiceStateChange | null> {
-    const invoice =
-      (remote.invoiceNumber && (await this.findByInvoiceNumber(remote.invoiceNumber))) ||
-      (remote.transactionId && (await this.findByTransactionId(remote.transactionId))) ||
-      null;
+    const change = await this.dataSource.transaction(async (manager) => {
+      const invoice = await this.lockInvoiceForUpdate(manager, remote);
 
-    if (!invoice) {
-      this.logger.warn(
-        `[IremboPay] ${source}: unknown invoice ${remote.invoiceNumber ?? remote.transactionId} — ignoring`,
-      );
-      return null;
-    }
+      if (!invoice) {
+        this.logger.warn(
+          `[IremboPay] ${source}: unknown invoice ${remote.invoiceNumber ?? remote.transactionId} — ignoring`,
+        );
+        return null;
+      }
 
-    const previousStatus = invoice.paymentStatus;
-    const incoming = this.normaliseStatus(remote, invoice);
+      const previousStatus = invoice.paymentStatus;
+      const incoming = this.normaliseStatus(remote, invoice);
 
-    if (previousStatus === 'PAID') {
+      if (previousStatus === 'PAID') {
+        this.logger.log(
+          `[IremboPay] ${source}: invoice ${invoice.invoiceNumber} already PAID — acknowledged, no change`,
+        );
+        return {
+          invoice,
+          previousStatus,
+          status: previousStatus,
+          changed: false,
+          resolvedStatus: 'SUCCESSFUL',
+        } satisfies InvoiceStateChange;
+      }
+
+      this.assignFromRemote(invoice, remote);
+      invoice.paymentStatus = incoming;
+      invoice.rawPayload = (rawPayload ?? (remote as unknown as Record<string, unknown>)) || null;
+
+      const saved = await manager.save(IremboPayInvoice, invoice);
+      const resolvedStatus = toGatewayStatus(incoming);
+      await this.upsertLedgerRow(saved, {}, manager);
+
+      const changed = previousStatus !== incoming;
       this.logger.log(
-        `[IremboPay] ${source}: invoice ${invoice.invoiceNumber} already PAID — acknowledged, no change`,
+        `[IremboPay] ${source}: invoice ${saved.invoiceNumber} ${previousStatus} → ${incoming}` +
+          (changed ? '' : ' (no status change)'),
       );
+
       return {
-        invoice,
+        invoice: saved,
         previousStatus,
-        status: previousStatus,
-        changed: false,
-        resolvedStatus: 'SUCCESSFUL',
-      };
-    }
+        status: incoming,
+        changed,
+        resolvedStatus,
+      } satisfies InvoiceStateChange;
+    });
 
-    this.assignFromRemote(invoice, remote);
-    invoice.paymentStatus = incoming;
-    invoice.rawPayload = (rawPayload ?? (remote as unknown as Record<string, unknown>)) || null;
-
-    const saved = await this.invoiceRepo.save(invoice);
-    const resolvedStatus = toGatewayStatus(incoming);
-    await this.upsertLedgerRow(saved, {});
-
-    const changed = previousStatus !== incoming;
-    this.logger.log(
-      `[IremboPay] ${source}: invoice ${saved.invoiceNumber} ${previousStatus} → ${incoming}` +
-        (changed ? '' : ' (no status change)'),
-    );
-
-    const change: InvoiceStateChange = {
-      invoice: saved,
-      previousStatus,
-      status: incoming,
-      changed,
-      resolvedStatus,
-    };
-
-    // Emitted from the single apply path, so a payment recovered by the
-    // reconciliation sweep reaches the domain services and the admin stream
-    // exactly as a webhook-delivered one does.
-    if (changed) await this.settlements.emit(change);
+    // Outside the lock: the row is already committed, so a second concurrent
+    // caller can proceed the moment this transaction ends rather than waiting
+    // out the domain fan-out too.
+    if (change?.changed) await this.settlements.emit(change);
 
     return change;
+  }
+
+  /**
+   * `SELECT ... FOR UPDATE` on the invoice row. A concurrent caller for the
+   * same invoice blocks here until the first transaction commits or rolls
+   * back — that serialisation is the entire fix.
+   */
+  private async lockInvoiceForUpdate(
+    manager: EntityManager,
+    remote: IremboInvoice,
+  ): Promise<IremboPayInvoice | null> {
+    const qb = manager.createQueryBuilder(IremboPayInvoice, 'inv').setLock('pessimistic_write');
+
+    if (remote.invoiceNumber) {
+      const byNumber = await qb
+        .where('inv.invoice_number = :ref', { ref: remote.invoiceNumber })
+        .getOne();
+      if (byNumber) return byNumber;
+    }
+    if (remote.transactionId) {
+      return manager
+        .createQueryBuilder(IremboPayInvoice, 'inv')
+        .setLock('pessimistic_write')
+        .where('inv.transaction_id = :ref', { ref: remote.transactionId })
+        .getOne();
+    }
+    return null;
   }
 
   /**
@@ -203,14 +249,20 @@ export class IremboPayInvoiceService {
   private async upsertLedgerRow(
     invoice: IremboPayInvoice,
     context: { payerPhone?: string; initiatedBy?: string },
+    manager?: EntityManager,
   ): Promise<PaymentTransaction> {
-    const existing = await this.txRepo.findOne({
+    // Runs inside the caller's transaction when one is given, so the ledger
+    // write is covered by the same row lock as the invoice write — a
+    // concurrent caller blocked on the invoice cannot race this either.
+    const txRepo = manager ? manager.getRepository(PaymentTransaction) : this.txRepo;
+
+    const existing = await txRepo.findOne({
       where: { requestTransactionId: invoice.transactionId, provider: 'irembopay' },
     });
 
     const tx =
       existing ??
-      this.txRepo.create({
+      txRepo.create({
         requestTransactionId: invoice.transactionId,
         provider: 'irembopay',
         paymentMethodCode: PaymentMethodCode.IREMBOPAY,
@@ -241,7 +293,7 @@ export class IremboPayInvoiceService {
           : PaymentTransactionStatus.PENDING;
     tx.completedAt = resolved === 'PENDING' ? null : (invoice.paidAt ?? new Date());
 
-    return this.txRepo.save(tx);
+    return txRepo.save(tx);
   }
 }
 
