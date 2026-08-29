@@ -3,7 +3,7 @@ import {
   paymentSettingsApi,
   PAYMENT_METHOD_FIELDS,
   METHOD_LABELS,
-  PaymentMethodCode,
+  methodLabel,
 } from './paymentSettingsApi';
 
 jest.mock('./api', () => ({
@@ -82,28 +82,37 @@ describe('paymentSettingsApi after the IntouchPay retirement', () => {
   });
 
   /**
-   * The archival keeps. Historical transactions carry MOMO_INTOUCH, and admin
-   * listings join on it — the vocabulary outlives the gateway.
+   * IremboPay is the only way to pay. Manual bank transfer went with it: the
+   * sheet already offers a bank channel, and that one reconciles itself where a
+   * hand-typed account number did not.
    */
-  describe('the archive', () => {
-    it('has no credential form for the retired gateway', () => {
-      expect(PAYMENT_METHOD_FIELDS.MOMO_INTOUCH).toBeUndefined();
+  describe('the offerable methods', () => {
+    it('offers IremboPay and nothing else', () => {
+      expect(Object.keys(METHOD_LABELS)).toEqual(['IREMBOPAY']);
+    });
+
+    it('has a credential form for IremboPay and none for the removed gateways', () => {
       expect(PAYMENT_METHOD_FIELDS.IREMBOPAY).toEqual(
         expect.arrayContaining([expect.objectContaining({ key: 'secretKey', sensitive: true })]),
       );
-    });
-
-    it('still labels the retired method, and says it is retired', () => {
-      const label = METHOD_LABELS['MOMO_INTOUCH' as PaymentMethodCode];
-
-      expect(label).toBeDefined();
-      expect(label).toMatch(/retired/i);
-    });
-
-    it('keeps every live method labelled', () => {
-      for (const code of ['IREMBOPAY', 'BANK_TRANSFER', 'CARD', 'CASH'] as PaymentMethodCode[]) {
-        expect(METHOD_LABELS[code]).toBeTruthy();
+      for (const gone of ['MOMO_INTOUCH', 'CARD', 'CASH', 'BANK_TRANSFER']) {
+        expect((PAYMENT_METHOD_FIELDS as Record<string, unknown>)[gone]).toBeUndefined();
       }
+    });
+
+    /**
+     * Archived transactions still carry the removed codes, so a label must
+     * exist — otherwise the admin ledger shows a bare enum to a human.
+     */
+    it('still labels an archived transaction, without offering the method', () => {
+      expect(methodLabel('MOMO_INTOUCH')).toMatch(/retired/i);
+      expect(methodLabel('CARD')).toBe('Card Payment');
+      expect(methodLabel('BANK_TRANSFER')).toBe('Bank Transfer');
+      expect(methodLabel('IREMBOPAY')).toBe('IremboPay');
+    });
+
+    it('falls back to the raw code rather than rendering nothing', () => {
+      expect(methodLabel('SOMETHING_UNKNOWN')).toBe('SOMETHING_UNKNOWN');
     });
   });
 });

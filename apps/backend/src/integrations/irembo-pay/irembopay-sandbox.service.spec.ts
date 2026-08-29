@@ -17,6 +17,7 @@ const baseConfig: IremboPayConfig = {
   isTestMode: true,
   simulatorMode: 'success',
   simulatorDelayMs: 0,
+  testMsisdn: '0781234567',
 };
 
 const invoiceInput = (transactionId = 'DON-abc12345-1') => ({

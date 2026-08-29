@@ -145,7 +145,7 @@ describe('IremboPayConfigService', () => {
       const { service, paymentSettings, bus } = build(FULL);
       await service.get();
 
-      bus.emitMethodSettingsChanged(PaymentMethodCode.BANK_TRANSFER);
+      bus.emitMethodSettingsChanged('SOME_OTHER_METHOD' as PaymentMethodCode);
       await service.get();
 
       expect(paymentSettings.getRawSettings).toHaveBeenCalledTimes(1);

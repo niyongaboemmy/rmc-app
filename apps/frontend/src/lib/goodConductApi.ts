@@ -124,17 +124,31 @@ export const goodConductApi = {
     return data.data ?? data;
   },
 
+  /**
+   * Starts the fee payment. `channel: 'card'` raises a payable invoice without
+   * pushing a MoMo prompt — the applicant settles it in IremboPay's sheet,
+   * which covers card, bank, USSD and MoMo in one place.
+   */
   initiateMomoPayment: async (
     id: string,
     mobilePhone: string,
+    channel: 'momo' | 'card' = 'momo',
   ): Promise<{
     request: GoodConductRequest;
     transaction: { id: string; status: string; providerRef: string | null };
     gatewayRef: string | null;
     responseCode: string;
     message: string;
+    transactionId?: string;
+    invoiceNumber?: string | null;
+    paymentLinkUrl?: string | null;
+    publicKey?: string | null;
+    widgetScriptUrl?: string | null;
   }> => {
-    const { data } = await apiClient.post(`/good-conduct/requests/${id}/pay`, { mobilePhone });
+    const { data } = await apiClient.post(`/good-conduct/requests/${id}/pay`, {
+      mobilePhone,
+      channel,
+    });
     return data.data ?? data;
   },
 
@@ -196,14 +210,4 @@ export const goodConductPublicApi = {
   },
 
   /** Real, admin-configured bank details — null if not yet configured (never a fabricated fallback). */
-  getBankDetails: async (): Promise<BankTransferDetails | null> => {
-    try {
-      const { data } = await apiClient.get('/good-conduct/public/bank-details');
-      // `data.data` is legitimately `null` when bank transfer isn't configured yet —
-      // unlike other endpoints here, `?? data` would wrongly fall back to the envelope.
-      return data.data;
-    } catch {
-      return null;
-    }
-  },
 };

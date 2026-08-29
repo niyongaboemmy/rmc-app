@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  Smartphone, Building2, CreditCard, Banknote,
+  Building2, Banknote,
   Save, RefreshCw, Eye, EyeOff, CheckCircle2, XCircle,
   Lock, AlertCircle, FlaskConical, Globe,
 } from 'lucide-react';
@@ -24,12 +24,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter, ModalTitle } from '@/compon
 import { cn } from '@/lib/utils';
 
 const METHOD_ICONS: Record<PaymentMethodCode, React.ElementType> = {
-  // Retired — the icon stays so historical rows still render.
-  MOMO_INTOUCH:  Smartphone,
-  IREMBOPAY:     Globe,
-  BANK_TRANSFER: Building2,
-  CARD:          CreditCard,
-  CASH:          Banknote,
+  IREMBOPAY: Globe,
 };
 
 interface Props {
@@ -379,14 +374,6 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
               )}
             </div>
 
-            {/* Retired gateway — historical transactions only, nothing to set up. */}
-            {selectedMethod.code === 'MOMO_INTOUCH' && (
-              <div className="rounded-xl bg-slate-50 border border-slate-200 px-5 py-4 text-xs text-slate-600 space-y-1.5">
-                <p className="font-semibold text-slate-700">This gateway is retired</p>
-                <p>IntouchPay was decommissioned in August 2026 and no longer takes payments. The method is kept so historical transactions keep their name in reports.</p>
-                <p>Use <strong>IremboPay</strong> for all new payments.</p>
-              </div>
-            )}
           </>
         )}
       </div>

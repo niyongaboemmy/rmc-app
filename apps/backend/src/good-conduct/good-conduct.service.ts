@@ -26,7 +26,6 @@ import { SmsTemplates } from './sms-templates';
 import { EmailTemplates } from './email-templates';
 import { PaymentSettingsService } from '../payment-settings/payment-settings.service';
 import { PaymentTypeKey } from '../payment-settings/entities/payment-type.entity';
-import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { PaymentGatewayService } from '../payments/payment-gateway.service';
 import { PaymentStatusResult, gatewayReference } from '../payments/payment-gateway.port';
 import { NotificationSettingsService } from '../integrations/notifications/notification-settings.service';
@@ -84,26 +83,6 @@ export class GoodConductService {
       // fall through to hardcoded fallback
     }
     return GOOD_CONDUCT_FEE_FALLBACK;
-  }
-
-  /**
-   * Real, admin-configured bank details for the manual bank-transfer flow —
-   * never a hardcoded placeholder. Returns null if the admin hasn't
-   * configured `BANK_TRANSFER` settings yet, so the frontend can show an
-   * honest "not available yet" state instead of a fabricated account number.
-   */
-  async getBankTransferDetails(): Promise<{
-    bankName: string;
-    accountName: string;
-    accountNumber: string;
-  } | null> {
-    const settings = await this.paymentSettings.getRawSettings(PaymentMethodCode.BANK_TRANSFER);
-    if (!settings?.bankName || !settings?.accountName || !settings?.accountNumber) return null;
-    return {
-      bankName: settings.bankName,
-      accountName: settings.accountName,
-      accountNumber: settings.accountNumber,
-    };
   }
 
   // ── Create / Draft ───────────────────────────────────────────────────────────

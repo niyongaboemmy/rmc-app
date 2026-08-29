@@ -102,6 +102,7 @@ export class IremboPayAdminController {
       simulated: await this.config.isSimulated(),
       simulatorMode: cfg.simulatorMode,
       simulatorDelayMs: cfg.simulatorDelayMs,
+      testMsisdn: cfg.testMsisdn,
       isTestMode: cfg.isTestMode,
       apiBaseUrl: cfg.apiBaseUrl,
       widgetScriptUrl: cfg.widgetScriptUrl,

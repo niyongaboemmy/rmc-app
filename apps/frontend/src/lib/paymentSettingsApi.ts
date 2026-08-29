@@ -3,10 +3,10 @@ import { apiClient } from './api';
 // ── Enums (mirrored from backend) ──────────────────────────────────────────────
 
 /**
- * `MOMO_INTOUCH` is retired (2026-08) but stays in the union: historical
+ * IremboPay is the only payment method. Historical
  * transactions carry the code, and admin listings must still render them.
  */
-export type PaymentMethodCode = 'MOMO_INTOUCH' | 'IREMBOPAY' | 'BANK_TRANSFER' | 'CARD' | 'CASH';
+export type PaymentMethodCode = 'IREMBOPAY';
 
 export type PaymentTypeKey =
   | 'DONATION'
@@ -134,6 +134,8 @@ export interface IremboPayStatus {
   simulated: boolean;
   simulatorMode: 'off' | 'success' | 'fail' | 'pending';
   simulatorDelayMs: number;
+  /** Default number the admin test panel pushes to. */
+  testMsisdn: string;
   isTestMode: boolean;
   apiBaseUrl: string;
   widgetScriptUrl: string;
@@ -196,7 +198,7 @@ export interface SettingField {
 }
 
 /**
- * `MOMO_INTOUCH` has no entry: the gateway is retired, so there is nothing left
+ * Removed methods have no entry: they cannot be configured, so there is nothing left
  * to configure. `Partial` rather than `Record` so the type says that out loud.
  */
 export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingField[]>> = {
@@ -241,39 +243,35 @@ export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingFie
       hint: 'Answer payments locally so the flow can be exercised with no credentials. Test mode only — always off in production.' },
     { key: 'simulatorDelayMs', label: 'Simulated approval delay (ms)', placeholder: '5000',
       hint: 'How long the simulated payer takes to approve.' },
-  ],
-  BANK_TRANSFER: [
-    { key: 'bankName',      label: 'Bank Name',       placeholder: 'e.g. Bank of Kigali',  required: true },
-    { key: 'accountName',   label: 'Account Name',    placeholder: 'Rwanda Muslim Community', required: true },
-    { key: 'accountNumber', label: 'Account Number',  placeholder: 'e.g. 00040-00612345-01', required: true },
-    { key: 'branchCode',    label: 'Branch Code',     placeholder: 'e.g. KGL001' },
-    { key: 'swiftCode',     label: 'SWIFT / BIC',     placeholder: 'e.g. BKIGRWRW' },
-    { key: 'instructions',  label: 'Payment Instructions', placeholder: 'Optional notes shown to payers', type: 'text' },
-  ],
-  CARD: [
-    { key: 'provider',       label: 'Provider',         required: true, type: 'select',
-      options: [{ value: 'stripe', label: 'Stripe' }, { value: 'paystack', label: 'Paystack' }] },
-    { key: 'publishableKey', label: 'Publishable Key',  placeholder: 'pk_live_...',   required: true },
-    { key: 'secretKey',      label: 'Secret Key',       placeholder: 'sk_live_...',   required: true, sensitive: true },
-    { key: 'webhookSecret',  label: 'Webhook Secret',   placeholder: 'whsec_...',     sensitive: true,
-      hint: 'Used to verify webhook signatures from the payment provider' },
-  ],
-  CASH: [
-    { key: 'instructions',  label: 'Payment Instructions', placeholder: 'e.g. Visit our office at KN 5 Rd...', type: 'text' },
-    { key: 'contactPhone',  label: 'Contact Phone',        placeholder: '+250 7XX XXX XXX' },
+    { key: 'testMsisdn', label: 'Test MoMo number', placeholder: '0781234567',
+      hint: "Default number the Testing tab pushes to. IremboPay's sandbox accepts only their own test number." },
   ],
 };
 
 // ── Display helpers ────────────────────────────────────────────────────────────
 
 export const METHOD_LABELS: Record<PaymentMethodCode, string> = {
-  // Retired 2026-08 — kept so historical transactions still show a method name.
-  MOMO_INTOUCH:  'Mobile Money (IntouchPay — retired)',
-  IREMBOPAY:     'IremboPay',
-  BANK_TRANSFER: 'Bank Transfer',
-  CARD:          'Card Payment',
-  CASH:          'Cash',
+  IREMBOPAY: 'IremboPay',
 };
+
+/**
+ * Codes that existed before the platform settled on a single gateway. Archived
+ * transactions still carry them, so the admin list needs a label — but they are
+ * not offerable, which is why they are not in `PaymentMethodCode`.
+ */
+export const ARCHIVED_METHOD_LABELS: Record<string, string> = {
+  MOMO_INTOUCH: 'Mobile Money (IntouchPay — retired)',
+  BANK_TRANSFER: 'Bank Transfer',
+  CARD: 'Card Payment',
+  CASH: 'Cash',
+};
+
+/** A method's display name, falling back to an archived one, then the raw code. */
+export function methodLabel(code: string): string {
+  return (
+    METHOD_LABELS[code as PaymentMethodCode] ?? ARCHIVED_METHOD_LABELS[code] ?? code
+  );
+}
 
 export const TYPE_LABELS: Record<PaymentTypeKey, string> = {
   DONATION:       'Donations',

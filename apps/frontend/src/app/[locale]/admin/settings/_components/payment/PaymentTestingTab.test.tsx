@@ -35,9 +35,9 @@ const METHODS: PaymentMethod[] = [
     id: 'm-1', name: 'IremboPay', code: 'IREMBOPAY', description: null,
     isActive: true, logoUrl: null, sortOrder: 1, createdAt: '', updatedAt: '',
   },
-  // Retired: inactive, so it must not be offered as a target for a new test.
+  // Inactive, so it must not be offered as a target for a new test.
   {
-    id: 'm-2', name: 'Mobile Money (IntouchPay — retired)', code: 'MOMO_INTOUCH',
+    id: 'm-2', name: 'Cash', code: 'CASH' as unknown as PaymentMethod['code'],
     description: null, isActive: false, logoUrl: null, sortOrder: 9, createdAt: '', updatedAt: '',
   },
 ];

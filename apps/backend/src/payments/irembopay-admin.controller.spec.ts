@@ -19,6 +19,7 @@ const CONFIG: IremboPayConfig = {
   signatureToleranceSeconds: 300,
   simulatorMode: 'off' as const,
   simulatorDelayMs: 5000,
+  testMsisdn: '0781234567',
   isTestMode: true,
 };
 

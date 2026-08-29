@@ -8,23 +8,24 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight, ArrowLeft, User, MapPin, Building2, Briefcase,
-  Smartphone, Landmark, Loader2, CheckCircle2, Copy, Check, Info,
+  Smartphone, Loader2, CheckCircle2, Copy, Check, Info,
 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { IremboPayWidget } from '@/components/payments/IremboPayWidget';
+import { IremboInvoiceHandle } from '@/hooks/useIremboPayment';
+import { paymentSettingsApi } from '@/lib/paymentSettingsApi';
 import { AccountPrefillNote } from '@/components/services/shared/AccountPrefillNote';
 import { useAuth, type AuthUser } from '@/hooks/useAuth';
 import { accountFullName, toLocalRwandanPhone } from '@/lib/accountPrefill';
 import { publicApi } from '@/lib/public-api';
 import {
   goodConductApi,
-  goodConductPublicApi,
   type CreateGoodConductRequestPayload,
   type GoodConductRequest,
   type GoodConductMotif,
-  type BankTransferDetails,
 } from '@/lib/goodConductApi';
 
 // Local Rwandan mobile format the user types: 0 + network prefix (72/73/78/79) + 7 digits = 10 chars.
@@ -539,16 +540,15 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
   const [phone, setPhone] = useState(toLocalRwandanPhone(initialRequest.phone));
   // 'slow' = provider timed out / is unresponsive; the charge may still be in
   // flight, so we show a friendly "try again shortly" state rather than a failure.
+  const [invoice, setInvoice] = useState<IremboInvoiceHandle | null>(null);
+  const [otherBusy, setOtherBusy] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'waiting' | 'confirmed' | 'failed' | 'slow'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const pollCountRef = useRef(0);
   // ~45 seconds of polling at 5s before we surface the "taking longer" screen.
   const MAX_POLLS = 9;
-  const [showBank, setShowBank] = useState(false);
-  const [bankNoticeSent, setBankNoticeSent] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [bankDetails, setBankDetails] = useState<BankTransferDetails | null | 'loading'>('loading');
   const [verified, setVerified] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -596,11 +596,6 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
-  useEffect(() => {
-    if (!showBank) return;
-    goodConductPublicApi.getBankDetails().then(setBankDetails);
-  }, [showBank]);
-
   const handlePayNow = async () => {
     if (!PHONE_RE.test(phone)) {
       setError(t('phoneFormatError'));
@@ -631,12 +626,33 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
     }
   };
 
-  const handleBankNotice = async () => {
+  /** Raises an invoice with no MoMo prompt, then hands over to the sheet. */
+  const handlePayOtherWay = async () => {
+    if (otherBusy) return;
+    setOtherBusy(true);
+    setError(null);
     try {
-      await goodConductApi.submitBankTransferNotice(request.id);
-      setBankNoticeSent(true);
+      const result = await goodConductApi.initiateMomoPayment(
+        request.id,
+        toE164Phone(phone),
+        'card',
+      );
+      setRequest(result.request);
+      if (!result.invoiceNumber || !result.publicKey) {
+        setError(t('genericError'));
+        return;
+      }
+      setInvoice({
+        transactionId: result.transactionId ?? '',
+        invoiceNumber: result.invoiceNumber,
+        publicKey: result.publicKey ?? undefined,
+        widgetScriptUrl: result.widgetScriptUrl ?? undefined,
+        paymentLinkUrl: result.paymentLinkUrl ?? undefined,
+      });
     } catch {
       setError(t('genericError'));
+    } finally {
+      setOtherBusy(false);
     }
   };
 
@@ -669,20 +685,6 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
     );
   }
 
-  if (bankNoticeSent) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-full bg-rmc-green-light flex items-center justify-center">
-          <Landmark className="w-8 h-8 text-rmc-green" />
-        </div>
-        <h2 className="text-xl font-bold text-gray-900">{t('bankNoticeSentTitle')}</h2>
-        <p className="text-gray-500 text-sm">{t('bankNoticeSentText')}</p>
-        <Button onClick={() => router.push(`/${locale}/services/good-conduct/status`)}>
-          {t('checkStatusBtn')}
-        </Button>
-      </div>
-    );
-  }
 
   // Provider slow/unresponsive: not a failure — the charge may still clear and
   // the background reconciler will confirm it. Offer a safe retry (the backend
@@ -765,32 +767,26 @@ function PaymentStep({ request: initialRequest, onCancel }: { request: GoodCondu
             <div className="absolute inset-x-0 top-1/2 -z-10 border-t border-gray-200" />
           </div>
 
-          {!showBank ? (
-            <Button variant="outline" fullWidth leftIcon={<Landmark className="w-4 h-4" />} onClick={() => setShowBank(true)}>
-              {t('payBankInstead')}
-            </Button>
+          {/*
+            Card, bank and USSD, through IremboPay's own sheet. Without this the
+            only route was a MoMo push, which strands an applicant whose number
+            is not reachable.
+          */}
+          {invoice ? (
+            <IremboPayWidget
+              autoOpen
+              invoice={invoice}
+              amount={Number(request.amountDue) || 0}
+              currency="RWF"
+              checkStatus={(txn) =>
+                paymentSettingsApi.getPaymentStatus(txn).then((r) => r.status)
+              }
+              onConfirmed={() => setPhase('confirmed')}
+            />
           ) : (
-            <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-              <p className="text-sm text-gray-600">{t('bankDetails')}</p>
-              {bankDetails === 'loading' ? (
-                <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> {t('loadingBankDetails')}
-                </div>
-              ) : bankDetails ? (
-                <div className="text-sm font-mono bg-gray-50 rounded-lg p-3 space-y-1">
-                  <p>{bankDetails.bankName}</p>
-                  <p>{t('accountLabel')}: {bankDetails.accountNumber}</p>
-                  <p>{t('nameLabel')}: {bankDetails.accountName}</p>
-                </div>
-              ) : (
-                <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5" /> {t('bankDetailsUnavailable')}
-                </div>
-              )}
-              <Button fullWidth variant="secondary" onClick={handleBankNotice} disabled={!bankDetails || bankDetails === 'loading'}>
-                {t('confirmedTransfer')}
-              </Button>
-            </div>
+            <Button variant="outline" fullWidth onClick={handlePayOtherWay} disabled={otherBusy}>
+              {otherBusy ? t('processing') : t('payAnotherWay')}
+            </Button>
           )}
 
           <button onClick={onCancel} className="text-sm text-gray-400 hover:text-gray-600 mx-auto block">

@@ -441,7 +441,12 @@ export default function PaymentTestingTab({ methods, types }: Props) {
   const loadGatewayStatus = useCallback(async () => {
     setLoadingStatus(true);
     try {
-      setGatewayStatus(await paymentSettingsApi.getIremboPayStatus());
+      const s = await paymentSettingsApi.getIremboPayStatus();
+      setGatewayStatus(s);
+      // Seed the number from settings rather than a constant in the bundle, so
+      // changing it is an admin edit and not a redeploy. Only when untouched —
+      // never overwrite what the admin is typing.
+      setMobilePhone((current) => current || s.testMsisdn || '');
     } catch {
       setGatewayStatus(null);
     } finally {

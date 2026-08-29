@@ -94,7 +94,7 @@ describe('IntouchPay retirement', () => {
       );
 
       expect(service.listProviders()).toEqual([PaymentMethodCode.IREMBOPAY]);
-      expect(service.listProviders()).not.toContain(PaymentMethodCode.MOMO_INTOUCH);
+      expect(service.listProviders()).not.toContain('MOMO_INTOUCH');
     });
 
     it('still accepts a new provider through the port', () => {
@@ -123,14 +123,24 @@ describe('IntouchPay retirement', () => {
   });
 
   /**
-   * The archival keeps. Historical `payment_transactions` rows carry
-   * `payment_method_code = 'MOMO_INTOUCH'`, and admin reporting joins on it —
-   * dropping the enum member costs nothing in safety and breaks every read of
-   * the financial record.
+   * The vocabulary was reduced to the methods that still do something.
+   *
+   * `MOMO_INTOUCH` was previously kept on the theory that admin reporting joins
+   * on it. It does not: `payment_transactions.payment_method_code` is a plain
+   * varchar, not a foreign key, so archived rows still read back after the
+   * member is gone — they render the raw code rather than a friendly label,
+   * which is the whole cost.
    */
-  describe('the archive', () => {
-    it('keeps MOMO_INTOUCH in the payment method vocabulary', () => {
-      expect(PaymentMethodCode.MOMO_INTOUCH).toBe('MOMO_INTOUCH');
+  describe('the payment method vocabulary', () => {
+    it('offers IremboPay and nothing else', () => {
+      expect(Object.values(PaymentMethodCode)).toEqual(['IREMBOPAY']);
+    });
+
+    it('no longer carries any of the removed methods', () => {
+      const codes = Object.values(PaymentMethodCode) as string[];
+      for (const gone of ['MOMO_INTOUCH', 'CARD', 'CASH', 'BANK_TRANSFER']) {
+        expect(codes).not.toContain(gone);
+      }
     });
   });
 });

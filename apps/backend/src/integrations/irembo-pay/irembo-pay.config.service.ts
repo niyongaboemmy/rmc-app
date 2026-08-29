@@ -30,6 +30,13 @@ export interface IremboPayConfig {
   simulatorMode: IremboSimulatorMode;
   /** How long the simulated payer takes to approve. */
   simulatorDelayMs: number;
+  /**
+   * The number the admin test panel pushes to by default. In the sandbox only
+   * IremboPay's own test MSISDN is accepted, and which one that is belongs with
+   * the rest of the gateway's settings rather than in an env file nobody can
+   * edit once the app is deployed.
+   */
+  testMsisdn: string;
 }
 
 const SANDBOX_API = 'https://api.sandbox.irembopay.com';
@@ -42,6 +49,9 @@ const DEFAULTS = {
   invoiceExpiryMinutes: 1440,
   defaultLanguage: 'EN' as IremboLanguage,
   signatureToleranceSeconds: 300,
+  // IremboPay's documented sandbox test number — the only one their sandbox
+  // accepts a push for.
+  testMsisdn: '0781234567',
 };
 
 /** How long a resolved config is trusted before re-reading the settings row. */
@@ -116,6 +126,7 @@ export class IremboPayConfigService {
       isTestMode,
       simulatorMode: asSimulatorMode(raw.simulatorMode),
       simulatorDelayMs: positiveInt(raw.simulatorDelayMs, DEFAULT_SIMULATOR_DELAY_MS),
+      testMsisdn: raw.testMsisdn?.trim() || DEFAULTS.testMsisdn,
     };
 
     this.cache = { value, expiresAt: Date.now() + CACHE_TTL_MS };
