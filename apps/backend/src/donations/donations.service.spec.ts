@@ -317,11 +317,16 @@ describe('DonationsService — never completed without payment', () => {
     expect(donations.save).not.toHaveBeenCalled();
   });
 
-  it('refuses mobile money with no phone number', async () => {
-    await expect(service.create(item({ donorPhone: undefined }), null)).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
-    expect(donations.save).not.toHaveBeenCalled();
+  // A single momo donation with no phone is NOT refused: it issues an invoice
+  // with no push, which the donor settles from the payment link. What matters
+  // here is only that it still reaches the gateway rather than being booked as
+  // received. (The cart's momo channel does require a number, since its whole
+  // point is the prompt — covered in donation-gateway-routing.spec.ts.)
+  it('charges mobile money with no phone rather than booking it paid', async () => {
+    await service.create(item({ donorPhone: undefined }), null);
+
+    expect(paymentGateway.charge).toHaveBeenCalled();
+    expect(savedStatuses()).not.toContain(DonationStatus.COMPLETED);
   });
 
   it('records the donation as pending when it can actually be charged', async () => {

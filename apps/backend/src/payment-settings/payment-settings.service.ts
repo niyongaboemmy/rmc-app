@@ -14,7 +14,6 @@ import { SettingsCacheBus } from './settings-cache.bus';
 
 const SENSITIVE_FIELDS: Partial<Record<PaymentMethodCode, string[]>> = {
   [PaymentMethodCode.IREMBOPAY]: ['secretKey'],
-  [PaymentMethodCode.CARD]: ['secretKey', 'webhookSecret'],
 };
 
 const MASK = '••••••••';
@@ -307,9 +306,6 @@ export class PaymentSettingsService {
   private checkConfigured(settings: Record<string, string>, code: string): boolean {
     const required: Partial<Record<PaymentMethodCode, string[]>> = {
       [PaymentMethodCode.IREMBOPAY]: ['secretKey', 'publicKey', 'paymentAccountIdentifier'],
-      [PaymentMethodCode.BANK_TRANSFER]: ['bankName', 'accountName', 'accountNumber'],
-      [PaymentMethodCode.CARD]: ['provider', 'publishableKey', 'secretKey'],
-      [PaymentMethodCode.CASH]: [],
     };
     const fields = required[code as PaymentMethodCode] ?? [];
     return fields.every((f) => !!settings[f]?.trim());

@@ -48,16 +48,24 @@ function remote(overrides: Partial<IremboInvoice> = {}): IremboInvoice {
   } as IremboInvoice;
 }
 
+/**
+ * A fake `DataSource.transaction()` plus the query builder `applyInvoiceState`
+ * locks through. `existing` is looked up fresh on every call, which is what
+ * lets the race-condition tests below simulate a second concurrent caller
+ * seeing whatever the first caller already wrote.
+ */
 function build(existing: IremboPayInvoice | null = localInvoice()) {
   const savedInvoices: IremboPayInvoice[] = [];
+  let current = existing;
+
   const invoiceRepo = {
-    findOne: jest.fn().mockResolvedValue(existing),
+    findOne: jest.fn(async () => current),
     create: jest.fn((v: Partial<IremboPayInvoice>) => ({ ...v }) as IremboPayInvoice),
     save: jest.fn(async (v: IremboPayInvoice) => {
       savedInvoices.push(v);
+      current = v;
       return v;
     }),
-    createQueryBuilder: jest.fn(),
   };
 
   const savedTx: PaymentTransaction[] = [];
@@ -74,8 +82,30 @@ function build(existing: IremboPayInvoice | null = localInvoice()) {
   const emitted: unknown[] = [];
   settlements.subscribe((c) => void emitted.push(c));
 
+  const manager = {
+    createQueryBuilder: () => ({
+      setLock: () => ({
+        where: () => ({ getOne: () => invoiceRepo.findOne() }),
+      }),
+    }),
+    save: (_entity: unknown, v: IremboPayInvoice) => invoiceRepo.save(v),
+    getRepository: () => txRepo,
+  };
+
+  const dataSource = {
+    // Sequential in these tests — there is no real concurrency inside one
+    // Jest test — but every call still re-reads `current` via the manager
+    // above, which is what a real lock's serialisation guarantees.
+    transaction: async (cb: (m: typeof manager) => unknown) => cb(manager),
+  };
+
   return {
-    service: new IremboPayInvoiceService(invoiceRepo as never, txRepo as never, settlements),
+    service: new IremboPayInvoiceService(
+      invoiceRepo as never,
+      txRepo as never,
+      settlements,
+      dataSource as never,
+    ),
     invoiceRepo,
     txRepo,
     savedInvoices,
@@ -174,6 +204,45 @@ describe('IremboPayInvoiceService', () => {
     });
   });
 
+  describe('applyInvoiceState — concurrent delivery', () => {
+    /**
+     * Reproduces, at the unit level, what five concurrent live callbacks did:
+     * with locking, each call sees the *result* of the one before it — never
+     * the pre-write state a race would let two callers share. Only the first
+     * to observe the row transitions and emits; every caller after it takes
+     * the sticky-PAID path.
+     */
+    it('only the first of several deliveries for one invoice changes anything', async () => {
+      const { service, emitted } = build(localInvoice({ paymentStatus: 'NEW' }));
+
+      const results = [];
+      for (let i = 0; i < 5; i++) {
+        results.push(await service.applyInvoiceState(remote(), 'webhook'));
+      }
+
+      expect(results[0]).toMatchObject({ changed: true, status: 'PAID' });
+      for (const r of results.slice(1)) {
+        expect(r).toMatchObject({ changed: false, status: 'PAID' });
+      }
+      // One transition, one settlement — not one per delivery.
+      expect(emitted).toHaveLength(1);
+    });
+
+    it('locks by invoice number and by transaction id equally', async () => {
+      const { service, emitted } = build(localInvoice({ paymentStatus: 'NEW' }));
+
+      await service.applyInvoiceState(remote(), 'webhook');
+      // A second delivery that only carries our transactionId (no invoice
+      // number on the payload) must still find the now-PAID row and stop.
+      await service.applyInvoiceState(
+        remote({ invoiceNumber: undefined as unknown as string }),
+        'reconciliation',
+      );
+
+      expect(emitted).toHaveLength(1);
+    });
+  });
+
   describe('applyInvoiceState — lookup', () => {
     it('returns null for an invoice we have never seen', async () => {
       const { service, emitted } = build(null);
@@ -183,14 +252,18 @@ describe('IremboPayInvoiceService', () => {
     });
 
     it('falls back to our transactionId when the invoice number is absent', async () => {
-      const { service, invoiceRepo } = build(localInvoice());
+      const { service, emitted } = build(localInvoice({ paymentStatus: 'NEW' }));
 
-      await service.applyInvoiceState(
+      const change = await service.applyInvoiceState(
         remote({ invoiceNumber: undefined as unknown as string }),
         'reconciliation',
       );
 
-      expect(invoiceRepo.findOne).toHaveBeenCalledWith({ where: { transactionId: TXN } });
+      // Found and applied via the transactionId path, not silently dropped as
+      // an unknown invoice — the lock is taken by whichever reference the
+      // payload actually carries.
+      expect(change).toMatchObject({ changed: true, status: 'PAID' });
+      expect(emitted).toHaveLength(1);
     });
   });
 

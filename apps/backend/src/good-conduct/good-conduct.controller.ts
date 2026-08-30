@@ -100,13 +100,4 @@ export class GoodConductController {
   publicVerify(@Param('certificateNumber') certificateNumber: string) {
     return this.service.publicVerify(certificateNumber);
   }
-
-  @Get('public/bank-details')
-  @Public()
-  @ApiOperation({
-    summary: 'Real, admin-configured bank transfer details (or null if not yet configured)',
-  })
-  bankDetails() {
-    return this.service.getBankTransferDetails();
-  }
 }

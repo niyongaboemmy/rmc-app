@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  AlertTriangle, Check, Copy, ExternalLink, Link2, Loader2, Package,
-  Pencil, RefreshCw, Smartphone, X, Zap,
+  AlertTriangle, Check, Copy, Link2, Loader2, Package, Pencil, RefreshCw, X, Zap,
 } from 'lucide-react';
 import { Permission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +10,6 @@ import {
   paymentSettingsApi,
   ProviderProductRow,
   IremboPayStatus,
-  IremboPayTestResult,
 } from '@/lib/paymentSettingsApi';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
@@ -95,7 +93,21 @@ export function IremboPayProductsTab() {
     <div className="space-y-5">
       <ConfigurationBanner status={status} unmappedCount={unmappedCount} />
 
-      {canManage && status?.configured && <TestPanel onDone={load} />}
+      {/*
+        Running a payment lives on the Testing tab, not here. This tab had a
+        near-duplicate of that panel, so there were two places to press "test"
+        with no way to tell which one mattered. This tab is setup —
+        credentials readout, callback URL, product mapping; Testing is where a
+        charge is actually made and its history kept.
+      */}
+      {canManage && status?.configured && (
+        <p className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+          <Zap className="h-4 w-4 shrink-0 text-gray-400" />
+          Ready to take a payment. Run one from the{' '}
+          <span className="font-semibold text-gray-900">Testing</span> tab, which also keeps a
+          history of test transactions.
+        </p>
+      )}
 
       {/* ── Product mapping table ── */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -180,7 +192,17 @@ function ConfigurationBanner({
     );
   }
 
-  const callbackUrl = `${typeof window !== 'undefined' ? window.location.origin.replace(/^https?:\/\/(www\.)?/, 'https://api.') : ''}/api/v1/webhooks/irembopay`;
+  /*
+   * Built from the API base the app actually calls, not from the browser
+   * origin. Rewriting the origin into an `api.` subdomain produced
+   * `https://api.localhost:3001/...` in development — an invented host on the
+   * *frontend* port — and an admin pasting that into the portal would have
+   * silently configured a callback that can never be delivered.
+   */
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
+  const callbackUrl = apiBase
+    ? `${apiBase}/webhooks/irembopay`
+    : `${typeof window !== 'undefined' ? window.location.origin : ''}/api/v1/webhooks/irembopay`;
 
   return (
     <div className="space-y-3">
@@ -255,170 +277,6 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 // ── Test panel ────────────────────────────────────────────────────────────────
-
-function TestPanel({ onDone }: { onDone: () => void }) {
-  const { showToast } = useToast();
-  const [phone, setPhone] = useState('0781234567');
-  const [amount, setAmount] = useState('100');
-  const [busy, setBusy] = useState<'invoice' | 'push' | null>(null);
-  const [result, setResult] = useState<IremboPayTestResult | null>(null);
-  const [liveStatus, setLiveStatus] = useState<string | null>(null);
-  const sourceRef = useRef<EventSource | null>(null);
-
-  // Watch the admin SSE stream so a MoMo approval flips the status here without
-  // a refresh — the webhook, not the widget, is what confirms a payment.
-  useEffect(() => {
-    return () => sourceRef.current?.close();
-  }, []);
-
-  const listen = (transactionId: string) => {
-    sourceRef.current?.close();
-    try {
-      const source = new EventSource(
-        `${process.env.NEXT_PUBLIC_API_URL ?? '/api/v1'}/admin/payment-settings/events`,
-        { withCredentials: true },
-      );
-      source.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.requestTransactionId !== transactionId) return;
-          setLiveStatus(data.status);
-          if (data.status !== 'PENDING') {
-            source.close();
-            onDone();
-          }
-        } catch {
-          /* a malformed frame is not worth breaking the panel over */
-        }
-      };
-      source.onerror = () => source.close();
-      sourceRef.current = source;
-    } catch {
-      /* SSE unavailable — the result card still shows the invoice */
-    }
-  };
-
-  const run = async (mode: 'invoice' | 'push') => {
-    setBusy(mode);
-    setResult(null);
-    setLiveStatus(null);
-    try {
-      const payload = { amount: Number(amount) || 100, mobilePhone: phone };
-      const res =
-        mode === 'push'
-          ? await paymentSettingsApi.testIremboPayPush({ ...payload, paymentProvider: 'MTN' })
-          : await paymentSettingsApi.testIremboPayInvoice(payload);
-
-      setResult(res);
-      setLiveStatus(res.status);
-      if (mode === 'push') listen(res.transactionId);
-      showToast(res.message || `Invoice ${res.invoiceNumber} created`, 'success');
-    } catch (err) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'The test failed';
-      showToast(message, 'error');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
-      <div className="flex items-center gap-2">
-        <Zap className="w-4 h-4 text-gray-500" />
-        <h3 className="text-sm font-semibold text-gray-900">Test connection</h3>
-      </div>
-
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-gray-500">Amount (RWF)</span>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-28 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green/20 focus:border-rmc-green outline-none"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-gray-500">MoMo number</span>
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-40 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-rmc-green/20 focus:border-rmc-green outline-none"
-          />
-        </label>
-
-        <button
-          onClick={() => void run('invoice')}
-          disabled={busy !== null}
-          className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-        >
-          {busy === 'invoice' ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Package className="w-4 h-4" />
-          )}
-          Create test invoice
-        </button>
-
-        <button
-          onClick={() => void run('push')}
-          disabled={busy !== null}
-          className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg bg-rmc-green text-white hover:bg-rmc-green/90 disabled:opacity-50"
-        >
-          {busy === 'push' ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Smartphone className="w-4 h-4" />
-          )}
-          Test MoMo push
-        </button>
-      </div>
-
-      {result && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm space-y-2">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-            <Field label="Invoice" value={result.invoiceNumber} />
-            <span className="text-gray-600">
-              <span className="text-gray-400 text-xs uppercase tracking-wide mr-1.5">Status</span>
-              <span
-                className={cn(
-                  'font-medium',
-                  liveStatus === 'SUCCESSFUL'
-                    ? 'text-rmc-green'
-                    : liveStatus === 'FAILED'
-                      ? 'text-red-600'
-                      : 'text-amber-600',
-                )}
-              >
-                {liveStatus ?? result.status}
-                {liveStatus === 'PENDING' && (
-                  <Loader2 className="w-3 h-3 animate-spin inline ml-1.5" />
-                )}
-              </span>
-            </span>
-          </div>
-
-          {result.message && <p className="text-gray-600">{result.message}</p>}
-
-          {result.paymentLinkUrl && (
-            <a
-              href={result.paymentLinkUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-rmc-green hover:underline"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Open the payment link
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── One mapping row ───────────────────────────────────────────────────────────
 
 interface ProductRowProps {
   row: ProviderProductRow;

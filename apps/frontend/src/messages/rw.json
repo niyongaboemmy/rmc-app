@@ -1041,6 +1041,7 @@
         "amountDue": "Amafaranga Yishyurwa",
         "momoPhone": "Nimero ya Mobile Money",
         "payNow": "Ishyura Nonaha",
+        "payAnotherWay": "Ishyura ukoresheje ikarita, banki cyangwa USSD",
         "or": "cyangwa",
         "payBankInstead": "Ishyura Binyuze kuri Banki",
         "bankDetails": "Ohereza amafaranga kuri:",
@@ -1172,7 +1173,12 @@
           "4": "Amazina, nimero ya telefoni, n'isano y'umurera wawe",
           "5": "Sobanura mu magambo make impamvu ukeneye iyi buruse"
         },
-        "step": { "1": "Reba buruse zikinguye usome ibisabwa n'itariki ntarengwa", "2": "Uzuza ifishi: amakuru bwite, uburezi, n'umurera", "3": "Ohereza inyandiko buruse isaba", "4": "Wakire kode yo gukurikirana ukurikirane ubusabe kugeza ku cyemezo" },
+        "step": {
+          "1": "Reba buruse zikinguye usome ibisabwa n'itariki ntarengwa",
+          "2": "Uzuza ifishi: amakuru bwite, uburezi, n'umurera",
+          "3": "Ohereza inyandiko buruse isaba",
+          "4": "Wakire kode yo gukurikirana ukurikirane ubusabe kugeza ku cyemezo"
+        },
         "notes": "Gusaba ni ubuntu. Isuzuma rimara iminsi 5–10 y'akazi."
       },
       "title": "Buruse",
@@ -1209,24 +1215,51 @@
         "notOpenYet": "Gusaba iyi buruse ntibiratangira.",
         "notFoundTitle": "Buruse ntiyabonetse",
         "notFoundText": "Ishobora kuba yarakuwemo, cyangwa iyi link yarataye igihe.",
-        "ctaTitle": "Wifuza gusaba iyi buruse?",
+        "ctaTitle": "Witeguye gusaba buruse?",
         "ctaText": "Saba mbere y’itariki ntarengwa. Uzahabwa kode yo gukurikirana ubusabe bwawe.",
         "needTitle": "Ibyo Ukeneye",
         "needSubtitle": "Byiteguze mbere yo gutangira ubusabe bwawe.",
         "need": {
-          "i1": { "title": "Amakuru yawe bwite", "text": "Amazina yombi, itariki y'amavuko, nimero ya telefoni, n'indangamuntu (bidahatirwa)." },
-          "i2": { "title": "Aho utuye", "text": "Akarere n'umurenge ubamo." },
-          "i3": { "title": "Amakuru y'uburezi bwawe", "text": "Ishuri urimo kwiga, urwego rw'uburezi, n'umwaka cyangwa icyiciro urimo." },
-          "i4": { "title": "Amakuru y'umurera wawe", "text": "Amazina, nimero ya telefoni, n'isano y'umubyeyi cyangwa umurera wawe nawe." },
-          "i5": { "title": "Ubusobanuro bugufi", "text": "Sobanura mu magambo make impamvu ukeneye iyi buruse." }
+          "i1": {
+            "title": "Amakuru yawe bwite",
+            "text": "Amazina yombi, itariki y'amavuko, nimero ya telefoni, n'indangamuntu (bidahatirwa)."
+          },
+          "i2": {
+            "title": "Aho utuye",
+            "text": "Akarere n'umurenge ubamo."
+          },
+          "i3": {
+            "title": "Amakuru y'uburezi bwawe",
+            "text": "Ishuri urimo kwiga, urwego rw'uburezi, n'umwaka cyangwa icyiciro urimo."
+          },
+          "i4": {
+            "title": "Amakuru y'umurera wawe",
+            "text": "Amazina, nimero ya telefoni, n'isano y'umubyeyi cyangwa umurera wawe nawe."
+          },
+          "i5": {
+            "title": "Ubusobanuro bugufi",
+            "text": "Sobanura mu magambo make impamvu ukeneye iyi buruse."
+          }
         },
         "processTitle": "Uko Usaba",
         "processSubtitle": "Intambwe enye kuva ku ihirwe kugeza ku busabe bwatanzwe.",
         "steps": {
-          "browse": { "title": "Reba buruse zikinguye", "text": "Shaka buruse kuri iyi paji hanyuma usome ibisabwa n'itariki ntarengwa." },
-          "form": { "title": "Uzuza ifishi", "text": "Tanga amakuru yawe bwite, ay'uburezi, n'ay'umurera." },
-          "documents": { "title": "Ohereza inyandiko", "text": "Shyiraho inyandiko izo buruse isaba." },
-          "track": { "title": "Kurikirana ubusabe bwawe", "text": "Wakira kode yo gukurikirana, hanyuma ukurikirane ubusabe bwawe kugeza ku cyemezo." }
+          "browse": {
+            "title": "Reba buruse zikinguye",
+            "text": "Shaka buruse kuri iyi paji hanyuma usome ibisabwa n'itariki ntarengwa."
+          },
+          "form": {
+            "title": "Uzuza ifishi",
+            "text": "Tanga amakuru yawe bwite, ay'uburezi, n'ay'umurera."
+          },
+          "documents": {
+            "title": "Ohereza inyandiko",
+            "text": "Shyiraho inyandiko izo buruse isaba."
+          },
+          "track": {
+            "title": "Kurikirana ubusabe bwawe",
+            "text": "Wakira kode yo gukurikirana, hanyuma ukurikirane ubusabe bwawe kugeza ku cyemezo."
+          }
         },
         "faqTitle": "Ibibazo Bikunze Kubazwa",
         "faqs": {
@@ -1247,7 +1280,6 @@
             "a": "Yego, urakaza neza kohereza ubundi busabe bushya."
           }
         },
-        "ctaTitle": "Witeguye gusaba buruse?",
         "ctaSubtitle": "Injira hanyuma wohereze ubusabe bwawe mu minota mike gusa.",
         "ctaStart": "Tangira ubusabe",
         "ctaContact": "Twandikire"
@@ -1389,8 +1421,18 @@
         "programsEmptyTitle": "Nta buruse ifunguye ubu",
         "programsEmptyText": "Garuka vuba — porogaramu nshya za buruse zitangazwa buri gihe.",
         "programsLoadError": "Ntibyashobotse gushakisha buruse. Ongera ugerageze nyuma.",
-        "filters": { "open": "Ifunguye", "closing": "Ifunga Vuba", "closed": "Ifunze" },
-        "deadline": { "none": "Nta gihe", "closed": "Ifunze", "today": "Ifunga uyu munsi", "tomorrow": "Ifunga ejo", "inDays": "Ifunga mu minsi {days}" },
+        "filters": {
+          "open": "Ifunguye",
+          "closing": "Ifunga Vuba",
+          "closed": "Ifunze"
+        },
+        "deadline": {
+          "none": "Nta gihe",
+          "closed": "Ifunze",
+          "today": "Ifunga uyu munsi",
+          "tomorrow": "Ifunga ejo",
+          "inDays": "Ifunga mu minsi {days}"
+        },
         "deadlineLabel": "Igihe Kigera",
         "amountLabel": "Amafaranga",
         "viewAndApply": "Reba & Usabe"
@@ -1726,7 +1768,12 @@
         "relatedTitle": "Indi myanya ifunguye",
         "closingSoon": "Birafunga vuba",
         "overview": "Incamake y’akazi",
-        "filters": { "all": "Byose", "open": "Ifunguye", "closing": "Ifunga Vuba", "closed": "Ifunze" },
+        "filters": {
+          "all": "Byose",
+          "open": "Ifunguye",
+          "closing": "Ifunga Vuba",
+          "closed": "Ifunze"
+        },
         "noDeadline": "Nta gihe ntarengwa",
         "closesToday": "Ifunga uyu munsi",
         "closesTomorrow": "Ifunga ejo",
@@ -1930,10 +1977,10 @@
         "backToJobs": "Subira ku Kazi"
       },
       "status": {
-          "requestedDocsTitle": "Inyandiko zisabwa kohereza",
-          "requestedDocsOther": "Ikindi kintu — reba ubutumwa hejuru",
-          "requestedDocsSignIn": "Injira ukoresheje konti wasabishije kugira ngo wohereze izi nyandiko.",
-          "respondDocsRequired": "Shyiraho inyandiko zose zasabwe mbere yo kohereza.",
+        "requestedDocsTitle": "Inyandiko zisabwa kohereza",
+        "requestedDocsOther": "Ikindi kintu — reba ubutumwa hejuru",
+        "requestedDocsSignIn": "Injira ukoresheje konti wasabishije kugira ngo wohereze izi nyandiko.",
+        "respondDocsRequired": "Shyiraho inyandiko zose zasabwe mbere yo kohereza.",
         "heroTitle": "Aho Isaba Rigeze",
         "backToService": "Subira ku Kazi",
         "signInPrompt": "Injira kugira ngo urebe amasaba y'akazi yawe.",
@@ -2050,7 +2097,10 @@
         "title": "Iyandikishe kuri Hija",
         "subtitle": "Uzuza ifishi ikurikira kugira ngo utangire kwiyandikisha kuri Hija. Ibisabwa bifite * birakenewe.",
         "back": "Subira kuri Serivisi za Hija",
-        "nav": { "back": "Subira inyuma", "next": "Komeza" },
+        "nav": {
+          "back": "Subira inyuma",
+          "next": "Komeza"
+        },
         "submit": "Ohereza iyandikwa",
         "submitting": "Kohereza…",
         "sections": {

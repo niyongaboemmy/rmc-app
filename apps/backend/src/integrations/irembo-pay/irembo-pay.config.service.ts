@@ -2,7 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PaymentMethodCode } from '../../payment-settings/entities/payment-method.entity';
 import { PaymentSettingsService } from '../../payment-settings/payment-settings.service';
 import { SettingsCacheBus } from '../../payment-settings/settings-cache.bus';
-import { IremboLanguage } from './irembo-pay.types';
+import {
+  DEFAULT_SIMULATOR_DELAY_MS,
+  IREMBO_SIMULATOR_MODES,
+  IremboLanguage,
+  IremboSimulatorMode,
+} from './irembo-pay.types';
 
 export interface IremboPayConfig {
   secretKey: string;
@@ -18,6 +23,20 @@ export interface IremboPayConfig {
   defaultLanguage: IremboLanguage;
   signatureToleranceSeconds: number;
   isTestMode: boolean;
+  /**
+   * Answer payments locally instead of calling IremboPay. Honoured only in test
+   * mode and never in production — see `IremboPaySandboxService.isActive()`.
+   */
+  simulatorMode: IremboSimulatorMode;
+  /** How long the simulated payer takes to approve. */
+  simulatorDelayMs: number;
+  /**
+   * The number the admin test panel pushes to by default. In the sandbox only
+   * IremboPay's own test MSISDN is accepted, and which one that is belongs with
+   * the rest of the gateway's settings rather than in an env file nobody can
+   * edit once the app is deployed.
+   */
+  testMsisdn: string;
 }
 
 const SANDBOX_API = 'https://api.sandbox.irembopay.com';
@@ -30,6 +49,9 @@ const DEFAULTS = {
   invoiceExpiryMinutes: 1440,
   defaultLanguage: 'EN' as IremboLanguage,
   signatureToleranceSeconds: 300,
+  // IremboPay's documented sandbox test number — the only one their sandbox
+  // accepts a push for.
+  testMsisdn: '0781234567',
 };
 
 /** How long a resolved config is trusted before re-reading the settings row. */
@@ -102,6 +124,9 @@ export class IremboPayConfigService {
         DEFAULTS.signatureToleranceSeconds,
       ),
       isTestMode,
+      simulatorMode: asSimulatorMode(raw.simulatorMode),
+      simulatorDelayMs: positiveInt(raw.simulatorDelayMs, DEFAULT_SIMULATOR_DELAY_MS),
+      testMsisdn: raw.testMsisdn?.trim() || DEFAULTS.testMsisdn,
     };
 
     this.cache = { value, expiresAt: Date.now() + CACHE_TTL_MS };
@@ -110,7 +135,20 @@ export class IremboPayConfigService {
 
   async isConfigured(): Promise<boolean> {
     const c = await this.get();
+    // A simulated gateway needs no credentials — that is the whole point of it.
+    // Reporting "not configured" here would send every charge down the
+    // no-gateway branch and defeat the simulation.
+    if (this.simulationRequested(c)) return true;
     return !!(c.secretKey && c.publicKey && c.paymentAccountIdentifier);
+  }
+
+  /** Whether payments are being answered locally rather than by IremboPay. */
+  async isSimulated(): Promise<boolean> {
+    return this.simulationRequested(await this.get());
+  }
+
+  private simulationRequested(c: IremboPayConfig): boolean {
+    return process.env.NODE_ENV !== 'production' && c.isTestMode && c.simulatorMode !== 'off';
   }
 
   /** The payment account for a currency, falling back to the RWF one. */
@@ -130,6 +168,11 @@ function stripTrailingSlash(url: string): string {
 function positiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+function asSimulatorMode(value: string | undefined): IremboSimulatorMode {
+  const v = (value ?? '').trim().toLowerCase() as IremboSimulatorMode;
+  return IREMBO_SIMULATOR_MODES.includes(v) ? v : 'off';
 }
 
 function asLanguage(value: string | undefined): IremboLanguage {

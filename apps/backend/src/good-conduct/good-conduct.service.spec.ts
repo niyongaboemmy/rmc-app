@@ -940,30 +940,18 @@ describe('GoodConductService', () => {
     });
   });
 
-  // ── getBankTransferDetails ───────────────────────────────────────────────
+  // ── manual bank transfer ─────────────────────────────────────────────────
 
-  describe('getBankTransferDetails', () => {
-    it('returns null when bank transfer settings are not configured', async () => {
-      paymentSettings.getRawSettings.mockResolvedValue(null);
-      await expect(service.getBankTransferDetails()).resolves.toBeNull();
-    });
-
-    it('returns null when settings exist but are incomplete', async () => {
-      paymentSettings.getRawSettings.mockResolvedValue({ bankName: 'Bank of Kigali' });
-      await expect(service.getBankTransferDetails()).resolves.toBeNull();
-    });
-
-    it('returns the real configured details when fully set', async () => {
-      paymentSettings.getRawSettings.mockResolvedValue({
-        bankName: 'Bank of Kigali',
-        accountName: 'Rwanda Muslim Community',
-        accountNumber: '00123456789',
-      });
-      await expect(service.getBankTransferDetails()).resolves.toEqual({
-        bankName: 'Bank of Kigali',
-        accountName: 'Rwanda Muslim Community',
-        accountNumber: '00123456789',
-      });
+  /**
+   * Removed 2026-08: IremboPay is the only way to pay, and it already offers a
+   * bank channel inside its own sheet. The guard is that no code path can offer
+   * a hand-typed account number again.
+   */
+  describe('manual bank transfer', () => {
+    it('no longer exposes bank details', () => {
+      expect(
+        (service as unknown as Record<string, unknown>).getBankTransferDetails,
+      ).toBeUndefined();
     });
   });
 });

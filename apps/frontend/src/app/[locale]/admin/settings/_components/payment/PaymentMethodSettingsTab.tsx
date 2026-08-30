@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  Smartphone, Building2, CreditCard, Banknote,
+  Building2, Banknote,
   Save, RefreshCw, Eye, EyeOff, CheckCircle2, XCircle,
   Lock, AlertCircle, FlaskConical, Globe,
 } from 'lucide-react';
@@ -24,12 +24,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter, ModalTitle } from '@/compon
 import { cn } from '@/lib/utils';
 
 const METHOD_ICONS: Record<PaymentMethodCode, React.ElementType> = {
-  // Retired — the icon stays so historical rows still render.
-  MOMO_INTOUCH:  Smartphone,
-  IREMBOPAY:     Globe,
-  BANK_TRANSFER: Building2,
-  CARD:          CreditCard,
-  CASH:          Banknote,
+  IREMBOPAY: Globe,
 };
 
 interface Props {
@@ -143,17 +138,25 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
 
   // ── Render helpers ─────────────────────────────────────────────────────────
 
+  /**
+   * Simulated payments answer locally, so there are no credentials to enter —
+   * and a `required` attribute on fields the simulator does not use would make
+   * the simulator itself impossible to save.
+   */
+  const simulating = !!form.simulatorMode && form.simulatorMode !== 'off';
+
   const renderField = (field: SettingField) => {
     const value = form[field.key] ?? '';
     const isRevealed = revealedFields.has(field.key);
     const isSensitive = !!field.sensitive;
+    const required = field.required && !simulating;
 
     if (field.type === 'select') {
       return (
         <Select
           key={field.key}
           label={field.label}
-          required={field.required}
+          required={required}
           value={value}
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
           disabled={!canManage}
@@ -168,7 +171,7 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
       <div key={field.key}>
         <Input
           label={field.label}
-          required={field.required}
+          required={required}
           type={isSensitive && !isRevealed ? 'password' : 'text'}
           value={value}
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
@@ -249,7 +252,17 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
                     !m.isActive && 'opacity-60',
                   )}
                 >
-                  <Icon className="w-4 h-4" />
+                  {/* A provider's own mark when one is configured; the generic
+                      icon is the fallback, not the default. */}
+                  {m.logoUrl ? (
+                    <img
+                      src={m.logoUrl}
+                      alt=""
+                      className={cn('h-4 w-auto max-w-[72px]', active && 'brightness-0 invert')}
+                    />
+                  ) : (
+                    <Icon className="w-4 h-4" />
+                  )}
                   {m.name}
                   {!m.isActive && (
                     <span className={cn(
@@ -361,14 +374,6 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
               )}
             </div>
 
-            {/* Retired gateway — historical transactions only, nothing to set up. */}
-            {selectedMethod.code === 'MOMO_INTOUCH' && (
-              <div className="rounded-xl bg-slate-50 border border-slate-200 px-5 py-4 text-xs text-slate-600 space-y-1.5">
-                <p className="font-semibold text-slate-700">This gateway is retired</p>
-                <p>IntouchPay was decommissioned in August 2026 and no longer takes payments. The method is kept so historical transactions keep their name in reports.</p>
-                <p>Use <strong>IremboPay</strong> for all new payments.</p>
-              </div>
-            )}
           </>
         )}
       </div>

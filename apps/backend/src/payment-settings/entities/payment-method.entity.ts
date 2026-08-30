@@ -6,17 +6,16 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+/**
+ * IremboPay is the only way to pay. Every other method — IntouchPay, card,
+ * cash and manual bank transfer — was removed in migrations 064 and 065.
+ *
+ * `payment_transactions.payment_method_code` is a plain string, not a foreign
+ * key, so archived rows carrying a removed code still read back fine; they just
+ * render the raw code instead of a friendly label.
+ */
 export enum PaymentMethodCode {
-  /**
-   * @deprecated Retired 2026-08 with the IntouchPay decommissioning. Kept because
-   * historical `payment_transactions` rows carry this code and admin reporting
-   * joins on it — removing the member breaks every read of the archive.
-   */
-  MOMO_INTOUCH = 'MOMO_INTOUCH',
   IREMBOPAY = 'IREMBOPAY',
-  BANK_TRANSFER = 'BANK_TRANSFER',
-  CARD = 'CARD',
-  CASH = 'CASH',
 }
 
 @Entity('payment_methods')

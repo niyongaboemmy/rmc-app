@@ -2,14 +2,17 @@ import {
   IsBoolean,
   IsEmail,
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
   Min,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DonationFrequency } from '../entities/donation.entity';
+import { ACCEPTED_DONATION_METHODS } from '../donation-payment-method';
 
 /** Payload sent by the public donate page when a visitor makes a donation. */
 export class CreateDonationDto {
@@ -37,10 +40,16 @@ export class CreateDonationDto {
   @IsEnum(DonationFrequency)
   frequency?: DonationFrequency;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    enum: ACCEPTED_DONATION_METHODS,
+    description:
+      "How the donation is paid. Online methods ('momo', 'card') are collected by the " +
+      'payment gateway and start as pending; the rest are recorded as already received. ' +
+      'Case-insensitive. An unrecognised value is rejected rather than assumed paid.',
+  })
   @IsOptional()
-  @IsString()
-  @MaxLength(20)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @IsIn(ACCEPTED_DONATION_METHODS as readonly string[])
   paymentMethod?: string;
 
   @ApiPropertyOptional()

@@ -19,6 +19,7 @@ import { PaymentStatusResult } from '../payments/payment-gateway.port';
 import { SmsService } from '../integrations/sms/sms.service';
 import { DonationSmsTemplates } from './donation-sms-templates';
 import { parseDonationMeta } from './donation-meta';
+import { isOnlineDonationMethod, normalizeDonationMethod } from './donation-payment-method';
 import { toXlsxBuffer, formatDateTime } from '../common/utils/xlsx';
 
 export interface DonationFilters {
@@ -274,15 +275,30 @@ export class DonationsService {
     // provider's credentials meant that switching the active provider made
     // every donation fall through to "no gateway available, assume paid" —
     // recording money as received that nobody had been asked for.
-    const useGateway =
-      dto.paymentMethod === 'momo' && !!dto.donorPhone && (await this.paymentGateway.canCharge());
+    //
+    // The method is classified rather than compared to a literal, for exactly
+    // the same reason: `'MOMO'`, `'IREMBOPAY'` and `'card'` all missed a bare
+    // `=== 'momo'` test and landed in the offline branch, which writes
+    // `completed`. An online method must reach the gateway or fail loudly; it
+    // must never be quietly booked as received.
+    const paymentMethod = normalizeDonationMethod(dto.paymentMethod);
+    const isOnline = isOnlineDonationMethod(paymentMethod);
+    const chargeable = isOnline && (await this.paymentGateway.canCharge());
 
-    // Nothing is recorded unless it can actually be charged — see refuseUnpaid.
-    if (!useGateway) {
-      if (dto.paymentMethod !== 'momo') this.refuseUnpaid('offline-method');
-      else if (!dto.donorPhone) this.refuseUnpaid('no-phone');
-      else this.refuseUnpaid('no-gateway');
-    }
+    // Two refusals, in the order their causes differ. The classifier above says
+    // which methods a gateway collects; these say that nothing else may be
+    // recorded on this route at all — see refuseUnpaid.
+    //
+    // An offline method reaching here is not an admin recording cash: this route
+    // is @Public(), so it is an unauthenticated way to write a completed
+    // donation of any amount. Offline recording belongs on the admin edit route
+    // (currently disabled), which is authenticated.
+    if (!isOnline) this.refuseUnpaid('offline-method');
+    else if (!chargeable) this.refuseUnpaid('no-gateway');
+
+    // False only under the dev bypass, the one case where refuseUnpaid returns
+    // rather than throwing.
+    const useGateway = chargeable;
 
     const donation = this.donations.create({
       campaignId,
@@ -294,7 +310,7 @@ export class DonationsService {
       amount: dto.amount,
       currency: dto.currency ?? 'RWF',
       frequency: dto.frequency ?? DonationFrequency.ONCE,
-      paymentMethod: dto.paymentMethod ?? null,
+      paymentMethod,
       // COMPLETED is reachable only under the dev bypass now; refuseUnpaid
       // has already thrown otherwise.
       status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
@@ -320,11 +336,13 @@ export class DonationsService {
           referenceId: saved.id,
           payer: {
             name: saved.donorName ?? undefined,
-            phone: dto.donorPhone as string,
+            phone: dto.donorPhone ?? undefined,
             email: saved.donorEmail ?? undefined,
           },
           description: 'RMC Donation – Rwanda Muslim Council',
-          pushProvider: 'MTN',
+          // A card donor settles on the hosted widget; only a MoMo donor gets a
+          // prompt, and only when they actually supplied a number to push to.
+          pushProvider: paymentMethod === 'momo' && dto.donorPhone ? 'MTN' : undefined,
         })
         .catch((error) => this.failUnreachable([saved], error));
 
@@ -378,21 +396,38 @@ export class DonationsService {
     if (dtos.length === 0) throw new BadRequestException('The cart is empty');
 
     const phone = dtos.find((d) => d.donorPhone)?.donorPhone;
-    const allMomo = dtos.every((d) => d.paymentMethod === 'momo');
-    // Only the mobile money push needs a number to send it to. A card checkout
-    // settles a hosted invoice instead, and its flow deliberately permits an
-    // empty phone — so requiring one here was what made an empty-phone card
-    // checkout fall through to "assume paid" while the donor was being told that
-    // card payment was unavailable.
-    const phoneOk = channel === 'card' || !!phone;
-    const useGateway = allMomo && phoneOk && (await this.paymentGateway.canCharge());
 
-    // Nothing is recorded unless it can actually be charged — see refuseUnpaid.
-    if (!useGateway) {
-      if (!allMomo) this.refuseUnpaid('offline-method');
-      else if (!phoneOk) this.refuseUnpaid('no-phone');
-      else this.refuseUnpaid('no-gateway');
+    // The basket is settled by one payment, so the items must agree on how it
+    // is paid — a mix of online and offline cannot be one charge. The old test
+    // compared every item to the literal `'momo'`, which meant a card basket
+    // (whose items say `'card'`) skipped the gateway and every donation in it
+    // was written `completed` without a payment. Classify instead, and require
+    // agreement rather than one hard-coded value.
+    const methods = dtos.map((d) => normalizeDonationMethod(d.paymentMethod));
+    const online = methods.map((m) => isOnlineDonationMethod(m));
+    if (online.some(Boolean) && !online.every(Boolean)) {
+      throw new BadRequestException(
+        'A basket cannot mix online and offline payment methods — it is settled by a single payment.',
+      );
     }
+
+    const isOnline = online.every(Boolean);
+    // A MoMo prompt needs somewhere to go; a card basket settles on the hosted
+    // widget and does not. Requiring a phone regardless was what made an
+    // empty-phone card basket skip the gateway and be booked as paid.
+    const phoneOk = channel !== 'momo' || !!phone;
+    const chargeable = isOnline && phoneOk && (await this.paymentGateway.canCharge());
+
+    // Same three refusals as create(), for the same reasons — see refuseUnpaid.
+    // This route is @Public() too, so an offline basket here is likewise an
+    // unauthenticated way to write completed donations rather than an admin
+    // recording cash.
+    if (!isOnline) this.refuseUnpaid('offline-method');
+    else if (!phoneOk) this.refuseUnpaid('no-phone');
+    else if (!chargeable) this.refuseUnpaid('no-gateway');
+
+    // False only under the dev bypass, the one case where refuseUnpaid returns.
+    const useGateway = chargeable;
 
     const saved: Donation[] = [];
     for (const dto of dtos) {
@@ -413,7 +448,7 @@ export class DonationsService {
             amount: dto.amount,
             currency: dto.currency ?? 'RWF',
             frequency: dto.frequency ?? DonationFrequency.ONCE,
-            paymentMethod: dto.paymentMethod ?? null,
+            paymentMethod: normalizeDonationMethod(dto.paymentMethod),
             // Dev bypass only — refuseUnpaid has already thrown otherwise.
             status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
             message: dto.message ?? null,

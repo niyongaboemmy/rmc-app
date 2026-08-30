@@ -18,6 +18,9 @@ import type { CartItem } from '@/components/donate/donateData';
 
 const STORAGE_KEY = 'rmc_donation_cart';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/** Smallest gift a line may hold. IremboPay rejects a zero-amount invoice. */
+export const MIN_GIFT = 100;
 const DEFAULT_CURRENCY = 'RWF';
 const DEFAULT_NIYYAH = 'sadaqah';
 
@@ -38,6 +41,8 @@ interface DonationCartValue {
   hydrated: boolean;
   addItem: (item: Omit<CartItem, 'id'>) => void;
   removeItem: (id: string) => void;
+  /** Change one line's amount. Ignores anything below the minimum gift. */
+  updateAmount: (id: string, amount: number) => void;
   /** Empty the cart (used after a successful checkout). */
   clear: () => void;
   /** Switching currency clears the cart — line items are in the old currency. */
@@ -53,6 +58,7 @@ const DonationCartContext = createContext<DonationCartValue>({
   hydrated: false,
   addItem: () => {},
   removeItem: () => {},
+  updateAmount: () => {},
   clear: () => {},
   setCurrency: () => {},
   setNiyyah: () => {},
@@ -121,6 +127,14 @@ export function DonationCartProvider({ children }: { children: React.ReactNode }
     setCart((prev) => prev.filter((it) => it.id !== id));
   }, []);
 
+  const updateAmount = useCallback((id: string, amount: number) => {
+    // Guarded here rather than in the input so every caller gets the same rule:
+    // a cart line can never hold a zero, negative or fractional amount.
+    if (!Number.isFinite(amount) || amount < MIN_GIFT) return;
+    const next = Math.round(amount);
+    setCart((prev) => prev.map((it) => (it.id === id ? { ...it, amount: next } : it)));
+  }, []);
+
   const clear = useCallback(() => setCart([]), []);
 
   const setCurrency = useCallback(
@@ -137,7 +151,7 @@ export function DonationCartProvider({ children }: { children: React.ReactNode }
 
   return (
     <DonationCartContext.Provider
-      value={{ cart, currency, niyyah, total, hydrated, addItem, removeItem, clear, setCurrency, setNiyyah }}
+      value={{ cart, currency, niyyah, total, hydrated, addItem, removeItem, updateAmount, clear, setCurrency, setNiyyah }}
     >
       {children}
     </DonationCartContext.Provider>

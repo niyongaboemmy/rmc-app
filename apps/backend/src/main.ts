@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { json, urlencoded } from 'express';
-import { IncomingMessage } from 'http';
+import { json, raw, urlencoded } from 'express';
+import { IncomingMessage, ServerResponse } from 'http';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as compression from 'compression';
@@ -46,16 +46,39 @@ async function bootstrap(): Promise<void> {
    * the parser discards it. Scoped to the webhook path: retaining a 2 MB buffer
    * on every request would be a memory cost for nothing.
    */
+  /*
+   * The IremboPay webhook, before the strict JSON parser and separate from it.
+   *
+   * Its contract is "answer 200 to everything, even a forgery". The global
+   * `json()` below throws on a malformed body inside Express middleware — before
+   * any controller runs — and the exception filter turns that into a 400, which
+   * tells a prober the endpoint is real and only their body was wrong.
+   *
+   * `raw()` never rejects: it hands the controller the exact bytes on
+   * `req.rawBody` (which the HMAC is computed over) and a parsed `req.body`, or
+   * leaves `req.body` undefined when the bytes are not JSON — the handler then
+   * classifies it as `malformed` and still returns 200.
+   */
   app.use(
-    json({
-      limit: '2mb',
-      verify: (req: IncomingMessage & { rawBody?: Buffer }, _res, buf: Buffer) => {
-        if ((req as { originalUrl?: string }).originalUrl?.includes('/webhooks/irembopay')) {
-          req.rawBody = Buffer.from(buf);
-        }
-      },
-    }),
+    '/api/v1/webhooks/irembopay',
+    raw({ type: () => true, limit: '2mb' }),
+    (
+      req: IncomingMessage & { rawBody?: Buffer; body?: unknown },
+      _res: ServerResponse,
+      next: (err?: unknown) => void,
+    ) => {
+      const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      req.rawBody = buf;
+      try {
+        req.body = buf.length ? JSON.parse(buf.toString('utf8')) : {};
+      } catch {
+        req.body = undefined;
+      }
+      next();
+    },
   );
+
+  app.use(json({ limit: '2mb' }));
   app.use(urlencoded({ limit: '2mb', extended: true }));
 
   // Security

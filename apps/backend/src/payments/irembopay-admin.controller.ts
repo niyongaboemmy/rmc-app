@@ -27,7 +27,8 @@ import {
 } from '../payment-settings/dto/test-irembopay.dto';
 import { IremboPayConfigService } from '../integrations/irembo-pay/irembo-pay.config.service';
 import { IremboPayInvoiceService } from '../integrations/irembo-pay/irembopay-invoice.service';
-import { IremboPayProvider, IREMBOPAY_PROVIDER_KEY } from './providers/irembo-pay.provider';
+import { IREMBOPAY_PROVIDER_KEY } from './providers/irembo-pay.provider';
+import { PaymentMethodCode } from '../payment-settings/entities/payment-method.entity';
 import { PaymentGatewayService } from './payment-gateway.service';
 import {
   PaymentTransaction,
@@ -47,7 +48,6 @@ import {
 export class IremboPayAdminController {
   constructor(
     private readonly products: ProviderProductsService,
-    private readonly provider: IremboPayProvider,
     private readonly config: IremboPayConfigService,
     private readonly invoices: IremboPayInvoiceService,
     private readonly gateway: PaymentGatewayService,
@@ -97,6 +97,12 @@ export class IremboPayAdminController {
 
     return {
       configured: await this.config.isConfigured(),
+      // Surfaced so the admin panel can say "these payments are simulated"
+      // rather than showing a green light that means something else entirely.
+      simulated: await this.config.isSimulated(),
+      simulatorMode: cfg.simulatorMode,
+      simulatorDelayMs: cfg.simulatorDelayMs,
+      testMsisdn: cfg.testMsisdn,
       isTestMode: cfg.isTestMode,
       apiBaseUrl: cfg.apiBaseUrl,
       widgetScriptUrl: cfg.widgetScriptUrl,
@@ -132,7 +138,9 @@ export class IremboPayAdminController {
     summary: 'Re-check one invoice against IremboPay — the admin recovery for a lost callback',
   })
   recheck(@Param('reference') reference: string) {
-    return this.provider.getStatus(reference);
+    // Through the router like every other status read, so a second provider
+    // would be re-checked correctly without touching this controller.
+    return this.gateway.getStatus(reference, PaymentMethodCode.IREMBOPAY, { allowInactive: true });
   }
 
   /**
@@ -184,22 +192,30 @@ export class IremboPayAdminController {
   private async charge(user: User, dto: TestIremboPayInvoiceDto, pushProvider?: 'MTN' | 'AIRTEL') {
     const transactionId = `TEST-${crypto.randomUUID().replace(/-/g, '').slice(0, 20).toUpperCase()}`;
 
-    const result = await this.provider.charge({
-      transactionId,
-      amount: dto.amount ?? 100,
-      currency: 'RWF',
-      paymentTypeKey: dto.paymentTypeKey ?? 'DONATION',
-      payer: {
-        name: `${user.firstName ?? 'RMC'} ${user.lastName ?? 'Admin'}`.trim(),
-        phone: dto.mobilePhone ?? '0781234567',
-        email: user.email,
+    // Routed through the gateway rather than the provider so the test panel
+    // shares one charge path with donations and the services — including its
+    // logging and its "is it configured?" guard. `allowInactive` is the single
+    // documented exception: credentials must be provable before activation.
+    const result = await this.gateway.charge(
+      {
+        transactionId,
+        amount: dto.amount ?? 100,
+        currency: 'RWF',
+        paymentTypeKey: dto.paymentTypeKey ?? 'DONATION',
+        payer: {
+          name: `${user.firstName ?? 'RMC'} ${user.lastName ?? 'Admin'}`.trim(),
+          phone: dto.mobilePhone ?? '0781234567',
+          email: user.email,
+        },
+        locale: dto.locale,
+        description: 'IremboPay connection test — RMC admin settings',
+        pushProvider,
+        isTest: true,
+        initiatedBy: user.id,
       },
-      locale: dto.locale,
-      description: 'IremboPay connection test — RMC admin settings',
-      pushProvider,
-      isTest: true,
-      initiatedBy: user.id,
-    });
+      PaymentMethodCode.IREMBOPAY,
+      { allowInactive: true },
+    );
 
     return {
       transactionId,
