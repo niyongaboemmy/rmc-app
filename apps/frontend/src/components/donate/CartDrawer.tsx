@@ -13,6 +13,7 @@ import { MIN_GIFT } from '@/contexts/DonationCartContext';
 import { cn } from '@/lib/utils';
 import { paymentSettingsApi } from '@/lib/paymentSettingsApi';
 import { IremboPayWidget } from '@/components/payments/IremboPayWidget';
+import { ACCEPTED_METHODS } from '@/components/payments/acceptedMethods';
 import { IremboInvoiceHandle } from '@/hooks/useIremboPayment';
 import { money, type CartItem } from './donateData';
 import { donationsApi } from '@/lib/donationsApi';
@@ -20,20 +21,6 @@ import { buildDonationMessage } from '@/lib/donationMeta';
 import type { DonationSummary } from './SuccessState';
 
 type Phase = 'form' | 'waiting' | 'timeout' | 'failed';
-
-/**
- * What the payer can actually use, as offered by IremboPay's own sheet. This is
- * a label list, not a picker: the gateway owns the choice, so a hard-coded
- * selector here could only drift out of date against it.
- */
-const ACCEPTED_METHODS: Array<{ label: string; dot: string }> = [
-  { label: 'MTN MoMo',       dot: 'bg-[#FFCC00]' },
-  { label: 'Airtel Money',   dot: 'bg-[#E4002B]' },
-  { label: 'Visa',           dot: 'bg-[#1A1F71]' },
-  { label: 'Mastercard',     dot: 'bg-[#EB001B]' },
-  { label: 'Bank transfer',  dot: 'bg-gray-400'  },
-  { label: 'Digital banking', dot: 'bg-gray-400' },
-];
 
 
 const METHOD_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

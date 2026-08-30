@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ACCEPTED_METHOD_LABELS } from './acceptedMethods';
 import {
   useIremboPayment,
   IremboInvoiceHandle,
@@ -33,9 +34,6 @@ export interface IremboPayWidgetProps {
   autoOpen?: boolean;
   className?: string;
 }
-
-/** What IremboPay's own sheet offers, shown before the payer commits. */
-const ACCEPTED = ['MTN MoMo', 'Airtel', 'Visa', 'Mastercard', 'Bank', 'USSD'];
 
 const PHASE_LABELS: Record<IremboPaymentPhase, string> = {
   idle: 'Pay now',
@@ -135,7 +133,7 @@ export function IremboPayWidget({
         <div className="px-4 pb-4">
           {!done && (
             <div className="mb-3 flex flex-wrap gap-1">
-              {ACCEPTED.map((label) => (
+              {ACCEPTED_METHOD_LABELS.map((label) => (
                 <span
                   key={label}
                   className="rounded-md bg-gray-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 ring-1 ring-gray-200/80"
