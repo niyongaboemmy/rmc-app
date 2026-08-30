@@ -71,7 +71,13 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'dawah-courses',    href: '/admin/dawah/courses',    icon: BookOpen,   labelKey: 'dawah.tabs.courses',    group: 'content', permission: Permission.DAWAH_VIEW   },
       { key: 'dawah-library',    href: '/admin/dawah/library',    icon: BookMarked, labelKey: 'dawah.tabs.library',    group: 'content', permission: Permission.DAWAH_VIEW   },
       { key: 'dawah-categories', href: '/admin/dawah/categories', icon: Tags,       labelKey: 'dawah.tabs.categories', group: 'content', permission: Permission.DAWAH_VIEW   },
-      { key: 'dawah-content',    href: '/admin/content/dawah',    icon: FileText,   labelKey: 'dawah.tabs.content',    group: 'content', permission: Permission.CONTENT_VIEW },
+      // The Dawah LANDING PAGE's wording lives under Content Management with every other
+      // page's copy, not here. This nav item pointed at /admin/content/dawah — a content
+      // editor reached through the Dawah section, so the one place an admin learns to
+      // look for page copy did not list it. It is now a card on the Content hub, in the
+      // Dawah Pages group beside the Library, Courses and Discussions listings.
+      // What stays here is what Dawah OWNS: the records — courses, books, categories,
+      // and the Q&A queues below.
       // Discussions moderation & scholar review — nested here for grouping. Each stays gated
       // on its OWN permission (moderate / verify), and the group filter below shows the Dawah
       // parent whenever a user can see ANY child. So a pure Moderator or Scholar who lacks
@@ -199,8 +205,8 @@ interface SidebarNavGroupProps {
 
 /**
  * A parent nav item that expands to reveal sub-pages (e.g. Dawah → Courses /
- * Library / Categories / Landing page). Auto-opens when the current route is
- * one of its children, and stays openable/closable by hand otherwise.
+ * Library / Categories). Auto-opens when the current route is one of its
+ * children, and stays openable/closable by hand otherwise.
  */
 function SidebarNavGroup({
   item, childrenItems, collapsed, locale, isActive, onMobileClose, mounted,

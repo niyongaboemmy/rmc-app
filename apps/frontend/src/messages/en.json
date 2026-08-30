@@ -2807,8 +2807,7 @@
       "tabs": {
         "courses": "Courses",
         "library": "Library",
-        "categories": "Categories",
-        "content": "Landing page"
+        "categories": "Categories"
       },
       "status": {
         "draft": "Draft",
