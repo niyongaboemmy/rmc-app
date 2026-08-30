@@ -8,6 +8,7 @@ import { ArrowLeft, Clock, Loader2, Send, X } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -174,18 +175,17 @@ function SubmissionQueue() {
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
                       {t('discussions.admin.answerLabel')}
                     </label>
-                    <textarea
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
+                    {/* Same arrangement as EntryEditor: written rich, STORED as
+                        markdown. `draft` is the markdown, serialised from the editor's
+                        own document; nothing here holds HTML, because a fresh answer
+                        has no stored content to seed from. */}
+                    <RichTextEditor
+                      key={`answer-${s.id}`}
+                      value=""
+                      onChange={() => {}}
+                      onChangeMarkdown={setDraft}
                       dir={s.language === 'ar' ? 'rtl' : 'ltr'}
-                      rows={7}
-                      autoFocus
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 font-mono text-[13px] outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
-                      placeholder={t('discussions.admin.answerPlaceholder')}
                     />
-                    <p className="mt-1.5 text-xs text-gray-400">
-                      {t('discussions.admin.markdownHint')}
-                    </p>
                   </div>
 
                   {/* Answering is usually the moment it becomes clear what the question

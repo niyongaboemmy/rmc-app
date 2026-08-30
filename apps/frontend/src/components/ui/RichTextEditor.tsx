@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
 import { fileUrl } from '@/lib/api';
+import { markdownFromDoc } from '@/lib/markdown/fromProseMirror';
 
 /**
  * Image + size/alignment, carried as `data-size` / `data-align`.
@@ -51,7 +52,8 @@ const ALIGNS = [
 ] as const;
 
 /**
- * Reusable rich-text editor (TipTap). Outputs HTML via `onChange`. The body is
+ * Reusable rich-text editor (TipTap). Outputs HTML via `onChange`, and markdown via
+ * the optional `onChangeMarkdown`. The body is
  * UNCONTROLLED after mount — `value` only seeds the initial content, so callers
  * should remount with a `key` (e.g. the language) to load different content.
  * This keeps the cursor stable while typing.
@@ -59,16 +61,35 @@ const ALIGNS = [
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
+  /**
+   * Also receive the edit as MARKDOWN, serialised from the editor's own document.
+   *
+   * For the callers that must STORE markdown rather than HTML — Dawah Q&A answers,
+   * where inert source is a deliberate defence (see the DawahQuestion entity). They
+   * still pass HTML in through `value`; only what comes back out differs.
+   *
+   * Additive on purpose: `onChange` keeps firing with HTML for the fifteen callers
+   * that want it, so this cannot change what any of them stores.
+   */
+  onChangeMarkdown?: (markdown: string) => void;
   dir?: 'ltr' | 'rtl';
   fontClassName?: string;
 }
 
-export function RichTextEditor({ value, onChange, dir = 'ltr', fontClassName = '' }: RichTextEditorProps) {
+export function RichTextEditor({
+  value,
+  onChange,
+  onChangeMarkdown,
+  dir = 'ltr',
+  fontClassName = '',
+}: RichTextEditorProps) {
   // The editor instance persists across language switches, so its onUpdate
   // closure must always call the LATEST onChange (which targets the current
   // language) — route it through a ref to avoid writing to the wrong language.
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+  const onChangeMarkdownRef = useRef(onChangeMarkdown);
+  useEffect(() => { onChangeMarkdownRef.current = onChangeMarkdown; }, [onChangeMarkdown]);
 
   const editor = useEditor({
     immediatelyRender: false, // avoids Next.js SSR hydration mismatch
@@ -88,7 +109,13 @@ export function RichTextEditor({ value, onChange, dir = 'ltr', fontClassName = '
       }),
     ],
     content: value,
-    onUpdate: ({ editor }) => onChangeRef.current(editor.getHTML()),
+    onUpdate: ({ editor }) => {
+      onChangeRef.current(editor.getHTML());
+      // From getJSON(), not by converting the HTML back: the document is the
+      // structured source of truth, so there is nothing to parse and no guessing
+      // at what a tag meant.
+      onChangeMarkdownRef.current?.(markdownFromDoc(editor.getJSON()));
+    },
     editorProps: {
       attributes: {
         // Font is applied on the wrapper and inherited, so it stays reactive.

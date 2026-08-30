@@ -3914,8 +3914,6 @@
         "questionLabel": "السؤال",
         "questionPlaceholder": "السؤال كما يطرحه القارئ…",
         "answerLabel": "إجابة المجلس",
-        "answerPlaceholder": "اكتب الإجابة…",
-        "markdownHint": "Markdown. يُعالَج ويُنقَّى في الخادم.",
         "cancel": "إلغاء",
         "save": "حفظ التغييرات",
         "publish": "نشر",

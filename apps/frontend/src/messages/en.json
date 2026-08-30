@@ -3914,8 +3914,6 @@
         "questionLabel": "Question",
         "questionPlaceholder": "The question, as a reader would ask it…",
         "answerLabel": "RMC's answer",
-        "answerPlaceholder": "Write the answer…",
-        "markdownHint": "Markdown. Rendered and sanitised by the server.",
         "cancel": "Cancel",
         "save": "Save changes",
         "publish": "Publish",

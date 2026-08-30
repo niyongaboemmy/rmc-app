@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui/Modal';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { Button } from '@/components/ui/Button';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useToast } from '@/components/ui/Toast';
@@ -21,11 +22,20 @@ const inputClass =
 /**
  * Author or edit one Q&A entry.
  *
- * Both halves are MARKDOWN, edited in a plain textarea and rendered server-side — the same
- * pipeline a member's question goes through. Deliberately not the RichTextEditor the rest
- * of the admin uses for CMS prose: that one emits HTML, and an entry whose answer is stored
- * as HTML would bake today's sanitiser into the database, exactly as the question body
- * already refuses to.
+ * Both halves are MARKDOWN and rendered server-side — the same pipeline a member's
+ * question goes through, and the same reason: stored markdown is inert, so a future bug in
+ * the read-time sanitiser cannot release a payload already sitting in the database.
+ *
+ * The ANSWER is nonetheless written in the RichTextEditor, because asking whoever knows the
+ * ruling to also know markdown is asking the wrong person for the wrong thing. Storage does
+ * not change: `onChangeMarkdown` serialises the editor's own document back to markdown on
+ * every keystroke (see lib/markdown/fromProseMirror.ts), and the HTML the editor is seeded
+ * with — rendered by the server, so it matches the public page exactly — is never sent
+ * anywhere. What is stored is what was always stored.
+ *
+ * The QUESTION stays a plain textarea. It is usually the member's own words, pasted or
+ * lightly corrected, and round-tripping somebody else's text through a rich editor to
+ * normalise its markdown is a change nobody asked for.
  *
  * Editing an existing entry is SILENT: it does not re-notify the asker. Fixing a typo must
  * not email somebody "your question has been answered" a second time.
@@ -52,12 +62,54 @@ export function EntryEditor({
   const [body, setBody] = useState('');
   const [answerBody, setAnswerBody] = useState('');
   const [summary, setSummary] = useState('');
+  /**
+   * The answer as HTML, purely to SEED TipTap — it is never sent anywhere.
+   * `answerBody` remains the markdown of record, updated from the editor's own
+   * document on every keystroke. Kept in state rather than derived so the editor
+   * is not re-seeded mid-edit, which would move the cursor.
+   */
+  const [answerHtml, setAnswerHtml] = useState('');
+  const [answerReady, setAnswerReady] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [language, setLanguage] = useState<PostLanguage>('en');
 
   useEffect(() => {
     dawahApi.categories().then(setCategories).catch(() => setCategories([]));
   }, []);
+
+  /**
+   * Seed the rich editor from the stored markdown.
+   *
+   * Rendered by the SERVER, through the same render+sanitise pipeline the public
+   * page uses — so what the admin edits is what a reader sees, rather than a
+   * second opinion from a client-side markdown library. `marked` is ESM-only and
+   * not bundled for the client anyway.
+   *
+   * A new entry starts blank and is ready immediately. An existing one waits, so
+   * TipTap is not mounted with empty content and then re-seeded — remounting on
+   * `answerReady` is what keeps the initial content from being lost.
+   */
+  useEffect(() => {
+    if (entryId === null) {
+      setAnswerReady(true);
+      return;
+    }
+    if (!answerBody) return;
+    let cancelled = false;
+    dawahApi.discussions
+      .preview(answerBody)
+      .then((r) => !cancelled && setAnswerHtml(r.html))
+      // Falling back to the raw markdown keeps the text editable rather than
+      // presenting an empty box over an answer that does exist.
+      .catch(() => !cancelled && setAnswerHtml(`<p>${answerBody}</p>`))
+      .finally(() => !cancelled && setAnswerReady(true));
+    return () => {
+      cancelled = true;
+    };
+    // Seeds ONCE per entry: re-running as `answerBody` changes would re-render and
+    // re-seed on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entryId, answerBody !== '']);
 
   useEffect(() => {
     if (entryId === null) return;
@@ -208,15 +260,27 @@ export function EntryEditor({
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 {t('discussions.admin.answerLabel')}
               </label>
-              <textarea
-                value={answerBody}
-                onChange={(e) => setAnswerBody(e.target.value)}
-                dir={dir}
-                rows={8}
-                className={`${inputClass} font-mono text-[13px]`}
-                placeholder={t('discussions.admin.answerPlaceholder')}
-              />
-              <p className="mt-1.5 text-xs text-gray-400">{t('discussions.admin.markdownHint')}</p>
+              {/* Written rich, STORED as markdown: `onChangeMarkdown` serialises the
+                  editor's own document, and the HTML is only ever the seed. The
+                  entity refuses stored HTML for a reason — see fromProseMirror.ts.
+
+                  Keyed on `answerReady` so the editor mounts once the seed has
+                  arrived: its content is uncontrolled after mount, so mounting it
+                  empty and setting the value afterwards would show a blank box over
+                  an existing answer. */}
+              {answerReady ? (
+                <RichTextEditor
+                  key={`answer-${entryId ?? 'new'}`}
+                  value={answerHtml}
+                  onChange={() => {}}
+                  onChangeMarkdown={setAnswerBody}
+                  dir={dir}
+                />
+              ) : (
+                <div className="flex justify-center rounded-lg border border-gray-200 py-10">
+                  <Loader2 className="h-5 w-5 animate-spin text-rmc-green" />
+                </div>
+              )}
             </div>
           </div>
         )}
