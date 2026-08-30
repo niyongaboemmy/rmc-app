@@ -25,7 +25,7 @@ import { AskQuestionFields } from './AskQuestionForm';
 import {
   dawahApi,
   serverMessage,
-  type DiscussionQuestion,
+  type DiscussionListItem,
   type Paginated,
   type DawahCategory,
 } from '@/lib/dawahApi';
@@ -33,7 +33,7 @@ import {
 const PAGE_SIZE = 12;
 
 /**
- * Dawah Q&A — the listing. A search box and an accordion of entries, nothing else.
+ * Dawah Q&A — the listing. A search box and a list of entries, nothing else.
  *
  * Same discipline as CoursesPageClient: searching is SERVER-SIDE and the URL is the single
  * source of truth, so a result set is shareable and survives the back button.
@@ -84,20 +84,15 @@ export function DiscussionsPageClient() {
   useEffect(() => {
     dawahApi.categories().then(setCategories).catch(() => setCategories([]));
   }, []);
-  const [data, setData] = useState<Paginated<DiscussionQuestion> | null>(null);
+  const [data, setData] = useState<Paginated<DiscussionListItem> | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-
-  // Which entries are expanded. A Set of ids, not a single id: opening one row does not
-  // close another (see DiscussionCard). Deliberately NOT in the URL — an accordion state
-  // in the query string makes every toggle a history entry, so Back stops meaning "the
-  // previous page" and starts meaning "the last thing I collapsed".
 
   // Moderation (edit mode only). `refreshKey` re-runs the fetch after an action
   // drops a question from the published list, without disturbing the URL filters.
   const [refreshKey, setRefreshKey] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<DiscussionQuestion | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<DiscussionListItem | null>(null);
 
   // Asking happens in a modal over the listing rather than on its own route: a member
   // asking a question has almost always just searched and not found it, so sending them
@@ -182,7 +177,7 @@ export function DiscussionsPageClient() {
   // `lock` is gone with the forum: locking stopped further answers, and there are
   // no further answers to stop.
   const act = useCallback(
-    async (q: DiscussionQuestion, action: 'hide' | 'delete') => {
+    async (q: DiscussionListItem, action: 'hide' | 'delete') => {
       setBusyId(q.id);
       try {
         await dawahApi.admin.discussions.moderate(q.id, action);
@@ -372,9 +367,10 @@ export function DiscussionsPageClient() {
                         locale={locale}
                         showDate
                       />
-                      {/* end-10 clears the disclosure chevron, which sits at end-4. An
-                          overlay on top of it would both hide the affordance and swallow
-                          the click that opens the row. */}
+                      {/* Absolutely positioned OVER the card, which is one big link — a
+                          moderation button inside it would be a nested interactive
+                          element, and clicking hide would also navigate. The inset keeps
+                          them clear of the title, which wraps to two lines. */}
                       {moderate && (
                         <div className="absolute end-10 top-3 z-10 flex gap-1">
                           <button

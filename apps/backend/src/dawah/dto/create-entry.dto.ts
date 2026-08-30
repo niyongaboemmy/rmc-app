@@ -32,6 +32,20 @@ export class CreateEntryDto {
   @MaxLength(20000)
   answerBody: string;
 
+  /**
+   * The short form of the ruling, shown in the listing. PLAIN TEXT, not markdown:
+   * it renders as a lede, so there is nothing to render and nothing to sanitise.
+   *
+   * Optional on purpose — an admin may publish and summarise afterwards. Left
+   * blank, the reader sees an excerpt derived from the answer, which is what the
+   * list showed before this field existed.
+   */
+  @ApiPropertyOptional({ maxLength: 320, description: 'Plain-text summary for the listing.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(320)
+  summary?: string;
+
   @ApiPropertyOptional({ description: 'Category id from the shared Dawah taxonomy.' })
   @IsOptional()
   @IsUUID()
@@ -56,6 +70,20 @@ export class AnswerQuestionDto {
   @MinLength(DISCUSSION_LIMITS.MIN_BODY_LENGTH)
   @MaxLength(20000)
   answerBody: string;
+
+  /**
+   * The short form of the ruling, shown in the listing. PLAIN TEXT, not markdown:
+   * it renders as a lede, so there is nothing to render and nothing to sanitise.
+   *
+   * Optional on purpose — an admin may publish and summarise afterwards. Left
+   * blank, the reader sees an excerpt derived from the answer, which is what the
+   * list showed before this field existed.
+   */
+  @ApiPropertyOptional({ maxLength: 320, description: 'Plain-text summary for the listing.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(320)
+  summary?: string;
 
   @ApiPropertyOptional({ description: 'Category id — often only clear once answered.' })
   @IsOptional()

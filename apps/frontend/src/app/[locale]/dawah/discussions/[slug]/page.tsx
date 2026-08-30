@@ -58,13 +58,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const entry = await getEntry(slug);
   if (!entry) return {};
-  // Describe with the ANSWER, not the question: a search result should show what RMC said,
-  // which is the thing worth clicking. Strip the rendered HTML — never a slice of markdown.
-  const description = entry.answerHtml
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 160);
+  // The summary IS the description: a short prose statement of what RMC said, which is
+  // the thing worth clicking in a search result. It replaced a second copy of the
+  // strip-the-HTML-and-cut routine that the listing also carried — and unlike that, it
+  // is written rather than truncated, so it ends on a sentence.
+  const description = entry.summary.slice(0, 160);
   return {
     title: entry.title,
     description,
@@ -145,6 +143,18 @@ export default async function DiscussionEntryPage({
             >
               {entry.title}
             </h1>
+
+            {/* The authored summary, as a lede. Plain text, so no renderer and no
+                sanitiser — and the server substitutes a derived excerpt when nobody
+                has written one, so this is never empty on a published entry. */}
+            {entry.summary && (
+              <p
+                dir={dirOf(entry.language)}
+                className="mt-3 text-[15px] leading-relaxed text-gray-600 md:text-base"
+              >
+                {entry.summary}
+              </p>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
               <span className="inline-flex items-center gap-1.5">

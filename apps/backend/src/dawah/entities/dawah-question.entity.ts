@@ -89,6 +89,20 @@ export class DawahQuestion {
   @Column({ type: 'text', default: '' })
   body: string;
 
+  /**
+   * The short form of the ruling, shown in the listing.
+   *
+   * PLAIN TEXT, unlike `body` and `answerBody` — it is rendered as a lede, never
+   * as rich content, so there is no markdown to render and no HTML to sanitise.
+   *
+   * Nullable because an admin may publish and write it afterwards. The service
+   * falls back to an excerpt of the answer when it is blank, so an entry without
+   * one degrades to what the list showed before this column existed rather than
+   * to an empty row.
+   */
+  @Column({ type: 'varchar', length: 320, nullable: true })
+  summary: string | null;
+
   @Column({ type: 'varchar', length: 20, default: 'en' })
   language: PostLanguage;
 

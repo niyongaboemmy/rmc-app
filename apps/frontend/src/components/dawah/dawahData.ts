@@ -14,7 +14,7 @@ import {
   DAWAH_DEFAULT,
   type DawahContent,
 } from '@/lib/content-api';
-import { dawahApi, type DawahCourse, type DiscussionQuestion } from '@/lib/dawahApi';
+import { dawahApi, type DawahCourse, type DiscussionListItem } from '@/lib/dawahApi';
 
 /** CMS copy for the landing page, merged over the seed. Never throws. */
 export async function getDawahContent(): Promise<DawahContent> {
@@ -53,7 +53,7 @@ export async function getFeaturedCourses(): Promise<DawahCourse[]> {
  * Returns [] rather than throwing when the API is down — the section then simply
  * doesn't render, same fail-safe contract as the featured courses above.
  */
-export async function getRecentDiscussions(limit = 4): Promise<DiscussionQuestion[]> {
+export async function getRecentDiscussions(limit = 4): Promise<DiscussionListItem[]> {
   try {
     const res = await dawahApi.discussions.list({ sort: 'new', limit });
     return res.items;

@@ -3935,7 +3935,10 @@
         "published": "Published.",
         "rejected": "Declined.",
         "rejectConfirmTitle": "Decline this question?",
-        "rejectConfirmBody": "It will not be answered or published. The member is not emailed."
+        "rejectConfirmBody": "It will not be answered or published. The member is not emailed.",
+        "summaryLabel": "Summary for the list",
+        "summaryPlaceholder": "One or two sentences stating the ruling, as it should read in the question list.",
+        "summaryHint": "Optional. Left blank, the list shows the opening of the answer instead."
       }
     }
   }

@@ -415,10 +415,37 @@ export interface PublicAuthor {
  * `isAnonymous` — not a flag set to false, but no field at all, so no component can leak
  * one by accident.
  */
+/**
+ * A row in the listing.
+ *
+ * Note what is NOT here: `bodyHtml` and `answerHtml`. The list used to return the
+ * full entry per row, so a page of twelve carried twelve complete answers to show
+ * a fragment of each. It now returns `summary` instead, and the full text lives on
+ * the detail page — which is why this is a separate type from DiscussionQuestion
+ * rather than a Partial of it. A row genuinely cannot render an answer.
+ */
+export interface DiscussionListItem {
+  id: string;
+  slug: string;
+  title: string;
+  /** Plain text — an authored lede, or an excerpt derived from the answer. */
+  summary: string;
+  language: PostLanguage;
+  category: DawahCategory | null;
+  answeredBy: PublicAuthor | null;
+  answeredAt: string | null;
+  viewCount: number;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+/** One entry in full, for the detail page. */
 export interface DiscussionQuestion {
   id: string;
   slug: string;
   title: string;
+  /** Plain text — an authored lede, or an excerpt derived from the answer. */
+  summary: string;
   /** Rendered + sanitised SERVER-SIDE. The client renders no markdown, ever. */
   bodyHtml: string;
   /** RMC's answer, likewise rendered and sanitised server-side. */
@@ -522,6 +549,13 @@ export interface AdminEntry {
   slug: string;
   title: string;
   body: string;
+  /**
+   * The RAW stored value, so the editor shows a blank box when nothing has been
+   * authored. The public shapes substitute a derived excerpt; loading THAT into
+   * the form would let an admin freeze today's auto-excerpt in by saving an
+   * untouched entry.
+   */
+  summary: string | null;
   answerBody: string;
   language: PostLanguage;
   status: QuestionStatus;
@@ -538,6 +572,8 @@ export interface CreateEntryPayload {
   title: string;
   body: string;
   answerBody: string;
+  /** Plain-text lede for the listing. Optional — blank falls back to a derived excerpt. */
+  summary?: string;
   categoryId?: string;
   language: PostLanguage;
 }
@@ -545,6 +581,8 @@ export interface CreateEntryPayload {
 /** Answer a member's submission. The question text is not editable here — that is an edit. */
 export interface AnswerQuestionPayload {
   answerBody: string;
+  /** Plain-text lede. Answering is usually when the short form becomes clear. */
+  summary?: string;
   categoryId?: string;
 }
 
@@ -585,7 +623,7 @@ export const dawahApi = {
    * There is no answer/vote/report method because there are no such endpoints.
    */
   discussions: {
-    list: (query: DiscussionsQuery = {}): Promise<Paginated<DiscussionQuestion>> =>
+    list: (query: DiscussionsQuery = {}): Promise<Paginated<DiscussionListItem>> =>
       unwrap(publicHttp.get('/dawah/discussions', { params: query })),
 
     /** One entry with RMC's answer. 404s anything not published. */

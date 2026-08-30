@@ -17,7 +17,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../integrations/email/email.service';
 import { answeredEmail } from './discussions-notifications';
-import { renderPostMarkdown } from './discussions-markdown';
+import { postExcerpt, renderPostMarkdown } from './discussions-markdown';
 import { slugify } from './dawah-slug.util';
 import { DISCUSSION_LIMITS, RELATED_LIMIT } from './discussions.constants';
 import type { QueryDiscussionsDto } from './dto/query-discussions.dto';
@@ -42,7 +42,7 @@ export interface PublicAuthor {
  * `q` is the query-builder alias for dawah_questions; the migration spells the same
  * expression with bare column names.
  */
-const FTS_VECTOR = `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, ''))`;
+const FTS_VECTOR = `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, '') || ' ' || coalesce(q.summary, ''))`;
 
 /**
  * Dawah Q&A — an editorial knowledge base, not a forum.
@@ -122,8 +122,40 @@ export class DawahDiscussionsService {
       title: question.title,
       // Rendered and sanitised HERE, on read — not stored as HTML. A DOMPurify fix next
       // year protects every entry already written; input-time sanitising would not.
+      // Plain text, shown as a lede above the question. Falls back to a derived
+      // excerpt for entries an admin has not summarised yet.
+      summary: question.summary?.trim() || postExcerpt(question.answerBody, 300),
       bodyHtml: renderPostMarkdown(question.body),
       answerHtml: renderPostMarkdown(question.answerBody),
+      language: question.language,
+      category: question.category ?? null,
+      answeredBy: this.publicAuthor(question.answeredBy),
+      answeredAt: question.answeredAt,
+      viewCount: question.viewCount,
+      publishedAt: question.publishedAt,
+      createdAt: question.createdAt,
+    };
+  }
+
+  /**
+   * The listing projection: enough to decide whether to open an entry, and no more.
+   *
+   * Deliberately NOT toPublic(). That returns `bodyHtml` and `answerHtml` fully
+   * rendered, so a page of twelve carried twelve complete answers whether or not
+   * anyone opened one — the list was shipping the whole knowledge base to show a
+   * fragment of it.
+   *
+   * `summary` is plain text and rendered as a lede, so nothing here needs the
+   * markdown renderer at all. When an admin has not written one yet, postExcerpt
+   * derives it from the answer: it renders and strips tags properly rather than
+   * slicing raw markdown, which would cut a link in half and leak the syntax.
+   */
+  private toListItem(question: DawahQuestion) {
+    return {
+      id: question.id,
+      slug: question.slug,
+      title: question.title,
+      summary: question.summary?.trim() || postExcerpt(question.answerBody, 300),
       language: question.language,
       category: question.category ?? null,
       answeredBy: this.publicAuthor(question.answeredBy),
@@ -189,7 +221,7 @@ export class DawahDiscussionsService {
       .take(limit)
       .getManyAndCount();
 
-    return { items: items.map((q) => this.toPublic(q)), total, page, limit };
+    return { items: items.map((q) => this.toListItem(q)), total, page, limit };
   }
 
   /**
@@ -494,6 +526,7 @@ export class DawahDiscussionsService {
         slug,
         title: dto.title.trim(),
         body: dto.body,
+        summary: dto.summary?.trim() || null,
         answerBody: dto.answerBody,
         language: dto.language,
         categoryId: category?.id ?? null,
@@ -531,6 +564,7 @@ export class DawahDiscussionsService {
     const now = new Date();
     await this.questions.update(id, {
       answerBody: dto.answerBody,
+      ...(dto.summary !== undefined ? { summary: dto.summary.trim() || null } : {}),
       answeredById: admin.id,
       answeredAt: now,
       publishedAt: question.publishedAt ?? now,
@@ -554,6 +588,9 @@ export class DawahDiscussionsService {
     await this.questions.update(id, {
       ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
       ...(dto.body !== undefined ? { body: dto.body } : {}),
+      // Blanking it is meaningful — it returns the entry to the derived excerpt —
+      // so an empty string stores null rather than being ignored.
+      ...(dto.summary !== undefined ? { summary: dto.summary.trim() || null } : {}),
       ...(dto.answerBody !== undefined ? { answerBody: dto.answerBody } : {}),
       ...(dto.language !== undefined ? { language: dto.language } : {}),
       ...(dto.categoryId !== undefined
@@ -649,6 +686,8 @@ export class DawahDiscussionsService {
         language: q.language,
         status: q.status,
         hasAnswer: q.answerBody.length > 0,
+        // Raw, so the library can tell an authored summary from a derived one.
+        hasSummary: !!q.summary?.trim(),
         // Lets the queue say "9 member questions awaiting an answer" without inferring
         // it from author_id = answered_by_id.
         origin: q.origin,
@@ -682,6 +721,10 @@ export class DawahDiscussionsService {
       title: q.title,
       // MARKDOWN SOURCE — this is the edit form, not a reader.
       body: q.body,
+      // The RAW value, not the derived fallback the public projections use: an
+      // admin opening and saving an untouched form would otherwise freeze
+      // today's auto-excerpt in as an authored summary.
+      summary: q.summary,
       answerBody: q.answerBody,
       language: q.language,
       status: q.status,

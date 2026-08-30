@@ -51,6 +51,7 @@ export function EntryEditor({
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [answerBody, setAnswerBody] = useState('');
+  const [summary, setSummary] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [language, setLanguage] = useState<PostLanguage>('en');
 
@@ -69,6 +70,9 @@ export function EntryEditor({
         setTitle(e.title);
         setBody(e.body);
         setAnswerBody(e.answerBody);
+        // The raw stored value — null shows an empty box, so saving an untouched
+        // form cannot silently promote a derived excerpt into an authored summary.
+        setSummary(e.summary ?? '');
         setCategoryId(e.categoryId ?? '');
         setLanguage(e.language);
       })
@@ -89,6 +93,7 @@ export function EntryEditor({
         title: title.trim(),
         body,
         answerBody,
+        summary: summary.trim(),
         categoryId: categoryId || undefined,
         language,
       };
@@ -132,6 +137,29 @@ export function EntryEditor({
                 className={inputClass}
                 placeholder={t('discussions.ask.titlePlaceholder')}
               />
+            </div>
+
+            <div>
+              <label className="mb-1.5 flex items-baseline justify-between gap-2 text-sm font-medium text-gray-700">
+                <span>{t('discussions.admin.summaryLabel')}</span>
+                <span className="text-[11px] font-normal tabular-nums text-gray-400">
+                  {summary.length}/320
+                </span>
+              </label>
+              <textarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                dir={dir}
+                rows={2}
+                maxLength={320}
+                className={inputClass}
+                placeholder={t('discussions.admin.summaryPlaceholder')}
+              />
+              {/* Says what happens when it is left blank, so an admin in a hurry knows
+                  the row will not be empty — it falls back to an excerpt of the answer. */}
+              <p className="mt-1 text-[11px] leading-snug text-gray-400">
+                {t('discussions.admin.summaryHint')}
+              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

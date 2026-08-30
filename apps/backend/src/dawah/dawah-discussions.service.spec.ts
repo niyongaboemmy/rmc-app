@@ -14,9 +14,12 @@ import { DataSource } from 'typeorm';
  * appears in the public projection they do not assert on. Markdown rendering
  * deserves its own tests against the real library, not a mock.
  */
+const postExcerptMock = jest.fn(
+  (src: string | null | undefined, _max?: number) => `excerpt:${src ?? ''}`,
+);
 jest.mock('./discussions-markdown', () => ({
   renderPostMarkdown: (src: string | null | undefined) => src ?? '',
-  postExcerpt: (src: string | null | undefined) => src ?? '',
+  postExcerpt: (src: string | null | undefined, max?: number) => postExcerptMock(src, max),
 }));
 
 import { DawahDiscussionsService } from './dawah-discussions.service';
@@ -79,10 +82,16 @@ describe('DawahDiscussionsService (admin)', () => {
       restore: jest.fn().mockResolvedValue(undefined),
     };
 
+    // Every builder method both adminList() and list() chain through. A missing one
+    // fails as "x is not a function" rather than as a wrong result, so they are all
+    // here even where a case does not assert on them.
     qb = {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
       getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
@@ -114,6 +123,7 @@ describe('DawahDiscussionsService (admin)', () => {
     }).compile();
 
     service = module.get(DawahDiscussionsService);
+    postExcerptMock.mockClear();
   });
 
   /** The final `update` payload the service wrote for a question. */
@@ -334,6 +344,88 @@ describe('DawahDiscussionsService (admin)', () => {
       );
 
       await expect(service.submitQuestion(userAged(48), dto)).rejects.toBeInstanceOf(HttpException);
+    });
+  });
+
+  describe('summary', () => {
+    it('persists an authored summary when creating an entry', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service
+        .createEntry(admin, {
+          title: 'A question about travel',
+          body: 'A body long enough to pass',
+          answerBody: 'An answer long enough to pass',
+          summary: '  Yes, a traveller may combine.  ',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(
+        expect.objectContaining({ summary: 'Yes, a traveller may combine.' }),
+      );
+    });
+
+    // Blanking it is a deliberate act — it returns the entry to the derived
+    // excerpt — so it must store null rather than an empty string.
+    it('stores null when the summary is cleared', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service.updateEntry('q-1', { summary: '   ' } as never);
+
+      expect(written()).toMatchObject({ summary: null });
+    });
+
+    it('leaves the summary alone when the field is not sent', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service.updateEntry('q-1', { title: 'A new title entirely' } as never);
+
+      expect(written()).not.toHaveProperty('summary');
+    });
+
+    it('accepts a summary written at the moment of answering', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service.answerQuestion(admin, 'q-1', {
+        answerBody: 'The answer',
+        summary: 'The short version',
+      } as never);
+
+      expect(written()).toMatchObject({ summary: 'The short version' });
+    });
+
+    // The listing must not carry the answers — that is the whole point of the
+    // separate projection.
+    it('omits the rendered question and answer from list rows', async () => {
+      const row = makeQuestion({ status: 'published', answerBody: 'a', summary: 'The gist' });
+      qb.getManyAndCount.mockResolvedValue([[row], 1]);
+
+      const result = await service.list({} as never);
+
+      expect(result.items[0]).toMatchObject({ summary: 'The gist' });
+      expect(result.items[0]).not.toHaveProperty('bodyHtml');
+      expect(result.items[0]).not.toHaveProperty('answerHtml');
+    });
+
+    it('falls back to an excerpt of the answer when no summary was authored', async () => {
+      const row = makeQuestion({ status: 'published', answerBody: 'The full answer', summary: null });
+      qb.getManyAndCount.mockResolvedValue([[row], 1]);
+
+      await service.list({} as never);
+
+      // Asserts the helper was CALLED with the answer — its output is stubbed,
+      // because marked is ESM-only and cannot be loaded in this suite.
+      expect(postExcerptMock).toHaveBeenCalledWith('The full answer', 300);
+    });
+
+    it('prefers the authored summary over the derived one', async () => {
+      const row = makeQuestion({ status: 'published', answerBody: 'a', summary: 'Authored' });
+      qb.getManyAndCount.mockResolvedValue([[row], 1]);
+
+      await service.list({} as never);
+
+      expect(postExcerptMock).not.toHaveBeenCalled();
     });
   });
 });
