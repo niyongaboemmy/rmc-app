@@ -186,6 +186,73 @@ export class DonationsService {
   }
 
   /**
+   * Whether a donation may be recorded as received without anyone being charged.
+   *
+   * Deny-by-default, and double-guarded exactly as the marriage-fee bypass is:
+   * NODE_ENV must not be 'production' AND an explicit opt-in flag must be set.
+   * The flag is deliberately NOT in .env.example, so copying the template onto a
+   * production box cannot enable it. Raw process.env is read on purpose —
+   * ConfigService's 'app.nodeEnv' defaults to 'development' when unset, which
+   * would make the first guard useless.
+   */
+  private get unpaidDonationsAllowed(): boolean {
+    return (
+      process.env.NODE_ENV !== 'production' && process.env.ENABLE_DEV_PAYMENT_BYPASS === 'true'
+    );
+  }
+
+  /**
+   * Refuses to record a donation that nobody was actually charged.
+   *
+   * `POST /donations` and `POST /donations/cart` are both `@Public()`, and both
+   * used to fall back to `status = completed` whenever the gateway could not be
+   * used — treating "we cannot charge you" as "you have paid". That was
+   * reachable three ways, none of them theoretical:
+   *
+   *   - the gateway is unconfigured or inactive, so `canCharge()` is false and
+   *     EVERY donation, mobile money included, is booked as received;
+   *   - a card checkout is sent with no phone number (the card flow allows an
+   *     empty one), which fails the `!!phone` test — the donor is then told
+   *     "card payment is unavailable" while the row says paid;
+   *   - anyone at all posts `paymentMethod: "cash"` with any amount, because the
+   *     route needs no authentication.
+   *
+   * All three inflate campaign totals with money nobody sent. There is no
+   * legitimate caller that needs this: neither route is reachable by an admin,
+   * and recording genuinely offline cash is what the admin update path is for.
+   */
+  private refuseUnpaid(reason: 'no-gateway' | 'no-phone' | 'offline-method'): void {
+    if (this.unpaidDonationsAllowed) {
+      this.logger.warn(
+        `[Donations] Recording a donation as completed with no payment — dev bypass is ON (${reason}). This must never happen in production.`,
+      );
+      return;
+    }
+
+    if (reason === 'no-phone') {
+      throw new BadRequestException({
+        code: 'PHONE_REQUIRED',
+        message: 'A mobile money number is needed to take this payment.',
+      });
+    }
+    if (reason === 'offline-method') {
+      throw new BadRequestException({
+        code: 'UNSUPPORTED_PAYMENT_METHOD',
+        message: 'That payment method cannot be used for online donations.',
+      });
+    }
+    // The gateway is unconfigured or switched off. Ours to fix, not the donor's.
+    this.logger.error(
+      '[Donations] Refusing a donation: no payment provider is configured or active.',
+    );
+    throw new ServiceUnavailableException({
+      code: 'PAYMENT_PROVIDER_UNAVAILABLE',
+      message:
+        'Online donations are temporarily unavailable. No payment was taken — please try again shortly.',
+    });
+  }
+
+  /**
    * Record a donation from the public donate page.
    *
    * When a real payment gateway drives the transaction (Mobile Money, with
@@ -210,6 +277,13 @@ export class DonationsService {
     const useGateway =
       dto.paymentMethod === 'momo' && !!dto.donorPhone && (await this.paymentGateway.canCharge());
 
+    // Nothing is recorded unless it can actually be charged — see refuseUnpaid.
+    if (!useGateway) {
+      if (dto.paymentMethod !== 'momo') this.refuseUnpaid('offline-method');
+      else if (!dto.donorPhone) this.refuseUnpaid('no-phone');
+      else this.refuseUnpaid('no-gateway');
+    }
+
     const donation = this.donations.create({
       campaignId,
       donorId,
@@ -221,6 +295,8 @@ export class DonationsService {
       currency: dto.currency ?? 'RWF',
       frequency: dto.frequency ?? DonationFrequency.ONCE,
       paymentMethod: dto.paymentMethod ?? null,
+      // COMPLETED is reachable only under the dev bypass now; refuseUnpaid
+      // has already thrown otherwise.
       status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
       message: dto.message ?? null,
       donatedAt: new Date(),
@@ -302,10 +378,21 @@ export class DonationsService {
     if (dtos.length === 0) throw new BadRequestException('The cart is empty');
 
     const phone = dtos.find((d) => d.donorPhone)?.donorPhone;
-    const useGateway =
-      dtos.every((d) => d.paymentMethod === 'momo') &&
-      !!phone &&
-      (await this.paymentGateway.canCharge());
+    const allMomo = dtos.every((d) => d.paymentMethod === 'momo');
+    // Only the mobile money push needs a number to send it to. A card checkout
+    // settles a hosted invoice instead, and its flow deliberately permits an
+    // empty phone — so requiring one here was what made an empty-phone card
+    // checkout fall through to "assume paid" while the donor was being told that
+    // card payment was unavailable.
+    const phoneOk = channel === 'card' || !!phone;
+    const useGateway = allMomo && phoneOk && (await this.paymentGateway.canCharge());
+
+    // Nothing is recorded unless it can actually be charged — see refuseUnpaid.
+    if (!useGateway) {
+      if (!allMomo) this.refuseUnpaid('offline-method');
+      else if (!phoneOk) this.refuseUnpaid('no-phone');
+      else this.refuseUnpaid('no-gateway');
+    }
 
     const saved: Donation[] = [];
     for (const dto of dtos) {
@@ -327,6 +414,7 @@ export class DonationsService {
             currency: dto.currency ?? 'RWF',
             frequency: dto.frequency ?? DonationFrequency.ONCE,
             paymentMethod: dto.paymentMethod ?? null,
+            // Dev bypass only — refuseUnpaid has already thrown otherwise.
             status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
             message: dto.message ?? null,
             donatedAt: new Date(),
@@ -343,7 +431,7 @@ export class DonationsService {
         paymentLinkUrl: null,
         publicKey: null,
         widgetScriptUrl: null,
-        message: 'Recorded without an online payment.',
+        message: 'Recorded without an online payment (development bypass).',
       };
     }
 

@@ -1,4 +1,8 @@
-import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -248,5 +252,97 @@ describe('DonationsService.create — provider unreachable', () => {
       .mockRejectedValueOnce(new Error('database is down'));
 
     await expect(service.create(dto, null)).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+});
+
+/**
+ * A donation must never be recorded as received when nobody was charged.
+ *
+ * Both creation routes are `@Public()` and both used to fall back to
+ * `status = completed` whenever the gateway could not be used, which meant
+ * "we cannot charge you" was written down as "you have paid".
+ */
+describe('DonationsService — never completed without payment', () => {
+  let service: DonationsService;
+  let donations: { create: jest.Mock; save: jest.Mock };
+  let paymentGateway: { getStatus: jest.Mock; canCharge: jest.Mock; charge: jest.Mock };
+
+  const item = (over: Record<string, unknown> = {}) =>
+    ({
+      amount: 5000,
+      paymentMethod: 'momo',
+      donorPhone: '+250781234567',
+      ...over,
+    }) as never;
+
+  beforeEach(async () => {
+    donations = {
+      create: jest.fn((d) => ({ id: 'don-1', ...d })),
+      save: jest.fn((d) => Promise.resolve(d)),
+    };
+    paymentGateway = {
+      getStatus: jest.fn(),
+      canCharge: jest.fn().mockResolvedValue(true),
+      charge: jest.fn().mockResolvedValue({ status: 'PENDING', domainReference: 'DON-x' }),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        DonationsService,
+        { provide: getRepositoryToken(Donation), useValue: donations },
+        { provide: getRepositoryToken(DonationCampaign), useValue: { findOne: jest.fn() } },
+        { provide: PaymentGatewayService, useValue: paymentGateway },
+        { provide: SmsService, useValue: { sendSms: jest.fn() } },
+        { provide: ConfigService, useValue: { get: jest.fn() } },
+      ],
+    }).compile();
+
+    service = module.get(DonationsService);
+  });
+
+  const savedStatuses = () =>
+    donations.save.mock.calls.flatMap((c) => (Array.isArray(c[0]) ? c[0] : [c[0]])).map((d) => d.status);
+
+  it('refuses with a 503 when no provider is configured, rather than booking it paid', async () => {
+    paymentGateway.canCharge.mockResolvedValue(false);
+
+    await expect(service.create(item(), null)).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(savedStatuses()).not.toContain(DonationStatus.COMPLETED);
+  });
+
+  it('refuses an unauthenticated "cash" donation instead of minting a completed one', async () => {
+    await expect(service.create(item({ paymentMethod: 'cash' }), null)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(donations.save).not.toHaveBeenCalled();
+  });
+
+  it('refuses mobile money with no phone number', async () => {
+    await expect(service.create(item({ donorPhone: undefined }), null)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(donations.save).not.toHaveBeenCalled();
+  });
+
+  it('records the donation as pending when it can actually be charged', async () => {
+    await service.create(item(), null);
+
+    expect(savedStatuses()).toEqual([DonationStatus.PENDING, DonationStatus.PENDING]);
+  });
+
+  // The card flow deliberately allows an empty phone. Requiring one made the whole
+  // basket fall through to "assume paid" while the donor was told card was unavailable.
+  it('charges a card basket that carries no phone, rather than booking it paid', async () => {
+    await service.createCart([item({ donorPhone: undefined })], null, 'card');
+
+    expect(paymentGateway.charge).toHaveBeenCalled();
+    expect(savedStatuses()).not.toContain(DonationStatus.COMPLETED);
+  });
+
+  it('still refuses a momo basket that carries no phone', async () => {
+    await expect(
+      service.createCart([item({ donorPhone: undefined })], null, 'momo'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(paymentGateway.charge).not.toHaveBeenCalled();
   });
 });
