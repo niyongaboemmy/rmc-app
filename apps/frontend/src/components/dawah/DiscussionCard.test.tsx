@@ -19,7 +19,6 @@ const item = (over: Partial<DiscussionListItem> = {}): DiscussionListItem => ({
   summary: 'Yes — a traveller may combine Dhuhr with Asr, and Maghrib with Isha.',
   language: 'en',
   category: null,
-  answeredBy: null,
   answeredAt: null,
   viewCount: 0,
   publishedAt: '2026-06-01T00:00:00.000Z',

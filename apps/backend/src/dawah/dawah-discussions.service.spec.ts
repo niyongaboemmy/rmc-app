@@ -428,4 +428,64 @@ describe('DawahDiscussionsService (admin)', () => {
       expect(postExcerptMock).not.toHaveBeenCalled();
     });
   });
+
+  describe('public projections', () => {
+    // A ruling carries RMC's authority, not an individual's. The name is not merely
+    // hidden in the UI — it never leaves the server, so it cannot be read out of the
+    // JSON payload either.
+    it('never exposes who answered', async () => {
+      const row = makeQuestion({ status: 'published', answerBody: 'a', summary: 'The gist' });
+      qb.getManyAndCount.mockResolvedValue([[row], 1]);
+
+      const result = await service.list({} as never);
+
+      expect(result.items[0]).not.toHaveProperty('answeredBy');
+    });
+
+    it('still records WHEN it was answered', async () => {
+      const answeredAt = new Date('2026-06-01');
+      const row = makeQuestion({ status: 'published', answerBody: 'a', answeredAt });
+      qb.getManyAndCount.mockResolvedValue([[row], 1]);
+
+      const result = await service.list({} as never);
+
+      expect(result.items[0]).toMatchObject({ answeredAt });
+    });
+  });
+
+  describe('createEntry without question detail', () => {
+    // The title IS the question on an admin-authored entry; the second box only
+    // invited it to be typed twice. The column is NOT NULL, so an absent one must
+    // become '' rather than reaching the database as undefined.
+    it('stores an empty body when none is given', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await service
+        .createEntry(admin, {
+          title: 'Can I combine prayers when travelling?',
+          answerBody: 'An answer long enough to pass',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(expect.objectContaining({ body: '' }));
+    });
+
+    it('still stores detail when it is supplied', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await service
+        .createEntry(admin, {
+          title: 'A question about travel',
+          body: 'The asker explained their situation',
+          answerBody: 'An answer long enough to pass',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(
+        expect.objectContaining({ body: 'The asker explained their situation' }),
+      );
+    });
+  });
 });

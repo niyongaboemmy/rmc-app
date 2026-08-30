@@ -20,11 +20,20 @@ export class CreateEntryDto {
   @MaxLength(200)
   title: string;
 
-  @ApiProperty({ description: 'The question, in markdown.' })
+  /**
+   * Extra detail beneath the question, in markdown.
+   *
+   * OPTIONAL, and usually absent on an admin-authored entry: there, the title is
+   * the whole question ("Can I combine prayers when travelling?") and a second
+   * box asking for the question again only invited it to be typed twice. It is
+   * populated on MEMBER submissions, where the asker explains their situation,
+   * and the admin form keeps the field for those so it stays correctable.
+   */
+  @ApiPropertyOptional({ description: 'Extra detail beneath the question, in markdown.' })
+  @IsOptional()
   @IsString()
-  @MinLength(DISCUSSION_LIMITS.MIN_BODY_LENGTH)
   @MaxLength(20000)
-  body: string;
+  body?: string;
 
   @ApiProperty({ description: "RMC's answer, in markdown." })
   @IsString()

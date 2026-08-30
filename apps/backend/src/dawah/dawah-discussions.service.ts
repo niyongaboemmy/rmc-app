@@ -25,12 +25,6 @@ import type { CreateQuestionDto } from './dto/create-question.dto';
 import type { AnswerQuestionDto, CreateEntryDto } from './dto/create-entry.dto';
 import type { RateQuestionDto } from './dto/rate-question.dto';
 
-/** The public shape of the person who answered. */
-export interface PublicAuthor {
-  name: string;
-  isScholar: boolean;
-}
-
 /**
  * The searchable text of an entry, as ONE expression used everywhere it is needed.
  *
@@ -95,18 +89,6 @@ export class DawahDiscussionsService {
     private readonly config: ConfigService,
   ) {}
 
-  /** The answering admin, for display. */
-  private publicAuthor(user: User | null | undefined): PublicAuthor | null {
-    if (!user) return null;
-    return {
-      name: `${user.firstName} ${user.lastName}`.trim(),
-      // Reads `roleEntity` — the RBAC relation that actually carries permissions — NOT
-      // `user.role`, a legacy varchar that knows nothing about the Scholar role. Reading a
-      // live relation also means the badge disappears the moment RMC un-appoints someone.
-      isScholar: user.roleEntity?.slug === 'scholar',
-    };
-  }
-
   /**
    * The public projection of one Q&A entry. Everything the client is allowed to know.
    *
@@ -129,7 +111,6 @@ export class DawahDiscussionsService {
       answerHtml: renderPostMarkdown(question.answerBody),
       language: question.language,
       category: question.category ?? null,
-      answeredBy: this.publicAuthor(question.answeredBy),
       answeredAt: question.answeredAt,
       viewCount: question.viewCount,
       publishedAt: question.publishedAt,
@@ -158,7 +139,6 @@ export class DawahDiscussionsService {
       summary: question.summary?.trim() || postExcerpt(question.answerBody, 300),
       language: question.language,
       category: question.category ?? null,
-      answeredBy: this.publicAuthor(question.answeredBy),
       answeredAt: question.answeredAt,
       viewCount: question.viewCount,
       publishedAt: question.publishedAt,
@@ -174,8 +154,9 @@ export class DawahDiscussionsService {
     const qb = this.questions
       .createQueryBuilder('q')
       .leftJoinAndSelect('q.category', 'category')
-      .leftJoinAndSelect('q.answeredBy', 'answeredBy')
-      .leftJoinAndSelect('answeredBy.roleEntity', 'answeredByRole')
+      // No answeredBy join: the public shapes no longer carry who answered, so
+      // loading the user and their RBAC role was two joins per listing page for a
+      // field nothing reads. The admin projections below still join it.
       .where('q.status = :status', { status: 'published' });
 
     if (query.category) {
@@ -234,7 +215,7 @@ export class DawahDiscussionsService {
   async bySlug(slug: string) {
     const question = await this.questions.findOne({
       where: { slug, status: 'published' },
-      relations: { category: true, answeredBy: { roleEntity: true } },
+      relations: { category: true },
     });
     if (!question) throw new NotFoundException('Question not found');
 
@@ -525,7 +506,9 @@ export class DawahDiscussionsService {
       this.questions.create({
         slug,
         title: dto.title.trim(),
-        body: dto.body,
+        // Optional here: on an admin-authored entry the title IS the question.
+        // The column is NOT NULL with a '' default, so an absent one stores ''.
+        body: dto.body ?? '',
         summary: dto.summary?.trim() || null,
         answerBody: dto.answerBody,
         language: dto.language,
@@ -790,7 +773,7 @@ export class DawahDiscussionsService {
   private async reload(id: string) {
     const full = await this.questions.findOne({
       where: { id },
-      relations: { category: true, answeredBy: { roleEntity: true } },
+      relations: { category: true },
     });
     return this.toPublic(full!);
   }

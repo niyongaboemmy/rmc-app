@@ -400,13 +400,6 @@ export type QuestionStatus = 'pending' | 'published' | 'rejected' | 'hidden' | '
 /** Newest-published first. A `search` term overrides it with relevance ranking. */
 export type DiscussionSort = 'new';
 
-/** The RMC person who answered. */
-export interface PublicAuthor {
-  name: string;
-  /** Renders the scholar badge. Resolved from the live role, so it disappears on removal. */
-  isScholar: boolean;
-}
-
 /**
  * One published Q&A entry: a question and RMC's answer.
  *
@@ -432,7 +425,6 @@ export interface DiscussionListItem {
   summary: string;
   language: PostLanguage;
   category: DawahCategory | null;
-  answeredBy: PublicAuthor | null;
   answeredAt: string | null;
   viewCount: number;
   publishedAt: string | null;
@@ -454,9 +446,6 @@ export interface DiscussionQuestion {
    *  English page is still RTL. */
   language: PostLanguage;
   category: DawahCategory | null;
-  /** WHO answered — a person, not a badge. An institution hiding behind itself is
-   *  the thing this names. */
-  answeredBy: PublicAuthor | null;
   answeredAt: string | null;
   viewCount: number;
   publishedAt: string | null;
@@ -570,7 +559,9 @@ export interface AdminEntry {
 /** Author a complete entry. Creating one publishes it — it has nothing left to wait for. */
 export interface CreateEntryPayload {
   title: string;
-  body: string;
+  /** Extra detail beneath the question. Absent on admin-authored entries, where
+   *  the title is the whole question; present on answered member submissions. */
+  body?: string;
   answerBody: string;
   /** Plain-text lede for the listing. Optional — blank falls back to a derived excerpt. */
   summary?: string;

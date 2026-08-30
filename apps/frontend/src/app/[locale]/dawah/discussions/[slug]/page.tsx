@@ -177,33 +177,41 @@ export default async function DiscussionEntryPage({
 
         <section className="bg-white py-6">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            {/* The question. Rendered AND sanitised server-side by the API — the client
-                never renders markdown, and never trusts stored HTML. */}
-            <Reveal>
-              <div className="rounded-lg border border-gray-200 bg-white p-4 md:p-5">
-                <div
-                  dir={dirOf(entry.language)}
-                  className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-p:leading-[1.65] prose-a:text-rmc-green prose-blockquote:border-rmc-gold"
-                  dangerouslySetInnerHTML={{ __html: entry.bodyHtml }}
-                />
-              </div>
-            </Reveal>
+            {/* The question's extra detail. Rendered AND sanitised server-side by the
+                API — the client never renders markdown, and never trusts stored HTML.
+
+                Only when there IS detail: an admin-authored entry has none, because
+                its title is the whole question, and an empty bordered box under the
+                heading reads as something that failed to load. */}
+            {entry.bodyHtml.trim() && (
+              <Reveal>
+                <div className="rounded-lg border border-gray-200 bg-white p-4 md:p-5">
+                  <div
+                    dir={dirOf(entry.language)}
+                    className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-p:leading-[1.65] prose-a:text-rmc-green prose-blockquote:border-rmc-gold"
+                    dangerouslySetInnerHTML={{ __html: entry.bodyHtml }}
+                  />
+                </div>
+              </Reveal>
+            )}
 
             {/* ── RMC's answer ────────────────────────────────────────────── */}
             <Reveal>
-              <div className="mt-6 rounded-lg border border-rmc-gold/40 bg-rmc-gold/[0.04] p-4 md:p-5">
+              <div
+                className={`rounded-lg border border-rmc-gold/40 bg-rmc-gold/[0.04] p-4 md:p-5 ${
+                  entry.bodyHtml.trim() ? 'mt-6' : ''
+                }`}
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-rmc-gold/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rmc-gold-light">
                     <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
                     {pick(cms.answerBadge, locale)}
                   </span>
-                  {/* Name the person. An institution hiding behind itself is exactly what
-                      naming the answerer prevents. */}
-                  {entry.answeredBy && (
-                    <span className="text-[11px] text-gray-500">
-                      {t('discussions.answeredBy', { name: entry.answeredBy.name })}
-                    </span>
-                  )}
+                  {/* The answer is RMC's, and the badge above says so. Who wrote it is
+                      not shown: a ruling carries the institution's authority, not an
+                      individual's, and naming one person invites them to be approached
+                      about it directly. The answerer is still recorded, and still visible
+                      to admins in the Q&A library. */}
                 </div>
                 <div
                   dir={dirOf(entry.language)}

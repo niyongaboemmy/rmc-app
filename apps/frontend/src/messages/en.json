@@ -3870,7 +3870,6 @@
       "searchLabel": "Search",
       "askRailHint": "Send it to RMC. We'll answer it and publish it here.",
       "answerBadge": "RMC's answer",
-      "answeredBy": "Answered by {name}",
       "askPrompt": "Have a question of your own?",
       "related": {
         "title": "Related questions"

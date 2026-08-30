@@ -3870,7 +3870,6 @@
       "searchLabel": "بحث",
       "askRailHint": "أرسله إلى المجلس. سنجيب عنه وننشره هنا.",
       "answerBadge": "إجابة المجلس",
-      "answeredBy": "أجاب عنه {name}",
       "askPrompt": "لديك سؤال خاص بك؟",
       "related": {
         "title": "أسئلة ذات صلة"
