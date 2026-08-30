@@ -35,7 +35,6 @@ const ACCEPTED_METHODS: Array<{ label: string; dot: string }> = [
   { label: 'Digital banking', dot: 'bg-gray-400' },
 ];
 
-const DISABLED_METHODS = ['bank', 'paypal'];
 
 const METHOD_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   momo: Smartphone,

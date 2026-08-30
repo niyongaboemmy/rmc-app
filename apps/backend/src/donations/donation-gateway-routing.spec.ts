@@ -78,8 +78,10 @@ describe('Donation gateway routing', () => {
       },
     );
 
+    // Once the offline list, now simply unrecognised. Nothing settles without a
+    // gateway any more, so every one of these is refused rather than recorded.
     it.each(['cash', 'bank', 'cheque', 'paypal', 'other', '', '   ', null, undefined])(
-      'treats %j as offline / unspecified',
+      'treats %j as not collectable, so not chargeable',
       (value) => {
         expect(isOnlineDonationMethod(value)).toBe(false);
       },
@@ -114,9 +116,8 @@ describe('Donation gateway routing', () => {
 
     // These once produced a `completed` donation with no payment reference, and
     // this route is @Public() — so it was an unauthenticated way to record money
-    // as received. An offline method is now refused here rather than booked.
-    // Recording genuinely offline cash belongs on the authenticated admin edit
-    // route; the classifier keeps working for it when that route returns.
+    // as received. RMC collects through IremboPay only, so there is no method
+    // that legitimately settles without a gateway: they are refused outright.
     it.each(['cash', 'bank', 'paypal'])(
       'refuses %j rather than recording it as already received',
       async (paymentMethod) => {
@@ -185,7 +186,9 @@ describe('Donation gateway routing', () => {
       expect(result.donations.every((d) => d.paymentReference === result.transactionId)).toBe(true);
     });
 
-    it('rejects a basket that mixes online and offline methods', async () => {
+    // One bad item fails the whole basket rather than quietly settling the rest
+    // — it is one payment, so it cannot be partly collected.
+    it('rejects a basket where any item names a method we cannot collect', async () => {
       await expect(
         service.createCart([item('momo'), item('cash')], null, 'momo'),
       ).rejects.toBeInstanceOf(BadRequestException);
@@ -206,7 +209,7 @@ describe('Donation gateway routing', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('refuses an offline basket rather than recording it without charging', async () => {
+    it('refuses an uncollectable basket rather than recording it without charging', async () => {
       await expect(
         service.createCart([item('cash'), item('bank')], null, 'momo'),
       ).rejects.toBeInstanceOf(BadRequestException);
