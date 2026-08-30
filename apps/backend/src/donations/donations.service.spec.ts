@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -158,5 +158,95 @@ describe('DonationsService.refreshPaymentStatus', () => {
     await service.refreshPaymentStatus('don-1');
 
     expect(paymentGateway.getStatus).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * What happens to a donation when the payment provider does not answer.
+ *
+ * `charge()` throws only after the client has already retried a 429/5xx three
+ * times, so by the time it lands here the provider is genuinely unreachable
+ * rather than merely slow. The donation must not stay `pending`: a pending row
+ * with no `paymentReference` is skipped forever by the reconciliation sweeper
+ * (it filters on that column), so it would never be re-checked or cleaned up
+ * while still counting toward campaign totals as money on its way.
+ */
+describe('DonationsService.create — provider unreachable', () => {
+  let service: DonationsService;
+  let donations: { create: jest.Mock; save: jest.Mock };
+  let paymentGateway: { getStatus: jest.Mock; canCharge: jest.Mock; charge: jest.Mock };
+
+  const dto = {
+    amount: 5000,
+    paymentMethod: 'momo',
+    donorPhone: '+250781234567',
+    donorName: 'Amina',
+  } as never;
+
+  beforeEach(async () => {
+    donations = {
+      create: jest.fn((d) => ({ id: 'don-1', ...d })),
+      save: jest.fn((d) => Promise.resolve(d)),
+    };
+    paymentGateway = {
+      getStatus: jest.fn(),
+      canCharge: jest.fn().mockResolvedValue(true),
+      charge: jest.fn().mockRejectedValue(new Error('IremboPay request timed out after 30000ms')),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        DonationsService,
+        { provide: getRepositoryToken(Donation), useValue: donations },
+        { provide: getRepositoryToken(DonationCampaign), useValue: { findOne: jest.fn() } },
+        { provide: PaymentGatewayService, useValue: paymentGateway },
+        { provide: SmsService, useValue: { sendSms: jest.fn() } },
+        { provide: ConfigService, useValue: { get: jest.fn() } },
+      ],
+    }).compile();
+
+    service = module.get(DonationsService);
+  });
+
+  it('rejects with a 503 rather than the 500 a bare Error would surface', async () => {
+    await expect(service.create(dto, null)).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  /**
+   * The last save is the one failUnreachable performs (the first created the row).
+   * It saves the whole batch, so the argument is an array even for a single donation.
+   */
+  const lastSaved = () => donations.save.mock.calls.at(-1)?.[0][0];
+
+  it('marks the donation failed instead of leaving it pending', async () => {
+    await expect(service.create(dto, null)).rejects.toThrow();
+
+    const saved = lastSaved();
+    expect(saved).toMatchObject({
+      status: DonationStatus.FAILED,
+      gatewayResponseCode: 'UNREACHABLE',
+    });
+  });
+
+  it('records the provider error, trimmed to the column width', async () => {
+    paymentGateway.charge.mockRejectedValue(new Error('x'.repeat(400)));
+
+    await expect(service.create(dto, null)).rejects.toThrow();
+
+    expect(lastSaved().gatewayMessage).toHaveLength(255);
+  });
+
+  it('leaves paymentReference null — there is no provider-side record to point at', async () => {
+    await expect(service.create(dto, null)).rejects.toThrow();
+
+    expect(lastSaved().paymentReference).toBeUndefined();
+  });
+
+  it('still 503s when the failed-status write itself fails', async () => {
+    donations.save
+      .mockImplementationOnce((d) => Promise.resolve(d)) // the initial create
+      .mockRejectedValueOnce(new Error('database is down'));
+
+    await expect(service.create(dto, null)).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });

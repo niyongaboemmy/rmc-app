@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Not, IsNull } from 'typeorm';
@@ -122,6 +128,64 @@ export class DonationsService {
   }
 
   /**
+   * Marks donations FAILED when the gateway could not be reached at all, then
+   * re-raises as a 503.
+   *
+   * The distinction this draws is between "the provider said no" and "the
+   * provider said nothing". A declined payment already lands as FAILED further
+   * down; this is the other case — the request timed out, or came back 5xx
+   * three times, and `charge()` threw.
+   *
+   * Left alone, such a donation kept `status = pending` and a null
+   * `paymentReference`, which is the worst of both worlds: the donor is shown a
+   * receipt for a payment nobody was ever asked for, and the reconciliation
+   * sweeper skips the row forever because it filters on `d.paymentReference`.
+   * The row is then a permanent phantom — never re-checked, never cleaned up,
+   * and counted in campaign totals as money on its way.
+   *
+   * No money can have moved: the throw means we never got an invoice back, so
+   * there was nothing for the donor to approve on their handset. FAILED is
+   * therefore the honest record, and it is re-triable — the donor simply
+   * donates again, with a new transaction id.
+   */
+  private async failUnreachable(donations: Donation[], error: unknown): Promise<never> {
+    const reason = error instanceof Error ? error.message : String(error);
+    const ids = donations.map((d) => d.id).join(', ');
+    this.logger.error(
+      `[Donations] Payment provider unreachable for donation(s) ${ids}: ${reason}`,
+    );
+
+    for (const donation of donations) {
+      donation.status = DonationStatus.FAILED;
+      // No `paymentReference` — there is no provider-side record to point at.
+      // Both columns are narrow (varchar 20 / 255) and an over-long value throws
+      // on save, which would put us right back to a stuck pending row.
+      donation.gatewayResponseCode = 'UNREACHABLE';
+      donation.gatewayMessage = reason.slice(0, 255);
+    }
+    // Best-effort: if the database write also fails we still want the donor to
+    // get the 503 rather than a 500 that says nothing about what went wrong.
+    try {
+      await this.donations.save(donations);
+    } catch (saveError) {
+      this.logger.error(
+        `[Donations] Could not mark donation(s) ${ids} failed: ${
+          saveError instanceof Error ? saveError.message : String(saveError)
+        }`,
+      );
+    }
+
+    // 503, not the 500 this used to surface: the site is fine, the payment
+    // provider is not, and the donor should be told to try again shortly
+    // rather than left thinking they broke something.
+    throw new ServiceUnavailableException({
+      code: 'PAYMENT_PROVIDER_UNAVAILABLE',
+      message:
+        'The mobile money service is not responding right now. No payment was taken — please try again in a few minutes.',
+    });
+  }
+
+  /**
    * Record a donation from the public donate page.
    *
    * When a real payment gateway drives the transaction (Mobile Money, with
@@ -170,20 +234,23 @@ export class DonationsService {
       // Routed through the gateway port rather than a hardwired provider, so
       // switching to IremboPay is a settings change rather than a deploy. The
       // `DON-` prefix is preserved either way — the webhook services match on it.
-      const result = await this.paymentGateway.charge({
-        transactionId: requestTxnId,
-        amount: Number(saved.amount),
-        currency: saved.currency,
-        paymentTypeKey: 'DONATION',
-        referenceId: saved.id,
-        payer: {
-          name: saved.donorName ?? undefined,
-          phone: dto.donorPhone as string,
-          email: saved.donorEmail ?? undefined,
-        },
-        description: 'RMC Donation – Rwanda Muslim Council',
-        pushProvider: 'MTN',
-      });
+      // A throw here means the provider never answered — see failUnreachable.
+      const result = await this.paymentGateway
+        .charge({
+          transactionId: requestTxnId,
+          amount: Number(saved.amount),
+          currency: saved.currency,
+          paymentTypeKey: 'DONATION',
+          referenceId: saved.id,
+          payer: {
+            name: saved.donorName ?? undefined,
+            phone: dto.donorPhone as string,
+            email: saved.donorEmail ?? undefined,
+          },
+          description: 'RMC Donation – Rwanda Muslim Council',
+          pushProvider: 'MTN',
+        })
+        .catch((error) => this.failUnreachable([saved], error));
 
       // `domainReference` is the value the provider's callback carries back —
       // our own transaction id — which is what the webhook services match on.
@@ -284,26 +351,29 @@ export class DonationsService {
     const requestTxnId = `DON-${saved[0].id.slice(0, 8)}-${Date.now()}`;
     const total = saved.reduce((sum, d) => sum + Number(d.amount), 0);
 
-    const result = await this.paymentGateway.charge({
-      transactionId: requestTxnId,
-      amount: total,
-      currency: saved[0].currency,
-      paymentTypeKey: 'DONATION',
-      referenceId: saved[0].id,
-      payer: {
-        name: saved[0].donorName ?? undefined,
-        phone,
-        email: saved[0].donorEmail ?? undefined,
-      },
-      description: 'RMC Donation – Rwanda Muslim Council',
-      items: saved.map((d) => ({
+    // The whole basket fails together, since it is one charge — see failUnreachable.
+    const result = await this.paymentGateway
+      .charge({
+        transactionId: requestTxnId,
+        amount: total,
+        currency: saved[0].currency,
         paymentTypeKey: 'DONATION',
-        amount: Number(d.amount),
-        quantity: 1,
-        description: d.message ?? undefined,
-      })),
-      pushProvider: channel === 'momo' ? 'MTN' : undefined,
-    });
+        referenceId: saved[0].id,
+        payer: {
+          name: saved[0].donorName ?? undefined,
+          phone,
+          email: saved[0].donorEmail ?? undefined,
+        },
+        description: 'RMC Donation – Rwanda Muslim Council',
+        items: saved.map((d) => ({
+          paymentTypeKey: 'DONATION',
+          amount: Number(d.amount),
+          quantity: 1,
+          description: d.message ?? undefined,
+        })),
+        pushProvider: channel === 'momo' ? 'MTN' : undefined,
+      })
+      .catch((error) => this.failUnreachable(saved, error));
 
     // Every donation in the basket points at the same payment.
     for (const donation of saved) {
