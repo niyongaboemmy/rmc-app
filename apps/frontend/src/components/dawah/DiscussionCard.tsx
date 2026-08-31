@@ -37,6 +37,7 @@ export function DiscussionCard({
   question,
   locale,
   showDate = false,
+  compact = false,
 }: {
   question: DiscussionListItem;
   locale: string;
@@ -46,6 +47,14 @@ export function DiscussionCard({
    * listing is a chronological index where it is how a reader places an answer.
    */
   showDate?: boolean;
+  /**
+   * Drop the summary and the rule under the title.
+   *
+   * For the curated panel, which is a column of titles to pick from rather than a
+   * feed to read: at that width three lines of summary per row turns eight entries
+   * into a page of scrolling, and the reader is choosing, not reading.
+   */
+  compact?: boolean;
 }) {
   const category = question.category ? localized(question.category, 'name', locale) : null;
   const isForeign = question.language !== locale;
@@ -81,7 +90,9 @@ export function DiscussionCard({
   return (
     <Link
       href={`/${locale}/dawah/discussions/${question.slug}`}
-      className="group block rounded-lg border border-gray-200 bg-white p-4 transition-colors duration-200 hover:border-rmc-green/50"
+      className={`group block rounded-lg border border-gray-200 bg-white transition-colors duration-200 hover:border-rmc-green/50 ${
+        compact ? 'p-3' : 'p-4'
+      }`}
     >
       {meta}
       <h3
@@ -90,13 +101,17 @@ export function DiscussionCard({
       >
         {question.title}
       </h3>
-      <span
-        aria-hidden
-        className="mt-1.5 block h-px w-10 rounded-full bg-gradient-to-r from-rmc-gold to-rmc-gold-light"
-      />
-      <p dir={dir} className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-gray-600">
-        {question.summary}
-      </p>
+      {!compact && (
+        <>
+          <span
+            aria-hidden
+            className="mt-1.5 block h-px w-10 rounded-full bg-gradient-to-r from-rmc-gold to-rmc-gold-light"
+          />
+          <p dir={dir} className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-gray-600">
+            {question.summary}
+          </p>
+        </>
+      )}
     </Link>
   );
 }

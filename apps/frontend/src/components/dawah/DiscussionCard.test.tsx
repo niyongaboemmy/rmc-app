@@ -61,4 +61,36 @@ describe('DiscussionCard', () => {
     rerender(<DiscussionCard question={item({ language: 'ar' })} locale="en" />);
     expect(screen.getByText('العربية')).toBeInTheDocument();
   });
+
+  // The curated panel is a column of titles to pick from, not a feed to read: at that
+  // width three lines of summary per row turns eight entries into a page of scrolling.
+  describe('compact', () => {
+    it('drops the summary', () => {
+      render(<DiscussionCard question={item()} locale="en" compact />);
+
+      expect(
+        screen.queryByText('Yes — a traveller may combine Dhuhr with Asr, and Maghrib with Isha.'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('keeps the title and the link — it is still how you reach the entry', () => {
+      render(<DiscussionCard question={item()} locale="en" compact />);
+
+      expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent(
+        'Can I combine prayers when travelling?',
+      );
+      expect(screen.getByRole('link')).toHaveAttribute(
+        'href',
+        '/en/dawah/discussions/combining-prayers-when-travelling',
+      );
+    });
+
+    it('still shows the summary when not compact', () => {
+      render(<DiscussionCard question={item()} locale="en" />);
+
+      expect(
+        screen.getByText('Yes — a traveller may combine Dhuhr with Asr, and Maghrib with Isha.'),
+      ).toBeInTheDocument();
+    });
+  });
 });

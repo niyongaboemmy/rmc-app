@@ -3838,7 +3838,6 @@
       "scholar": "Scholar",
       "views": "{count, plural, =1 {1 view} other {# views}}",
       "backToDiscussions": "Discussions",
-      "allCategories": "All categories",
       "allLanguages": "All languages",
       "otherLanguages": "Also showing questions in other languages",
       "writtenIn": "Written in {language}",

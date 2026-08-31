@@ -589,6 +589,14 @@ export interface AnswerQuestionPayload {
 
 export interface DiscussionsQuery {
   category?: string;
+  /**
+   * Restrict to the curated Essential Answers.
+   *
+   * A STRING, matching the wire format the server insists on: a query parameter
+   * always arrives as text, and a boolean here would be coerced so that
+   * `essential=false` filtered TO the curated set. See QueryDiscussionsDto.
+   */
+  essential?: 'true' | 'false';
   language?: PostLanguage;
   sort?: DiscussionSort;
   search?: string;

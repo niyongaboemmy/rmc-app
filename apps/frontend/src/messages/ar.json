@@ -3838,7 +3838,6 @@
       "scholar": "عالِم",
       "views": "{count, plural, =1 {مشاهدة واحدة} other {# مشاهدات}}",
       "backToDiscussions": "النقاشات",
-      "allCategories": "كل التصنيفات",
       "allLanguages": "كل اللغات",
       "otherLanguages": "تُعرض أيضًا أسئلة بلغات أخرى",
       "writtenIn": "مكتوب بـ{language}",

@@ -19,6 +19,18 @@ export interface DiscussionsContent {
     title: Tri;
     subtitle: Tri;
   };
+  /**
+   * The two panel headings, and the sentence under the curated one.
+   *
+   * Editorial: "The Essential Answers" is a claim RMC makes about that collection,
+   * and the sentence beneath explains what was selected and why. Both belong to an
+   * editor rather than to the translation files, which is where UI grammar lives.
+   */
+  panels: {
+    newTitle: Tri;
+    essentialTitle: Tri;
+    essentialBody: Tri;
+  };
   /** Shown when the list is empty with no filters applied. */
   empty: {
     body: Tri;
@@ -65,6 +77,15 @@ export const DISCUSSIONS_DEFAULT: DiscussionsContent = {
       'Ask the community, and read what RMC scholars have answered.',
       'Baza umuryango, kandi usome ibyo inzobere za RMC zasubije.',
       'اسأل المجتمع، واقرأ إجابات علماء المجتمع الرواندي المسلم.',
+    ),
+  },
+  panels: {
+    newTitle: tri('New Answers', 'Ibisubizo bishya', 'أحدث الأجوبة'),
+    essentialTitle: tri('The Essential Answers', 'Ibisubizo by’ingenzi', 'الأجوبة الأساسية'),
+    essentialBody: tri(
+      'A carefully selected collection of essential answers from our website, to equip every Muslim with the foundational knowledge needed to worship Allah with true understanding and build a strong, well-rounded grasp of Islam.',
+      'Ikusanyirizo ry’ibisubizo by’ingenzi byatoranyijwe mu buryo bwitondewe, kugira ngo buri Mwislamu abone ubumenyi shingiro bwo gusenga Allah mu kumva neza, no kubaka ubumenyi bukomeye kandi bwuzuye bwa Islamu.',
+      'مجموعة مختارة بعناية من الأجوبة الأساسية من موقعنا، لتزويد كل مسلم بالمعرفة التأسيسية اللازمة لعبادة الله على فهم صحيح، وبناء تصوّر متين ومتكامل عن الإسلام.',
     ),
   },
   empty: {

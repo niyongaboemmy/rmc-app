@@ -1,13 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Pagination } from '@/components/ui/Pagination';
-import { localized } from './localize';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowLeft, EyeOff, Loader2, MessagesSquare, Plus, Search, Trash2, X,
+  ArrowLeft, EyeOff, Loader2, MessageSquarePlus, MessagesSquare, Search, Trash2, X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
@@ -21,30 +19,36 @@ import { useEditMode } from '@/lib/edit-mode/EditModeProvider';
 import { InlineText } from '@/components/edit-mode/InlineText';
 import { ContentKeys, DISCUSSIONS_DEFAULT, pick, type DiscussionsContent, type Locale } from '@/lib/content-api';
 import { DiscussionCard } from './DiscussionCard';
+import { EssentialAnswersPanel } from './EssentialAnswersPanel';
 import { AskQuestionFields } from './AskQuestionForm';
 import {
   dawahApi,
   serverMessage,
   type DiscussionListItem,
   type Paginated,
-  type DawahCategory,
 } from '@/lib/dawahApi';
 
 const PAGE_SIZE = 12;
 
 /**
- * Dawah Q&A — the listing. A search box and a list of entries, nothing else.
+ * Dawah Q&A — the listing: a chronological feed beside a curated collection.
  *
  * Same discipline as CoursesPageClient: searching is SERVER-SIDE and the URL is the single
  * source of truth, so a result set is shareable and survives the back button.
  *
- * ── One control, deliberately ────────────────────────────────────────────────────────
+ * ── Two panels, and where the category filter went ───────────────────────────────────
  *
- * The category and language dropdowns are gone. Against a knowledge base with one
- * canonical answer per entry, typing the words you want beats narrowing by a taxonomy you
- * have to learn first — and since the server searches the ANSWER text too, a category
- * filter largely duplicated a query that works better. Language is still a property of
- * each entry (badged on the row, driving its `dir`); it is just not a thing to filter on.
+ * "New Answers" is the feed — everything, newest first, searchable. "The Essential
+ * Answers" is what RMC chose, grouped under its own category tabs.
+ *
+ * The category dropdown is gone from the feed's toolbar. It used to sit beside the search
+ * box; now the curated panel carries category as tabs, and two category controls on one
+ * screen is one too many — a reader who picked "Fiqh" in one and "Hadith" in the other
+ * would be looking at a page that contradicts itself. Category survives in the URL, so a
+ * link to `?category=fiqh` still narrows the feed; nothing on the page sets it any more.
+ *
+ * Language is still a property of each entry (badged on the row, driving its `dir`); it is
+ * not a thing to filter on.
  *
  * The listing therefore shows every language at once, which is deliberate and worth
  * keeping: this community is majority Kinyarwanda and the corpus is mixed, so a reader who
@@ -79,11 +83,6 @@ export function DiscussionsPageClient() {
   // Typed-but-not-yet-committed search text; mirrors the URL when it changes underneath
   // us (back button, Clear filters).
   const [searchInput, setSearchInput] = useState(search);
-  // Shared with courses and the library — one taxonomy across all three listings.
-  const [categories, setCategories] = useState<DawahCategory[]>([]);
-  useEffect(() => {
-    dawahApi.categories().then(setCategories).catch(() => setCategories([]));
-  }, []);
   const [data, setData] = useState<Paginated<DiscussionListItem> | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -195,10 +194,6 @@ export function DiscussionsPageClient() {
 
   const hasFilters = Boolean(category || search);
 
-  const categoryOptions = [
-    { value: '', label: t('discussions.allCategories') },
-    ...categories.map((c) => ({ value: c.slug, label: localized(c, 'name', locale) })),
-  ];
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -245,21 +240,50 @@ export function DiscussionsPageClient() {
               </div>
             </div>
 
-            {/* ── One column ──────────────────────────────────────────────
-                This was a two-column split with a sticky rail, but the rail held only the
-                search box — and search belongs with the list it filters. With that moved
-                there was no second column left, and a single measured column reads better
-                for question titles than one stretched across the full page width. */}
-            <div className="mx-auto max-w-3xl">
-              <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
-                {/* The panel is labelled with the COUNT, not a heading. The page's own
-                    h1 already says "Discussions"; a second heading saying it again would
-                    be noise, whereas the count describes the list it sits on — and it
-                    used to sit in the rail, away from the thing it counts. */}
+            {/* Asking, above both panels.
+                It used to sit under the feed, on the reasoning that a reader arrives to
+                find out whether their question is already answered and asks only once it
+                is not. That holds for a single list; it stops holding here, where the
+                page opens with a curated collection rather than with search results. The
+                offer is now visible without scrolling past two panels to find it.
+
+                Still gated on being signed in: the submit endpoint 401s otherwise, and a
+                button that leads to a wall is a worse offer than no button. */}
+            {isAuthenticated && (
+              <div className="mb-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setAskOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full border border-rmc-green/30 bg-white px-5 py-2.5 text-sm font-semibold text-rmc-green shadow-sm transition-colors hover:bg-rmc-green hover:text-white"
+                >
+                  <MessageSquarePlus className="h-4 w-4" aria-hidden />
+                  {t('discussions.askCta')}
+                </button>
+              </div>
+            )}
+
+            {/* Two panels: the feed, and what RMC curated out of it.
+                Below `lg` they stack with the curated set FIRST — on a phone a reader
+                scrolling a chronological feed has to know what they are looking for,
+                whereas the curated set is the answer to "where do I start?". */}
+            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_26rem]">
+              <div className="order-2 min-w-0 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 lg:order-1">
+                {/* Named now, where before the count stood in for a heading. With a
+                    second panel beside it the two have to be told apart, and "12
+                    questions" does not say which list it is counting. */}
                 <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-gray-100 pb-3">
-                  <MessagesSquare className="h-4 w-4 shrink-0 text-rmc-green" aria-hidden />
-                  <span className="text-sm font-bold text-gray-900">
-                    {t('discussions.count', { count: total })}
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rmc-green-light text-rmc-green">
+                    <MessagesSquare className="h-5 w-5" aria-hidden />
+                  </span>
+                  <InlineText
+                    as="h2"
+                    lang={locale}
+                    value={pick(content.panels.newTitle, locale)}
+                    onCommit={(v) => setField((d) => { d.panels.newTitle[lang] = v; })}
+                    className="text-lg font-bold text-rmc-green-deep"
+                  />
+                  <span className="text-xs text-gray-400">
+                    · {t('discussions.count', { count: total })}
                   </span>
                   {/* Say it plainly that the list is mixed-language — a reader seeing
                       Arabic on the English page should know it is deliberate. */}
@@ -273,10 +297,9 @@ export function DiscussionsPageClient() {
                   <label htmlFor="discussions-search" className="sr-only">
                     {t('discussions.searchLabel')}
                   </label>
-                  {/* Search and category on one row: they narrow the same list, and a
-                      reader combining them should not have to hunt for the second. The
-                      select drops below the input on small screens rather than squeezing
-                      both into a width neither can use. */}
+                  {/* Search alone now. Category moved to the curated panel's tabs, and
+                      two category controls on one screen is one too many — see the file
+                      docblock. A `?category=` in the URL still narrows this list. */}
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <div className="relative sm:flex-1">
                     <Search
@@ -293,17 +316,6 @@ export function DiscussionsPageClient() {
                     />
                   </div>
 
-                  <div className="sm:w-56">
-                    <SearchableSelect
-                      value={category}
-                      onChange={(v) => setParams({ category: v || null, page: null })}
-                      options={categoryOptions}
-                      placeholder={t('discussions.allCategories')}
-                      size="md"
-                      triggerClassName="rounded-lg"
-                      zIndex={40}
-                    />
-                  </div>
                   </div>
 
                   {hasFilters && (
@@ -418,25 +430,36 @@ export function DiscussionsPageClient() {
             )}
               </div>
 
-              {/* Ask only shows to signed-in members — the form 401s otherwise, and a
-                  button that leads to a wall is a worse offer than no button.
-
-                  Below the list, not above it: a reader arrives to find out whether their
-                  question has already been answered, and asking is what they do once it
-                  has not been. Offered before the list, it interrupts that with the one
-                  action that makes the reading redundant. */}
-              {isAuthenticated && (
-                <div className="mt-6 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setAskOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-rmc-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rmc-green/20 transition-colors hover:bg-rmc-green-dark"
-                  >
-                    <Plus className="h-4 w-4" /> {t('discussions.askCta')}
-                  </button>
-                </div>
-              )}
-
+              {/* The curated panel. It owns its own fetch and its own tabs, so a
+                  reader narrowing the feed by search does not empty it — the two
+                  panels answer different questions and should not move together. */}
+              <div className="order-1 lg:order-2 lg:sticky lg:top-24">
+                <EssentialAnswersPanel
+                  locale={locale}
+                  seeAllHref={`/${locale}/dawah/discussions?essential=true`}
+                  title={
+                    <InlineText
+                      as="span"
+                      lang={locale}
+                      value={pick(content.panels.essentialTitle, locale)}
+                      onCommit={(v) => setField((d) => { d.panels.essentialTitle[lang] = v; })}
+                      className="min-w-0"
+                    />
+                  }
+                  body={
+                    <InlineText
+                      as="p"
+                      lang={locale}
+                      value={pick(content.panels.essentialBody, locale)}
+                      onCommit={(v) => setField((d) => { d.panels.essentialBody[lang] = v; })}
+                      className="block"
+                    />
+                  }
+                  renderItem={(item) => (
+                    <DiscussionCard question={item} locale={locale} compact />
+                  )}
+                />
+              </div>
             </div>
           </div>
         </section>
