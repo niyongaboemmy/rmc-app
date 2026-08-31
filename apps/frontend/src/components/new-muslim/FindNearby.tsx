@@ -1,32 +1,35 @@
 'use client';
 
 /**
- * Section: "Find a mosque or school near you" — the heading plus the shared
- * interactive map from the home page.
+ * Section: "Find a mosque near you" — the heading plus the SHARED mosque finder,
+ * the same one the contact page uses.
  *
- * The map's four button/badge labels are CMS copy too, but they live inside
- * Leaflet markup where a `contentEditable` node cannot sensibly go. So in Edit
- * Mode they are exposed as a small labelled panel under the map instead; the
- * public site never renders it.
+ * It used to render `NearestSchoolMap`, which drew a dashed straight line from the
+ * visitor to the nearest pin. That line was easy to read as a route and was not one: it
+ * ignored roads entirely, and actually going anywhere meant following a link out to
+ * Google Maps. The shared finder draws a real road route with distance and travel time,
+ * and brings the province overlay and the "Find near me" button with it.
+ *
+ * The four map labels this section used to own as CMS copy are gone with it — the shared
+ * finder carries its own, so keeping editable fields here would have meant editing text
+ * that renders nowhere.
  */
 
 import dynamic from 'next/dynamic';
-import { pick, type Tri } from '@/lib/content-api';
-import { InlineText } from '@/components/edit-mode/InlineText';
 import { SectionHeading, useNewMuslimCopy } from './shared';
 
 // Leaflet touches `window`, so the map only loads on the client.
-const NearestSchoolMap = dynamic(() => import('@/components/home/NearestSchoolMap'), {
-  ssr: false,
-  loading: () => <div className="h-72 w-full animate-pulse bg-gray-100 sm:h-80" />,
-});
+const MosqueFinder = dynamic(
+  () => import('@/components/contact/MosqueFinder').then((m) => m.MosqueFinder),
+  {
+    ssr: false,
+    loading: () => <div className="h-80 w-full animate-pulse rounded-2xl bg-gray-100 sm:h-[34rem]" />,
+  },
+);
 
 export function FindNearby() {
-  const { locale, lang, dir, arabicFont, content, editing, setField } = useNewMuslimCopy();
+  const { locale, lang, dir, arabicFont, content, setField } = useNewMuslimCopy();
   const c = content.nearby;
-
-  const label = (key: 'locateLabel' | 'locatingLabel' | 'nearestLabel' | 'directionsLabel') =>
-    pick(c[key] as Tri, locale);
 
   return (
     <section id="find-nearby" className="scroll-mt-24 bg-gray-50/60 py-14 lg:py-16">
@@ -41,43 +44,11 @@ export function FindNearby() {
           onSubtitle={(v) => setField((d) => { d.nearby.subtitle[lang] = v; })}
         />
 
-        <div className="mt-12 overflow-hidden rounded-lg border border-gray-200/70 bg-white shadow-sm">
-          <NearestSchoolMap
-            locateLabel={label('locateLabel')}
-            locatingLabel={label('locatingLabel')}
-            nearestLabel={label('nearestLabel')}
-            directionsLabel={label('directionsLabel')}
-          />
+        {/* No wrapper border: MosqueFinder brings its own rounded card, and nesting one
+            inside another drew a double edge. */}
+        <div className="mt-12">
+          <MosqueFinder />
         </div>
-
-        {editing && (
-          <div className="mx-auto mt-4 max-w-3xl rounded-lg border-2 border-dashed border-rmc-green/25 bg-white p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-rmc-green/70">
-              Map labels
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {([
-                ['locateLabel', 'Locate button'],
-                ['locatingLabel', 'While locating'],
-                ['nearestLabel', 'Nearest badge'],
-                ['directionsLabel', 'Directions link'],
-              ] as const).map(([key, caption]) => (
-                <label key={key} className="block">
-                  <span className="text-[11px] font-medium text-gray-400">{caption}</span>
-                  <InlineText
-                    as="p"
-                    lang={locale}
-                    dir={dir}
-                    value={label(key)}
-                    onCommit={(v) => setField((d) => { d.nearby[key][lang] = v; })}
-                    className="mt-0.5 rounded-md bg-gray-50 px-2.5 py-1.5 text-sm text-gray-800"
-                    placeholder={caption}
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );

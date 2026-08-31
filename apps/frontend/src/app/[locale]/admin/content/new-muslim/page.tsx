@@ -75,14 +75,10 @@ function buildGroups(form: NewMuslimContent): TriFieldGroup[] {
     {
       title: 'Find a mosque nearby',
       icon: MapPin,
-      note: 'Heading plus the labels on the map controls.',
-      fields: [
-        ...heading('nearby'),
-        { path: ['nearby', 'locateLabel'], label: 'Locate button', rows: 1 },
-        { path: ['nearby', 'locatingLabel'], label: 'Locate button — while searching', rows: 1 },
-        { path: ['nearby', 'nearestLabel'], label: '"Nearest" label', rows: 1 },
-        { path: ['nearby', 'directionsLabel'], label: 'Directions link', rows: 1 },
-      ],
+      // The map's own control labels are not editable here: the section renders the
+      // shared mosque finder, which carries its own.
+      note: 'Heading only — the map brings its own labels.',
+      fields: heading('nearby'),
     },
     {
       title: 'Register & get a mentor',

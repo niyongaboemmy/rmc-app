@@ -21,7 +21,16 @@ export function SchoolsPageClient() {
     <div className="min-h-screen">
       <Navbar />
       <main>
-        <PageHero eyebrow={t('eyebrow')} title={t('title')} subtitle={t('subtitle')} ornament />
+        {/* The last landing hero on PageHero's 50vh / pt-36 pb-14 defaults; about,
+            contact, gallery, projects and new-muslim are all 40vh at pt-28 pb-10 with no
+            eyebrow and no divider. The eyebrow read "Education" above "Find Islamic
+            Schools", which is the heading's own subject stated twice. */}
+        <PageHero
+          title={t('title')}
+          subtitle={t('subtitle')}
+          minHeightClassName="min-h-[40vh]"
+          paddingClassName="pt-28 pb-10"
+        />
 
         <section className="relative bg-transparent py-10 md:py-14">
           <div className="pointer-events-none absolute inset-0 pattern-light opacity-70" />

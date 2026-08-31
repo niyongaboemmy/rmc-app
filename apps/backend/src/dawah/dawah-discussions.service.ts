@@ -407,7 +407,9 @@ export class DawahDiscussionsService {
         categoryId: category?.id ?? null,
         authorId: user.id,
         status: 'pending',
-        lastActivityAt: new Date(),
+        // Explicit even though it matches the column default — the two writers should
+        // read the same way, and a default is not a statement of intent.
+        origin: 'member',
       }),
     );
 
@@ -500,7 +502,9 @@ export class DawahDiscussionsService {
         answeredAt: now,
         publishedAt: now,
         status: 'published',
-        lastActivityAt: now,
+        // Set here rather than left to the column default: this is the one path that
+        // produces a scholar-authored entry, and the default is deliberately 'member'.
+        origin: 'scholar',
       }),
     );
 
@@ -536,7 +540,6 @@ export class DawahDiscussionsService {
       ...(dto.categoryId !== undefined
         ? { categoryId: (await this.resolveCategory(dto.categoryId))?.id ?? null }
         : {}),
-      lastActivityAt: now,
     });
 
     this.notifyAnswered(id, admin.id);
@@ -646,6 +649,9 @@ export class DawahDiscussionsService {
         language: q.language,
         status: q.status,
         hasAnswer: q.answerBody.length > 0,
+        // Lets the queue say "9 member questions awaiting an answer" without inferring
+        // it from author_id = answered_by_id.
+        origin: q.origin,
         category: q.category ? { id: q.category.id, nameEn: q.category.nameEn } : null,
         author: q.author ? `${q.author.firstName} ${q.author.lastName}`.trim() : null,
         answeredBy: q.answeredBy

@@ -19,6 +19,9 @@ import {
   type UploadedProof,
 } from '@/lib/hajjApi';
 import { publicApi } from '@/lib/public-api';
+import { useAuth } from '@/hooks/useAuth';
+import { accountFullName, toLocalRwandanPhone } from '@/lib/accountPrefill';
+import { AccountPrefillNote } from '@/components/services/shared/AccountPrefillNote';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -89,8 +92,26 @@ export function HajjRegisterForm() {
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  /**
+   * Prefill from the signed-in account — a starting point, never a lock. Someone may be
+   * registering on behalf of a relative, and every field stays editable.
+   *
+   * Unlike the jobs and scholarship wizards, this page is a SERVER component and is open
+   * to guests, so it cannot gate its own render on auth. `useAuth` therefore reports
+   * `isLoading` with a null user on the first render here — seeding straight into a lazy
+   * initializer would capture that null and silently prefill nothing. Step 1 waits for
+   * auth to settle instead (see below), which is what makes this seed real.
+   */
+  const { user, isLoading: authLoading } = useAuth();
+
   // Step data kept in the parent so Back/Next never loses what was typed.
   const [step1, setStep1] = useState<Partial<Step1Values>>({});
+  const prefill: Partial<Step1Values> = {
+    fullName: accountFullName(user) || undefined,
+    phone: toLocalRwandanPhone(user?.phone) || undefined,
+    email: user?.email || undefined,
+  };
+  const prefilled = !!(prefill.fullName || prefill.phone || prefill.email);
   const [passport, setPassport] = useState<Partial<Step3Values>>({});
 
   // Residence: cascading district → sector selects (all of Rwanda, seeded).
@@ -266,11 +287,26 @@ export function HajjRegisterForm() {
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:px-6">
       <WizardProgress labels={stepLabels} current={phase} />
 
-      {phase === 1 && (
-        <Step1PersonalContact
-          initialData={step1}
-          onNext={(d) => { setStep1(d); setPhase(2); }}
-        />
+      {/* Held back until auth settles. react-hook-form latches `defaultValues` at mount,
+          so rendering this while the account is still loading would fix the fields empty
+          for a signed-in member — the one case the prefill exists for. The wait is a
+          token check, and a guest simply arrives at empty fields a moment later. */}
+      {phase === 1 && authLoading && (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-5 w-5 animate-spin text-rmc-green" aria-hidden />
+        </div>
+      )}
+
+      {phase === 1 && !authLoading && (
+        <>
+          {prefilled && <AccountPrefillNote text={t('prefillNote')} />}
+          <Step1PersonalContact
+            // Anything already typed wins over the account, so returning from step 2
+            // shows what was entered rather than resetting to the profile.
+            initialData={{ ...prefill, ...step1 }}
+            onNext={(d) => { setStep1(d); setPhase(2); }}
+          />
+        </>
       )}
 
       {phase === 2 && (

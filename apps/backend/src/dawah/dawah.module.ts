@@ -9,10 +9,7 @@ import { DawahLessonCompletion } from './entities/dawah-lesson-completion.entity
 import { DawahBook } from './entities/dawah-book.entity';
 import { DawahQuestion } from './entities/dawah-question.entity';
 import { DawahQuestionRating } from './entities/dawah-question-rating.entity';
-import { DawahAnswer } from './entities/dawah-answer.entity';
-import { DawahReport } from './entities/dawah-report.entity';
 import { DawahModerationLog } from './entities/dawah-moderation-log.entity';
-import { DawahVote } from './entities/dawah-vote.entity';
 import { DawahCategoryService } from './dawah-category.service';
 import { DawahCourseService } from './dawah-course.service';
 import { DawahEnrollmentService } from './dawah-enrollment.service';
@@ -45,14 +42,11 @@ import { EmailModule } from '../integrations/email/email.module';
       DawahBook,
       DawahCourseEnrollment,
       DawahLessonCompletion,
-      // Discussions. Votes/reports/moderation_log have tables but no entities yet —
-      // Phase A reads nothing from them, and an entity for a table nobody queries is
-      // dead code that looks like a feature.
+      // Discussions. RMC writes both halves of an entry, so the question, its rating and
+      // the moderation trail are the whole model — the answers/votes/reports tables of
+      // the old community-forum design are gone (migration 064).
       DawahQuestion,
-      DawahAnswer,
-      DawahReport,
       DawahModerationLog,
-      DawahVote,
       DawahQuestionRating,
     ]),
     PublicUploadModule,

@@ -43,6 +43,19 @@ export type QuestionStatus = 'pending' | 'published' | 'rejected' | 'hidden' | '
 export type PostLanguage = 'en' | 'rw' | 'ar';
 
 /**
+ * Which of the two paths produced this entry.
+ *
+ * 'scholar' — RMC wrote the question AND the answer, published at once.
+ * 'member'  — somebody asked; a scholar answered it later, or has not yet.
+ *
+ * Recorded rather than inferred. It used to be readable only from the coincidence that
+ * an admin-authored row has the same id in `author_id` and `answered_by_id`, which is a
+ * heuristic that breaks the moment anything reassigns an answerer. Mirrored by
+ * CHK_dawah_questions_origin.
+ */
+export type QuestionOrigin = 'scholar' | 'member';
+
+/**
  * One entry in the Dawah Q&A: a question and RMC's answer to it.
  *
  * A row arrives one of two ways — an admin authors both halves at once, or a member
@@ -102,6 +115,17 @@ export class DawahQuestion {
   status: QuestionStatus;
 
   /**
+   * Where the entry came from. See {@link QuestionOrigin}.
+   *
+   * Note this is NOT derivable from `status`: a 'member' entry can be published, and a
+   * 'scholar' one can be hidden. It is also what gives `author_id` a readable meaning —
+   * on a member's entry that column is who asked, on a scholar's it is RMC filling a
+   * required field because nobody did.
+   */
+  @Column({ type: 'varchar', length: 20, default: 'member' })
+  origin: QuestionOrigin;
+
+  /**
    * RMC's answer. MARKDOWN SOURCE, never HTML — see `body`.
    *
    * Empty until answered. A published row with an empty answer is refused by
@@ -133,10 +157,6 @@ export class DawahQuestion {
 
   @Column({ name: 'view_count', type: 'int', default: 0 })
   viewCount: number;
-
-  /** Retained from the forum model; no longer a sort key. See `publishedAt`. */
-  @Column({ name: 'last_activity_at', type: 'timestamptz', default: () => 'now()' })
-  lastActivityAt: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

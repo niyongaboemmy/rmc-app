@@ -40,13 +40,14 @@ export interface NewMuslimDua {
 export interface NewMuslimContent {
   steps: NewMuslimHeading & { items: NewMuslimStep[] };
   duas: NewMuslimHeading & { items: NewMuslimDua[] };
-  /** Nearest mosque/school finder — heading plus the map's own button labels. */
-  nearby: NewMuslimHeading & {
-    locateLabel: Tri;
-    locatingLabel: Tri;
-    nearestLabel: Tri;
-    directionsLabel: Tri;
-  };
+  /**
+   * The nearest-mosque finder — heading only.
+   *
+   * The map's own button and badge labels used to live here as CMS copy. The section
+   * now renders the SHARED MosqueFinder, which carries its own labels, so editable
+   * fields here would have driven nothing.
+   */
+  nearby: NewMuslimHeading;
   /** "Register & get a mentor" — heading, field placeholders and result states. */
   mentor: NewMuslimHeading & {
     namePlaceholder: Tri;
@@ -153,19 +154,17 @@ export const NEW_MUSLIM_DEFAULT: NewMuslimContent = {
   nearby: {
     eyebrow: tri('Community', 'Umuryango', 'المجتمع'),
     title: tri(
-      'Find a mosque or school near you',
-      'Shaka umusigiti cyangwa ishuri hafi yawe',
-      'ابحث عن مسجد أو مدرسة قريبة منك',
+      'Find a mosque near you',
+      'Shaka umusigiti hafi yawe',
+      'ابحث عن مسجد قريب منك',
     ),
+    // Names the button the shared finder actually shows. This used to read 'Tap "Find
+    // schools near me"', which no longer exists anywhere on the page.
     subtitle: tri(
-      'Tap "Find schools near me" to locate the nearest Islamic school or mosque, get directions, and connect with a local teacher.',
-      "Kanda \"Shaka amashuri hafi yanjye\" ushake ishuri ry'Abayisilamu cyangwa umusigiti uri hafi, ubone inzira, uhuze n'umwarimu wo aho.",
-      'اضغط "ابحث عن مدارس قريبة" لتحديد أقرب مدرسة إسلامية أو مسجد، واحصل على الاتجاهات، وتواصل مع معلّم محلي.',
+      'Search by name or province, or tap "Find near me" to see the closest mosque — with directions from where you are.',
+      "Shakisha ukoresheje izina cyangwa intara, cyangwa ukande \"Shakisha hafi yanjye\" urebe umusigiti uri hafi — ubone n'inzira uhereye aho uri.",
+      'ابحث بالاسم أو المقاطعة، أو اضغط "ابحث بالقرب مني" لعرض أقرب مسجد — مع الاتجاهات من موقعك.',
     ),
-    locateLabel: tri('Find schools near me', 'Shaka amashuri hafi yanjye', 'ابحث عن مدارس قريبة'),
-    locatingLabel: tri('Locating…', 'Birashakishwa…', 'جارٍ تحديد الموقع…'),
-    nearestLabel: tri('Nearest', 'Hafi cyane', 'الأقرب'),
-    directionsLabel: tri('Directions', 'Inzira', 'الاتجاهات'),
   },
 
   mentor: {

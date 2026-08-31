@@ -12,7 +12,7 @@ import {
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
   Compass, ListChecks, CalendarDays, Briefcase, GraduationCap,
-  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart,
+  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart, ShieldCheck,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -28,6 +28,7 @@ type PageLocation =
   | 'Tenders Page'
   | 'Jobs Page'
   | 'Scholarships Page'
+  | 'Good Conduct Page'
   | 'Services Page'
   | 'Dawah Pages'
   | 'Welcome to Islam'
@@ -370,6 +371,19 @@ const SECTIONS: SectionConfig[] = [
     accentBar: 'bg-violet-400',
   },
   {
+    id: 'good-conduct',
+    icon: ShieldCheck,
+    title: 'Good Conduct Page',
+    description: 'Hero, what the certificate confirms, what an applicant needs before applying, how the process runs, and the two cards on the public Good Conduct page. The requests themselves are managed under Good Conduct.',
+    type: 'edit', itemLabel: null,
+    page: 'Good Conduct Page', positionOrder: 0,
+    locationLabel: 'Good Conduct Page · Wording',
+    keywords: ['good conduct', 'conduct', 'certificate', 'imam', 'mosque', 'requirements', 'before you apply', 'steps', 'hero', 'heading', 'wording', 'copy'],
+    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
+    badge: 'bg-emerald-100 text-emerald-700',
+    accentBar: 'bg-emerald-400',
+  },
+  {
     id: 'services',
     icon: LayoutGrid,
     title: 'Services Page',
@@ -485,6 +499,7 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'Tenders Page', icon: Briefcase, color: 'text-teal-600', description: 'Wording on the public tenders board' },
   { page: 'Jobs Page', icon: Briefcase, color: 'text-indigo-600', description: 'Wording on the public jobs board' },
   { page: 'Scholarships Page', icon: GraduationCap, color: 'text-violet-600', description: 'Wording on the public scholarships board' },
+  { page: 'Good Conduct Page', icon: ShieldCheck, color: 'text-emerald-600', description: 'Wording on the public good conduct page' },
   { page: 'Services Page', icon: LayoutGrid, color: 'text-cyan-600', description: 'The service cards and their detail modals' },
   { page: 'Dawah Pages', icon: Library, color: 'text-emerald-600', description: 'Wording on the Library, Courses and Discussions listings' },
   { page: 'Welcome to Islam', icon: Sparkles, color: 'text-rmc-green', description: 'Content on the /new-muslim page' },

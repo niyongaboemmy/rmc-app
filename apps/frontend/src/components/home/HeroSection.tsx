@@ -151,7 +151,6 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20" />
 
       {/* ── Subtle Islamic pattern on top ── */}
-      <div className="absolute inset-0 pattern-islamic opacity-30" />
 
       {/* ── Soft radial halo behind the right-aligned copy, for extra legibility ── */}
       <div

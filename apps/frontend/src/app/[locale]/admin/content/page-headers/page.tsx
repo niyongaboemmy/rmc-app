@@ -86,9 +86,9 @@ const SECTIONS: HeaderSection[] = [
   {
     key: ContentKeys.newMuslimHero,
     title: 'Welcome to Islam page',
-    note: '/new-muslim — the banner a brand-new Muslim lands on.',
+    note: '/new-muslim — the banner a brand-new Muslim lands on; heading only, no eyebrow.',
     defaults: NEW_MUSLIM_HERO_DEFAULT,
-    fields: heroFields(true),
+    fields: heroFields(false),
   },
   {
     key: ContentKeys.galleryHero,

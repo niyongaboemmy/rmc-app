@@ -2,18 +2,41 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
-import { ShieldCheck, ArrowRight, FileText, Search } from 'lucide-react';
+import { ShieldCheck, FileText, Search } from 'lucide-react';
 import { BackToServices } from '@/components/services/BackToServices';
+import {
+  GoodConductCtaCopy,
+  GoodConductDetails,
+  GoodConductHeroCopy,
+} from '@/components/services/good-conduct/GoodConductDetails';
+import { ContentKeys } from '@/lib/content-api';
+import { fetchSiteContent } from '@/lib/content/server';
+import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
+
+/**
+ * Copy comes from the site-content store rather than the i18n bundle, so RMC can edit it
+ * without a deploy — the same move the tender, jobs and scholarship boards already made.
+ * The defaults are the exact strings this page used to read from `services.conduct`, so
+ * nothing changes for a visitor until an admin edits something.
+ *
+ * The page stays a SERVER component and keeps the layout, imagery and links. Only the
+ * text is lifted into client islands, exactly as the three board pages do it — which is
+ * also why the hero here is still hand-rolled rather than a PageHero: all four service
+ * landings share this markup, and swapping one would break the set.
+ */
+const PAGE_CONTENT_KEYS = [ContentKeys.goodConduct];
 
 export default async function GoodConductServicePage({
   params: { locale },
 }: {
   params: { locale: string };
 }) {
-  const t = await getTranslations('services.conduct');
+  // Fetched here so the copy is in the server HTML; the islands below read it from the
+  // provider rather than merging it again.
+  const saved = await fetchSiteContent(PAGE_CONTENT_KEYS);
 
   return (
+    <SiteContentProvider content={saved}>
     <div className="min-h-screen">
       <Navbar />
       <main>
@@ -40,16 +63,18 @@ export default async function GoodConductServicePage({
                   <ShieldCheck className="w-7 h-7 text-white" strokeWidth={2.25} />
                 </div>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{t('title')}</h1>
-              <p className="text-white/75 text-base max-w-2xl mx-auto leading-relaxed">{t('desc')}</p>
+              <GoodConductHeroCopy />
             </div>
           </div>
 
           <BackToServices locale={locale} />
         </section>
 
+        {/* What it is, what you need, and what happens next — all inline-editable. */}
+        <GoodConductDetails />
+
         {/* CTA cards */}
-        <section className="bg-gray-50/60 pattern-light py-14 px-4 sm:px-6 lg:px-8">
+        <section className="bg-white py-14 px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-5">
             <Link
               href={`/${locale}/services/good-conduct/apply`}
@@ -58,11 +83,7 @@ export default async function GoodConductServicePage({
               <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
                 <FileText className="w-5 h-5 text-rmc-green-dark" />
               </div>
-              <p className="font-bold text-gray-900">{t('landing.applyTitle')}</p>
-              <p className="text-sm text-gray-500 flex-1">{t('landing.applyText')}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                {t('landing.applyCta')} <ArrowRight className="w-4 h-4" />
-              </span>
+              <GoodConductCtaCopy card="apply" />
             </Link>
 
             <Link
@@ -72,16 +93,13 @@ export default async function GoodConductServicePage({
               <div className="w-11 h-11 rounded-xl bg-rmc-green-light flex items-center justify-center">
                 <Search className="w-5 h-5 text-rmc-green-dark" />
               </div>
-              <p className="font-bold text-gray-900">{t('landing.statusTitle')}</p>
-              <p className="text-sm text-gray-500 flex-1">{t('landing.statusText')}</p>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-rmc-green group-hover:gap-2.5 transition-all">
-                {t('landing.statusCta')} <ArrowRight className="w-4 h-4" />
-              </span>
+              <GoodConductCtaCopy card="status" />
             </Link>
           </div>
         </section>
       </main>
       <Footer />
     </div>
+    </SiteContentProvider>
   );
 }
