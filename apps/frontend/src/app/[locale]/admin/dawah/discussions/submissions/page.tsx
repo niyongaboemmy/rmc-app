@@ -53,6 +53,7 @@ function SubmissionQueue() {
   const [answering, setAnswering] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [draftCategory, setDraftCategory] = useState('');
+  const [draftAnswerSummary, setDraftAnswerSummary] = useState('');
   const [confirmReject, setConfirmReject] = useState<PendingSubmission | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -83,10 +84,12 @@ function SubmissionQueue() {
     try {
       await dawahApi.admin.discussions.answer(s.id, {
         answerBody: draft,
+        answerSummary: draftAnswerSummary.trim() || undefined,
         categoryId: draftCategory || undefined,
       });
       success(t('discussions.admin.published'));
       setAnswering(null);
+      setDraftAnswerSummary('');
       await load();
     } catch (err) {
       toastError(serverMessage(err) ?? t('discussions.admin.saveError'));
@@ -181,6 +184,27 @@ function SubmissionQueue() {
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
                       {t('discussions.admin.answerLabel')}
                     </label>
+                    {/* The ruling in short, above the answer it summarises — the same
+                        arrangement as EntryEditor, and the same place it renders for
+                        the reader. Optional: an answer without one opens with itself. */}
+                    <div className="mb-3">
+                      <label className="mb-1.5 flex items-baseline justify-between gap-2 text-sm font-medium text-gray-700">
+                        <span>{t('discussions.admin.answerSummaryLabel')}</span>
+                        <span className="text-[11px] font-normal tabular-nums text-gray-400">
+                          {draftAnswerSummary.length}/600
+                        </span>
+                      </label>
+                      <textarea
+                        value={draftAnswerSummary}
+                        onChange={(e) => setDraftAnswerSummary(e.target.value)}
+                        dir={s.language === 'ar' ? 'rtl' : 'ltr'}
+                        rows={3}
+                        maxLength={600}
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
+                        placeholder={t('discussions.admin.answerSummaryPlaceholder')}
+                      />
+                    </div>
+
                     {/* Same arrangement as EntryEditor: written rich, STORED as
                         markdown. `draft` is the markdown, serialised from the editor's
                         own document; nothing here holds HTML, because a fresh answer

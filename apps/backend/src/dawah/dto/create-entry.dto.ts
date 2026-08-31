@@ -80,6 +80,20 @@ export class CreateEntryDto {
   @IsBoolean()
   isEssential?: boolean;
 
+
+  /**
+   * The ruling in short, shown ABOVE the full answer on the entry page.
+   *
+   * Distinct from `summary`, which is the listing lede: this one is read after a
+   * reader has already opened the entry, by somebody who wants the ruling before
+   * the reasoning. Optional — an answer without one simply opens with itself.
+   */
+  @ApiPropertyOptional({ maxLength: 600, description: 'Plain-text summary of the ruling.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  answerSummary?: string;
+
   @ApiPropertyOptional({ description: 'Category id from the shared Dawah taxonomy.' })
   @IsOptional()
   @IsUUID()
@@ -118,6 +132,20 @@ export class AnswerQuestionDto {
   @IsString()
   @MaxLength(320)
   summary?: string;
+
+
+  /**
+   * The ruling in short, shown ABOVE the full answer on the entry page.
+   *
+   * Distinct from `summary`, which is the listing lede: this one is read after a
+   * reader has already opened the entry, by somebody who wants the ruling before
+   * the reasoning. Optional — an answer without one simply opens with itself.
+   */
+  @ApiPropertyOptional({ maxLength: 600, description: 'Plain-text summary of the ruling.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  answerSummary?: string;
 
   @ApiPropertyOptional({ description: 'Category id — often only clear once answered.' })
   @IsOptional()

@@ -3936,7 +3936,10 @@
         "summaryHint": "Ntibisabwa. Nusiga ubusa, urutonde rwerekana intangiriro y’igisubizo.",
         "entryNumber": "Ikibazo {number}",
         "essentialLabel": "Shyira mu Bisubizo by’ingenzi",
-        "essentialHint": "Bigaragaza iki kibazo mu gace k’ibyatoranyijwe kuruhande, munsi y’icyiciro cyacyo."
+        "essentialHint": "Bigaragaza iki kibazo mu gace k’ibyatoranyijwe kuruhande, munsi y’icyiciro cyacyo.",
+        "answerSummaryLabel": "Igisubizo muri make",
+        "answerSummaryPlaceholder": "Interuro imwe cyangwa ebyiri zivuga icyemezo, zigaragara hejuru y’igisubizo cyuzuye.",
+        "answerSummaryHint": "Ntibisabwa. Gisomwa n’uwafunguye ikibazo ashaka icyemezo mbere y’ibisobanuro."
       },
       "download": "Kuramo",
       "share": "Sangiza",

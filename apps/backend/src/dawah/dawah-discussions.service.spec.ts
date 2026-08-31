@@ -54,6 +54,7 @@ describe('DawahDiscussionsService (admin)', () => {
     update: jest.Mock;
     create: jest.Mock;
     save: jest.Mock;
+    increment: jest.Mock;
     createQueryBuilder: jest.Mock;
   };
   let ratings: { find: jest.Mock };
@@ -109,6 +110,8 @@ describe('DawahDiscussionsService (admin)', () => {
       update: jest.fn().mockResolvedValue(undefined),
       create: jest.fn((d) => d),
       save: jest.fn((d) => Promise.resolve(d)),
+      // bySlug fires the view counter and does not await it.
+      increment: jest.fn().mockResolvedValue(undefined),
       createQueryBuilder: jest.fn(() => qb),
     };
     ratings = { find: jest.fn().mockResolvedValue([]) };
@@ -676,6 +679,70 @@ describe('DawahDiscussionsService (admin)', () => {
 
       expect(qb.orderBy).toHaveBeenCalledWith('rank', 'DESC');
       expect(qb.orderBy).not.toHaveBeenCalledWith('q.viewCount', 'DESC');
+    });
+  });
+
+  describe('the answer summary', () => {
+    it('persists it when creating an entry', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await service
+        .createEntry(admin, {
+          title: 'A question long enough to pass',
+          answerBody: 'An answer long enough to pass',
+          answerSummary: '  Yes, a traveller may combine.  ',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(
+        expect.objectContaining({ answerSummary: 'Yes, a traveller may combine.' }),
+      );
+    });
+
+    it('accepts one written at the moment of answering', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service.answerQuestion(admin, 'q-1', {
+        answerBody: 'The answer',
+        answerSummary: 'The short version',
+      } as never);
+
+      expect(written()).toMatchObject({ answerSummary: 'The short version' });
+    });
+
+    it('stores null when cleared', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service.updateEntry('q-1', { answerSummary: '   ' } as never);
+
+      expect(written()).toMatchObject({ answerSummary: null });
+    });
+
+    // Absent means absent. A derived one would repeat the listing lede a few lines
+    // above itself, which is why `summary` has a fallback and this does not.
+    it('is null on the entry when nobody wrote one — never derived', async () => {
+      const row = makeQuestion({
+        status: 'published',
+        answerBody: 'The full answer',
+        answerSummary: null,
+      });
+      questions.findOne.mockResolvedValue(row);
+
+      const result = await service.bySlug('a-question');
+
+      expect(result.answerSummary).toBeNull();
+    });
+
+    // The listing has `summary` for this job; shipping both would send the same
+    // idea twice to a card that renders one of them.
+    it('stays off the listing rows', async () => {
+      const row = makeQuestion({ status: 'published', answerSummary: 'Short' });
+      qb.getManyAndCount.mockResolvedValue([[row], 1]);
+
+      const result = await service.list({} as never);
+
+      expect(result.items[0]).not.toHaveProperty('answerSummary');
     });
   });
 });

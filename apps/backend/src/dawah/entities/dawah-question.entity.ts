@@ -115,6 +115,19 @@ export class DawahQuestion {
   @Column({ type: 'varchar', length: 320, nullable: true })
   summary: string | null;
 
+  /**
+   * The ruling in short, shown above the full answer on the entry page.
+   *
+   * PLAIN TEXT, like `summary`, and distinct from it: that one is the LISTING
+   * lede, read before deciding to open the entry. This one is read after, by
+   * somebody who wants the ruling before the reasoning — which is why it is
+   * longer and written for a different moment.
+   *
+   * Nullable and never derived. Nothing renders where it is absent.
+   */
+  @Column({ name: 'answer_summary', type: 'varchar', length: 600, nullable: true })
+  answerSummary: string | null;
+
   @Column({ type: 'varchar', length: 20, default: 'en' })
   language: PostLanguage;
 

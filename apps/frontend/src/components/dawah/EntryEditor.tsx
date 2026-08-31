@@ -72,6 +72,7 @@ export function EntryEditor({
    */
   const [entryNumber, setEntryNumber] = useState<number | null>(null);
   const [isEssential, setIsEssential] = useState(false);
+  const [answerSummary, setAnswerSummary] = useState('');
   /**
    * The answer as HTML, purely to SEED TipTap — it is never sent anywhere.
    * `answerBody` remains the markdown of record, updated from the editor's own
@@ -163,6 +164,7 @@ export function EntryEditor({
         setSummary(e.summary ?? '');
         setEntryNumber(e.entryNumber);
         setIsEssential(e.isEssential);
+        setAnswerSummary(e.answerSummary ?? '');
         setCategoryId(e.categoryId ?? '');
         setLanguage(e.language);
       })
@@ -185,6 +187,7 @@ export function EntryEditor({
         // `!== undefined` check leaves the stored value alone.
         ...(hasDetail ? { body } : {}),
         isEssential,
+        answerSummary: answerSummary.trim(),
         answerBody,
         summary: summary.trim(),
         categoryId: categoryId || undefined,
@@ -350,6 +353,31 @@ export function EntryEditor({
                   arrived: its content is uncontrolled after mount, so mounting it
                   empty and setting the value afterwards would show a blank box over
                   an existing answer. */}
+              {/* The ruling in short, above the answer it summarises — which is also
+                  where it renders for the reader. Kept apart from "Summary for the
+                  list" at the top of this form: that one sells the entry, this one
+                  states the outcome. */}
+              <div className="mb-3">
+                <label className="mb-1.5 flex items-baseline justify-between gap-2 text-sm font-medium text-gray-700">
+                  <span>{t('discussions.admin.answerSummaryLabel')}</span>
+                  <span className="text-[11px] font-normal tabular-nums text-gray-400">
+                    {answerSummary.length}/600
+                  </span>
+                </label>
+                <textarea
+                  value={answerSummary}
+                  onChange={(e) => setAnswerSummary(e.target.value)}
+                  dir={dir}
+                  rows={3}
+                  maxLength={600}
+                  className={inputClass}
+                  placeholder={t('discussions.admin.answerSummaryPlaceholder')}
+                />
+                <p className="mt-1 text-[11px] leading-snug text-gray-400">
+                  {t('discussions.admin.answerSummaryHint')}
+                </p>
+              </div>
+
               {answerReady ? (
                 <RichTextEditor
                   key={`answer-${entryId ?? 'new'}`}

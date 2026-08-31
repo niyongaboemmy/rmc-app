@@ -444,6 +444,12 @@ export interface DiscussionQuestion {
   title: string;
   /** Plain text — an authored lede, or an excerpt derived from the answer. */
   summary: string;
+  /**
+   * The ruling in short, shown above the full answer. Distinct from `summary`,
+   * which is the listing lede: this is read after the entry is already open.
+   * Null when nobody wrote one, and nothing renders in its place.
+   */
+  answerSummary: string | null;
   /** Rendered + sanitised SERVER-SIDE. The client renders no markdown, ever. */
   bodyHtml: string;
   /** RMC's answer, likewise rendered and sanitised server-side. */
@@ -559,6 +565,8 @@ export interface AdminEntry {
    * untouched entry.
    */
   summary: string | null;
+  /** The RAW stored value, like `summary` — an empty box when nothing is authored. */
+  answerSummary: string | null;
   answerBody: string;
   language: PostLanguage;
   status: QuestionStatus;
@@ -579,6 +587,8 @@ export interface CreateEntryPayload {
   answerBody: string;
   /** Plain-text lede for the listing. Optional — blank falls back to a derived excerpt. */
   summary?: string;
+  /** The ruling in short, shown above the answer. Optional; nothing renders when blank. */
+  answerSummary?: string;
   /** Curate into The Essential Answers panel. */
   isEssential?: boolean;
   categoryId?: string;
@@ -590,6 +600,8 @@ export interface AnswerQuestionPayload {
   answerBody: string;
   /** Plain-text lede. Answering is usually when the short form becomes clear. */
   summary?: string;
+  /** The ruling in short, shown above the answer. */
+  answerSummary?: string;
   categoryId?: string;
 }
 

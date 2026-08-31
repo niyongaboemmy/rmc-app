@@ -220,6 +220,18 @@ export default async function DiscussionEntryPage({
                       about it directly. The answerer is still recorded, and still visible
                       to admins in the Q&A library. */}
                 </div>
+                {/* The ruling in short, before its reasoning. Plain text, so no
+                    renderer and no sanitiser; absent when nobody wrote one, and
+                    nothing stands in for it — a derived one would just repeat the
+                    lede a few lines above. */}
+                {entry.answerSummary && (
+                  <p
+                    dir={dirOf(entry.language)}
+                    className="mt-3 border-s-2 border-rmc-gold/40 ps-3 text-[15px] font-medium leading-relaxed text-gray-800"
+                  >
+                    {entry.answerSummary}
+                  </p>
+                )}
                 <div
                   dir={dirOf(entry.language)}
                   className="prose prose-sm md:prose-base mt-3 max-w-none text-gray-700 prose-p:leading-[1.65] prose-a:text-rmc-green"

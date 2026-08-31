@@ -3936,7 +3936,10 @@
         "summaryHint": "Optional. Left blank, the list shows the opening of the answer instead.",
         "entryNumber": "Question {number}",
         "essentialLabel": "Include in The Essential Answers",
-        "essentialHint": "Shows this entry in the curated panel beside the feed, under its category."
+        "essentialHint": "Shows this entry in the curated panel beside the feed, under its category.",
+        "answerSummaryLabel": "The ruling in short",
+        "answerSummaryPlaceholder": "One or two sentences stating the outcome, shown above the full answer.",
+        "answerSummaryHint": "Optional. Read by someone who has opened the entry and wants the ruling before the reasoning."
       },
       "download": "Download",
       "share": "Share",

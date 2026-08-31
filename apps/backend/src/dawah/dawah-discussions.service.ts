@@ -36,7 +36,7 @@ import type { RateQuestionDto } from './dto/rate-question.dto';
  * `q` is the query-builder alias for dawah_questions; the migration spells the same
  * expression with bare column names.
  */
-const FTS_VECTOR = `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, '') || ' ' || coalesce(q.summary, ''))`;
+const FTS_VECTOR = `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, '') || ' ' || coalesce(q.summary, '') || ' ' || coalesce(q.answer_summary, ''))`;
 
 /**
  * Dawah Q&A — an editorial knowledge base, not a forum.
@@ -107,6 +107,10 @@ export class DawahDiscussionsService {
       // Plain text, shown as a lede above the question. Falls back to a derived
       // excerpt for entries an admin has not summarised yet.
       summary: question.summary?.trim() || postExcerpt(question.answerBody, 300),
+      // No fallback: an absent answer summary renders nothing, where an absent
+      // listing summary must still fill a card. Deriving one would just repeat
+      // the lede a few lines below itself.
+      answerSummary: question.answerSummary?.trim() || null,
       bodyHtml: renderPostMarkdown(question.body),
       answerHtml: renderPostMarkdown(question.answerBody),
       language: question.language,
@@ -559,6 +563,7 @@ export class DawahDiscussionsService {
         // The column is NOT NULL with a '' default, so an absent one stores ''.
         body: dto.body ?? '',
         summary: dto.summary?.trim() || null,
+        answerSummary: dto.answerSummary?.trim() || null,
         isEssential: dto.isEssential ?? false,
         answerBody: dto.answerBody,
         language: dto.language,
@@ -598,6 +603,9 @@ export class DawahDiscussionsService {
     await this.questions.update(id, {
       answerBody: dto.answerBody,
       ...(dto.summary !== undefined ? { summary: dto.summary.trim() || null } : {}),
+      ...(dto.answerSummary !== undefined
+        ? { answerSummary: dto.answerSummary.trim() || null }
+        : {}),
       answeredById: admin.id,
       answeredAt: now,
       publishedAt: question.publishedAt ?? now,
@@ -624,6 +632,9 @@ export class DawahDiscussionsService {
       // Blanking it is meaningful — it returns the entry to the derived excerpt —
       // so an empty string stores null rather than being ignored.
       ...(dto.summary !== undefined ? { summary: dto.summary.trim() || null } : {}),
+      ...(dto.answerSummary !== undefined
+        ? { answerSummary: dto.answerSummary.trim() || null }
+        : {}),
       ...(dto.isEssential !== undefined ? { isEssential: dto.isEssential } : {}),
       ...(dto.answerBody !== undefined ? { answerBody: dto.answerBody } : {}),
       ...(dto.language !== undefined ? { language: dto.language } : {}),
@@ -763,6 +774,7 @@ export class DawahDiscussionsService {
       // admin opening and saving an untouched form would otherwise freeze
       // today's auto-excerpt in as an authored summary.
       summary: q.summary,
+      answerSummary: q.answerSummary,
       isEssential: q.isEssential,
       answerBody: q.answerBody,
       language: q.language,
