@@ -198,6 +198,12 @@ export class DawahDiscussionsService {
       qb.addSelect(`ts_rank(${FTS_VECTOR}, websearch_to_tsquery('simple', :q))`, 'rank')
         .orderBy('rank', 'DESC')
         .addOrderBy('q.publishedAt', 'DESC');
+    } else if (query.sort === 'popular') {
+      // Views first, then recency. Without the tie-break every unread entry shares a
+      // count of 0 and Postgres may return them in any order it likes — so the tail
+      // would reshuffle between two identical requests, and paginating over it would
+      // repeat some rows and skip others.
+      qb.orderBy('q.viewCount', 'DESC').addOrderBy('q.publishedAt', 'DESC');
     } else {
       // Publication order, NOT creation order: a question asked in March and answered in
       // July belongs at the top of the list in July, not buried back in March.

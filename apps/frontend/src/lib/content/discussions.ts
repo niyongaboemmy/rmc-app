@@ -28,6 +28,7 @@ export interface DiscussionsContent {
    */
   panels: {
     newTitle: Tri;
+    mostReadTitle: Tri;
     essentialTitle: Tri;
     essentialBody: Tri;
   };
@@ -81,6 +82,7 @@ export const DISCUSSIONS_DEFAULT: DiscussionsContent = {
   },
   panels: {
     newTitle: tri('New Answers', 'Ibisubizo bishya', 'أحدث الأجوبة'),
+    mostReadTitle: tri('Most-Read', 'Ibisomwa cyane', 'الأكثر قراءة'),
     essentialTitle: tri('The Essential Answers', 'Ibisubizo by’ingenzi', 'الأجوبة الأساسية'),
     essentialBody: tri(
       'A carefully selected collection of essential answers from our website, to equip every Muslim with the foundational knowledge needed to worship Allah with true understanding and build a strong, well-rounded grasp of Islam.',

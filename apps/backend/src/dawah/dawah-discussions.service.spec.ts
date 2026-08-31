@@ -645,4 +645,37 @@ describe('DawahDiscussionsService (admin)', () => {
       expect(qb.andWhere).not.toHaveBeenCalledWith('q.isEssential = true');
     });
   });
+
+  describe('the popular sort', () => {
+    it('orders by views, most read first', async () => {
+      await service.list({ sort: 'popular' } as never);
+
+      expect(qb.orderBy).toHaveBeenCalledWith('q.viewCount', 'DESC');
+    });
+
+    // Every unread entry shares a count of 0, and without a second key Postgres may
+    // return those in any order — so the tail would reshuffle between two identical
+    // requests, and paginating over it would repeat some rows and skip others.
+    it('breaks ties on recency, so the order is stable', async () => {
+      await service.list({ sort: 'popular' } as never);
+
+      expect(qb.addOrderBy).toHaveBeenCalledWith('q.publishedAt', 'DESC');
+    });
+
+    it('leaves the default listing in publication order', async () => {
+      await service.list({} as never);
+
+      expect(qb.orderBy).toHaveBeenCalledWith('q.publishedAt', 'DESC');
+      expect(qb.orderBy).not.toHaveBeenCalledWith('q.viewCount', 'DESC');
+    });
+
+    // A search has its own ordering — relevance — and asking for popularity must not
+    // quietly override it, or a keyword match would be buried under whatever is read most.
+    it('does not override relevance when there is a search term', async () => {
+      await service.list({ sort: 'popular', search: 'prayer' } as never);
+
+      expect(qb.orderBy).toHaveBeenCalledWith('rank', 'DESC');
+      expect(qb.orderBy).not.toHaveBeenCalledWith('q.viewCount', 'DESC');
+    });
+  });
 });

@@ -398,7 +398,13 @@ export function uploadLessonMedia(
 export type PostLanguage = 'en' | 'rw' | 'ar';
 export type QuestionStatus = 'pending' | 'published' | 'rejected' | 'hidden' | 'deleted';
 /** Newest-published first. A `search` term overrides it with relevance ranking. */
-export type DiscussionSort = 'new';
+/**
+ * `new` — newest published first, the listing's own order.
+ * `popular` — most read first, for the Most-Read panel.
+ *
+ * Mirrors DISCUSSION_SORTS on the server; a value not in that union is a 400.
+ */
+export type DiscussionSort = 'new' | 'popular';
 
 /**
  * One published Q&A entry: a question and RMC's answer.

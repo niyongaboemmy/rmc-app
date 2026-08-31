@@ -3937,7 +3937,10 @@
         "entryNumber": "Ikibazo {number}",
         "essentialLabel": "Shyira mu Bisubizo by’ingenzi",
         "essentialHint": "Bigaragaza iki kibazo mu gace k’ibyatoranyijwe kuruhande, munsi y’icyiciro cyacyo."
-      }
+      },
+      "download": "Kuramo",
+      "share": "Sangiza",
+      "linkCopied": "Umurongo wafashwe"
     }
   }
 }

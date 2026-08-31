@@ -1,4 +1,4 @@
-import { cache } from 'react';
+import { cache, Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -9,6 +9,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
 import { QuestionRating } from '@/components/dawah/QuestionRating';
+import { PrintOnLoad } from '@/components/dawah/PrintOnLoad';
 import { dawahApi, type DiscussionQuestion, type PostLanguage } from '@/lib/dawahApi';
 import {
   ContentKeys, DISCUSSIONS_DEFAULT, mergeContent, pick, type DiscussionsContent,
@@ -120,6 +121,12 @@ export default async function DiscussionEntryPage({
     <div className="min-h-screen">
       {/* solid: this page opens straight onto white, and the navbar's links are white. */}
       <Navbar solid />
+      {/* Raises the print dialog when the listing's Download link brought the reader
+          here. In Suspense because it reads searchParams, which opts a server
+          component into dynamic rendering unless the boundary absorbs it. */}
+      <Suspense fallback={null}>
+        <PrintOnLoad />
+      </Suspense>
       <main>
         <section className="pt-24 md:pt-28">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -225,13 +232,15 @@ export default async function DiscussionEntryPage({
                 the page: by the time a reader has scrolled past the ask-your-own CTA they
                 have left the answer behind. Outside <Reveal>, whose transform would
                 otherwise animate a control the reader may already be reaching for. */}
-            <QuestionRating
-              slug={slug}
-              copy={{
-                prompt: pick(cms.ratingPrompt, locale),
-                thanks: pick(cms.ratingThanks, locale),
-              }}
-            />
+            <div data-print-hide>
+              <QuestionRating
+                slug={slug}
+                copy={{
+                  prompt: pick(cms.ratingPrompt, locale),
+                  thanks: pick(cms.ratingThanks, locale),
+                }}
+              />
+            </div>
 
             {/* Where to go next, before the ask-your-own CTA: a reader whose question was
                 already answered here should meet the neighbouring answers first, and only
@@ -239,7 +248,7 @@ export default async function DiscussionEntryPage({
                 crawlable links between entries rather than a client-side afterthought. */}
             {related.length > 0 && (
               <Reveal>
-                <section className="mt-8" aria-labelledby="related-heading">
+                <section data-print-hide className="mt-8" aria-labelledby="related-heading">
                   <h2
                     id="related-heading"
                     className="text-sm font-bold uppercase tracking-[0.12em] text-rmc-green-deep"

@@ -12,7 +12,17 @@ export const POST_LANGUAGES = ['en', 'rw', 'ar'] as const;
  * is published complete, so there is no activity to track and nothing is ever unanswered.
  * A search query overrides this with relevance ranking.
  */
-export const DISCUSSION_SORTS = ['new'] as const;
+/**
+ * `new` — newest published first, the default and the feed's own order.
+ * `popular` — most read first, for the Most-Read panel.
+ *
+ * `popular` is a VIEW count, which is a record of what has been opened, not a
+ * judgement about what is worth opening. That is why it sits in its own panel
+ * rather than becoming the listing's default: an entry that ranked early keeps
+ * accumulating views for that reason alone, and letting it order the whole
+ * corpus would bury newer answers under a self-reinforcing top.
+ */
+export const DISCUSSION_SORTS = ['new', 'popular'] as const;
 export type DiscussionSort = (typeof DISCUSSION_SORTS)[number];
 
 /**

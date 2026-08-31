@@ -3937,7 +3937,10 @@
         "entryNumber": "Question {number}",
         "essentialLabel": "Include in The Essential Answers",
         "essentialHint": "Shows this entry in the curated panel beside the feed, under its category."
-      }
+      },
+      "download": "Download",
+      "share": "Share",
+      "linkCopied": "Link copied"
     }
   }
 }

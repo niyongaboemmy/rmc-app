@@ -20,6 +20,7 @@ import { InlineText } from '@/components/edit-mode/InlineText';
 import { ContentKeys, DISCUSSIONS_DEFAULT, pick, type DiscussionsContent, type Locale } from '@/lib/content-api';
 import { DiscussionCard } from './DiscussionCard';
 import { EssentialAnswersPanel } from './EssentialAnswersPanel';
+import { MostReadPanel } from './MostReadPanel';
 import { AskQuestionFields } from './AskQuestionForm';
 import {
   dawahApi,
@@ -267,7 +268,11 @@ export function DiscussionsPageClient() {
                 scrolling a chronological feed has to know what they are looking for,
                 whereas the curated set is the answer to "where do I start?". */}
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_26rem]">
-              <div className="order-2 min-w-0 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 lg:order-1">
+              {/* The left column: the feed, with the most-read shortlist beneath it.
+                  The wrapper is the grid child; the panel styling moves inside so the
+                  two panels are siblings rather than one nested in the other. */}
+              <div className="order-2 min-w-0 lg:order-1">
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
                 {/* Named now, where before the count stood in for a heading. With a
                     second panel beside it the two have to be told apart, and "12
                     questions" does not say which list it is counting. */}
@@ -428,6 +433,25 @@ export function DiscussionsPageClient() {
                 />
               </>
             )}
+              </div>
+
+                {/* Below the feed, in the same column. A reader should meet what is
+                    new before what is popular — put the shortlist first and the
+                    popular entries become the only ones that ever get read. */}
+                <MostReadPanel
+                  locale={locale}
+                  title={
+                    <InlineText
+                      as="span"
+                      lang={locale}
+                      value={pick(content.panels.mostReadTitle, locale)}
+                      onCommit={(v) => setField((d) => { d.panels.mostReadTitle[lang] = v; })}
+                    />
+                  }
+                  renderItem={(item) => (
+                    <DiscussionCard question={item} locale={locale} showViews />
+                  )}
+                />
               </div>
 
               {/* The curated panel. It owns its own fetch and its own tabs, so a
