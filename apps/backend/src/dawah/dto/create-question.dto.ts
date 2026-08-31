@@ -24,7 +24,7 @@ export class CreateQuestionDto {
   // Generous ceiling: a long question is fine, but this is the wall against a
   // megabyte paste. Express's JSON limit sits above it, so an over-limit body is
   // rejected here as 400, not swallowed as a 500.
-  @MaxLength(20000)
+  @MaxLength(DISCUSSION_LIMITS.MAX_MEMBER_BODY_LENGTH)
   body: string;
 
   @ApiPropertyOptional({ description: 'Category slug from the shared Dawah taxonomy.' })

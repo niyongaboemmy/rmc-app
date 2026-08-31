@@ -32,13 +32,13 @@ export class CreateEntryDto {
   @ApiPropertyOptional({ description: 'Extra detail beneath the question, in markdown.' })
   @IsOptional()
   @IsString()
-  @MaxLength(20000)
+  @MaxLength(DISCUSSION_LIMITS.MAX_ADMIN_BODY_LENGTH)
   body?: string;
 
   @ApiProperty({ description: "RMC's answer, in markdown." })
   @IsString()
   @MinLength(DISCUSSION_LIMITS.MIN_BODY_LENGTH)
-  @MaxLength(20000)
+  @MaxLength(DISCUSSION_LIMITS.MAX_ADMIN_BODY_LENGTH)
   answerBody: string;
 
   /**
@@ -77,7 +77,7 @@ export class AnswerQuestionDto {
   @ApiProperty({ description: "RMC's answer, in markdown." })
   @IsString()
   @MinLength(DISCUSSION_LIMITS.MIN_BODY_LENGTH)
-  @MaxLength(20000)
+  @MaxLength(DISCUSSION_LIMITS.MAX_ADMIN_BODY_LENGTH)
   answerBody: string;
 
   /**
