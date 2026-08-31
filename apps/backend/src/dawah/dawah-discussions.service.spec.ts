@@ -577,4 +577,72 @@ describe('DawahDiscussionsService (admin)', () => {
       expect(result.items[0]).not.toHaveProperty('entryNumber');
     });
   });
+
+  describe('the essential flag', () => {
+    it('defaults to false — nothing is curated until somebody says so', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await service
+        .createEntry(admin, {
+          title: 'A question long enough to pass',
+          answerBody: 'An answer long enough to pass',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isEssential: false }),
+      );
+    });
+
+    it('stores it when the entry is curated', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await service
+        .createEntry(admin, {
+          title: 'A question long enough to pass',
+          answerBody: 'An answer long enough to pass',
+          language: 'en',
+          isEssential: true,
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isEssential: true }),
+      );
+    });
+
+    it('can be turned off again', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service.updateEntry('q-1', { isEssential: false } as never);
+
+      expect(written()).toMatchObject({ isEssential: false });
+    });
+
+    it('is left alone when the field is not sent', async () => {
+      questions.findOne.mockResolvedValue(makeQuestion());
+
+      await service.updateEntry('q-1', { title: 'A new title entirely' } as never);
+
+      expect(written()).not.toHaveProperty('isEssential');
+    });
+
+    it('narrows the public listing when asked for', async () => {
+      await service.list({ essential: 'true' } as never);
+
+      expect(qb.andWhere).toHaveBeenCalledWith('q.isEssential = true');
+    });
+
+    // `essential=false` means "do not restrict", not "show the un-curated ones".
+    // Reading it as a filter would make absence and negation behave differently.
+    it('does not narrow for anything other than "true"', async () => {
+      await service.list({ essential: 'false' } as never);
+      expect(qb.andWhere).not.toHaveBeenCalledWith('q.isEssential = true');
+
+      qb.andWhere.mockClear();
+      await service.list({} as never);
+      expect(qb.andWhere).not.toHaveBeenCalledWith('q.isEssential = true');
+    });
+  });
 });

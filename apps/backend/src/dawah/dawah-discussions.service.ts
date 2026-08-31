@@ -162,6 +162,13 @@ export class DawahDiscussionsService {
     if (query.category) {
       qb.andWhere('category.slug = :category', { category: query.category });
     }
+    // Only the affirmative narrows. `essential=false` means "do not restrict",
+    // not "show the un-curated ones" — nothing asks for that, and reading it as a
+    // filter would make the parameter's absence and its negation behave
+    // differently for no reason.
+    if (query.essential === 'true') {
+      qb.andWhere('q.isEssential = true');
+    }
     if (query.language) {
       qb.andWhere('q.language = :language', { language: query.language });
     }
@@ -546,6 +553,7 @@ export class DawahDiscussionsService {
         // The column is NOT NULL with a '' default, so an absent one stores ''.
         body: dto.body ?? '',
         summary: dto.summary?.trim() || null,
+        isEssential: dto.isEssential ?? false,
         answerBody: dto.answerBody,
         language: dto.language,
         categoryId: category?.id ?? null,
@@ -610,6 +618,7 @@ export class DawahDiscussionsService {
       // Blanking it is meaningful — it returns the entry to the derived excerpt —
       // so an empty string stores null rather than being ignored.
       ...(dto.summary !== undefined ? { summary: dto.summary.trim() || null } : {}),
+      ...(dto.isEssential !== undefined ? { isEssential: dto.isEssential } : {}),
       ...(dto.answerBody !== undefined ? { answerBody: dto.answerBody } : {}),
       ...(dto.language !== undefined ? { language: dto.language } : {}),
       ...(dto.categoryId !== undefined
@@ -709,6 +718,7 @@ export class DawahDiscussionsService {
         hasAnswer: q.answerBody.length > 0,
         // Raw, so the library can tell an authored summary from a derived one.
         hasSummary: !!q.summary?.trim(),
+        isEssential: q.isEssential,
         // Lets the queue say "9 member questions awaiting an answer" without inferring
         // it from author_id = answered_by_id.
         origin: q.origin,
@@ -747,6 +757,7 @@ export class DawahDiscussionsService {
       // admin opening and saving an untouched form would otherwise freeze
       // today's auto-excerpt in as an authored summary.
       summary: q.summary,
+      isEssential: q.isEssential,
       answerBody: q.answerBody,
       language: q.language,
       status: q.status,

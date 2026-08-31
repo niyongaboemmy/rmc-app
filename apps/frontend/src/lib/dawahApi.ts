@@ -542,6 +542,8 @@ export interface AdminEntry {
   slug: string;
   /** Staff-facing reference number — "Question 18". Never shown publicly. */
   entryNumber: number;
+  /** Curated into The Essential Answers panel. */
+  isEssential: boolean;
   title: string;
   body: string;
   /**
@@ -571,6 +573,8 @@ export interface CreateEntryPayload {
   answerBody: string;
   /** Plain-text lede for the listing. Optional — blank falls back to a derived excerpt. */
   summary?: string;
+  /** Curate into The Essential Answers panel. */
+  isEssential?: boolean;
   categoryId?: string;
   language: PostLanguage;
 }

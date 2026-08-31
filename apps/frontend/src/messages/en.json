@@ -3935,7 +3935,9 @@
         "summaryLabel": "Summary for the list",
         "summaryPlaceholder": "One or two sentences stating the ruling, as it should read in the question list.",
         "summaryHint": "Optional. Left blank, the list shows the opening of the answer instead.",
-        "entryNumber": "Question {number}"
+        "entryNumber": "Question {number}",
+        "essentialLabel": "Include in The Essential Answers",
+        "essentialHint": "Shows this entry in the curated panel beside the feed, under its category."
       }
     }
   }

@@ -184,6 +184,15 @@ export class DawahQuestion {
   @Column({ name: 'view_count', type: 'int', default: 0 })
   viewCount: number;
 
+  /**
+   * One of "The Essential Answers" — the curated set beside the feed.
+   *
+   * Curated rather than computed: the panel claims the entries were chosen, so
+   * they are. Set by an admin on the entry editor; nothing derives it.
+   */
+  @Column({ name: 'is_essential', type: 'boolean', default: false })
+  isEssential: boolean;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

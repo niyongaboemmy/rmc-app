@@ -47,6 +47,24 @@ export class QueryDiscussionsDto {
   @IsIn(DISCUSSION_SORTS)
   sort?: DiscussionSort = 'new';
 
+  /**
+   * Restrict to "The Essential Answers" — the curated panel beside the feed.
+   *
+   * A STRING union, not a boolean, and deliberately so. A query parameter always
+   * arrives as text, and the global pipe's `enableImplicitConversion` turns any
+   * non-empty string into `true` for a boolean field — so `?essential=false`
+   * would filter TO the essential entries, the exact opposite of the request.
+   * `@IsIn` on the two literals makes the wire format explicit and anything else
+   * a 400.
+   */
+  @ApiPropertyOptional({
+    enum: ['true', 'false'],
+    description: 'Restrict to entries curated into The Essential Answers.',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  essential?: 'true' | 'false';
+
   /** Full-text search across title + body (GIN index, 'simple' config). Phase D. */
   @ApiPropertyOptional({ description: 'Full-text search across title and body.' })
   @IsOptional()

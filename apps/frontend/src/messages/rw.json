@@ -3935,7 +3935,9 @@
         "summaryLabel": "Incamake yo ku rutonde",
         "summaryPlaceholder": "Interuro imwe cyangwa ebyiri zivuga igisubizo, uko kigomba gusomeka ku rutonde rw’ibibazo.",
         "summaryHint": "Ntibisabwa. Nusiga ubusa, urutonde rwerekana intangiriro y’igisubizo.",
-        "entryNumber": "Ikibazo {number}"
+        "entryNumber": "Ikibazo {number}",
+        "essentialLabel": "Shyira mu Bisubizo by’ingenzi",
+        "essentialHint": "Bigaragaza iki kibazo mu gace k’ibyatoranyijwe kuruhande, munsi y’icyiciro cyacyo."
       }
     }
   }

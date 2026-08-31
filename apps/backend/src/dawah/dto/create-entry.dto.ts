@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 import { POST_LANGUAGES } from './query-discussions.dto';
 import { DISCUSSION_LIMITS } from '../discussions.constants';
 
@@ -54,6 +63,22 @@ export class CreateEntryDto {
   @IsString()
   @MaxLength(320)
   summary?: string;
+
+  /**
+   * One of "The Essential Answers" — the curated panel beside the feed.
+   *
+   * `@Transform` reads the RAW value off `obj` rather than the converted one.
+   * The global ValidationPipe runs with `enableImplicitConversion`, which coerces
+   * to the reflected type before validators see it — and for a boolean that turns
+   * ANY non-empty string into `true`, so a stray `"false"` would silently mark an
+   * entry essential. Reading `obj` gets the untouched JSON value, and @IsBoolean
+   * then rejects a string with a 400 instead of guessing.
+   */
+  @ApiPropertyOptional({ description: 'Include in the curated Essential Answers panel.' })
+  @IsOptional()
+  @Transform(({ obj }) => (obj as Record<string, unknown>).isEssential)
+  @IsBoolean()
+  isEssential?: boolean;
 
   @ApiPropertyOptional({ description: 'Category id from the shared Dawah taxonomy.' })
   @IsOptional()

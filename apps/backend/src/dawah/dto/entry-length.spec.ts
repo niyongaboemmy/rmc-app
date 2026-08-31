@@ -102,3 +102,44 @@ describe('discussion length limits', () => {
     expect(worstCaseBytes).toBeLessThan(2 * 1024 * 1024);
   });
 });
+
+/**
+ * `isEssential` under the global pipe's `enableImplicitConversion`.
+ *
+ * That option coerces to the reflected type before validators run, and for a
+ * boolean it turns ANY non-empty string into `true` — so a stray `"false"` would
+ * silently mark an entry as one of The Essential Answers. The DTO reads the raw
+ * value off `obj` to dodge it; these run with the same option the pipe uses, or
+ * they would not be testing the thing that goes wrong.
+ */
+describe('isEssential coercion', () => {
+  const IMPLICIT = { enableImplicitConversion: true } as const;
+  const withFlag = (isEssential: unknown) =>
+    plainToInstance(
+      CreateEntryDto,
+      {
+        title: 'A question long enough to pass',
+        answerBody: 'An answer long enough to pass',
+        language: 'en',
+        isEssential,
+      },
+      IMPLICIT,
+    );
+
+  it('accepts a real boolean, both ways round', async () => {
+    const on = withFlag(true);
+    const off = withFlag(false);
+    expect(await validate(on)).toHaveLength(0);
+    expect(await validate(off)).toHaveLength(0);
+    expect(on.isEssential).toBe(true);
+    expect(off.isEssential).toBe(false);
+  });
+
+  it('rejects the string "false" rather than storing it as true', async () => {
+    expect(await errorsOn(withFlag('false'), 'isEssential')).toBe(true);
+  });
+
+  it('is optional — an entry need not say anything about it', async () => {
+    expect(await errorsOn(withFlag(undefined), 'isEssential')).toBe(false);
+  });
+});
