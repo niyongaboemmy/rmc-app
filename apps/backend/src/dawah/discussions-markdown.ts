@@ -4,6 +4,7 @@ import { marked } from 'marked';
 // perfectly and is `undefined` at runtime — the emitted CJS has no interop helper.
 // sanitize-html is `export =`; this is the honest way to reach it.
 import * as sanitizeHtml from 'sanitize-html';
+import { addHeadingAnchors, type TocEntry } from './discussions-toc';
 
 /**
  * The Discussions markdown pipeline: a stranger's markdown → HTML nobody can be hurt by.
@@ -48,8 +49,15 @@ const ALLOWED_TAGS = [
   'blockquote',
   'code',
   'pre',
+  // h1 belongs to the page — it is the question's title. h2 down to h4 are the
+  // answer's own structure. h2 was excluded when this was a member forum post
+  // nested inside a page; an admin-authored ANSWER is the page's main content, so
+  // its top-level heading IS h2. Leaving it out did not demote such a heading, it
+  // DESTROYED it: sanitize-html discards the tag and keeps the text, so an admin
+  // using the editor's "Heading 2" button silently got a bare paragraph.
+  'h2',
   'h3',
-  'h4', // h1/h2 belong to the page, not to a post inside it
+  'h4',
   'a',
   'hr',
 ];
@@ -124,4 +132,13 @@ export function postExcerpt(source: string | null | undefined, max = 160): strin
     .replace(/\s+/g, ' ')
     .trim();
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+export function renderAnswerWithToc(source: string | null | undefined): {
+  html: string;
+  toc: TocEntry[];
+} {
+  // Sanitise FIRST, stamp SECOND. The order is the security property, which is why
+  // it is two named steps here rather than one function doing both.
+  return addHeadingAnchors(renderPostMarkdown(source));
 }

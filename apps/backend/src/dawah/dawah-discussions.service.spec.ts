@@ -20,6 +20,10 @@ const postExcerptMock = jest.fn(
 jest.mock('./discussions-markdown', () => ({
   renderPostMarkdown: (src: string | null | undefined) => src ?? '',
   postExcerpt: (src: string | null | undefined, max?: number) => postExcerptMock(src, max),
+  // The answer's headings are anchored for the table of contents. The real rules
+  // live in discussions-toc.spec.ts, which can load them — this module cannot be
+  // imported here at all, since `marked` is ESM-only.
+  renderAnswerWithToc: (src: string | null | undefined) => ({ html: src ?? '', toc: [] }),
 }));
 
 import { DawahDiscussionsService } from './dawah-discussions.service';

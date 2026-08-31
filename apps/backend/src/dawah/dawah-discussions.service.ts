@@ -17,7 +17,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../integrations/email/email.service';
 import { answeredEmail } from './discussions-notifications';
-import { postExcerpt, renderPostMarkdown } from './discussions-markdown';
+import { postExcerpt, renderAnswerWithToc, renderPostMarkdown } from './discussions-markdown';
 import { slugify } from './dawah-slug.util';
 import { DISCUSSION_LIMITS, RELATED_LIMIT } from './discussions.constants';
 import type { QueryDiscussionsDto } from './dto/query-discussions.dto';
@@ -98,6 +98,10 @@ export class DawahDiscussionsService {
    *   · status            — only published rows reach a public route anyway
    */
   toPublic(question: DawahQuestion) {
+    // Rendered once, for both the HTML and its contents list: the ids in the markup
+    // and the ids in the list have to be the same ones, and rendering twice is the
+    // way they quietly stop being.
+    const answer = renderAnswerWithToc(question.answerBody);
     return {
       id: question.id,
       slug: question.slug,
@@ -112,7 +116,13 @@ export class DawahDiscussionsService {
       // the lede a few lines below itself.
       answerSummary: question.answerSummary?.trim() || null,
       bodyHtml: renderPostMarkdown(question.body),
-      answerHtml: renderPostMarkdown(question.answerBody),
+      answerHtml: answer.html,
+      /**
+       * The answer's headings, for a table of contents. Empty for most entries —
+       * a short ruling has no headings, and a list of one is not a contents list.
+       * The client decides when it is worth showing.
+       */
+      answerToc: answer.toc,
       language: question.language,
       category: question.category ?? null,
       answeredAt: question.answeredAt,

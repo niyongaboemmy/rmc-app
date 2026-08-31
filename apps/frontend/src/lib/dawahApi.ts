@@ -452,6 +452,14 @@ export interface DiscussionQuestion {
   answerSummary: string | null;
   /** Rendered + sanitised SERVER-SIDE. The client renders no markdown, ever. */
   bodyHtml: string;
+  /**
+   * The answer's headings, for a table of contents.
+   *
+   * The ids match anchors the SERVER stamped onto the rendered answer, after
+   * sanitising — so they are ids nobody authored. Empty for most entries: a short
+   * ruling has no headings, and a contents list of one is not a contents list.
+   */
+  answerToc: { id: string; text: string; level: number }[];
   /** RMC's answer, likewise rendered and sanitised server-side. */
   answerHtml: string;
   /** Drives `dir` on THIS entry — never the page locale. An Arabic entry on the

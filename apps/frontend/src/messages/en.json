@@ -3943,7 +3943,8 @@
       },
       "download": "Download",
       "share": "Share",
-      "linkCopied": "Link copied"
+      "linkCopied": "Link copied",
+      "contents": "In this answer"
     }
   }
 }

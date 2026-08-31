@@ -10,6 +10,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
 import { QuestionRating } from '@/components/dawah/QuestionRating';
 import { PrintOnLoad } from '@/components/dawah/PrintOnLoad';
+import { AnswerContents } from '@/components/dawah/AnswerContents';
 import { dawahApi, type DiscussionQuestion, type PostLanguage } from '@/lib/dawahApi';
 import {
   ContentKeys, DISCUSSIONS_DEFAULT, mergeContent, pick, type DiscussionsContent,
@@ -232,9 +233,16 @@ export default async function DiscussionEntryPage({
                     {entry.answerSummary}
                   </p>
                 )}
+                {/* Outcome, then map, then detail: the short ruling above, the
+                    contents here, the answer itself below. */}
+                <AnswerContents
+                  toc={entry.answerToc}
+                  label={t('discussions.contents')}
+                  dir={dirOf(entry.language)}
+                />
                 <div
                   dir={dirOf(entry.language)}
-                  className="prose prose-sm md:prose-base mt-3 max-w-none text-gray-700 prose-p:leading-[1.65] prose-a:text-rmc-green"
+                  className="prose prose-sm md:prose-base mt-3 max-w-none text-gray-700 prose-p:leading-[1.65] prose-a:text-rmc-green prose-headings:scroll-mt-24"
                   dangerouslySetInnerHTML={{ __html: entry.answerHtml }}
                 />
               </div>
