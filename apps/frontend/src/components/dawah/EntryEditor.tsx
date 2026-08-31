@@ -63,6 +63,15 @@ export function EntryEditor({
   const [answerBody, setAnswerBody] = useState('');
   const [summary, setSummary] = useState('');
   /**
+   * The entry's staff-facing number. For an existing entry it is what was
+   * assigned; for a new one it is a PREVIEW of what the next insert will get.
+   *
+   * Preview, not a reservation: the value is assigned server-side, so if another
+   * admin saves first this one shifts by one. That is why it is displayed rather
+   * than submitted — nothing here can create a duplicate.
+   */
+  const [entryNumber, setEntryNumber] = useState<number | null>(null);
+  /**
    * The answer as HTML, purely to SEED TipTap — it is never sent anywhere.
    * `answerBody` remains the markdown of record, updated from the editor's own
    * document on every keystroke. Kept in state rather than derived so the editor
@@ -70,12 +79,6 @@ export function EntryEditor({
    */
   const [answerHtml, setAnswerHtml] = useState('');
   const [answerReady, setAnswerReady] = useState(false);
-  /**
-   * Whether this entry HAD question detail when it was opened. Latched at load
-   * rather than derived from `body`, so clearing the box does not make it vanish
-   * mid-edit — which would strand whatever the admin was part-way through fixing.
-   */
-  const [hasDetail, setHasDetail] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [language, setLanguage] = useState<PostLanguage>('en');
 
@@ -117,6 +120,25 @@ export function EntryEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryId, answerBody !== '']);
 
+  /**
+   * A NEW entry has no number yet, so ask what the next one will be.
+   *
+   * Failure is silent: the number is a convenience for referring to an entry, and
+   * refusing to let an admin write one because a display field could not load
+   * would be the wrong trade. The header simply omits it.
+   */
+  useEffect(() => {
+    if (entryId !== null) return;
+    let cancelled = false;
+    dawahApi.admin.discussions
+      .nextEntryNumber()
+      .then((r) => !cancelled && setEntryNumber(r.nextEntryNumber))
+      .catch(() => !cancelled && setEntryNumber(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [entryId]);
+
   useEffect(() => {
     if (entryId === null) return;
     let cancelled = false;
@@ -127,11 +149,11 @@ export function EntryEditor({
         if (cancelled) return;
         setTitle(e.title);
         setBody(e.body);
-        setHasDetail(!!e.body?.trim());
         setAnswerBody(e.answerBody);
         // The raw stored value — null shows an empty box, so saving an untouched
         // form cannot silently promote a derived excerpt into an authored summary.
         setSummary(e.summary ?? '');
+        setEntryNumber(e.entryNumber);
         setCategoryId(e.categoryId ?? '');
         setLanguage(e.language);
       })
@@ -150,9 +172,7 @@ export function EntryEditor({
     try {
       const payload = {
         title: title.trim(),
-        // Omitted entirely when the entry has no detail, so updateEntry's
-        // `!== undefined` check leaves the stored value alone.
-        ...(hasDetail ? { body } : {}),
+        body,
         answerBody,
         summary: summary.trim(),
         categoryId: categoryId || undefined,
@@ -170,15 +190,22 @@ export function EntryEditor({
   };
 
   const dir = language === 'ar' ? 'rtl' : 'ltr';
-  // No `body` requirement: an admin-authored entry has no separate detail, and the
-  // server now treats it as optional too.
-  const canSave = title.trim().length >= 10 && answerBody.trim().length >= 20;
+  const canSave = title.trim().length >= 10 && body.trim().length >= 20 && answerBody.trim().length >= 20;
 
   return (
     <Modal open onClose={onClose} size="lg">
       <ModalHeader>
         <ModalTitle>
-          {entryId ? t('discussions.admin.editTitle') : t('discussions.admin.newTitle')}
+          <span className="flex flex-wrap items-baseline gap-2">
+            {entryId ? t('discussions.admin.editTitle') : t('discussions.admin.newTitle')}
+            {/* Generated, never typed — so it is shown as a label rather than a
+                field. On a new entry it is what the next insert will receive. */}
+            {entryNumber !== null && (
+              <span className="rounded-full bg-rmc-green-light px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-rmc-green">
+                {t('discussions.admin.entryNumber', { number: entryNumber })}
+              </span>
+            )}
+          </span>
         </ModalTitle>
       </ModalHeader>
       <ModalBody>
@@ -253,29 +280,19 @@ export function EntryEditor({
               </div>
             </div>
 
-            {/* Extra detail beneath the question — shown ONLY for an entry that already
-                has some, which in practice means a member's submission where the asker
-                explained their situation. It stays editable so that text can be tidied.
-
-                A NEW entry does not get this box. Both fields were labelled "Question",
-                and on an admin-authored entry the title IS the question — the second box
-                only invited it to be typed twice, or left the detail page showing the
-                same sentence in two places. */}
-            {hasDetail && (
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  {t('discussions.admin.questionLabel')}
-                </label>
-                <textarea
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  dir={dir}
-                  rows={5}
-                  className={`${inputClass} font-mono text-[13px]`}
-                  placeholder={t('discussions.admin.questionPlaceholder')}
-                />
-              </div>
-            )}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                {t('discussions.admin.questionLabel')}
+              </label>
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                dir={dir}
+                rows={5}
+                className={`${inputClass} font-mono text-[13px]`}
+                placeholder={t('discussions.admin.questionPlaceholder')}
+              />
+            </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">

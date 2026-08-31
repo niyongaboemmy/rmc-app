@@ -3934,7 +3934,8 @@
         "rejectConfirmBody": "Ntikizasubizwa cyangwa ngo gitangazwe. Umunyamuryango ntiyandikirwa.",
         "summaryLabel": "Incamake yo ku rutonde",
         "summaryPlaceholder": "Interuro imwe cyangwa ebyiri zivuga igisubizo, uko kigomba gusomeka ku rutonde rw’ibibazo.",
-        "summaryHint": "Ntibisabwa. Nusiga ubusa, urutonde rwerekana intangiriro y’igisubizo."
+        "summaryHint": "Ntibisabwa. Nusiga ubusa, urutonde rwerekana intangiriro y’igisubizo.",
+        "entryNumber": "Ikibazo {number}"
       }
     }
   }

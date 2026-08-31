@@ -139,9 +139,15 @@ function SubmissionQueue() {
             <li key={s.id} className="rounded-xl border border-gray-100 bg-white p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
+                  {/* The queue is where an unanswered entry gets discussed before it
+                      is answered — "has anyone looked at 21 yet?" — so the number
+                      matters here as much as in the library. */}
+                  <span className="text-[11px] font-semibold tabular-nums text-gray-400">
+                    #{s.entryNumber}
+                  </span>
                   <h2
                     dir={s.language === 'ar' ? 'rtl' : 'ltr'}
-                    className="text-sm font-bold text-gray-900"
+                    className="mt-0.5 text-sm font-bold text-gray-900"
                   >
                     {s.title}
                   </h2>

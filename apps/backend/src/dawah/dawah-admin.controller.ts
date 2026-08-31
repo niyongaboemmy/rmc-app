@@ -73,6 +73,17 @@ export class DawahAdminController {
     return this.discussions.submissionQueue();
   }
 
+  /**
+   * The number a new entry will be given. Display only — the value is assigned
+   * server-side on insert, so a stale preview cannot produce a duplicate.
+   */
+  @Get('discussions/next-number')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'The entry number the next new entry will receive.' })
+  nextEntryNumber() {
+    return this.discussions.peekNextEntryNumber();
+  }
+
   @Get('discussions/entries')
   @Permissions(Permission.DISCUSSIONS_VERIFY)
   @ApiOperation({ summary: 'ALL entries in any status, for the admin listing.' })

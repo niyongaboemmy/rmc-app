@@ -53,6 +53,7 @@ describe('DawahDiscussionsService (admin)', () => {
     count: jest.Mock;
     update: jest.Mock;
     create: jest.Mock;
+    save: jest.Mock;
     createQueryBuilder: jest.Mock;
   };
   let ratings: { find: jest.Mock };
@@ -95,6 +96,10 @@ describe('DawahDiscussionsService (admin)', () => {
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
       getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      // nextEntryNumber(): MAX over the table, soft-deleted rows included.
+      withDeleted: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      getRawOne: jest.fn().mockResolvedValue({ max: 17 }),
     };
 
     questions = {
@@ -103,6 +108,7 @@ describe('DawahDiscussionsService (admin)', () => {
       count: jest.fn().mockResolvedValue(0),
       update: jest.fn().mockResolvedValue(undefined),
       create: jest.fn((d) => d),
+      save: jest.fn((d) => Promise.resolve(d)),
       createQueryBuilder: jest.fn(() => qb),
     };
     ratings = { find: jest.fn().mockResolvedValue([]) };
@@ -486,6 +492,89 @@ describe('DawahDiscussionsService (admin)', () => {
       expect(questions.create).toHaveBeenCalledWith(
         expect.objectContaining({ body: 'The asker explained their situation' }),
       );
+    });
+  });
+
+  describe('entry numbering', () => {
+    it('assigns one past the highest ever used', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await service
+        .createEntry(admin, {
+          title: 'A question long enough to pass',
+          answerBody: 'An answer long enough to pass',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(
+        expect.objectContaining({ entryNumber: 18 }),
+      );
+    });
+
+    it('starts at 1 on an empty table', async () => {
+      qb.getRawOne.mockResolvedValue({ max: null });
+      questions.findOne.mockResolvedValue(null);
+
+      await service
+        .createEntry(admin, {
+          title: 'A question long enough to pass',
+          answerBody: 'An answer long enough to pass',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      expect(questions.create).toHaveBeenCalledWith(expect.objectContaining({ entryNumber: 1 }));
+    });
+
+    // Numbering by how many rows are VISIBLE would re-issue a number the moment
+    // anything is deleted. Gaps are correct; collisions are not.
+    it('counts soft-deleted rows, so a number is never reused', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await service.peekNextEntryNumber();
+
+      expect(qb.withDeleted).toHaveBeenCalled();
+    });
+
+    // Two admins saving at the same instant read the same MAX; one loses on the
+    // unique index. The retry has to RE-READ rather than reuse the value that
+    // just failed, or it fails five times with the same number.
+    it('re-reads the number when the insert collides', async () => {
+      questions.findOne.mockResolvedValue(null);
+      qb.getRawOne
+        .mockResolvedValueOnce({ max: 17 })
+        .mockResolvedValueOnce({ max: 18 });
+      questions.save = jest
+        .fn()
+        .mockRejectedValueOnce(Object.assign(new Error('dup'), { code: '23505' }))
+        .mockImplementation((d) => Promise.resolve(d));
+
+      await service
+        .createEntry(admin, {
+          title: 'A question long enough to pass',
+          answerBody: 'An answer long enough to pass',
+          language: 'en',
+        } as never)
+        .catch(() => undefined);
+
+      const numbers = questions.create.mock.calls.map((c) => c[0].entryNumber);
+      expect(numbers).toEqual([18, 19]);
+    });
+
+    it('reports the next number without consuming it', async () => {
+      expect(await service.peekNextEntryNumber()).toEqual({ nextEntryNumber: 18 });
+      expect(questions.create).not.toHaveBeenCalled();
+    });
+
+    // Admin-facing only: the reading order is still newest-first.
+    it('never reaches a public projection', async () => {
+      const row = makeQuestion({ status: 'published', answerBody: 'a', entryNumber: 7 });
+      qb.getManyAndCount.mockResolvedValue([[row], 1]);
+
+      const result = await service.list({} as never);
+
+      expect(result.items[0]).not.toHaveProperty('entryNumber');
     });
   });
 });

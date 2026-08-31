@@ -196,6 +196,11 @@ function EntryLibrary() {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* First in the row: it is how somebody names this entry to a
+                      colleague, so it should be the first thing found when scanning. */}
+                  <span className="text-[11px] font-semibold tabular-nums text-gray-400">
+                    #{entry.entryNumber}
+                  </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                       STATUS_STYLE[entry.status] ?? 'bg-gray-100 text-gray-500'

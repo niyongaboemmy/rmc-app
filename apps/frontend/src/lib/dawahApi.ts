@@ -480,6 +480,8 @@ export class ThrottledError extends Error {
 export interface AdminQuestion {
   id: string;
   slug: string;
+  /** Staff-facing reference number — "Question 18". Never shown publicly. */
+  entryNumber: number;
   title: string;
   language: PostLanguage;
   status: QuestionStatus;
@@ -522,6 +524,8 @@ export interface RelatedQuestion {
 /** A member's question waiting for RMC to answer it. */
 export interface PendingSubmission {
   id: string;
+  /** Staff-facing reference number — the queue is where entries get discussed by it. */
+  entryNumber: number;
   title: string;
   bodyHtml: string;
   language: PostLanguage;
@@ -536,6 +540,8 @@ export interface PendingSubmission {
 export interface AdminEntry {
   id: string;
   slug: string;
+  /** Staff-facing reference number — "Question 18". Never shown publicly. */
+  entryNumber: number;
   title: string;
   body: string;
   /**
@@ -752,6 +758,13 @@ export const dawahApi = {
       entries: (query: { search?: string; status?: string; page?: number; limit?: number } = {}):
         Promise<Paginated<AdminQuestion>> =>
         unwrap(apiClient.get('/admin/dawah/discussions/entries', { params: query })),
+
+      /**
+       * The number the next new entry will receive. Display only — the value is
+       * assigned server-side on insert, so a stale preview cannot duplicate one.
+       */
+      nextEntryNumber: (): Promise<{ nextEntryNumber: number }> =>
+        unwrap(apiClient.get('/admin/dawah/discussions/next-number')),
 
       /** One entry with its MARKDOWN SOURCE, for the editor. */
       entry: (id: string): Promise<AdminEntry> =>

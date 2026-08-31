@@ -411,9 +411,10 @@ export class DawahDiscussionsService {
 
     const category = await this.resolveCategory(dto.categoryId);
 
-    const question = await this.insertWithUniqueSlug(dto.title, (slug) =>
+    const question = await this.insertWithUniqueSlug(dto.title, (slug, entryNumber) =>
       this.questions.create({
         slug,
+        entryNumber,
         title: dto.title.trim(),
         body: dto.body,
         language: dto.language,
@@ -471,17 +472,51 @@ export class DawahDiscussionsService {
    * A non-Latin title (Arabic, or Kinyarwanda after diacritics strip) can slugify to empty,
    * so the base falls back to a stable word rather than leaving the URL as just a suffix.
    */
+  /**
+   * The next staff-facing entry number: one past the highest ever used.
+   *
+   * MAX rather than COUNT, and `withDeleted` so soft-deleted rows still count:
+   * numbering by how many rows are visible would hand out a number that is
+   * already taken the moment anything is deleted. Gaps are correct — a number
+   * that gets recycled stops identifying an entry.
+   */
+  private async nextEntryNumber(): Promise<number> {
+    const row = await this.questions
+      .createQueryBuilder('q')
+      .withDeleted()
+      .select('MAX(q.entryNumber)', 'max')
+      .getRawOne<{ max: number | null }>();
+    return (row?.max ?? 0) + 1;
+  }
+
+  /** The next number, for the admin form to show before the entry is saved. */
+  async peekNextEntryNumber(): Promise<{ nextEntryNumber: number }> {
+    return { nextEntryNumber: await this.nextEntryNumber() };
+  }
+
+  /**
+   * Insert with a unique slug AND a unique entry number.
+   *
+   * Both are recomputed on every attempt, which is what makes the retry correct
+   * for the number: two admins saving at the same instant read the same MAX, one
+   * of them loses on the unique index, and the loser re-reads rather than
+   * retrying with the value that just failed.
+   */
   private async insertWithUniqueSlug(
     title: string,
-    build: (slug: string) => DawahQuestion,
+    build: (slug: string, entryNumber: number) => DawahQuestion,
   ): Promise<DawahQuestion> {
     const base = slugify(title) || 'question';
     for (let attempt = 0; attempt < 5; attempt++) {
       const suffix = randomBytes(3).toString('hex');
       try {
-        return await this.questions.save(build(`${base}-${suffix}`.slice(0, 180)));
+        const entryNumber = await this.nextEntryNumber();
+        return await this.questions.save(
+          build(`${base}-${suffix}`.slice(0, 180), entryNumber),
+        );
       } catch (err: unknown) {
-        // 23505 = unique_violation. Anything else is a real error.
+        // 23505 = unique_violation, on either the slug or the number. Anything
+        // else is a real error.
         if ((err as { code?: string }).code === '23505' && attempt < 4) continue;
         throw err;
       }
@@ -502,9 +537,10 @@ export class DawahDiscussionsService {
     const category = await this.resolveCategory(dto.categoryId);
     const now = new Date();
 
-    const question = await this.insertWithUniqueSlug(dto.title, (slug) =>
+    const question = await this.insertWithUniqueSlug(dto.title, (slug, entryNumber) =>
       this.questions.create({
         slug,
+        entryNumber,
         title: dto.title.trim(),
         // Optional here: on an admin-authored entry the title IS the question.
         // The column is NOT NULL with a '' default, so an absent one stores ''.
@@ -621,6 +657,7 @@ export class DawahDiscussionsService {
     });
     return rows.map((q) => ({
       id: q.id,
+      entryNumber: q.entryNumber,
       title: q.title,
       bodyHtml: renderPostMarkdown(q.body),
       language: q.language,
@@ -665,6 +702,7 @@ export class DawahDiscussionsService {
       items: items.map((q) => ({
         id: q.id,
         slug: q.slug,
+        entryNumber: q.entryNumber,
         title: q.title,
         language: q.language,
         status: q.status,
@@ -701,6 +739,7 @@ export class DawahDiscussionsService {
     return {
       id: q.id,
       slug: q.slug,
+      entryNumber: q.entryNumber,
       title: q.title,
       // MARKDOWN SOURCE — this is the edit form, not a reader.
       body: q.body,

@@ -75,6 +75,18 @@ export class DawahQuestion {
   @Column({ type: 'varchar', length: 180, unique: true })
   slug: string;
 
+  /**
+   * A stable number for staff to refer to an entry by — "Question 18".
+   *
+   * ADMIN-FACING ONLY. It is not the reading order: the public listing is
+   * newest-first and never receives this. Assigned on insert as MAX + 1, unique,
+   * and never reused — deleting 18 leaves a gap, because a recycled number stops
+   * identifying anything.
+   */
+  @Index('UQ_dawah_questions_entry_number', { unique: true })
+  @Column({ name: 'entry_number', type: 'int' })
+  entryNumber: number;
+
   /** Plain text. Never HTML — the title is not rich content. */
   @Column({ type: 'varchar', length: 200 })
   title: string;
