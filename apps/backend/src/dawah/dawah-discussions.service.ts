@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, MoreThan, Repository } from 'typeorm';
+import { DataSource, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { DawahQuestion } from './entities/dawah-question.entity';
 import { DawahModerationLog, type ModerationAction } from './entities/dawah-moderation-log.entity';
 import { DawahCategory } from './entities/dawah-category.entity';
@@ -299,8 +299,19 @@ export class DawahDiscussionsService {
         // Absent behind a proxy that strips it; the column is nullable precisely so a
         // missing IP costs the rating nothing.
         ipHash: ip ? sha256(ip) : null,
+        // The follow-up. Sent by a SECOND call — the verdict is recorded the moment
+        // it is clicked, and the form asking why is submitted after — so these are
+        // null on the first write and filled by the upsert below.
+        reason: dto.reason?.trim() || null,
+        comment: dto.comment?.trim() || null,
+        email: dto.email?.trim() || null,
       })
-      .orUpdate(['helpful', 'ip_hash', 'updated_at'], ['question_id', 'voter_hash'])
+      // The follow-up columns join the update set, which is what lets the second
+      // call attach a reason to the verdict the first already stored.
+      .orUpdate(
+        ['helpful', 'ip_hash', 'updated_at', 'reason', 'comment', 'email'],
+        ['question_id', 'voter_hash'],
+      )
       .execute();
 
     return { recorded: true };
@@ -763,6 +774,36 @@ export class DawahDiscussionsService {
       page,
       limit,
     };
+  }
+
+  /**
+   * What readers said about one entry, for the admin working on it.
+   *
+   * ADMIN ONLY — it carries reader-supplied email addresses, which belong to the
+   * reader rather than to the entry and appear in no public projection.
+   *
+   * Only rows that actually said something: a verdict with no follow-up is already
+   * counted in the tallies, and listing it here would bury the handful of rows
+   * with words in them under everything else.
+   */
+  async adminFeedback(id: string) {
+    const rows = await this.ratings.find({
+      where: [
+        { questionId: id, reason: Not(IsNull()) },
+        { questionId: id, comment: Not(IsNull()) },
+      ],
+      order: { updatedAt: 'DESC' },
+      take: 100,
+    });
+
+    return rows.map((r) => ({
+      id: r.id,
+      helpful: r.helpful,
+      reason: r.reason,
+      comment: r.comment,
+      email: r.email,
+      at: r.updatedAt,
+    }));
   }
 
   /** One entry with its raw markdown, for the admin editor. Never a public shape. */

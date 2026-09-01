@@ -3878,7 +3878,11 @@
         "yes": "Yes",
         "no": "No",
         "thanks": "Thank you for your feedback.",
-        "failed": "Could not record your rating. Please try again."
+        "failed": "Could not record your rating. Please try again.",
+        "commentLabel": "Text of the proposal (optional)",
+        "emailLabel": "Your e-mail (optional)",
+        "reasonLabel": "Select reason",
+        "send": "Send"
       },
       "admin": {
         "title": "Q&A library",

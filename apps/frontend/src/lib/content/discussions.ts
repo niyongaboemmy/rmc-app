@@ -61,8 +61,25 @@ export interface DiscussionsContent {
     answerBadge: Tri;
     /** The rating widget's question, asked after the reader has read the answer. */
     ratingPrompt: Tri;
-    /** Replaces the buttons once a rating is recorded. */
+    /** Shown once the follow-up has been sent. */
     ratingThanks: Tri;
+    /** Heading over the follow-up form after "Yes". */
+    ratingSuggestPrompt: Tri;
+    /** Heading over the follow-up form after "No". */
+    ratingReasonPrompt: Tri;
+    /**
+     * The options offered after "No", ONE PER LINE.
+     *
+     * A newline-separated string rather than an array of Tri, deliberately.
+     * `mergeContent` walks arrays by index, so an admin deleting the second of five
+     * reasons would leave the third shifted up wearing the second's seeded
+     * translation — the trap `unmergedList` exists to work around. A single string
+     * has no indices to shift: each language's list is edited whole, and reordering
+     * one cannot corrupt another.
+     *
+     * Blank lines are ignored, so an admin can space the list out while editing.
+     */
+    ratingReasons: Tri;
     /** Heading over the (up to three) entries offered to read next. */
     relatedTitle: Tri;
     /** The closing invitation, and its button. */
@@ -113,6 +130,39 @@ export const DISCUSSIONS_DEFAULT: DiscussionsContent = {
       'Was this answer helpful?',
       'Iki gisubizo cyaragufashije?',
       'هل كانت هذه الإجابة مفيدة؟',
+    ),
+    ratingSuggestPrompt: tri(
+      'Do you have any suggestions for improvement?',
+      'Hari icyo watanga ngo turusheho kunoza?',
+      'هل لديك اقتراحات للتحسين؟',
+    ),
+    ratingReasonPrompt: tri(
+      'Please tell us the reason.',
+      'Turabasaba kutubwira impamvu.',
+      'من فضلك أخبرنا بالسبب.',
+    ),
+    ratingReasons: tri(
+      [
+        'The answer is not clear',
+        'It does not answer my question',
+        'It is too brief',
+        'I think there is a mistake',
+        'Something else',
+      ].join('\n'),
+      [
+        'Igisubizo ntikisobanutse',
+        'Nticyasubije ikibazo cyanjye',
+        'Ni kigufi cyane',
+        'Ndakeka ko hari ikosa',
+        'Ikindi kintu',
+      ].join('\n'),
+      [
+        'الجواب غير واضح',
+        'لا يجيب عن سؤالي',
+        'مختصر جدًا',
+        'أظن أن فيه خطأ',
+        'شيء آخر',
+      ].join('\n'),
     ),
     ratingThanks: tri(
       'Thank you for your feedback.',

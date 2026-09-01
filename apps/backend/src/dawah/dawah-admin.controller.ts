@@ -105,6 +105,13 @@ export class DawahAdminController {
     return this.discussions.adminGetById(id);
   }
 
+  @Get('discussions/entries/:id/feedback')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: "What readers said about this entry, beyond the verdict." })
+  entryFeedback(@Param('id', ParseUUIDPipe) id: string) {
+    return this.discussions.adminFeedback(id);
+  }
+
   @Patch('discussions/entries/:id')
   @Permissions(Permission.DISCUSSIONS_VERIFY)
   @ApiOperation({ summary: 'Edit a published entry in place. Does not re-notify.' })

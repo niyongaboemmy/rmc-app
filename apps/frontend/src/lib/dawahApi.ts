@@ -702,7 +702,19 @@ export const dawahApi = {
      *
      * Returns an acknowledgement, never a tally — the counts are for RMC, not readers.
      */
-    rate: (slug: string, helpful: boolean, voterKey: string): Promise<{ recorded: boolean }> =>
+    /**
+     * Record a verdict, and optionally the follow-up that explains it.
+     *
+     * Called twice for one rating: once when the button is pressed, so a reader who
+     * leaves still counts, and again when they send the form. The server upserts on
+     * (question, voter), so the second call attaches to the first row.
+     */
+    rate: (
+      slug: string,
+      helpful: boolean,
+      voterKey: string,
+      feedback?: { reason?: string; comment?: string; email?: string },
+    ): Promise<{ recorded: boolean }> =>
       unwrap(
         publicHttp.post(`/dawah/discussions/${slug}/rating`, {
           // 'yes'/'no', not a boolean: the API takes a string on purpose, because the
@@ -710,6 +722,7 @@ export const dawahApi = {
           // Boolean("false") is true. See RateQuestionDto.
           helpful: helpful ? 'yes' : 'no',
           voterKey,
+          ...feedback,
         }),
       ),
   },

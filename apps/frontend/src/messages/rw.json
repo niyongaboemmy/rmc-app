@@ -3878,7 +3878,11 @@
         "yes": "Yego",
         "no": "Oya",
         "thanks": "Urakoze ku bitekerezo byawe.",
-        "failed": "Ntibyashobotse kwandika igitekerezo cyawe. Ongera ugerageze."
+        "failed": "Ntibyashobotse kwandika igitekerezo cyawe. Ongera ugerageze.",
+        "commentLabel": "Igitekerezo (ntibisabwa)",
+        "emailLabel": "Imeyili yawe (ntibisabwa)",
+        "reasonLabel": "Hitamo impamvu",
+        "send": "Ohereza"
       },
       "admin": {
         "title": "Ububiko bw'ibibazo n'ibisubizo",

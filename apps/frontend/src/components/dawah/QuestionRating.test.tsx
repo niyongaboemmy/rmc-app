@@ -30,7 +30,14 @@ beforeEach(() => {
 
 // The two editorial strings now arrive as props; the server page resolves them from the
 // CMS. Fixed stand-ins here so a copy change cannot break these tests.
-const COPY = { prompt: 'Was this helpful?', thanks: 'Thanks!' };
+const COPY = {
+  prompt: 'Was this helpful?',
+  thanks: 'Thanks!',
+  suggestPrompt: 'Any suggestions?',
+  reasonPrompt: 'Tell us why.',
+  // One per line, as the CMS stores it.
+  reasons: 'Not clear\nDoes not answer my question\nSomething else',
+};
 
 const yes = () => screen.getByRole('button', { name: /rating\.yes/ });
 const no = () => screen.getByRole('button', { name: /rating\.no/ });
@@ -65,11 +72,101 @@ describe('QuestionRating', () => {
     expect(rate.mock.calls[0][1]).toBe(false);
   });
 
-  it('thanks the reader once the rating lands', async () => {
+  // The verdict is recorded on the click and the widget then ASKS WHY, rather than
+  // closing. A reader who stops here has still told RMC the thing it most needed.
+  it('opens the suggestion form after yes, not a thank-you', async () => {
     render(<QuestionRating slug="wudu" copy={COPY} />);
     fireEvent.click(yes());
+
+    expect(await screen.findByText(COPY.suggestPrompt)).toBeInTheDocument();
+    expect(screen.queryByText(COPY.thanks)).not.toBeInTheDocument();
+  });
+
+  it('offers the reasons after no, from the list the CMS supplied', async () => {
+    render(<QuestionRating slug="wudu" copy={COPY} />);
+    fireEvent.click(no());
+
+    expect(await screen.findByText(COPY.reasonPrompt)).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Not clear' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Does not answer my question' }),
+    ).toBeInTheDocument();
+    // The suggestion form belongs to the other answer.
+    expect(screen.queryByText(COPY.suggestPrompt)).not.toBeInTheDocument();
+  });
+
+  it('thanks the reader once the follow-up is sent', async () => {
+    render(<QuestionRating slug="wudu" copy={COPY} />);
+    fireEvent.click(yes());
+    await screen.findByText(COPY.suggestPrompt);
+
+    fireEvent.click(screen.getByRole('button', { name: /discussions.rating.send/ }));
+
     expect(await screen.findByText(COPY.thanks)).toBeInTheDocument();
-    expect(screen.queryByText(COPY.prompt)).not.toBeInTheDocument();
+  });
+
+  // The second call carries the same verdict plus the detail, so the server's upsert
+  // attaches it to the row the first call wrote rather than creating another.
+  it('sends the suggestion and email against the same verdict', async () => {
+    render(<QuestionRating slug="wudu" copy={COPY} />);
+    fireEvent.click(yes());
+    await screen.findByText(COPY.suggestPrompt);
+
+    fireEvent.change(screen.getByLabelText('discussions.rating.commentLabel'), {
+      target: { value: 'Add the evidence' },
+    });
+    fireEvent.change(screen.getByLabelText('discussions.rating.emailLabel'), {
+      target: { value: 'reader@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /discussions.rating.send/ }));
+
+    await waitFor(() => expect(rate).toHaveBeenCalledTimes(2));
+    expect(rate.mock.calls[1][1]).toBe(true);
+    expect(rate.mock.calls[1][3]).toMatchObject({
+      comment: 'Add the evidence',
+      email: 'reader@example.com',
+    });
+  });
+
+  it('sends the chosen reason after no', async () => {
+    render(<QuestionRating slug="wudu" copy={COPY} />);
+    fireEvent.click(no());
+    await screen.findByText(COPY.reasonPrompt);
+
+    fireEvent.change(screen.getByLabelText('discussions.rating.reasonLabel'), {
+      target: { value: 'Not clear' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /discussions.rating.send/ }));
+
+    await waitFor(() => expect(rate).toHaveBeenCalledTimes(2));
+    expect(rate.mock.calls[1][1]).toBe(false);
+    expect(rate.mock.calls[1][3]).toMatchObject({ reason: 'Not clear' });
+  });
+
+  // Nothing to send is not an error; it is a button that would post an empty message.
+  it('cannot send an empty reason', async () => {
+    render(<QuestionRating slug="wudu" copy={COPY} />);
+    fireEvent.click(no());
+    await screen.findByText(COPY.reasonPrompt);
+
+    expect(screen.getByRole('button', { name: /discussions.rating.send/ })).toBeDisabled();
+  });
+
+  // Changing sides must not carry the other form's answer across.
+  it('clears what was typed when the verdict is switched', async () => {
+    render(<QuestionRating slug="wudu" copy={COPY} />);
+    fireEvent.click(no());
+    await screen.findByText(COPY.reasonPrompt);
+    fireEvent.change(screen.getByLabelText('discussions.rating.reasonLabel'), {
+      target: { value: 'Not clear' },
+    });
+
+    fireEvent.click(yes());
+    await screen.findByText(COPY.suggestPrompt);
+    fireEvent.click(screen.getByRole('button', { name: /discussions.rating.send/ }));
+
+    await waitFor(() => expect(rate).toHaveBeenCalledTimes(3));
+    expect(rate.mock.calls[2][3]).not.toMatchObject({ reason: 'Not clear' });
   });
 
   it('reuses one token across entries, so a reader is one voter everywhere', async () => {
@@ -89,6 +186,8 @@ describe('QuestionRating', () => {
   it('remembers a prior rating for the same entry, and only that entry', async () => {
     const { unmount } = render(<QuestionRating slug="wudu" copy={COPY} />);
     fireEvent.click(yes());
+    await screen.findByText(COPY.suggestPrompt);
+    fireEvent.click(screen.getByRole('button', { name: /discussions.rating.send/ }));
     await screen.findByText(COPY.thanks);
     unmount();
 

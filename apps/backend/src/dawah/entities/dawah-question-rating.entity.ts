@@ -60,6 +60,29 @@ export class DawahQuestionRating {
   @Column({ name: 'ip_hash', type: 'varchar', length: 64, nullable: true })
   ipHash: string | null;
 
+  /**
+   * Why the answer did not help — one of a list RMC maintains in the CMS.
+   *
+   * The chosen TEXT, not an id into that list. The list is editorial copy an admin
+   * will reword or reorder, and an id would silently re-point last month's
+   * feedback at whatever now occupies that slot.
+   */
+  @Column({ type: 'varchar', length: 160, nullable: true })
+  reason: string | null;
+
+  /** Free text, offered when the answer DID help: "any suggestions?" */
+  @Column({ type: 'text', nullable: true })
+  comment: string | null;
+
+  /**
+   * Optional, so RMC can reply.
+   *
+   * PII. It belongs to the reader rather than to the entry, so no public
+   * projection carries it and it is shown only to admins working the feedback.
+   */
+  @Column({ type: 'varchar', length: 160, nullable: true })
+  email: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

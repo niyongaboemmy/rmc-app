@@ -258,6 +258,9 @@ export default async function DiscussionEntryPage({
                 copy={{
                   prompt: pick(cms.ratingPrompt, locale),
                   thanks: pick(cms.ratingThanks, locale),
+                  suggestPrompt: pick(cms.ratingSuggestPrompt, locale),
+                  reasonPrompt: pick(cms.ratingReasonPrompt, locale),
+                  reasons: pick(cms.ratingReasons, locale),
                 }}
               />
             </div>
