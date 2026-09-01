@@ -63,7 +63,7 @@ export function AnswerContents({
           >
             <a
               href={`#${h.id}`}
-              className="text-[13px] leading-snug text-gray-600 underline-offset-2 transition-colors hover:text-rmc-green hover:underline"
+              className="block [overflow-wrap:anywhere] text-[13px] leading-snug text-gray-600 underline-offset-2 transition-colors hover:text-rmc-green hover:underline"
             >
               {h.text}
             </a>

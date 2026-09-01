@@ -828,6 +828,25 @@ body[data-bottom-bar='true'] .ask-launcher {
 }
 
 /* --------------------------------------------------------
+   LONG UNBROKEN TEXT
+   --------------------------------------------------------
+   Rendered markdown carries whatever was typed, and what gets typed includes
+   URLs, transliterated terms and — in one live entry — a 156-character run of a
+   single letter. None of those offer the browser a place to wrap, so without
+   this they run straight out of their card.
+
+   `anywhere` rather than `break-word`: both break a word that cannot fit, but
+   only `anywhere` also counts toward min-content sizing. Inside a grid or flex
+   container that difference decides whether the box itself gets stretched wide
+   by its own contents, which is exactly where this showed up.
+
+   It only acts when a word genuinely cannot fit, so ordinary prose is untouched.
+   -------------------------------------------------------- */
+.prose {
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------
    PRINT
    --------------------------------------------------------
    "Download" on a Q&A card opens the entry with ?print=1 and raises the

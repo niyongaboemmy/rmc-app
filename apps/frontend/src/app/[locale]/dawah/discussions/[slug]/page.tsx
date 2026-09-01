@@ -147,7 +147,7 @@ export default async function DiscussionEntryPage({
 
             <h1
               dir={dirOf(entry.language)}
-              className="mt-1.5 text-xl font-bold leading-snug text-rmc-green-deep md:text-2xl"
+              className="mt-1.5 [overflow-wrap:anywhere] text-xl font-bold leading-snug text-rmc-green-deep md:text-2xl"
             >
               {entry.title}
             </h1>
@@ -158,7 +158,7 @@ export default async function DiscussionEntryPage({
             {entry.summary && (
               <p
                 dir={dirOf(entry.language)}
-                className="mt-3 text-[15px] leading-relaxed text-gray-600 md:text-base"
+                className="mt-3 [overflow-wrap:anywhere] text-[15px] leading-relaxed text-gray-600 md:text-base"
               >
                 {entry.summary}
               </p>
@@ -228,7 +228,7 @@ export default async function DiscussionEntryPage({
                 {entry.answerSummary && (
                   <p
                     dir={dirOf(entry.language)}
-                    className="mt-3 border-s-2 border-rmc-gold/40 ps-3 text-[15px] font-medium leading-relaxed text-gray-800"
+                    className="mt-3 [overflow-wrap:anywhere] border-s-2 border-rmc-gold/40 ps-3 text-[15px] font-medium leading-relaxed text-gray-800"
                   >
                     {entry.answerSummary}
                   </p>

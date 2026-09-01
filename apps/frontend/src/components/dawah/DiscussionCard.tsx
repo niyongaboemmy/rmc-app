@@ -139,7 +139,7 @@ export function DiscussionCard({
         {meta}
         <h3
           dir={dir}
-          className="mt-1.5 line-clamp-2 text-[15px] font-bold leading-snug text-gray-900 transition-colors group-hover:text-rmc-green"
+          className="mt-1.5 line-clamp-2 [overflow-wrap:anywhere] text-[15px] font-bold leading-snug text-gray-900 transition-colors group-hover:text-rmc-green"
         >
           {question.title}
         </h3>
@@ -149,7 +149,7 @@ export function DiscussionCard({
               aria-hidden
               className="mt-1.5 block h-px w-10 rounded-full bg-gradient-to-r from-rmc-gold to-rmc-gold-light"
             />
-            <p dir={dir} className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-gray-600">
+            <p dir={dir} className="mt-2 line-clamp-3 [overflow-wrap:anywhere] text-[13px] leading-relaxed text-gray-600">
               {question.summary}
             </p>
           </>
