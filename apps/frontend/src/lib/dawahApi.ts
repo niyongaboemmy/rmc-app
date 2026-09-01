@@ -613,6 +613,16 @@ export interface AnswerQuestionPayload {
   categoryId?: string;
 }
 
+/** A category with published answers in it, and how many. */
+export interface DiscussionCategoryCount {
+  id: string;
+  slug: string;
+  nameEn: string;
+  nameRw: string;
+  nameAr: string;
+  count: number;
+}
+
 export interface DiscussionsQuery {
   category?: string;
   /**
@@ -680,6 +690,14 @@ export const dawahApi = {
 
     /** Render markdown → sanitised HTML through the server's real pipeline, so the
      *  preview cannot diverge from the published entry. */
+    /**
+     * Categories that have published answers, with counts — for the listing's
+     * category view. Separate from `categories()`, which is the taxonomy shared
+     * with courses and the library.
+     */
+    categories: (): Promise<DiscussionCategoryCount[]> =>
+      unwrap(publicHttp.get('/dawah/discussions/categories')),
+
     preview: (body: string): Promise<{ html: string }> =>
       unwrap(apiClient.post('/dawah/discussions/preview', { body })),
 

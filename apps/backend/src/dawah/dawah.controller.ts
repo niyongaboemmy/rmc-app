@@ -54,6 +54,18 @@ export class DawahController {
   // on or report. A member may submit a question; it is invisible until an admin
   // answers it through the admin controller.
 
+  /**
+   * Categories that have published answers, with counts — for the listing's
+   * category view. Separate from `GET categories`, which is the taxonomy shared
+   * with courses and the library and carries no discussions concern.
+   */
+  @Public()
+  @Get('discussions/categories')
+  @ApiOperation({ summary: 'Categories with published answers, and how many each has.' })
+  discussionCategories() {
+    return this.discussions.listCategoriesWithCounts();
+  }
+
   @Public()
   @Get('discussions')
   @ApiOperation({ summary: 'List published Q&A entries.' })

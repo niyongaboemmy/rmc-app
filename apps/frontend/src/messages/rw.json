@@ -3836,7 +3836,9 @@
       "clearFilters": "Siba amatonde",
       "loadError": "Ntitwashoboye gutangiza ibiganiro. Ongera ugerageze.",
       "scholar": "Inzobere",
-      "views": "{count, plural, =1 {Kurebwa 1} other {Kurebwa #}}",
+      "views": {
+        "categories": "Igiti cy’ibyiciro"
+      },
       "backToDiscussions": "Ibiganiro",
       "allLanguages": "Indimi zose",
       "otherLanguages": "Hagaragazwa n'ibibazo mu zindi ndimi",
@@ -3948,7 +3950,9 @@
       "download": "Kuramo",
       "share": "Sangiza",
       "linkCopied": "Umurongo wafashwe",
-      "contents": "Muri iki gisubizo"
+      "contents": "Muri iki gisubizo",
+      "searchCategories": "Shakisha ibyiciro",
+      "noCategories": "Nta cyiciro gihuye."
     }
   }
 }

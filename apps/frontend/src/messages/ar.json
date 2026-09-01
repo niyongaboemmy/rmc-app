@@ -3836,7 +3836,9 @@
       "clearFilters": "مسح الفلاتر",
       "loadError": "تعذّر تحميل النقاشات. حاول مرة أخرى.",
       "scholar": "عالِم",
-      "views": "{count, plural, =1 {مشاهدة واحدة} other {# مشاهدات}}",
+      "views": {
+        "categories": "شجرة التصنيفات"
+      },
       "backToDiscussions": "النقاشات",
       "allLanguages": "كل اللغات",
       "otherLanguages": "تُعرض أيضًا أسئلة بلغات أخرى",
@@ -3948,7 +3950,9 @@
       "download": "تنزيل",
       "share": "مشاركة",
       "linkCopied": "تم نسخ الرابط",
-      "contents": "في هذا الجواب"
+      "contents": "في هذا الجواب",
+      "searchCategories": "ابحث في التصنيفات",
+      "noCategories": "لا توجد تصنيفات مطابقة."
     }
   }
 }

@@ -3836,7 +3836,9 @@
       "clearFilters": "Clear filters",
       "loadError": "We couldn't load the discussions. Please try again.",
       "scholar": "Scholar",
-      "views": "{count, plural, =1 {1 view} other {# views}}",
+      "views": {
+        "categories": "Category tree"
+      },
       "backToDiscussions": "Discussions",
       "allLanguages": "All languages",
       "otherLanguages": "Also showing questions in other languages",
@@ -3948,7 +3950,9 @@
       "download": "Download",
       "share": "Share",
       "linkCopied": "Link copied",
-      "contents": "In this answer"
+      "contents": "In this answer",
+      "searchCategories": "Search categories",
+      "noCategories": "No categories match."
     }
   }
 }

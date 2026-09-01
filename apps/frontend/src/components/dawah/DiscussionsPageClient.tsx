@@ -21,6 +21,8 @@ import { ContentKeys, DISCUSSIONS_DEFAULT, pick, type DiscussionsContent, type L
 import { DiscussionCard } from './DiscussionCard';
 import { EssentialAnswersPanel } from './EssentialAnswersPanel';
 import { MostReadPanel } from './MostReadPanel';
+import { DiscussionsSidebar, type DiscussionsView } from './DiscussionsSidebar';
+import { CategoryTreePanel } from './CategoryTreePanel';
 import { AskQuestionFields } from './AskQuestionForm';
 import {
   dawahApi,
@@ -76,6 +78,17 @@ export function DiscussionsPageClient() {
   const { content, setField } = useEditableContent<DiscussionsContent>(ContentKeys.discussions, DISCUSSIONS_DEFAULT);
   const { editMode, hasPermission } = useEditMode();
   const moderate = editMode && hasPermission(Permission.DISCUSSIONS_MODERATE);
+
+  /**
+   * Which panel the main column shows. In the URL for the same reason search and
+   * page are: a link to the curated set has to arrive at the curated set, and Back
+   * has to return to the view the reader came from.
+   *
+   * Anything unrecognised falls back to the feed rather than rendering nothing.
+   */
+  const viewParam = searchParams.get('view');
+  const view: DiscussionsView =
+    viewParam === 'essential' || viewParam === 'categories' ? viewParam : 'new';
 
   const category = searchParams.get('category') ?? '';
   const search = searchParams.get('search') ?? '';
@@ -267,11 +280,67 @@ export function DiscussionsPageClient() {
                 Below `lg` they stack with the curated set FIRST — on a phone a reader
                 scrolling a chronological feed has to know what they are looking for,
                 whereas the curated set is the answer to "where do I start?". */}
-            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_26rem]">
-              {/* The left column: the feed, with the most-read shortlist beneath it.
-                  The wrapper is the grid child; the panel styling moves inside so the
-                  two panels are siblings rather than one nested in the other. */}
-              <div className="order-2 min-w-0 lg:order-1">
+            <div className="grid items-start gap-5 lg:grid-cols-[14rem_minmax(0,1fr)]">
+              <DiscussionsSidebar
+                active={view}
+                onChange={(v) => setParams({ view: v === 'new' ? null : v, page: null })}
+                labels={{
+                  categories: t('discussions.views.categories'),
+                  essential: pick(content.panels.essentialTitle, locale),
+                  new: pick(content.panels.newTitle, locale),
+                }}
+              />
+
+              {/* One view at a time. Each panel owns its own fetch, so switching swaps
+                  what is mounted rather than re-querying the others. */}
+              <div className="min-w-0">
+                {view === 'categories' && (
+                  <CategoryTreePanel
+                    locale={locale}
+                    activeSlug={category}
+                    title={t('discussions.views.categories')}
+                    searchPlaceholder={t('discussions.searchCategories')}
+                    answersLabel={(count) => t('discussions.count', { count })}
+                    emptyLabel={t('discussions.noCategories')}
+                    // Picking one filters the FEED and shows it: entries are already
+                    // paginated there, and listing them inside this panel would be a
+                    // second copy of the same state to keep in step.
+                    onSelect={(slug) => setParams({ category: slug, view: null, page: null })}
+                  />
+                )}
+
+                {view === 'essential' && (
+                  <EssentialAnswersPanel
+                    locale={locale}
+                    seeAllHref={`/${locale}/dawah/discussions?essential=true`}
+                    title={
+                      <InlineText
+                        as="span"
+                        lang={locale}
+                        value={pick(content.panels.essentialTitle, locale)}
+                        onCommit={(v) => setField((d) => { d.panels.essentialTitle[lang] = v; })}
+                        className="min-w-0"
+                      />
+                    }
+                    body={
+                      <InlineText
+                        as="p"
+                        lang={locale}
+                        value={pick(content.panels.essentialBody, locale)}
+                        onCommit={(v) => setField((d) => { d.panels.essentialBody[lang] = v; })}
+                        className="block"
+                      />
+                    }
+                    renderItem={(item) => (
+                      <DiscussionCard question={item} locale={locale} compact />
+                    )}
+                  />
+                )}
+
+                {/* Hidden rather than unmounted: the feed holds the search box, the
+                    page and the moderation state, and remounting it would throw all
+                    three away every time a reader glanced at another view. */}
+                <div className={view === 'new' ? '' : 'hidden'}>
                 <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
                 {/* Named now, where before the count stood in for a heading. With a
                     second panel beside it the two have to be told apart, and "12
@@ -452,37 +521,7 @@ export function DiscussionsPageClient() {
                     <DiscussionCard question={item} locale={locale} showViews />
                   )}
                 />
-              </div>
-
-              {/* The curated panel. It owns its own fetch and its own tabs, so a
-                  reader narrowing the feed by search does not empty it — the two
-                  panels answer different questions and should not move together. */}
-              <div className="order-1 lg:order-2 lg:sticky lg:top-24">
-                <EssentialAnswersPanel
-                  locale={locale}
-                  seeAllHref={`/${locale}/dawah/discussions?essential=true`}
-                  title={
-                    <InlineText
-                      as="span"
-                      lang={locale}
-                      value={pick(content.panels.essentialTitle, locale)}
-                      onCommit={(v) => setField((d) => { d.panels.essentialTitle[lang] = v; })}
-                      className="min-w-0"
-                    />
-                  }
-                  body={
-                    <InlineText
-                      as="p"
-                      lang={locale}
-                      value={pick(content.panels.essentialBody, locale)}
-                      onCommit={(v) => setField((d) => { d.panels.essentialBody[lang] = v; })}
-                      className="block"
-                    />
-                  }
-                  renderItem={(item) => (
-                    <DiscussionCard question={item} locale={locale} compact />
-                  )}
-                />
+                </div>
               </div>
             </div>
           </div>

@@ -160,6 +160,58 @@ export class DawahDiscussionsService {
     };
   }
 
+  /**
+   * The categories that actually have published answers, with how many.
+   *
+   * NOT added to the shared `categories` endpoint: that taxonomy is used by courses
+   * and the library too, and hanging a discussions count off it would make every
+   * caller pay for a join none of them asked for.
+   *
+   * Empty categories are omitted. One in the list is a promise that opening it
+   * shows something, and a category with nothing published in it reads as a broken
+   * link rather than as an empty shelf — the same reason the Essential panel builds
+   * its tabs from the entries rather than from the taxonomy.
+   */
+  async listCategoriesWithCounts() {
+    const rows = await this.questions
+      .createQueryBuilder('q')
+      .innerJoin('q.category', 'c')
+      .select('c.id', 'id')
+      .addSelect('c.slug', 'slug')
+      .addSelect('c.name_en', 'nameEn')
+      .addSelect('c.name_rw', 'nameRw')
+      .addSelect('c.name_ar', 'nameAr')
+      .addSelect('c.sort_order', 'sortOrder')
+      .addSelect('COUNT(q.id)', 'count')
+      .where('q.status = :status', { status: 'published' })
+      .andWhere('c.is_active = true')
+      .groupBy('c.id')
+      .addGroupBy('c.slug')
+      .addGroupBy('c.name_en')
+      .addGroupBy('c.name_rw')
+      .addGroupBy('c.name_ar')
+      .addGroupBy('c.sort_order')
+      .orderBy('c.sort_order', 'ASC')
+      .getRawMany<{
+        id: string;
+        slug: string;
+        nameEn: string;
+        nameRw: string;
+        nameAr: string;
+        count: string;
+      }>();
+
+    // COUNT comes back as a string from the driver; the client wants a number.
+    return rows.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      nameEn: r.nameEn,
+      nameRw: r.nameRw,
+      nameAr: r.nameAr,
+      count: Number(r.count),
+    }));
+  }
+
   /** The listing. Published only — enforced here, so no route can forget to. */
   async list(query: QueryDiscussionsDto) {
     const page = Math.max(1, query.page ?? 1);
