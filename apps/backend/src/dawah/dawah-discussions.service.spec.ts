@@ -749,4 +749,36 @@ describe('DawahDiscussionsService (admin)', () => {
       expect(result.items[0]).not.toHaveProperty('answerSummary');
     });
   });
+
+  describe('view counting', () => {
+    // It used to be counted inside bySlug. Next.js prefetches the entry page when a
+    // card is hovered or scrolled into view, and that server render bumped the
+    // counter — so scrolling the listing inflated every entry without anyone
+    // opening one.
+    it('does not count a view merely for reading the entry', async () => {
+      questions.findOne.mockResolvedValue(
+        makeQuestion({ status: 'published', answerBody: 'a' }),
+      );
+
+      await service.bySlug('a-question');
+
+      expect(questions.increment).not.toHaveBeenCalled();
+    });
+
+    it('counts one when the browser reports a read', async () => {
+      questions.findOne.mockResolvedValue({ id: 'q-1' });
+
+      await expect(service.recordView('a-question')).resolves.toEqual({ counted: true });
+      expect(questions.increment).toHaveBeenCalledWith({ id: 'q-1' }, 'viewCount', 1);
+    });
+
+    // Same reason bySlug 404s: the status code must not become a way to probe which
+    // slugs exist as unpublished rows.
+    it('404s an entry that is not published', async () => {
+      questions.findOne.mockResolvedValue(null);
+
+      await expect(service.recordView('nope')).rejects.toBeInstanceOf(NotFoundException);
+      expect(questions.increment).not.toHaveBeenCalled();
+    });
+  });
 });

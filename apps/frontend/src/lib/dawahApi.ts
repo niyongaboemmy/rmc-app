@@ -698,6 +698,16 @@ export const dawahApi = {
     categories: (): Promise<DiscussionCategoryCount[]> =>
       unwrap(publicHttp.get('/dawah/discussions/categories')),
 
+    /**
+     * Count a read. Called from the BROWSER once the entry page has rendered.
+     *
+     * Not counted on the server: Next.js prefetches this page when a card is
+     * hovered or scrolled into view, and that server render is not somebody
+     * reading the answer.
+     */
+    recordView: (slug: string): Promise<{ counted: boolean }> =>
+      unwrap(publicHttp.post(`/dawah/discussions/${slug}/view`, {})),
+
     preview: (body: string): Promise<{ html: string }> =>
       unwrap(apiClient.post('/dawah/discussions/preview', { body })),
 

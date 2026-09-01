@@ -10,6 +10,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
 import { QuestionRating } from '@/components/dawah/QuestionRating';
 import { PrintOnLoad } from '@/components/dawah/PrintOnLoad';
+import { ViewCounter } from '@/components/dawah/ViewCounter';
 import { AnswerContents } from '@/components/dawah/AnswerContents';
 import { dawahApi, type DiscussionQuestion, type PostLanguage } from '@/lib/dawahApi';
 import {
@@ -128,6 +129,9 @@ export default async function DiscussionEntryPage({
       <Suspense fallback={null}>
         <PrintOnLoad />
       </Suspense>
+      {/* Counts the read from the browser. A server render happens for prefetches
+          and for metadata too, and neither is somebody reading the answer. */}
+      <ViewCounter slug={slug} />
       <main>
         <section className="pt-24 md:pt-28">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">

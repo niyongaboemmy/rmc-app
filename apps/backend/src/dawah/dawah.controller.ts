@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Ip,
   Param,
   Post,
@@ -93,6 +94,19 @@ export class DawahController {
    * route (`discussions/:something`) would need to come first.
    */
   @Public()
+  /**
+   * Count a read. Called by the entry page from the BROWSER, not on render — a
+   * server render happens for prefetches and metadata too, neither of which is
+   * somebody reading the answer.
+   */
+  @Public()
+  @Post('discussions/:slug/view')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Record that an entry was read.' })
+  recordView(@Param('slug') slug: string) {
+    return this.discussions.recordView(slug);
+  }
+
   @Get('discussions/:slug/related')
   @ApiOperation({ summary: 'Up to three related published entries.' })
   relatedDiscussions(@Param('slug') slug: string) {

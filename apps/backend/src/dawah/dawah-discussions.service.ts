@@ -298,7 +298,10 @@ export class DawahDiscussionsService {
     });
     if (!question) throw new NotFoundException('Question not found');
 
-    this.bumpViewCount(question.id);
+    // NOT counted here. Rendering is not reading: Next.js prefetches this page's
+    // payload when a card is hovered or scrolled into view, which server-renders it
+    // and would count a view for an entry nobody opened. Scrolling the listing
+    // alone inflated every count. `recordView` is called from the client instead.
     return this.toPublic(question);
   }
 
@@ -309,6 +312,24 @@ export class DawahDiscussionsService {
    * discipline as DawahBookService.bumpCounter. A reader must never see a page fail
    * because a stats UPDATE hit a lock. The entry is the product; the number is not.
    */
+  /**
+   * Count one read, from the client.
+   *
+   * Public and unauthenticated, like the rating. 404s anything not published, for
+   * the same reason `bySlug` does: the status code must not become a way to probe
+   * which slugs exist as unpublished rows.
+   */
+  async recordView(slug: string): Promise<{ counted: boolean }> {
+    const question = await this.questions.findOne({
+      where: { slug, status: 'published' },
+      select: { id: true },
+    });
+    if (!question) throw new NotFoundException('Question not found');
+
+    this.bumpViewCount(question.id);
+    return { counted: true };
+  }
+
   private bumpViewCount(id: string): void {
     void this.questions
       .increment({ id }, 'viewCount', 1)
