@@ -87,4 +87,71 @@ describe('addHeadingAnchors', () => {
 
     expect(toc.map((e) => e.level)).toEqual([2]);
   });
+
+  /**
+   * Cases the first version got wrong. Each shipped, and each was found by probing
+   * the function rather than by a test failing — which is why they are written down
+   * now.
+   */
+  describe('what the first version got wrong', () => {
+    // `&nbsp;` and `&hellip;` rendered as literal text AND became part of the id:
+    // "answer-fasting-travel-nbsp-hellip".
+    it('decodes named entities rather than slugging them', () => {
+      const { toc } = addHeadingAnchors('<h2>Fasting &amp; travel &nbsp;&hellip;</h2>');
+
+      expect(toc[0].text).toBe('Fasting & travel …');
+      expect(toc[0].id).not.toContain('nbsp');
+      expect(toc[0].id).not.toContain('hellip');
+    });
+
+    it('decodes numeric entities, decimal and hex alike', () => {
+      expect(addHeadingAnchors('<h2>A&#8230;B</h2>').toc[0].text).toBe('A…B');
+      expect(addHeadingAnchors('<h2>A&#x2026;B</h2>').toc[0].text).toBe('A…B');
+    });
+
+    it('leaves an unknown entity alone rather than mangling it', () => {
+      expect(addHeadingAnchors('<h2>A &notareal; B</h2>').toc[0].text).toBe('A &notareal; B');
+    });
+
+    // An empty heading became an entry with no text — a blank row in the contents
+    // that reads as a broken link.
+    it('skips an empty heading instead of listing a blank row', () => {
+      const { html, toc } = addHeadingAnchors('<h2></h2><h3>Real</h3>');
+
+      expect(toc.map((e) => e.text)).toEqual(['Real']);
+      expect(html).toContain('<h2></h2>');
+    });
+
+    it('skips a whitespace-only heading too', () => {
+      expect(addHeadingAnchors('<h2>   </h2>').toc).toEqual([]);
+    });
+
+    // The regex matched `<h2>` exactly, so it depended on a sanitiser config it does
+    // not import: allow one attribute on a heading and every anchor vanishes
+    // silently. It now tolerates attributes — and discards them, since stamping the
+    // id is the whole point.
+    it('still anchors a heading that carries attributes', () => {
+      const { html, toc } = addHeadingAnchors('<h2 class="x">Title</h2>');
+
+      expect(toc).toHaveLength(1);
+      expect(html).toContain('<h2 id="answer-title">');
+      expect(html).not.toContain('class="x"');
+    });
+
+    it('drops an id an author somehow got through, rather than keeping it', () => {
+      const { html } = addHeadingAnchors('<h3 id="evil">T</h3>');
+
+      expect(html).not.toContain('id="evil"');
+      expect(html).toContain('id="answer-t"');
+    });
+
+    // Numbering counts LISTED headings, so skipping an empty one does not leave a
+    // gap in the positional fallbacks.
+    it('numbers the fallbacks by listed position', () => {
+      const { toc } = addHeadingAnchors('<h2>  </h2><h2>عربي</h2>');
+
+      expect(toc).toHaveLength(1);
+      expect(toc[0].id).toBe('answer-s1');
+    });
+  });
 });

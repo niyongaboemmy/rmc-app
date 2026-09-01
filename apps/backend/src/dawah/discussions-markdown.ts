@@ -81,6 +81,18 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   // worst.
   nonTextTags: ['style', 'script', 'textarea', 'option', 'noscript', 'iframe'],
   transformTags: {
+    /**
+     * `# Heading` becomes an h2 rather than being thrown away.
+     *
+     * h1 is not on the allowlist, and a disallowed tag is DISCARDED with its text
+     * kept — so a stray `#` silently became a paragraph, exactly as `## ` did
+     * before h2 was allowed. The reason for excluding it stands: h1 belongs to the
+     * page, which here is the question's title, and a second one inside the answer
+     * would give the document two top-level headings. Mapping it down honours both
+     * — the outline stays correct AND the writer's heading survives.
+     */
+    h1: () => ({ tagName: 'h2', attribs: {} }),
+
     // Every outbound link, without exception:
     //   nofollow → a spammer's SEO payload is worthless, which is why they leave
     //   ugc      → tells search engines this is user content, not RMC's word

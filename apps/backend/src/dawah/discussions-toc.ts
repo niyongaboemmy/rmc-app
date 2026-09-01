@@ -31,17 +31,45 @@ export interface TocEntry {
   level: number;
 }
 
+/**
+ * The named entities `marked` actually emits, plus the few a writer types directly.
+ *
+ * Not a full HTML entity table: this decodes a heading for display and for a slug,
+ * and an unrecognised entity is handled by the numeric pass below or left alone —
+ * both of which are better than the alternative that shipped first, where every
+ * entity fell through as literal text and `&nbsp;` became part of the anchor id.
+ */
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  hellip: '…',
+  mdash: '—',
+  ndash: '–',
+  lsquo: '\u2018',
+  rsquo: '\u2019',
+  ldquo: '\u201c',
+  rdquo: '\u201d',
+};
+
 /** Inline tags survive inside a heading; the contents list wants the words only. */
 function headingText(inner: string): string {
-  return inner
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    inner
+      .replace(/<[^>]*>/g, '')
+      // Numeric first, decimal and hex — `&#8230;` and `&#x2026;` are the same
+      // ellipsis, and marked emits either depending on what was typed.
+      .replace(/&#(\d+);/g, (_m, code: string) => String.fromCodePoint(Number(code)))
+      .replace(/&#x([0-9a-f]+);/gi, (_m, code: string) =>
+        String.fromCodePoint(parseInt(code, 16)),
+      )
+      .replace(/&([a-z]+);/gi, (match, name: string) => ENTITIES[name.toLowerCase()] ?? match)
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 /**
@@ -86,15 +114,29 @@ export function addHeadingAnchors(html: string): { html: string; toc: TocEntry[]
   const used = new Set<string>();
   let index = 0;
 
-  // The HTML is already sanitised, so a heading here carries no attributes and
-  // this matches the whole tag rather than guessing at one.
+  /**
+   * Attributes are tolerated even though the sanitiser strips them all today.
+   *
+   * The first version matched `<h2>` exactly, on the reasoning that sanitised
+   * headings are bare. True — but it made this silently depend on a config file it
+   * does not import: allow one attribute on a heading and every anchor vanishes and
+   * the contents list empties, with nothing failing. Matching optional attributes
+   * costs a few characters and removes the coupling.
+   *
+   * Any attributes found are DISCARDED rather than carried over: this stamps the
+   * id, and preserving an author-supplied one is precisely what must not happen.
+   */
   const withIds = html.replace(
-    /<h([2-4])>([\s\S]*?)<\/h\1>/g,
-    (_match, levelStr: string, inner: string) => {
-      index += 1;
+    /<h([2-4])(?:\s[^>]*)?>([\s\S]*?)<\/h\1>/g,
+    (match, levelStr: string, inner: string) => {
       const level = Number(levelStr);
       const text = headingText(inner);
 
+      // An empty heading is not a place to jump to, and listing it puts a blank
+      // row in the contents that looks like a broken link. Left exactly as it was.
+      if (!text) return match;
+
+      index += 1;
       const base = `answer-${slugify(text) || `s${index}`}`;
       // Two headings with the same words are ordinary in a long ruling ("Evidence"
       // under two sections). A repeated id would send both links to the first.
