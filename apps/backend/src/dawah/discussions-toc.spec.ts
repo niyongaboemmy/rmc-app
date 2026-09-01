@@ -82,10 +82,15 @@ describe('addHeadingAnchors', () => {
     expect(html).toBe('<p>Just a paragraph, no structure at all.</p>');
   });
 
-  it('does not touch h1, which belongs to the page', () => {
-    const { toc } = addHeadingAnchors('<h1>Page title</h1><h2>Section</h2>');
+  // Every level the toolbar offers is anchored, h1 included. It stopped being
+  // "the page's" the moment the editor grew a button for it — a heading with no
+  // anchor is one the contents list cannot reach.
+  it('anchors all six levels', () => {
+    const { toc } = addHeadingAnchors(
+      '<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5><h6>Six</h6>',
+    );
 
-    expect(toc.map((e) => e.level)).toEqual([2]);
+    expect(toc.map((e) => e.level)).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
   /**

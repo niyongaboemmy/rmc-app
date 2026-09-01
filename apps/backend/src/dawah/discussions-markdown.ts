@@ -49,15 +49,24 @@ const ALLOWED_TAGS = [
   'blockquote',
   'code',
   'pre',
-  // h1 belongs to the page — it is the question's title. h2 down to h4 are the
-  // answer's own structure. h2 was excluded when this was a member forum post
-  // nested inside a page; an admin-authored ANSWER is the page's main content, so
-  // its top-level heading IS h2. Leaving it out did not demote such a heading, it
-  // DESTROYED it: sanitize-html discards the tag and keeps the text, so an admin
-  // using the editor's "Heading 2" button silently got a bare paragraph.
+  // Every level the editor can produce — h1 through h6.
+  //
+  // The allowlist has to match the toolbar, because a heading level that is not
+  // here is not demoted, it is DESTROYED: sanitize-html discards the tag and keeps
+  // the text, so the writer's heading silently becomes a paragraph. That happened
+  // twice, first for h2 and then for h1, and both times the author had no way to
+  // tell. With the toolbar now offering all six, the allowlist offers all six.
+  //
+  // h1 included, which gives the entry page a second top-level heading beside the
+  // question's title. That is the cost of the toolbar being honest about the
+  // button it shows; mapping h1 down to h2 instead would mean clicking "Heading 1"
+  // produced something else.
+  'h1',
   'h2',
   'h3',
   'h4',
+  'h5',
+  'h6',
   'a',
   'hr',
 ];
@@ -81,18 +90,6 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   // worst.
   nonTextTags: ['style', 'script', 'textarea', 'option', 'noscript', 'iframe'],
   transformTags: {
-    /**
-     * `# Heading` becomes an h2 rather than being thrown away.
-     *
-     * h1 is not on the allowlist, and a disallowed tag is DISCARDED with its text
-     * kept — so a stray `#` silently became a paragraph, exactly as `## ` did
-     * before h2 was allowed. The reason for excluding it stands: h1 belongs to the
-     * page, which here is the question's title, and a second one inside the answer
-     * would give the document two top-level headings. Mapping it down honours both
-     * — the outline stays correct AND the writer's heading survives.
-     */
-    h1: () => ({ tagName: 'h2', attribs: {} }),
-
     // Every outbound link, without exception:
     //   nofollow → a spammer's SEO payload is worthless, which is why they leave
     //   ugc      → tells search engines this is user content, not RMC's word

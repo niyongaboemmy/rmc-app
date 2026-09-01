@@ -27,7 +27,7 @@ export interface TocEntry {
   /** The anchor's id. Generated here — never taken from the author's markup. */
   id: string;
   text: string;
-  /** 2, 3 or 4 — the heading levels an answer may use. */
+  /** 1 to 6 — every level the editor's toolbar offers. */
   level: number;
 }
 
@@ -127,7 +127,7 @@ export function addHeadingAnchors(html: string): { html: string; toc: TocEntry[]
    * id, and preserving an author-supplied one is precisely what must not happen.
    */
   const withIds = html.replace(
-    /<h([2-4])(?:\s[^>]*)?>([\s\S]*?)<\/h\1>/g,
+    /<h([1-6])(?:\s[^>]*)?>([\s\S]*?)<\/h\1>/g,
     (match, levelStr: string, inner: string) => {
       const level = Number(levelStr);
       const text = headingText(inner);

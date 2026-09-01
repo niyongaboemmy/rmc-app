@@ -209,8 +209,20 @@ export function EntryEditor({
   // server treats it as optional too.
   const canSave = title.trim().length >= 10 && answerBody.trim().length >= 20;
 
+  /**
+   * `2xl` (56rem), widened from the `lg` (32rem) this opened at.
+   *
+   * That was a sensible width for the three-field form this used to be. It now
+   * holds a title, two summaries, a category, a language, the curation checkbox
+   * and a rich-text answer — and at 32rem the editor gave roughly forty characters
+   * of line to write a long ruling in.
+   *
+   * Not the widest available: past this, lines get long enough to be hard to read
+   * back, which is the opposite of what an authoring form is for. The toolbar
+   * wraps, so it is not what sets the width.
+   */
   return (
-    <Modal open onClose={onClose} size="lg">
+    <Modal open onClose={onClose} size="2xl">
       <ModalHeader>
         <ModalTitle>
           <span className="flex flex-wrap items-baseline gap-2">

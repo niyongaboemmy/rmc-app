@@ -5,7 +5,8 @@ import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import {
-  Bold, Italic, Heading2, Heading3, List, ListOrdered,
+  Bold, Italic, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
+  List, ListOrdered,
   Quote, Link2, Unlink, Undo2, Redo2, ImagePlus, Loader2,
   AlignLeft, AlignCenter, AlignRight,
 } from 'lucide-react';
@@ -38,6 +39,19 @@ const SizedImage = Image.extend({
     };
   },
 });
+
+/**
+ * Every heading level the document schema accepts, which is every level the
+ * toolbar now offers.
+ */
+const HEADING_LEVELS: { level: 1 | 2 | 3 | 4 | 5 | 6; Icon: typeof Heading1 }[] = [
+  { level: 1, Icon: Heading1 },
+  { level: 2, Icon: Heading2 },
+  { level: 3, Icon: Heading3 },
+  { level: 4, Icon: Heading4 },
+  { level: 5, Icon: Heading5 },
+  { level: 6, Icon: Heading6 },
+];
 
 const SIZES = [
   { key: 'sm', label: 'Small image' },
@@ -211,8 +225,21 @@ function Toolbar({ editor }: { editor: Editor }) {
       <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} label="Bold"><Bold className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} label="Italic"><Italic className="w-4 h-4" /></Btn>
       <Divider />
-      <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} label="Heading 2"><Heading2 className="w-4 h-4" /></Btn>
-      <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} label="Heading 3"><Heading3 className="w-4 h-4" /></Btn>
+      {/* All six levels the schema accepts.
+          Two buttons was never the constraint: StarterKit runs the Heading
+          extension with its default `levels: [1,2,3,4,5,6]`, so typing `#### `
+          already produced an h4 that no button offered. The toolbar now says
+          what the editor actually does. */}
+      {HEADING_LEVELS.map(({ level, Icon }) => (
+        <Btn
+          key={level}
+          onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
+          active={editor.isActive('heading', { level })}
+          label={`Heading ${level}`}
+        >
+          <Icon className="w-4 h-4" />
+        </Btn>
+      ))}
       <Divider />
       <Btn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} label="Bullet list"><List className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} label="Numbered list"><ListOrdered className="w-4 h-4" /></Btn>
