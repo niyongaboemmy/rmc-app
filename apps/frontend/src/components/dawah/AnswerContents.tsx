@@ -1,7 +1,19 @@
 import type { DiscussionQuestion } from '@/lib/dawahApi';
 
-/** Below this it is not a contents list, it is a heading with extra steps. */
-const MIN_HEADINGS = 2;
+/**
+ * Show the contents as soon as there is a heading to list.
+ *
+ * This was 2, on the reasoning that a one-item list is a heading with extra steps.
+ * That reads well and was wrong in practice: an answer with a single heading
+ * showed nothing, which is indistinguishable from the feature being broken — and
+ * was reported as exactly that. A reader cannot tell "we decided one is not worth
+ * listing" from "the contents list does not work", and the second costs more than
+ * a slightly redundant box.
+ *
+ * An answer with NO headings still shows nothing, because there is genuinely
+ * nothing to list.
+ */
+const MIN_HEADINGS = 1;
 
 /**
  * The table of contents for a long answer.
