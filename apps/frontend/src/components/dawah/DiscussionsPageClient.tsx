@@ -285,7 +285,7 @@ export function DiscussionsPageClient() {
                 active={view}
                 onChange={(v) => setParams({ view: v === 'new' ? null : v, page: null })}
                 labels={{
-                  categories: t('discussions.views.categories'),
+                  categories: t('discussions.nav.categories'),
                   essential: pick(content.panels.essentialTitle, locale),
                   new: pick(content.panels.newTitle, locale),
                 }}
@@ -298,7 +298,7 @@ export function DiscussionsPageClient() {
                   <CategoryTreePanel
                     locale={locale}
                     activeSlug={category}
-                    title={t('discussions.views.categories')}
+                    title={t('discussions.nav.categories')}
                     searchPlaceholder={t('discussions.searchCategories')}
                     answersLabel={(count) => t('discussions.count', { count })}
                     emptyLabel={t('discussions.noCategories')}

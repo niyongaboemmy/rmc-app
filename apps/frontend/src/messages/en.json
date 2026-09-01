@@ -3827,7 +3827,9 @@
     "discussions": {
       "title": "Discussions",
       "subtitle": "Ask the community, and read what RMC scholars have answered.",
-      "nav": "Discussions",
+      "nav": {
+        "categories": "Category tree"
+      },
       "navDesc": "Questions answered by the community and verified by RMC.",
       "askCta": "Ask a question",
       "viewAll": "View all discussions",
@@ -3836,9 +3838,7 @@
       "clearFilters": "Clear filters",
       "loadError": "We couldn't load the discussions. Please try again.",
       "scholar": "Scholar",
-      "views": {
-        "categories": "Category tree"
-      },
+      "views": "{count, plural, =1 {1 view} other {# views}}",
       "backToDiscussions": "Discussions",
       "allLanguages": "All languages",
       "otherLanguages": "Also showing questions in other languages",
