@@ -3827,9 +3827,7 @@
     "discussions": {
       "title": "Ibiganiro",
       "subtitle": "Baza umuryango, kandi usome ibyo inzobere za RMC zasubije.",
-      "nav": {
-        "categories": "Igiti cy’ibyiciro"
-      },
+      "nav": "Ibiganiro",
       "navDesc": "Ibibazo bisubizwa n'umuryango kandi byemezwa na RMC.",
       "askCta": "Baza ikibazo",
       "viewAll": "Reba ibiganiro byose",
@@ -3952,7 +3950,10 @@
       "linkCopied": "Umurongo wafashwe",
       "contents": "Muri iki gisubizo",
       "searchCategories": "Shakisha ibyiciro",
-      "noCategories": "Nta cyiciro gihuye."
+      "noCategories": "Nta cyiciro gihuye.",
+      "panels": {
+        "categories": "Igiti cy’ibyiciro"
+      }
     }
   }
 }

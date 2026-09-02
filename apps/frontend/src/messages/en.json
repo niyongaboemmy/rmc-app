@@ -3827,9 +3827,7 @@
     "discussions": {
       "title": "Discussions",
       "subtitle": "Ask the community, and read what RMC scholars have answered.",
-      "nav": {
-        "categories": "Category tree"
-      },
+      "nav": "Discussions",
       "navDesc": "Questions answered by the community and verified by RMC.",
       "askCta": "Ask a question",
       "viewAll": "View all discussions",
@@ -3952,7 +3950,10 @@
       "linkCopied": "Link copied",
       "contents": "In this answer",
       "searchCategories": "Search categories",
-      "noCategories": "No categories match."
+      "noCategories": "No categories match.",
+      "panels": {
+        "categories": "Category tree"
+      }
     }
   }
 }
