@@ -210,7 +210,6 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
             <aside className="lg:pt-1">
               <div className="space-y-4 lg:sticky lg:top-20">
                 <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
-                  <div className={`h-1.5 w-full ${funded ? 'bg-gradient-to-r from-rmc-gold to-rmc-gold-light' : 'bg-gradient-to-r from-rmc-green to-rmc-green-dark'}`} />
                   <div className="p-6">
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-rmc-gold">{pick({ en: 'Funding progress', rw: 'Aho ikusanya rigeze', ar: 'تقدّم التمويل' }, locale)}</p>
 
