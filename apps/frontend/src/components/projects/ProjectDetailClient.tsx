@@ -6,6 +6,7 @@ import {
   ChevronRight, MapPin, Target, HandHeart, CheckCircle2, Wallet, TrendingUp, Building2, ArrowLeft, Loader2,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
+import { PageHero } from '@/components/layout/PageHero';
 import { Footer } from '@/components/layout/Footer';
 import { fileUrl } from '@/lib/api';
 import {
@@ -100,47 +101,48 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* ── Hero (plain <img>, loads any uploaded cover reliably) ── */}
-      <section className="relative flex min-h-[54vh] items-end overflow-hidden bg-rmc-green-deep">
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt={title} className="absolute inset-0 h-full w-full object-cover object-center" />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-rmc-green to-rmc-green-deep">
-            <div className="pointer-events-none absolute inset-0 pattern-islamic opacity-20" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/30" />
+      {/* The shared hero, as the projects LISTING already uses.
+          This page hand-rolled its own: its own image layer, its own overlays, its
+          own back link, at min-h-[54vh] where every other hero on the site is 40.
+          Two implementations of one thing, and only one of them got fixes.
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-36 pb-10 sm:px-6 lg:px-8">
-          <Link
-            href={`/${locale}/projects`}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm transition-colors hover:border-rmc-gold/50 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" /> {pick({ en: 'Back to Projects', rw: 'Subira ku Mishinga', ar: 'العودة إلى المشاريع' }, locale)}
-          </Link>
-          <div className="flex flex-wrap items-center gap-2">
-            {project.category && (
-              <span className="inline-flex items-center rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.09em] text-rmc-green-dark shadow-sm">
-                {project.category}
-              </span>
-            )}
-            {done && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rmc-green px-3 py-1 text-[10px] font-bold uppercase tracking-[0.09em] text-white shadow-sm">
-                <CheckCircle2 className="h-3 w-3" /> {pick({ en: 'Completed', rw: 'Byarangiye', ar: 'مكتمل' }, locale)}
-              </span>
-            )}
-          </div>
-          <h1 className={`mt-3 max-w-3xl text-3xl font-bold leading-tight text-white drop-shadow-lg md:text-5xl ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
-            {title}
-          </h1>
+          `images={cover ? [cover] : []}` — an empty array renders no image layer,
+          leaving the green ground and overlays, which is what a project with no
+          cover showed before. Passing `undefined` would fall through to PageHero's
+          default slides, putting stock photography on a project that has none. */}
+      <PageHero
+        images={cover ? [cover] : []}
+        align="left"
+        minHeightClassName="min-h-[40vh]"
+        paddingClassName="pt-36 pb-10"
+        backHref={`/${locale}/projects`}
+        backLabel={pick({ en: 'Back to Projects', rw: 'Subira ku Mishinga', ar: 'العودة إلى المشاريع' }, locale)}
+        titleClassName="text-3xl md:text-5xl"
+        title={<span dir={rtl ? 'rtl' : 'ltr'} className={arFont}>{title}</span>}
+      >
+        {/* Badges and location sit BELOW the title now, where they were above it.
+            PageHero's only slot above the title is `eyebrow`, which wraps whatever
+            it is given in a single bordered pill — right for one word, wrong for two
+            separate badges. One metadata row under the title reads cleanly and does
+            not fight the component. */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {project.category && (
+            <span className="inline-flex items-center rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.09em] text-rmc-green-deep">
+              {project.category}
+            </span>
+          )}
+          {done && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-rmc-green px-3 py-1 text-[10px] font-bold uppercase tracking-[0.09em] text-white">
+              <CheckCircle2 className="h-3 w-3" /> {pick({ en: 'Completed', rw: 'Byarangiye', ar: 'مكتمل' }, locale)}
+            </span>
+          )}
           {project.location && (
-            <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-white/80">
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-white/80">
               <MapPin className="h-4 w-4 text-rmc-gold-light" /> {project.location}
-            </p>
+            </span>
           )}
         </div>
-      </section>
+      </PageHero>
 
       {/* Breadcrumb */}
       {/* Offset by the navbar's own height (h-14 / md:h-16), not top-0.
