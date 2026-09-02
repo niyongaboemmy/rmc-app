@@ -127,7 +127,7 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
             )}
             {done && (
               <span className="inline-flex items-center gap-1 rounded-full bg-rmc-green px-3 py-1 text-[10px] font-bold uppercase tracking-[0.09em] text-white shadow-sm">
-                <CheckCircle2 className="h-3 w-3" /> Completed
+                <CheckCircle2 className="h-3 w-3" /> {pick({ en: 'Completed', rw: 'Byarangiye', ar: 'مكتمل' }, locale)}
               </span>
             )}
           </div>
@@ -143,12 +143,20 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
       </section>
 
       {/* Breadcrumb */}
-      <div className="sticky top-0 z-20 border-b border-gray-100 bg-white/85 backdrop-blur-sm">
+      {/* Offset by the navbar's own height (h-14 / md:h-16), not top-0.
+          The site nav is `fixed top-0 z-50`, so pinning this at 0 parked it
+          underneath — and z-20 against z-50 meant it was hidden at exactly the
+          moment it became sticky. */}
+      <div className="sticky top-14 z-20 border-b border-gray-100 bg-white/85 backdrop-blur-sm md:top-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav className="flex h-11 items-center gap-1.5 text-[11px] text-gray-400" aria-label="Breadcrumb">
-            <Link href={`/${locale}`} className="transition-colors hover:text-rmc-green">Home</Link>
+            <Link href={`/${locale}`} className="transition-colors hover:text-rmc-green">
+                {pick({ en: 'Home', rw: 'Ahabanza', ar: 'الرئيسية' }, locale)}
+              </Link>
             <ChevronRight className="h-3 w-3 shrink-0 rtl:rotate-180" />
-            <Link href={`/${locale}/projects`} className="transition-colors hover:text-rmc-green">Projects</Link>
+            <Link href={`/${locale}/projects`} className="transition-colors hover:text-rmc-green">
+                {pick({ en: 'Projects', rw: 'Imishinga', ar: 'المشاريع' }, locale)}
+              </Link>
             <ChevronRight className="h-3 w-3 shrink-0 rtl:rotate-180" />
             <span className="truncate font-semibold text-gray-600">{title}</span>
           </nav>

@@ -53,7 +53,7 @@ export function ProjectCard({ project, locale }: { project: ProjectItem; locale:
           )}
           {done && (
             <span className="inline-flex items-center gap-1 rounded-full bg-rmc-green px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.09em] text-white shadow-sm">
-              <CheckCircle2 className="h-3 w-3" /> Completed
+              <CheckCircle2 className="h-3 w-3" /> {pick({ en: 'Completed', rw: 'Byarangiye', ar: 'مكتمل' }, locale)}
             </span>
           )}
         </div>
