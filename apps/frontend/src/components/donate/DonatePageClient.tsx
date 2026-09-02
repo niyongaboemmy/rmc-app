@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ShoppingBag, ArrowRight, HeartHandshake } from 'lucide-react';
@@ -56,6 +56,32 @@ export function DonatePageClient() {
   useEffect(() => {
     donationsApi.listCampaigns().then(setLiveCampaigns).catch(() => {});
   }, []);
+  /**
+   * Honour a `#campaign-…` anchor once the campaigns have actually rendered.
+   *
+   * The project pages link here with one. The browser resolves a hash at load,
+   * and at load this list is empty — the campaigns arrive from a fetch a moment
+   * later — so the jump finds nothing and silently does nothing. Every project's
+   * "Support this project" would have landed at the top of the donate page and
+   * looked like it had simply ignored the link.
+   *
+   * Runs once, after the first batch arrives. A rAF lets the cards paint before
+   * the scroll is measured; without it the target's position is read while the
+   * grid is still laying out.
+   */
+  const jumped = useRef(false);
+  useEffect(() => {
+    if (jumped.current || !liveCampaigns.length) return;
+    const id = window.location.hash.slice(1);
+    if (!id.startsWith('campaign-')) return;
+
+    jumped.current = true;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [liveCampaigns]);
+
   const liveBySlug = useMemo(() => {
     const m = new Map<string, PublicCampaign>();
     liveCampaigns.forEach((c) => m.set(c.slug, c));

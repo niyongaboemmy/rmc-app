@@ -99,6 +99,18 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
   const done = project.status === 'completed';
   const remaining = Math.max(0, project.fundNeeded - project.fundCollected);
   const cover = resolveImg(project.imageKey);
+
+  /**
+   * Where "Support this project" goes.
+   *
+   * Straight to the linked campaign's card on the donate page when the project has
+   * one — a reader who has just read why the money is needed should not then have
+   * to find that programme again in a list. Without a link it falls back to the
+   * donate landing, which is where every project's button went before this.
+   */
+  const donateHref = project.campaignSlug
+    ? `/${locale}/donate#campaign-${project.campaignSlug}`
+    : `/${locale}/donate`;
   const gallery = (project.galleryImages ?? []).map(resolveImg).filter(Boolean);
 
   return (
@@ -265,7 +277,7 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
                     </div>
 
                     {!funded ? (
-                      <Link href={`/${locale}/donate`} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-rmc-green-dark hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green focus-visible:ring-offset-2 active:scale-[0.98]">
+                      <Link href={donateHref} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-rmc-green-dark hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green focus-visible:ring-offset-2 active:scale-[0.98]">
                         <HandHeart className="h-4 w-4" /> {pick({ en: 'Support this project', rw: 'Shyigikira uyu mushinga', ar: 'ادعم هذا المشروع' }, locale)}
                       </Link>
                     ) : (

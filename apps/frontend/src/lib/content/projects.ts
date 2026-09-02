@@ -27,6 +27,20 @@ export interface ProjectItem {
   imageKey?: string;
   /** File-server keys for additional images shown on the detail page. */
   galleryImages?: string[];
+  /**
+   * The donation campaign this project raises for, by slug.
+   *
+   * Optional: a project can exist without one — it is being described, not
+   * collected for. When set, the project page's call to action points at that
+   * campaign on the donate page instead of the general donate landing, so a
+   * reader who has just read why the money is needed gives to THAT rather than
+   * having to find it again in a list.
+   *
+   * A slug, not an id, matching how the donate cart already identifies a campaign
+   * (`campaignSlug` on CreateDonationPayload). An id would be one more thing to
+   * translate between two systems that already agree on slugs.
+   */
+  campaignSlug?: string;
 }
 
 export interface ProjectsContent {

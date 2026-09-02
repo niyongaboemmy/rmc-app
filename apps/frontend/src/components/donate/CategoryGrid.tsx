@@ -146,16 +146,20 @@ export function CategoryGrid({
       {progs.map((p) => {
         const key = `prog:${p.slug}`;
         return (
-          <CauseCard
-            key={key}
-            cause={programToCause(p)}
-            currency={currency}
-            active={activeKey === key}
-            wasAdded={!!added[key]}
-            onToggle={() => toggle(key)}
-            onAdd={(amount) => handleAddProgram(p, amount, catTitle)}
-            onDonateNow={(amount) => handleDonateNowProgram(p, amount, catTitle)}
-          />
+          /* Anchored so a project page can send a reader to THIS campaign.
+             `scroll-mt` clears the fixed navbar, which an anchor jump would
+             otherwise park the card underneath. */
+          <div key={key} id={`campaign-${p.slug}`} className="scroll-mt-24">
+            <CauseCard
+              cause={programToCause(p)}
+              currency={currency}
+              active={activeKey === key}
+              wasAdded={!!added[key]}
+              onToggle={() => toggle(key)}
+              onAdd={(amount) => handleAddProgram(p, amount, catTitle)}
+              onDonateNow={(amount) => handleDonateNowProgram(p, amount, catTitle)}
+            />
+          </div>
         );
       })}
     </div>
