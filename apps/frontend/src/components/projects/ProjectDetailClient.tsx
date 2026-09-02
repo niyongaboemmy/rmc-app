@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
-  ChevronRight, MapPin, Target, HandHeart, CheckCircle2, Wallet, TrendingUp, Building2, ArrowLeft, Loader2,
+  ArrowLeft, Building2, CheckCircle2, ChevronRight, HandHeart, Loader2, MapPin, Target, TrendingUp, Wallet, ZoomIn,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { PageHero } from '@/components/layout/PageHero';
+import { GalleryLightbox } from '@/components/gallery/GalleryLightbox';
 import { Footer } from '@/components/layout/Footer';
 import { fileUrl } from '@/lib/api';
 import {
@@ -43,6 +45,8 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
   const { locale } = useParams<{ locale: string }>();
   const rtl = isRtl(locale);
   const arFont = rtl ? 'font-arabic' : '';
+  /** Which gallery photo is open full-size; null when the lightbox is closed. */
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   // The page reads this section on the server, so the project resolves on the first
   // render and its copy is in the HTML rather than appearing after the spinner.
@@ -198,10 +202,24 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
                   <h2 className="mb-4 text-lg font-bold text-gray-900">{pick({ en: 'Gallery', rw: 'Amafoto', ar: 'المعرض' }, locale)}</h2>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {gallery.map((src, i) => (
-                      <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-lg ring-1 ring-black/5">
+                      /* A button, not a div with a click handler: opening a photo is an
+                         action, so it should be reachable by keyboard and announced as
+                         something that does one. */
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setLightboxIndex(i)}
+                        aria-label={pick({ en: 'Open image', rw: 'Fungura ifoto', ar: 'افتح الصورة' }, locale)}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-lg ring-1 ring-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green focus-visible:ring-offset-2"
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt={`${title} — ${i + 1}`} className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy" />
-                      </div>
+                        <img src={src} alt={`${title} — ${i + 1}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                        {/* Says the tile does something. The slow zoom alone read as
+                            decoration rather than an affordance. */}
+                        <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:bg-black/25 group-hover:opacity-100 group-focus-visible:bg-black/25 group-focus-visible:opacity-100">
+                          <ZoomIn className="h-6 w-6 text-white drop-shadow" aria-hidden />
+                        </span>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -262,6 +280,17 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
           </div>
         </div>
       </main>
+
+      {/* The shared lightbox — keyboard nav, swipe, backdrop dismiss and
+          scroll-lock all come with it. Mounted only while open, so a closed
+          gallery costs nothing. */}
+      {lightboxIndex !== null && (
+        <GalleryLightbox
+          images={gallery.map((src, i) => ({ src, alt: `${title} — ${i + 1}` }))}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
 
       <Footer />
     </div>
