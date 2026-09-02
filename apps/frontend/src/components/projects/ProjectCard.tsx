@@ -20,7 +20,7 @@ export function ProjectCard({ project, locale }: { project: ProjectItem; locale:
   return (
     <Link
       href={`/${locale}/projects/${project.slug}`}
-      className="group flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm ring-1 ring-black/[0.02] transition-all duration-300 hover:border-rmc-green/30 hover:shadow-[0_28px_60px_-30px_rgba(26,122,74,0.45)] motion-safe:hover:-translate-y-1.5"
+      className="group flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm ring-1 ring-black/[0.02] transition-all duration-300 hover:border-rmc-green/30 hover:shadow-[0_28px_60px_-30px_rgba(26,122,74,0.45)] motion-safe:hover:-translate-y-1.5"
     >
       {/* Cover */}
       <div className="relative h-52 w-full overflow-hidden bg-rmc-green-light">

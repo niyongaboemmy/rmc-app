@@ -71,7 +71,7 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
       <div className="flex min-h-screen flex-col bg-white">
         <Navbar />
         <div className="flex flex-1 flex-col items-center justify-center px-4 py-40 text-center">
-          <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
+          <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100">
             <Building2 className="h-7 w-7 text-gray-300" />
           </span>
           <p className="text-lg font-bold text-gray-800">Project not found</p>
@@ -177,7 +177,7 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
                     <Target className="h-5 w-5 text-rmc-green" />
                     {pick({ en: 'What we need', rw: 'Icyo dukeneye', ar: 'ما نحتاج إليه' }, locale)}
                   </h2>
-                  <div className="rounded-2xl border border-rmc-green/15 bg-rmc-green-light/40 p-5">
+                  <div className="rounded-lg border border-rmc-green/15 bg-rmc-green-light/40 p-5">
                     <Prose text={whatWeNeed} />
                   </div>
                 </div>
@@ -188,7 +188,7 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
                   <h2 className="mb-4 text-lg font-bold text-gray-900">{pick({ en: 'Gallery', rw: 'Amafoto', ar: 'المعرض' }, locale)}</h2>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {gallery.map((src, i) => (
-                      <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-xl ring-1 ring-black/5">
+                      <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-lg ring-1 ring-black/5">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={src} alt={`${title} — ${i + 1}`} className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy" />
                       </div>
@@ -201,7 +201,7 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
             {/* ── Right: sticky funding ── */}
             <aside className="lg:pt-1">
               <div className="space-y-4 lg:sticky lg:top-20">
-                <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+                <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
                   <div className={`h-1.5 w-full ${funded ? 'bg-gradient-to-r from-rmc-gold to-rmc-gold-light' : 'bg-gradient-to-r from-rmc-green to-rmc-green-dark'}`} />
                   <div className="p-6">
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-rmc-gold">{pick({ en: 'Funding progress', rw: 'Aho ikusanya rigeze', ar: 'تقدّم التمويل' }, locale)}</p>
@@ -223,13 +223,13 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
                     </div>
 
                     <div className="mt-5 grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-rmc-green/15 bg-rmc-green-light/50 p-3">
+                      <div className="rounded-md border border-rmc-green/15 bg-rmc-green-light/50 p-3">
                         <span className="flex items-center gap-1.5 text-[11px] font-semibold text-rmc-green-dark">
                           <TrendingUp className="h-3.5 w-3.5 shrink-0" /> {pick({ en: 'Raised', rw: 'Byakusanyijwe', ar: 'تم جمعه' }, locale)}
                         </span>
                         <p className="mt-1 text-sm font-bold leading-none tabular-nums text-gray-900">{projectMoney(project.currency, project.fundCollected)}</p>
                       </div>
-                      <div className="rounded-xl border border-rmc-gold/20 bg-rmc-gold/10 p-3">
+                      <div className="rounded-md border border-rmc-gold/20 bg-rmc-gold/10 p-3">
                         <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8A6A0F]">
                           <Wallet className="h-3.5 w-3.5 shrink-0" /> {pick({ en: 'Still needed', rw: 'Bikenewe', ar: 'المتبقي' }, locale)}
                         </span>

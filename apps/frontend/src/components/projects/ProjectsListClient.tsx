@@ -126,7 +126,7 @@ export function ProjectsListClient() {
           {!loaded ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="overflow-hidden rounded-3xl border border-gray-100 bg-white">
+                <div key={i} className="overflow-hidden rounded-lg border border-gray-100 bg-white">
                   <div className="h-52 w-full animate-pulse bg-gray-100" />
                   <div className="space-y-3 p-5">
                     <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
@@ -137,8 +137,8 @@ export function ProjectsListClient() {
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="mx-auto max-w-md rounded-3xl border border-dashed border-gray-200 bg-white/70 p-12 text-center">
-              <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rmc-green-light">
+            <div className="mx-auto max-w-md rounded-lg border border-dashed border-gray-200 bg-white/70 p-12 text-center">
+              <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-rmc-green-light">
                 <Building2 className="h-7 w-7 text-rmc-green" aria-hidden="true" />
               </span>
               <p className={`text-base font-bold text-gray-800 ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
