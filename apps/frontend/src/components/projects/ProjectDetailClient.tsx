@@ -245,11 +245,11 @@ export function ProjectDetailClient({ slug }: { slug: string }) {
                     </div>
 
                     {!funded ? (
-                      <Link href={`/${locale}/donate`} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-md shadow-rmc-green/25 transition-colors hover:bg-rmc-green-dark">
+                      <Link href={`/${locale}/donate`} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-rmc-green px-5 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-rmc-green-dark hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-green focus-visible:ring-offset-2 active:scale-[0.98]">
                         <HandHeart className="h-4 w-4" /> {pick({ en: 'Support this project', rw: 'Shyigikira uyu mushinga', ar: 'ادعم هذا المشروع' }, locale)}
                       </Link>
                     ) : (
-                      <p className="mt-5 flex items-center justify-center gap-2 rounded-full bg-rmc-green-light/70 px-5 py-3 text-sm font-bold text-rmc-green-dark">
+                      <p className="mt-5 flex items-center justify-center gap-2 rounded-lg bg-rmc-green-light/70 px-5 py-3 text-sm font-bold text-rmc-green-dark">
                         <CheckCircle2 className="h-4 w-4" /> {pick({ en: 'Fully funded — Alhamdulillah', rw: 'Byuzuye — Alhamdulillah', ar: 'تم التمويل بالكامل — الحمد لله' }, locale)}
                       </p>
                     )}
