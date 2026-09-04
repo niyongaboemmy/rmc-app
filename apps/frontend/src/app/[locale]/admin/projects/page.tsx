@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import {
@@ -391,9 +392,12 @@ function ProjectsManager() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Category</label>
-                <select value={formData.category} onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))} className={inputCls}>
-                  {PROJECT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <SearchableSelect
+                      value={formData.category}
+                      onChange={(v) => setFormData((p) => ({ ...p, category: v }))}
+                      options={PROJECT_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                      size="md"
+                    />
               </div>
               {/* Which donation campaign this project collects for. Without one, the
                   project page's call to action goes to the donate landing. */}
@@ -401,18 +405,19 @@ function ProjectsManager() {
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   Donation program <span className="text-gray-400 font-normal">— where “Support this project” leads</span>
                 </label>
-                <select
+                <SearchableSelect
                   value={formData.campaignSlug ?? ''}
-                  onChange={(e) => setFormData((p) => ({ ...p, campaignSlug: e.target.value }))}
-                  className={inputCls}
-                >
-                  <option value="">Not linked — go to the donate page</option>
-                  {campaigns.map((c) => (
-                    <option key={c.slug} value={c.slug}>{c.title}</option>
-                  ))}
-                </select>
-                {/* A <select> whose value matches no option silently shows the first
-                    one, so a dead link would look like a working one. */}
+                  onChange={(v) => setFormData((p) => ({ ...p, campaignSlug: v }))}
+                  options={campaigns.map((c) => ({ value: c.slug, label: c.title }))}
+                  noneLabel="Not linked — go to the donate page"
+                  placeholder="Not linked — go to the donate page"
+                  size="md"
+                />
+                {/* SearchableSelect shows its placeholder, greyed, when the value
+                    matches no option — so a project linked to a deleted or deactivated
+                    campaign reads as "Not linked" while still carrying the slug. Better
+                    than a native select, which would have shown the first campaign as
+                    though it were chosen, but still a lie worth naming. */}
                 {formData.campaignSlug && !campaigns.some((c) => c.slug === formData.campaignSlug) && (
                   <p className="mt-1 text-[11px] text-amber-600">
                     Linked to “{formData.campaignSlug}”, which is not an active program.
@@ -422,10 +427,15 @@ function ProjectsManager() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value as ProjectStatus }))} className={inputCls}>
-                  <option value="ongoing">Ongoing</option>
-                  <option value="completed">Completed</option>
-                </select>
+                <SearchableSelect
+                      value={formData.status}
+                      onChange={(v) => setFormData((p) => ({ ...p, status: v as ProjectStatus }))}
+                      options={[
+                        { value: 'ongoing', label: 'Ongoing' },
+                        { value: 'completed', label: 'Completed' },
+                      ]}
+                      size="md"
+                    />
               </div>
             </div>
             <div>
@@ -445,9 +455,12 @@ function ProjectsManager() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Currency</label>
-                <select value={formData.currency} onChange={(e) => setFormData((p) => ({ ...p, currency: e.target.value }))} className={inputCls}>
-                  {['RWF', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <SearchableSelect
+                      value={formData.currency}
+                      onChange={(v) => setFormData((p) => ({ ...p, currency: v }))}
+                      options={['RWF', 'USD', 'EUR', 'GBP'].map((c) => ({ value: c, label: c }))}
+                      size="md"
+                    />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Fund needed</label>
