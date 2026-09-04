@@ -48,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'scholarshipReports', href: '/admin/scholarship/reports',  icon: BarChart2,      labelKey: 'sidebar.scholarshipReports', group: 'main', permission: Permission.SCHOLARSHIP_REPORTS },
     ],
   },
-  { key: 'projects',  href: '/admin/content/projects', icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
+  { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
   // Jobs — mirrors the Tenders/Scholarship group pattern: work the applications
   // on the board, report on them, and manage the postings. The parent points at
   // the applications board, where most of the work is; each child keeps its own
