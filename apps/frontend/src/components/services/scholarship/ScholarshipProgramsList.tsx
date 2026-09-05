@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { GraduationCap, Clock, ArrowRight, AlertCircle, Coins } from 'lucide-react';
+import { GraduationCap, Clock, ArrowRight, AlertCircle } from 'lucide-react';
 import { scholarshipPublicApi, type ScholarshipProgram } from '@/lib/scholarshipApi';
 
 function getDiffDays(deadline: string | null): number | null {
@@ -184,12 +184,6 @@ export function ScholarshipProgramsList({
               <span className="inline-flex items-center gap-1.5">
                 <GraduationCap className="h-3.5 w-3.5 shrink-0" />
                 {tLevels(program.level)}
-              </span>
-            )}
-            {program.amount != null && (
-              <span className="inline-flex items-center gap-1.5">
-                <Coins className="h-3.5 w-3.5 shrink-0" />
-                {Number(program.amount).toLocaleString()} RWF
               </span>
             )}
           </>

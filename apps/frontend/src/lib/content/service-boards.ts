@@ -181,8 +181,6 @@ export interface JobsDetailCopy {
 
 export interface ScholarshipDetailCopy {
   aboutTitle: Tri;
-  eligibilityTitle: Tri;
-  benefitsTitle: Tri;
   documentsTitle: Tri;
   attachmentsTitle: Tri;
   need: { title: Tri; subtitle: Tri };
@@ -586,8 +584,6 @@ export const SCHOLARSHIP_SERVICE_DEFAULT: ScholarshipServiceContent = {
   },
   detail: {
     aboutTitle: tri('About this scholarship', 'Ibyerekeye iyi buruse', 'عن هذه المنحة'),
-    eligibilityTitle: tri('Who may apply', 'Abashobora gusaba', 'من يمكنه التقدّم'),
-    benefitsTitle: tri('What the award covers', 'Ibyo iyi buruse itanga', 'ما تغطيه المنحة'),
     documentsTitle: tri(
       'Documents you must attach',
       'Inyandiko ugomba gushyiraho',

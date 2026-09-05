@@ -12,6 +12,7 @@ import {
 } from '@/lib/scholarshipAdminApi';
 import { cn } from '@/lib/utils';
 import { ModalPortal } from '@/components/ui/Modal';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 
 /**
  * Composing and publishing scholarships — extracted from the admin page when
@@ -37,6 +38,22 @@ const LANGS: Array<{ code: keyof I18nDraft; label: string }> = [
 ];
 
 /** A missing i18n object is a row authored before the trilingual fields existed. */
+/**
+ * Whether a rich-text value actually says anything.
+ *
+ * An "empty" editor is not an empty string — TipTap serialises an untouched
+ * document as `<p></p>`, so a plain `.trim()` check would read a blank
+ * description as filled and let a scholarship be published with nothing in it.
+ * Tags are stripped and the remainder tested, which also catches `<p><br></p>`
+ * and a paragraph holding only a non-breaking space.
+ */
+function hasRichText(html: string | null | undefined): boolean {
+  return (html ?? '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .trim().length > 0;
+}
+
 function toDraft(value: I18nText | null | undefined): I18nDraft {
   return value ? { en: value.en ?? '', rw: value.rw ?? '', ar: value.ar ?? '' } : { ...EMPTY_I18N };
 }
@@ -96,9 +113,7 @@ function ProgramModal({
   onSaved: () => void;
 }) {
   const [title, setTitle] = useState(program?.title ?? '');
-  const [description, setDescription] = useState(program?.description ?? '');
   const [level, setLevel] = useState(program?.level ?? '');
-  const [amount, setAmount] = useState(program?.amount != null ? String(program.amount) : '');
   const [slots, setSlots] = useState(program?.slots != null ? String(program.slots) : '');
   const [opensAt, setOpensAt] = useState(program?.opensAt ? program.opensAt.slice(0, 10) : '');
   const [deadline, setDeadline] = useState(
@@ -110,9 +125,15 @@ function ProgramModal({
   // all three are held at once and saved together.
   const [lang, setLang] = useState<'en' | 'rw' | 'ar'>('en');
   const [titleI18n, setTitleI18n] = useState<I18nDraft>(toDraft(program?.titleI18n));
-  const [descI18n, setDescI18n] = useState<I18nDraft>(toDraft(program?.descriptionI18n));
-  const [eligI18n, setEligI18n] = useState<I18nDraft>(toDraft(program?.eligibilityI18n));
-  const [benefitsI18n, setBenefitsI18n] = useState<I18nDraft>(toDraft(program?.benefitsI18n));
+  // English is seeded from the fallback column when the row has no English of
+  // its own. Without it, a scholarship whose text lives only in `description`
+  // opens with an empty editor and cannot be saved, since English is the
+  // required tab — a public page its own author is locked out of editing.
+  const [descI18n, setDescI18n] = useState<I18nDraft>(() => {
+    const draft = toDraft(program?.descriptionI18n);
+    if (!hasRichText(draft.en) && program?.description) draft.en = program.description;
+    return draft;
+  });
 
   const [requiredDocs, setRequiredDocs] = useState<RequiredDocument[]>(
     program?.requiredDocuments ?? [],
@@ -127,9 +148,12 @@ function ProgramModal({
     // default them to the English tab rather than making the admin type the
     // same words twice into a collapsed section they may never open.
     const fallbackTitle = (title.trim() || titleI18n.en.trim()).trim();
-    const fallbackDescription = (description.trim() || descI18n.en.trim()).trim();
+    // The fallback is no longer typed separately: it IS the English description.
+    // Two boxes for one text meant an admin could fill the rich one and leave a
+    // stale plain-text fallback for every locale without a translation.
+    const fallbackDescription = descI18n.en.trim();
 
-    if (!fallbackTitle || !fallbackDescription) {
+    if (!fallbackTitle || !hasRichText(fallbackDescription)) {
       setError('A title and description are required — fill in the English tab at minimum.');
       return;
     }
@@ -140,11 +164,8 @@ function ProgramModal({
       description: fallbackDescription,
       titleI18n,
       descriptionI18n: descI18n,
-      eligibilityI18n: eligI18n,
-      benefitsI18n: benefitsI18n,
       requiredDocuments: requiredDocs,
       level: (level || undefined) as CreateScholarshipProgramPayload['level'],
-      amount: amount ? Number(amount) : undefined,
       slots: slots ? Number(slots) : undefined,
       opensAt: opensAt || undefined,
       deadline: deadline || undefined,
@@ -225,28 +246,38 @@ function ProgramModal({
 
         <div className="space-y-3">
           <I18nField label="Title" lang={lang} value={titleI18n} onChange={setTitleI18n} />
-          <I18nField label="Description" lang={lang} value={descI18n} onChange={setDescI18n} rows={3} />
-          <I18nField
-            label="Who may apply"
-            hint="Shown as its own section — an applicant should not have to read the description to find out whether they qualify."
-            lang={lang}
-            value={eligI18n}
-            onChange={setEligI18n}
-            rows={2}
-          />
-          <I18nField
-            label="What the award covers"
-            lang={lang}
-            value={benefitsI18n}
-            onChange={setBenefitsI18n}
-            rows={2}
-          />
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <span className="text-[10px] font-semibold tracking-wider text-gray-400">
+                  {LANGS.filter((l) => hasRichText(descI18n[l.code]))
+                    .map((l) => l.code.toUpperCase())
+                    .join(' \u00b7 ') || 'EMPTY'}
+                </span>
+              </div>
+              {/* Keyed by language: the editor seeds its content once and is
+                  uncontrolled after mount, so switching tabs without a remount
+                  would leave the previous language's text in the box. Same
+                  reason as HajjDescriptionSection. */}
+              <RichTextEditor
+                key={lang}
+                value={descI18n[lang]}
+                onChange={(html) => setDescI18n((d) => ({ ...d, [lang]: html }))}
+                dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                fontClassName={lang === 'ar' ? 'font-arabic' : ''}
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                Everything an applicant reads: what the scholarship is, who may apply, what it
+                covers and what it is worth. Use headings to break it up.
+              </p>
+            </div>
 
           {/* The single-language fallback the public page uses when a locale is
               missing. Kept visible rather than hidden, so it is obvious it exists. */}
           <details className="rounded-lg border border-gray-200 p-3">
             <summary className="cursor-pointer text-xs font-semibold text-gray-500">
-              Fallback title &amp; description (used when a language above is empty)
+              Fallback title (used when a language above is empty)
             </summary>
             <div className="mt-3 space-y-3">
               <input
@@ -255,13 +286,10 @@ function ProgramModal({
                 placeholder="Fallback title"
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               />
-              <textarea
-                rows={2}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Fallback description"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
-              />
+              <p className="text-xs text-gray-400">
+                The description has no separate fallback \u2014 the English tab is what a locale
+                without its own translation renders.
+              </p>
             </div>
           </details>
           <div className="grid grid-cols-2 gap-3">
@@ -277,15 +305,6 @@ function ProgramModal({
                 <option value="tvet">TVET / Vocational</option>
                 <option value="university">University</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (RWF)</label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -498,7 +517,6 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-5 py-3.5 font-medium text-gray-600">Title</th>
                   <th className="text-left px-4 py-3.5 font-medium text-gray-600">Level</th>
-                  <th className="text-left px-4 py-3.5 font-medium text-gray-600">Amount</th>
                   <th className="text-left px-4 py-3.5 font-medium text-gray-600">Deadline</th>
                   <th className="text-left px-4 py-3.5 font-medium text-gray-600">Status</th>
                   {canManage && <th className="px-4 py-3.5" />}
@@ -513,9 +531,6 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                     </td>
                     <td className="px-4 py-4 text-xs text-gray-600">
                       {p.level ? LEVEL_LABELS[p.level] : 'Any level'}
-                    </td>
-                    <td className="px-4 py-4 text-xs text-gray-600">
-                      {p.amount != null ? `${Number(p.amount).toLocaleString()} RWF` : '—'}
                     </td>
                     <td className="px-4 py-4 text-xs text-gray-600">
                       {p.deadline ? new Date(p.deadline).toLocaleDateString() : '—'}

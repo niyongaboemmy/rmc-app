@@ -28,6 +28,7 @@ import {
 } from './dto/update-scholarship-status.dto';
 import { districtCode } from '../common/district-codes';
 import { toCsv } from '../common/csv.util';
+import { sanitizeDescription, sanitizeDescriptionI18n } from './scholarship-description';
 import { generateTrackingCode } from '../tracking/tracking-code.util';
 import { slugify } from '../common/slugify.util';
 import type { TrackingSubject } from '../tracking/tracking-verification.service';
@@ -799,19 +800,21 @@ export class ScholarshipService {
 
     return {
       title: keep(dto.title, current?.title),
-      description: keep(dto.description, current?.description),
+      // The description is the one rich-text field, and the detail page renders
+      // it as HTML. Cleaned on the way IN so what is stored is safe for every
+      // reader — the page that shows it fetches in the browser, where the
+      // frontend's jsdom-backed sanitiser cannot be used. See
+      // scholarship-description.ts.
+      description: sanitizeDescription(keep(dto.description, current?.description)),
       titleI18n: (keep(dto.titleI18n, current?.titleI18n ?? undefined) ?? null) as I18nText | null,
-      descriptionI18n: (keep(dto.descriptionI18n, current?.descriptionI18n ?? undefined) ??
-        null) as I18nText | null,
-      eligibilityI18n: (keep(dto.eligibilityI18n, current?.eligibilityI18n ?? undefined) ??
-        null) as I18nText | null,
-      benefitsI18n: (keep(dto.benefitsI18n, current?.benefitsI18n ?? undefined) ??
-        null) as I18nText | null,
+      descriptionI18n: sanitizeDescriptionI18n(
+        (keep(dto.descriptionI18n, current?.descriptionI18n ?? undefined) ??
+          null) as I18nText | null,
+      ),
       requiredDocuments: (keep(dto.requiredDocuments, current?.requiredDocuments) ??
         []) as ScholarshipProgram['requiredDocuments'],
       attachments: keep(dto.attachments, current?.attachments) ?? [],
       level: keep(dto.level, current?.level ?? undefined) ?? null,
-      amount: keep(dto.amount, current?.amount ?? undefined) ?? null,
       slots: keep(dto.slots, current?.slots ?? undefined) ?? null,
       referenceNumber: keep(dto.referenceNumber, current?.referenceNumber ?? undefined) ?? null,
       opensAt: dto.opensAt ? new Date(dto.opensAt) : (current?.opensAt ?? null),

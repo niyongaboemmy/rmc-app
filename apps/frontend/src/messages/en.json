@@ -1434,7 +1434,6 @@
           "inDays": "Closes in {days} days"
         },
         "deadlineLabel": "Deadline",
-        "amountLabel": "Amount",
         "viewAndApply": "View & Apply"
       }
     },

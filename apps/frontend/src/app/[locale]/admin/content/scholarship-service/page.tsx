@@ -14,8 +14,6 @@ import { ContentKeys, SCHOLARSHIP_SERVICE_DEFAULT } from '@/lib/content-api';
  */
 const DETAIL_FIELDS = [
   { path: ['detail', 'aboutTitle'], label: 'About heading', rows: 1 },
-  { path: ['detail', 'eligibilityTitle'], label: 'Eligibility heading', rows: 1 },
-  { path: ['detail', 'benefitsTitle'], label: 'Benefits heading', rows: 1 },
   { path: ['detail', 'documentsTitle'], label: 'Documents heading', rows: 1 },
   { path: ['detail', 'attachmentsTitle'], label: 'Attachments heading', rows: 1 },
   { path: ['detail', 'need', 'title'], label: 'What you will need — Heading', rows: 1 },

@@ -3,6 +3,29 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
+/**
+ * `sanitize-html` ships ESM only and this project's Jest runs CJS, so importing
+ * the service pulls in scholarship-description, which pulls in sanitize-html,
+ * and the suite dies at parse time on `export {`. Same wall dawah's discussions
+ * spec hit, and the same way through it: the sanitiser lives in its own module
+ * precisely so it can be replaced here.
+ *
+ * Identity functions rather than a fake cleaner. Nothing in this file is about
+ * sanitising — these are status transitions — and a mock that pretended to strip
+ * tags would invite an assertion that proves only that the mock works.
+ *
+ * The allowlist therefore has NO Jest coverage, and cannot have any while the
+ * suite is CJS: a spec that imports it dies at parse time, which was checked
+ * rather than assumed. It was verified against the real library through the
+ * running API instead — a script tag, an onerror handler and a javascript: href
+ * pushed through PATCH /admin/scholarship/programs, and the stored row read
+ * back. Written down because "untested" and "unverified" are different claims.
+ */
+jest.mock('./scholarship-description', () => ({
+  sanitizeDescription: (html: unknown) => html,
+  sanitizeDescriptionI18n: (value: unknown) => value,
+}));
+
 import { ScholarshipService } from './scholarship.service';
 import {
   ScholarshipApplication,
@@ -41,9 +64,7 @@ describe('ScholarshipService — state rules', () => {
   const APPLICANT = 'applicant-1';
   const ADMIN = 'admin-1';
 
-  const makeApplication = (
-    over: Partial<ScholarshipApplication> = {},
-  ): ScholarshipApplication =>
+  const makeApplication = (over: Partial<ScholarshipApplication> = {}): ScholarshipApplication =>
     ({
       id: 'app-1',
       applicantId: APPLICANT,
@@ -295,10 +316,11 @@ describe('ScholarshipService — state rules', () => {
      * cover it.
      */
     const existingApplicationWithStatus = (status: ScholarshipApplicationStatus) => {
-      applications.findOne.mockImplementation((query: { where: { status: { _value: string[] } } }) =>
-        Promise.resolve(
-          query.where.status._value.includes(status) ? makeApplication({ status }) : null,
-        ),
+      applications.findOne.mockImplementation(
+        (query: { where: { status: { _value: string[] } } }) =>
+          Promise.resolve(
+            query.where.status._value.includes(status) ? makeApplication({ status }) : null,
+          ),
       );
     };
 

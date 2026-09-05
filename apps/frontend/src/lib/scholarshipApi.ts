@@ -83,15 +83,14 @@ export interface ScholarshipProgram {
   id: string;
   slug: string | null;
   title: string;
+  /** Rich text (HTML). The whole of what an applicant reads — what the
+   *  scholarship is, who may apply, what it covers and what it is worth. */
   description: string;
   titleI18n: I18nText | null;
   descriptionI18n: I18nText | null;
-  eligibilityI18n: I18nText | null;
-  benefitsI18n: I18nText | null;
   requiredDocuments: RequiredDocument[];
   attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
   level: EducationLevel | null;
-  amount: number | null;
   slots: number | null;
   referenceNumber: string | null;
   opensAt: string | null;

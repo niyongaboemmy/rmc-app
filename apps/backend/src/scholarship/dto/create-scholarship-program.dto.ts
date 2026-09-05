@@ -4,7 +4,6 @@ import {
   Length,
   IsEnum,
   IsOptional,
-  IsNumber,
   IsDateString,
   IsBoolean,
   IsInt,
@@ -72,18 +71,6 @@ export class CreateScholarshipProgramDto {
   @Type(() => I18nTextDto)
   descriptionI18n?: I18nTextDto;
 
-  @ApiPropertyOptional({ type: I18nTextDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => I18nTextDto)
-  eligibilityI18n?: I18nTextDto;
-
-  @ApiPropertyOptional({ type: I18nTextDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => I18nTextDto)
-  benefitsI18n?: I18nTextDto;
-
   @ApiPropertyOptional({ type: [RequiredDocumentDto] })
   @IsOptional()
   @IsArray()
@@ -101,8 +88,6 @@ export class CreateScholarshipProgramDto {
   @IsOptional()
   @IsEnum(ScholarshipLevel)
   level?: ScholarshipLevel;
-
-  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsNumber() @Min(0) amount?: number;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsInt() @Min(1) slots?: number;
 

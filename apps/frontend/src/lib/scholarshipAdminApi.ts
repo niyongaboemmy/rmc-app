@@ -60,11 +60,8 @@ export interface CreateScholarshipProgramPayload {
   description: string;
   titleI18n?: I18nTextPayload;
   descriptionI18n?: I18nTextPayload;
-  eligibilityI18n?: I18nTextPayload;
-  benefitsI18n?: I18nTextPayload;
   requiredDocuments?: RequiredDocumentPayload[];
   level?: EducationLevel;
-  amount?: number;
   slots?: number;
   opensAt?: string;
   deadline?: string;

@@ -1434,7 +1434,6 @@
           "inDays": "تُغلق خلال {days} أيام"
         },
         "deadlineLabel": "الموعد النهائي",
-        "amountLabel": "المبلغ",
         "viewAndApply": "عرض والتقديم"
       }
     },
