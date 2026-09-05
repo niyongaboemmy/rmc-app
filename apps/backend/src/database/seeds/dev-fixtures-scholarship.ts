@@ -181,9 +181,18 @@ const FIXTURES: FixtureSpec[] = [
   },
 ];
 
-/** Rwandan mobile format the app validates against: +250 7[2389] + 7 digits. */
+/**
+ * Rwandan mobile format the app validates against: +250 7[2389] + 7 digits.
+ *
+ * The slice was `-6`, one digit short of what the comment above it already
+ * said — so every fixture carried a `+250` + 8-digit number that the create
+ * endpoint's own `^\+250[0-9]{9}$` rejects. Twelve of thirteen seeded
+ * applications were unusable for the thing the phone is FOR: it is the channel
+ * the OTP tracking flow sends to, so public status tracking could not be
+ * exercised against fixture data at all.
+ */
 const phoneFor = (n: number, offset = 0) =>
-  `+2507${8}${String(1_000_000 + n * 137 + offset).slice(-6)}`;
+  `+2507${8}${String(1_000_000 + n * 137 + offset).slice(-7)}`;
 
 async function main(): Promise<void> {
   await AppDataSource.initialize();

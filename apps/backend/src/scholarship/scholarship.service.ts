@@ -27,19 +27,33 @@ import {
   ScholarshipStatusAction,
 } from './dto/update-scholarship-status.dto';
 import { districtCode } from '../common/district-codes';
+import { toCsv } from '../common/csv.util';
 import { generateTrackingCode } from '../tracking/tracking-code.util';
 import { slugify } from '../common/slugify.util';
 import type { TrackingSubject } from '../tracking/tracking-verification.service';
 import { User } from '../users/entities/user.entity';
 import { District } from '../locations/entities/district.entity';
 
-// An application in any of these statuses counts as "active" for duplicate
-// detection — rejected/cancelled/confirmed never block a new application.
+/**
+ * An application in any of these statuses blocks a second one for the same
+ * scholarship. Only `rejected` and `cancelled` let a member apply again.
+ *
+ * This list MUST match the partial unique index `IDX_scholarship_app_one_per_program`,
+ * which excludes exactly those two. It did not: `confirmed` was listed here as
+ * non-blocking while the index blocked it, so a member re-applying to a
+ * scholarship they had already been awarded got past this check and then hit a
+ * duplicate-key error — a 500 where the ConflictException below was meant to
+ * explain the problem.
+ *
+ * Aligned toward the index rather than away from it, because having already won
+ * a scholarship is a reason not to apply to it a second time.
+ */
 const ACTIVE_STATUSES: ScholarshipApplicationStatus[] = [
   ScholarshipApplicationStatus.DRAFT,
   ScholarshipApplicationStatus.SUBMITTED,
   ScholarshipApplicationStatus.UNDER_REVIEW,
   ScholarshipApplicationStatus.APPROVED,
+  ScholarshipApplicationStatus.CONFIRMED,
 ];
 
 @Injectable()
@@ -313,6 +327,28 @@ export class ScholarshipService {
   // ── Documents (member) ────────────────────────────────────────────────────────
 
   /**
+   * The evidence an application rests on is fixed at the same moment its text
+   * is: when the applicant submits.
+   *
+   * Ownership alone used to be the whole check, so an applicant could attach or
+   * remove documents at any point — including on a CONFIRMED application, after
+   * a reviewer had read and verified them. `updateDraft` has always refused to
+   * touch anything past DRAFT; there is no reading on which the essay is frozen
+   * but the transcript backing it is not.
+   *
+   * DRAFT is the right line and not a conservative guess: the wizard uploads
+   * every file first and calls submit last, so nothing in the real flow attaches
+   * a document to an application that has already been submitted.
+   */
+  private assertDocumentsEditable(application: ScholarshipApplication): void {
+    if (application.status !== ScholarshipApplicationStatus.DRAFT) {
+      throw new ForbiddenException(
+        'Documents can only be changed while the application is still a draft.',
+      );
+    }
+  }
+
+  /**
    * Records an already-uploaded supporting document for an application the
    * caller owns. Documents are appended (multiple allowed per type), never
    * upserted — an applicant may attach several transcripts/records.
@@ -322,7 +358,7 @@ export class ScholarshipService {
     applicantId: string,
     dto: SaveScholarshipDocumentDto,
   ): Promise<ScholarshipDocument> {
-    await this.findOwn(id, applicantId);
+    this.assertDocumentsEditable(await this.findOwn(id, applicantId));
     const doc = this.documentRepo.create({
       applicationId: id,
       documentType: dto.documentType,
@@ -337,7 +373,7 @@ export class ScholarshipService {
   }
 
   async deleteDocument(id: string, documentId: string, applicantId: string): Promise<void> {
-    await this.findOwn(id, applicantId);
+    this.assertDocumentsEditable(await this.findOwn(id, applicantId));
     const doc = await this.documentRepo.findOne({
       where: { id: documentId, applicationId: id },
     });
@@ -516,6 +552,26 @@ export class ScholarshipService {
         toStatus = ScholarshipApplicationStatus.APPROVED;
         break;
       case ScholarshipStatusAction.REJECT:
+        // Rejection was the one action with no source-status check, so a draft
+        // the applicant had not finished writing could be rejected out from
+        // under them, and an application already rejected could be rejected
+        // again, rewriting its outcome and its reason.
+        //
+        // APPROVED is in the allowed list deliberately: an offer that has been
+        // made but not yet accepted can still be withdrawn, and the board lets a
+        // reviewer do exactly that. CONFIRMED is not — the applicant has taken
+        // the place up, and revoking an award is not a drag between two columns.
+        if (
+          ![
+            ScholarshipApplicationStatus.SUBMITTED,
+            ScholarshipApplicationStatus.UNDER_REVIEW,
+            ScholarshipApplicationStatus.APPROVED,
+          ].includes(application.status)
+        ) {
+          throw new BadRequestException(
+            'Only an application that is submitted, under review, or approved can be rejected',
+          );
+        }
         if (!dto.reason?.trim()) {
           throw new BadRequestException('A rejection reason is required');
         }
@@ -622,9 +678,12 @@ export class ScholarshipService {
       'status',
       'createdAt',
     ];
-    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = items.map((a) =>
-      [
+    // `fullNames` and `schoolName` are written by the applicant. See csv.util —
+    // quoting alone leaves them able to open the file as a spreadsheet formula
+    // on the reviewer's machine.
+    return toCsv(
+      header,
+      items.map((a) => [
         a.id,
         a.applicationNumber,
         a.fullNames,
@@ -634,12 +693,8 @@ export class ScholarshipService {
         a.educationLevel,
         a.status,
         a.createdAt?.toISOString(),
-      ]
-        .map(escape)
-        .join(','),
+      ]),
     );
-
-    return [header.join(','), ...rows].join('\n');
   }
 
   // ── Admin: programs ───────────────────────────────────────────────────────────

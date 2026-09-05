@@ -148,6 +148,17 @@ export function scholarshipMoveRule(
     return { allowed: false, reason: 'Only the applicant can withdraw their own application.' };
   }
 
+  // Rejecting is allowed right up to the point the applicant accepts: an offer
+  // can be withdrawn, an accepted award cannot be taken back by dragging a card.
+  // The server refuses this too — it used to refuse nothing here, which is how
+  // the two ends came to disagree in the first place.
+  if (to === 'rejected' && from === 'confirmed') {
+    return {
+      allowed: false,
+      reason: 'This award has been accepted. Rejecting it now is not a board action.',
+    };
+  }
+
   // The ordering the backend enforces. Stated here so the reviewer is told
   // BEFORE the request, and in words rather than a 400.
   if (to === 'under_review' && from !== 'submitted') {

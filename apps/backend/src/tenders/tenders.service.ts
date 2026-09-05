@@ -36,6 +36,7 @@ import { SmsService } from '../integrations/sms/sms.service';
 import { EmailService } from '../integrations/email/email.service';
 import { Announcement } from '../public/entities/announcement.entity';
 import { User } from '../users/entities/user.entity';
+import { toCsv } from '../common/csv.util';
 
 /**
  * Statuses that count as a live bid. A withdrawn or rejected bid frees the
@@ -956,9 +957,12 @@ export class TendersService {
       'documentsUploaded',
       'submittedAt',
     ];
-    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = items.map((a) =>
-      [
+    // Company and contact names come from the bidder. See csv.util — quoting
+    // alone leaves them able to open as a spreadsheet formula on the machine of
+    // whoever downloads the bids.
+    return toCsv(
+      header,
+      items.map((a) => [
         a.applicationNumber,
         a.companyName,
         a.companyTin,
@@ -969,12 +973,8 @@ export class TendersService {
         a.status,
         a.documents?.length ?? 0,
         a.submittedAt?.toISOString(),
-      ]
-        .map(escape)
-        .join(','),
+      ]),
     );
-
-    return [header.join(','), ...rows].join('\n');
   }
 
   // ── Internal helpers ─────────────────────────────────────────────────────────
