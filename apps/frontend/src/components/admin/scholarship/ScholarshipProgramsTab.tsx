@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, X, RefreshCw, GraduationCap, LayoutGrid } from 'lucide-react';
+import {
+  Plus, Pencil, Trash2, X, RefreshCw, GraduationCap, LayoutGrid, Globe, Lock, Loader2,
+} from 'lucide-react';
 import {
   type ScholarshipProgram, type I18nText, type RequiredDocument,
 } from '@/lib/scholarshipApi';
@@ -469,6 +471,14 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
   useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
 
   const [actionError, setActionError] = useState('');
+  /**
+   * The row whose publish/close is in flight.
+   *
+   * Both actions were fire-and-forget with no feedback: the row sat unchanged
+   * until the refetch landed, so the natural response to a slow request was to
+   * click again — and the second click sent a second request.
+   */
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   /** Surfaces the server's own refusal — "cannot publish without: deadline" is
    *  far more useful than a generic failure toast. */
@@ -477,24 +487,38 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
       ?.message ?? fallback;
 
   const handlePublish = async (p: ScholarshipProgram) => {
-    if (!confirm(`Publish "${p.title}"? It becomes visible to applicants immediately.`)) return;
+    // Reopening a closed scholarship runs the same endpoint, so the wording
+    // follows the row rather than the handler.
+    const reopening = p.status === 'closed';
+    const question = reopening
+      ? `Reopen "${p.title}"? It starts accepting applications again.`
+      : `Publish "${p.title}"? It becomes visible to applicants immediately.`;
+    if (!confirm(question)) return;
     setActionError('');
+    setBusyId(p.id);
     try {
       await scholarshipAdminApi.publishProgram(p.id);
       await fetchPrograms();
     } catch (err) {
-      setActionError(serverMessage(err, 'Could not publish this scholarship.'));
+      setActionError(
+        serverMessage(err, `Could not ${reopening ? 'reopen' : 'publish'} this scholarship.`),
+      );
+    } finally {
+      setBusyId(null);
     }
   };
 
   const handleClose = async (p: ScholarshipProgram) => {
     if (!confirm(`Close "${p.title}"? No new applications will be accepted. Applications already submitted continue through review.`)) return;
     setActionError('');
+    setBusyId(p.id);
     try {
       await scholarshipAdminApi.closeProgram(p.id);
       await fetchPrograms();
     } catch (err) {
       setActionError(serverMessage(err, 'Could not close this scholarship.'));
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -591,19 +615,50 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                           >
                             <LayoutGrid className="h-4 w-4" />
                           </Link>
+                          {/* The two state changes are the consequential actions in
+                              this row, and they used to be the least visible thing
+                              in it: bare text among four icon buttons, reading as
+                              labels rather than controls.
+
+                              Icon AND word, not icon alone. An icon by itself would
+                              be quicker to scan and worse to be sure about — these
+                              put a scholarship in front of the public or stop it
+                              taking applications, and neither is a guess worth
+                              inviting. The pill gives them the affordance the
+                              neutral row icons deliberately do not have. */}
                           {p.status !== 'published' && (
                             <button
                               onClick={() => handlePublish(p)}
-                              className="text-xs font-semibold text-rmc-green hover:underline"
+                              disabled={busyId === p.id}
+                              title={
+                                p.status === 'closed'
+                                  ? 'Start accepting applications again'
+                                  : 'Make this scholarship visible to applicants'
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/25 bg-rmc-green-light/60 px-2.5 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              Publish
+                              {busyId === p.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Globe className="h-3.5 w-3.5" />
+                              )}
+                              {/* Publishing a CLOSED scholarship reopens it — same
+                                  endpoint, different thing to a reader. */}
+                              {p.status === 'closed' ? 'Reopen' : 'Publish'}
                             </button>
                           )}
                           {p.status === 'published' && (
                             <button
                               onClick={() => handleClose(p)}
-                              className="text-xs font-semibold text-amber-600 hover:underline"
+                              disabled={busyId === p.id}
+                              title="Stop accepting new applications; submitted ones continue through review"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
+                              {busyId === p.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Lock className="h-3.5 w-3.5" />
+                              )}
                               Close
                             </button>
                           )}
