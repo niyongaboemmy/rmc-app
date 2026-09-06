@@ -12,7 +12,7 @@ import {
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
   Compass, ListChecks, CalendarDays, Briefcase, GraduationCap,
-  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart, ShieldCheck,
+  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart, ShieldCheck, UserPlus,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ type PageLocation =
   | 'Welcome to Islam'
   | 'Projects Page'
   | 'Marriage Page'
+  | 'Member Registration'
   | 'Site-wide';
 
 interface SectionConfig {
@@ -369,6 +370,20 @@ const SECTIONS: SectionConfig[] = [
     bg: 'bg-violet-50', iconColor: 'text-violet-600', border: 'border-violet-100',
     badge: 'bg-violet-100 text-violet-700',
     accentBar: 'bg-violet-400',
+  },
+  {
+    id: 'member-registration',
+    icon: UserPlus,
+    title: 'Member Registration',
+    description:
+      'The education levels offered on the membership form. Add, rename, reorder or remove them.',
+    type: 'edit', itemLabel: null,
+    page: 'Member Registration', positionOrder: 0,
+    locationLabel: 'Member Registration \u00b7 Education levels',
+    keywords: ['member', 'membership', 'register', 'registration', 'education', 'level', 'levels', 'school', 'degree', 'qualification'],
+    bg: 'bg-sky-50', iconColor: 'text-sky-600', border: 'border-sky-100',
+    badge: 'bg-sky-100 text-sky-700',
+    accentBar: 'bg-sky-400',
   },
   {
     id: 'good-conduct',

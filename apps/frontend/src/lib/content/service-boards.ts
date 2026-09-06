@@ -56,7 +56,7 @@ export function boardSteps(saved: unknown, defaults: ServiceBoardContent): Board
  * unset section, malformed blob — falls back to the seed; an array is taken exactly
  * as saved, which is the whole point (see {@link boardSteps}).
  */
-function unmergedList<T>(
+export function unmergedList<T>(
   items: unknown,
   fallback: T[],
   idPrefix: string,
