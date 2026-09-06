@@ -56,6 +56,8 @@ import { District } from '../locations/entities/district.entity';
  */
 describe('ScholarshipService — state rules', () => {
   let service: ScholarshipService;
+  // Hoisted so a test can reach the mocked DataSource and steer one nextval.
+  let module: TestingModule;
   let applications: Record<string, jest.Mock>;
   let programs: Record<string, jest.Mock>;
   let documents: Record<string, jest.Mock>;
@@ -117,7 +119,7 @@ describe('ScholarshipService — state rules', () => {
       save: jest.fn((d) => Promise.resolve(d)),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         ScholarshipService,
         { provide: getRepositoryToken(ScholarshipApplication), useValue: applications },
@@ -282,6 +284,57 @@ describe('ScholarshipService — state rules', () => {
           BadRequestException,
         );
       }
+    });
+  });
+
+  /**
+   * The programme reference used to be a free-text box: no format, no
+   * uniqueness, no generation, and two of three live programmes had none.
+   */
+  describe('the programme reference is allocated, not typed', () => {
+    const dto = { title: 'S4 bursary', description: '<p>x</p>' } as never;
+
+    it('stamps one on every new programme', async () => {
+      const created = await service.adminCreateProgram(dto);
+
+      expect(created.referenceNumber).toMatch(/^RMC-SCHP-\d{4}-\d{4}$/);
+    });
+
+    /**
+     * The counter is a sequence rather than a row count, so two admins creating
+     * a programme at the same moment cannot be handed the same reference. This
+     * asserts the service asks the DATABASE for the number — the property that
+     * makes it race-free — rather than deriving it from anything it has read.
+     */
+    it('takes its number from the sequence', async () => {
+      const dataSource = module.get<{ query: jest.Mock }>(getDataSourceToken());
+      dataSource.query.mockResolvedValueOnce([{ seq: 7 }]);
+
+      const created = await service.adminCreateProgram(dto);
+
+      expect(dataSource.query).toHaveBeenCalledWith(
+        expect.stringContaining("nextval('scholarship_program_seq')"),
+      );
+      expect(created.referenceNumber).toMatch(/-0007$/);
+    });
+
+    it('pads the sequence to four digits', async () => {
+      const dataSource = module.get<{ query: jest.Mock }>(getDataSourceToken());
+      dataSource.query.mockResolvedValueOnce([{ seq: 1234 }]);
+
+      expect((await service.adminCreateProgram(dto)).referenceNumber).toMatch(/-1234$/);
+    });
+
+    // Renaming a programme must not renumber it: the reference may already be in
+    // a letter. Nothing in the update path touches it.
+    it('never reassigns one on update', async () => {
+      programs.findOne.mockResolvedValue(
+        makeProgram({ referenceNumber: 'RMC-SCHP-2607-0001' } as never),
+      );
+
+      const updated = await service.adminUpdateProgram('prog-1', { title: 'Renamed' } as never);
+
+      expect(updated.referenceNumber).toBe('RMC-SCHP-2607-0001');
     });
   });
 

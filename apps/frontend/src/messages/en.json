@@ -1183,11 +1183,6 @@
       },
       "title": "Scholarships",
       "desc": "Financial support for Muslim students pursuing education at all levels.",
-      "levels": {
-        "secondary": "Secondary School",
-        "tvet": "TVET / Vocational",
-        "university": "University"
-      },
       "relationships": {
         "parent": "Parent",
         "guardian": "Guardian",

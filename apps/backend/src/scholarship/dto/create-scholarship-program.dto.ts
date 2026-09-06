@@ -2,7 +2,6 @@ import {
   IsString,
   IsNotEmpty,
   Length,
-  IsEnum,
   IsOptional,
   IsDateString,
   IsBoolean,
@@ -13,7 +12,6 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ScholarshipLevel } from '../entities/scholarship-program.entity';
 
 const blankToUndefined = Transform(({ value }) => (value === '' ? undefined : value));
 
@@ -83,24 +81,29 @@ export class CreateScholarshipProgramDto {
   @IsArray()
   attachments?: Array<{ key: string; name: string; mimeType: string; size: number }>;
 
-  @ApiPropertyOptional({ enum: ScholarshipLevel })
+  /**
+   * The education level key, as defined in the Scholarships CMS section.
+   *
+   * No longer an enum. The levels are admin-managed content — RMC can add
+   * "Primary" or drop "TVET" without a deploy — so the server cannot hold a
+   * closed list of them. Bounded by the column width instead; the key an admin
+   * picks always comes from a dropdown built from that same list.
+   *
+   * The APPLICATION's `educationLevel` is a different field and still uses
+   * ScholarshipLevel: it is about the applicant, not the offer.
+   */
+  @ApiPropertyOptional({ description: 'Level key from the Scholarships CMS section' })
   @blankToUndefined
   @IsOptional()
-  @IsEnum(ScholarshipLevel)
-  level?: ScholarshipLevel;
+  @IsString()
+  @Length(1, 20)
+  level?: string;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsInt() @Min(1) slots?: number;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsDateString() opensAt?: string;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsDateString() deadline?: string;
-
-  @ApiPropertyOptional()
-  @blankToUndefined
-  @IsOptional()
-  @IsString()
-  @Length(1, 40)
-  referenceNumber?: string;
 
   /** @deprecated Retained so the existing admin form keeps working; `status` rules. */
   @ApiPropertyOptional({ default: true }) @IsOptional() @IsBoolean() isOpen?: boolean;

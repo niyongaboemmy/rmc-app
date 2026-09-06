@@ -1183,11 +1183,6 @@
       },
       "title": "Buruse",
       "desc": "Inkunga y'amafaranga kuri abanyeshuri b'Abasilamu bavoma uburezi mu mashuri yose.",
-      "levels": {
-        "secondary": "Amashuri Yisumbuye",
-        "tvet": "Amashuri y'Umwuga (TVET)",
-        "university": "Kaminuza"
-      },
       "relationships": {
         "parent": "Umubyeyi",
         "guardian": "Umurezi",

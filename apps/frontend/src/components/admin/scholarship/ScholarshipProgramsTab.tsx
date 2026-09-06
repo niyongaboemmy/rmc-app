@@ -13,6 +13,8 @@ import {
 import { cn } from '@/lib/utils';
 import { ModalPortal } from '@/components/ui/Modal';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { ContentKeys, getSiteContent, SCHOLARSHIP_SERVICE_DEFAULT } from '@/lib/content-api';
+import { boardLevels, type BoardLevel } from '@/lib/content/service-boards';
 
 /**
  * Composing and publishing scholarships — extracted from the admin page when
@@ -21,11 +23,34 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor';
  * state lives in one component, because a submenu needs somewhere to link to.
  */
 
-const LEVEL_LABELS: Record<string, string> = {
-  secondary: 'Secondary School',
-  tvet: 'TVET / Vocational',
-  university: 'University',
-};
+/**
+ * The education levels, read from the Scholarships CMS section rather than
+ * hardcoded here. `boardLevels` takes the saved list exactly as stored, so a
+ * level an admin deleted stays deleted instead of the seed coming back.
+ *
+ * English labels: this is the admin console, which is English throughout. The
+ * public pages resolve the same ids through `pick()` in the reader's locale.
+ */
+function useLevels(): BoardLevel[] {
+  const [levels, setLevels] = useState<BoardLevel[]>(SCHOLARSHIP_SERVICE_DEFAULT.levels);
+  useEffect(() => {
+    let active = true;
+    getSiteContent(ContentKeys.scholarshipService)
+      .then((data) => {
+        if (active) setLevels(boardLevels(data, SCHOLARSHIP_SERVICE_DEFAULT));
+      })
+      // The seeded three are already in state; a failed read leaves the form
+      // usable rather than showing an empty dropdown.
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+  return levels;
+}
+
+const levelLabelEn = (levels: BoardLevel[], key: string | null): string =>
+  levels.find((l) => l.id === key)?.label.en || '';
 
 // ── Program form modal ──────────────────────────────────────────────────────
 
@@ -113,13 +138,13 @@ function ProgramModal({
   onSaved: () => void;
 }) {
   const [title, setTitle] = useState(program?.title ?? '');
-  const [level, setLevel] = useState(program?.level ?? '');
+  const levels = useLevels();
+  const [level, setLevel] = useState<string>(program?.level ?? '');
   const [slots, setSlots] = useState(program?.slots != null ? String(program.slots) : '');
   const [opensAt, setOpensAt] = useState(program?.opensAt ? program.opensAt.slice(0, 10) : '');
   const [deadline, setDeadline] = useState(
     program?.deadline ? program.deadline.slice(0, 10) : '',
   );
-  const [referenceNumber, setReferenceNumber] = useState(program?.referenceNumber ?? '');
 
   // Trilingual copy. The `lang` tab only switches which language is being typed;
   // all three are held at once and saved together.
@@ -169,7 +194,6 @@ function ProgramModal({
       slots: slots ? Number(slots) : undefined,
       opensAt: opensAt || undefined,
       deadline: deadline || undefined,
-      referenceNumber: referenceNumber.trim() || undefined,
     };
     try {
       if (program) {
@@ -301,9 +325,11 @@ function ProgramModal({
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               >
                 <option value="">Any level</option>
-                <option value="secondary">Secondary School</option>
-                <option value="tvet">TVET / Vocational</option>
-                <option value="university">University</option>
+                {levels.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.label.en || l.id}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -321,12 +347,14 @@ function ProgramModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Reference no.</label>
-              <input
-                value={referenceNumber}
-                onChange={(e) => setReferenceNumber(e.target.value)}
-                placeholder="RMC-SCHP-2607-0001"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-              />
+              {/* Allocated by the server when the programme is created, and frozen
+                  after — a reference already quoted in a letter must not change
+                  because the programme was renamed. Shown, never typed. */}
+              <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-500">
+                {program?.referenceNumber ?? (
+                  <span className="text-gray-400">Assigned when you save</span>
+                )}
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -420,6 +448,7 @@ function ProgramModal({
 // ── Programs tab ─────────────────────────────────────────────────────────────
 
 export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
+  const levels = useLevels();
   const { locale } = useParams<{ locale: string }>();
   const [programs, setPrograms] = useState<ScholarshipProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -530,7 +559,7 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                       <p className="text-xs text-gray-400 mt-0.5 line-clamp-1 max-w-xs">{p.description}</p>
                     </td>
                     <td className="px-4 py-4 text-xs text-gray-600">
-                      {p.level ? LEVEL_LABELS[p.level] : 'Any level'}
+                      {levelLabelEn(levels, p.level) || 'Any level'}
                     </td>
                     <td className="px-4 py-4 text-xs text-gray-600">
                       {p.deadline ? new Date(p.deadline).toLocaleDateString() : '—'}

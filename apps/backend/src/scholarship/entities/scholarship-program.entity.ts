@@ -101,8 +101,17 @@ export class ScholarshipProgram {
   @Column({ type: 'jsonb', default: () => "'[]'" })
   attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
 
+  /**
+   * The education level key, defined in the Scholarships CMS section rather than
+   * by this enum — RMC adds and removes levels without a deploy. The three
+   * seeded keys are still `secondary`, `tvet` and `university`, which is why no
+   * data had to move when they became content.
+   *
+   * `ScholarshipLevel` still governs the APPLICATION's `educationLevel`: that
+   * describes the applicant, not the offer, and is a different decision.
+   */
   @Column({ type: 'varchar', length: 20, nullable: true })
-  level: ScholarshipLevel | null;
+  level: string | null;
 
   /** How many awards are on offer. Null when RMC would rather not commit. */
   @Column({ type: 'int', nullable: true })

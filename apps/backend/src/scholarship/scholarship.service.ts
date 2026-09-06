@@ -714,6 +714,10 @@ export class ScholarshipService {
       status: ScholarshipProgramStatus.DRAFT,
       isOpen: false,
       slug: await this.uniqueProgramSlug(dto.title),
+      // Allocated here and never again: a reference an admin has quoted in a
+      // letter must not change because the programme was renamed. Same rule the
+      // slug follows, for the same reason.
+      referenceNumber: await this.generateProgramReference(),
     });
     return this.programRepo.save(program);
   }
@@ -816,7 +820,6 @@ export class ScholarshipService {
       attachments: keep(dto.attachments, current?.attachments) ?? [],
       level: keep(dto.level, current?.level ?? undefined) ?? null,
       slots: keep(dto.slots, current?.slots ?? undefined) ?? null,
-      referenceNumber: keep(dto.referenceNumber, current?.referenceNumber ?? undefined) ?? null,
       opensAt: dto.opensAt ? new Date(dto.opensAt) : (current?.opensAt ?? null),
       deadline: dto.deadline ? new Date(dto.deadline) : (current?.deadline ?? null),
     };
@@ -832,6 +835,23 @@ export class ScholarshipService {
     if (program.opensAt && +new Date(program.opensAt) > now) return false;
     if (program.deadline && +new Date(program.deadline) < now) return false;
     return true;
+  }
+
+  /**
+   * `RMC-SCHP-<YYMM>-<4-digit sequence>`, allocated server-side.
+   *
+   * The counter is a Postgres sequence rather than a count of existing rows:
+   * two admins creating a programme at the same moment would both read the same
+   * count and write the same reference. A sequence hands out each value once,
+   * and outside the transaction — so a rolled-back create leaves a gap rather
+   * than reissuing a number. A gap is not a defect; a duplicate is.
+   */
+  private async generateProgramReference(): Promise<string> {
+    const result = await this.dataSource.query(`SELECT nextval('scholarship_program_seq') AS seq`);
+    const seq = String(result[0].seq).padStart(4, '0');
+    const now = new Date();
+    const yymm = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0');
+    return `RMC-SCHP-${yymm}-${seq}`;
   }
 
   /** Slug from the title, suffixed until free. Soft-deleted rows still hold theirs. */

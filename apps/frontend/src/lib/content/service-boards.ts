@@ -77,6 +77,33 @@ function titleText(item: Record<string, unknown> | null, id: string): BoardStep 
   };
 }
 
+/**
+ * The education levels an admin has saved, or the seeded three when the section
+ * has never been edited. Unmerged for the reason {@link boardSteps} explains —
+ * merging by index would attach one level's Kinyarwanda label to another's key.
+ */
+export function boardLevels(saved: unknown, defaults: ScholarshipServiceContent): BoardLevel[] {
+  return unmergedList(
+    (saved as ScholarshipServiceContent | null)?.levels,
+    defaults.levels,
+    'lvl',
+    (item, id) => ({ id, label: (item?.label as Tri) ?? tri('') }),
+  );
+}
+
+/**
+ * The label for a stored level key, or null when the key names a level that no
+ * longer exists.
+ *
+ * Null rather than the raw key: `university` is a passable fallback but
+ * `lvl1757012345678` is not, and a programme pointing at a deleted level should
+ * show nothing rather than debris. Callers hide the chip.
+ */
+export function levelLabel(levels: BoardLevel[], key: string | null | undefined): Tri | null {
+  if (!key) return null;
+  return levels.find((l) => l.id === key)?.label ?? null;
+}
+
 /** Build a seeded step; the id keeps React keys stable across reordering. */
 function step(id: string, title: Tri, text: Tri): BoardStep {
   return { id, title, text };
@@ -119,6 +146,25 @@ export function boardFaqs(saved: unknown, defaults: ScholarshipServiceContent): 
 
 /** A required document on the tender detail page — same shape as a step. */
 export type BoardRequirement = BoardStep;
+
+/**
+ * An education level a scholarship can be offered at.
+ *
+ * `id` IS the key stored on the programme row — it is not a React key that
+ * happens to persist. That is why the three seeded levels keep the ids
+ * `secondary`, `tvet` and `university`: those are the exact strings already in
+ * `scholarship_programs.level`, so moving this list into the CMS renames nothing
+ * and orphans nothing.
+ *
+ * A level added later gets a generated id, which is opaque but stable. Stable is
+ * what matters: an admin correcting a typo in a LABEL must not silently
+ * re-point every programme that used it, which is what deriving the key from the
+ * label would do.
+ */
+export interface BoardLevel {
+  id: string;
+  label: Tri;
+}
 
 /**
  * The bid requirements an admin has saved, or the seeded ones when the section has
@@ -204,6 +250,7 @@ export interface ScholarshipServiceContent extends ServiceBoardContent {
   faq: { title: Tri; items: BoardFaq[] };
   cta: { title: Tri; subtitle: Tri; startLabel: Tri; contactLabel: Tri };
   detail: ScholarshipDetailCopy;
+  levels: BoardLevel[];
 }
 
 /* ── Tenders ─────────────────────────────────────────────────────────────── */
@@ -629,4 +676,17 @@ export const SCHOLARSHIP_SERVICE_DEFAULT: ScholarshipServiceContent = {
       'لم يبدأ التقديم على هذه المنحة بعد.',
     ),
   },
+  /**
+   * The education levels the programme form offers.
+   *
+   * These three ids are the exact strings already stored in
+   * `scholarship_programs.level`, so seeding them here renames nothing. An admin
+   * may now add, rename, reorder or remove levels; the id of one they add is
+   * generated and permanent, because it is what gets written to the programme.
+   */
+  levels: [
+    { id: 'secondary', label: tri('Secondary School', 'Amashuri yisumbuye', 'المدرسة الثانوية') },
+    { id: 'tvet', label: tri('TVET / Vocational', 'TVET / Imyuga', 'التعليم والتدريب المهني') },
+    { id: 'university', label: tri('University', 'Kaminuza', 'الجامعة') },
+  ],
 };

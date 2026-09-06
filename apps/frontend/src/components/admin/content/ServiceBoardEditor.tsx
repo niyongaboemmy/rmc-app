@@ -27,12 +27,14 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   ArrowLeft, Save, Loader2, ExternalLink, ListOrdered, Megaphone, HelpCircle, Layers, FileText,
+  GraduationCap,
   Plus, Trash2, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { ListEditor } from './TriFields';
 import {
   boardFaqs,
+  boardLevels,
   boardSteps,
   getSiteContent,
   saveSiteContent,
@@ -69,7 +71,7 @@ interface FieldGroup {
    * Render an add / remove / reorder list under this group's fields. Three lists
    * on these boards are orderable, and they differ only in noun and path.
    */
-  list?: 'steps' | 'faq' | 'requirements';
+  list?: 'steps' | 'faq' | 'requirements' | 'levels';
 }
 
 /** Immutable set of `obj` at `path`, cloning only the nodes along the way. */
@@ -152,6 +154,14 @@ function buildGroups(form: ServiceBoardContent, detailFields: FieldDef[]): Field
 
   if (hasExtras(form)) {
     groups.push(
+      {
+        title: 'Education levels',
+        icon: GraduationCap,
+        // No plain fields: the list below is the whole section. Levels have no
+        // heading of their own — they are options on a form, not page copy.
+        fields: [],
+        list: 'levels',
+      },
       {
         title: 'Frequently asked questions',
         icon: HelpCircle,
@@ -244,6 +254,7 @@ export function ServiceBoardEditor({
           const withFaq: ScholarshipServiceContent = {
             ...repaired,
             faq: { ...repaired.faq, items: boardFaqs(data, repaired) },
+            levels: boardLevels(data, repaired),
           };
           setForm(withFaq);
         } else {
@@ -311,6 +322,38 @@ export function ServiceBoardEditor({
       const next = [...items];
       [next[i], next[j]] = [next[j], next[i]];
       return next;
+    });
+  }, []);
+
+  /*
+   * Levels are scholarship-only, like the FAQ below.
+   *
+   * A new level's id is generated once, here, and never derived from its label:
+   * the id is what a programme row stores, so recomputing it when somebody fixes
+   * a typo would silently orphan every programme using that level.
+   */
+  const addLevel = useCallback(() => {
+    setForm((prev) =>
+      hasExtras(prev)
+        ? { ...prev, levels: [...prev.levels, { id: `lvl${Date.now()}`, label: tri('') }] }
+        : prev,
+    );
+  }, []);
+
+  const removeLevel = useCallback((i: number) => {
+    setForm((prev) =>
+      hasExtras(prev) ? { ...prev, levels: prev.levels.filter((_, idx) => idx !== i) } : prev,
+    );
+  }, []);
+
+  const moveLevel = useCallback((i: number, delta: -1 | 1) => {
+    setForm((prev) => {
+      if (!hasExtras(prev)) return prev;
+      const j = i + delta;
+      if (j < 0 || j >= prev.levels.length) return prev;
+      const items = [...prev.levels];
+      [items[i], items[j]] = [items[j], items[i]];
+      return { ...prev, levels: items };
     });
   }, []);
 
@@ -512,7 +555,26 @@ export function ServiceBoardEditor({
             />
           )}
 
-          {group.list === 'faq' && hasExtras(form) && (
+          {group.list === 'levels' && hasExtras(form) && (
+          <ListEditor
+            noun="Level"
+            emptyNote="No levels. The programme form's Level dropdown stays empty until you add one."
+            addLabel="Add level"
+            ids={form.levels.map((l) => l.id)}
+            basePath={['levels']}
+            fields={[{ key: 'label', label: 'Label', rows: 1 }]}
+            lang={lang}
+            dir={dir}
+            inputClass={inputClass}
+            read={(path) => readAtPath(form, path)}
+            onFieldChange={(path, value) => setField(path, lang, value)}
+            onAdd={addLevel}
+            onRemove={removeLevel}
+            onMove={moveLevel}
+          />
+        )}
+
+        {group.list === 'faq' && hasExtras(form) && (
             <ListEditor
               noun="Question"
               emptyNote="No questions. The FAQ section hides itself until you add one."

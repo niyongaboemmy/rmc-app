@@ -26,7 +26,9 @@ import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import {
   ContentKeys,
   SCHOLARSHIP_SERVICE_DEFAULT,
+  boardLevels,
   isRtl,
+  levelLabel,
   pick,
   raw,
   type Locale,
@@ -108,7 +110,6 @@ function formatSize(bytes: number): string {
 export default function ScholarshipDetailPage() {
   const { locale, slug } = useParams<{ locale: string; slug: string }>();
   const t = useTranslations('services.scholarship');
-  const tLevels = useTranslations('services.scholarship.levels');
 
   /* Section headings, the CTA and the page's notices are admin-managed. The field
      micro-labels and the deadline phrases stay in i18n: those carry `{days}` and
@@ -118,6 +119,11 @@ export default function ScholarshipDetailPage() {
     SCHOLARSHIP_SERVICE_DEFAULT,
   );
   const lang = locale as Locale;
+  // Levels are CMS-managed now: the programme stores a key, the label for it
+  // lives beside the rest of this page's copy. `levelLabel` returns null for a
+  // key whose level has been deleted, and the chip below hides itself — a stale
+  // `lvl1757…` on a public page is worse than no chip at all.
+  const levels = boardLevels(content, SCHOLARSHIP_SERVICE_DEFAULT);
   const dir = isRtl(locale) ? ('rtl' as const) : ('ltr' as const);
   const copy = content.detail;
 
@@ -174,6 +180,9 @@ export default function ScholarshipDetailPage() {
   // there is no server component in the path to pre-sanitise and pass it down
   // the way the hajj and funeral pages do. It is cleaned at the API boundary
   // instead, on write: see backend scholarship-description.ts.
+  const levelLabelTri = levelLabel(levels, program?.level);
+  const levelText = levelLabelTri ? pick(levelLabelTri, locale) : '';
+
   const descriptionHtml = program
     ? localized(program.descriptionI18n, program.description, locale)
     : '';
@@ -236,9 +245,9 @@ export default function ScholarshipDetailPage() {
                             ? `${t('detail.opensLabel')} ${formatDate(program.opensAt, locale)}`
                             : deadlineText}
                         </span>
-                        {program.level && (
+                        {levelText && (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-[11px] font-semibold text-gray-600">
-                            <GraduationCap className="h-3 w-3" /> {tLevels(program.level)}
+                            <GraduationCap className="h-3 w-3" /> {levelText}
                           </span>
                         )}
                         {program.referenceNumber && (
