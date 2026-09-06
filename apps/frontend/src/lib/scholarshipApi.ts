@@ -47,7 +47,6 @@ export interface ScholarshipPublicStatus {
   applicationNumber: string | null;
   fullNames: string;
   schoolName: string;
-  educationLevel: EducationLevel;
   status: ScholarshipApplicationStatus;
   rejectionReason: string | null;
   submittedAt: string | null;
@@ -56,7 +55,6 @@ export interface ScholarshipPublicStatus {
   statusHistory: Array<{ toStatus: ScholarshipApplicationStatus; changedAt: string }>;
 }
 
-export type EducationLevel = 'secondary' | 'tvet' | 'university';
 export type GuardianRelationship = 'parent' | 'guardian' | 'sibling' | 'other';
 
 export type ScholarshipProgramStatus = 'draft' | 'published' | 'closed';
@@ -90,7 +88,8 @@ export interface ScholarshipProgram {
   descriptionI18n: I18nText | null;
   requiredDocuments: RequiredDocument[];
   attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
-  level: EducationLevel | null;
+  /** A level key defined in the Scholarships CMS section; not a fixed set. */
+  level: string | null;
   slots: number | null;
   referenceNumber: string | null;
   opensAt: string | null;
@@ -163,7 +162,6 @@ export interface ScholarshipApplication {
   cell: string | null;
   village: string | null;
   schoolName: string;
-  educationLevel: EducationLevel;
   currentYear: string;
   averageGrade: string | null;
   guardianName: string;
@@ -194,7 +192,6 @@ export interface CreateScholarshipApplicationPayload {
   cell?: string;
   village?: string;
   schoolName: string;
-  educationLevel: EducationLevel;
   currentYear: string;
   averageGrade?: string;
   guardianName: string;

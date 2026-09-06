@@ -30,12 +30,6 @@ const STATUS_LABELS: Record<string, string> = {
   confirmed: 'Confirmed',
 };
 
-const LEVEL_LABELS: Record<string, string> = {
-  secondary: 'Secondary School',
-  tvet: 'TVET / Vocational',
-  university: 'University',
-};
-
 const RELATIONSHIP_LABELS: Record<string, string> = {
   parent: 'Parent',
   guardian: 'Guardian',
@@ -418,7 +412,6 @@ function AdminScholarshipDetailContent() {
 
           <Section title="Education" icon={<School className="w-4 h-4" />}>
             <InfoRow label="School" value={application.schoolName} icon={<School className="w-3.5 h-3.5" />} />
-            <InfoRow label="Level" value={LEVEL_LABELS[application.educationLevel] ?? application.educationLevel} />
             <InfoRow label="Current Year" value={application.currentYear} />
             <InfoRow label="Average Grade" value={application.averageGrade} />
           </Section>

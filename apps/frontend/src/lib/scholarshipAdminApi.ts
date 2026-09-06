@@ -2,7 +2,6 @@ import { apiClient } from './api';
 import type {
   ScholarshipApplication,
   ScholarshipProgram,
-  EducationLevel,
 } from './scholarshipApi';
 
 /**
@@ -61,7 +60,8 @@ export interface CreateScholarshipProgramPayload {
   titleI18n?: I18nTextPayload;
   descriptionI18n?: I18nTextPayload;
   requiredDocuments?: RequiredDocumentPayload[];
-  level?: EducationLevel;
+  /** A level key from the Scholarships CMS section. */
+  level?: string;
   slots?: number;
   opensAt?: string;
   deadline?: string;

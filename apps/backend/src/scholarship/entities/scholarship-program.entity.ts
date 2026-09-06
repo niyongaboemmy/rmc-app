@@ -8,12 +8,6 @@ import {
   Index,
 } from 'typeorm';
 
-export enum ScholarshipLevel {
-  SECONDARY = 'secondary',
-  TVET = 'tvet',
-  UNIVERSITY = 'university',
-}
-
 /**
  * Where an opportunity is in its life. Replaces the `isOpen` boolean, which
  * could not express "being written" — an admin had no way to compose a
@@ -107,8 +101,9 @@ export class ScholarshipProgram {
    * seeded keys are still `secondary`, `tvet` and `university`, which is why no
    * data had to move when they became content.
    *
-   * `ScholarshipLevel` still governs the APPLICATION's `educationLevel`: that
-   * describes the applicant, not the offer, and is a different decision.
+   * This is the level an OFFER is aimed at. The application's own
+   * `educationLevel` went in migration 079 — the form had stopped asking for it
+   * and sent the same value for every applicant.
    */
   @Column({ type: 'varchar', length: 20, nullable: true })
   level: string | null;

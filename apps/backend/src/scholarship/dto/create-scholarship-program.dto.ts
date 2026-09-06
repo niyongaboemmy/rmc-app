@@ -89,8 +89,9 @@ export class CreateScholarshipProgramDto {
    * closed list of them. Bounded by the column width instead; the key an admin
    * picks always comes from a dropdown built from that same list.
    *
-   * The APPLICATION's `educationLevel` is a different field and still uses
-   * ScholarshipLevel: it is about the applicant, not the offer.
+   * This is the level an OFFER is aimed at. The application once carried a
+   * level of its own; it was dropped in migration 079, because the form had
+   * stopped asking and sent the same value for everyone.
    */
   @ApiPropertyOptional({ description: 'Level key from the Scholarships CMS section' })
   @blankToUndefined

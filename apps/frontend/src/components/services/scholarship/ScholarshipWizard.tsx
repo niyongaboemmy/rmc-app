@@ -376,9 +376,11 @@ export function ScholarshipWizard({ editRequest, initialProgramId, requiredDocum
           step2Data.programCourse ?? '',
           step4Data.householdIncome ?? '',
         ),
-        // Fixed defaults for the two enums the new form no longer surfaces, so the
-        // unchanged backend validation still passes.
-        educationLevel: 'university',
+        // `relationship` is a fixed default for an enum this form no longer
+        // surfaces, so the backend's validation still passes. `educationLevel`
+        // sat beside it and is gone entirely: a required field every applicant
+        // answered identically was worse than absent, because two screens
+        // presented it as though it described them.
         relationship: 'guardian',
       };
 

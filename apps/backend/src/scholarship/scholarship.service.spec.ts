@@ -349,7 +349,6 @@ describe('ScholarshipService — state rules', () => {
       fullNames: 'Aisha Uwimana',
       phone: '+250781000137',
       schoolName: 'GS Kigali Islamic',
-      educationLevel: 'secondary',
       currentYear: 'S4',
       guardianName: 'Uwimana (guardian)',
       guardianPhone: '+250781000138',
