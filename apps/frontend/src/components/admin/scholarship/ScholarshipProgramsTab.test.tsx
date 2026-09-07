@@ -77,36 +77,59 @@ afterEach(() => jest.restoreAllMocks());
  * row, and the label lied on a closed scholarship.
  */
 describe('ScholarshipProgramsTab — publish and close', () => {
-  it('offers Publish on a draft', async () => {
-    listPrograms.mockResolvedValue([program({ status: 'draft' })]);
+  /**
+   * Both buttons are always present. Rendering only the applicable one meant a
+   * screen where every scholarship happened to be published showed no Publish
+   * button anywhere, so nothing said the action existed — and the controls moved
+   * between rows, so the column could not be scanned.
+   */
+  it.each([
+    ['draft', 'Publish', true, false],
+    ['published', 'Publish', false, true],
+    ['closed', 'Reopen', true, false],
+  ] as const)(
+    'a %s row offers both, with %s enabled=%s and Close enabled=%s',
+    async (status, publishLabel, publishEnabled, closeEnabled) => {
+      listPrograms.mockResolvedValue([program({ status })]);
+      render(<ScholarshipProgramsTab canManage />);
+
+      const row = await actionsFor('S4 bursary');
+      const publish = row.getByRole('button', { name: new RegExp(publishLabel, 'i') });
+      const close = row.getByRole('button', { name: /close/i });
+
+      expect(publish).toBeInTheDocument();
+      expect(close).toBeInTheDocument();
+      expect(publish.hasAttribute('disabled')).toBe(!publishEnabled);
+      expect(close.hasAttribute('disabled')).toBe(!closeEnabled);
+    },
+  );
+
+  // The disabled one has to say WHY, or it is just a control that does nothing.
+  it.each([
+    ['published', /close/i, /already published/i],
+    ['draft', /close/i, /publish it before/i],
+    ['closed', /close/i, /already closed/i],
+  ] as const)('a %s row explains why the unavailable action is unavailable', async (status, _n, reason) => {
+    listPrograms.mockResolvedValue([program({ status })]);
     render(<ScholarshipProgramsTab canManage />);
 
     const row = await actionsFor('S4 bursary');
-    expect(row.getByRole('button', { name: /publish/i })).toBeInTheDocument();
-    expect(row.queryByRole('button', { name: /close/i })).not.toBeInTheDocument();
+    const disabled = row
+      .getAllByRole('button')
+      .filter((b) => b.hasAttribute('disabled'))
+      .map((b) => b.getAttribute('title') ?? '');
+
+    expect(disabled.some((t) => reason.test(t))).toBe(true);
   });
 
-  it('offers Close on a published scholarship', async () => {
+  it('never lets a disabled action be fired', async () => {
     listPrograms.mockResolvedValue([program({ status: 'published' })]);
     render(<ScholarshipProgramsTab canManage />);
 
     const row = await actionsFor('S4 bursary');
-    expect(row.getByRole('button', { name: /close/i })).toBeInTheDocument();
-    expect(row.queryByRole('button', { name: /publish/i })).not.toBeInTheDocument();
-  });
+    fireEvent.click(row.getByRole('button', { name: /publish/i }));
 
-  /**
-   * The wording bug. Publishing a CLOSED scholarship runs the same endpoint, but
-   * to a reader "Publish" on something already published once is not what is
-   * happening — it is being reopened.
-   */
-  it('says Reopen, not Publish, on a closed scholarship', async () => {
-    listPrograms.mockResolvedValue([program({ status: 'closed' })]);
-    render(<ScholarshipProgramsTab canManage />);
-
-    const row = await actionsFor('S4 bursary');
-    expect(row.getByRole('button', { name: /reopen/i })).toBeInTheDocument();
-    expect(row.queryByRole('button', { name: /^publish$/i })).not.toBeInTheDocument();
+    expect(publishProgram).not.toHaveBeenCalled();
   });
 
   // Icon AND word. An icon alone would be quicker to scan and worse to be sure

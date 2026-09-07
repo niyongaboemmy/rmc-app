@@ -625,43 +625,57 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                               put a scholarship in front of the public or stop it
                               taking applications, and neither is a guess worth
                               inviting. The pill gives them the affordance the
-                              neutral row icons deliberately do not have. */}
-                          {p.status !== 'published' && (
-                            <button
-                              onClick={() => handlePublish(p)}
-                              disabled={busyId === p.id}
-                              title={
-                                p.status === 'closed'
+                              neutral row icons deliberately do not have.
+
+                              BOTH are always rendered, the inapplicable one
+                              disabled, rather than showing only the one that
+                              applies. Rendering conditionally meant a screen where
+                              every scholarship happened to be published showed no
+                              Publish button at all, so nothing on the page said the
+                              action existed — and the controls shifted position
+                              between rows, so the column could not be scanned. A
+                              disabled button with a reason says "not from here",
+                              which is what an admin needs to know. */}
+                          <button
+                            onClick={() => handlePublish(p)}
+                            disabled={busyId === p.id || p.status === 'published'}
+                            title={
+                              p.status === 'published'
+                                ? 'Already published'
+                                : p.status === 'closed'
                                   ? 'Start accepting applications again'
                                   : 'Make this scholarship visible to applicants'
-                              }
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/25 bg-rmc-green-light/60 px-2.5 py-1 text-xs font-semibold text-rmc-green transition-colors hover:bg-rmc-green hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {busyId === p.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Globe className="h-3.5 w-3.5" />
-                              )}
-                              {/* Publishing a CLOSED scholarship reopens it — same
-                                  endpoint, different thing to a reader. */}
-                              {p.status === 'closed' ? 'Reopen' : 'Publish'}
-                            </button>
-                          )}
-                          {p.status === 'published' && (
-                            <button
-                              onClick={() => handleClose(p)}
-                              disabled={busyId === p.id}
-                              title="Stop accepting new applications; submitted ones continue through review"
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {busyId === p.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Lock className="h-3.5 w-3.5" />
-                              )}
-                              Close
-                            </button>
-                          )}
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/25 bg-rmc-green-light/60 px-2.5 py-1 text-xs font-semibold text-rmc-green transition-colors enabled:hover:bg-rmc-green enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {busyId === p.id && p.status !== 'published' ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Globe className="h-3.5 w-3.5" />
+                            )}
+                            {/* Publishing a CLOSED scholarship reopens it — same
+                                endpoint, different thing to a reader. */}
+                            {p.status === 'closed' ? 'Reopen' : 'Publish'}
+                          </button>
+                          <button
+                            onClick={() => handleClose(p)}
+                            disabled={busyId === p.id || p.status !== 'published'}
+                            title={
+                              p.status === 'closed'
+                                ? 'Already closed'
+                                : p.status === 'draft'
+                                  ? 'Publish it before you can close it'
+                                  : 'Stop accepting new applications; submitted ones continue through review'
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors enabled:hover:bg-amber-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {busyId === p.id && p.status === 'published' ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Lock className="h-3.5 w-3.5" />
+                            )}
+                            Close
+                          </button>
                           <button onClick={() => setEditing(p)} aria-label="Edit" className="text-gray-400 hover:text-rmc-green transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
