@@ -122,6 +122,38 @@ describe('ScholarshipProgramsTab — publish and close', () => {
     expect(disabled.some((t) => reason.test(t))).toBe(true);
   });
 
+  /**
+   * The disabled button has to stay READABLE.
+   *
+   * It was dimmed with `opacity-40`, which took the coloured pill's label to
+   * 1.79:1 against the page — rendered in the DOM, and invisible on screen. The
+   * word was there in every test; none of them could see it was not.
+   *
+   * This asserts the mechanism rather than the contrast, because jsdom resolves
+   * no CSS and cannot measure a rendered colour. Opacity dims the TEXT along
+   * with everything else; an explicit grey palette changes what the control
+   * looks like without making it unreadable, and that is the rule worth pinning.
+   */
+  it.each(['draft', 'published', 'closed'] as const)(
+    'dims a %s row\u2019s unavailable action with colour, never with opacity',
+    async (status) => {
+      listPrograms.mockResolvedValue([program({ status })]);
+      render(<ScholarshipProgramsTab canManage />);
+
+      const row = await actionsFor('S4 bursary');
+      const disabled = row
+        .getAllByRole('button')
+        .filter((b) => b.hasAttribute('disabled') && b.textContent?.trim());
+
+      expect(disabled.length).toBeGreaterThan(0);
+      for (const b of disabled) {
+        const cls = b.getAttribute('class') ?? '';
+        expect(cls).not.toMatch(/disabled:opacity-/);
+        expect(cls).toMatch(/disabled:text-/);
+      }
+    },
+  );
+
   it('never lets a disabled action be fired', async () => {
     listPrograms.mockResolvedValue([program({ status: 'published' })]);
     render(<ScholarshipProgramsTab canManage />);

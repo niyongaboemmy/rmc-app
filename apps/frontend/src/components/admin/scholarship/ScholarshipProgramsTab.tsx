@@ -635,7 +635,14 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                               action existed — and the controls shifted position
                               between rows, so the column could not be scanned. A
                               disabled button with a reason says "not from here",
-                              which is what an admin needs to know. */}
+                              which is what an admin needs to know.
+
+                              Disabled is expressed as a GREY PALETTE, never as
+                              opacity. Dimming the coloured pill to 40% put its
+                              label at 1.79:1 against the page — rendered, and
+                              unreadable, which is not a state a control should
+                              ever be in. Grey on grey is 4.6:1 and still reads
+                              instantly as inactive. */}
                           <button
                             onClick={() => handlePublish(p)}
                             disabled={busyId === p.id || p.status === 'published'}
@@ -646,7 +653,7 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                                   ? 'Start accepting applications again'
                                   : 'Make this scholarship visible to applicants'
                             }
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/25 bg-rmc-green-light/60 px-2.5 py-1 text-xs font-semibold text-rmc-green transition-colors enabled:hover:bg-rmc-green enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/25 bg-rmc-green-light/60 px-2.5 py-1 text-xs font-semibold text-rmc-green transition-colors enabled:hover:bg-rmc-green enabled:hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
                           >
                             {busyId === p.id && p.status !== 'published' ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -667,7 +674,7 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                                   ? 'Publish it before you can close it'
                                   : 'Stop accepting new applications; submitted ones continue through review'
                             }
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors enabled:hover:bg-amber-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors enabled:hover:bg-amber-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
                           >
                             {busyId === p.id && p.status === 'published' ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
