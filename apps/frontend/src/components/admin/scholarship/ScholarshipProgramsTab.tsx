@@ -13,7 +13,7 @@ import {
   scholarshipAdminApi, type CreateScholarshipProgramPayload,
 } from '@/lib/scholarshipAdminApi';
 import { cn } from '@/lib/utils';
-import { ModalPortal } from '@/components/ui/Modal';
+import { ConfirmModal, ModalPortal } from '@/components/ui/Modal';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { ContentKeys, getSiteContent, SCHOLARSHIP_SERVICE_DEFAULT } from '@/lib/content-api';
 import { boardLevels, type BoardLevel } from '@/lib/content/service-boards';
@@ -486,52 +486,97 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
     (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
       ?.message ?? fallback;
 
-  const handlePublish = async (p: ScholarshipProgram) => {
-    // Reopening a closed scholarship runs the same endpoint, so the wording
-    // follows the row rather than the handler.
-    const reopening = p.status === 'closed';
-    const question = reopening
-      ? `Reopen "${p.title}"? It starts accepting applications again.`
-      : `Publish "${p.title}"? It becomes visible to applicants immediately.`;
-    if (!confirm(question)) return;
-    setActionError('');
-    setBusyId(p.id);
-    try {
-      await scholarshipAdminApi.publishProgram(p.id);
-      await fetchPrograms();
-    } catch (err) {
-      setActionError(
-        serverMessage(err, `Could not ${reopening ? 'reopen' : 'publish'} this scholarship.`),
-      );
-    } finally {
-      setBusyId(null);
+  /**
+   * The action awaiting confirmation, or null.
+   *
+   * All three used to go through the browser's own `confirm()` — the dialog that
+   * opens with "localhost:3001 says", cannot be styled, cannot show the server's
+   * refusal, and blocks the whole tab while it is up. For actions that decide
+   * whether a scholarship is visible to the public, an alert box that looks like
+   * a browser warning is the wrong frame entirely.
+   *
+   * Holding the whole programme rather than an id: the confirmation names the
+   * scholarship, and "Delete this scholarship?" could not.
+   */
+  type PendingAction = {
+    kind: 'publish' | 'close' | 'delete';
+    program: ScholarshipProgram;
+  };
+  const [pending, setPending] = useState<PendingAction | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
+  /**
+   * Wording for each confirmation, derived from the row it was raised on.
+   *
+   * `reopen` is not a fourth action — it is `publish` on a closed scholarship,
+   * which is the same endpoint and a different thing to the person reading it.
+   */
+  const confirmCopy = (a: PendingAction) => {
+    const reopening = a.kind === 'publish' && a.program.status === 'closed';
+    if (a.kind === 'delete') {
+      return {
+        title: 'Delete this scholarship?',
+        message: `"${a.program.title}" will be removed. This cannot be undone, and a scholarship that already has applications cannot be deleted at all.`,
+        confirmLabel: 'Delete',
+        variant: 'danger' as const,
+      };
     }
+    if (a.kind === 'close') {
+      return {
+        title: 'Close this scholarship?',
+        message: `"${a.program.title}" will stop accepting new applications. Applications already submitted continue through review, and you can reopen it later.`,
+        confirmLabel: 'Close it',
+        variant: 'default' as const,
+      };
+    }
+    return reopening
+      ? {
+          title: 'Reopen this scholarship?',
+          message: `"${a.program.title}" starts accepting applications again straight away.`,
+          confirmLabel: 'Reopen',
+          variant: 'default' as const,
+        }
+      : {
+          title: 'Publish this scholarship?',
+          message: `"${a.program.title}" becomes visible to applicants immediately.`,
+          confirmLabel: 'Publish',
+          variant: 'default' as const,
+        };
   };
 
-  const handleClose = async (p: ScholarshipProgram) => {
-    if (!confirm(`Close "${p.title}"? No new applications will be accepted. Applications already submitted continue through review.`)) return;
+  /**
+   * Runs whatever was confirmed.
+   *
+   * The dialog stays open until the request settles, so a server refusal — "cannot
+   * publish without: deadline" — is not shown behind a dialog the admin has to
+   * dismiss first. It closes on success only.
+   */
+  const runPending = async () => {
+    if (!pending) return;
+    const { kind, program } = pending;
+    const reopening = kind === 'publish' && program.status === 'closed';
     setActionError('');
-    setBusyId(p.id);
+    setConfirming(true);
+    setBusyId(program.id);
     try {
-      await scholarshipAdminApi.closeProgram(p.id);
+      if (kind === 'publish') await scholarshipAdminApi.publishProgram(program.id);
+      else if (kind === 'close') await scholarshipAdminApi.closeProgram(program.id);
+      else await scholarshipAdminApi.deleteProgram(program.id);
       await fetchPrograms();
+      setPending(null);
     } catch (err) {
-      setActionError(serverMessage(err, 'Could not close this scholarship.'));
+      const fallback =
+        kind === 'delete'
+          ? 'Could not delete this scholarship.'
+          : kind === 'close'
+            ? 'Could not close this scholarship.'
+            : `Could not ${reopening ? 'reopen' : 'publish'} this scholarship.`;
+      // The server refuses to delete one that already has applications, and
+      // refuses to publish one missing a deadline or description.
+      setActionError(serverMessage(err, fallback));
     } finally {
+      setConfirming(false);
       setBusyId(null);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this scholarship? This cannot be undone.')) return;
-    setActionError('');
-    try {
-      await scholarshipAdminApi.deleteProgram(id);
-      await fetchPrograms();
-      return;
-    } catch (err) {
-      // The server refuses to delete one that already has applications.
-      setActionError(serverMessage(err, 'Could not delete this scholarship.'));
     }
   };
 
@@ -644,7 +689,7 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                               ever be in. Grey on grey is 4.6:1 and still reads
                               instantly as inactive. */}
                           <button
-                            onClick={() => handlePublish(p)}
+                            onClick={() => setPending({ kind: 'publish', program: p })}
                             disabled={busyId === p.id || p.status === 'published'}
                             title={
                               p.status === 'published'
@@ -665,7 +710,7 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                             {p.status === 'closed' ? 'Reopen' : 'Publish'}
                           </button>
                           <button
-                            onClick={() => handleClose(p)}
+                            onClick={() => setPending({ kind: 'close', program: p })}
                             disabled={busyId === p.id || p.status !== 'published'}
                             title={
                               p.status === 'closed'
@@ -686,7 +731,7 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                           <button onClick={() => setEditing(p)} aria-label="Edit" className="text-gray-400 hover:text-rmc-green transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDelete(p.id)} aria-label="Delete" className="text-gray-400 hover:text-red-600 transition-colors">
+                          <button onClick={() => setPending({ kind: 'delete', program: p })} aria-label="Delete" className="text-gray-400 hover:text-red-600 transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -705,6 +750,23 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
           program={editing}
           onClose={() => { setEditing(null); setCreating(false); }}
           onSaved={fetchPrograms}
+        />
+      )}
+
+      {/* One dialog for all three actions rather than three dialogs: what differs
+          between them is wording and the confirm button's tone, both of which
+          `confirmCopy` derives from the pending action. */}
+      {pending && (
+        <ConfirmModal
+          open
+          onClose={() => {
+            // A request in flight owns the dialog; dismissing it mid-way would
+            // leave the admin unsure whether the scholarship was published.
+            if (!confirming) setPending(null);
+          }}
+          onConfirm={runPending}
+          isLoading={confirming}
+          {...confirmCopy(pending)}
         />
       )}
     </div>

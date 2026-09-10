@@ -15,12 +15,13 @@ jest.mock('@/components/ui/RichTextEditor', () => ({
 const listPrograms = jest.fn();
 const publishProgram = jest.fn();
 const closeProgram = jest.fn();
+const deleteProgram = jest.fn();
 jest.mock('@/lib/scholarshipAdminApi', () => ({
   scholarshipAdminApi: {
     listPrograms: () => listPrograms(),
     publishProgram: (id: string) => publishProgram(id),
     closeProgram: (id: string) => closeProgram(id),
-    deleteProgram: jest.fn(),
+    deleteProgram: (id: string) => deleteProgram(id),
   },
 }));
 
@@ -65,7 +66,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   publishProgram.mockResolvedValue(undefined);
   closeProgram.mockResolvedValue(undefined);
-  jest.spyOn(window, 'confirm').mockReturnValue(true);
+  deleteProgram.mockResolvedValue(undefined);
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -189,28 +190,108 @@ describe('ScholarshipProgramsTab — publish and close', () => {
   });
 
   /**
-   * Both actions were fire-and-forget: the row sat unchanged until the refetch
-   * landed, so the natural response to a slow request was to click again — and
-   * the second click sent a second request.
+   * Every one of these actions used to go through the browser's own confirm() —
+   * the "localhost:3001 says" box, which cannot be styled, cannot name what it
+   * is about to do in the app's own voice, and cannot show the server's answer.
    */
-  it('disables the button while the request is in flight, so it cannot fire twice', async () => {
-    listPrograms.mockResolvedValue([program({ status: 'draft' })]);
-    let release: () => void = () => {};
-    publishProgram.mockReturnValue(new Promise<void>((r) => { release = r; }));
+  describe('the confirmation dialog', () => {
+    const openDialog = async (status: string, buttonName: RegExp) => {
+      listPrograms.mockResolvedValue([program({ status })]);
+      render(<ScholarshipProgramsTab canManage />);
+      const row = await actionsFor('S4 bursary');
+      fireEvent.click(row.getByRole('button', { name: buttonName }));
+      return screen.findByRole('dialog');
+    };
 
-    render(<ScholarshipProgramsTab canManage />);
-    const row = await actionsFor('S4 bursary');
-    const button = row.getByRole('button', { name: /publish/i });
+    it('asks before publishing, and calls nothing until it is answered', async () => {
+      const dialog = await openDialog('draft', /publish/i);
 
-    fireEvent.click(button);
-    await waitFor(() => expect(button).toBeDisabled());
+      expect(within(dialog).getByText(/publish this scholarship\?/i)).toBeInTheDocument();
+      expect(publishProgram).not.toHaveBeenCalled();
+    });
 
-    fireEvent.click(button);
-    fireEvent.click(button);
-    expect(publishProgram).toHaveBeenCalledTimes(1);
+    // The old alert said "Delete this scholarship?" about no scholarship in
+    // particular. On a list of three, that is a question you cannot safely answer.
+    it.each([
+      ['draft', /publish/i],
+      ['published', /close/i],
+    ] as const)('names the scholarship it is asking about (%s)', async (status, button) => {
+      const dialog = await openDialog(status, button);
 
-    release();
-    await waitFor(() => expect(publishProgram).toHaveBeenCalledTimes(1));
+      expect(within(dialog).getByText(/S4 bursary/)).toBeInTheDocument();
+    });
+
+    it('says Reopen when the scholarship is closed', async () => {
+      const dialog = await openDialog('closed', /reopen/i);
+
+      expect(within(dialog).getByText(/reopen this scholarship\?/i)).toBeInTheDocument();
+    });
+
+    it('does nothing when dismissed', async () => {
+      const dialog = await openDialog('draft', /publish/i);
+      fireEvent.click(within(dialog).getByRole('button', { name: /cancel/i }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(publishProgram).not.toHaveBeenCalled();
+    });
+
+    it('runs the action once confirmed', async () => {
+      const dialog = await openDialog('draft', /publish/i);
+      fireEvent.click(within(dialog).getByRole('button', { name: /^publish$/i }));
+
+      await waitFor(() => expect(publishProgram).toHaveBeenCalledWith('p-1'));
+    });
+
+    it('closes an action a published scholarship offers', async () => {
+      const dialog = await openDialog('published', /close/i);
+      fireEvent.click(within(dialog).getByRole('button', { name: /close it/i }));
+
+      await waitFor(() => expect(closeProgram).toHaveBeenCalledWith('p-1'));
+    });
+
+    /**
+     * The reason this is worth more than confirm(): the server refuses to publish
+     * a scholarship with no deadline, and that refusal has to reach the person who
+     * asked. A native alert closes the moment it is answered, so the message
+     * landed behind it.
+     */
+    it('keeps the dialog open and surfaces the server’s refusal', async () => {
+      publishProgram.mockRejectedValue({
+        response: { data: { error: { message: 'Cannot publish without: deadline' } } },
+      });
+      const dialog = await openDialog('draft', /publish/i);
+      fireEvent.click(within(dialog).getByRole('button', { name: /^publish$/i }));
+
+      expect(await screen.findByText(/cannot publish without: deadline/i)).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    /**
+     * The double-submit guard moved here with the confirmation. A slow request
+     * used to leave the row unchanged, so the natural response was to click again.
+     */
+    it('cannot be confirmed twice while the request is in flight', async () => {
+      let release: () => void = () => {};
+      publishProgram.mockReturnValue(new Promise<void>((r) => { release = r; }));
+
+      const dialog = await openDialog('draft', /publish/i);
+      const confirm = within(dialog).getByRole('button', { name: /^publish$/i });
+
+      fireEvent.click(confirm);
+      await waitFor(() => expect(confirm).toBeDisabled());
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
+
+      expect(publishProgram).toHaveBeenCalledTimes(1);
+      release();
+    });
+
+    it('asks before deleting, and warns that it cannot be undone', async () => {
+      const dialog = await openDialog('draft', /delete/i);
+
+      expect(within(dialog).getByText(/cannot be undone/i)).toBeInTheDocument();
+      expect(deleteProgram).not.toHaveBeenCalled();
+    });
   });
 
   it('shows nothing to edit for a viewer without manage rights', async () => {
