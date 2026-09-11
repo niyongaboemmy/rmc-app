@@ -335,7 +335,9 @@ function ProgramModal({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          {/* Two columns only when there is a reference to put in the second.
+              Without it "Awards available" would sit beside a gap. */}
+          <div className={cn('grid gap-3', program ? 'grid-cols-2' : 'grid-cols-1')}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Awards available</label>
               <input
@@ -347,17 +349,21 @@ function ProgramModal({
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reference no.</label>
-              {/* Allocated by the server when the programme is created, and frozen
-                  after — a reference already quoted in a letter must not change
-                  because the programme was renamed. Shown, never typed. */}
-              <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-500">
-                {program?.referenceNumber ?? (
-                  <span className="text-gray-400">Assigned when you save</span>
-                )}
+            {/* Only when editing. The reference is allocated by the server on
+                save, so on a new scholarship this could say nothing but "assigned
+                later" — a field that takes no input and reports no value is a row
+                of furniture. Once it exists it is worth showing, and this is the
+                only admin screen that does: it is frozen after allocation,
+                because a reference already quoted in a letter must not change
+                because the scholarship was renamed. */}
+            {program && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Reference no.</label>
+                <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-500">
+                  {program.referenceNumber ?? '\u2014'}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

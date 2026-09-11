@@ -294,6 +294,51 @@ describe('ScholarshipProgramsTab — publish and close', () => {
     });
   });
 
+  /**
+   * The reference is allocated by the server on save, so on a new scholarship
+   * the field could only ever say "assigned later" — a control that takes no
+   * input and reports no value. It earns its place once there is one to show,
+   * and this modal is the only admin screen that shows it.
+   */
+  describe('the reference number field', () => {
+    it('is absent on the create form', async () => {
+      listPrograms.mockResolvedValue([]);
+      render(<ScholarshipProgramsTab canManage />);
+      fireEvent.click(await screen.findByRole('button', { name: /new program/i }));
+
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByText(/new scholarship/i)).toBeInTheDocument();
+      expect(within(dialog).queryByText(/reference no/i)).not.toBeInTheDocument();
+    });
+
+    // Removing it from create must not remove it from edit, where it is the
+    // only place an admin can read the reference at all.
+    it('is present with its value when editing', async () => {
+      listPrograms.mockResolvedValue([program({ status: 'published' })]);
+      render(<ScholarshipProgramsTab canManage />);
+      const row = await actionsFor('S4 bursary');
+      fireEvent.click(row.getByRole('button', { name: /edit/i }));
+
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByText(/reference no/i)).toBeInTheDocument();
+      expect(within(dialog).getByText('RMC-SCHP-2609-0001')).toBeInTheDocument();
+    });
+
+    // The other half of the row keeps the full width rather than sitting beside
+    // the gap the removed field left.
+    it('leaves Awards available on its own row when creating', async () => {
+      listPrograms.mockResolvedValue([]);
+      render(<ScholarshipProgramsTab canManage />);
+      fireEvent.click(await screen.findByRole('button', { name: /new program/i }));
+
+      const dialog = await screen.findByRole('dialog');
+      const label = within(dialog).getByText(/awards available/i);
+      const grid = label.closest('div')?.parentElement;
+      expect(grid?.className).toContain('grid-cols-1');
+      expect(grid?.className).not.toContain('grid-cols-2');
+    });
+  });
+
   it('shows nothing to edit for a viewer without manage rights', async () => {
     listPrograms.mockResolvedValue([program({ status: 'draft' })]);
     render(<ScholarshipProgramsTab canManage={false} />);
