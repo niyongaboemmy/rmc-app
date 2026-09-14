@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import localFont from 'next/font/local';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -111,6 +112,7 @@ export default async function LocaleLayout({
     fetchSiteContent(SHARED_CONTENT_KEYS),
   ]);
   const isRtl = locale === 'ar';
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
   return (
     <html
@@ -119,6 +121,19 @@ export default async function LocaleLayout({
       className={`${plusJakarta.variable} ${notoNaskh.variable}`}
     >
       <body className={isRtl ? 'font-arabic' : 'font-latin'}>
+        {gaId && (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `}
+            </Script>
+          </>
+        )}
         <NextIntlClientProvider locale={locale} messages={messages}>
           {/* Server-read copy for the shared chrome. A page may nest its own
               provider inside; the two maps merge. */}

@@ -43,6 +43,7 @@ jobs:
           NEXT_PUBLIC_API_URL: https://api.rwandamuslim.org/api/v1
           NEXT_PUBLIC_FILE_SERVER_URL: https://cdn.rwandamuslim.org
           NEXT_PUBLIC_ORS_API_KEY: eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImEzZGNmZTYzZjJiNDQyNDBiNGU5YzUxNGMyYTY0ZTM1IiwiaCI6Im11cm11cjY0In0=
+          NEXT_PUBLIC_GA_MEASUREMENT_ID: G-HTCKY5DK4C
 
       - name: Build — file-server
         working-directory: apps/file-server
