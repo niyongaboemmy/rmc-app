@@ -21,7 +21,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'DEPLOY')
     environment:
       name: production
-      url: http://13.62.202.96
+      url: https://rwandamuslim.org
     steps:
       - uses: actions/checkout@v4
 
@@ -40,9 +40,8 @@ jobs:
         working-directory: apps/frontend
         run: npm ci && npm run build
         env:
-          # Temporary IP-based URLs until isengesho.com is mapped to this instance (see DEPLOYMENT.md phase 8)
-          NEXT_PUBLIC_API_URL: http://13.62.202.96/api/v1
-          NEXT_PUBLIC_FILE_SERVER_URL: http://13.62.202.96/cdn
+          NEXT_PUBLIC_API_URL: https://api.rwandamuslim.org/api/v1
+          NEXT_PUBLIC_FILE_SERVER_URL: https://cdn.rwandamuslim.org
           NEXT_PUBLIC_ORS_API_KEY: eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImEzZGNmZTYzZjJiNDQyNDBiNGU5YzUxNGMyYTY0ZTM1IiwiaCI6Im11cm11cjY0In0=
 
       - name: Build — file-server
@@ -73,7 +72,7 @@ jobs:
               fi
             }
 
-            patch_env APP_URL http://13.62.202.96/api
+            patch_env APP_URL https://api.rwandamuslim.org
             patch_env YOUTUBE_CHANNEL_ID UC8Wm3_vrV1v44QJv78YatPQ
           "
 
