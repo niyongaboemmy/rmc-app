@@ -75,6 +75,18 @@ export class DawahQuestion {
   @Column({ type: 'varchar', length: 180, unique: true })
   slug: string;
 
+  /**
+   * A stable number for staff to refer to an entry by — "Question 18".
+   *
+   * ADMIN-FACING ONLY. It is not the reading order: the public listing is
+   * newest-first and never receives this. Assigned on insert as MAX + 1, unique,
+   * and never reused — deleting 18 leaves a gap, because a recycled number stops
+   * identifying anything.
+   */
+  @Index('UQ_dawah_questions_entry_number', { unique: true })
+  @Column({ name: 'entry_number', type: 'int' })
+  entryNumber: number;
+
   /** Plain text. Never HTML — the title is not rich content. */
   @Column({ type: 'varchar', length: 200 })
   title: string;
@@ -88,6 +100,33 @@ export class DawahQuestion {
    */
   @Column({ type: 'text', default: '' })
   body: string;
+
+  /**
+   * The short form of the ruling, shown in the listing.
+   *
+   * PLAIN TEXT, unlike `body` and `answerBody` — it is rendered as a lede, never
+   * as rich content, so there is no markdown to render and no HTML to sanitise.
+   *
+   * Nullable because an admin may publish and write it afterwards. The service
+   * falls back to an excerpt of the answer when it is blank, so an entry without
+   * one degrades to what the list showed before this column existed rather than
+   * to an empty row.
+   */
+  @Column({ type: 'varchar', length: 320, nullable: true })
+  summary: string | null;
+
+  /**
+   * The ruling in short, shown above the full answer on the entry page.
+   *
+   * PLAIN TEXT, like `summary`, and distinct from it: that one is the LISTING
+   * lede, read before deciding to open the entry. This one is read after, by
+   * somebody who wants the ruling before the reasoning — which is why it is
+   * longer and written for a different moment.
+   *
+   * Nullable and never derived. Nothing renders where it is absent.
+   */
+  @Column({ name: 'answer_summary', type: 'varchar', length: 600, nullable: true })
+  answerSummary: string | null;
 
   @Column({ type: 'varchar', length: 20, default: 'en' })
   language: PostLanguage;
@@ -157,6 +196,15 @@ export class DawahQuestion {
 
   @Column({ name: 'view_count', type: 'int', default: 0 })
   viewCount: number;
+
+  /**
+   * One of "The Essential Answers" — the curated set beside the feed.
+   *
+   * Curated rather than computed: the panel claims the entries were chosen, so
+   * they are. Set by an admin on the entry editor; nothing derives it.
+   */
+  @Column({ name: 'is_essential', type: 'boolean', default: false })
+  isEssential: boolean;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

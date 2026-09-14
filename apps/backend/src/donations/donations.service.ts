@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Not, IsNull } from 'typeorm';
@@ -123,6 +129,135 @@ export class DonationsService {
   }
 
   /**
+   * Marks donations FAILED when the gateway could not be reached at all, then
+   * re-raises as a 503.
+   *
+   * The distinction this draws is between "the provider said no" and "the
+   * provider said nothing". A declined payment already lands as FAILED further
+   * down; this is the other case — the request timed out, or came back 5xx
+   * three times, and `charge()` threw.
+   *
+   * Left alone, such a donation kept `status = pending` and a null
+   * `paymentReference`, which is the worst of both worlds: the donor is shown a
+   * receipt for a payment nobody was ever asked for, and the reconciliation
+   * sweeper skips the row forever because it filters on `d.paymentReference`.
+   * The row is then a permanent phantom — never re-checked, never cleaned up,
+   * and counted in campaign totals as money on its way.
+   *
+   * No money can have moved: the throw means we never got an invoice back, so
+   * there was nothing for the donor to approve on their handset. FAILED is
+   * therefore the honest record, and it is re-triable — the donor simply
+   * donates again, with a new transaction id.
+   */
+  private async failUnreachable(donations: Donation[], error: unknown): Promise<never> {
+    const reason = error instanceof Error ? error.message : String(error);
+    const ids = donations.map((d) => d.id).join(', ');
+    this.logger.error(
+      `[Donations] Payment provider unreachable for donation(s) ${ids}: ${reason}`,
+    );
+
+    for (const donation of donations) {
+      donation.status = DonationStatus.FAILED;
+      // No `paymentReference` — there is no provider-side record to point at.
+      // Both columns are narrow (varchar 20 / 255) and an over-long value throws
+      // on save, which would put us right back to a stuck pending row.
+      donation.gatewayResponseCode = 'UNREACHABLE';
+      donation.gatewayMessage = reason.slice(0, 255);
+    }
+    // Best-effort: if the database write also fails we still want the donor to
+    // get the 503 rather than a 500 that says nothing about what went wrong.
+    try {
+      await this.donations.save(donations);
+    } catch (saveError) {
+      this.logger.error(
+        `[Donations] Could not mark donation(s) ${ids} failed: ${
+          saveError instanceof Error ? saveError.message : String(saveError)
+        }`,
+      );
+    }
+
+    // 503, not the 500 this used to surface: the site is fine, the payment
+    // provider is not, and the donor should be told to try again shortly
+    // rather than left thinking they broke something.
+    throw new ServiceUnavailableException({
+      code: 'PAYMENT_PROVIDER_UNAVAILABLE',
+      message:
+        'The mobile money service is not responding right now. No payment was taken — please try again in a few minutes.',
+    });
+  }
+
+  /**
+   * Whether a donation may be recorded as received without anyone being charged.
+   *
+   * Deny-by-default, and double-guarded exactly as the marriage-fee bypass is:
+   * NODE_ENV must not be 'production' AND an explicit opt-in flag must be set.
+   * The flag is deliberately NOT in .env.example, so copying the template onto a
+   * production box cannot enable it. Raw process.env is read on purpose —
+   * ConfigService's 'app.nodeEnv' defaults to 'development' when unset, which
+   * would make the first guard useless.
+   */
+  private get unpaidDonationsAllowed(): boolean {
+    return (
+      process.env.NODE_ENV !== 'production' && process.env.ENABLE_DEV_PAYMENT_BYPASS === 'true'
+    );
+  }
+
+  /**
+   * Refuses to record a donation that nobody was actually charged.
+   *
+   * `POST /donations` and `POST /donations/cart` are both `@Public()`, and both
+   * used to fall back to `status = completed` whenever the gateway could not be
+   * used — treating "we cannot charge you" as "you have paid". That was
+   * reachable three ways, none of them theoretical:
+   *
+   *   - the gateway is unconfigured or inactive, so `canCharge()` is false and
+   *     EVERY donation, mobile money included, is booked as received;
+   *   - a card checkout is sent with no phone number (the card flow allows an
+   *     empty one), which fails the `!!phone` test — the donor is then told
+   *     "card payment is unavailable" while the row says paid;
+   *   - anyone at all posts `paymentMethod: "cash"` with any amount, because the
+   *     route needs no authentication.
+   *
+   * All three inflate campaign totals with money nobody sent, and between them
+   * they account for the 31 uncharged rows migration 068 had to sweep.
+   *
+   * RMC collects through IremboPay only, so there is no method that legitimately
+   * settles without a gateway — see donation-payment-method.ts. An unrecognised
+   * or absent one is refused here rather than assumed paid. The DTO rejects most
+   * of them at the edge; this catches callers that skip the validation pipe.
+   */
+  private refuseUnpaid(reason: 'no-gateway' | 'no-phone' | 'unsupported-method'): void {
+    if (this.unpaidDonationsAllowed) {
+      this.logger.warn(
+        `[Donations] Recording a donation as completed with no payment — dev bypass is ON (${reason}). This must never happen in production.`,
+      );
+      return;
+    }
+
+    if (reason === 'no-phone') {
+      throw new BadRequestException({
+        code: 'PHONE_REQUIRED',
+        message: 'A mobile money number is needed to take this payment.',
+      });
+    }
+    if (reason === 'unsupported-method') {
+      throw new BadRequestException({
+        code: 'UNSUPPORTED_PAYMENT_METHOD',
+        message: 'Choose a payment method we can collect — mobile money or card.',
+      });
+    }
+    // The gateway is unconfigured or switched off. Ours to fix, not the donor's.
+    this.logger.error(
+      '[Donations] Refusing a donation: no payment provider is configured or active.',
+    );
+    throw new ServiceUnavailableException({
+      code: 'PAYMENT_PROVIDER_UNAVAILABLE',
+      message:
+        'Online donations are temporarily unavailable. No payment was taken — please try again shortly.',
+    });
+  }
+
+  /**
    * Record a donation from the public donate page.
    *
    * When a real payment gateway drives the transaction (Mobile Money, with
@@ -152,14 +287,17 @@ export class DonationsService {
     // must never be quietly booked as received.
     const paymentMethod = normalizeDonationMethod(dto.paymentMethod);
     const isOnline = isOnlineDonationMethod(paymentMethod);
+    const chargeable = isOnline && (await this.paymentGateway.canCharge());
 
-    if (isOnline && !(await this.paymentGateway.canCharge())) {
-      throw new BadRequestException(
-        'No payment gateway is active, so an online donation cannot be collected right now. ' +
-          'Try again later, or record the donation as an offline payment.',
-      );
-    }
-    const useGateway = isOnline;
+    // Two refusals, in the order their causes differ. The classifier above says
+    // which methods a gateway collects; these say that nothing else may be
+    // recorded on this route at all — see refuseUnpaid.
+    if (!isOnline) this.refuseUnpaid('unsupported-method');
+    else if (!chargeable) this.refuseUnpaid('no-gateway');
+
+    // False only under the dev bypass, the one case where refuseUnpaid returns
+    // rather than throwing.
+    const useGateway = chargeable;
 
     const donation = this.donations.create({
       campaignId,
@@ -172,6 +310,8 @@ export class DonationsService {
       currency: dto.currency ?? 'RWF',
       frequency: dto.frequency ?? DonationFrequency.ONCE,
       paymentMethod,
+      // COMPLETED is reachable only under the dev bypass now; refuseUnpaid
+      // has already thrown otherwise.
       status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
       message: dto.message ?? null,
       donatedAt: new Date(),
@@ -185,22 +325,25 @@ export class DonationsService {
       // Routed through the gateway port rather than a hardwired provider, so
       // switching to IremboPay is a settings change rather than a deploy. The
       // `DON-` prefix is preserved either way — the webhook services match on it.
-      const result = await this.paymentGateway.charge({
-        transactionId: requestTxnId,
-        amount: Number(saved.amount),
-        currency: saved.currency,
-        paymentTypeKey: 'DONATION',
-        referenceId: saved.id,
-        payer: {
-          name: saved.donorName ?? undefined,
-          phone: dto.donorPhone ?? undefined,
-          email: saved.donorEmail ?? undefined,
-        },
-        description: 'RMC Donation – Rwanda Muslim Council',
-        // A card donor settles on the hosted widget; only a MoMo donor gets a
-        // prompt, and only when they actually supplied a number to push to.
-        pushProvider: paymentMethod === 'momo' && dto.donorPhone ? 'MTN' : undefined,
-      });
+      // A throw here means the provider never answered — see failUnreachable.
+      const result = await this.paymentGateway
+        .charge({
+          transactionId: requestTxnId,
+          amount: Number(saved.amount),
+          currency: saved.currency,
+          paymentTypeKey: 'DONATION',
+          referenceId: saved.id,
+          payer: {
+            name: saved.donorName ?? undefined,
+            phone: dto.donorPhone ?? undefined,
+            email: saved.donorEmail ?? undefined,
+          },
+          description: 'RMC Donation – Rwanda Muslim Council',
+          // A card donor settles on the hosted widget; only a MoMo donor gets a
+          // prompt, and only when they actually supplied a number to push to.
+          pushProvider: paymentMethod === 'momo' && dto.donorPhone ? 'MTN' : undefined,
+        })
+        .catch((error) => this.failUnreachable([saved], error));
 
       // `domainReference` is the value the provider's callback carries back —
       // our own transaction id — which is what the webhook services match on.
@@ -253,32 +396,27 @@ export class DonationsService {
 
     const phone = dtos.find((d) => d.donorPhone)?.donorPhone;
 
-    // The basket is settled by one payment, so the items must agree on how it
-    // is paid — a mix of online and offline cannot be one charge. The old test
-    // compared every item to the literal `'momo'`, which meant a card basket
-    // (whose items say `'card'`) skipped the gateway and every donation in it
-    // was written `completed` without a payment. Classify instead, and require
-    // agreement rather than one hard-coded value.
+    // The basket is settled by one payment, so every item must name a method a
+    // gateway can collect. The old test compared each to the literal `'momo'`,
+    // which meant a card basket (whose items say `'card'`) skipped the gateway
+    // and every donation in it was written `completed` without a payment.
+    // Classify instead. One unrecognised item fails the basket rather than
+    // quietly settling the rest.
     const methods = dtos.map((d) => normalizeDonationMethod(d.paymentMethod));
-    const online = methods.map((m) => isOnlineDonationMethod(m));
-    if (online.some(Boolean) && !online.every(Boolean)) {
-      throw new BadRequestException(
-        'A basket cannot mix online and offline payment methods — it is settled by a single payment.',
-      );
-    }
+    const isOnline = methods.every((m) => isOnlineDonationMethod(m));
+    // A MoMo prompt needs somewhere to go; a card basket settles on the hosted
+    // widget and does not. Requiring a phone regardless was what made an
+    // empty-phone card basket skip the gateway and be booked as paid.
+    const phoneOk = channel !== 'momo' || !!phone;
+    const chargeable = isOnline && phoneOk && (await this.paymentGateway.canCharge());
 
-    const isOnline = online.every(Boolean);
-    if (isOnline && !(await this.paymentGateway.canCharge())) {
-      throw new BadRequestException(
-        'No payment gateway is active, so an online donation cannot be collected right now. ' +
-          'Try again later, or record the donation as an offline payment.',
-      );
-    }
-    // A MoMo prompt needs somewhere to go; a card basket does not.
-    if (isOnline && channel === 'momo' && !phone) {
-      throw new BadRequestException('A mobile number is required to send a MoMo prompt.');
-    }
-    const useGateway = isOnline;
+    // Same three refusals as create(), for the same reasons — see refuseUnpaid.
+    if (!isOnline) this.refuseUnpaid('unsupported-method');
+    else if (!phoneOk) this.refuseUnpaid('no-phone');
+    else if (!chargeable) this.refuseUnpaid('no-gateway');
+
+    // False only under the dev bypass, the one case where refuseUnpaid returns.
+    const useGateway = chargeable;
 
     const saved: Donation[] = [];
     for (const dto of dtos) {
@@ -300,6 +438,7 @@ export class DonationsService {
             currency: dto.currency ?? 'RWF',
             frequency: dto.frequency ?? DonationFrequency.ONCE,
             paymentMethod: normalizeDonationMethod(dto.paymentMethod),
+            // Dev bypass only — refuseUnpaid has already thrown otherwise.
             status: useGateway ? DonationStatus.PENDING : DonationStatus.COMPLETED,
             message: dto.message ?? null,
             donatedAt: new Date(),
@@ -316,7 +455,7 @@ export class DonationsService {
         paymentLinkUrl: null,
         publicKey: null,
         widgetScriptUrl: null,
-        message: 'Recorded without an online payment.',
+        message: 'Recorded without an online payment (development bypass).',
       };
     }
 
@@ -324,26 +463,29 @@ export class DonationsService {
     const requestTxnId = `DON-${saved[0].id.slice(0, 8)}-${Date.now()}`;
     const total = saved.reduce((sum, d) => sum + Number(d.amount), 0);
 
-    const result = await this.paymentGateway.charge({
-      transactionId: requestTxnId,
-      amount: total,
-      currency: saved[0].currency,
-      paymentTypeKey: 'DONATION',
-      referenceId: saved[0].id,
-      payer: {
-        name: saved[0].donorName ?? undefined,
-        phone,
-        email: saved[0].donorEmail ?? undefined,
-      },
-      description: 'RMC Donation – Rwanda Muslim Council',
-      items: saved.map((d) => ({
+    // The whole basket fails together, since it is one charge — see failUnreachable.
+    const result = await this.paymentGateway
+      .charge({
+        transactionId: requestTxnId,
+        amount: total,
+        currency: saved[0].currency,
         paymentTypeKey: 'DONATION',
-        amount: Number(d.amount),
-        quantity: 1,
-        description: d.message ?? undefined,
-      })),
-      pushProvider: channel === 'momo' ? 'MTN' : undefined,
-    });
+        referenceId: saved[0].id,
+        payer: {
+          name: saved[0].donorName ?? undefined,
+          phone,
+          email: saved[0].donorEmail ?? undefined,
+        },
+        description: 'RMC Donation – Rwanda Muslim Council',
+        items: saved.map((d) => ({
+          paymentTypeKey: 'DONATION',
+          amount: Number(d.amount),
+          quantity: 1,
+          description: d.message ?? undefined,
+        })),
+        pushProvider: channel === 'momo' ? 'MTN' : undefined,
+      })
+      .catch((error) => this.failUnreachable(saved, error));
 
     // Every donation in the basket points at the same payment.
     for (const donation of saved) {

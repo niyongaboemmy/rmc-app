@@ -37,6 +37,7 @@ import { MosqueImam } from '../mosques/entities/mosque-imam.entity';
 import { Mosque } from '../mosques/entities/mosque.entity';
 import { District } from '../locations/entities/district.entity';
 import { Sector } from '../locations/entities/sector.entity';
+import { toCsv } from '../common/csv.util';
 
 // Fallback amount — used if no active PaymentTypeRate is configured yet
 const GOOD_CONDUCT_FEE_FALLBACK = 2000;
@@ -889,9 +890,11 @@ export class GoodConductService {
       'amountPaid',
       'createdAt',
     ];
-    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = items.map((r) =>
-      [
+    // `fullNames` and `motif` are written by the requester. See csv.util —
+    // quoting alone leaves them able to open as a spreadsheet formula.
+    return toCsv(
+      header,
+      items.map((r) => [
         r.id,
         r.fullNames,
         r.phone,
@@ -903,12 +906,8 @@ export class GoodConductService {
         r.amountDue,
         r.amountPaid,
         r.createdAt?.toISOString(),
-      ]
-        .map(escape)
-        .join(','),
+      ]),
     );
-
-    return [header.join(','), ...rows].join('\n');
   }
 
   // ── Internal helpers ─────────────────────────────────────────────────────────

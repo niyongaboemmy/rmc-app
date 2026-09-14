@@ -22,6 +22,8 @@ import {
   ArrowLeft, Save, Loader2, ExternalLink, Plus, Trash2, HandCoins,
   ImagePlus, ChevronDown, ChevronUp,
 } from 'lucide-react';
+import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
@@ -33,7 +35,7 @@ import {
 } from '@/components/admin/content/TriFields';
 import {
   ContentKeys, getSiteContent, saveSiteContent, mergeContent, tri,
-  projectPct, PROJECTS_DEFAULT,
+  projectPct, PROJECTS_DEFAULT, PROJECT_CATEGORIES,
   type ProjectsContent, type ProjectItem,
 } from '@/lib/content-api';
 
@@ -56,10 +58,21 @@ function emptyProject(): ProjectItem {
   };
 }
 
-/** Kebab-case a title into a URL segment, for the slug an admin has not set. */
+/**
+ * Kebab-case a title into a URL segment.
+ *
+ * Mirrors the backend's canonical `slugify` (common/slugify.util.ts) on the two
+ * points that actually bite: accented letters are decomposed and their marks
+ * dropped, so "Nyamirambo Café" slugs to "nyamirambo-cafe" rather than
+ * "nyamirambo-caf"; and typographic apostrophes are deleted rather than treated
+ * as separators, so "Qur'an" gives "quran", not "qur-an".
+ */
 function slugify(value: string): string {
   return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+    .replace(/['\u2018\u2019`]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
@@ -83,6 +96,17 @@ function ProjectsManager() {
   const [open, setOpen] = useState<number | null>(0);
   const [removing, setRemoving] = useState<number | null>(null);
   const [uploading, setUploading] = useState<number | null>(null);
+  /**
+   * The donation campaigns a project can be pointed at.
+   *
+   * Failure is silent and leaves the list empty: the picker then offers only
+   * "not linked", which is the honest state — better than blocking an admin from
+   * editing a project's description because the donations service is down.
+   */
+  const [campaigns, setCampaigns] = useState<PublicCampaign[]>([]);
+  useEffect(() => {
+    donationsApi.listCampaigns().then(setCampaigns).catch(() => setCampaigns([]));
+  }, []);
   const fileInputs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -297,31 +321,41 @@ function ProjectsManager() {
               <div className="space-y-5 border-t border-gray-50 p-6">
                 {/* Language-independent fields */}
                 <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Derived, never typed.
+                      An unsaved project follows its English title as it is written. Once
+                      saved the slug is FROZEN: it is the project's public address, and
+                      quietly rewriting it because someone fixed a typo in the title would
+                      break every link and bookmark already pointing at it. Renaming a
+                      live project's URL should be a deliberate act, not a side effect of
+                      editing its heading. */}
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Address <span className="font-normal text-gray-400">— all languages</span>
+                      Address <span className="font-normal text-gray-400">— generated</span>
                     </label>
-                    <input
-                      type="text"
-                      value={item.slug}
-                      onChange={(e) => setPlain(i, 'slug', e.target.value)}
-                      placeholder="kigali-central-mosque"
-                      className={inputCls}
-                    />
+                    <p className={`${inputCls} flex items-center bg-gray-50 font-mono text-[13px] text-gray-600`}>
+                      {item.slug || slugify(item.title.en) || (
+                        <span className="font-sans text-gray-300">Set once the English title is written</span>
+                      )}
+                    </p>
                     <p className="mt-1 text-[11px] text-gray-400">
-                      The last part of /projects/… Left blank, it is built from the English title on save.
+                      {item.slug
+                        ? 'The last part of /projects/… Fixed, so existing links keep working.'
+                        : 'Built from the English title when this project is saved.'}
                     </p>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
                       Category <span className="font-normal text-gray-400">— all languages</span>
                     </label>
-                    <input
-                      type="text"
+                    {/* The same fixed list the other editor offers. It was free text
+                        here, which is how two editors for one field end up able to
+                        produce values the other cannot. Both stored categories are
+                        already in the list, so nothing is stranded by the change. */}
+                    <SearchableSelect
                       value={item.category}
-                      onChange={(e) => setPlain(i, 'category', e.target.value)}
-                      placeholder="Mosque"
-                      className={inputCls}
+                      onChange={(v) => setPlain(i, 'category', v)}
+                      options={PROJECT_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                      size="md"
                     />
                   </div>
                   <div>
@@ -334,25 +368,54 @@ function ProjectsManager() {
                       className={inputCls}
                     />
                   </div>
+                  {/* Which donation campaign this project collects for.
+                      A project without one still works — its call to action goes to
+                      the donate landing, as every project's did before this. With one,
+                      it goes straight to that campaign's card. */}
+                  <div className="sm:col-span-2">
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Donation program{' '}
+                      <span className="font-normal text-gray-400">— where “Support this project” leads</span>
+                    </label>
+                    <SearchableSelect
+                      value={item.campaignSlug ?? ''}
+                      onChange={(v) => setPlain(i, 'campaignSlug', v)}
+                      options={campaigns.map((c) => ({ value: c.slug, label: c.title }))}
+                      noneLabel="Not linked — go to the donate page"
+                      placeholder="Not linked — go to the donate page"
+                      size="md"
+                    />
+                    {/* SearchableSelect shows its placeholder, greyed, when the value
+                        matches no option — so a project linked to a deleted or
+                        deactivated campaign reads as "Not linked" while still carrying
+                        the slug. Say it rather than let the control quietly misreport. */}
+                    {item.campaignSlug && !campaigns.some((c) => c.slug === item.campaignSlug) && (
+                      <p className="mt-1 text-[11px] text-amber-600">
+                        Linked to “{item.campaignSlug}”, which is not an active program. Pick another, or
+                        leave it and re-activate that program.
+                      </p>
+                    )}
+                  </div>
+
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">Status</label>
-                    <select
+                    <SearchableSelect
                       value={item.status}
-                      onChange={(e) => setPlain(i, 'status', e.target.value)}
-                      className={inputCls}
-                    >
-                      <option value="ongoing">Ongoing</option>
-                      <option value="completed">Completed</option>
-                    </select>
+                      onChange={(v) => setPlain(i, 'status', v)}
+                      options={[
+                        { value: 'ongoing', label: 'Ongoing' },
+                        { value: 'completed', label: 'Completed' },
+                      ]}
+                      size="md"
+                    />
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">Currency</label>
-                    <input
-                      type="text"
+                    <SearchableSelect
                       value={item.currency}
-                      onChange={(e) => setPlain(i, 'currency', e.target.value)}
-                      placeholder="RWF"
-                      className={inputCls}
+                      onChange={(v) => setPlain(i, 'currency', v)}
+                      options={['RWF', 'USD', 'EUR', 'GBP'].map((c) => ({ value: c, label: c }))}
+                      size="md"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">

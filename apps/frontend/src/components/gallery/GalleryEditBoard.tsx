@@ -24,7 +24,9 @@ import {
   Eye, EyeOff, Trash2, Images, Pencil,
 } from 'lucide-react';
 import { ConfirmModal } from '@/components/ui/Modal';
+import { PhotoPlaceholder } from '@/components/ui/PhotoPlaceholder';
 import { useToast } from '@/components/ui/Toast';
+import { useImageLoaded } from '@/hooks/useImageLoaded';
 import {
   galleryApi,
   generateImageVersions,
@@ -524,12 +526,28 @@ function BoardCard({
   const src = item.thumbnailKey ? fileUrl(item.thumbnailKey) : item.fileKey ? fileUrl(item.fileKey) : null;
   const [imgError, setImgError] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  const { loaded, imageProps } = useImageLoaded(src);
 
   return (
     <div className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 shadow-sm">
       {src && !imgError ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={item.title ?? ''} onError={() => setImgError(true)} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <>
+          {!loaded && <PhotoPlaceholder />}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            {...imageProps}
+            // Both handlers run: the hook stops the placeholder, this swaps in
+            // the broken-photo glyph. Dropping either leaves the tile pulsing
+            // over a file that is never coming.
+            onError={() => {
+              imageProps.onError();
+              setImgError(true);
+            }}
+            src={src}
+            alt={item.title ?? ''}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center"><ImageOff className="h-8 w-8 text-gray-300" /></div>
       )}

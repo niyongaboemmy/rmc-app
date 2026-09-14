@@ -8,12 +8,6 @@ import {
   Index,
 } from 'typeorm';
 
-export enum ScholarshipLevel {
-  SECONDARY = 'secondary',
-  TVET = 'tvet',
-  UNIVERSITY = 'university',
-}
-
 /**
  * Where an opportunity is in its life. Replaces the `isOpen` boolean, which
  * could not express "being written" — an admin had no way to compose a
@@ -68,6 +62,18 @@ export class ScholarshipProgram {
   @Column({ type: 'varchar', length: 200 })
   title: string;
 
+  /**
+   * The WHOLE of what an applicant reads: what the scholarship is, who may
+   * apply, what it covers, what it is worth.
+   *
+   * Rich text (HTML from the shared RichTextEditor), not plain. It replaced
+   * three plain-text columns and an `amount` number in migration 077 — the
+   * editor carries its own headings, so the structure that once justified
+   * separate columns now lives inside this one and RMC shapes the page rather
+   * than filling in a fixed form.
+   *
+   * Sanitised at render, never at write: see the frontend's lib/sanitize.
+   */
   @Column({ type: 'text' })
   description: string;
 
@@ -82,15 +88,6 @@ export class ScholarshipProgram {
   @Column({ name: 'description_i18n', type: 'jsonb', nullable: true })
   descriptionI18n: I18nText | null;
 
-  /** Who may apply. Its own field, not buried in the description, because an
-   *  applicant scanning for whether they qualify should not have to read prose. */
-  @Column({ name: 'eligibility_i18n', type: 'jsonb', nullable: true })
-  eligibilityI18n: I18nText | null;
-
-  /** What the award actually covers — tuition, materials, stipend. */
-  @Column({ name: 'benefits_i18n', type: 'jsonb', nullable: true })
-  benefitsI18n: I18nText | null;
-
   @Column({ name: 'required_documents', type: 'jsonb', default: () => "'[]'" })
   requiredDocuments: RequiredDocument[];
 
@@ -98,11 +95,18 @@ export class ScholarshipProgram {
   @Column({ type: 'jsonb', default: () => "'[]'" })
   attachments: Array<{ key: string; name: string; mimeType: string; size: number }>;
 
+  /**
+   * The education level key, defined in the Scholarships CMS section rather than
+   * by this enum — RMC adds and removes levels without a deploy. The three
+   * seeded keys are still `secondary`, `tvet` and `university`, which is why no
+   * data had to move when they became content.
+   *
+   * This is the level an OFFER is aimed at. The application's own
+   * `educationLevel` went in migration 079 — the form had stopped asking for it
+   * and sent the same value for every applicant.
+   */
   @Column({ type: 'varchar', length: 20, nullable: true })
-  level: ScholarshipLevel | null;
-
-  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
-  amount: number | null;
+  level: string | null;
 
   /** How many awards are on offer. Null when RMC would rather not commit. */
   @Column({ type: 'int', nullable: true })

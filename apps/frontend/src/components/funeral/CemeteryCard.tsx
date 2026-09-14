@@ -29,11 +29,14 @@ export function CemeteryCard({
 }) {
   const pct = occupancyPercent(cemetery.used, cemetery.capacity);
   const nearFull = pct >= 85;
-  const mapsQuery =
+  // Coordinates when we have them, the address otherwise — `destination` accepts either.
+  const mapsDestination =
     cemetery.lat != null && cemetery.lng != null
       ? `${cemetery.lat},${cemetery.lng}`
       : encodeURIComponent(cemetery.address);
-  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+  // `/maps/dir/`, not `/maps/search/`. The button says "directions"; searching only
+  // dropped a pin on the cemetery and left the reader to ask for a route themselves.
+  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${mapsDestination}`;
 
   return (
     <div

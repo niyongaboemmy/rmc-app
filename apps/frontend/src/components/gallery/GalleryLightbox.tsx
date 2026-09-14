@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useImageLoaded } from '@/hooks/useImageLoaded';
+import { PhotoPlaceholder } from '@/components/ui/PhotoPlaceholder';
 
 export interface LightboxImage {
   src: string;
@@ -71,6 +73,16 @@ export function GalleryLightbox({
     touchStartX.current = null;
   };
 
+  /* Placeholder while the photo arrives. Called before the early return below,
+     since it is a hook — hence the optional index rather than `current.src`.
+
+     Usually instant: the lightbox opens the same medium-sized file the pile
+     behind it already loaded, so the browser has it and `complete` settles this
+     on the first ref. It earns its place on the cold paths — a photo the pile
+     had not reached yet, and every step through the set with the arrows, where
+     the next file has not been asked for until now. */
+  const { loaded, imageProps } = useImageLoaded(images[index]?.src);
+
   if (typeof document === 'undefined' || total === 0) return null;
 
   const current = images[index];
@@ -97,15 +109,35 @@ export function GalleryLightbox({
 
         {/* Image — full picture, letterboxed, height-capped */}
         <div
-          className="relative flex items-center justify-center"
+          // The height floor holds the frame open while the photo is on its way.
+          // Without it the img has no box yet, so the dialog would collapse to
+          // its caption and then shove it down — the jump a placeholder exists
+          // to prevent. Dropped the moment the photo can size the frame itself.
+          className={`relative flex items-center justify-center ${loaded ? '' : 'min-h-[55dvh]'}`}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
+          {!loaded && (
+            <div className="absolute inset-0 grid place-items-center">
+              {/* Held to a plausible landscape frame rather than stretched over
+                  the full dialog width, so the swap to the real photo is a small
+                  correction instead of a wide grey slab collapsing to a portrait. */}
+              <div className="relative aspect-[3/2] max-h-full w-full max-w-2xl overflow-hidden rounded-2xl">
+                <PhotoPlaceholder tone="dark" icon />
+              </div>
+            </div>
+          )}
+
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            {...imageProps}
             src={current.src}
             alt={caption}
-            className="max-h-[82dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10 select-none"
+            // Lifted above the placeholder, which is absolute and would otherwise
+            // paint over this in-flow image. So the photo is never hidden waiting
+            // for a signal: if `loaded` somehow never arrives, the reader still
+            // sees the photo, with a pulse behind it rather than instead of it.
+            className="relative z-10 max-h-[82dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10 select-none"
             draggable={false}
           />
 

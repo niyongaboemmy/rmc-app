@@ -27,6 +27,12 @@ class VerifyScholarshipDocumentDto {
   verified: boolean;
 }
 
+/** A query-string integer of at least 1, or the fallback for anything else. */
+function positiveInt(raw: string | undefined, fallback: number): number {
+  const n = Number.parseInt(raw ?? '', 10);
+  return Number.isFinite(n) && n >= 1 ? n : fallback;
+}
+
 @ApiTags('Scholarship — Admin')
 @Controller('admin/scholarship')
 @ApiBearerAuth()
@@ -115,8 +121,12 @@ export class ScholarshipAdminController {
       search,
       dateFrom,
       dateTo,
-      page: page ? parseInt(page) : 1,
-      limit: limit ? parseInt(limit) : 20,
+      // `parseInt` alone returns NaN for junk, and NaN reaches TypeORM as the
+      // skip/take — `?limit=0` divided through to `pages: Infinity`, and a
+      // negative page asked Postgres for a negative OFFSET. Clamped here rather
+      // than trusted, since these are query strings.
+      page: positiveInt(page, 1),
+      limit: Math.min(positiveInt(limit, 20), 200),
     });
   }
 

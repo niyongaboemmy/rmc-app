@@ -11,7 +11,6 @@ import {
   CalendarClock,
   Clock,
   ClipboardList,
-  Coins,
   FileText,
   GraduationCap,
   Hash,
@@ -27,7 +26,9 @@ import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
 import {
   ContentKeys,
   SCHOLARSHIP_SERVICE_DEFAULT,
+  boardLevels,
   isRtl,
+  levelLabel,
   pick,
   raw,
   type Locale,
@@ -109,7 +110,6 @@ function formatSize(bytes: number): string {
 export default function ScholarshipDetailPage() {
   const { locale, slug } = useParams<{ locale: string; slug: string }>();
   const t = useTranslations('services.scholarship');
-  const tLevels = useTranslations('services.scholarship.levels');
 
   /* Section headings, the CTA and the page's notices are admin-managed. The field
      micro-labels and the deadline phrases stay in i18n: those carry `{days}` and
@@ -119,12 +119,17 @@ export default function ScholarshipDetailPage() {
     SCHOLARSHIP_SERVICE_DEFAULT,
   );
   const lang = locale as Locale;
+  // Levels are CMS-managed now: the programme stores a key, the label for it
+  // lives beside the rest of this page's copy. `levelLabel` returns null for a
+  // key whose level has been deleted, and the chip below hides itself — a stale
+  // `lvl1757…` on a public page is worse than no chip at all.
+  const levels = boardLevels(content, SCHOLARSHIP_SERVICE_DEFAULT);
   const dir = isRtl(locale) ? ('rtl' as const) : ('ltr' as const);
   const copy = content.detail;
 
   /** One inline-editable heading from the `detail` group. */
   const heading = (
-    key: 'aboutTitle' | 'eligibilityTitle' | 'benefitsTitle' | 'documentsTitle' | 'attachmentsTitle',
+    key: 'aboutTitle' | 'documentsTitle' | 'attachmentsTitle',
   ) => (
     <InlineText
       as="span"
@@ -165,9 +170,22 @@ export default function ScholarshipDetailPage() {
   })();
 
   const title = program ? localized(program.titleI18n, program.title, locale) : '';
-  const description = program ? localized(program.descriptionI18n, program.description, locale) : '';
-  const eligibility = program ? localized(program.eligibilityI18n, '', locale) : '';
-  const benefits = program ? localized(program.benefitsI18n, '', locale) : '';
+  // Rich text now, and the only prose on the page: eligibility, benefits and the
+  // award figure were folded into it in migration 077, so the editor's own
+  // headings carry the structure three separate columns used to.
+  //
+  // NOT sanitised here. `lib/sanitize` bundles jsdom and its own header forbids
+  // importing it from a 'use client' module — doing so 500s this page, which is
+  // how that rule was rediscovered. The programme is fetched in the browser, so
+  // there is no server component in the path to pre-sanitise and pass it down
+  // the way the hajj and funeral pages do. It is cleaned at the API boundary
+  // instead, on write: see backend scholarship-description.ts.
+  const levelLabelTri = levelLabel(levels, program?.level);
+  const levelText = levelLabelTri ? pick(levelLabelTri, locale) : '';
+
+  const descriptionHtml = program
+    ? localized(program.descriptionI18n, program.description, locale)
+    : '';
 
   return (
     <div className="min-h-screen">
@@ -227,9 +245,9 @@ export default function ScholarshipDetailPage() {
                             ? `${t('detail.opensLabel')} ${formatDate(program.opensAt, locale)}`
                             : deadlineText}
                         </span>
-                        {program.level && (
+                        {levelText && (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-[11px] font-semibold text-gray-600">
-                            <GraduationCap className="h-3 w-3" /> {tLevels(program.level)}
+                            <GraduationCap className="h-3 w-3" /> {levelText}
                           </span>
                         )}
                         {program.referenceNumber && (
@@ -259,26 +277,12 @@ export default function ScholarshipDetailPage() {
                   {/* ── Main column ──────────────────────────────────────── */}
                   <div className="space-y-6 lg:col-span-2">
                     <Panel icon={FileText} title={heading('aboutTitle')}>
-                      <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">
-                        {description}
-                      </p>
+                      <div
+                        dir={dir}
+                        className="prose prose-sm max-w-none text-gray-600 prose-headings:text-rmc-green-dark prose-headings:font-semibold prose-a:text-rmc-green prose-strong:text-gray-900"
+                        dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                      />
                     </Panel>
-
-                    {eligibility && (
-                      <Panel icon={Users} title={heading('eligibilityTitle')}>
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">
-                          {eligibility}
-                        </p>
-                      </Panel>
-                    )}
-
-                    {benefits && (
-                      <Panel icon={Coins} title={heading('benefitsTitle')}>
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">
-                          {benefits}
-                        </p>
-                      </Panel>
-                    )}
 
                     {/* What to have ready before starting. Moved here from the
                         landing page: it is preparation for ONE application, so
@@ -362,11 +366,6 @@ export default function ScholarshipDetailPage() {
                   <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
                     <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                       <dl className="space-y-3.5">
-                        {program.amount != null && (
-                          <Fact icon={Coins} label={t('landing.amountLabel')}>
-                            {Number(program.amount).toLocaleString()} RWF
-                          </Fact>
-                        )}
                         {program.slots != null && (
                           <Fact icon={Users} label={t('detail.slotsLabel')}>{program.slots}</Fact>
                         )}

@@ -12,11 +12,19 @@ import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/Modal';
+import { Pagination } from '@/components/ui/Pagination';
 import { EntryEditor } from '@/components/dawah/EntryEditor';
 import {
   dawahApi, serverMessage,
   type AdminQuestion, type QuestionStatus,
 } from '@/lib/dawahApi';
+
+/**
+ * Matches the backend's own default. The page used to ask for 50 — the cap —
+ * and render whatever came back with no pager and no count, so past 50 entries
+ * an admin was shown a truncated library with nothing to say so.
+ */
+const PAGE_SIZE = 20;
 
 const STATUSES: (QuestionStatus | '')[] = ['', 'published', 'pending', 'rejected', 'hidden'];
 
@@ -52,6 +60,7 @@ export default function AdminDiscussionsPage() {
 function EntryLibrary() {
   const { locale } = useParams<{ locale: string }>();
   const t = useTranslations('dawah');
+  const tCommon = useTranslations('common');
   const { success, error: toastError } = useToast();
 
   const [items, setItems] = useState<AdminQuestion[]>([]);
@@ -59,6 +68,8 @@ function EntryLibrary() {
   const [status, setStatus] = useState<QuestionStatus | ''>('');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   /** null = closed; '' = composing a new entry; an id = editing that one. */
@@ -68,18 +79,21 @@ function EntryLibrary() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const page = await dawahApi.admin.discussions.entries({
+      const result = await dawahApi.admin.discussions.entries({
         status: status || undefined,
         search: search || undefined,
-        limit: 50,
+        page,
+        limit: PAGE_SIZE,
       });
-      setItems(page.items);
+      setItems(result.items);
+      setTotal(result.total);
     } catch {
       setItems([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, [status, search]);
+  }, [status, search, page]);
 
   useEffect(() => {
     load();
@@ -90,6 +104,13 @@ function EntryLibrary() {
     const id = setTimeout(() => setSearch(searchInput), 300);
     return () => clearTimeout(id);
   }, [searchInput]);
+
+  // Narrowing the list has to return to the first page. Staying on page 3 while
+  // the result set shrinks to one page asks the server for a page that no longer
+  // exists, and the library comes back empty for no visible reason.
+  useEffect(() => {
+    setPage(1);
+  }, [status, search]);
 
   const act = async (entry: AdminQuestion, action: 'hide' | 'restore' | 'delete') => {
     setBusyId(entry.id);
@@ -151,6 +172,13 @@ function EntryLibrary() {
         </div>
       </div>
 
+      {/* What the filters actually matched. The pager alone says how many PAGES
+          there are, which is not the same question. Reuses the public page's
+          pluralised key rather than adding a third wording of "N questions". */}
+      {!loading && total > 0 && (
+        <p className="text-xs text-gray-400">{t('discussions.count', { count: total })}</p>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-rmc-green" />
@@ -168,6 +196,11 @@ function EntryLibrary() {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* First in the row: it is how somebody names this entry to a
+                      colleague, so it should be the first thing found when scanning. */}
+                  <span className="text-[11px] font-semibold tabular-nums text-gray-400">
+                    #{entry.entryNumber}
+                  </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                       STATUS_STYLE[entry.status] ?? 'bg-gray-100 text-gray-500'
@@ -259,6 +292,20 @@ function EntryLibrary() {
             </li>
           ))}
         </ul>
+      )}
+
+      {!loading && total > 0 && (
+        <Pagination
+          className="mt-6"
+          page={page}
+          pages={Math.ceil(total / PAGE_SIZE)}
+          onChange={setPage}
+          labels={{
+            previous: tCommon('pagination.previous'),
+            next: tCommon('pagination.next'),
+            nav: tCommon('pagination.nav'),
+          }}
+        />
       )}
 
       {editing !== null && (

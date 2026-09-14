@@ -4,6 +4,7 @@ import { marked } from 'marked';
 // perfectly and is `undefined` at runtime — the emitted CJS has no interop helper.
 // sanitize-html is `export =`; this is the honest way to reach it.
 import * as sanitizeHtml from 'sanitize-html';
+import { addHeadingAnchors, type TocEntry } from './discussions-toc';
 
 /**
  * The Discussions markdown pipeline: a stranger's markdown → HTML nobody can be hurt by.
@@ -48,8 +49,24 @@ const ALLOWED_TAGS = [
   'blockquote',
   'code',
   'pre',
+  // Every level the editor can produce — h1 through h6.
+  //
+  // The allowlist has to match the toolbar, because a heading level that is not
+  // here is not demoted, it is DESTROYED: sanitize-html discards the tag and keeps
+  // the text, so the writer's heading silently becomes a paragraph. That happened
+  // twice, first for h2 and then for h1, and both times the author had no way to
+  // tell. With the toolbar now offering all six, the allowlist offers all six.
+  //
+  // h1 included, which gives the entry page a second top-level heading beside the
+  // question's title. That is the cost of the toolbar being honest about the
+  // button it shows; mapping h1 down to h2 instead would mean clicking "Heading 1"
+  // produced something else.
+  'h1',
+  'h2',
   'h3',
-  'h4', // h1/h2 belong to the page, not to a post inside it
+  'h4',
+  'h5',
+  'h6',
   'a',
   'hr',
 ];
@@ -124,4 +141,13 @@ export function postExcerpt(source: string | null | undefined, max = 160): strin
     .replace(/\s+/g, ' ')
     .trim();
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+export function renderAnswerWithToc(source: string | null | undefined): {
+  html: string;
+  toc: TocEntry[];
+} {
+  // Sanitise FIRST, stamp SECOND. The order is the security property, which is why
+  // it is two named steps here rather than one function doing both.
+  return addHeadingAnchors(renderPostMarkdown(source));
 }

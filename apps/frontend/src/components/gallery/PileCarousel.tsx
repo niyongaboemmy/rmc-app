@@ -2,10 +2,44 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
+import { useImageLoaded } from '@/hooks/useImageLoaded';
+import { PhotoPlaceholder } from '@/components/ui/PhotoPlaceholder';
 
 interface PileImage {
   src: string;
   alt?: string;
+}
+
+/**
+ * One photo in the pile, with its placeholder.
+ *
+ * Its own component because each photo tracks its own arrival, and a hook cannot
+ * be called from inside the map that lays the pile out.
+ */
+function PilePhoto({ img, focused }: { img: PileImage; focused: boolean }) {
+  const { loaded, imageProps } = useImageLoaded(img.src);
+
+  // A fragment: the caller's tile is already the positioned, clipping box, and
+  // both of these fill it absolutely.
+  //
+  // The placeholder comes FIRST so it sits underneath — the photo is never made
+  // transparent to reveal it. Hiding the photo until `onLoad` would mean a
+  // gallery of blank tiles for anyone whose hydration is slow or broken, which
+  // is a worse failure than the flicker being fixed. Underneath, an opaque
+  // object-cover photo simply paints over it.
+  return (
+    <>
+      {!loaded && <PhotoPlaceholder />}
+      <Image
+        {...imageProps}
+        src={img.src}
+        alt={focused ? img.alt ?? '' : ''}
+        fill
+        sizes="(max-width: 768px) 90vw, 28rem"
+        className="object-cover object-center"
+      />
+    </>
+  );
 }
 
 interface Props {
@@ -66,13 +100,7 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
               }}
             >
               <div className="relative w-full h-full overflow-hidden rounded-lg bg-gray-100">
-                <Image
-                  src={img.src}
-                  alt={depth === 0 ? img.alt ?? '' : ''}
-                  fill
-                  sizes="(max-width: 768px) 90vw, 28rem"
-                  className="object-cover object-center"
-                />
+                <PilePhoto img={img} focused={depth === 0} />
                 {/* Focused photo: sheen + "view all" hint on hover */}
                 {depth === 0 && (
                   <>

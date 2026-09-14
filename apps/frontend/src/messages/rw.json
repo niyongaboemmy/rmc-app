@@ -21,6 +21,7 @@
     "services": "Reba Serivisi"
   },
   "common": {
+    "openInMaps": "Fungura muri Maps",
     "findNearMe": "Shakisha hafi yanjye",
     "findNearMeLocating": "Turagushakisha…",
     "findNearMeDenied": "Aho uri ntibiboneka — turerekana ahantu hose.",
@@ -1182,11 +1183,6 @@
       },
       "title": "Buruse",
       "desc": "Inkunga y'amafaranga kuri abanyeshuri b'Abasilamu bavoma uburezi mu mashuri yose.",
-      "levels": {
-        "secondary": "Amashuri Yisumbuye",
-        "tvet": "Amashuri y'Umwuga (TVET)",
-        "university": "Kaminuza"
-      },
       "relationships": {
         "parent": "Umubyeyi",
         "guardian": "Umurezi",
@@ -1433,7 +1429,6 @@
           "inDays": "Ifunga mu minsi {days}"
         },
         "deadlineLabel": "Igihe Kigera",
-        "amountLabel": "Amafaranga",
         "viewAndApply": "Reba & Usabe"
       }
     },
@@ -2806,8 +2801,7 @@
       "tabs": {
         "courses": "Amasomo",
         "library": "Isomero",
-        "categories": "Ibyiciro",
-        "content": "Urupapuro rw'itangiriro"
+        "categories": "Ibyiciro"
       },
       "status": {
         "draft": "Draft",
@@ -3838,7 +3832,6 @@
       "scholar": "Inzobere",
       "views": "{count, plural, =1 {Kurebwa 1} other {Kurebwa #}}",
       "backToDiscussions": "Ibiganiro",
-      "allCategories": "Ibyiciro byose",
       "allLanguages": "Indimi zose",
       "otherLanguages": "Hagaragazwa n'ibibazo mu zindi ndimi",
       "writtenIn": "Byanditswe mu {language}",
@@ -3870,7 +3863,6 @@
       "searchLabel": "Shakisha",
       "askRailHint": "Kohereza kuri RMC. Tuzagisubiza kandi tugitangaze hano.",
       "answerBadge": "Igisubizo cya RMC",
-      "answeredBy": "Cyasubijwe na {name}",
       "askPrompt": "Ufite ikibazo cyawe?",
       "related": {
         "title": "Ibibazo bifitanye isano"
@@ -3880,7 +3872,11 @@
         "yes": "Yego",
         "no": "Oya",
         "thanks": "Urakoze ku bitekerezo byawe.",
-        "failed": "Ntibyashobotse kwandika igitekerezo cyawe. Ongera ugerageze."
+        "failed": "Ntibyashobotse kwandika igitekerezo cyawe. Ongera ugerageze.",
+        "commentLabel": "Igitekerezo (ntibisabwa)",
+        "emailLabel": "Imeyili yawe (ntibisabwa)",
+        "reasonLabel": "Hitamo impamvu",
+        "send": "Ohereza"
       },
       "admin": {
         "title": "Ububiko bw'ibibazo n'ibisubizo",
@@ -3914,8 +3910,6 @@
         "questionLabel": "Ikibazo",
         "questionPlaceholder": "Ikibazo, nk'uko umusomyi yakibaza…",
         "answerLabel": "Igisubizo cya RMC",
-        "answerPlaceholder": "Andika igisubizo…",
-        "markdownHint": "Markdown. Bitunganywa kandi bigasukurwa na seriveri.",
         "cancel": "Reka",
         "save": "Bika impinduka",
         "publish": "Tangaza",
@@ -3934,7 +3928,25 @@
         "published": "Byatangajwe.",
         "rejected": "Byanzwe.",
         "rejectConfirmTitle": "Wanga iki kibazo?",
-        "rejectConfirmBody": "Ntikizasubizwa cyangwa ngo gitangazwe. Umunyamuryango ntiyandikirwa."
+        "rejectConfirmBody": "Ntikizasubizwa cyangwa ngo gitangazwe. Umunyamuryango ntiyandikirwa.",
+        "summaryLabel": "Incamake yo ku rutonde",
+        "summaryPlaceholder": "Interuro imwe cyangwa ebyiri zivuga igisubizo, uko kigomba gusomeka ku rutonde rw’ibibazo.",
+        "summaryHint": "Ntibisabwa. Nusiga ubusa, urutonde rwerekana intangiriro y’igisubizo.",
+        "entryNumber": "Ikibazo {number}",
+        "essentialLabel": "Shyira mu Bisubizo by’ingenzi",
+        "essentialHint": "Bigaragaza iki kibazo mu gace k’ibyatoranyijwe kuruhande, munsi y’icyiciro cyacyo.",
+        "answerSummaryLabel": "Igisubizo muri make",
+        "answerSummaryPlaceholder": "Interuro imwe cyangwa ebyiri zivuga icyemezo, zigaragara hejuru y’igisubizo cyuzuye.",
+        "answerSummaryHint": "Ntibisabwa. Gisomwa n’uwafunguye ikibazo ashaka icyemezo mbere y’ibisobanuro."
+      },
+      "download": "Kuramo",
+      "share": "Sangiza",
+      "linkCopied": "Umurongo wafashwe",
+      "contents": "Muri iki gisubizo",
+      "searchCategories": "Shakisha ibyiciro",
+      "noCategories": "Nta cyiciro gihuye.",
+      "panels": {
+        "categories": "Igiti cy’ibyiciro"
       }
     }
   }

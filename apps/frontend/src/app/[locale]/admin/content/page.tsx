@@ -12,7 +12,7 @@ import {
   Search, X, MapPin, Layers, Home, FileText,
   ListFilter, Images, Sparkles, Share2, Newspaper, Mail, Moon,
   Compass, ListChecks, CalendarDays, Briefcase, GraduationCap,
-  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart, ShieldCheck,
+  Library, MessagesSquare, Heading1, LayoutGrid, HandCoins, Heart, ShieldCheck, UserPlus,
 } from 'lucide-react';
 
 // ─── Types & config ───────────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ type PageLocation =
   | 'Welcome to Islam'
   | 'Projects Page'
   | 'Marriage Page'
+  | 'Member Registration'
   | 'Site-wide';
 
 interface SectionConfig {
@@ -371,6 +372,20 @@ const SECTIONS: SectionConfig[] = [
     accentBar: 'bg-violet-400',
   },
   {
+    id: 'member-registration',
+    icon: UserPlus,
+    title: 'Member Registration',
+    description:
+      'The education levels offered on the membership form. Add, rename, reorder or remove them.',
+    type: 'edit', itemLabel: null,
+    page: 'Member Registration', positionOrder: 0,
+    locationLabel: 'Member Registration \u00b7 Education levels',
+    keywords: ['member', 'membership', 'register', 'registration', 'education', 'level', 'levels', 'school', 'degree', 'qualification'],
+    bg: 'bg-sky-50', iconColor: 'text-sky-600', border: 'border-sky-100',
+    badge: 'bg-sky-100 text-sky-700',
+    accentBar: 'bg-sky-400',
+  },
+  {
     id: 'good-conduct',
     icon: ShieldCheck,
     title: 'Good Conduct Page',
@@ -397,12 +412,25 @@ const SECTIONS: SectionConfig[] = [
     accentBar: 'bg-cyan-400',
   },
   {
+    id: 'dawah',
+    icon: GraduationCap,
+    title: 'Dawah Landing Page',
+    description: 'Hero, description and the three footer cards on /dawah — the section\u2019s own page, above the Library, Courses and Discussions listings.',
+    type: 'edit', itemLabel: null,
+    page: 'Dawah Pages', positionOrder: 0,
+    locationLabel: 'Dawah \u00b7 Landing page',
+    keywords: ['dawah', 'landing', 'hero', 'description', 'courses', 'library', 'discussions', 'cards', 'wording', 'copy'],
+    bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
+    badge: 'bg-emerald-100 text-emerald-700',
+    accentBar: 'bg-emerald-400',
+  },
+  {
     id: 'library',
     icon: Library,
     title: 'Library Page',
     description: 'Heading and the empty / error messages on the public Dawah Library listing. The books themselves are managed under Dawah → Library.',
     type: 'edit', itemLabel: null,
-    page: 'Dawah Pages', positionOrder: 0,
+    page: 'Dawah Pages', positionOrder: 1,
     locationLabel: 'Dawah · Library listing',
     keywords: ['library', 'books', 'dawah', 'reading', 'heading', 'empty', 'error', 'wording', 'copy'],
     bg: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100',
@@ -415,7 +443,7 @@ const SECTIONS: SectionConfig[] = [
     title: 'Courses Page',
     description: 'Heading and the empty / error messages on the public Dawah Courses listing. The courses themselves are managed under Dawah → Courses.',
     type: 'edit', itemLabel: null,
-    page: 'Dawah Pages', positionOrder: 1,
+    page: 'Dawah Pages', positionOrder: 2,
     locationLabel: 'Dawah · Courses listing',
     keywords: ['courses', 'learning', 'dawah', 'lessons', 'heading', 'empty', 'error', 'wording', 'copy'],
     bg: 'bg-sky-50', iconColor: 'text-sky-600', border: 'border-sky-100',
@@ -428,7 +456,7 @@ const SECTIONS: SectionConfig[] = [
     title: 'Discussions Page',
     description: 'Heading and the empty / no-results / error messages on the public Dawah Discussions listing. The questions themselves are managed under Dawah → Discussions.',
     type: 'edit', itemLabel: null,
-    page: 'Dawah Pages', positionOrder: 2,
+    page: 'Dawah Pages', positionOrder: 3,
     locationLabel: 'Dawah · Discussions listing',
     keywords: ['discussions', 'questions', 'answers', 'ask', 'dawah', 'heading', 'empty', 'error', 'wording', 'copy'],
     bg: 'bg-orange-50', iconColor: 'text-orange-600', border: 'border-orange-100',
@@ -501,7 +529,7 @@ const PAGE_GROUPS: { page: PageLocation; icon: React.ElementType; color: string;
   { page: 'Scholarships Page', icon: GraduationCap, color: 'text-violet-600', description: 'Wording on the public scholarships board' },
   { page: 'Good Conduct Page', icon: ShieldCheck, color: 'text-emerald-600', description: 'Wording on the public good conduct page' },
   { page: 'Services Page', icon: LayoutGrid, color: 'text-cyan-600', description: 'The service cards and their detail modals' },
-  { page: 'Dawah Pages', icon: Library, color: 'text-emerald-600', description: 'Wording on the Library, Courses and Discussions listings' },
+  { page: 'Dawah Pages', icon: Library, color: 'text-emerald-600', description: 'The Dawah landing page, and wording on the Library, Courses and Discussions listings' },
   { page: 'Welcome to Islam', icon: Sparkles, color: 'text-rmc-green', description: 'Content on the /new-muslim page' },
   { page: 'Projects Page', icon: HandCoins, color: 'text-amber-600', description: 'Fundraising projects and the section heading' },
   { page: 'Marriage Page', icon: Heart, color: 'text-pink-600', description: 'Wording on the public marriage page' },

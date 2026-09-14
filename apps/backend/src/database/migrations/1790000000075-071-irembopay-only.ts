@@ -13,8 +13,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * is a plain varchar, not a foreign key, so rows carrying the removed code still
  * read back and render through the frontend's archived-label map.
  */
-export class IremboPayOnly1790000000069 implements MigrationInterface {
-  name = 'IremboPayOnly1790000000069';
+export class IremboPayOnly1790000000075 implements MigrationInterface {
+  name = 'IremboPayOnly1790000000075';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`

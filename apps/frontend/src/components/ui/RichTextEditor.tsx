@@ -5,12 +5,14 @@ import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import {
-  Bold, Italic, Heading2, Heading3, List, ListOrdered,
+  Bold, Italic, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
+  List, ListOrdered,
   Quote, Link2, Unlink, Undo2, Redo2, ImagePlus, Loader2,
   AlignLeft, AlignCenter, AlignRight,
 } from 'lucide-react';
 import { generateImageVersions, uploadGalleryVersions } from '@/lib/galleryApi';
 import { fileUrl } from '@/lib/api';
+import { markdownFromDoc } from '@/lib/markdown/fromProseMirror';
 
 /**
  * Image + size/alignment, carried as `data-size` / `data-align`.
@@ -38,6 +40,19 @@ const SizedImage = Image.extend({
   },
 });
 
+/**
+ * Every heading level the document schema accepts, which is every level the
+ * toolbar now offers.
+ */
+const HEADING_LEVELS: { level: 1 | 2 | 3 | 4 | 5 | 6; Icon: typeof Heading1 }[] = [
+  { level: 1, Icon: Heading1 },
+  { level: 2, Icon: Heading2 },
+  { level: 3, Icon: Heading3 },
+  { level: 4, Icon: Heading4 },
+  { level: 5, Icon: Heading5 },
+  { level: 6, Icon: Heading6 },
+];
+
 const SIZES = [
   { key: 'sm', label: 'Small image' },
   { key: 'md', label: 'Medium image' },
@@ -51,7 +66,8 @@ const ALIGNS = [
 ] as const;
 
 /**
- * Reusable rich-text editor (TipTap). Outputs HTML via `onChange`. The body is
+ * Reusable rich-text editor (TipTap). Outputs HTML via `onChange`, and markdown via
+ * the optional `onChangeMarkdown`. The body is
  * UNCONTROLLED after mount — `value` only seeds the initial content, so callers
  * should remount with a `key` (e.g. the language) to load different content.
  * This keeps the cursor stable while typing.
@@ -59,16 +75,35 @@ const ALIGNS = [
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
+  /**
+   * Also receive the edit as MARKDOWN, serialised from the editor's own document.
+   *
+   * For the callers that must STORE markdown rather than HTML — Dawah Q&A answers,
+   * where inert source is a deliberate defence (see the DawahQuestion entity). They
+   * still pass HTML in through `value`; only what comes back out differs.
+   *
+   * Additive on purpose: `onChange` keeps firing with HTML for the fifteen callers
+   * that want it, so this cannot change what any of them stores.
+   */
+  onChangeMarkdown?: (markdown: string) => void;
   dir?: 'ltr' | 'rtl';
   fontClassName?: string;
 }
 
-export function RichTextEditor({ value, onChange, dir = 'ltr', fontClassName = '' }: RichTextEditorProps) {
+export function RichTextEditor({
+  value,
+  onChange,
+  onChangeMarkdown,
+  dir = 'ltr',
+  fontClassName = '',
+}: RichTextEditorProps) {
   // The editor instance persists across language switches, so its onUpdate
   // closure must always call the LATEST onChange (which targets the current
   // language) — route it through a ref to avoid writing to the wrong language.
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+  const onChangeMarkdownRef = useRef(onChangeMarkdown);
+  useEffect(() => { onChangeMarkdownRef.current = onChangeMarkdown; }, [onChangeMarkdown]);
 
   const editor = useEditor({
     immediatelyRender: false, // avoids Next.js SSR hydration mismatch
@@ -88,7 +123,13 @@ export function RichTextEditor({ value, onChange, dir = 'ltr', fontClassName = '
       }),
     ],
     content: value,
-    onUpdate: ({ editor }) => onChangeRef.current(editor.getHTML()),
+    onUpdate: ({ editor }) => {
+      onChangeRef.current(editor.getHTML());
+      // From getJSON(), not by converting the HTML back: the document is the
+      // structured source of truth, so there is nothing to parse and no guessing
+      // at what a tag meant.
+      onChangeMarkdownRef.current?.(markdownFromDoc(editor.getJSON()));
+    },
     editorProps: {
       attributes: {
         // Font is applied on the wrapper and inherited, so it stays reactive.
@@ -184,8 +225,21 @@ function Toolbar({ editor }: { editor: Editor }) {
       <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} label="Bold"><Bold className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} label="Italic"><Italic className="w-4 h-4" /></Btn>
       <Divider />
-      <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} label="Heading 2"><Heading2 className="w-4 h-4" /></Btn>
-      <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} label="Heading 3"><Heading3 className="w-4 h-4" /></Btn>
+      {/* All six levels the schema accepts.
+          Two buttons was never the constraint: StarterKit runs the Heading
+          extension with its default `levels: [1,2,3,4,5,6]`, so typing `#### `
+          already produced an h4 that no button offered. The toolbar now says
+          what the editor actually does. */}
+      {HEADING_LEVELS.map(({ level, Icon }) => (
+        <Btn
+          key={level}
+          onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
+          active={editor.isActive('heading', { level })}
+          label={`Heading ${level}`}
+        >
+          <Icon className="w-4 h-4" />
+        </Btn>
+      ))}
       <Divider />
       <Btn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} label="Bullet list"><List className="w-4 h-4" /></Btn>
       <Btn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} label="Numbered list"><ListOrdered className="w-4 h-4" /></Btn>

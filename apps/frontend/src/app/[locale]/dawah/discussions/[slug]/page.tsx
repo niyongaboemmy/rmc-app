@@ -1,4 +1,4 @@
-import { cache } from 'react';
+import { cache, Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -9,6 +9,9 @@ import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
 import { localized } from '@/components/dawah/localize';
 import { QuestionRating } from '@/components/dawah/QuestionRating';
+import { PrintOnLoad } from '@/components/dawah/PrintOnLoad';
+import { ViewCounter } from '@/components/dawah/ViewCounter';
+import { AnswerContents } from '@/components/dawah/AnswerContents';
 import { dawahApi, type DiscussionQuestion, type PostLanguage } from '@/lib/dawahApi';
 import {
   ContentKeys, DISCUSSIONS_DEFAULT, mergeContent, pick, type DiscussionsContent,
@@ -58,13 +61,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const entry = await getEntry(slug);
   if (!entry) return {};
-  // Describe with the ANSWER, not the question: a search result should show what RMC said,
-  // which is the thing worth clicking. Strip the rendered HTML — never a slice of markdown.
-  const description = entry.answerHtml
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 160);
+  // The summary IS the description: a short prose statement of what RMC said, which is
+  // the thing worth clicking in a search result. It replaced a second copy of the
+  // strip-the-HTML-and-cut routine that the listing also carried — and unlike that, it
+  // is written rather than truncated, so it ends on a sentence.
+  const description = entry.summary.slice(0, 160);
   return {
     title: entry.title,
     description,
@@ -122,6 +123,15 @@ export default async function DiscussionEntryPage({
     <div className="min-h-screen">
       {/* solid: this page opens straight onto white, and the navbar's links are white. */}
       <Navbar solid />
+      {/* Raises the print dialog when the listing's Download link brought the reader
+          here. In Suspense because it reads searchParams, which opts a server
+          component into dynamic rendering unless the boundary absorbs it. */}
+      <Suspense fallback={null}>
+        <PrintOnLoad />
+      </Suspense>
+      {/* Counts the read from the browser. A server render happens for prefetches
+          and for metadata too, and neither is somebody reading the answer. */}
+      <ViewCounter slug={slug} />
       <main>
         <section className="pt-24 md:pt-28">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -141,10 +151,22 @@ export default async function DiscussionEntryPage({
 
             <h1
               dir={dirOf(entry.language)}
-              className="mt-1.5 text-xl font-bold leading-snug text-rmc-green-deep md:text-2xl"
+              className="mt-1.5 [overflow-wrap:anywhere] text-xl font-bold leading-snug text-rmc-green-deep md:text-2xl"
             >
               {entry.title}
             </h1>
+
+            {/* The authored summary, as a lede. Plain text, so no renderer and no
+                sanitiser — and the server substitutes a derived excerpt when nobody
+                has written one, so this is never empty on a published entry. */}
+            {entry.summary && (
+              <p
+                dir={dirOf(entry.language)}
+                className="mt-3 [overflow-wrap:anywhere] text-[15px] leading-relaxed text-gray-600 md:text-base"
+              >
+                {entry.summary}
+              </p>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
               <span className="inline-flex items-center gap-1.5">
@@ -167,37 +189,64 @@ export default async function DiscussionEntryPage({
 
         <section className="bg-white py-6">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            {/* The question. Rendered AND sanitised server-side by the API — the client
-                never renders markdown, and never trusts stored HTML. */}
-            <Reveal>
-              <div className="rounded-lg border border-gray-200 bg-white p-4 md:p-5">
-                <div
-                  dir={dirOf(entry.language)}
-                  className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-p:leading-[1.65] prose-a:text-rmc-green prose-blockquote:border-rmc-gold"
-                  dangerouslySetInnerHTML={{ __html: entry.bodyHtml }}
-                />
-              </div>
-            </Reveal>
+            {/* The question's extra detail. Rendered AND sanitised server-side by the
+                API — the client never renders markdown, and never trusts stored HTML.
+
+                Only when there IS detail: an admin-authored entry has none, because
+                its title is the whole question, and an empty bordered box under the
+                heading reads as something that failed to load. */}
+            {entry.bodyHtml.trim() && (
+              <Reveal>
+                <div className="rounded-lg border border-gray-200 bg-white p-4 md:p-5">
+                  <div
+                    dir={dirOf(entry.language)}
+                    className="prose prose-sm md:prose-base max-w-none text-gray-600 prose-p:leading-[1.65] prose-a:text-rmc-green prose-blockquote:border-rmc-gold"
+                    dangerouslySetInnerHTML={{ __html: entry.bodyHtml }}
+                  />
+                </div>
+              </Reveal>
+            )}
 
             {/* ── RMC's answer ────────────────────────────────────────────── */}
             <Reveal>
-              <div className="mt-6 rounded-lg border border-rmc-gold/40 bg-rmc-gold/[0.04] p-4 md:p-5">
+              <div
+                className={`rounded-lg border border-rmc-gold/40 bg-rmc-gold/[0.04] p-4 md:p-5 ${
+                  entry.bodyHtml.trim() ? 'mt-6' : ''
+                }`}
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-rmc-gold/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-rmc-gold-light">
                     <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
                     {pick(cms.answerBadge, locale)}
                   </span>
-                  {/* Name the person. An institution hiding behind itself is exactly what
-                      naming the answerer prevents. */}
-                  {entry.answeredBy && (
-                    <span className="text-[11px] text-gray-500">
-                      {t('discussions.answeredBy', { name: entry.answeredBy.name })}
-                    </span>
-                  )}
+                  {/* The answer is RMC's, and the badge above says so. Who wrote it is
+                      not shown: a ruling carries the institution's authority, not an
+                      individual's, and naming one person invites them to be approached
+                      about it directly. The answerer is still recorded, and still visible
+                      to admins in the Q&A library. */}
                 </div>
+                {/* The ruling in short, before its reasoning. Plain text, so no
+                    renderer and no sanitiser; absent when nobody wrote one, and
+                    nothing stands in for it — a derived one would just repeat the
+                    lede a few lines above. */}
+                {entry.answerSummary && (
+                  <p
+                    dir={dirOf(entry.language)}
+                    className="mt-3 [overflow-wrap:anywhere] border-s-2 border-rmc-gold/40 ps-3 text-[15px] font-medium leading-relaxed text-gray-800"
+                  >
+                    {entry.answerSummary}
+                  </p>
+                )}
+                {/* Outcome, then map, then detail: the short ruling above, the
+                    contents here, the answer itself below. */}
+                <AnswerContents
+                  toc={entry.answerToc}
+                  label={t('discussions.contents')}
+                  dir={dirOf(entry.language)}
+                />
                 <div
                   dir={dirOf(entry.language)}
-                  className="prose prose-sm md:prose-base mt-3 max-w-none text-gray-700 prose-p:leading-[1.65] prose-a:text-rmc-green"
+                  className="prose prose-sm md:prose-base mt-3 max-w-none text-gray-700 prose-p:leading-[1.65] prose-a:text-rmc-green prose-headings:scroll-mt-24"
                   dangerouslySetInnerHTML={{ __html: entry.answerHtml }}
                 />
               </div>
@@ -207,13 +256,18 @@ export default async function DiscussionEntryPage({
                 the page: by the time a reader has scrolled past the ask-your-own CTA they
                 have left the answer behind. Outside <Reveal>, whose transform would
                 otherwise animate a control the reader may already be reaching for. */}
-            <QuestionRating
-              slug={slug}
-              copy={{
-                prompt: pick(cms.ratingPrompt, locale),
-                thanks: pick(cms.ratingThanks, locale),
-              }}
-            />
+            <div data-print-hide>
+              <QuestionRating
+                slug={slug}
+                copy={{
+                  prompt: pick(cms.ratingPrompt, locale),
+                  thanks: pick(cms.ratingThanks, locale),
+                  suggestPrompt: pick(cms.ratingSuggestPrompt, locale),
+                  reasonPrompt: pick(cms.ratingReasonPrompt, locale),
+                  reasons: pick(cms.ratingReasons, locale),
+                }}
+              />
+            </div>
 
             {/* Where to go next, before the ask-your-own CTA: a reader whose question was
                 already answered here should meet the neighbouring answers first, and only
@@ -221,7 +275,7 @@ export default async function DiscussionEntryPage({
                 crawlable links between entries rather than a client-side afterthought. */}
             {related.length > 0 && (
               <Reveal>
-                <section className="mt-8" aria-labelledby="related-heading">
+                <section data-print-hide className="mt-8" aria-labelledby="related-heading">
                   <h2
                     id="related-heading"
                     className="text-sm font-bold uppercase tracking-[0.12em] text-rmc-green-deep"

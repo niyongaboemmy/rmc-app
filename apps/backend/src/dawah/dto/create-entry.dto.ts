@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 import { POST_LANGUAGES } from './query-discussions.dto';
 import { DISCUSSION_LIMITS } from '../discussions.constants';
 
@@ -20,17 +29,70 @@ export class CreateEntryDto {
   @MaxLength(200)
   title: string;
 
-  @ApiProperty({ description: 'The question, in markdown.' })
+  /**
+   * Extra detail beneath the question, in markdown.
+   *
+   * OPTIONAL, and usually absent on an admin-authored entry: there, the title is
+   * the whole question ("Can I combine prayers when travelling?") and a second
+   * box asking for the question again only invited it to be typed twice. It is
+   * populated on MEMBER submissions, where the asker explains their situation,
+   * and the admin form keeps the field for those so it stays correctable.
+   */
+  @ApiPropertyOptional({ description: 'Extra detail beneath the question, in markdown.' })
+  @IsOptional()
   @IsString()
-  @MinLength(DISCUSSION_LIMITS.MIN_BODY_LENGTH)
-  @MaxLength(20000)
-  body: string;
+  @MaxLength(DISCUSSION_LIMITS.MAX_ADMIN_BODY_LENGTH)
+  body?: string;
 
   @ApiProperty({ description: "RMC's answer, in markdown." })
   @IsString()
   @MinLength(DISCUSSION_LIMITS.MIN_BODY_LENGTH)
-  @MaxLength(20000)
+  @MaxLength(DISCUSSION_LIMITS.MAX_ADMIN_BODY_LENGTH)
   answerBody: string;
+
+  /**
+   * The short form of the ruling, shown in the listing. PLAIN TEXT, not markdown:
+   * it renders as a lede, so there is nothing to render and nothing to sanitise.
+   *
+   * Optional on purpose — an admin may publish and summarise afterwards. Left
+   * blank, the reader sees an excerpt derived from the answer, which is what the
+   * list showed before this field existed.
+   */
+  @ApiPropertyOptional({ maxLength: 320, description: 'Plain-text summary for the listing.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(320)
+  summary?: string;
+
+  /**
+   * One of "The Essential Answers" — the curated panel beside the feed.
+   *
+   * `@Transform` reads the RAW value off `obj` rather than the converted one.
+   * The global ValidationPipe runs with `enableImplicitConversion`, which coerces
+   * to the reflected type before validators see it — and for a boolean that turns
+   * ANY non-empty string into `true`, so a stray `"false"` would silently mark an
+   * entry essential. Reading `obj` gets the untouched JSON value, and @IsBoolean
+   * then rejects a string with a 400 instead of guessing.
+   */
+  @ApiPropertyOptional({ description: 'Include in the curated Essential Answers panel.' })
+  @IsOptional()
+  @Transform(({ obj }) => (obj as Record<string, unknown>).isEssential)
+  @IsBoolean()
+  isEssential?: boolean;
+
+
+  /**
+   * The ruling in short, shown ABOVE the full answer on the entry page.
+   *
+   * Distinct from `summary`, which is the listing lede: this one is read after a
+   * reader has already opened the entry, by somebody who wants the ruling before
+   * the reasoning. Optional — an answer without one simply opens with itself.
+   */
+  @ApiPropertyOptional({ maxLength: 600, description: 'Plain-text summary of the ruling.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  answerSummary?: string;
 
   @ApiPropertyOptional({ description: 'Category id from the shared Dawah taxonomy.' })
   @IsOptional()
@@ -54,8 +116,36 @@ export class AnswerQuestionDto {
   @ApiProperty({ description: "RMC's answer, in markdown." })
   @IsString()
   @MinLength(DISCUSSION_LIMITS.MIN_BODY_LENGTH)
-  @MaxLength(20000)
+  @MaxLength(DISCUSSION_LIMITS.MAX_ADMIN_BODY_LENGTH)
   answerBody: string;
+
+  /**
+   * The short form of the ruling, shown in the listing. PLAIN TEXT, not markdown:
+   * it renders as a lede, so there is nothing to render and nothing to sanitise.
+   *
+   * Optional on purpose — an admin may publish and summarise afterwards. Left
+   * blank, the reader sees an excerpt derived from the answer, which is what the
+   * list showed before this field existed.
+   */
+  @ApiPropertyOptional({ maxLength: 320, description: 'Plain-text summary for the listing.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(320)
+  summary?: string;
+
+
+  /**
+   * The ruling in short, shown ABOVE the full answer on the entry page.
+   *
+   * Distinct from `summary`, which is the listing lede: this one is read after a
+   * reader has already opened the entry, by somebody who wants the ruling before
+   * the reasoning. Optional — an answer without one simply opens with itself.
+   */
+  @ApiPropertyOptional({ maxLength: 600, description: 'Plain-text summary of the ruling.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  answerSummary?: string;
 
   @ApiPropertyOptional({ description: 'Category id — often only clear once answered.' })
   @IsOptional()

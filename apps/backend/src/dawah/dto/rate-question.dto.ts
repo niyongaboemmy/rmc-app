@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsString, Length, Matches } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 
 /** "Was this answer helpful?" — yes or no, from one browser. */
 export class RateQuestionDto {
@@ -27,6 +27,38 @@ export class RateQuestionDto {
    * Constrained to an opaque string of a fixed size so the column cannot be used as
    * free-text storage, and never persisted raw — the service stores its SHA-256.
    */
+  /**
+   * Why it did not help — the chosen option's TEXT, from the list RMC maintains.
+   *
+   * Not validated against that list: it is CMS copy in three languages that an
+   * admin edits freely, so the server would be re-reading and re-parsing editorial
+   * content on every rating to reject a value the UI just offered. The length cap
+   * is the real bound; the field is a label, never rendered as markup.
+   */
+  @ApiPropertyOptional({ maxLength: 160, description: 'Why the answer did not help.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  reason?: string;
+
+  /** A suggestion for improving the answer. Offered when the reader said yes. */
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  comment?: string;
+
+  /**
+   * Optional, so RMC can reply. Validated as an address so a typo is caught while
+   * the reader is still looking at the form, rather than when somebody tries to
+   * answer them weeks later.
+   */
+  @ApiPropertyOptional({ maxLength: 160 })
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(160)
+  email?: string;
+
   @ApiProperty({ description: 'Opaque browser token, 16-64 chars of [a-z0-9-]' })
   @IsString()
   @Length(16, 64)

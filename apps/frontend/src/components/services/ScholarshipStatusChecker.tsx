@@ -96,9 +96,10 @@ function StatusResult({ app, locale }: { app: ScholarshipPublicStatus; locale: s
     ? new Date(submittedRaw).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })
     : '—';
   // Location is deliberately absent from the tracked projection — it is part of
-  // the applicant's identity, not their case's progress. Education level tells
-  // them they opened the right record without disclosing where they live.
-  const level = app.educationLevel ? t(`levels.${app.educationLevel}`) : '—';
+  // the applicant's identity, not their case's progress. Education level used to
+  // sit here on the same reasoning, but the form had stopped asking for it and
+  // sent 'university' for everyone, so it confirmed nothing. The school name
+  // above does the job it was supposed to.
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -135,7 +136,6 @@ function StatusResult({ app, locale }: { app: ScholarshipPublicStatus; locale: s
           <Detail label={t('status.applicant')} value={app.fullNames} icon={<GraduationCap className="w-4 h-4" />} />
           <Detail label={t('status.submittedOn')} value={submitted} icon={<Calendar className="w-4 h-4" />} />
           <Detail label={t('status.school')} value={app.schoolName} icon={<School className="w-4 h-4" />} />
-          <Detail label={tMember('education')} value={level} icon={<School className="w-4 h-4" />} />
         </div>
       </div>
 

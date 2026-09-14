@@ -11,7 +11,6 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ScholarshipLevel } from '../entities/scholarship-program.entity';
 import {
   ScholarshipGender,
   ScholarshipRelationship,
@@ -61,10 +60,6 @@ export class CreateScholarshipApplicationDto {
   village?: string;
 
   @ApiProperty() @IsString() @IsNotEmpty() @Length(1, 200) schoolName!: string;
-
-  @ApiProperty({ enum: ScholarshipLevel })
-  @IsEnum(ScholarshipLevel)
-  educationLevel!: ScholarshipLevel;
 
   @ApiProperty() @IsString() @IsNotEmpty() @Length(1, 50) currentYear!: string;
 

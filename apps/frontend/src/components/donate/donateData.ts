@@ -45,7 +45,14 @@ export function money(currency: string, n: number): string {
   return currency === 'RWF' ? `RWF ${num}` : `${CURRENCIES[currency]?.symbol ?? ''}${num}`;
 }
 
-/* ── Payment methods (copy via donate.methods.<key>.*) ── */
+/* ── Payment methods (copy via donate.methods.<key>.*) ──
+ *
+ * NOT a picker for the donate page: IremboPay owns that choice, inside its own
+ * sheet. This list exists for the admin donations report's method filter, which
+ * has to cover what is actually stored on historical rows — `bank` and `paypal`
+ * predate IremboPay and still sit on donations in the table. Dropping them here
+ * would silently make those records unfilterable.
+ */
 export const METHODS: { key: string; Icon: IconType }[] = [
   { key: 'momo', Icon: Smartphone },
   { key: 'card', Icon: CreditCard },

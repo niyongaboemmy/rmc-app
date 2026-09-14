@@ -826,3 +826,97 @@ img[data-align='right']  { margin-inline-start: auto; margin-inline-end: 0; }
 body[data-bottom-bar='true'] .ask-launcher {
   bottom: 6rem;
 }
+
+/* --------------------------------------------------------
+   LONG UNBROKEN TEXT
+   --------------------------------------------------------
+   Rendered markdown carries whatever was typed, and what gets typed includes
+   URLs, transliterated terms and — in one live entry — a 156-character run of a
+   single letter. None of those offer the browser a place to wrap, so without
+   this they run straight out of their card.
+
+   `anywhere` rather than `break-word`: both break a word that cannot fit, but
+   only `anywhere` also counts toward min-content sizing. Inside a grid or flex
+   container that difference decides whether the box itself gets stretched wide
+   by its own contents, which is exactly where this showed up.
+
+   It only acts when a word genuinely cannot fit, so ordinary prose is untouched.
+   -------------------------------------------------------- */
+.prose {
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------
+   PRINT
+   --------------------------------------------------------
+   "Download" on a Q&A card opens the entry with ?print=1 and raises the
+   browser's print dialog, where the reader saves a PDF. The browser is doing
+   the work on purpose: it shapes Arabic correctly and already has the fonts,
+   which a server-side generator here could not manage — pdf-lib has no text
+   shaping and the library that would add it cannot be installed offline.
+
+   So this stylesheet IS the document. What it removes is everything that is
+   navigation rather than content.
+   -------------------------------------------------------- */
+@media print {
+  /* The reveal-on-scroll system starts at opacity:0 and only clears once a
+     section has been scrolled into view. Printing does not scroll, so anything
+     below the fold — usually the answer itself — would come out BLANK. This is
+     the single most important rule here. */
+  .reveal,
+  .reveal-left,
+  .reveal-right {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* Chrome, not content: site navigation, the footer, the card's own actions,
+     the rating widget and the "read next" list. A printed page cannot be
+     clicked, and a row of dead buttons in a PDF reads as a broken export. */
+  nav,
+  footer,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  /* Backgrounds and shadows cost ink and gain nothing on paper. Colours are
+     left alone: the gold rule over RMC's answer is how the answer is told from
+     the question, and losing it would merge the two. */
+  * {
+    box-shadow: none !important;
+  }
+  body,
+  main,
+  section {
+    background: #fff !important;
+  }
+
+  /* Full measure. The page is centred in a max-width column for reading on a
+     screen; on paper the margin is the sheet's own. */
+  main {
+    padding: 0 !important;
+  }
+
+  /* A heading stranded at the foot of a page, or a single line carried onto the
+     next, is the usual way a printed answer looks careless. */
+  h1,
+  h2,
+  h3 {
+    break-after: avoid-page;
+  }
+  p,
+  li,
+  blockquote {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* A link's destination is invisible on paper, so print it — but only for
+     links inside the answer, since the chrome is gone by now anyway. */
+  .prose a::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+}

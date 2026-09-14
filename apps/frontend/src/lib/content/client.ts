@@ -60,6 +60,7 @@ export const ContentKeys = {
   galleryHero: 'gallery-hero',
   tendersHero: 'tenders-hero',
   registerHero: 'register-hero',
+  memberRegistration: 'member-registration',
   newMuslimHero: 'new-muslim-hero',
   newMuslim: 'new-muslim',
   servicesHero: 'services-hero',

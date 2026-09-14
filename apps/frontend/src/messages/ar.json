@@ -21,6 +21,7 @@
     "services": "استكشف الخدمات"
   },
   "common": {
+    "openInMaps": "افتح في الخرائط",
     "findNearMe": "ابحث بالقرب مني",
     "findNearMeLocating": "جارٍ تحديد موقعك…",
     "findNearMeDenied": "الموقع غير متاح — يتم عرض جميع المواقع.",
@@ -1182,11 +1183,6 @@
       },
       "title": "المنح الدراسية",
       "desc": "دعم مالي للطلاب المسلمين الساعين إلى التعليم على جميع المستويات.",
-      "levels": {
-        "secondary": "المرحلة الثانوية",
-        "tvet": "التعليم المهني والتقني",
-        "university": "الجامعة"
-      },
       "relationships": {
         "parent": "أحد الوالدين",
         "guardian": "ولي الأمر",
@@ -1433,7 +1429,6 @@
           "inDays": "تُغلق خلال {days} أيام"
         },
         "deadlineLabel": "الموعد النهائي",
-        "amountLabel": "المبلغ",
         "viewAndApply": "عرض والتقديم"
       }
     },
@@ -2806,8 +2801,7 @@
       "tabs": {
         "courses": "الدورات",
         "library": "المكتبة",
-        "categories": "التصنيفات",
-        "content": "الصفحة الرئيسية"
+        "categories": "التصنيفات"
       },
       "status": {
         "draft": "مسودة",
@@ -3838,7 +3832,6 @@
       "scholar": "عالِم",
       "views": "{count, plural, =1 {مشاهدة واحدة} other {# مشاهدات}}",
       "backToDiscussions": "النقاشات",
-      "allCategories": "كل التصنيفات",
       "allLanguages": "كل اللغات",
       "otherLanguages": "تُعرض أيضًا أسئلة بلغات أخرى",
       "writtenIn": "مكتوب بـ{language}",
@@ -3870,7 +3863,6 @@
       "searchLabel": "بحث",
       "askRailHint": "أرسله إلى المجلس. سنجيب عنه وننشره هنا.",
       "answerBadge": "إجابة المجلس",
-      "answeredBy": "أجاب عنه {name}",
       "askPrompt": "لديك سؤال خاص بك؟",
       "related": {
         "title": "أسئلة ذات صلة"
@@ -3880,7 +3872,11 @@
         "yes": "نعم",
         "no": "لا",
         "thanks": "شكراً لملاحظاتك.",
-        "failed": "تعذّر تسجيل تقييمك. يرجى المحاولة مرة أخرى."
+        "failed": "تعذّر تسجيل تقييمك. يرجى المحاولة مرة أخرى.",
+        "commentLabel": "نص الاقتراح (اختياري)",
+        "emailLabel": "بريدك الإلكتروني (اختياري)",
+        "reasonLabel": "اختر السبب",
+        "send": "إرسال"
       },
       "admin": {
         "title": "مكتبة الأسئلة والأجوبة",
@@ -3914,8 +3910,6 @@
         "questionLabel": "السؤال",
         "questionPlaceholder": "السؤال كما يطرحه القارئ…",
         "answerLabel": "إجابة المجلس",
-        "answerPlaceholder": "اكتب الإجابة…",
-        "markdownHint": "Markdown. يُعالَج ويُنقَّى في الخادم.",
         "cancel": "إلغاء",
         "save": "حفظ التغييرات",
         "publish": "نشر",
@@ -3934,7 +3928,25 @@
         "published": "تم النشر.",
         "rejected": "تم الرفض.",
         "rejectConfirmTitle": "رفض هذا السؤال؟",
-        "rejectConfirmBody": "لن يُجاب عنه ولن يُنشر. لا يُراسَل العضو."
+        "rejectConfirmBody": "لن يُجاب عنه ولن يُنشر. لا يُراسَل العضو.",
+        "summaryLabel": "ملخّص للقائمة",
+        "summaryPlaceholder": "جملة أو جملتان تُبيّنان الحكم، كما ينبغي أن يظهر في قائمة الأسئلة.",
+        "summaryHint": "اختياري. إذا تُرك فارغًا، تعرض القائمة بداية الجواب.",
+        "entryNumber": "السؤال {number}",
+        "essentialLabel": "أدرِجه ضمن الأجوبة الأساسية",
+        "essentialHint": "يُظهر هذا المدخل في اللوحة المختارة بجانب القائمة، ضمن تصنيفه.",
+        "answerSummaryLabel": "الحكم باختصار",
+        "answerSummaryPlaceholder": "جملة أو جملتان تبيّنان الحكم، تظهران فوق الجواب الكامل.",
+        "answerSummaryHint": "اختياري. يقرؤه من فتح المدخل وأراد الحكم قبل التفصيل."
+      },
+      "download": "تنزيل",
+      "share": "مشاركة",
+      "linkCopied": "تم نسخ الرابط",
+      "contents": "في هذا الجواب",
+      "searchCategories": "ابحث في التصنيفات",
+      "noCategories": "لا توجد تصنيفات مطابقة.",
+      "panels": {
+        "categories": "شجرة التصنيفات"
       }
     }
   }

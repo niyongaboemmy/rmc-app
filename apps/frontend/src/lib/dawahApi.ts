@@ -398,14 +398,13 @@ export function uploadLessonMedia(
 export type PostLanguage = 'en' | 'rw' | 'ar';
 export type QuestionStatus = 'pending' | 'published' | 'rejected' | 'hidden' | 'deleted';
 /** Newest-published first. A `search` term overrides it with relevance ranking. */
-export type DiscussionSort = 'new';
-
-/** The RMC person who answered. */
-export interface PublicAuthor {
-  name: string;
-  /** Renders the scholar badge. Resolved from the live role, so it disappears on removal. */
-  isScholar: boolean;
-}
+/**
+ * `new` — newest published first, the listing's own order.
+ * `popular` — most read first, for the Most-Read panel.
+ *
+ * Mirrors DISCUSSION_SORTS on the server; a value not in that union is a 400.
+ */
+export type DiscussionSort = 'new' | 'popular';
 
 /**
  * One published Q&A entry: a question and RMC's answer.
@@ -415,21 +414,58 @@ export interface PublicAuthor {
  * `isAnonymous` — not a flag set to false, but no field at all, so no component can leak
  * one by accident.
  */
+/**
+ * A row in the listing.
+ *
+ * Note what is NOT here: `bodyHtml` and `answerHtml`. The list used to return the
+ * full entry per row, so a page of twelve carried twelve complete answers to show
+ * a fragment of each. It now returns `summary` instead, and the full text lives on
+ * the detail page — which is why this is a separate type from DiscussionQuestion
+ * rather than a Partial of it. A row genuinely cannot render an answer.
+ */
+export interface DiscussionListItem {
+  id: string;
+  slug: string;
+  title: string;
+  /** Plain text — an authored lede, or an excerpt derived from the answer. */
+  summary: string;
+  language: PostLanguage;
+  category: DawahCategory | null;
+  answeredAt: string | null;
+  viewCount: number;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+/** One entry in full, for the detail page. */
 export interface DiscussionQuestion {
   id: string;
   slug: string;
   title: string;
+  /** Plain text — an authored lede, or an excerpt derived from the answer. */
+  summary: string;
+  /**
+   * The ruling in short, shown above the full answer. Distinct from `summary`,
+   * which is the listing lede: this is read after the entry is already open.
+   * Null when nobody wrote one, and nothing renders in its place.
+   */
+  answerSummary: string | null;
   /** Rendered + sanitised SERVER-SIDE. The client renders no markdown, ever. */
   bodyHtml: string;
+  /**
+   * The answer's headings, for a table of contents.
+   *
+   * The ids match anchors the SERVER stamped onto the rendered answer, after
+   * sanitising — so they are ids nobody authored. Empty for most entries: a short
+   * ruling has no headings, and a contents list of one is not a contents list.
+   */
+  answerToc: { id: string; text: string; level: number }[];
   /** RMC's answer, likewise rendered and sanitised server-side. */
   answerHtml: string;
   /** Drives `dir` on THIS entry — never the page locale. An Arabic entry on the
    *  English page is still RTL. */
   language: PostLanguage;
   category: DawahCategory | null;
-  /** WHO answered — a person, not a badge. An institution hiding behind itself is
-   *  the thing this names. */
-  answeredBy: PublicAuthor | null;
   answeredAt: string | null;
   viewCount: number;
   publishedAt: string | null;
@@ -464,6 +500,8 @@ export class ThrottledError extends Error {
 export interface AdminQuestion {
   id: string;
   slug: string;
+  /** Staff-facing reference number — "Question 18". Never shown publicly. */
+  entryNumber: number;
   title: string;
   language: PostLanguage;
   status: QuestionStatus;
@@ -506,6 +544,8 @@ export interface RelatedQuestion {
 /** A member's question waiting for RMC to answer it. */
 export interface PendingSubmission {
   id: string;
+  /** Staff-facing reference number — the queue is where entries get discussed by it. */
+  entryNumber: number;
   title: string;
   bodyHtml: string;
   language: PostLanguage;
@@ -520,8 +560,21 @@ export interface PendingSubmission {
 export interface AdminEntry {
   id: string;
   slug: string;
+  /** Staff-facing reference number — "Question 18". Never shown publicly. */
+  entryNumber: number;
+  /** Curated into The Essential Answers panel. */
+  isEssential: boolean;
   title: string;
   body: string;
+  /**
+   * The RAW stored value, so the editor shows a blank box when nothing has been
+   * authored. The public shapes substitute a derived excerpt; loading THAT into
+   * the form would let an admin freeze today's auto-excerpt in by saving an
+   * untouched entry.
+   */
+  summary: string | null;
+  /** The RAW stored value, like `summary` — an empty box when nothing is authored. */
+  answerSummary: string | null;
   answerBody: string;
   language: PostLanguage;
   status: QuestionStatus;
@@ -536,8 +589,16 @@ export interface AdminEntry {
 /** Author a complete entry. Creating one publishes it — it has nothing left to wait for. */
 export interface CreateEntryPayload {
   title: string;
-  body: string;
+  /** Extra detail beneath the question. Absent on admin-authored entries, where
+   *  the title is the whole question; present on answered member submissions. */
+  body?: string;
   answerBody: string;
+  /** Plain-text lede for the listing. Optional — blank falls back to a derived excerpt. */
+  summary?: string;
+  /** The ruling in short, shown above the answer. Optional; nothing renders when blank. */
+  answerSummary?: string;
+  /** Curate into The Essential Answers panel. */
+  isEssential?: boolean;
   categoryId?: string;
   language: PostLanguage;
 }
@@ -545,11 +606,33 @@ export interface CreateEntryPayload {
 /** Answer a member's submission. The question text is not editable here — that is an edit. */
 export interface AnswerQuestionPayload {
   answerBody: string;
+  /** Plain-text lede. Answering is usually when the short form becomes clear. */
+  summary?: string;
+  /** The ruling in short, shown above the answer. */
+  answerSummary?: string;
   categoryId?: string;
+}
+
+/** A category with published answers in it, and how many. */
+export interface DiscussionCategoryCount {
+  id: string;
+  slug: string;
+  nameEn: string;
+  nameRw: string;
+  nameAr: string;
+  count: number;
 }
 
 export interface DiscussionsQuery {
   category?: string;
+  /**
+   * Restrict to the curated Essential Answers.
+   *
+   * A STRING, matching the wire format the server insists on: a query parameter
+   * always arrives as text, and a boolean here would be coerced so that
+   * `essential=false` filtered TO the curated set. See QueryDiscussionsDto.
+   */
+  essential?: 'true' | 'false';
   language?: PostLanguage;
   sort?: DiscussionSort;
   search?: string;
@@ -585,7 +668,7 @@ export const dawahApi = {
    * There is no answer/vote/report method because there are no such endpoints.
    */
   discussions: {
-    list: (query: DiscussionsQuery = {}): Promise<Paginated<DiscussionQuestion>> =>
+    list: (query: DiscussionsQuery = {}): Promise<Paginated<DiscussionListItem>> =>
       unwrap(publicHttp.get('/dawah/discussions', { params: query })),
 
     /** One entry with RMC's answer. 404s anything not published. */
@@ -607,6 +690,24 @@ export const dawahApi = {
 
     /** Render markdown → sanitised HTML through the server's real pipeline, so the
      *  preview cannot diverge from the published entry. */
+    /**
+     * Categories that have published answers, with counts — for the listing's
+     * category view. Separate from `categories()`, which is the taxonomy shared
+     * with courses and the library.
+     */
+    categories: (): Promise<DiscussionCategoryCount[]> =>
+      unwrap(publicHttp.get('/dawah/discussions/categories')),
+
+    /**
+     * Count a read. Called from the BROWSER once the entry page has rendered.
+     *
+     * Not counted on the server: Next.js prefetches this page when a card is
+     * hovered or scrolled into view, and that server render is not somebody
+     * reading the answer.
+     */
+    recordView: (slug: string): Promise<{ counted: boolean }> =>
+      unwrap(publicHttp.post(`/dawah/discussions/${slug}/view`, {})),
+
     preview: (body: string): Promise<{ html: string }> =>
       unwrap(apiClient.post('/dawah/discussions/preview', { body })),
 
@@ -629,7 +730,19 @@ export const dawahApi = {
      *
      * Returns an acknowledgement, never a tally — the counts are for RMC, not readers.
      */
-    rate: (slug: string, helpful: boolean, voterKey: string): Promise<{ recorded: boolean }> =>
+    /**
+     * Record a verdict, and optionally the follow-up that explains it.
+     *
+     * Called twice for one rating: once when the button is pressed, so a reader who
+     * leaves still counts, and again when they send the form. The server upserts on
+     * (question, voter), so the second call attaches to the first row.
+     */
+    rate: (
+      slug: string,
+      helpful: boolean,
+      voterKey: string,
+      feedback?: { reason?: string; comment?: string; email?: string },
+    ): Promise<{ recorded: boolean }> =>
       unwrap(
         publicHttp.post(`/dawah/discussions/${slug}/rating`, {
           // 'yes'/'no', not a boolean: the API takes a string on purpose, because the
@@ -637,6 +750,7 @@ export const dawahApi = {
           // Boolean("false") is true. See RateQuestionDto.
           helpful: helpful ? 'yes' : 'no',
           voterKey,
+          ...feedback,
         }),
       ),
   },
@@ -723,6 +837,13 @@ export const dawahApi = {
       entries: (query: { search?: string; status?: string; page?: number; limit?: number } = {}):
         Promise<Paginated<AdminQuestion>> =>
         unwrap(apiClient.get('/admin/dawah/discussions/entries', { params: query })),
+
+      /**
+       * The number the next new entry will receive. Display only — the value is
+       * assigned server-side on insert, so a stale preview cannot duplicate one.
+       */
+      nextEntryNumber: (): Promise<{ nextEntryNumber: number }> =>
+        unwrap(apiClient.get('/admin/dawah/discussions/next-number')),
 
       /** One entry with its MARKDOWN SOURCE, for the editor. */
       entry: (id: string): Promise<AdminEntry> =>

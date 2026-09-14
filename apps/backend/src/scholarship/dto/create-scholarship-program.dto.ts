@@ -2,9 +2,7 @@ import {
   IsString,
   IsNotEmpty,
   Length,
-  IsEnum,
   IsOptional,
-  IsNumber,
   IsDateString,
   IsBoolean,
   IsInt,
@@ -14,7 +12,6 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ScholarshipLevel } from '../entities/scholarship-program.entity';
 
 const blankToUndefined = Transform(({ value }) => (value === '' ? undefined : value));
 
@@ -72,18 +69,6 @@ export class CreateScholarshipProgramDto {
   @Type(() => I18nTextDto)
   descriptionI18n?: I18nTextDto;
 
-  @ApiPropertyOptional({ type: I18nTextDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => I18nTextDto)
-  eligibilityI18n?: I18nTextDto;
-
-  @ApiPropertyOptional({ type: I18nTextDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => I18nTextDto)
-  benefitsI18n?: I18nTextDto;
-
   @ApiPropertyOptional({ type: [RequiredDocumentDto] })
   @IsOptional()
   @IsArray()
@@ -96,26 +81,30 @@ export class CreateScholarshipProgramDto {
   @IsArray()
   attachments?: Array<{ key: string; name: string; mimeType: string; size: number }>;
 
-  @ApiPropertyOptional({ enum: ScholarshipLevel })
+  /**
+   * The education level key, as defined in the Scholarships CMS section.
+   *
+   * No longer an enum. The levels are admin-managed content — RMC can add
+   * "Primary" or drop "TVET" without a deploy — so the server cannot hold a
+   * closed list of them. Bounded by the column width instead; the key an admin
+   * picks always comes from a dropdown built from that same list.
+   *
+   * This is the level an OFFER is aimed at. The application once carried a
+   * level of its own; it was dropped in migration 079, because the form had
+   * stopped asking and sent the same value for everyone.
+   */
+  @ApiPropertyOptional({ description: 'Level key from the Scholarships CMS section' })
   @blankToUndefined
   @IsOptional()
-  @IsEnum(ScholarshipLevel)
-  level?: ScholarshipLevel;
-
-  @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsNumber() @Min(0) amount?: number;
+  @IsString()
+  @Length(1, 20)
+  level?: string;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsInt() @Min(1) slots?: number;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsDateString() opensAt?: string;
 
   @ApiPropertyOptional() @blankToUndefined @IsOptional() @IsDateString() deadline?: string;
-
-  @ApiPropertyOptional()
-  @blankToUndefined
-  @IsOptional()
-  @IsString()
-  @Length(1, 40)
-  referenceNumber?: string;
 
   /** @deprecated Retained so the existing admin form keeps working; `status` rules. */
   @ApiPropertyOptional({ default: true }) @IsOptional() @IsBoolean() isOpen?: boolean;

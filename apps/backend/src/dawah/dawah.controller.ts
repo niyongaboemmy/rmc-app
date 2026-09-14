@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Ip,
   Param,
   Post,
@@ -54,6 +55,18 @@ export class DawahController {
   // on or report. A member may submit a question; it is invisible until an admin
   // answers it through the admin controller.
 
+  /**
+   * Categories that have published answers, with counts — for the listing's
+   * category view. Separate from `GET categories`, which is the taxonomy shared
+   * with courses and the library and carries no discussions concern.
+   */
+  @Public()
+  @Get('discussions/categories')
+  @ApiOperation({ summary: 'Categories with published answers, and how many each has.' })
+  discussionCategories() {
+    return this.discussions.listCategoriesWithCounts();
+  }
+
   @Public()
   @Get('discussions')
   @ApiOperation({ summary: 'List published Q&A entries.' })
@@ -81,6 +94,19 @@ export class DawahController {
    * route (`discussions/:something`) would need to come first.
    */
   @Public()
+  /**
+   * Count a read. Called by the entry page from the BROWSER, not on render — a
+   * server render happens for prefetches and metadata too, neither of which is
+   * somebody reading the answer.
+   */
+  @Public()
+  @Post('discussions/:slug/view')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Record that an entry was read.' })
+  recordView(@Param('slug') slug: string) {
+    return this.discussions.recordView(slug);
+  }
+
   @Get('discussions/:slug/related')
   @ApiOperation({ summary: 'Up to three related published entries.' })
   relatedDiscussions(@Param('slug') slug: string) {

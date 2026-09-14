@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { ScholarshipService } from './scholarship.service';
 import { CreateScholarshipApplicationDto } from './dto/create-scholarship-application.dto';
+import { UpdateScholarshipApplicationDto } from './dto/update-scholarship-application.dto';
 import { SaveScholarshipDocumentDto } from './dto/save-scholarship-document.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -71,7 +72,7 @@ export class ScholarshipController {
   updateDraft(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: Partial<CreateScholarshipApplicationDto>,
+    @Body() dto: UpdateScholarshipApplicationDto,
   ) {
     return this.service.updateDraft(id, user.id, dto);
   }

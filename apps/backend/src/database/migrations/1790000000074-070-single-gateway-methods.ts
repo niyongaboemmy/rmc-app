@@ -16,13 +16,13 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * is a plain varchar, not a foreign key, so rows carrying a removed code still
  * read back. They render the raw code instead of a friendly label.
  */
-export class SingleGatewayMethods1790000000068 implements MigrationInterface {
-  name = 'SingleGatewayMethods1790000000068';
+export class SingleGatewayMethods1790000000074 implements MigrationInterface {
+  name = 'SingleGatewayMethods1790000000074';
 
   private static readonly REMOVED = ['MOMO_INTOUCH', 'CARD', 'CASH'];
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const codes = SingleGatewayMethods1790000000068.REMOVED.map((c) => `'${c}'`).join(',');
+    const codes = SingleGatewayMethods1790000000074.REMOVED.map((c) => `'${c}'`).join(',');
 
     // Settings first — payment_method_settings references the method.
     await queryRunner.query(`

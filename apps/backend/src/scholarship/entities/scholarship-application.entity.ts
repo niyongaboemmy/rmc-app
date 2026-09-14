@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { ScholarshipStatusHistory } from './scholarship-status-history.entity';
 import { ScholarshipDocument } from './scholarship-document.entity';
-import { ScholarshipLevel } from './scholarship-program.entity';
 
 export enum ScholarshipApplicationStatus {
   DRAFT = 'draft',
@@ -98,9 +97,6 @@ export class ScholarshipApplication {
   // Education
   @Column({ name: 'school_name', type: 'varchar', length: 200 })
   schoolName: string;
-
-  @Column({ name: 'education_level', type: 'varchar', length: 20 })
-  educationLevel: ScholarshipLevel;
 
   @Column({ name: 'current_year', type: 'varchar', length: 50 })
   currentYear: string;

@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, MoreThan, Repository } from 'typeorm';
+import { DataSource, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { DawahQuestion } from './entities/dawah-question.entity';
 import { DawahModerationLog, type ModerationAction } from './entities/dawah-moderation-log.entity';
 import { DawahCategory } from './entities/dawah-category.entity';
@@ -17,19 +17,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../integrations/email/email.service';
 import { answeredEmail } from './discussions-notifications';
-import { renderPostMarkdown } from './discussions-markdown';
+import { postExcerpt, renderAnswerWithToc, renderPostMarkdown } from './discussions-markdown';
 import { slugify } from './dawah-slug.util';
 import { DISCUSSION_LIMITS, RELATED_LIMIT } from './discussions.constants';
 import type { QueryDiscussionsDto } from './dto/query-discussions.dto';
 import type { CreateQuestionDto } from './dto/create-question.dto';
 import type { AnswerQuestionDto, CreateEntryDto } from './dto/create-entry.dto';
 import type { RateQuestionDto } from './dto/rate-question.dto';
-
-/** The public shape of the person who answered. */
-export interface PublicAuthor {
-  name: string;
-  isScholar: boolean;
-}
 
 /**
  * The searchable text of an entry, as ONE expression used everywhere it is needed.
@@ -42,7 +36,7 @@ export interface PublicAuthor {
  * `q` is the query-builder alias for dawah_questions; the migration spells the same
  * expression with bare column names.
  */
-const FTS_VECTOR = `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, ''))`;
+const FTS_VECTOR = `to_tsvector('simple', coalesce(q.title, '') || ' ' || coalesce(q.body, '') || ' ' || coalesce(q.answer_body, '') || ' ' || coalesce(q.summary, '') || ' ' || coalesce(q.answer_summary, ''))`;
 
 /**
  * Dawah Q&A — an editorial knowledge base, not a forum.
@@ -95,18 +89,6 @@ export class DawahDiscussionsService {
     private readonly config: ConfigService,
   ) {}
 
-  /** The answering admin, for display. */
-  private publicAuthor(user: User | null | undefined): PublicAuthor | null {
-    if (!user) return null;
-    return {
-      name: `${user.firstName} ${user.lastName}`.trim(),
-      // Reads `roleEntity` — the RBAC relation that actually carries permissions — NOT
-      // `user.role`, a legacy varchar that knows nothing about the Scholar role. Reading a
-      // live relation also means the badge disappears the moment RMC un-appoints someone.
-      isScholar: user.roleEntity?.slug === 'scholar',
-    };
-  }
-
   /**
    * The public projection of one Q&A entry. Everything the client is allowed to know.
    *
@@ -116,22 +98,118 @@ export class DawahDiscussionsService {
    *   · status            — only published rows reach a public route anyway
    */
   toPublic(question: DawahQuestion) {
+    // Rendered once, for both the HTML and its contents list: the ids in the markup
+    // and the ids in the list have to be the same ones, and rendering twice is the
+    // way they quietly stop being.
+    const answer = renderAnswerWithToc(question.answerBody);
     return {
       id: question.id,
       slug: question.slug,
       title: question.title,
       // Rendered and sanitised HERE, on read — not stored as HTML. A DOMPurify fix next
       // year protects every entry already written; input-time sanitising would not.
+      // Plain text, shown as a lede above the question. Falls back to a derived
+      // excerpt for entries an admin has not summarised yet.
+      summary: question.summary?.trim() || postExcerpt(question.answerBody, 300),
+      // No fallback: an absent answer summary renders nothing, where an absent
+      // listing summary must still fill a card. Deriving one would just repeat
+      // the lede a few lines below itself.
+      answerSummary: question.answerSummary?.trim() || null,
       bodyHtml: renderPostMarkdown(question.body),
-      answerHtml: renderPostMarkdown(question.answerBody),
+      answerHtml: answer.html,
+      /**
+       * The answer's headings, for a table of contents. Empty for most entries —
+       * a short ruling has no headings, and a list of one is not a contents list.
+       * The client decides when it is worth showing.
+       */
+      answerToc: answer.toc,
       language: question.language,
       category: question.category ?? null,
-      answeredBy: this.publicAuthor(question.answeredBy),
       answeredAt: question.answeredAt,
       viewCount: question.viewCount,
       publishedAt: question.publishedAt,
       createdAt: question.createdAt,
     };
+  }
+
+  /**
+   * The listing projection: enough to decide whether to open an entry, and no more.
+   *
+   * Deliberately NOT toPublic(). That returns `bodyHtml` and `answerHtml` fully
+   * rendered, so a page of twelve carried twelve complete answers whether or not
+   * anyone opened one — the list was shipping the whole knowledge base to show a
+   * fragment of it.
+   *
+   * `summary` is plain text and rendered as a lede, so nothing here needs the
+   * markdown renderer at all. When an admin has not written one yet, postExcerpt
+   * derives it from the answer: it renders and strips tags properly rather than
+   * slicing raw markdown, which would cut a link in half and leak the syntax.
+   */
+  private toListItem(question: DawahQuestion) {
+    return {
+      id: question.id,
+      slug: question.slug,
+      title: question.title,
+      summary: question.summary?.trim() || postExcerpt(question.answerBody, 300),
+      language: question.language,
+      category: question.category ?? null,
+      answeredAt: question.answeredAt,
+      viewCount: question.viewCount,
+      publishedAt: question.publishedAt,
+      createdAt: question.createdAt,
+    };
+  }
+
+  /**
+   * The categories that actually have published answers, with how many.
+   *
+   * NOT added to the shared `categories` endpoint: that taxonomy is used by courses
+   * and the library too, and hanging a discussions count off it would make every
+   * caller pay for a join none of them asked for.
+   *
+   * Empty categories are omitted. One in the list is a promise that opening it
+   * shows something, and a category with nothing published in it reads as a broken
+   * link rather than as an empty shelf — the same reason the Essential panel builds
+   * its tabs from the entries rather than from the taxonomy.
+   */
+  async listCategoriesWithCounts() {
+    const rows = await this.questions
+      .createQueryBuilder('q')
+      .innerJoin('q.category', 'c')
+      .select('c.id', 'id')
+      .addSelect('c.slug', 'slug')
+      .addSelect('c.name_en', 'nameEn')
+      .addSelect('c.name_rw', 'nameRw')
+      .addSelect('c.name_ar', 'nameAr')
+      .addSelect('c.sort_order', 'sortOrder')
+      .addSelect('COUNT(q.id)', 'count')
+      .where('q.status = :status', { status: 'published' })
+      .andWhere('c.is_active = true')
+      .groupBy('c.id')
+      .addGroupBy('c.slug')
+      .addGroupBy('c.name_en')
+      .addGroupBy('c.name_rw')
+      .addGroupBy('c.name_ar')
+      .addGroupBy('c.sort_order')
+      .orderBy('c.sort_order', 'ASC')
+      .getRawMany<{
+        id: string;
+        slug: string;
+        nameEn: string;
+        nameRw: string;
+        nameAr: string;
+        count: string;
+      }>();
+
+    // COUNT comes back as a string from the driver; the client wants a number.
+    return rows.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      nameEn: r.nameEn,
+      nameRw: r.nameRw,
+      nameAr: r.nameAr,
+      count: Number(r.count),
+    }));
   }
 
   /** The listing. Published only — enforced here, so no route can forget to. */
@@ -142,12 +220,20 @@ export class DawahDiscussionsService {
     const qb = this.questions
       .createQueryBuilder('q')
       .leftJoinAndSelect('q.category', 'category')
-      .leftJoinAndSelect('q.answeredBy', 'answeredBy')
-      .leftJoinAndSelect('answeredBy.roleEntity', 'answeredByRole')
+      // No answeredBy join: the public shapes no longer carry who answered, so
+      // loading the user and their RBAC role was two joins per listing page for a
+      // field nothing reads. The admin projections below still join it.
       .where('q.status = :status', { status: 'published' });
 
     if (query.category) {
       qb.andWhere('category.slug = :category', { category: query.category });
+    }
+    // Only the affirmative narrows. `essential=false` means "do not restrict",
+    // not "show the un-curated ones" — nothing asks for that, and reading it as a
+    // filter would make the parameter's absence and its negation behave
+    // differently for no reason.
+    if (query.essential === 'true') {
+      qb.andWhere('q.isEssential = true');
     }
     if (query.language) {
       qb.andWhere('q.language = :language', { language: query.language });
@@ -178,6 +264,12 @@ export class DawahDiscussionsService {
       qb.addSelect(`ts_rank(${FTS_VECTOR}, websearch_to_tsquery('simple', :q))`, 'rank')
         .orderBy('rank', 'DESC')
         .addOrderBy('q.publishedAt', 'DESC');
+    } else if (query.sort === 'popular') {
+      // Views first, then recency. Without the tie-break every unread entry shares a
+      // count of 0 and Postgres may return them in any order it likes — so the tail
+      // would reshuffle between two identical requests, and paginating over it would
+      // repeat some rows and skip others.
+      qb.orderBy('q.viewCount', 'DESC').addOrderBy('q.publishedAt', 'DESC');
     } else {
       // Publication order, NOT creation order: a question asked in March and answered in
       // July belongs at the top of the list in July, not buried back in March.
@@ -189,7 +281,7 @@ export class DawahDiscussionsService {
       .take(limit)
       .getManyAndCount();
 
-    return { items: items.map((q) => this.toPublic(q)), total, page, limit };
+    return { items: items.map((q) => this.toListItem(q)), total, page, limit };
   }
 
   /**
@@ -202,11 +294,14 @@ export class DawahDiscussionsService {
   async bySlug(slug: string) {
     const question = await this.questions.findOne({
       where: { slug, status: 'published' },
-      relations: { category: true, answeredBy: { roleEntity: true } },
+      relations: { category: true },
     });
     if (!question) throw new NotFoundException('Question not found');
 
-    this.bumpViewCount(question.id);
+    // NOT counted here. Rendering is not reading: Next.js prefetches this page's
+    // payload when a card is hovered or scrolled into view, which server-renders it
+    // and would count a view for an entry nobody opened. Scrolling the listing
+    // alone inflated every count. `recordView` is called from the client instead.
     return this.toPublic(question);
   }
 
@@ -217,6 +312,24 @@ export class DawahDiscussionsService {
    * discipline as DawahBookService.bumpCounter. A reader must never see a page fail
    * because a stats UPDATE hit a lock. The entry is the product; the number is not.
    */
+  /**
+   * Count one read, from the client.
+   *
+   * Public and unauthenticated, like the rating. 404s anything not published, for
+   * the same reason `bySlug` does: the status code must not become a way to probe
+   * which slugs exist as unpublished rows.
+   */
+  async recordView(slug: string): Promise<{ counted: boolean }> {
+    const question = await this.questions.findOne({
+      where: { slug, status: 'published' },
+      select: { id: true },
+    });
+    if (!question) throw new NotFoundException('Question not found');
+
+    this.bumpViewCount(question.id);
+    return { counted: true };
+  }
+
   private bumpViewCount(id: string): void {
     void this.questions
       .increment({ id }, 'viewCount', 1)
@@ -259,8 +372,19 @@ export class DawahDiscussionsService {
         // Absent behind a proxy that strips it; the column is nullable precisely so a
         // missing IP costs the rating nothing.
         ipHash: ip ? sha256(ip) : null,
+        // The follow-up. Sent by a SECOND call — the verdict is recorded the moment
+        // it is clicked, and the form asking why is submitted after — so these are
+        // null on the first write and filled by the upsert below.
+        reason: dto.reason?.trim() || null,
+        comment: dto.comment?.trim() || null,
+        email: dto.email?.trim() || null,
       })
-      .orUpdate(['helpful', 'ip_hash', 'updated_at'], ['question_id', 'voter_hash'])
+      // The follow-up columns join the update set, which is what lets the second
+      // call attach a reason to the verdict the first already stored.
+      .orUpdate(
+        ['helpful', 'ip_hash', 'updated_at', 'reason', 'comment', 'email'],
+        ['question_id', 'voter_hash'],
+      )
       .execute();
 
     return { recorded: true };
@@ -398,9 +522,10 @@ export class DawahDiscussionsService {
 
     const category = await this.resolveCategory(dto.categoryId);
 
-    const question = await this.insertWithUniqueSlug(dto.title, (slug) =>
+    const question = await this.insertWithUniqueSlug(dto.title, (slug, entryNumber) =>
       this.questions.create({
         slug,
+        entryNumber,
         title: dto.title.trim(),
         body: dto.body,
         language: dto.language,
@@ -458,17 +583,51 @@ export class DawahDiscussionsService {
    * A non-Latin title (Arabic, or Kinyarwanda after diacritics strip) can slugify to empty,
    * so the base falls back to a stable word rather than leaving the URL as just a suffix.
    */
+  /**
+   * The next staff-facing entry number: one past the highest ever used.
+   *
+   * MAX rather than COUNT, and `withDeleted` so soft-deleted rows still count:
+   * numbering by how many rows are visible would hand out a number that is
+   * already taken the moment anything is deleted. Gaps are correct — a number
+   * that gets recycled stops identifying an entry.
+   */
+  private async nextEntryNumber(): Promise<number> {
+    const row = await this.questions
+      .createQueryBuilder('q')
+      .withDeleted()
+      .select('MAX(q.entryNumber)', 'max')
+      .getRawOne<{ max: number | null }>();
+    return (row?.max ?? 0) + 1;
+  }
+
+  /** The next number, for the admin form to show before the entry is saved. */
+  async peekNextEntryNumber(): Promise<{ nextEntryNumber: number }> {
+    return { nextEntryNumber: await this.nextEntryNumber() };
+  }
+
+  /**
+   * Insert with a unique slug AND a unique entry number.
+   *
+   * Both are recomputed on every attempt, which is what makes the retry correct
+   * for the number: two admins saving at the same instant read the same MAX, one
+   * of them loses on the unique index, and the loser re-reads rather than
+   * retrying with the value that just failed.
+   */
   private async insertWithUniqueSlug(
     title: string,
-    build: (slug: string) => DawahQuestion,
+    build: (slug: string, entryNumber: number) => DawahQuestion,
   ): Promise<DawahQuestion> {
     const base = slugify(title) || 'question';
     for (let attempt = 0; attempt < 5; attempt++) {
       const suffix = randomBytes(3).toString('hex');
       try {
-        return await this.questions.save(build(`${base}-${suffix}`.slice(0, 180)));
+        const entryNumber = await this.nextEntryNumber();
+        return await this.questions.save(
+          build(`${base}-${suffix}`.slice(0, 180), entryNumber),
+        );
       } catch (err: unknown) {
-        // 23505 = unique_violation. Anything else is a real error.
+        // 23505 = unique_violation, on either the slug or the number. Anything
+        // else is a real error.
         if ((err as { code?: string }).code === '23505' && attempt < 4) continue;
         throw err;
       }
@@ -489,11 +648,17 @@ export class DawahDiscussionsService {
     const category = await this.resolveCategory(dto.categoryId);
     const now = new Date();
 
-    const question = await this.insertWithUniqueSlug(dto.title, (slug) =>
+    const question = await this.insertWithUniqueSlug(dto.title, (slug, entryNumber) =>
       this.questions.create({
         slug,
+        entryNumber,
         title: dto.title.trim(),
-        body: dto.body,
+        // Optional here: on an admin-authored entry the title IS the question.
+        // The column is NOT NULL with a '' default, so an absent one stores ''.
+        body: dto.body ?? '',
+        summary: dto.summary?.trim() || null,
+        answerSummary: dto.answerSummary?.trim() || null,
+        isEssential: dto.isEssential ?? false,
         answerBody: dto.answerBody,
         language: dto.language,
         categoryId: category?.id ?? null,
@@ -531,6 +696,10 @@ export class DawahDiscussionsService {
     const now = new Date();
     await this.questions.update(id, {
       answerBody: dto.answerBody,
+      ...(dto.summary !== undefined ? { summary: dto.summary.trim() || null } : {}),
+      ...(dto.answerSummary !== undefined
+        ? { answerSummary: dto.answerSummary.trim() || null }
+        : {}),
       answeredById: admin.id,
       answeredAt: now,
       publishedAt: question.publishedAt ?? now,
@@ -554,6 +723,13 @@ export class DawahDiscussionsService {
     await this.questions.update(id, {
       ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
       ...(dto.body !== undefined ? { body: dto.body } : {}),
+      // Blanking it is meaningful — it returns the entry to the derived excerpt —
+      // so an empty string stores null rather than being ignored.
+      ...(dto.summary !== undefined ? { summary: dto.summary.trim() || null } : {}),
+      ...(dto.answerSummary !== undefined
+        ? { answerSummary: dto.answerSummary.trim() || null }
+        : {}),
+      ...(dto.isEssential !== undefined ? { isEssential: dto.isEssential } : {}),
       ...(dto.answerBody !== undefined ? { answerBody: dto.answerBody } : {}),
       ...(dto.language !== undefined ? { language: dto.language } : {}),
       ...(dto.categoryId !== undefined
@@ -601,6 +777,7 @@ export class DawahDiscussionsService {
     });
     return rows.map((q) => ({
       id: q.id,
+      entryNumber: q.entryNumber,
       title: q.title,
       bodyHtml: renderPostMarkdown(q.body),
       language: q.language,
@@ -645,10 +822,14 @@ export class DawahDiscussionsService {
       items: items.map((q) => ({
         id: q.id,
         slug: q.slug,
+        entryNumber: q.entryNumber,
         title: q.title,
         language: q.language,
         status: q.status,
         hasAnswer: q.answerBody.length > 0,
+        // Raw, so the library can tell an authored summary from a derived one.
+        hasSummary: !!q.summary?.trim(),
+        isEssential: q.isEssential,
         // Lets the queue say "9 member questions awaiting an answer" without inferring
         // it from author_id = answered_by_id.
         origin: q.origin,
@@ -668,6 +849,36 @@ export class DawahDiscussionsService {
     };
   }
 
+  /**
+   * What readers said about one entry, for the admin working on it.
+   *
+   * ADMIN ONLY — it carries reader-supplied email addresses, which belong to the
+   * reader rather than to the entry and appear in no public projection.
+   *
+   * Only rows that actually said something: a verdict with no follow-up is already
+   * counted in the tallies, and listing it here would bury the handful of rows
+   * with words in them under everything else.
+   */
+  async adminFeedback(id: string) {
+    const rows = await this.ratings.find({
+      where: [
+        { questionId: id, reason: Not(IsNull()) },
+        { questionId: id, comment: Not(IsNull()) },
+      ],
+      order: { updatedAt: 'DESC' },
+      take: 100,
+    });
+
+    return rows.map((r) => ({
+      id: r.id,
+      helpful: r.helpful,
+      reason: r.reason,
+      comment: r.comment,
+      email: r.email,
+      at: r.updatedAt,
+    }));
+  }
+
   /** One entry with its raw markdown, for the admin editor. Never a public shape. */
   async adminGetById(id: string) {
     const q = await this.questions.findOne({
@@ -679,9 +890,16 @@ export class DawahDiscussionsService {
     return {
       id: q.id,
       slug: q.slug,
+      entryNumber: q.entryNumber,
       title: q.title,
       // MARKDOWN SOURCE — this is the edit form, not a reader.
       body: q.body,
+      // The RAW value, not the derived fallback the public projections use: an
+      // admin opening and saving an untouched form would otherwise freeze
+      // today's auto-excerpt in as an authored summary.
+      summary: q.summary,
+      answerSummary: q.answerSummary,
+      isEssential: q.isEssential,
       answerBody: q.answerBody,
       language: q.language,
       status: q.status,
@@ -747,7 +965,7 @@ export class DawahDiscussionsService {
   private async reload(id: string) {
     const full = await this.questions.findOne({
       where: { id },
-      relations: { category: true, answeredBy: { roleEntity: true } },
+      relations: { category: true },
     });
     return this.toPublic(full!);
   }

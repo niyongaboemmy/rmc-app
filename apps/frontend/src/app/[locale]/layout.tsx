@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Noto_Naskh_Arabic } from 'next/font/google';
+import localFont from 'next/font/local';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { ContentKeys } from '@/lib/content-api';
@@ -15,23 +15,38 @@ import { EditModeProvider } from '@/lib/edit-mode/EditModeProvider';
 import { EditModeBar } from '@/components/edit-mode/EditModeBar';
 import '../globals.css';
 
+// Both faces are self-hosted from src/fonts rather than fetched through
+// next/font/google. That loader downloads from fonts.gstatic.com at compile
+// time and, when the network is unreachable, silently emits only its
+// local("Arial") fallback face — no build error, but the whole app renders in
+// Arial. Vendoring the woff2 removes the build-time network dependency.
+//
+// Each file is the variable font for one subset, matching the subsets
+// next/font/google was configured to download.
+
 // Plus Jakarta Sans — a humanist geometric sans with a slightly warmer, more
 // contemporary feel than Poppins. Keeps the same --font-latin slot so every
 // downstream consumer (Tailwind font-sans/body/display, globals.css) picks it
 // up unchanged.
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
+const plusJakarta = localFont({
+  src: '../../fonts/PlusJakartaSans-latin-variable.woff2',
   variable: '--font-latin',
-  weight: ['300', '400', '500', '600', '700', '800'],
+  weight: '200 800', // variable axis — covers every weight the app uses
+  style: 'normal',
   display: 'swap',
+  adjustFontFallback: 'Arial',
+  fallback: ['system-ui', 'sans-serif'],
 });
 
 // Noto Naskh Arabic — smooth flowing Naskh, the script of printed Qurans.
-const notoNaskh = Noto_Naskh_Arabic({
-  subsets: ['arabic'],
+const notoNaskh = localFont({
+  src: '../../fonts/NotoNaskhArabic-arabic-variable.woff2',
   variable: '--font-arabic',
-  weight: ['400', '500', '600', '700'],
+  weight: '400 700',
+  style: 'normal',
   display: 'swap',
+  adjustFontFallback: 'Times New Roman',
+  fallback: ['serif'],
 });
 
 export const metadata: Metadata = {

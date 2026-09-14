@@ -3,10 +3,43 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useImageLoaded } from '@/hooks/useImageLoaded';
+import { PhotoPlaceholder } from '@/components/ui/PhotoPlaceholder';
 
 interface CarouselImage {
   src: string;
   alt: string;
+}
+
+/**
+ * One slide of the coverflow, with its placeholder.
+ *
+ * Own component so each slide waits for its own photo — the stage shows five at
+ * a time, and one slow file should not hold a placeholder over the four that
+ * have already arrived.
+ *
+ * The dark tone is not cosmetic here: the stage sits on deep green, where the
+ * grey placeholder used elsewhere reads as a lit panel rather than an absence.
+ */
+function CarouselSlide({ img, active, priority }: { img: CarouselImage; active: boolean; priority: boolean }) {
+  const { loaded, imageProps } = useImageLoaded(img.src);
+
+  // Placeholder first, so it sits under the photo rather than the photo being
+  // held transparent above it — see PileCarousel for why that direction matters.
+  return (
+    <>
+      {!loaded && <PhotoPlaceholder tone="dark" icon />}
+      <Image
+        {...imageProps}
+        src={img.src}
+        alt={active ? img.alt : ''}
+        fill
+        priority={priority}
+        sizes="50vw"
+        className="object-cover object-center"
+      />
+    </>
+  );
 }
 
 interface Props {
@@ -100,14 +133,7 @@ export function ImageCarousel3D({ images, interval = 5000 }: Props) {
                 cursor: offset === 0 ? 'default' : 'pointer',
               }}
             >
-              <Image
-                src={img.src}
-                alt={i === current ? img.alt : ''}
-                fill
-                priority={i === 0}
-                sizes="50vw"
-                className="object-cover object-center"
-              />
+              <CarouselSlide img={img} active={i === current} priority={i === 0} />
               {/* Dim non-active slides for depth */}
               <span
                 className="absolute inset-0 bg-rmc-green-deep transition-opacity duration-700"

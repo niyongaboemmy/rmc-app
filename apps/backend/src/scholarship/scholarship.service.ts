@@ -27,19 +27,34 @@ import {
   ScholarshipStatusAction,
 } from './dto/update-scholarship-status.dto';
 import { districtCode } from '../common/district-codes';
+import { toCsv } from '../common/csv.util';
+import { sanitizeDescription, sanitizeDescriptionI18n } from './scholarship-description';
 import { generateTrackingCode } from '../tracking/tracking-code.util';
 import { slugify } from '../common/slugify.util';
 import type { TrackingSubject } from '../tracking/tracking-verification.service';
 import { User } from '../users/entities/user.entity';
 import { District } from '../locations/entities/district.entity';
 
-// An application in any of these statuses counts as "active" for duplicate
-// detection — rejected/cancelled/confirmed never block a new application.
+/**
+ * An application in any of these statuses blocks a second one for the same
+ * scholarship. Only `rejected` and `cancelled` let a member apply again.
+ *
+ * This list MUST match the partial unique index `IDX_scholarship_app_one_per_program`,
+ * which excludes exactly those two. It did not: `confirmed` was listed here as
+ * non-blocking while the index blocked it, so a member re-applying to a
+ * scholarship they had already been awarded got past this check and then hit a
+ * duplicate-key error — a 500 where the ConflictException below was meant to
+ * explain the problem.
+ *
+ * Aligned toward the index rather than away from it, because having already won
+ * a scholarship is a reason not to apply to it a second time.
+ */
 const ACTIVE_STATUSES: ScholarshipApplicationStatus[] = [
   ScholarshipApplicationStatus.DRAFT,
   ScholarshipApplicationStatus.SUBMITTED,
   ScholarshipApplicationStatus.UNDER_REVIEW,
   ScholarshipApplicationStatus.APPROVED,
+  ScholarshipApplicationStatus.CONFIRMED,
 ];
 
 @Injectable()
@@ -178,7 +193,6 @@ export class ScholarshipService {
       cell: dto.cell ?? null,
       village: dto.village ?? null,
       schoolName: dto.schoolName,
-      educationLevel: dto.educationLevel,
       currentYear: dto.currentYear,
       averageGrade: dto.averageGrade ?? null,
       guardianName: dto.guardianName,
@@ -227,7 +241,6 @@ export class ScholarshipService {
       cell: dto.cell ?? application.cell,
       village: dto.village ?? application.village,
       schoolName: dto.schoolName ?? application.schoolName,
-      educationLevel: dto.educationLevel ?? application.educationLevel,
       currentYear: dto.currentYear ?? application.currentYear,
       averageGrade: dto.averageGrade ?? application.averageGrade,
       guardianName: dto.guardianName ?? application.guardianName,
@@ -313,6 +326,28 @@ export class ScholarshipService {
   // ── Documents (member) ────────────────────────────────────────────────────────
 
   /**
+   * The evidence an application rests on is fixed at the same moment its text
+   * is: when the applicant submits.
+   *
+   * Ownership alone used to be the whole check, so an applicant could attach or
+   * remove documents at any point — including on a CONFIRMED application, after
+   * a reviewer had read and verified them. `updateDraft` has always refused to
+   * touch anything past DRAFT; there is no reading on which the essay is frozen
+   * but the transcript backing it is not.
+   *
+   * DRAFT is the right line and not a conservative guess: the wizard uploads
+   * every file first and calls submit last, so nothing in the real flow attaches
+   * a document to an application that has already been submitted.
+   */
+  private assertDocumentsEditable(application: ScholarshipApplication): void {
+    if (application.status !== ScholarshipApplicationStatus.DRAFT) {
+      throw new ForbiddenException(
+        'Documents can only be changed while the application is still a draft.',
+      );
+    }
+  }
+
+  /**
    * Records an already-uploaded supporting document for an application the
    * caller owns. Documents are appended (multiple allowed per type), never
    * upserted — an applicant may attach several transcripts/records.
@@ -322,7 +357,7 @@ export class ScholarshipService {
     applicantId: string,
     dto: SaveScholarshipDocumentDto,
   ): Promise<ScholarshipDocument> {
-    await this.findOwn(id, applicantId);
+    this.assertDocumentsEditable(await this.findOwn(id, applicantId));
     const doc = this.documentRepo.create({
       applicationId: id,
       documentType: dto.documentType,
@@ -337,7 +372,7 @@ export class ScholarshipService {
   }
 
   async deleteDocument(id: string, documentId: string, applicantId: string): Promise<void> {
-    await this.findOwn(id, applicantId);
+    this.assertDocumentsEditable(await this.findOwn(id, applicantId));
     const doc = await this.documentRepo.findOne({
       where: { id: documentId, applicationId: id },
     });
@@ -393,7 +428,6 @@ export class ScholarshipService {
       applicationNumber: app.applicationNumber,
       fullNames: app.fullNames,
       schoolName: app.schoolName,
-      educationLevel: app.educationLevel,
       status: app.status,
       rejectionReason: app.rejectionReason,
       submittedAt: app.submittedAt,
@@ -516,6 +550,26 @@ export class ScholarshipService {
         toStatus = ScholarshipApplicationStatus.APPROVED;
         break;
       case ScholarshipStatusAction.REJECT:
+        // Rejection was the one action with no source-status check, so a draft
+        // the applicant had not finished writing could be rejected out from
+        // under them, and an application already rejected could be rejected
+        // again, rewriting its outcome and its reason.
+        //
+        // APPROVED is in the allowed list deliberately: an offer that has been
+        // made but not yet accepted can still be withdrawn, and the board lets a
+        // reviewer do exactly that. CONFIRMED is not — the applicant has taken
+        // the place up, and revoking an award is not a drag between two columns.
+        if (
+          ![
+            ScholarshipApplicationStatus.SUBMITTED,
+            ScholarshipApplicationStatus.UNDER_REVIEW,
+            ScholarshipApplicationStatus.APPROVED,
+          ].includes(application.status)
+        ) {
+          throw new BadRequestException(
+            'Only an application that is submitted, under review, or approved can be rejected',
+          );
+        }
         if (!dto.reason?.trim()) {
           throw new BadRequestException('A rejection reason is required');
         }
@@ -618,28 +672,25 @@ export class ScholarshipService {
       'phone',
       'email',
       'schoolName',
-      'educationLevel',
       'status',
       'createdAt',
     ];
-    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = items.map((a) =>
-      [
+    // `fullNames` and `schoolName` are written by the applicant. See csv.util —
+    // quoting alone leaves them able to open the file as a spreadsheet formula
+    // on the reviewer's machine.
+    return toCsv(
+      header,
+      items.map((a) => [
         a.id,
         a.applicationNumber,
         a.fullNames,
         a.phone,
         a.email,
         a.schoolName,
-        a.educationLevel,
         a.status,
         a.createdAt?.toISOString(),
-      ]
-        .map(escape)
-        .join(','),
+      ]),
     );
-
-    return [header.join(','), ...rows].join('\n');
   }
 
   // ── Admin: programs ───────────────────────────────────────────────────────────
@@ -658,6 +709,10 @@ export class ScholarshipService {
       status: ScholarshipProgramStatus.DRAFT,
       isOpen: false,
       slug: await this.uniqueProgramSlug(dto.title),
+      // Allocated here and never again: a reference an admin has quoted in a
+      // letter must not change because the programme was renamed. Same rule the
+      // slug follows, for the same reason.
+      referenceNumber: await this.generateProgramReference(),
     });
     return this.programRepo.save(program);
   }
@@ -744,21 +799,22 @@ export class ScholarshipService {
 
     return {
       title: keep(dto.title, current?.title),
-      description: keep(dto.description, current?.description),
+      // The description is the one rich-text field, and the detail page renders
+      // it as HTML. Cleaned on the way IN so what is stored is safe for every
+      // reader — the page that shows it fetches in the browser, where the
+      // frontend's jsdom-backed sanitiser cannot be used. See
+      // scholarship-description.ts.
+      description: sanitizeDescription(keep(dto.description, current?.description)),
       titleI18n: (keep(dto.titleI18n, current?.titleI18n ?? undefined) ?? null) as I18nText | null,
-      descriptionI18n: (keep(dto.descriptionI18n, current?.descriptionI18n ?? undefined) ??
-        null) as I18nText | null,
-      eligibilityI18n: (keep(dto.eligibilityI18n, current?.eligibilityI18n ?? undefined) ??
-        null) as I18nText | null,
-      benefitsI18n: (keep(dto.benefitsI18n, current?.benefitsI18n ?? undefined) ??
-        null) as I18nText | null,
+      descriptionI18n: sanitizeDescriptionI18n(
+        (keep(dto.descriptionI18n, current?.descriptionI18n ?? undefined) ??
+          null) as I18nText | null,
+      ),
       requiredDocuments: (keep(dto.requiredDocuments, current?.requiredDocuments) ??
         []) as ScholarshipProgram['requiredDocuments'],
       attachments: keep(dto.attachments, current?.attachments) ?? [],
       level: keep(dto.level, current?.level ?? undefined) ?? null,
-      amount: keep(dto.amount, current?.amount ?? undefined) ?? null,
       slots: keep(dto.slots, current?.slots ?? undefined) ?? null,
-      referenceNumber: keep(dto.referenceNumber, current?.referenceNumber ?? undefined) ?? null,
       opensAt: dto.opensAt ? new Date(dto.opensAt) : (current?.opensAt ?? null),
       deadline: dto.deadline ? new Date(dto.deadline) : (current?.deadline ?? null),
     };
@@ -774,6 +830,23 @@ export class ScholarshipService {
     if (program.opensAt && +new Date(program.opensAt) > now) return false;
     if (program.deadline && +new Date(program.deadline) < now) return false;
     return true;
+  }
+
+  /**
+   * `RMC-SCHP-<YYMM>-<4-digit sequence>`, allocated server-side.
+   *
+   * The counter is a Postgres sequence rather than a count of existing rows:
+   * two admins creating a programme at the same moment would both read the same
+   * count and write the same reference. A sequence hands out each value once,
+   * and outside the transaction — so a rolled-back create leaves a gap rather
+   * than reissuing a number. A gap is not a defect; a duplicate is.
+   */
+  private async generateProgramReference(): Promise<string> {
+    const result = await this.dataSource.query(`SELECT nextval('scholarship_program_seq') AS seq`);
+    const seq = String(result[0].seq).padStart(4, '0');
+    const now = new Date();
+    const yymm = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0');
+    return `RMC-SCHP-${yymm}-${seq}`;
   }
 
   /** Slug from the title, suffixed until free. Soft-deleted rows still hold theirs. */

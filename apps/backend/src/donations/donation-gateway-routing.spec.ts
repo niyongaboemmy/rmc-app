@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -78,8 +78,10 @@ describe('Donation gateway routing', () => {
       },
     );
 
+    // Once the offline list, now simply unrecognised. Nothing settles without a
+    // gateway any more, so every one of these is refused rather than recorded.
     it.each(['cash', 'bank', 'cheque', 'paypal', 'other', '', '   ', null, undefined])(
-      'treats %j as offline / unspecified',
+      'treats %j as not collectable, so not chargeable',
       (value) => {
         expect(isOnlineDonationMethod(value)).toBe(false);
       },
@@ -112,13 +114,19 @@ describe('Donation gateway routing', () => {
       expect(saved.paymentMethod).toBe('momo');
     });
 
+    // These once produced a `completed` donation with no payment reference, and
+    // this route is @Public() — so it was an unauthenticated way to record money
+    // as received. RMC collects through IremboPay only, so there is no method
+    // that legitimately settles without a gateway: they are refused outright.
     it.each(['cash', 'bank', 'paypal'])(
-      'records %j as already received without charging anything',
+      'refuses %j rather than recording it as already received',
       async (paymentMethod) => {
-        const saved = await service.create({ ...base, paymentMethod } as never, null);
+        await expect(
+          service.create({ ...base, paymentMethod } as never, null),
+        ).rejects.toBeInstanceOf(BadRequestException);
 
         expect(paymentGateway.charge).not.toHaveBeenCalled();
-        expect(saved.status).toBe(DonationStatus.COMPLETED);
+        expect(donations.save).not.toHaveBeenCalled();
       },
     );
 
@@ -143,18 +151,19 @@ describe('Donation gateway routing', () => {
     it('refuses an online donation when no gateway can charge', async () => {
       paymentGateway.canCharge.mockResolvedValue(false);
 
+      // 503, not 400: an inactive gateway is ours to fix, not the donor's error.
       await expect(
         service.create({ ...base, paymentMethod: 'momo' } as never, null),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
       expect(paymentGateway.charge).not.toHaveBeenCalled();
     });
 
-    it('still records an offline donation when no gateway can charge', async () => {
+    it('refuses an offline donation whether or not a gateway could charge', async () => {
       paymentGateway.canCharge.mockResolvedValue(false);
 
-      const saved = await service.create({ ...base, paymentMethod: 'cash' } as never, null);
-
-      expect(saved.status).toBe(DonationStatus.COMPLETED);
+      await expect(
+        service.create({ ...base, paymentMethod: 'cash' } as never, null),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 
@@ -177,7 +186,9 @@ describe('Donation gateway routing', () => {
       expect(result.donations.every((d) => d.paymentReference === result.transactionId)).toBe(true);
     });
 
-    it('rejects a basket that mixes online and offline methods', async () => {
+    // One bad item fails the whole basket rather than quietly settling the rest
+    // — it is one payment, so it cannot be partly collected.
+    it('rejects a basket where any item names a method we cannot collect', async () => {
       await expect(
         service.createCart([item('momo'), item('cash')], null, 'momo'),
       ).rejects.toBeInstanceOf(BadRequestException);
@@ -188,7 +199,7 @@ describe('Donation gateway routing', () => {
       paymentGateway.canCharge.mockResolvedValue(false);
 
       await expect(service.createCart([item('momo')], null, 'momo')).rejects.toBeInstanceOf(
-        BadRequestException,
+        ServiceUnavailableException,
       );
     });
 
@@ -198,12 +209,13 @@ describe('Donation gateway routing', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('records an offline basket without charging', async () => {
-      const result = await service.createCart([item('cash'), item('bank')], null, 'momo');
+    it('refuses an uncollectable basket rather than recording it without charging', async () => {
+      await expect(
+        service.createCart([item('cash'), item('bank')], null, 'momo'),
+      ).rejects.toBeInstanceOf(BadRequestException);
 
       expect(paymentGateway.charge).not.toHaveBeenCalled();
-      expect(result.transactionId).toBe('');
-      expect(result.donations.every((d) => d.status === DonationStatus.COMPLETED)).toBe(true);
+      expect(donations.save).not.toHaveBeenCalled();
     });
   });
 });

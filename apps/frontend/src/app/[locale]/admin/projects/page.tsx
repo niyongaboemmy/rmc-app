@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
+import { donationsApi, type PublicCampaign } from '@/lib/donationsApi';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import {
@@ -51,6 +53,25 @@ const LANGS: { key: Lang; label: string; flag: string }[] = [
   { key: 'ar', label: 'Arabic', flag: 'AR' },
 ];
 
+/**
+ * Kebab-case a title into a URL segment.
+ *
+ * Mirrors the backend's canonical `slugify` (common/slugify.util.ts) on the two
+ * points that bite: accented letters decompose and lose their marks, so
+ * "Nyamirambo Café" gives nyamirambo-cafe rather than nyamirambo-caf; and
+ * typographic apostrophes are deleted rather than split on, so "Qur’an" gives
+ * quran, not qur-an.
+ */
+function slugify(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/['\u2018\u2019`]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 const EMPTY_ITEM: ProjectItem = {
   slug: '',
   title: tri(''),
@@ -86,6 +107,15 @@ function ProjectsManager() {
   const [lang, setLang] = useState<Lang>('en');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  /**
+   * The donation campaigns a project can point at. Failure leaves the list empty,
+   * so the picker offers only "not linked" — better than blocking an admin from
+   * editing a project because the donations service is down.
+   */
+  const [campaigns, setCampaigns] = useState<PublicCampaign[]>([]);
+  useEffect(() => {
+    donationsApi.listCampaigns().then(setCampaigns).catch(() => setCampaigns([]));
+  }, []);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -156,13 +186,17 @@ function ProjectsManager() {
     setFormData((p) => ({ ...p, [field]: { ...((p[field] as Tri | undefined) ?? tri('')), [l]: value } }));
 
   const handleSaveItem = useCallback(async () => {
-    if (!formData.slug.trim()) { error('A URL slug is required.'); return; }
     if (!formData.title.en.trim()) { error('English title is required.'); return; }
     const clean: ProjectItem = {
       ...formData,
+      // Derived, never typed. An existing project keeps the slug it already has —
+      // it is the public address, and rewriting it because someone fixed a typo in
+      // the title would break every link pointing at it.
+      slug: formData.slug.trim() || slugify(formData.title.en),
       fundNeeded: Number(formData.fundNeeded) || 0,
       fundCollected: Number(formData.fundCollected) || 0,
     };
+    if (!clean.slug) { error('The English title must contain letters or numbers.'); return; }
     const items = editingIndex !== null
       ? content.items.map((it, i) => (i === editingIndex ? clean : it))
       : [...content.items, clean];
@@ -258,11 +292,12 @@ function ProjectsManager() {
             {loading ? 'Loading…' : 'Save Header'}
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Eyebrow</label>
-            <input dir={dir} type="text" value={content.eyebrow[lang]} onChange={(e) => setHeader('eyebrow', lang, e.target.value)} className={`${inputCls} ${fc}`} />
-          </div>
+        <div className="grid grid-cols-1 gap-4">
+            {/* No Eyebrow field. The projects hero was centred and its eyebrow pill
+                dropped, matching About, Gallery, Dawah and Contact — so `content.eyebrow`
+                renders nowhere. An input that changes nothing is worse than a missing
+                one: it tells an admin they have set something. The value stays in
+                ProjectsContent, so restoring the pill restores the field with it. */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
             <input dir={dir} type="text" value={content.title[lang]} onChange={(e) => setHeader('title', lang, e.target.value)} className={`${inputCls} ${fc}`} />
@@ -344,21 +379,63 @@ function ProjectsManager() {
             <SectionHead icon={Info} title="Basics" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Slug <span className="text-red-500">*</span> <span className="text-gray-400 font-normal">(URL)</span></label>
-                <input type="text" value={formData.slug} onChange={(e) => setFormData((p) => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') }))} placeholder="e.g. kigali-mosque" className={inputCls} />
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Slug <span className="text-gray-400 font-normal">(generated)</span></label>
+                  {/* Shown, never entered. A new project follows its English title;
+                      once saved the slug is FROZEN, because it is the public address
+                      and rewriting it after a typo fix would break every link already
+                      pointing at the project. */}
+                  <p className={`${inputCls} flex items-center bg-gray-50 font-mono text-[13px] text-gray-600`}>
+                    {formData.slug || slugify(formData.title.en) || (
+                      <span className="font-sans text-gray-300">From the English title</span>
+                    )}
+                  </p>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Category</label>
-                <select value={formData.category} onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))} className={inputCls}>
-                  {PROJECT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <SearchableSelect
+                      value={formData.category}
+                      onChange={(v) => setFormData((p) => ({ ...p, category: v }))}
+                      options={PROJECT_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                      size="md"
+                    />
               </div>
+              {/* Which donation campaign this project collects for. Without one, the
+                  project page's call to action goes to the donate landing. */}
+              <div className="sm:col-span-3">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Donation program <span className="text-gray-400 font-normal">— where “Support this project” leads</span>
+                </label>
+                <SearchableSelect
+                  value={formData.campaignSlug ?? ''}
+                  onChange={(v) => setFormData((p) => ({ ...p, campaignSlug: v }))}
+                  options={campaigns.map((c) => ({ value: c.slug, label: c.title }))}
+                  noneLabel="Not linked — go to the donate page"
+                  placeholder="Not linked — go to the donate page"
+                  size="md"
+                />
+                {/* SearchableSelect shows its placeholder, greyed, when the value
+                    matches no option — so a project linked to a deleted or deactivated
+                    campaign reads as "Not linked" while still carrying the slug. Better
+                    than a native select, which would have shown the first campaign as
+                    though it were chosen, but still a lie worth naming. */}
+                {formData.campaignSlug && !campaigns.some((c) => c.slug === formData.campaignSlug) && (
+                  <p className="mt-1 text-[11px] text-amber-600">
+                    Linked to “{formData.campaignSlug}”, which is not an active program.
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value as ProjectStatus }))} className={inputCls}>
-                  <option value="ongoing">Ongoing</option>
-                  <option value="completed">Completed</option>
-                </select>
+                <SearchableSelect
+                      value={formData.status}
+                      onChange={(v) => setFormData((p) => ({ ...p, status: v as ProjectStatus }))}
+                      options={[
+                        { value: 'ongoing', label: 'Ongoing' },
+                        { value: 'completed', label: 'Completed' },
+                      ]}
+                      size="md"
+                    />
               </div>
             </div>
             <div>
@@ -378,9 +455,12 @@ function ProjectsManager() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Currency</label>
-                <select value={formData.currency} onChange={(e) => setFormData((p) => ({ ...p, currency: e.target.value }))} className={inputCls}>
-                  {['RWF', 'USD', 'EUR', 'GBP'].map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <SearchableSelect
+                      value={formData.currency}
+                      onChange={(v) => setFormData((p) => ({ ...p, currency: v }))}
+                      options={['RWF', 'USD', 'EUR', 'GBP'].map((c) => ({ value: c, label: c }))}
+                      size="md"
+                    />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Fund needed</label>

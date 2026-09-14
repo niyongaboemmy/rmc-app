@@ -5,7 +5,6 @@ dotenv.config();
 import { AppDataSource } from '../../config/data-source';
 import { User } from '../../users/entities/user.entity';
 import {
-  ScholarshipLevel,
   ScholarshipProgram,
   ScholarshipProgramStatus,
 } from '../../scholarship/entities/scholarship-program.entity';
@@ -56,7 +55,6 @@ interface FixtureSpec {
   n: number;
   name: string;
   school: string;
-  level: ScholarshipLevel;
   year: string;
   status: ScholarshipApplicationStatus;
   /** 0 = first published scholarship, 1 = second, and so on (wraps). */
@@ -74,7 +72,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 1,
     name: 'Aisha Uwimana',
     school: 'GS Kigali Islamic',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S4',
     status: ScholarshipApplicationStatus.DRAFT,
     program: 0,
@@ -83,7 +80,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 2,
     name: 'Ibrahim Niyonzima',
     school: 'GS Nyamirambo',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S5',
     status: ScholarshipApplicationStatus.SUBMITTED,
     program: 0,
@@ -92,7 +88,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 3,
     name: 'Fatuma Mukamana',
     school: 'GS Remera',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S5',
     status: ScholarshipApplicationStatus.SUBMITTED,
     program: 0,
@@ -101,7 +96,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 4,
     name: 'Yusuf Habimana',
     school: 'GS Kicukiro',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S6',
     status: ScholarshipApplicationStatus.SUBMITTED,
     program: 0,
@@ -110,7 +104,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 5,
     name: 'Khadija Ingabire',
     school: 'GS Gisozi',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S4',
     status: ScholarshipApplicationStatus.UNDER_REVIEW,
     program: 0,
@@ -119,7 +112,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 6,
     name: 'Omar Nsengimana',
     school: 'GS Kimironko',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S5',
     status: ScholarshipApplicationStatus.UNDER_REVIEW,
     program: 0,
@@ -128,7 +120,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 7,
     name: 'Zainab Mukandayisenga',
     school: 'GS Nyabugogo',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S6',
     status: ScholarshipApplicationStatus.APPROVED,
     program: 0,
@@ -137,7 +128,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 8,
     name: 'Idriss Bizimana',
     school: 'GS Gikondo',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S6',
     status: ScholarshipApplicationStatus.CONFIRMED,
     program: 0,
@@ -146,7 +136,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 9,
     name: 'Halima Uwase',
     school: 'GS Kanombe',
-    level: ScholarshipLevel.SECONDARY,
     year: 'S4',
     status: ScholarshipApplicationStatus.REJECTED,
     program: 0,
@@ -156,7 +145,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 10,
     name: 'Salim Mugisha',
     school: 'University of Rwanda',
-    level: ScholarshipLevel.UNIVERSITY,
     year: 'Year 2',
     status: ScholarshipApplicationStatus.SUBMITTED,
     program: 1,
@@ -165,7 +153,6 @@ const FIXTURES: FixtureSpec[] = [
     n: 11,
     name: 'Mariam Keza',
     school: 'INES Ruhengeri',
-    level: ScholarshipLevel.UNIVERSITY,
     year: 'Year 1',
     status: ScholarshipApplicationStatus.UNDER_REVIEW,
     program: 1,
@@ -174,16 +161,24 @@ const FIXTURES: FixtureSpec[] = [
     n: 12,
     name: 'Bilal Rwigema',
     school: 'IPRC Kigali',
-    level: ScholarshipLevel.TVET,
     year: 'Level 4',
     status: ScholarshipApplicationStatus.APPROVED,
     program: 1,
   },
 ];
 
-/** Rwandan mobile format the app validates against: +250 7[2389] + 7 digits. */
+/**
+ * Rwandan mobile format the app validates against: +250 7[2389] + 7 digits.
+ *
+ * The slice was `-6`, one digit short of what the comment above it already
+ * said — so every fixture carried a `+250` + 8-digit number that the create
+ * endpoint's own `^\+250[0-9]{9}$` rejects. Twelve of thirteen seeded
+ * applications were unusable for the thing the phone is FOR: it is the channel
+ * the OTP tracking flow sends to, so public status tracking could not be
+ * exercised against fixture data at all.
+ */
 const phoneFor = (n: number, offset = 0) =>
-  `+2507${8}${String(1_000_000 + n * 137 + offset).slice(-6)}`;
+  `+2507${8}${String(1_000_000 + n * 137 + offset).slice(-7)}`;
 
 async function main(): Promise<void> {
   await AppDataSource.initialize();
@@ -256,7 +251,6 @@ async function main(): Promise<void> {
       phone: phoneFor(spec.n),
       email,
       schoolName: spec.school,
-      educationLevel: spec.level,
       currentYear: spec.year,
       guardianName: `${spec.name.split(' ').slice(-1)[0]} (guardian)`,
       guardianPhone: phoneFor(spec.n, 1),

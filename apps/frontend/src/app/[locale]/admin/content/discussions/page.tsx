@@ -59,7 +59,14 @@ const GROUPS: TriFieldGroup[] = [
       'Dawah → Discussions. The Yes / No button labels are not editable here.',
     fields: [
       { path: ['detail', 'ratingPrompt'], label: 'Question', rows: 1 },
-      { path: ['detail', 'ratingThanks'], label: 'After rating', rows: 1 },
+      { path: ['detail', 'ratingSuggestPrompt'], label: 'After "Yes" — heading', rows: 1 },
+      { path: ['detail', 'ratingReasonPrompt'], label: 'After "No" — heading', rows: 1 },
+      {
+        path: ['detail', 'ratingReasons'],
+        label: 'After "No" — the reasons offered, ONE PER LINE',
+        rows: 6,
+      },
+      { path: ['detail', 'ratingThanks'], label: 'Once the form is sent', rows: 1 },
     ],
   },
   {

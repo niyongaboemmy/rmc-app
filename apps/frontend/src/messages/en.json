@@ -21,6 +21,7 @@
     "services": "Explore Services"
   },
   "common": {
+    "openInMaps": "Open in Maps",
     "findNearMe": "Find near me",
     "findNearMeLocating": "Finding you…",
     "findNearMeDenied": "Location unavailable — showing every location instead.",
@@ -1182,11 +1183,6 @@
       },
       "title": "Scholarships",
       "desc": "Financial support for Muslim students pursuing education at all levels.",
-      "levels": {
-        "secondary": "Secondary School",
-        "tvet": "TVET / Vocational",
-        "university": "University"
-      },
       "relationships": {
         "parent": "Parent",
         "guardian": "Guardian",
@@ -1433,7 +1429,6 @@
           "inDays": "Closes in {days} days"
         },
         "deadlineLabel": "Deadline",
-        "amountLabel": "Amount",
         "viewAndApply": "View & Apply"
       }
     },
@@ -2806,8 +2801,7 @@
       "tabs": {
         "courses": "Courses",
         "library": "Library",
-        "categories": "Categories",
-        "content": "Landing page"
+        "categories": "Categories"
       },
       "status": {
         "draft": "Draft",
@@ -3838,7 +3832,6 @@
       "scholar": "Scholar",
       "views": "{count, plural, =1 {1 view} other {# views}}",
       "backToDiscussions": "Discussions",
-      "allCategories": "All categories",
       "allLanguages": "All languages",
       "otherLanguages": "Also showing questions in other languages",
       "writtenIn": "Written in {language}",
@@ -3870,7 +3863,6 @@
       "searchLabel": "Search",
       "askRailHint": "Send it to RMC. We'll answer it and publish it here.",
       "answerBadge": "RMC's answer",
-      "answeredBy": "Answered by {name}",
       "askPrompt": "Have a question of your own?",
       "related": {
         "title": "Related questions"
@@ -3880,7 +3872,11 @@
         "yes": "Yes",
         "no": "No",
         "thanks": "Thank you for your feedback.",
-        "failed": "Could not record your rating. Please try again."
+        "failed": "Could not record your rating. Please try again.",
+        "commentLabel": "Text of the proposal (optional)",
+        "emailLabel": "Your e-mail (optional)",
+        "reasonLabel": "Select reason",
+        "send": "Send"
       },
       "admin": {
         "title": "Q&A library",
@@ -3914,8 +3910,6 @@
         "questionLabel": "Question",
         "questionPlaceholder": "The question, as a reader would ask it…",
         "answerLabel": "RMC's answer",
-        "answerPlaceholder": "Write the answer…",
-        "markdownHint": "Markdown. Rendered and sanitised by the server.",
         "cancel": "Cancel",
         "save": "Save changes",
         "publish": "Publish",
@@ -3934,7 +3928,25 @@
         "published": "Published.",
         "rejected": "Declined.",
         "rejectConfirmTitle": "Decline this question?",
-        "rejectConfirmBody": "It will not be answered or published. The member is not emailed."
+        "rejectConfirmBody": "It will not be answered or published. The member is not emailed.",
+        "summaryLabel": "Summary for the list",
+        "summaryPlaceholder": "One or two sentences stating the ruling, as it should read in the question list.",
+        "summaryHint": "Optional. Left blank, the list shows the opening of the answer instead.",
+        "entryNumber": "Question {number}",
+        "essentialLabel": "Include in The Essential Answers",
+        "essentialHint": "Shows this entry in the curated panel beside the feed, under its category.",
+        "answerSummaryLabel": "The ruling in short",
+        "answerSummaryPlaceholder": "One or two sentences stating the outcome, shown above the full answer.",
+        "answerSummaryHint": "Optional. Read by someone who has opened the entry and wants the ruling before the reasoning."
+      },
+      "download": "Download",
+      "share": "Share",
+      "linkCopied": "Link copied",
+      "contents": "In this answer",
+      "searchCategories": "Search categories",
+      "noCategories": "No categories match.",
+      "panels": {
+        "categories": "Category tree"
       }
     }
   }

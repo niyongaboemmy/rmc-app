@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, X, RefreshCw, GraduationCap, LayoutGrid } from 'lucide-react';
+import {
+  Plus, Pencil, Trash2, X, RefreshCw, GraduationCap, LayoutGrid, Globe, Lock, Loader2,
+} from 'lucide-react';
 import {
   type ScholarshipProgram, type I18nText, type RequiredDocument,
 } from '@/lib/scholarshipApi';
@@ -11,7 +13,10 @@ import {
   scholarshipAdminApi, type CreateScholarshipProgramPayload,
 } from '@/lib/scholarshipAdminApi';
 import { cn } from '@/lib/utils';
-import { ModalPortal } from '@/components/ui/Modal';
+import { ConfirmModal, ModalPortal } from '@/components/ui/Modal';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { ContentKeys, getSiteContent, SCHOLARSHIP_SERVICE_DEFAULT } from '@/lib/content-api';
+import { boardLevels, type BoardLevel } from '@/lib/content/service-boards';
 
 /**
  * Composing and publishing scholarships — extracted from the admin page when
@@ -20,11 +25,34 @@ import { ModalPortal } from '@/components/ui/Modal';
  * state lives in one component, because a submenu needs somewhere to link to.
  */
 
-const LEVEL_LABELS: Record<string, string> = {
-  secondary: 'Secondary School',
-  tvet: 'TVET / Vocational',
-  university: 'University',
-};
+/**
+ * The education levels, read from the Scholarships CMS section rather than
+ * hardcoded here. `boardLevels` takes the saved list exactly as stored, so a
+ * level an admin deleted stays deleted instead of the seed coming back.
+ *
+ * English labels: this is the admin console, which is English throughout. The
+ * public pages resolve the same ids through `pick()` in the reader's locale.
+ */
+function useLevels(): BoardLevel[] {
+  const [levels, setLevels] = useState<BoardLevel[]>(SCHOLARSHIP_SERVICE_DEFAULT.levels);
+  useEffect(() => {
+    let active = true;
+    getSiteContent(ContentKeys.scholarshipService)
+      .then((data) => {
+        if (active) setLevels(boardLevels(data, SCHOLARSHIP_SERVICE_DEFAULT));
+      })
+      // The seeded three are already in state; a failed read leaves the form
+      // usable rather than showing an empty dropdown.
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+  return levels;
+}
+
+const levelLabelEn = (levels: BoardLevel[], key: string | null): string =>
+  levels.find((l) => l.id === key)?.label.en || '';
 
 // ── Program form modal ──────────────────────────────────────────────────────
 
@@ -37,6 +65,22 @@ const LANGS: Array<{ code: keyof I18nDraft; label: string }> = [
 ];
 
 /** A missing i18n object is a row authored before the trilingual fields existed. */
+/**
+ * Whether a rich-text value actually says anything.
+ *
+ * An "empty" editor is not an empty string — TipTap serialises an untouched
+ * document as `<p></p>`, so a plain `.trim()` check would read a blank
+ * description as filled and let a scholarship be published with nothing in it.
+ * Tags are stripped and the remainder tested, which also catches `<p><br></p>`
+ * and a paragraph holding only a non-breaking space.
+ */
+function hasRichText(html: string | null | undefined): boolean {
+  return (html ?? '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .trim().length > 0;
+}
+
 function toDraft(value: I18nText | null | undefined): I18nDraft {
   return value ? { en: value.en ?? '', rw: value.rw ?? '', ar: value.ar ?? '' } : { ...EMPTY_I18N };
 }
@@ -96,23 +140,27 @@ function ProgramModal({
   onSaved: () => void;
 }) {
   const [title, setTitle] = useState(program?.title ?? '');
-  const [description, setDescription] = useState(program?.description ?? '');
-  const [level, setLevel] = useState(program?.level ?? '');
-  const [amount, setAmount] = useState(program?.amount != null ? String(program.amount) : '');
+  const levels = useLevels();
+  const [level, setLevel] = useState<string>(program?.level ?? '');
   const [slots, setSlots] = useState(program?.slots != null ? String(program.slots) : '');
   const [opensAt, setOpensAt] = useState(program?.opensAt ? program.opensAt.slice(0, 10) : '');
   const [deadline, setDeadline] = useState(
     program?.deadline ? program.deadline.slice(0, 10) : '',
   );
-  const [referenceNumber, setReferenceNumber] = useState(program?.referenceNumber ?? '');
 
   // Trilingual copy. The `lang` tab only switches which language is being typed;
   // all three are held at once and saved together.
   const [lang, setLang] = useState<'en' | 'rw' | 'ar'>('en');
   const [titleI18n, setTitleI18n] = useState<I18nDraft>(toDraft(program?.titleI18n));
-  const [descI18n, setDescI18n] = useState<I18nDraft>(toDraft(program?.descriptionI18n));
-  const [eligI18n, setEligI18n] = useState<I18nDraft>(toDraft(program?.eligibilityI18n));
-  const [benefitsI18n, setBenefitsI18n] = useState<I18nDraft>(toDraft(program?.benefitsI18n));
+  // English is seeded from the fallback column when the row has no English of
+  // its own. Without it, a scholarship whose text lives only in `description`
+  // opens with an empty editor and cannot be saved, since English is the
+  // required tab — a public page its own author is locked out of editing.
+  const [descI18n, setDescI18n] = useState<I18nDraft>(() => {
+    const draft = toDraft(program?.descriptionI18n);
+    if (!hasRichText(draft.en) && program?.description) draft.en = program.description;
+    return draft;
+  });
 
   const [requiredDocs, setRequiredDocs] = useState<RequiredDocument[]>(
     program?.requiredDocuments ?? [],
@@ -127,9 +175,12 @@ function ProgramModal({
     // default them to the English tab rather than making the admin type the
     // same words twice into a collapsed section they may never open.
     const fallbackTitle = (title.trim() || titleI18n.en.trim()).trim();
-    const fallbackDescription = (description.trim() || descI18n.en.trim()).trim();
+    // The fallback is no longer typed separately: it IS the English description.
+    // Two boxes for one text meant an admin could fill the rich one and leave a
+    // stale plain-text fallback for every locale without a translation.
+    const fallbackDescription = descI18n.en.trim();
 
-    if (!fallbackTitle || !fallbackDescription) {
+    if (!fallbackTitle || !hasRichText(fallbackDescription)) {
       setError('A title and description are required — fill in the English tab at minimum.');
       return;
     }
@@ -140,15 +191,11 @@ function ProgramModal({
       description: fallbackDescription,
       titleI18n,
       descriptionI18n: descI18n,
-      eligibilityI18n: eligI18n,
-      benefitsI18n: benefitsI18n,
       requiredDocuments: requiredDocs,
       level: (level || undefined) as CreateScholarshipProgramPayload['level'],
-      amount: amount ? Number(amount) : undefined,
       slots: slots ? Number(slots) : undefined,
       opensAt: opensAt || undefined,
       deadline: deadline || undefined,
-      referenceNumber: referenceNumber.trim() || undefined,
     };
     try {
       if (program) {
@@ -225,28 +272,38 @@ function ProgramModal({
 
         <div className="space-y-3">
           <I18nField label="Title" lang={lang} value={titleI18n} onChange={setTitleI18n} />
-          <I18nField label="Description" lang={lang} value={descI18n} onChange={setDescI18n} rows={3} />
-          <I18nField
-            label="Who may apply"
-            hint="Shown as its own section — an applicant should not have to read the description to find out whether they qualify."
-            lang={lang}
-            value={eligI18n}
-            onChange={setEligI18n}
-            rows={2}
-          />
-          <I18nField
-            label="What the award covers"
-            lang={lang}
-            value={benefitsI18n}
-            onChange={setBenefitsI18n}
-            rows={2}
-          />
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <span className="text-[10px] font-semibold tracking-wider text-gray-400">
+                  {LANGS.filter((l) => hasRichText(descI18n[l.code]))
+                    .map((l) => l.code.toUpperCase())
+                    .join(' \u00b7 ') || 'EMPTY'}
+                </span>
+              </div>
+              {/* Keyed by language: the editor seeds its content once and is
+                  uncontrolled after mount, so switching tabs without a remount
+                  would leave the previous language's text in the box. Same
+                  reason as HajjDescriptionSection. */}
+              <RichTextEditor
+                key={lang}
+                value={descI18n[lang]}
+                onChange={(html) => setDescI18n((d) => ({ ...d, [lang]: html }))}
+                dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                fontClassName={lang === 'ar' ? 'font-arabic' : ''}
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                Everything an applicant reads: what the scholarship is, who may apply, what it
+                covers and what it is worth. Use headings to break it up.
+              </p>
+            </div>
 
           {/* The single-language fallback the public page uses when a locale is
               missing. Kept visible rather than hidden, so it is obvious it exists. */}
           <details className="rounded-lg border border-gray-200 p-3">
             <summary className="cursor-pointer text-xs font-semibold text-gray-500">
-              Fallback title &amp; description (used when a language above is empty)
+              Fallback title (used when a language above is empty)
             </summary>
             <div className="mt-3 space-y-3">
               <input
@@ -255,13 +312,10 @@ function ProgramModal({
                 placeholder="Fallback title"
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               />
-              <textarea
-                rows={2}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Fallback description"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green resize-none"
-              />
+              <p className="text-xs text-gray-400">
+                The description has no separate fallback \u2014 the English tab is what a locale
+                without its own translation renders.
+              </p>
             </div>
           </details>
           <div className="grid grid-cols-2 gap-3">
@@ -273,22 +327,17 @@ function ProgramModal({
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               >
                 <option value="">Any level</option>
-                <option value="secondary">Secondary School</option>
-                <option value="tvet">TVET / Vocational</option>
-                <option value="university">University</option>
+                {levels.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.label.en || l.id}
+                  </option>
+                ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (RWF)</label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-              />
-            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          {/* Two columns only when there is a reference to put in the second.
+              Without it "Awards available" would sit beside a gap. */}
+          <div className={cn('grid gap-3', program ? 'grid-cols-2' : 'grid-cols-1')}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Awards available</label>
               <input
@@ -300,15 +349,21 @@ function ProgramModal({
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reference no.</label>
-              <input
-                value={referenceNumber}
-                onChange={(e) => setReferenceNumber(e.target.value)}
-                placeholder="RMC-SCHP-2607-0001"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rmc-green"
-              />
-            </div>
+            {/* Only when editing. The reference is allocated by the server on
+                save, so on a new scholarship this could say nothing but "assigned
+                later" — a field that takes no input and reports no value is a row
+                of furniture. Once it exists it is worth showing, and this is the
+                only admin screen that does: it is frozen after allocation,
+                because a reference already quoted in a letter must not change
+                because the scholarship was renamed. */}
+            {program && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Reference no.</label>
+                <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-500">
+                  {program.referenceNumber ?? '\u2014'}
+                </div>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -401,6 +456,7 @@ function ProgramModal({
 // ── Programs tab ─────────────────────────────────────────────────────────────
 
 export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
+  const levels = useLevels();
   const { locale } = useParams<{ locale: string }>();
   const [programs, setPrograms] = useState<ScholarshipProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -421,6 +477,14 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
   useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
 
   const [actionError, setActionError] = useState('');
+  /**
+   * The row whose publish/close is in flight.
+   *
+   * Both actions were fire-and-forget with no feedback: the row sat unchanged
+   * until the refetch landed, so the natural response to a slow request was to
+   * click again — and the second click sent a second request.
+   */
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   /** Surfaces the server's own refusal — "cannot publish without: deadline" is
    *  far more useful than a generic failure toast. */
@@ -428,38 +492,97 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
     (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
       ?.message ?? fallback;
 
-  const handlePublish = async (p: ScholarshipProgram) => {
-    if (!confirm(`Publish "${p.title}"? It becomes visible to applicants immediately.`)) return;
-    setActionError('');
-    try {
-      await scholarshipAdminApi.publishProgram(p.id);
-      await fetchPrograms();
-    } catch (err) {
-      setActionError(serverMessage(err, 'Could not publish this scholarship.'));
+  /**
+   * The action awaiting confirmation, or null.
+   *
+   * All three used to go through the browser's own `confirm()` — the dialog that
+   * opens with "localhost:3001 says", cannot be styled, cannot show the server's
+   * refusal, and blocks the whole tab while it is up. For actions that decide
+   * whether a scholarship is visible to the public, an alert box that looks like
+   * a browser warning is the wrong frame entirely.
+   *
+   * Holding the whole programme rather than an id: the confirmation names the
+   * scholarship, and "Delete this scholarship?" could not.
+   */
+  type PendingAction = {
+    kind: 'publish' | 'close' | 'delete';
+    program: ScholarshipProgram;
+  };
+  const [pending, setPending] = useState<PendingAction | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
+  /**
+   * Wording for each confirmation, derived from the row it was raised on.
+   *
+   * `reopen` is not a fourth action — it is `publish` on a closed scholarship,
+   * which is the same endpoint and a different thing to the person reading it.
+   */
+  const confirmCopy = (a: PendingAction) => {
+    const reopening = a.kind === 'publish' && a.program.status === 'closed';
+    if (a.kind === 'delete') {
+      return {
+        title: 'Delete this scholarship?',
+        message: `"${a.program.title}" will be removed. This cannot be undone, and a scholarship that already has applications cannot be deleted at all.`,
+        confirmLabel: 'Delete',
+        variant: 'danger' as const,
+      };
     }
+    if (a.kind === 'close') {
+      return {
+        title: 'Close this scholarship?',
+        message: `"${a.program.title}" will stop accepting new applications. Applications already submitted continue through review, and you can reopen it later.`,
+        confirmLabel: 'Close it',
+        variant: 'default' as const,
+      };
+    }
+    return reopening
+      ? {
+          title: 'Reopen this scholarship?',
+          message: `"${a.program.title}" starts accepting applications again straight away.`,
+          confirmLabel: 'Reopen',
+          variant: 'default' as const,
+        }
+      : {
+          title: 'Publish this scholarship?',
+          message: `"${a.program.title}" becomes visible to applicants immediately.`,
+          confirmLabel: 'Publish',
+          variant: 'default' as const,
+        };
   };
 
-  const handleClose = async (p: ScholarshipProgram) => {
-    if (!confirm(`Close "${p.title}"? No new applications will be accepted. Applications already submitted continue through review.`)) return;
+  /**
+   * Runs whatever was confirmed.
+   *
+   * The dialog stays open until the request settles, so a server refusal — "cannot
+   * publish without: deadline" — is not shown behind a dialog the admin has to
+   * dismiss first. It closes on success only.
+   */
+  const runPending = async () => {
+    if (!pending) return;
+    const { kind, program } = pending;
+    const reopening = kind === 'publish' && program.status === 'closed';
     setActionError('');
+    setConfirming(true);
+    setBusyId(program.id);
     try {
-      await scholarshipAdminApi.closeProgram(p.id);
+      if (kind === 'publish') await scholarshipAdminApi.publishProgram(program.id);
+      else if (kind === 'close') await scholarshipAdminApi.closeProgram(program.id);
+      else await scholarshipAdminApi.deleteProgram(program.id);
       await fetchPrograms();
+      setPending(null);
     } catch (err) {
-      setActionError(serverMessage(err, 'Could not close this scholarship.'));
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this scholarship? This cannot be undone.')) return;
-    setActionError('');
-    try {
-      await scholarshipAdminApi.deleteProgram(id);
-      await fetchPrograms();
-      return;
-    } catch (err) {
-      // The server refuses to delete one that already has applications.
-      setActionError(serverMessage(err, 'Could not delete this scholarship.'));
+      const fallback =
+        kind === 'delete'
+          ? 'Could not delete this scholarship.'
+          : kind === 'close'
+            ? 'Could not close this scholarship.'
+            : `Could not ${reopening ? 'reopen' : 'publish'} this scholarship.`;
+      // The server refuses to delete one that already has applications, and
+      // refuses to publish one missing a deadline or description.
+      setActionError(serverMessage(err, fallback));
+    } finally {
+      setConfirming(false);
+      setBusyId(null);
     }
   };
 
@@ -498,7 +621,6 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-5 py-3.5 font-medium text-gray-600">Title</th>
                   <th className="text-left px-4 py-3.5 font-medium text-gray-600">Level</th>
-                  <th className="text-left px-4 py-3.5 font-medium text-gray-600">Amount</th>
                   <th className="text-left px-4 py-3.5 font-medium text-gray-600">Deadline</th>
                   <th className="text-left px-4 py-3.5 font-medium text-gray-600">Status</th>
                   {canManage && <th className="px-4 py-3.5" />}
@@ -512,10 +634,7 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                       <p className="text-xs text-gray-400 mt-0.5 line-clamp-1 max-w-xs">{p.description}</p>
                     </td>
                     <td className="px-4 py-4 text-xs text-gray-600">
-                      {p.level ? LEVEL_LABELS[p.level] : 'Any level'}
-                    </td>
-                    <td className="px-4 py-4 text-xs text-gray-600">
-                      {p.amount != null ? `${Number(p.amount).toLocaleString()} RWF` : '—'}
+                      {levelLabelEn(levels, p.level) || 'Any level'}
                     </td>
                     <td className="px-4 py-4 text-xs text-gray-600">
                       {p.deadline ? new Date(p.deadline).toLocaleDateString() : '—'}
@@ -547,26 +666,78 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                           >
                             <LayoutGrid className="h-4 w-4" />
                           </Link>
-                          {p.status !== 'published' && (
-                            <button
-                              onClick={() => handlePublish(p)}
-                              className="text-xs font-semibold text-rmc-green hover:underline"
-                            >
-                              Publish
-                            </button>
-                          )}
-                          {p.status === 'published' && (
-                            <button
-                              onClick={() => handleClose(p)}
-                              className="text-xs font-semibold text-amber-600 hover:underline"
-                            >
-                              Close
-                            </button>
-                          )}
+                          {/* The two state changes are the consequential actions in
+                              this row, and they used to be the least visible thing
+                              in it: bare text among four icon buttons, reading as
+                              labels rather than controls.
+
+                              Icon AND word, not icon alone. An icon by itself would
+                              be quicker to scan and worse to be sure about — these
+                              put a scholarship in front of the public or stop it
+                              taking applications, and neither is a guess worth
+                              inviting. The pill gives them the affordance the
+                              neutral row icons deliberately do not have.
+
+                              BOTH are always rendered, the inapplicable one
+                              disabled, rather than showing only the one that
+                              applies. Rendering conditionally meant a screen where
+                              every scholarship happened to be published showed no
+                              Publish button at all, so nothing on the page said the
+                              action existed — and the controls shifted position
+                              between rows, so the column could not be scanned. A
+                              disabled button with a reason says "not from here",
+                              which is what an admin needs to know.
+
+                              Disabled is expressed as a GREY PALETTE, never as
+                              opacity. Dimming the coloured pill to 40% put its
+                              label at 1.79:1 against the page — rendered, and
+                              unreadable, which is not a state a control should
+                              ever be in. Grey on grey is 4.6:1 and still reads
+                              instantly as inactive. */}
+                          <button
+                            onClick={() => setPending({ kind: 'publish', program: p })}
+                            disabled={busyId === p.id || p.status === 'published'}
+                            title={
+                              p.status === 'published'
+                                ? 'Already published'
+                                : p.status === 'closed'
+                                  ? 'Start accepting applications again'
+                                  : 'Make this scholarship visible to applicants'
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/25 bg-rmc-green-light/60 px-2.5 py-1 text-xs font-semibold text-rmc-green transition-colors enabled:hover:bg-rmc-green enabled:hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
+                          >
+                            {busyId === p.id && p.status !== 'published' ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Globe className="h-3.5 w-3.5" />
+                            )}
+                            {/* Publishing a CLOSED scholarship reopens it — same
+                                endpoint, different thing to a reader. */}
+                            {p.status === 'closed' ? 'Reopen' : 'Publish'}
+                          </button>
+                          <button
+                            onClick={() => setPending({ kind: 'close', program: p })}
+                            disabled={busyId === p.id || p.status !== 'published'}
+                            title={
+                              p.status === 'closed'
+                                ? 'Already closed'
+                                : p.status === 'draft'
+                                  ? 'Publish it before you can close it'
+                                  : 'Stop accepting new applications; submitted ones continue through review'
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors enabled:hover:bg-amber-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
+                          >
+                            {busyId === p.id && p.status === 'published' ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Lock className="h-3.5 w-3.5" />
+                            )}
+                            Close
+                          </button>
                           <button onClick={() => setEditing(p)} aria-label="Edit" className="text-gray-400 hover:text-rmc-green transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDelete(p.id)} aria-label="Delete" className="text-gray-400 hover:text-red-600 transition-colors">
+                          <button onClick={() => setPending({ kind: 'delete', program: p })} aria-label="Delete" className="text-gray-400 hover:text-red-600 transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -585,6 +756,23 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
           program={editing}
           onClose={() => { setEditing(null); setCreating(false); }}
           onSaved={fetchPrograms}
+        />
+      )}
+
+      {/* One dialog for all three actions rather than three dialogs: what differs
+          between them is wording and the confirm button's tone, both of which
+          `confirmCopy` derives from the pending action. */}
+      {pending && (
+        <ConfirmModal
+          open
+          onClose={() => {
+            // A request in flight owns the dialog; dismissing it mid-way would
+            // leave the admin unsure whether the scholarship was published.
+            if (!confirming) setPending(null);
+          }}
+          onConfirm={runPending}
+          isLoading={confirming}
+          {...confirmCopy(pending)}
         />
       )}
     </div>

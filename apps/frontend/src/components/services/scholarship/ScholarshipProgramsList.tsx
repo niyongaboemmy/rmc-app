@@ -4,8 +4,17 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { GraduationCap, Clock, ArrowRight, AlertCircle, Coins } from 'lucide-react';
+import { GraduationCap, Clock, ArrowRight, AlertCircle } from 'lucide-react';
 import { scholarshipPublicApi, type ScholarshipProgram } from '@/lib/scholarshipApi';
+import { useEditableContent } from '@/lib/edit-mode/useEditableContent';
+import {
+  ContentKeys,
+  SCHOLARSHIP_SERVICE_DEFAULT,
+  boardLevels,
+  levelLabel,
+  pick,
+  type ScholarshipServiceContent,
+} from '@/lib/content-api';
 
 function getDiffDays(deadline: string | null): number | null {
   if (!deadline) return null;
@@ -91,7 +100,18 @@ export function ScholarshipProgramsList({
 }: ScholarshipProgramsListProps = {}) {
   const { locale } = useParams<{ locale: string }>();
   const t = useTranslations('services.scholarship');
-  const tLevels = useTranslations('services.scholarship.levels');
+  // Levels are CMS-managed: the programme stores a key and the label lives with
+  // the rest of this board's copy. An unknown key — a level since deleted —
+  // resolves to '' and the chip hides, rather than printing the raw id.
+  const { content } = useEditableContent<ScholarshipServiceContent>(
+    ContentKeys.scholarshipService,
+    SCHOLARSHIP_SERVICE_DEFAULT,
+  );
+  const levels = boardLevels(content, SCHOLARSHIP_SERVICE_DEFAULT);
+  const levelText = (key: string | null): string => {
+    const label = levelLabel(levels, key);
+    return label ? pick(label, locale) : '';
+  };
   const [programs, setPrograms] = useState<ScholarshipProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -180,16 +200,10 @@ export function ScholarshipProgramsList({
                 t(key as Parameters<typeof t>[0], values as Parameters<typeof t>[1]),
               )}
             </span>
-            {program.level && (
+            {levelText(program.level) && (
               <span className="inline-flex items-center gap-1.5">
                 <GraduationCap className="h-3.5 w-3.5 shrink-0" />
-                {tLevels(program.level)}
-              </span>
-            )}
-            {program.amount != null && (
-              <span className="inline-flex items-center gap-1.5">
-                <Coins className="h-3.5 w-3.5 shrink-0" />
-                {Number(program.amount).toLocaleString()} RWF
+                {levelText(program.level)}
               </span>
             )}
           </>

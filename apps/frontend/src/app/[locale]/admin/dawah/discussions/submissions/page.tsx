@@ -8,6 +8,7 @@ import { ArrowLeft, Clock, Loader2, Send, X } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/lib/permissions';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -52,6 +53,7 @@ function SubmissionQueue() {
   const [answering, setAnswering] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [draftCategory, setDraftCategory] = useState('');
+  const [draftAnswerSummary, setDraftAnswerSummary] = useState('');
   const [confirmReject, setConfirmReject] = useState<PendingSubmission | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -82,10 +84,12 @@ function SubmissionQueue() {
     try {
       await dawahApi.admin.discussions.answer(s.id, {
         answerBody: draft,
+        answerSummary: draftAnswerSummary.trim() || undefined,
         categoryId: draftCategory || undefined,
       });
       success(t('discussions.admin.published'));
       setAnswering(null);
+      setDraftAnswerSummary('');
       await load();
     } catch (err) {
       toastError(serverMessage(err) ?? t('discussions.admin.saveError'));
@@ -138,9 +142,15 @@ function SubmissionQueue() {
             <li key={s.id} className="rounded-xl border border-gray-100 bg-white p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
+                  {/* The queue is where an unanswered entry gets discussed before it
+                      is answered — "has anyone looked at 21 yet?" — so the number
+                      matters here as much as in the library. */}
+                  <span className="text-[11px] font-semibold tabular-nums text-gray-400">
+                    #{s.entryNumber}
+                  </span>
                   <h2
                     dir={s.language === 'ar' ? 'rtl' : 'ltr'}
-                    className="text-sm font-bold text-gray-900"
+                    className="mt-0.5 text-sm font-bold text-gray-900"
                   >
                     {s.title}
                   </h2>
@@ -174,18 +184,38 @@ function SubmissionQueue() {
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
                       {t('discussions.admin.answerLabel')}
                     </label>
-                    <textarea
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
+                    {/* The ruling in short, above the answer it summarises — the same
+                        arrangement as EntryEditor, and the same place it renders for
+                        the reader. Optional: an answer without one opens with itself. */}
+                    <div className="mb-3">
+                      <label className="mb-1.5 flex items-baseline justify-between gap-2 text-sm font-medium text-gray-700">
+                        <span>{t('discussions.admin.answerSummaryLabel')}</span>
+                        <span className="text-[11px] font-normal tabular-nums text-gray-400">
+                          {draftAnswerSummary.length}/600
+                        </span>
+                      </label>
+                      <textarea
+                        value={draftAnswerSummary}
+                        onChange={(e) => setDraftAnswerSummary(e.target.value)}
+                        dir={s.language === 'ar' ? 'rtl' : 'ltr'}
+                        rows={3}
+                        maxLength={600}
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
+                        placeholder={t('discussions.admin.answerSummaryPlaceholder')}
+                      />
+                    </div>
+
+                    {/* Same arrangement as EntryEditor: written rich, STORED as
+                        markdown. `draft` is the markdown, serialised from the editor's
+                        own document; nothing here holds HTML, because a fresh answer
+                        has no stored content to seed from. */}
+                    <RichTextEditor
+                      key={`answer-${s.id}`}
+                      value=""
+                      onChange={() => {}}
+                      onChangeMarkdown={setDraft}
                       dir={s.language === 'ar' ? 'rtl' : 'ltr'}
-                      rows={7}
-                      autoFocus
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 font-mono text-[13px] outline-none focus:border-transparent focus:ring-2 focus:ring-rmc-green"
-                      placeholder={t('discussions.admin.answerPlaceholder')}
                     />
-                    <p className="mt-1.5 text-xs text-gray-400">
-                      {t('discussions.admin.markdownHint')}
-                    </p>
                   </div>
 
                   {/* Answering is usually the moment it becomes clear what the question

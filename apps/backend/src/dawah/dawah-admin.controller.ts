@@ -73,6 +73,17 @@ export class DawahAdminController {
     return this.discussions.submissionQueue();
   }
 
+  /**
+   * The number a new entry will be given. Display only — the value is assigned
+   * server-side on insert, so a stale preview cannot produce a duplicate.
+   */
+  @Get('discussions/next-number')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: 'The entry number the next new entry will receive.' })
+  nextEntryNumber() {
+    return this.discussions.peekNextEntryNumber();
+  }
+
   @Get('discussions/entries')
   @Permissions(Permission.DISCUSSIONS_VERIFY)
   @ApiOperation({ summary: 'ALL entries in any status, for the admin listing.' })
@@ -92,6 +103,13 @@ export class DawahAdminController {
   @ApiOperation({ summary: 'One entry with its markdown source, for the editor.' })
   entry(@Param('id') id: string) {
     return this.discussions.adminGetById(id);
+  }
+
+  @Get('discussions/entries/:id/feedback')
+  @Permissions(Permission.DISCUSSIONS_VERIFY)
+  @ApiOperation({ summary: "What readers said about this entry, beyond the verdict." })
+  entryFeedback(@Param('id', ParseUUIDPipe) id: string) {
+    return this.discussions.adminFeedback(id);
   }
 
   @Patch('discussions/entries/:id')

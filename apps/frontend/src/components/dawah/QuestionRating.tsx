@@ -65,12 +65,37 @@ export function QuestionRating({
    * i18n messages: "Yes"/"No" name the buttons, and the failure line is a system message,
    * neither of which is RMC's editorial voice.
    */
-  copy: { prompt: string; thanks: string };
+  copy: {
+    prompt: string;
+    thanks: string;
+    suggestPrompt: string;
+    reasonPrompt: string;
+    /** One reason per line — see DiscussionsContent.detail.ratingReasons. */
+    reasons: string;
+  };
 }) {
   const t = useTranslations('dawah');
   const [choice, setChoice] = useState<boolean | null>(null);
   const [pending, setPending] = useState<boolean | null>(null);
   const [failed, setFailed] = useState(false);
+  /** Set once the follow-up has been sent — or skipped. Then the widget rests. */
+  const [done, setDone] = useState(false);
+  const [comment, setComment] = useState('');
+  const [email, setEmail] = useState('');
+  const [reason, setReason] = useState('');
+  const [sending, setSending] = useState(false);
+
+  /**
+   * The reason options, one per line.
+   *
+   * Blank lines dropped so an admin can space the list out while editing it, and
+   * trimmed because a trailing space on an option becomes a trailing space in the
+   * stored feedback.
+   */
+  const reasons = copy.reasons
+    .split('\n')
+    .map((r) => r.trim())
+    .filter(Boolean);
 
   /**
    * Storage is read in an effect, never during render.
@@ -85,7 +110,11 @@ export function QuestionRating({
   useEffect(() => {
     try {
       const prior = localStorage.getItem(ratedKey(slug));
-      if (prior === 'yes' || prior === 'no') setChoice(prior === 'yes');
+      if (prior === 'yes' || prior === 'no') {
+        setChoice(prior === 'yes');
+        // They have already been asked the follow-up; do not ask again.
+        setDone(true);
+      }
     } catch {
       // Storage blocked — the widget still works, it just cannot remember.
     }
@@ -107,6 +136,11 @@ export function QuestionRating({
     try {
       await dawahApi.discussions.rate(slug, helpful, key);
       setChoice(helpful);
+      // Switching sides after answering: clear what was typed for the other form,
+      // or a reason picked under "No" would be sent along with a "Yes".
+      setComment('');
+      setEmail('');
+      setReason('');
       try {
         localStorage.setItem(ratedKey(slug), helpful ? 'yes' : 'no');
       } catch {
@@ -120,7 +154,49 @@ export function QuestionRating({
     }
   }
 
-  if (choice !== null) {
+  /**
+   * Send the follow-up against the SAME rating.
+   *
+   * The verdict is already stored — it was written the moment the button was
+   * pressed, so a reader who says "No" and closes the tab still counts. This is a
+   * second call carrying the same verdict plus the detail, and the server's upsert
+   * attaches it to that row rather than creating another.
+   */
+  async function sendFeedback() {
+    if (choice === null || sending) return;
+    const key = voterKey();
+    if (!key) {
+      setFailed(true);
+      return;
+    }
+
+    setSending(true);
+    setFailed(false);
+    try {
+      /**
+       * Only the fields belonging to the form that was shown.
+       *
+       * This overlaps with the clearing done when the verdict is switched, and the
+       * two are NOT the same job: that one is for the reader, so a stale answer is
+       * not left visible in a form they have moved away from; this one is for the
+       * server, so a payload can never carry the other form's field whatever route
+       * the state arrived by. Removing either alone leaves the current behaviour
+       * intact, which is exactly why both are written down.
+       */
+      await dawahApi.discussions.rate(slug, choice, key, {
+        reason: choice ? undefined : reason || undefined,
+        comment: choice ? comment.trim() || undefined : undefined,
+        email: choice ? email.trim() || undefined : undefined,
+      });
+      setDone(true);
+    } catch {
+      setFailed(true);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (done) {
     return (
       <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50/60 p-4 text-center">
         <p className="inline-flex items-center gap-2 text-sm text-gray-600">
@@ -147,7 +223,11 @@ export function QuestionRating({
             type="button"
             onClick={() => rate(true)}
             disabled={pending !== null}
-            className={`${btn} border-gray-200 bg-white text-gray-700 hover:border-rmc-green hover:text-rmc-green`}
+            className={`${btn} ${
+              choice === true
+                ? 'border-rmc-green bg-rmc-green text-white'
+                : 'border-gray-200 bg-white text-gray-700 hover:border-rmc-green hover:text-rmc-green'
+            }`}
           >
             {pending === true ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -160,7 +240,11 @@ export function QuestionRating({
             type="button"
             onClick={() => rate(false)}
             disabled={pending !== null}
-            className={`${btn} border-gray-200 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900`}
+            className={`${btn} ${
+              choice === false
+                ? 'border-rmc-green bg-rmc-green text-white'
+                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900'
+            }`}
           >
             {pending === false ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -171,6 +255,84 @@ export function QuestionRating({
           </button>
         </div>
       </div>
+
+      {/* The follow-up. Which form appears is the whole point of the toggle: after
+          "Yes" there is nothing wrong to report, so it asks for suggestions; after
+          "No" the useful thing is WHY, which is a short list rather than an essay.
+          Both are optional — the verdict is already recorded, and a reader who
+          stops here has still told RMC what it most needed to know. */}
+      {choice !== null && (
+        <div className="mt-4 border-t border-gray-200 pt-4 text-start">
+          <p className="text-center text-sm font-semibold text-gray-800">
+            {choice ? copy.suggestPrompt : copy.reasonPrompt}
+          </p>
+
+          {choice ? (
+            <div className="mx-auto mt-3 max-w-md space-y-3">
+              <div>
+                <label htmlFor="rating-comment" className="mb-1 block text-xs text-gray-600">
+                  {t('discussions.rating.commentLabel')}
+                </label>
+                <textarea
+                  id="rating-comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                  placeholder={t('discussions.rating.commentLabel')}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                />
+              </div>
+              <div>
+                <label htmlFor="rating-email" className="mb-1 block text-xs text-gray-600">
+                  {t('discussions.rating.emailLabel')}
+                </label>
+                <input
+                  id="rating-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  maxLength={160}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto mt-3 max-w-md">
+              <label htmlFor="rating-reason" className="mb-1 block text-xs text-gray-600">
+                {t('discussions.rating.reasonLabel')}
+              </label>
+              <select
+                id="rating-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-rmc-green focus:ring-1 focus:ring-rmc-green/30"
+              >
+                <option value="">{t('discussions.rating.reasonLabel')}</option>
+                {reasons.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={sendFeedback}
+              // Nothing to send is not an error: after "No" with no reason picked
+              // there is no message, and the button would post an empty one.
+              disabled={sending || (!choice && !reason)}
+              className="inline-flex items-center gap-2 rounded-full bg-rmc-green px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rmc-green-dark disabled:opacity-50"
+            >
+              {sending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+              {t('discussions.rating.send')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {failed && (
         <p role="status" className="mt-3 text-xs text-red-600">
