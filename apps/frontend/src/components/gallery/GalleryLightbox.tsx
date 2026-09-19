@@ -90,16 +90,18 @@ export function GalleryLightbox({
      stored file is then requested off-screen and swapped in when it has fully
      arrived — never before, so the reader sees a sharper photo replace a soft
      one and not a blank frame waiting on a 300KB download. */
-  const [hiRes, setHiRes] = useState<string | null>(null);
+  // Keyed by index rather than reset in the effect: state reset happens after
+  // paint, so a bare URL would put the previous photo's full-size file on the
+  // <img> for the first frame after a page turn.
+  const [hiRes, setHiRes] = useState<{ index: number; url: string } | null>(null);
   useEffect(() => {
     const target = images[index];
     const full = target?.full;
-    setHiRes(null);
     if (!full || full === target.src) return;
     let cancelled = false;
     const probe = new window.Image();
     probe.onload = () => {
-      if (!cancelled) setHiRes(full);
+      if (!cancelled) setHiRes({ index, url: full });
     };
     probe.src = full;
     return () => {
@@ -111,13 +113,18 @@ export function GalleryLightbox({
 
   const current = images[index];
   const caption = current.alt ?? '';
+  const shownSrc = hiRes?.index === index ? hiRes.url : current.src;
 
   return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={caption || 'Photo preview'}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+      // touch-none: iOS Safari ignores overflow:hidden on <body> for touch
+      // scrolling, so without it a swipe on the photo also scrolls the page
+      // underneath. The lightbox handles its own swipes, and has nothing that
+      // needs to scroll, so the browser gets none of the gestures.
+      className="fixed inset-0 z-[100] flex touch-none items-center justify-center p-3 sm:p-6 animate-fade-in"
     >
       {/* Backdrop — click to dismiss */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -155,13 +162,16 @@ export function GalleryLightbox({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             {...imageProps}
-            src={hiRes ?? current.src}
+            src={shownSrc}
             alt={caption}
             // Lifted above the placeholder, which is absolute and would otherwise
             // paint over this in-flow image. So the photo is never hidden waiting
             // for a signal: if `loaded` somehow never arrives, the reader still
             // sees the photo, with a pulse behind it rather than instead of it.
-            className="relative z-10 max-h-[82dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10 select-none"
+            // 82dvh on a tall screen; on a short one (a phone held sideways
+            // is 390px) the budget is the viewport minus the top margin, the
+            // caption row and the padding, or the caption ends up off-screen.
+            className="relative z-10 max-h-[min(82dvh,calc(100dvh_-_7.5rem))] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10 select-none"
             draggable={false}
           />
 
