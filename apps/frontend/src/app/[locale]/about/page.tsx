@@ -78,6 +78,7 @@ export default async function AboutPage() {
     .then((res) =>
       res.data.map((g) => ({
         src: fileUrl(g.mediumKey ?? g.fileKey),
+        thumb: fileUrl(g.thumbnailKey ?? g.mediumKey ?? g.fileKey),
         alt: g.title ?? t('gallery.title'),
       })),
     )

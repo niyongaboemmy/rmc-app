@@ -13,7 +13,12 @@ export const CATEGORY_KEYS = [
 
 export interface GalleryItem {
   id: string;
+  /** Medium (≤900px) file — what tiles and carousel slides show. */
   src: string;
+  /** Small (≤400px) file — blurred backdrops and the backs of a pile. */
+  thumb: string;
+  /** Largest stored file (≤1920px) — the lightbox upgrades to it. */
+  full: string;
   categoryKey: string;
   monthKey: string;
 }

@@ -8,6 +8,8 @@ import { PhotoPlaceholder } from '@/components/ui/PhotoPlaceholder';
 interface PileImage {
   src: string;
   alt?: string;
+  /** Small variant for the photos fanned out behind the front one. */
+  thumb?: string;
 }
 
 /**
@@ -16,8 +18,8 @@ interface PileImage {
  * Its own component because each photo tracks its own arrival, and a hook cannot
  * be called from inside the map that lays the pile out.
  */
-function PilePhoto({ img, focused }: { img: PileImage; focused: boolean }) {
-  const { loaded, imageProps } = useImageLoaded(img.src);
+function PilePhoto({ img, src, focused }: { img: PileImage; src: string; focused: boolean }) {
+  const { loaded, imageProps } = useImageLoaded(src);
 
   // A fragment: the caller's tile is already the positioned, clipping box, and
   // both of these fill it absolutely.
@@ -32,7 +34,7 @@ function PilePhoto({ img, focused }: { img: PileImage; focused: boolean }) {
       {!loaded && <PhotoPlaceholder />}
       <Image
         {...imageProps}
-        src={img.src}
+        src={src}
         alt={focused ? img.alt ?? '' : ''}
         fill
         sizes="(max-width: 768px) 90vw, 28rem"
@@ -100,7 +102,17 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
               }}
             >
               <div className="relative w-full h-full overflow-hidden rounded-lg bg-gray-100">
-                <PilePhoto img={img} focused={depth === 0} />
+                {/* The pile never rotates, so anything deeper than the four
+                    visible photos is never seen — no photo is mounted for it.
+                    The three fanned out behind the front one are mostly
+                    covered and rotated away, so the thumbnail is enough. */}
+                {visible && (
+                  <PilePhoto
+                    img={img}
+                    src={depth === 0 ? img.src : img.thumb ?? img.src}
+                    focused={depth === 0}
+                  />
+                )}
                 {/* Focused photo: sheen + "view all" hint on hover */}
                 {depth === 0 && (
                   <>

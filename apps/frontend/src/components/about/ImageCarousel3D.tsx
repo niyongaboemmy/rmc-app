@@ -9,6 +9,19 @@ import { PhotoPlaceholder } from '@/components/ui/PhotoPlaceholder';
 interface CarouselImage {
   src: string;
   alt: string;
+  /** Small variant for the blurred backdrop; falls back to `src`. */
+  thumb?: string;
+}
+
+/** Slides within this many steps of the active one have their photo mounted. */
+const MOUNT_RADIUS = 3;
+
+/** Shortest signed distance from `i` to `current`, with wrap-around. */
+function distance(i: number, current: number, len: number): number {
+  let offset = i - current;
+  if (offset > len / 2) offset -= len;
+  if (offset < -len / 2) offset += len;
+  return offset;
 }
 
 /**
@@ -18,26 +31,46 @@ interface CarouselImage {
  * a time, and one slow file should not hold a placeholder over the four that
  * have already arrived.
  *
+ * `mounted` is false for slides far from the active one: they keep their box
+ * (so the transition into view still runs) but hold only the placeholder. A
+ * gallery of 125 photos otherwise asks for 125 files the moment the page
+ * opens, for a stage that shows five — lazy loading does not help, because an
+ * opacity-0 slide is still "in the viewport" to the browser.
+ *
  * The dark tone is not cosmetic here: the stage sits on deep green, where the
  * grey placeholder used elsewhere reads as a lit panel rather than an absence.
  */
-function CarouselSlide({ img, active, priority }: { img: CarouselImage; active: boolean; priority: boolean }) {
+function CarouselSlide({
+  img,
+  active,
+  priority,
+  mounted,
+}: {
+  img: CarouselImage;
+  active: boolean;
+  priority: boolean;
+  mounted: boolean;
+}) {
   const { loaded, imageProps } = useImageLoaded(img.src);
 
   // Placeholder first, so it sits under the photo rather than the photo being
   // held transparent above it — see PileCarousel for why that direction matters.
   return (
     <>
-      {!loaded && <PhotoPlaceholder tone="dark" icon />}
-      <Image
-        {...imageProps}
-        src={img.src}
-        alt={active ? img.alt : ''}
-        fill
-        priority={priority}
-        sizes="50vw"
-        className="object-cover object-center"
-      />
+      {(!mounted || !loaded) && <PhotoPlaceholder tone="dark" icon />}
+      {mounted && (
+        <Image
+          {...imageProps}
+          src={img.src}
+          alt={active ? img.alt : ''}
+          fill
+          priority={priority}
+          // The slide is 74% of its stage: full-width on a phone, capped at the
+          // gallery's max-w-3xl stage on larger screens.
+          sizes="(max-width: 768px) 74vw, 570px"
+          className="object-cover object-center"
+        />
+      )}
     </>
   );
 }
@@ -79,32 +112,35 @@ export function ImageCarousel3D({ images, interval = 5000 }: Props) {
       onBlurCapture={() => setPaused(false)}
       aria-roledescription="carousel"
     >
-      {/* Blurred backdrop — current image scaled up + blurred to fill the frame */}
-      {images.map((img, i) => (
-        <div
-          key={`bg-${img.src}`}
-          className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out motion-reduce:transition-none"
-          style={{ opacity: i === current ? 1 : 0 }}
-          aria-hidden
-        >
-          <Image
-            src={img.src}
-            alt=""
-            fill
-            sizes="50vw"
-            className="object-cover scale-125 blur-2xl opacity-60"
-          />
-        </div>
-      ))}
+      {/* Blurred backdrop — current image scaled up + blurred to fill the frame.
+          Only the active slide and its neighbours are kept mounted (enough for
+          the crossfade on prev/next), and at 64px: under a 40px blur the
+          resolution is invisible, so the thumbnail variant is more than enough. */}
+      {images.map((img, i) => {
+        if (Math.abs(distance(i, current, len)) > 1) return null;
+        return (
+          <div
+            key={`bg-${img.src}`}
+            className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out motion-reduce:transition-none"
+            style={{ opacity: i === current ? 1 : 0 }}
+            aria-hidden
+          >
+            <Image
+              src={img.thumb ?? img.src}
+              alt=""
+              fill
+              sizes="64px"
+              className="object-cover scale-125 blur-2xl opacity-60"
+            />
+          </div>
+        );
+      })}
       <div className="absolute inset-0 bg-rmc-green-deep/15" />
 
       {/* 3D coverflow stage */}
       <div className="absolute inset-0 [transform-style:preserve-3d]">
         {images.map((img, i) => {
-          // shortest signed distance from the active slide (with wrap-around)
-          let offset = i - current;
-          if (offset > len / 2) offset -= len;
-          if (offset < -len / 2) offset += len;
+          const offset = distance(i, current, len);
           const abs = Math.abs(offset);
           const visible = abs <= 2;
 
@@ -133,7 +169,12 @@ export function ImageCarousel3D({ images, interval = 5000 }: Props) {
                 cursor: offset === 0 ? 'default' : 'pointer',
               }}
             >
-              <CarouselSlide img={img} active={i === current} priority={i === 0} />
+              <CarouselSlide
+                img={img}
+                active={i === current}
+                priority={i === 0}
+                mounted={abs <= MOUNT_RADIUS}
+              />
               {/* Dim non-active slides for depth */}
               <span
                 className="absolute inset-0 bg-rmc-green-deep transition-opacity duration-700"

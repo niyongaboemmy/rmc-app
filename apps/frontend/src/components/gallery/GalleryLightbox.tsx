@@ -9,6 +9,8 @@ import { PhotoPlaceholder } from '@/components/ui/PhotoPlaceholder';
 export interface LightboxImage {
   src: string;
   alt?: string;
+  /** Largest stored file; swapped in once it has arrived, over `src`. */
+  full?: string;
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -83,6 +85,28 @@ export function GalleryLightbox({
      the next file has not been asked for until now. */
   const { loaded, imageProps } = useImageLoaded(images[index]?.src);
 
+  /* Progressive upgrade. The dialog opens on the medium file, which the pile
+     behind it already fetched, so there is a picture at once. The largest
+     stored file is then requested off-screen and swapped in when it has fully
+     arrived — never before, so the reader sees a sharper photo replace a soft
+     one and not a blank frame waiting on a 300KB download. */
+  const [hiRes, setHiRes] = useState<string | null>(null);
+  useEffect(() => {
+    const target = images[index];
+    const full = target?.full;
+    setHiRes(null);
+    if (!full || full === target.src) return;
+    let cancelled = false;
+    const probe = new window.Image();
+    probe.onload = () => {
+      if (!cancelled) setHiRes(full);
+    };
+    probe.src = full;
+    return () => {
+      cancelled = true;
+    };
+  }, [images, index]);
+
   if (typeof document === 'undefined' || total === 0) return null;
 
   const current = images[index];
@@ -131,7 +155,7 @@ export function GalleryLightbox({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             {...imageProps}
-            src={current.src}
+            src={hiRes ?? current.src}
             alt={caption}
             // Lifted above the placeholder, which is absolute and would otherwise
             // paint over this in-flow image. So the photo is never hidden waiting
@@ -146,14 +170,17 @@ export function GalleryLightbox({
               <button
                 onClick={() => go(-1)}
                 aria-label="Previous photo"
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/45 text-white backdrop-blur-sm flex items-center justify-center hover:bg-black/65 outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
+                // z-20: the photo is lifted to z-10 above its placeholder, and
+                // without this the arrows sat under it wherever the photo
+                // reached the frame's edge — which is always, on a phone.
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/45 text-white backdrop-blur-sm flex items-center justify-center hover:bg-black/65 outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => go(1)}
                 aria-label="Next photo"
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/45 text-white backdrop-blur-sm flex items-center justify-center hover:bg-black/65 outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/45 text-white backdrop-blur-sm flex items-center justify-center hover:bg-black/65 outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>

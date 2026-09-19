@@ -55,8 +55,12 @@ export function GalleryCategories({ categories, items, periods, viewAllLabel }: 
                 {periods.map((period) => {
                   const group = catItems.filter((it) => it.monthKey === period.key);
                   if (group.length === 0) return null;
-                  const groupImages: LightboxImage[] = group.map((it) => ({
+                  // One list feeds both the pile (which wants `thumb`) and the
+                  // lightbox (which wants `full`), so it carries both.
+                  const groupImages = group.map((it) => ({
                     src: it.src,
+                    thumb: it.thumb,
+                    full: it.full,
                     alt: `${cat.label} — ${period.label}`,
                   }));
                   return (

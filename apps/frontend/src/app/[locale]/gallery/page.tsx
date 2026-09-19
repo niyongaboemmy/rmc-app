@@ -38,6 +38,8 @@ async function fetchGalleryItems(): Promise<GalleryItem[]> {
     return rows.map((r) => ({
       id: r.id,
       src: fileUrl(r.mediumKey ?? r.fileKey),
+      thumb: fileUrl(r.thumbnailKey ?? r.mediumKey ?? r.fileKey),
+      full: fileUrl(r.fileKey),
       categoryKey: r.category ?? 'other',
       monthKey: (r.createdAt ?? '').slice(0, 7), // YYYY-MM
     }));
@@ -82,7 +84,7 @@ export default async function GalleryPage() {
   const seen = new Set<string>();
   const allImages = items
     .filter((it) => (seen.has(it.src) ? false : seen.add(it.src)))
-    .map((it) => ({ src: it.src, alt: t('title') }));
+    .map((it) => ({ src: it.src, thumb: it.thumb, alt: t('title') }));
 
   return (
     <div className="min-h-screen">
