@@ -94,12 +94,12 @@ interface Leader {
 // Seeded from the current About page leaders (photos + EN names/roles). Names are
 // the same across languages; RW/AR roles fall back to EN until an admin fills them.
 const LEADERS_DEFAULT: Leader[] = [
-  { id: 'm1', image: 'https://i.postimg.cc/8CKkfkMS/Mufti.jpg',   nameEn: 'Sheikh SINDAYIGAYA Musa',     nameRw: 'Sheikh SINDAYIGAYA Musa',     nameAr: 'Sheikh SINDAYIGAYA Musa',     roleEn: 'Mufti of Rwanda',                 roleRw: '', roleAr: '' },
-  { id: 'm2', image: 'https://i.postimg.cc/mkTL1ckm/V1A8567.jpg', nameEn: 'Sheikh MUSHUMBA Yunnus',      nameRw: 'Sheikh MUSHUMBA Yunnus',      nameAr: 'Sheikh MUSHUMBA Yunnus',      roleEn: 'Deputy Mufti of Rwanda',          roleRw: '', roleAr: '' },
-  { id: 'm3', image: 'https://i.postimg.cc/9f1JHK96/Qadh.jpg',    nameEn: 'Sheikh SEGISEKURE Ibrahim',   nameRw: 'Sheikh SEGISEKURE Ibrahim',   nameAr: 'Sheikh SEGISEKURE Ibrahim',   roleEn: 'Qadhwi of Rwanda',                roleRw: '', roleAr: '' },
-  { id: 'm4', image: 'https://i.postimg.cc/Cx0M5wJm/P1180223.jpg', nameEn: 'Sheikh NZANAHAYO Qassim',    nameRw: 'Sheikh NZANAHAYO Qassim',     nameAr: 'Sheikh NZANAHAYO Qassim',     roleEn: 'President of The Majlisi Shuyukh', roleRw: '', roleAr: '' },
-  { id: 'm5', image: 'https://i.postimg.cc/Fsym22m4/P1180220.jpg', nameEn: 'Sheikh MBARUSHIMANA Suleiman', nameRw: 'Sheikh MBARUSHIMANA Suleiman', nameAr: 'Sheikh MBARUSHIMANA Suleiman', roleEn: 'Advisor to the Mufti of Rwanda',  roleRw: '', roleAr: '' },
-  { id: 'm6', image: 'https://i.postimg.cc/YSxyqhck/ES-Salim.jpg', nameEn: 'Mr. SIBOMANA Salim',         nameRw: 'Mr. SIBOMANA Salim',          nameAr: 'Mr. SIBOMANA Salim',          roleEn: 'Executive Secretary',             roleRw: '', roleAr: '' },
+  { id: 'm1', image: '/leaders/mufti.jpg',   nameEn: 'Sheikh SINDAYIGAYA Musa',     nameRw: 'Sheikh SINDAYIGAYA Musa',     nameAr: 'Sheikh SINDAYIGAYA Musa',     roleEn: 'Mufti of Rwanda',                 roleRw: '', roleAr: '' },
+  { id: 'm2', image: '/leaders/deputy-mufti.jpg', nameEn: 'Sheikh MUSHUMBA Yunnus',      nameRw: 'Sheikh MUSHUMBA Yunnus',      nameAr: 'Sheikh MUSHUMBA Yunnus',      roleEn: 'Deputy Mufti of Rwanda',          roleRw: '', roleAr: '' },
+  { id: 'm3', image: '/leaders/qadhi.jpg',    nameEn: 'Sheikh SEGISEKURE Ibrahim',   nameRw: 'Sheikh SEGISEKURE Ibrahim',   nameAr: 'Sheikh SEGISEKURE Ibrahim',   roleEn: 'Qadhwi of Rwanda',                roleRw: '', roleAr: '' },
+  { id: 'm4', image: '/leaders/majlisi-president.jpg', nameEn: 'Sheikh NZANAHAYO Qassim',    nameRw: 'Sheikh NZANAHAYO Qassim',     nameAr: 'Sheikh NZANAHAYO Qassim',     roleEn: 'President of The Majlisi Shuyukh', roleRw: '', roleAr: '' },
+  { id: 'm5', image: '/leaders/mufti-advisor.jpg', nameEn: 'Sheikh MBARUSHIMANA Suleiman', nameRw: 'Sheikh MBARUSHIMANA Suleiman', nameAr: 'Sheikh MBARUSHIMANA Suleiman', roleEn: 'Advisor to the Mufti of Rwanda',  roleRw: '', roleAr: '' },
+  { id: 'm6', image: '/leaders/executive-secretary.jpg', nameEn: 'Mr. SIBOMANA Salim',         nameRw: 'Mr. SIBOMANA Salim',          nameAr: 'Mr. SIBOMANA Salim',          roleEn: 'Executive Secretary',             roleRw: '', roleAr: '' },
 ];
 
 const EMPTY_ENTRY: HistoryEntryForm = {

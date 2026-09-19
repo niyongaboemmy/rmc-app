@@ -55,12 +55,12 @@ export default async function AboutPage() {
 
   // Leadership — fallback portraits/roles when none are set in the CMS yet.
   const leaders = [
-    { id: 'm1', img: 'https://i.postimg.cc/8CKkfkMS/Mufti.jpg' },
-    { id: 'm2', img: 'https://i.postimg.cc/mkTL1ckm/V1A8567.jpg' },
-    { id: 'm3', img: 'https://i.postimg.cc/9f1JHK96/Qadh.jpg' },
-    { id: 'm4', img: 'https://i.postimg.cc/Cx0M5wJm/P1180223.jpg' },
-    { id: 'm5', img: 'https://i.postimg.cc/Fsym22m4/P1180220.jpg' },
-    { id: 'm6', img: 'https://i.postimg.cc/YSxyqhck/ES-Salim.jpg' },
+    { id: 'm1', img: '/leaders/mufti.jpg' },
+    { id: 'm2', img: '/leaders/deputy-mufti.jpg' },
+    { id: 'm3', img: '/leaders/qadhi.jpg' },
+    { id: 'm4', img: '/leaders/majlisi-president.jpg' },
+    { id: 'm5', img: '/leaders/mufti-advisor.jpg' },
+    { id: 'm6', img: '/leaders/executive-secretary.jpg' },
   ] as const;
 
   // Admin-managed leaders take over once saved; otherwise use the fallback above.

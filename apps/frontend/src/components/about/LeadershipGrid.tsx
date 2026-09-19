@@ -20,34 +20,40 @@ export interface LeaderView {
 
 const TITLE_ID = 'leader-modal-title';
 
-/* ── Portrait — the section's signature gradient ring, at two sizes ────────── */
+/* ── Portrait — a plain circle, at two sizes ──────────────────────────────── */
 
 function Portrait({ img, name, size }: { img: string; name: string; size: 'card' | 'modal' }) {
   const box = size === 'card' ? 'h-20 w-20' : 'h-28 w-28';
   const icon = size === 'card' ? 'h-9 w-9' : 'h-12 w-12';
+  // A portrait the host fails to serve (external hosts do time out) must not
+  // leave an empty ring, most visibly in the modal — fall back to the icon.
+  const [failed, setFailed] = useState(false);
 
   return (
-    <div className="relative shrink-0 rounded-full bg-gradient-to-br from-rmc-green via-rmc-gold to-rmc-green p-[2px] shadow-sm shadow-rmc-green/20">
-      <div className={`relative ${box} overflow-hidden rounded-full ring-2 ring-white`}>
-        {img ? (
-          <Image
-            src={img}
-            alt={name}
-            fill
-            quality={95}
-            sizes={size === 'card' ? '80px' : '112px'}
-            className={`object-cover object-top ${
-              size === 'card'
-                ? 'transition-transform duration-500 motion-reduce:transform-none group-hover:scale-105'
-                : ''
-            }`}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-rmc-green-deep">
-            <User className={`${icon} text-white/80`} strokeWidth={1.5} />
-          </div>
-        )}
-      </div>
+    <div className={`relative ${box} shrink-0 overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200`}>
+      {img && !failed ? (
+        <Image
+          src={img}
+          alt={name}
+          fill
+          quality={95}
+          // The same `sizes` for the card and the modal on purpose: both then
+          // resolve to the identical optimized URL, so opening a profile
+          // shows the portrait the card already fetched instead of waiting
+          // on a second round-trip to the image host.
+          sizes="112px"
+          onError={() => setFailed(true)}
+          className={`object-cover object-top ${
+            size === 'card'
+              ? 'transition-transform duration-500 motion-reduce:transform-none group-hover:scale-105'
+              : ''
+          }`}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-rmc-green-deep">
+          <User className={`${icon} text-white/80`} strokeWidth={1.5} />
+        </div>
+      )}
     </div>
   );
 }
@@ -188,13 +194,20 @@ export function LeadershipGrid({ leaders, locale }: { leaders: LeaderView[]; loc
                   area over the whole card. Wrapping the card in a <button>
                   instead would put the mailto/tel links INSIDE a button, which
                   is invalid and unreachable by keyboard. The links sit at z-10
-                  so they stay clickable above that stretched layer. */}
-              <h3 className="mt-2 truncate font-medium text-gray-900">
+                  so they stay clickable above that stretched layer.
+
+                  `transform-none will-change-auto` is load-bearing: globals.css
+                  gives every <button> `transform: translateZ(0)` plus
+                  `will-change: transform`, and either one makes the button the
+                  containing block for its absolute descendants — so without
+                  them the ::after shrinks to the name and only the text is
+                  clickable. */}
+              <h3 className="mt-2 font-medium leading-snug text-gray-900">
                 <button
                   type="button"
                   onClick={() => setOpenId(leader.id)}
                   aria-label={`${aboutLabel} ${leader.name}`}
-                  className="rounded text-start after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold focus-visible:ring-offset-2 group-hover:text-rmc-green"
+                  className="rounded text-start transform-none will-change-auto after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold focus-visible:ring-offset-2 group-hover:text-rmc-green"
                 >
                   {leader.name}
                 </button>
@@ -227,7 +240,7 @@ export function LeadershipGrid({ leaders, locale }: { leaders: LeaderView[]; loc
 
             <ChevronRight
               aria-hidden
-              className="h-4 w-4 shrink-0 self-center text-gray-300 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-rmc-green group-hover:opacity-100 rtl:rotate-180"
+              className="h-4 w-4 shrink-0 self-center text-gray-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-rmc-green rtl:rotate-180"
             />
           </div>
         ))}
