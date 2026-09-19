@@ -39,7 +39,12 @@ export function GalleryCategories({ categories, items, periods, viewAllLabel }: 
           <section
             key={cat.key}
             id={cat.key}
-            className={`scroll-mt-24 py-6 md:py-8 ${tinted ? 'bg-rmc-green/[0.03] border-y border-rmc-green/10' : 'bg-transparent'}`}
+            // overflow-x-clip: a pile's fanned-out cards reach ~20px past its
+            // box to the right, by design. On a phone the 16px side gutter is
+            // less than that, so without this the page is a few px wider than
+            // the screen and mobile browsers zoom the whole page out to fit.
+            // `clip`, not `hidden`, so the section stays a non-scrolling box.
+            className={`scroll-mt-24 overflow-x-clip py-6 md:py-8 ${tinted ? 'bg-rmc-green/[0.03] border-y border-rmc-green/10' : 'bg-transparent'}`}
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {/* Category label */}
