@@ -73,6 +73,23 @@ export class YoutubeProvider implements SocialProvider {
     // No API key → use the official channel RSS feed (free, no quota/key).
     if (!apiKey) return this.fetchViaRss(channelId, maxPosts);
 
+    try {
+      return await this.fetchViaApi(channelId, apiKey, maxPosts);
+    } catch (err) {
+      // An invalid/placeholder key (400), exhausted quota (403) or a Google
+      // outage must not blank the featured video on the landing page: the
+      // key-less feed carries the same uploads, minus like/comment counts.
+      this.logger.warn(`YouTube Data API failed, falling back to RSS: ${(err as Error).message}`);
+      return this.fetchViaRss(channelId, maxPosts);
+    }
+  }
+
+  /** Keyed path: YouTube Data API v3 (uploads + like/comment/subscriber counts). */
+  private async fetchViaApi(
+    channelId: string,
+    apiKey: string,
+    maxPosts: number,
+  ): Promise<ProviderResult> {
     // 1. Channel → uploads playlist id, subscriber count, title.
     const channel = await fetchJson<YtChannelResp>(
       `${API}/channels?part=snippet,statistics,contentDetails&id=${channelId}&key=${apiKey}`,
