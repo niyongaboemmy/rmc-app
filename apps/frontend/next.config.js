@@ -29,6 +29,11 @@ const nextConfig = {
     serverComponentsExternalPackages: ['isomorphic-dompurify'],
   },
   images: {
+    // Generated thumbnails are kept on disk for 30 days instead of Next's
+    // 60-second default. Sources such as the CMS file-server and the postimg
+    // fallback portraits never change under a given URL, and re-fetching a
+    // slow external host every minute is what made the leader cards crawl.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: 'https', hostname: 'pbs.twimg.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
