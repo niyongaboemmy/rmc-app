@@ -52,6 +52,9 @@ interface Props {
   viewAllLabel?: string;
 }
 
+/** The front photo plus the three fanned out behind it. */
+const VISIBLE = 4;
+
 /**
  * A "pile" of photos stacked in 3D — the front photo is in focus while the
  * rest fan out behind it with rotation, offset and scale. Clicking it opens
@@ -66,6 +69,14 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
   }, [onOpen, current]);
 
   if (n === 0) return null;
+
+  // Only the visible cards are laid out. The pile never rotates, so a card
+  // deeper than the fan is never seen — and it is not harmless to keep one
+  // around invisibly: its transform grows with depth (`scale(1 - depth*0.05)`
+  // goes negative past 20 and keeps growing), so a month with 100 photos put
+  // a 2000px card, opacity 0, well below the footer, and the page scrolled
+  // into blank space to reach it.
+  const cards = images.slice(0, VISIBLE);
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -82,9 +93,8 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
         }}
         className="group relative mx-auto w-full max-w-md aspect-[4/3] cursor-pointer select-none [perspective:1200px] focus-visible:outline-none"
       >
-        {images.map((img, i) => {
+        {cards.map((img, i) => {
           const depth = (i - current + n) % n; // 0 = front of the pile
-          const visible = depth < 4;
           const rot = depth === 0 ? 0 : (depth % 2 === 0 ? 1 : -1) * (3 + depth * 2.5);
           const tx = depth * 9;
           const ty = depth * 5;
@@ -97,22 +107,17 @@ export function PileCarousel({ images, onOpen, viewAllLabel = 'View all' }: Prop
               style={{
                 transform: `translateX(${tx}px) translateY(${ty}px) rotateY(${depth * -4}deg) rotate(${rot}deg) scale(${scale})`,
                 zIndex: n - depth,
-                opacity: visible ? 1 : 0,
                 pointerEvents: depth === 0 ? 'auto' : 'none',
               }}
             >
               <div className="relative w-full h-full overflow-hidden rounded-lg bg-gray-100">
-                {/* The pile never rotates, so anything deeper than the four
-                    visible photos is never seen — no photo is mounted for it.
-                    The three fanned out behind the front one are mostly
+                {/* The three fanned out behind the front one are mostly
                     covered and rotated away, so the thumbnail is enough. */}
-                {visible && (
-                  <PilePhoto
-                    img={img}
-                    src={depth === 0 ? img.src : img.thumb ?? img.src}
-                    focused={depth === 0}
-                  />
-                )}
+                <PilePhoto
+                  img={img}
+                  src={depth === 0 ? img.src : img.thumb ?? img.src}
+                  focused={depth === 0}
+                />
                 {/* Focused photo: sheen + "view all" hint on hover */}
                 {depth === 0 && (
                   <>
