@@ -86,7 +86,13 @@ export async function getPost(locale: string, slug: string): Promise<BlogPost | 
   }
   const wanted = blogUrlSlug(requested);
   const posts = await loadPosts(locale);
-  return posts.find((p) => p.slug === wanted);
+  return (
+    posts.find((p) => p.slug === wanted) ??
+    // A built-in article an editor has since written over keeps its address:
+    // links to it were shared (and indexed) before the edit, and should still
+    // open it rather than 404. A current post with the same slug always wins.
+    resolvePosts(null, locale).find((p) => p.slug === wanted)
+  );
 }
 
 /** Estimated reading time in minutes (min 1), ~200 words/min over title + body. */

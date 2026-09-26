@@ -64,6 +64,28 @@ describe('blog post links', () => {
   it('still 404s a slug no post has', async () => {
     mockSaved = savedWithSlugs('EID AL ADHA CELEBRATION 2026-1447');
 
-    expect(await getPost('en', 'free-translated-quran-initiative')).toBeUndefined();
+    expect(await getPost('en', 'no-such-post')).toBeUndefined();
+  });
+
+  it('keeps a built-in article reachable after an editor writes over it', async () => {
+    // Production: the seeded Qur'an article was edited into the Eid post, and
+    // links to /blog/free-translated-quran-initiative started to 404.
+    mockSaved = {
+      posts: [{ ...BLOG_DEFAULT.posts[0], slug: 'EID-AL-ADHA-CELEBRATION-2026-1447', title: { en: 'Eid', rw: '', ar: '' } }],
+    };
+
+    const post = await getPost('en', 'free-translated-quran-initiative');
+
+    expect(post?.title).toBe(BLOG_DEFAULT.posts[0].title.en);
+  });
+
+  it('prefers a current post over the built-in one with the same slug', async () => {
+    mockSaved = {
+      posts: [{ ...BLOG_DEFAULT.posts[0], title: { en: 'Edited in the CMS', rw: '', ar: '' } }],
+    };
+
+    const post = await getPost('en', BLOG_DEFAULT.posts[0].slug);
+
+    expect(post?.title).toBe('Edited in the CMS');
   });
 });
