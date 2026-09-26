@@ -5,14 +5,14 @@ import { WhoWeAreSection } from '@/components/home/WhoWeAreSection';
 import { HowToBecomeMuslimSection } from '@/components/home/HowToBecomeMuslimSection';
 import { AreasOfInterventionSection } from '@/components/home/AreasOfInterventionSection';
 import { ActivitiesEventsSection } from '@/components/home/ActivitiesEventsSection';
-import { AnnouncementsSection } from '@/components/home/AnnouncementsSection';
-import { TendersSection } from '@/components/home/TendersSection';
+import { NewsSection, type NewsStory } from '@/components/home/NewsSection';
 import { StatsSection } from '@/components/home/StatsSection';
 import { PartnersSection } from '@/components/home/PartnersSection';
 import { SocialMediaSection } from '@/components/home/SocialMediaSection';
 import { Footer } from '@/components/layout/Footer';
 import { Reveal } from '@/components/ui/Reveal';
-import { ContentKeys } from '@/lib/content-api';
+import { resolvePosts } from '@/components/blog/blogData';
+import { ContentKeys, type BlogContent } from '@/lib/content-api';
 import { fetchSiteContent } from '@/lib/content/server';
 import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
 
@@ -28,18 +28,46 @@ const HOME_CONTENT_KEYS = [
   ContentKeys.hero,
   ContentKeys.whoWeAre,
   ContentKeys.updates,
-  ContentKeys.howToBecomeMuslim,
   ContentKeys.areas,
-  ContentKeys.activities,
-  ContentKeys.announcements,
-  ContentKeys.tendersHome,
   ContentKeys.stats,
+  ContentKeys.news,
+  ContentKeys.announcements,
+  ContentKeys.activities,
+  ContentKeys.howToBecomeMuslim,
   ContentKeys.partners,
   ContentKeys.social,
 ];
 
-export default async function HomePage() {
+/** How many of the newest blog posts the News section features. */
+const NEWS_STORIES = 3;
+
+export default async function HomePage({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
   const content = await fetchSiteContent(HOME_CONTENT_KEYS);
+
+  // The blog is read from the same (request-cached) store fetch, but kept out of the
+  // provider map above: it carries every post's full body, and the News section
+  // needs only the newest few cards.
+  const { [ContentKeys.blog]: savedBlog } = await fetchSiteContent([ContentKeys.blog]);
+  // Post dates are date-only (YYYY-MM-DD), which parse as UTC midnight — format in
+  // UTC too, or a server west of Greenwich would show the day before.
+  const dateFmt = new Intl.DateTimeFormat(locale, {
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
+  });
+  const stories: NewsStory[] = resolvePosts(savedBlog as BlogContent | undefined, locale)
+    .slice(0, NEWS_STORIES)
+    .map((post) => ({
+      slug: post.slug,
+      title: post.title,
+      excerpt: post.excerpt || post.summary,
+      image: post.image,
+      category: post.category,
+      date: post.date,
+      dateLabel: dateFmt.format(new Date(post.date)),
+    }));
 
   return (
     <SiteContentProvider content={content}>
@@ -60,34 +88,29 @@ export default async function HomePage() {
             <WelcomeCarouselSection />
           </Reveal>
 
-          {/* 3b. How to Become a Muslim — auto-playing muted video, the Shahada, and steps */}
-          <Reveal>
-            <HowToBecomeMuslimSection />
-          </Reveal>
-
-          {/* 5. Areas of Intervention: Dawa, Social & Dev, Education, Foreign Affairs */}
+          {/* 4. What we do — Dawa, Social & Dev, Education, Foreign Affairs */}
           <Reveal>
             <AreasOfInterventionSection />
           </Reveal>
 
-          {/* 6. Activities: Latest & Upcoming Events */}
+          {/* 5. Impact — RMC in Statistics (dark band between the light sections) */}
+          <Reveal>
+            <StatsSection />
+          </Reveal>
+
+          {/* 6. News — latest blog stories beside announcements & tenders */}
+          <Reveal>
+            <NewsSection stories={stories} />
+          </Reveal>
+
+          {/* 7. Activities: Latest & Upcoming Events */}
           <Reveal>
             <ActivitiesEventsSection />
           </Reveal>
 
-          {/* 7. Announcements */}
+          {/* 8. How to Become a Muslim — auto-playing muted video, the Shahada, and steps */}
           <Reveal>
-            <AnnouncementsSection />
-          </Reveal>
-
-          {/* 7b. Tenders */}
-          <Reveal>
-            <TendersSection />
-          </Reveal>
-
-          {/* 8. RMC in Statistics */}
-          <Reveal>
-            <StatsSection />
+            <HowToBecomeMuslimSection />
           </Reveal>
 
           {/* 9. Partners */}

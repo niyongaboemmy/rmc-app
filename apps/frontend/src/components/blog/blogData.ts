@@ -28,13 +28,22 @@ export interface BlogPost {
 
 /** Load published posts for a locale, newest first, merged over the seed. */
 async function loadPosts(locale: string): Promise<BlogPost[]> {
-  let content: BlogContent = BLOG_DEFAULT;
+  let saved: BlogContent | null = null;
   try {
-    const saved = await getSiteContent<BlogContent>(ContentKeys.blog);
-    if (saved) content = mergeContent(BLOG_DEFAULT, saved);
+    saved = await getSiteContent<BlogContent>(ContentKeys.blog);
   } catch {
     // Backend unreachable or section unset — fall back to the seeded defaults.
   }
+  return resolvePosts(saved, locale);
+}
+
+/**
+ * Localize an already-fetched Blog & Posts blob: published posts only, newest
+ * first, merged over the seed. For callers that read the store themselves (the
+ * home page shares one site-content request across all its sections).
+ */
+export function resolvePosts(saved: BlogContent | null | undefined, locale: string): BlogPost[] {
+  const content = saved ? mergeContent(BLOG_DEFAULT, saved) : BLOG_DEFAULT;
 
   return content.posts
     .filter((p) => (p.status ?? 'published') === 'published')

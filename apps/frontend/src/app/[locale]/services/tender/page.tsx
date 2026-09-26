@@ -35,8 +35,6 @@ import { SiteContentProvider } from '@/lib/content/SiteContentProvider';
  * The page's own copy — hero, board header and the bidder's journey — is admin
  * managed and inline-editable. The steps used to be four hard-coded i18n keys; they
  * are now entries in this blob, so their order and wording are the admin's.
- *
- * `tender-service` is this page. The home page's tender teaser is `tenders-home`.
  */
 const PAGE_CONTENT_KEYS = [ContentKeys.tenderService];
 

@@ -197,9 +197,16 @@
       "provinces": "Provinces Covered",
       "services": "Services Offered"
     },
-    "announcements": {
-      "title": "Announcements",
-      "noAnnouncements": "No announcements at this time"
+    "news": {
+      "allNews": "All news",
+      "readStory": "Read story",
+      "noStories": "No stories published yet.",
+      "viewAll": "View all",
+      "announcement": "Announcement",
+      "tender": "Tender",
+      "urgent": "Urgent",
+      "noNotices": "No active announcements or tenders right now.",
+      "pastNotices": "Browse past announcements"
     },
     "upcomingEvents": {
       "title": "Upcoming Events",

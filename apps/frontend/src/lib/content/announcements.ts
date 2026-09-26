@@ -27,7 +27,7 @@ export interface AnnouncementsContent {
  * canonical. The Announcements wiring step finalizes the body text verbatim.
  */
 export const ANNOUNCEMENTS_DEFAULT: AnnouncementsContent = {
-  title: tri('Announcements', 'Amatangazo', 'الإعلانات'),
+  title: tri('Announcements & Tenders', "Amatangazo n'Amasoko", 'الإعلانات والمناقصات'),
   subtitle: tri('Latest news & updates', "Amakuru n'ibishya bigezweho", 'أحدث الأخبار والمستجدات'),
   items: [
     {

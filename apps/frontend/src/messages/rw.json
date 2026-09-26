@@ -197,9 +197,16 @@
       "provinces": "Intara Zirinzwe",
       "services": "Serivisi Zihabwa"
     },
-    "announcements": {
-      "title": "Impanuro",
-      "noAnnouncements": "Nta mpanuro zihari ubu"
+    "news": {
+      "allNews": "Amakuru yose",
+      "readStory": "Soma inkuru",
+      "noStories": "Nta nkuru irashyirwaho.",
+      "viewAll": "Reba byose",
+      "announcement": "Itangazo",
+      "tender": "Isoko",
+      "urgent": "Byihutirwa",
+      "noNotices": "Nta matangazo cyangwa amasoko ari ho ubu.",
+      "pastNotices": "Reba amatangazo yashize"
     },
     "upcomingEvents": {
       "title": "Ibikorwa Bizaza",

@@ -197,9 +197,16 @@
       "provinces": "المقاطعات المشمولة",
       "services": "الخدمات المقدمة"
     },
-    "announcements": {
-      "title": "الإعلانات",
-      "noAnnouncements": "لا توجد إعلانات في الوقت الحالي"
+    "news": {
+      "allNews": "كل الأخبار",
+      "readStory": "اقرأ القصة",
+      "noStories": "لم تُنشر أي قصص بعد.",
+      "viewAll": "عرض الكل",
+      "announcement": "إعلان",
+      "tender": "مناقصة",
+      "urgent": "عاجل",
+      "noNotices": "لا توجد إعلانات أو مناقصات نشطة حاليًا.",
+      "pastNotices": "تصفح الإعلانات السابقة"
     },
     "upcomingEvents": {
       "title": "الفعاليات القادمة",

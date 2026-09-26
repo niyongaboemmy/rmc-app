@@ -43,6 +43,7 @@ export const ContentKeys = {
   projects: 'projects',
   updates: 'updates-programs',
   announcements: 'announcements',
+  news: 'news-home',
   social: 'social-media',
   hero: 'hero',
   blog: 'blog',
@@ -65,9 +66,7 @@ export const ContentKeys = {
   newMuslim: 'new-muslim',
   servicesHero: 'services-hero',
   contactHero: 'contact-hero',
-  tendersHome: 'tenders-home',
-  // The three service BOARD pages. Distinct from `tendersHome`, which is the home
-  // page's tender teaser — the names are close enough that conflating them is easy.
+  // The three service BOARD pages.
   marriage: 'marriage',
   tenderService: 'tender-service',
   jobsService: 'jobs-service',
