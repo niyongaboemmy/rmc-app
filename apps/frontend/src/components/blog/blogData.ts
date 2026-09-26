@@ -10,6 +10,7 @@ import {
   BLOG_DEFAULT,
   resolveBlogImage,
   blogBodyHtml,
+  blogUrlSlug,
   type BlogContent,
 } from '@/lib/content-api';
 
@@ -51,7 +52,7 @@ export function resolvePosts(saved: BlogContent | null | undefined, locale: stri
       const summary = pick(p.summary, locale);
       const bodyHtml = blogBodyHtml(p, locale);
       return {
-        slug: p.slug,
+        slug: blogUrlSlug(p.slug),
         image: resolveBlogImage(p.image),
         date: p.date,
         title: pick(p.title, locale),
@@ -70,10 +71,22 @@ export async function getPosts(locale: string): Promise<BlogPost[]> {
   return loadPosts(locale);
 }
 
-/** A single localized published post by slug. */
+/**
+ * A single localized published post by the slug in its URL. The route hands the
+ * segment over still percent-encoded, so decode it and put it through the same
+ * `blogUrlSlug` the links were built with — old links that spelled a slug out
+ * with spaces or capitals resolve too.
+ */
 export async function getPost(locale: string, slug: string): Promise<BlogPost | undefined> {
+  let requested = slug;
+  try {
+    requested = decodeURIComponent(slug);
+  } catch {
+    // Malformed escape sequence — match the segment as it came.
+  }
+  const wanted = blogUrlSlug(requested);
   const posts = await loadPosts(locale);
-  return posts.find((p) => p.slug === slug);
+  return posts.find((p) => p.slug === wanted);
 }
 
 /** Estimated reading time in minutes (min 1), ~200 words/min over title + body. */

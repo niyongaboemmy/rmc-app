@@ -26,6 +26,7 @@ import {
   resolveBlogImage,
   blogBodyHtml,
   slugifyTitle,
+  blogUrlSlug,
   type BlogContent,
   type BlogPostItem,
   type BlogStatus,
@@ -167,9 +168,9 @@ function BlogManager({ embedded = false }: { embedded?: boolean } = {}) {
       if (!form.summary.en.trim()) return 'English summary is required.';
     }
     if (s === 1) {
-      const slug = (form.slug.trim() || slugifyTitle(form.title.en)).trim();
+      const slug = blogUrlSlug(form.slug.trim() || slugifyTitle(form.title.en));
       if (!slug) return 'Could not derive a slug — please add a title or slug.';
-      if (posts.some((p, i) => p.slug === slug && i !== editingIndex)) {
+      if (posts.some((p, i) => blogUrlSlug(p.slug) === slug && i !== editingIndex)) {
         return `The slug "${slug}" is already used by another post.`;
       }
     }
@@ -196,11 +197,14 @@ function BlogManager({ embedded = false }: { embedded?: boolean } = {}) {
     if (!form.title.en.trim()) { error('English title is required.'); return; }
     if (!form.summary.en.trim()) { error('English summary is required.'); return; }
 
-    const slug = (form.slug.trim() || slugifyTitle(form.title.en)).trim();
+    // Saved in its URL form: a slug typed with spaces, capitals or "#" broke the
+    // post's link (see `blogUrlSlug`).
+    const slug = blogUrlSlug(form.slug.trim() || slugifyTitle(form.title.en));
     if (!slug) { error('Could not derive a slug — please add a title or slug.'); return; }
 
-    // Slug must be unique across posts.
-    const clash = posts.some((p, i) => p.slug === slug && i !== editingIndex);
+    // Slug must be unique across posts — compared in URL form, since that is
+    // what a link resolves to.
+    const clash = posts.some((p, i) => blogUrlSlug(p.slug) === slug && i !== editingIndex);
     if (clash) { error(`The slug "${slug}" is already used by another post.`); return; }
 
     setSaving(true);
@@ -309,7 +313,7 @@ function BlogManager({ embedded = false }: { embedded?: boolean } = {}) {
                   <CalendarDays className="w-3 h-3" />
                   {post.date ? dateFmt.format(new Date(post.date)) : '—'}
                   <span className="text-gray-300">·</span>
-                  <span className="font-mono text-gray-400">/{post.slug}</span>
+                  <span className="font-mono text-gray-400">/{blogUrlSlug(post.slug)}</span>
                 </p>
 
                 <div className="flex items-center gap-1 mt-3 pt-3 border-t border-gray-50">
@@ -319,7 +323,7 @@ function BlogManager({ embedded = false }: { embedded?: boolean } = {}) {
                     <NotifySubscribersButton
                       compact
                       subject={post.title.en || title}
-                      html={`<p>New on the RMC blog: <strong>${post.title.en || title}</strong></p><p><a href="/${lang}/blog/${post.slug}" style="color:#1a7a4a;font-weight:bold;text-decoration:underline">Read the full post →</a></p>`}
+                      html={`<p>New on the RMC blog: <strong>${post.title.en || title}</strong></p><p><a href="/${lang}/blog/${blogUrlSlug(post.slug)}" style="color:#1a7a4a;font-weight:bold;text-decoration:underline">Read the full post →</a></p>`}
                     />
                   )}
                 </div>

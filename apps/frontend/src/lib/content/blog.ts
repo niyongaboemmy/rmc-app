@@ -334,3 +334,19 @@ export function slugifyTitle(value: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 }
+
+/**
+ * The URL form of a stored post slug — what links use and what the detail page
+ * matches against.
+ *
+ * The slug box is free text, and posts were saved with slugs like
+ * "EID AL ADHA CELEBRATION 2026-1447" and "Rwandan Muslim Community
+ * #MeetThePresident". The first 404'd because the route receives the segment
+ * still percent-encoded ("EID%20AL…"), the second because a browser reads "#" as
+ * the end of the path. Slugifying both sides makes those stored values work
+ * without re-saving them. A slug with nothing URL-safe left (Arabic-only, say)
+ * keeps its own text.
+ */
+export function blogUrlSlug(slug: string): string {
+  return slugifyTitle(slug) || slug.trim();
+}
