@@ -39,8 +39,13 @@ export class DonationReconciliationService implements OnModuleInit, OnModuleDest
     // Initial run after a short delay (let the app finish starting up). Held so
     // shutdown can cancel it — otherwise a process that closes within 30s dies
     // with "Driver not Connected" when this fires against a closed connection.
-    this.startupTimer = setTimeout(() => void this.reconcile(), 30_000);
-    this.timer = setInterval(() => void this.reconcile(), this.RUN_INTERVAL_MS);
+    //
+    // Every run is caught: these are fire-and-forget timers, so a rejection (e.g. a
+    // momentary database outage) would otherwise be unhandled and kill the process.
+    const run = () =>
+      this.reconcile().catch((err) => this.logger.error(`[Reconciliation] Run failed: ${err}`));
+    this.startupTimer = setTimeout(run, 30_000);
+    this.timer = setInterval(run, this.RUN_INTERVAL_MS);
   }
 
   onModuleDestroy() {

@@ -33,8 +33,13 @@ export class GoodConductReconciliationService implements OnModuleInit, OnModuleD
   onModuleInit(): void {
     // Held so shutdown can cancel it — a process that closes within 45s would
     // otherwise die querying a connection that is already gone.
-    this.startupTimer = setTimeout(() => void this.tick(), 45_000);
-    this.timer = setInterval(() => void this.tick(), this.RUN_INTERVAL_MS);
+    //
+    // Every run is caught: these are fire-and-forget timers, so a rejection (e.g. a
+    // momentary database outage) would otherwise be unhandled and kill the process.
+    const run = () =>
+      this.tick().catch((err) => this.logger.error(`[GC-Reconciliation] Run failed: ${err}`));
+    this.startupTimer = setTimeout(run, 45_000);
+    this.timer = setInterval(run, this.RUN_INTERVAL_MS);
   }
 
   /** One scheduled pass: settle stuck MoMo payments, then send any due payment reminders. */

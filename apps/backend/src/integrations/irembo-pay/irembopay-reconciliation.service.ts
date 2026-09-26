@@ -43,8 +43,13 @@ export class IremboPayReconciliationService implements OnModuleInit, OnModuleDes
     // cancel it: a short-lived process (a CLI script, a test) closes the app
     // before this fires, and an uncancelled sweep then queries a closed
     // connection and crashes the process on its way out.
-    this.startupTimer = setTimeout(() => void this.reconcile(), 60_000);
-    this.timer = setInterval(() => void this.reconcile(), this.RUN_INTERVAL_MS);
+    //
+    // Every run is caught, too: a rejection from a fire-and-forget timer (e.g. a
+    // momentary database outage) would otherwise be unhandled and kill the process.
+    const run = () =>
+      this.reconcile().catch((err) => this.logger.error(`[IremboPay Reconcile] Run failed: ${err}`));
+    this.startupTimer = setTimeout(run, 60_000);
+    this.timer = setInterval(run, this.RUN_INTERVAL_MS);
   }
 
   onModuleDestroy(): void {
