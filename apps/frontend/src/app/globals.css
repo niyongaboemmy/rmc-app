@@ -372,12 +372,21 @@
   animation: marquee 90s linear infinite;
 }
 
-.animate-marquee:hover {
+/* Same loop, left-to-right — for a second row running against the first. */
+.animate-marquee-reverse {
+  animation: marquee 90s linear infinite reverse;
+}
+
+.animate-marquee:hover,
+.animate-marquee:focus-within,
+.animate-marquee-reverse:hover,
+.animate-marquee-reverse:focus-within {
   animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .animate-marquee-reverse {
     animation: none;
   }
 }

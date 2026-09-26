@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { ExternalLink, X } from 'lucide-react';
@@ -36,161 +36,225 @@ interface PartnerCardEditHandlers {
   onMoveDown: () => void;
 }
 
-function PartnerCard({
+/** Edit Mode card — non-navigating, every field editable in place. The public
+ *  site shows partners in the moving rows below instead (see `MarqueeRow`). */
+function EditablePartnerCard({
   partner,
   sector,
   description,
-  delay,
-  visible,
-  editing,
   locale,
   index,
   count,
-  onOpen,
   handlers,
 }: {
   partner: PartnerItem;
   sector: string;
   description: string;
-  delay: number;
-  visible: boolean;
-  editing: boolean;
   locale: string;
   index: number;
   count: number;
-  onOpen: () => void;
   handlers: PartnerCardEditHandlers;
 }) {
-  const linked = Boolean(partner.website);
   // `sector`/`description` arrive locale-resolved for display; the edit boxes want
   // this locale's own text so an untranslated field opens empty (see `editValue`).
   const lang = locale as Locale;
 
-  const cardClass = `group relative flex h-full flex-col items-center rounded-lg border border-gray-200/70 bg-white px-6 py-8 transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:transform-none hover:-translate-y-2 hover:border-rmc-green/30 hover:shadow-[0_12px_28px_-16px_rgba(26,122,74,0.2)] ${
-    visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-  }`;
+  return (
+    <div className="relative flex h-full flex-col items-center rounded-lg border border-dashed border-rmc-green/40 bg-white px-6 py-8">
+      <CardEditToolbar
+        canMoveUp={index > 0}
+        canMoveDown={index < count - 1}
+        onMoveUp={handlers.onMoveUp}
+        onMoveDown={handlers.onMoveDown}
+        onDelete={handlers.onDelete}
+      />
 
-  // ── Edit mode: a non-navigating card whose every field is editable in place ──
-  if (editing) {
-    return (
-      <div
-        className="relative flex h-full flex-col items-center rounded-lg border border-dashed border-rmc-green/40 bg-white px-6 py-8"
-        style={{ transitionDelay: `${delay}ms` }}
-      >
-        <CardEditToolbar
-          canMoveUp={index > 0}
-          canMoveDown={index < count - 1}
-          onMoveUp={handlers.onMoveUp}
-          onMoveDown={handlers.onMoveDown}
-          onDelete={handlers.onDelete}
+      {/* Logo — click to replace/upload */}
+      <div className="relative h-20 w-full md:h-24">
+        <InlineImage
+          value={partner.logo}
+          onChange={handlers.onLogo}
+          folder="partners"
+          alt={`${partner.name} logo`}
+          className="mx-auto h-full w-40"
+          imgClassName="object-contain p-1"
         />
-
-        {/* Logo — click to replace/upload */}
-        <div className="relative h-20 w-full md:h-24">
-          <InlineImage
-            value={partner.logo}
-            onChange={handlers.onLogo}
-            folder="partners"
-            alt={`${partner.name} logo`}
-            className="mx-auto h-full w-40"
-            imgClassName="object-contain p-1"
-          />
-        </div>
-
-        {/* Name (not translated) */}
-        <InlineText
-          as="p"
-          value={partner.name}
-          onCommit={handlers.onName}
-          className="mt-6 text-center text-sm font-bold uppercase tracking-wide text-gray-900"
-          placeholder="Partner name"
-        />
-
-        {/* Sector (per-language) */}
-        <InlineText
-          as="p"
-          lang={locale}
-          value={sector}
-          editValue={partner.sector[lang]}
-          onCommit={handlers.onSector}
-          className="mt-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold"
-          placeholder="Sector"
-        />
-
-        {/* Description (per-language) — shown in the partner modal */}
-        <InlineText
-          as="p"
-          lang={locale}
-          value={description}
-          editValue={partner.description?.[lang] ?? ''}
-          onCommit={handlers.onDescription}
-          className="mt-3 text-center text-xs leading-relaxed text-gray-500"
-          placeholder="Short description"
-        />
-
-        {/* Website target */}
-        <div className="mt-4">
-          <InlineLink value={partner.website ?? ''} onChange={handlers.onWebsite} />
-        </div>
       </div>
-    );
-  }
 
-  const content = (
-    <>
-      {/* External-link hint — only for partners with a website */}
-      {linked && (
-        <span
-          aria-hidden
-          className="absolute right-3.5 top-3.5 grid place-items-center w-6 h-6 rounded-full bg-rmc-green/10 text-rmc-green opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0"
-        >
-          <ExternalLink className="w-3 h-3" />
-        </span>
-      )}
+      {/* Name (not translated) */}
+      <InlineText
+        as="p"
+        value={partner.name}
+        onCommit={handlers.onName}
+        className="mt-6 text-center text-sm font-bold uppercase tracking-wide text-gray-900"
+        placeholder="Partner name"
+      />
 
+      {/* Sector (per-language) */}
+      <InlineText
+        as="p"
+        lang={locale}
+        value={sector}
+        editValue={partner.sector[lang]}
+        onCommit={handlers.onSector}
+        className="mt-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold"
+        placeholder="Sector"
+      />
+
+      {/* Description (per-language) — shown in the partner modal */}
+      <InlineText
+        as="p"
+        lang={locale}
+        value={description}
+        editValue={partner.description?.[lang] ?? ''}
+        onCommit={handlers.onDescription}
+        className="mt-3 text-center text-xs leading-relaxed text-gray-500"
+        placeholder="Short description"
+      />
+
+      {/* Website target */}
+      <div className="mt-4">
+        <InlineLink value={partner.website ?? ''} onChange={handlers.onWebsite} />
+      </div>
+    </div>
+  );
+}
+
+/** A compact partner tile for the moving rows. Clicking opens the detail modal. */
+function PartnerTile({
+  partner,
+  sector,
+  locale,
+  inert,
+  onOpen,
+}: {
+  partner: PartnerItem;
+  sector: string;
+  locale: string;
+  /** A loop copy — kept out of the tab order (its row hides it from assistive tech). */
+  inert: boolean;
+  onOpen: () => void;
+}) {
+  const rtl = isRtl(locale);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      tabIndex={inert ? -1 : undefined}
+      aria-label={`${pick({ en: 'About', rw: 'Ibyerekeye', ar: 'حول' }, locale)} ${partner.name}`}
+      className="group relative flex h-full w-48 flex-col items-center rounded-lg border border-gray-200/70 bg-white px-3 py-5 text-center transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-0.5 hover:border-rmc-green/30 hover:shadow-[0_12px_28px_-16px_rgba(26,122,74,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    >
       {/* Logo — fixed box so every partner aligns regardless of aspect ratio.
           Guard the empty case: next/image throws on an empty src (can happen for
           a partner added but not yet given a logo before publish). */}
-      <div className="relative flex h-20 w-full items-center justify-center md:h-24">
+      <div className="relative h-14 w-full">
         {partner.logo ? (
           <Image
             src={assetUrl(partner.logo)}
             alt={`${partner.name} logo`}
             fill
-            sizes="(max-width: 640px) 40vw, 220px"
-            className="object-contain p-1 transition-transform duration-500 motion-reduce:transform-none group-hover:scale-105"
+            sizes="144px"
+            className="object-contain"
           />
         ) : (
           <div className="h-full w-full rounded-md bg-gray-50" aria-hidden />
         )}
       </div>
 
-      {/* Name */}
-      <p className="mt-6 text-sm font-bold uppercase tracking-wide text-gray-900 transition-colors duration-200 group-hover:text-rmc-green">
+      <p className="mt-4 w-full truncate text-xs font-bold uppercase tracking-wide text-gray-900 transition-colors duration-200 group-hover:text-rmc-green">
         {partner.name}
       </p>
-
-      {/* Sector */}
-      <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rmc-gold">
+      <p
+        dir={rtl ? 'rtl' : 'ltr'}
+        className={`mt-1 w-full text-[10px] font-semibold text-rmc-gold ${rtl ? 'font-arabic line-clamp-2' : 'truncate uppercase tracking-[0.1em]'}`}
+      >
         {sector}
       </p>
-    </>
-  );
-
-  const ring =
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rmc-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white';
-
-  // Clicking any partner opens its detail modal (short note + optional website).
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={`${pick({ en: 'About', rw: 'Ibyerekeye', ar: 'حول' }, locale)} ${partner.name}`}
-      className={`${cardClass} ${ring} text-center`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {content}
     </button>
+  );
+}
+
+type PartnerEntry = { partner: PartnerItem; index: number };
+
+/** Tiles in one copy of a row — enough that it spans the widest container, so the
+ *  loop never shows a gap however few partners there are. */
+const MIN_TILES_PER_LOOP = 8;
+/** Seconds per tile, so a row moves at the same speed whatever its length. */
+const SECONDS_PER_TILE = 4;
+/** From this many partners the two rows split them; below it, both show them all. */
+const SPLIT_AT = 8;
+
+/**
+ * One endlessly scrolling row. The track holds the row twice over and slides by
+ * half its width, so the second copy lands exactly where the first began. Hover
+ * or keyboard focus pauses it (see `.animate-marquee` in globals.css).
+ */
+function MarqueeRow({
+  entries,
+  reverse,
+  mirror,
+  locale,
+  onOpen,
+}: {
+  entries: PartnerEntry[];
+  reverse: boolean;
+  /** The row repeats partners already listed in the other one — hide it from AT. */
+  mirror: boolean;
+  locale: string;
+  onOpen: (index: number) => void;
+}) {
+  const reps = Math.ceil(MIN_TILES_PER_LOOP / entries.length);
+  const loop = Array.from({ length: reps }, () => entries).flat();
+  const track = [...loop, ...loop];
+
+  // Hold the loop while the row is scrolled out of view — nothing to see, so no
+  // reason to keep the compositor animating it.
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [onScreen, setOnScreen] = useState(false);
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    // LTR regardless of locale: the loop's -50% slide assumes the track starts at
+    // the left edge. Edge fades soften where tiles enter and leave.
+    <div
+      ref={viewportRef}
+      dir="ltr"
+      aria-hidden={mirror || undefined}
+      className="overflow-hidden py-1.5 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)] motion-reduce:overflow-x-auto"
+    >
+      <ul
+        className={`flex w-max ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'}`}
+        // Paused only while off screen; otherwise left unset so the hover/focus pause
+        // in globals.css still applies.
+        style={{
+          animationDuration: `${loop.length * SECONDS_PER_TILE}s`,
+          animationPlayState: onScreen ? undefined : 'paused',
+        }}
+      >
+        {track.map(({ partner, index }, i) => {
+          // Only the first pass of a non-mirror row is real content; the rest is loop.
+          const inert = mirror || i >= entries.length;
+          return (
+            <li key={i} className="shrink-0 pr-4" aria-hidden={(!mirror && inert) || undefined}>
+              <PartnerTile
+                partner={partner}
+                sector={pick(partner.sector, locale)}
+                locale={locale}
+                inert={inert}
+                onOpen={() => onOpen(index)}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -334,7 +398,6 @@ function PartnerModal({
 export function PartnersSection() {
   const { locale } = useParams<{ locale: string }>();
   const { ref: titleRef, visible: titleVisible } = useScrollReveal(0.1);
-  const { ref: gridRef, visible: gridVisible } = useScrollReveal(0.05);
 
   // Content managed from Admin → Content → Our Partners. Falls back to the
   // built-in defaults until something is saved. In super-admin Edit Mode the
@@ -371,6 +434,14 @@ export function PartnersSection() {
   const title = pick(content.title, locale);
   const lede = pick(content.lede, locale);
   const footerNote = pick(content.footerNote, locale);
+  // Many partners are split across the two rows. With few, both rows carry them
+  // all — the second in reverse order, so the rows never mirror each other.
+  const entries: PartnerEntry[] = content.items.map((partner, index) => ({ partner, index }));
+  const split = entries.length >= SPLIT_AT;
+  const [rowA, rowB] = split
+    ? [entries.filter((_, i) => i % 2 === 0), entries.filter((_, i) => i % 2 === 1)]
+    : [entries, [...entries].reverse()];
+
   // Unresolved active-locale copy, for the edit boxes only — see `editValue`.
   const rawTitle = content.title[lang];
   const rawLede = content.lede[lang];
@@ -437,38 +508,44 @@ export function PartnersSection() {
           )}
         </div>
 
-        {/* Partner logo wall */}
-        <div ref={gridRef} className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
-          {content.items.map((partner, i) => (
-            <PartnerCard
-              key={i}
-              partner={partner}
-              sector={pick(partner.sector, locale)}
-              description={pick(partner.description, locale)}
-              delay={i * 90}
-              visible={gridVisible}
-              editing={editing}
-              locale={locale}
-              index={i}
-              count={content.items.length}
-              onOpen={() => setOpenIndex(i)}
-              handlers={{
-                onLogo: (key) => setField((d) => { d.items[i].logo = key; }),
-                onName: (v) => setField((d) => { d.items[i].name = v; }),
-                onSector: (v) => setField((d) => { d.items[i].sector[lang] = v; }),
-                onDescription: (v) => setField((d) => {
-                  if (!d.items[i].description) d.items[i].description = tri('');
-                  d.items[i].description![lang] = v;
-                }),
-                onWebsite: (v) => setField((d) => { d.items[i].website = v; }),
-                onDelete: () => deletePartner(i),
-                onMoveUp: () => movePartner(i, -1),
-                onMoveDown: () => movePartner(i, 1),
-              }}
-            />
-          ))}
-          {editing && <AddCardTile label="Add partner" onClick={addPartner} />}
-        </div>
+        {/* Partners — two rows gliding in opposite directions on the public site;
+            a static, editable grid in Edit Mode (moving cards can't be edited). */}
+        {!editing && entries.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <MarqueeRow entries={rowA} reverse={false} mirror={false} locale={locale} onOpen={setOpenIndex} />
+            <MarqueeRow entries={rowB} reverse mirror={!split} locale={locale} onOpen={setOpenIndex} />
+          </div>
+        )}
+
+        {editing && (
+          <div className="grid grid-cols-2 gap-5 sm:gap-6 lg:grid-cols-4">
+            {content.items.map((partner, i) => (
+              <EditablePartnerCard
+                key={i}
+                partner={partner}
+                sector={pick(partner.sector, locale)}
+                description={pick(partner.description, locale)}
+                locale={locale}
+                index={i}
+                count={content.items.length}
+                handlers={{
+                  onLogo: (key) => setField((d) => { d.items[i].logo = key; }),
+                  onName: (v) => setField((d) => { d.items[i].name = v; }),
+                  onSector: (v) => setField((d) => { d.items[i].sector[lang] = v; }),
+                  onDescription: (v) => setField((d) => {
+                    if (!d.items[i].description) d.items[i].description = tri('');
+                    d.items[i].description![lang] = v;
+                  }),
+                  onWebsite: (v) => setField((d) => { d.items[i].website = v; }),
+                  onDelete: () => deletePartner(i),
+                  onMoveUp: () => movePartner(i, -1),
+                  onMoveDown: () => movePartner(i, 1),
+                }}
+              />
+            ))}
+            <AddCardTile label="Add partner" onClick={addPartner} />
+          </div>
+        )}
 
         {/* Footer note */}
         {editing ? (
