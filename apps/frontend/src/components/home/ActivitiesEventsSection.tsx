@@ -308,7 +308,21 @@ export function ActivitiesEventsSection() {
               </Link>
             </div>
 
+            {/* Empty state — nothing published yet (or the content failed to load) */}
+            {latestItems.length === 0 && (
+              <div className="flex-1 rounded-lg border border-dashed border-gray-200 bg-white/50 p-8 text-center flex flex-col items-center justify-center animate-fade-up">
+                <Newspaper className="w-8 h-8 text-gray-300 mb-2" aria-hidden="true" />
+                <p className={`text-sm font-semibold text-gray-600 ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
+                  {pick({ en: 'No recent activities', rw: 'Nta bikorwa bishya', ar: 'لا توجد أنشطة حديثة' }, locale)}
+                </p>
+                <p className={`text-[11px] text-gray-400 mt-1 ${arFont}`} dir={rtl ? 'rtl' : 'ltr'}>
+                  {pick({ en: 'New activities will appear here.', rw: 'Ibikorwa bishya bizagaragara hano.', ar: 'ستظهر الأنشطة الجديدة هنا.' }, locale)}
+                </p>
+              </div>
+            )}
+
             {/* News rows joined by hairlines — each opens an image gallery */}
+            {latestItems.length > 0 && (
             <div className="flex-1 rounded-lg border border-gray-200/70 bg-white divide-y divide-gray-100 overflow-hidden">
               {latestItems.map((item, i) => {
                 const delay = { animationDelay: `${i * 90 + 220}ms` };
@@ -554,6 +568,7 @@ export function ActivitiesEventsSection() {
                 );
               })}
             </div>
+            )}
           </div>
 
           {/* ════════ UPCOMING EVENTS — right (2 cols) ════════ */}
