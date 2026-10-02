@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AttachmentDto } from '../../common/dto/attachment.dto';
 
 const blankToUndefined = Transform(({ value }) => (value === '' ? undefined : value));
 
@@ -76,10 +77,12 @@ export class CreateScholarshipProgramDto {
   @Type(() => RequiredDocumentDto)
   requiredDocuments?: RequiredDocumentDto[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [AttachmentDto] })
   @IsOptional()
   @IsArray()
-  attachments?: Array<{ key: string; name: string; mimeType: string; size: number }>;
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 
   /**
    * The education level key, as defined in the Scholarships CMS section.

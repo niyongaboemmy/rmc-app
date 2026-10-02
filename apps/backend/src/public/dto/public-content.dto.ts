@@ -14,7 +14,10 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { AttachmentDto } from '../../common/dto/attachment.dto';
 
 /**
  * DTOs for the admin-managed content served by PublicController.
@@ -52,7 +55,9 @@ export class CreateAnnouncementDto {
   @ApiPropertyOptional() @IsOptional() @IsDateString() expiresAt?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isPublished?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsIn(['announcement', 'tender']) type?: string;
-  @ApiPropertyOptional() @IsOptional() @IsArray() attachments?: unknown[];
+  @ApiPropertyOptional({ type: [AttachmentDto] })
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 }
 export class UpdateAnnouncementDto extends PartialType(CreateAnnouncementDto) {}
 

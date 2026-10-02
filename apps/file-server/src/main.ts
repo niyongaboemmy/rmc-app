@@ -71,10 +71,19 @@ async function bootstrap() {
   // crossOriginEmbedderPolicy is disabled for the same reason — COEP
   // require-corp would force every sub-resource to opt-in, which breaks
   // cross-origin XHR responses before the client can even read them.
+  // frame-ancestors lists the app origins, not just 'self': the admin and the
+  // public tender page preview PDFs in an <iframe>, and the app is always a
+  // different origin from this server. Helmet's defaults ('self' plus
+  // X-Frame-Options: SAMEORIGIN) left every preview blank. X-Frame-Options can't
+  // name an origin, so it is dropped — frame-ancestors supersedes it anyway.
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
       crossOriginEmbedderPolicy: false,
+      contentSecurityPolicy: {
+        directives: { frameAncestors: ["'self'", ...allowedOrigins] },
+      },
+      frameguard: false,
     }),
   );
   app.use(compression());

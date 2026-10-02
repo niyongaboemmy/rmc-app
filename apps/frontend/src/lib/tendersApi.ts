@@ -15,8 +15,26 @@ export interface TenderAttachment {
   size: number;
 }
 
+/**
+ * Drops attachment entries that are not a real file record. A validation bug
+ * once saved every uploaded file as `[]`, and rows written then still hold
+ * them; rendering one crashed the tender page, and sending it back on an
+ * admin edit would now be rejected by the API.
+ */
+export function validAttachments<T extends TenderAttachment>(list: unknown): T[] {
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (a): a is T =>
+      !!a && typeof a === 'object' && !Array.isArray(a) &&
+      typeof (a as TenderAttachment).key === 'string' &&
+      typeof (a as TenderAttachment).mimeType === 'string',
+  );
+}
+
 export interface Tender {
   id: string;
+  /** Public address: /tenders/<slug>. Assigned by the backend on create/update. */
+  slug: string | null;
   /** Plain-text fallback (EN canonical). */
   title: string;
   content: string;

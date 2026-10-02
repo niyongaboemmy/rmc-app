@@ -10,6 +10,7 @@ import {
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { publicApi } from '@/lib/public-api';
+import { validAttachments } from '@/lib/tendersApi';
 import { fileUrl } from '@/lib/api';
 import { useTranslations } from 'next-intl';
 import { InlineText } from '@/components/edit-mode/InlineText';
@@ -186,7 +187,7 @@ export default function TenderDetailPage() {
   useEffect(() => {
     publicApi
       .getTender(slug)
-      .then((data) => setTender(data as Tender))
+      .then((data) => setTender({ ...(data as Tender), attachments: validAttachments(data.attachments) }))
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [slug]);
