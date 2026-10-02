@@ -39,7 +39,7 @@ export default function JobsServiceContentPage() {
           detailFields={DETAIL_FIELDS}
           publicPath="/services/jobs"
           recordsLabel="Job Postings"
-          recordsHref="/admin/job-postings"
+          recordsHref="/admin/jobs/manage"
           recordsNote="The openings listed on the board — descriptions, deadlines and status"
         />
       </ToastProvider>

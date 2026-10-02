@@ -107,7 +107,7 @@ describe('ScholarshipProgramsTab — publish and close', () => {
 
   // The disabled one has to say WHY, or it is just a control that does nothing.
   it.each([
-    ['published', /close/i, /already published/i],
+    ['published', /close/i, /already open/i],
     ['draft', /close/i, /publish it before/i],
     ['closed', /close/i, /already closed/i],
   ] as const)('a %s row explains why the unavailable action is unavailable', async (status, _n, reason) => {
@@ -118,7 +118,12 @@ describe('ScholarshipProgramsTab — publish and close', () => {
     const disabled = row
       .getAllByRole('button')
       .filter((b) => b.hasAttribute('disabled'))
-      .map((b) => b.getAttribute('title') ?? '');
+      .map((b) => {
+        // The reason is the button's accessible description: a tooltip wired by
+        // aria-describedby, so a screen reader hears it and not just a mouse.
+        const id = b.getAttribute('aria-describedby');
+        return (id && document.getElementById(id)?.textContent) || '';
+      });
 
     expect(disabled.some((t) => reason.test(t))).toBe(true);
   });
@@ -183,9 +188,8 @@ describe('ScholarshipProgramsTab — publish and close', () => {
     render(<ScholarshipProgramsTab canManage />);
 
     const row = await actionsFor('S4 bursary');
-    expect(row.getByRole('button', { name: /publish/i })).toHaveAttribute(
-      'title',
-      expect.stringContaining('visible to applicants'),
+    expect(row.getByRole('button', { name: /publish/i })).toHaveAccessibleDescription(
+      expect.stringContaining('visible and open for applications'),
     );
   });
 

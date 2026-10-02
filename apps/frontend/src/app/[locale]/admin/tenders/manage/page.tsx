@@ -12,13 +12,17 @@ import {
 } from '@/components/ui/Modal';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import {
-  tendersApi, uploadTenderFile,
+  tendersApi, uploadTenderFile, validAttachments,
   type Tender, type TenderAttachment, type TenderI18n, type CreateTenderDto,
 } from '@/lib/tendersApi';
 import { fileUrl } from '@/lib/api';
 import { readDeadline } from '@/lib/deadline';
 import {
-  FileText, ArrowLeft, Plus, Edit2, Trash2, Save,
+  PublishingActions, PublishStateBadge, Tip, iconToolClass, publishingConfirmCopy, serverMessage,
+  type PublishAction, type PublishState,
+} from '@/components/admin/shared/PublishingActions';
+import {
+  FileText, ArrowLeft, Plus, Save,
   Clock, Upload, X, Eye, Paperclip, AlertCircle,
   CheckCircle2, Loader2, ExternalLink, Globe,
 } from 'lucide-react';
@@ -81,6 +85,11 @@ function deadlineBadge(expiresAt: string | null): string {
   return 'bg-green-100 text-green-700';
 }
 
+function tenderState(t: Tender): PublishState {
+  if (!t.isPublished) return 'draft';
+  return readDeadline(t.expiresAt).closed ? 'closed' : 'open';
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -105,6 +114,16 @@ const EMPTY_FORM: CreateTenderDto = {
 };
 
 // ── Upload state ──────────────────────────────────────────────────────────────
+
+/** What the preview overlay shows — a saved attachment or a file not yet uploaded. */
+interface PreviewTarget {
+  name: string;
+  size: number;
+  mimeType: string;
+  url: string;
+  /** A blob: URL for a local file, released when the preview closes. */
+  local?: boolean;
+}
 
 interface UploadItem {
   id: string;
@@ -138,8 +157,27 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [previewAttachment, setPreviewAttachment] = useState<TenderAttachment | null>(null);
+  const [reopening, setReopening] = useState(false);
+  const [pending, setPending] = useState<{ kind: PublishAction; tender: Tender } | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
+
+  function previewSaved(att: TenderAttachment) {
+    setPreview({ name: att.name, size: att.size, mimeType: att.mimeType, url: fileUrl(att.key) });
+  }
+
+  // A file that hasn't been uploaded yet is shown straight from the admin's
+  // machine through a blob: URL — nothing is sent to the file-server to preview it.
+  function previewLocal(file: File) {
+    setPreview({ name: file.name, size: file.size, mimeType: file.type, url: URL.createObjectURL(file), local: true });
+  }
+
+  function closePreview() {
+    setPreview((p) => {
+      if (p?.local) URL.revokeObjectURL(p.url);
+      return null;
+    });
+  }
   const [modalLang, setModalLang] = useState<Lang>('en');
 
   const [form, setForm] = useState<CreateTenderDto>(EMPTY_FORM);
@@ -159,14 +197,21 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
 
   function openCreate() {
     setEditingId(null);
+    setReopening(false);
     setForm({ ...EMPTY_FORM, publishAt: new Date().toISOString() });
     setUploadQueue([]);
     setModalLang('en');
     setIsModalOpen(true);
   }
 
-  function openEdit(t: Tender) {
+  /**
+   * `reopen` opens the same form for a tender whose deadline has passed, published
+   * and with the deadline emptied, so the admin picks a new one before it goes
+   * live. Reopening with no deadline at all would silently leave it open forever.
+   */
+  function openEdit(t: Tender, reopen = false) {
     setEditingId(t.id);
+    setReopening(reopen);
     setForm({
       title: t.title,
       content: t.content,
@@ -174,9 +219,9 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
       contentI18n: t.contentI18n ?? { en: t.content, rw: '', ar: '' },
       priority: t.priority,
       publishAt: t.publishAt,
-      expiresAt: t.expiresAt,
-      isPublished: t.isPublished,
-      attachments: t.attachments ?? [],
+      expiresAt: reopen ? null : t.expiresAt,
+      isPublished: reopen ? true : t.isPublished,
+      attachments: validAttachments(t.attachments),
     });
     setUploadQueue([]);
     setModalLang('en');
@@ -212,6 +257,10 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
     if (!form.titleI18n.en.trim() || !form.contentI18n.en.trim()) {
       error('English title and description are required.'); return;
     }
+    // Same rule the bid endpoint applies, so "reopened" can't mean already closed.
+    if (reopening && (!form.expiresAt || readDeadline(form.expiresAt).closed)) {
+      error('Set a new deadline after today to reopen this tender.'); return;
+    }
 
     setSaving(true);
 
@@ -240,7 +289,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
       if (editingId) {
         const updated = await tendersApi.update(editingId, payload);
         setTenders((prev) => prev.map((t) => (t.id === editingId ? updated : t)));
-        success('Tender updated.');
+        success(reopening ? 'Tender reopened.' : 'Tender updated.');
       } else {
         const created = await tendersApi.create(payload);
         setTenders((prev) => [created, ...prev]);
@@ -252,22 +301,44 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
     } finally {
       setSaving(false);
     }
-  }, [form, editingId, uploadQueue, error, success]);
+  }, [form, editingId, reopening, uploadQueue, error, success]);
 
-  const handleDelete = useCallback(async () => {
-    if (!deleteId) return;
-    setSaving(true);
+  /**
+   * A tender has no status column: it is a draft until published, and closed once
+   * its deadline passes — the bid endpoint already refuses anything after
+   * `expiresAt`. So closing moves the deadline to now. Publishing one whose
+   * deadline has passed never comes through here: it opens the form instead
+   * (see `onTenderAction`), because it needs a new deadline first.
+   */
+  const runPending = useCallback(async () => {
+    if (!pending) return;
+    const { kind, tender } = pending;
+    setBusyId(tender.id);
     try {
-      await tendersApi.delete(deleteId);
-      setTenders((prev) => prev.filter((t) => t.id !== deleteId));
-      success('Tender deleted.');
-      setDeleteId(null);
-    } catch {
-      error('Delete failed.');
+      if (kind === 'delete') {
+        await tendersApi.delete(tender.id);
+        setTenders((prev) => prev.filter((t) => t.id !== tender.id));
+        success('Tender deleted.');
+      } else {
+        const patch: Partial<CreateTenderDto> =
+          kind === 'close' ? { expiresAt: new Date().toISOString() } : { isPublished: true };
+        const updated = await tendersApi.update(tender.id, patch);
+        setTenders((prev) => prev.map((t) => (t.id === tender.id ? updated : t)));
+        success(kind === 'close' ? 'Tender closed.' : 'Tender published.');
+      }
+      setPending(null);
+    } catch (err) {
+      error(serverMessage(err, `Could not ${kind} this tender.`));
     } finally {
-      setSaving(false);
+      setBusyId(null);
     }
-  }, [deleteId, error, success]);
+  }, [pending, error, success]);
+
+  /** Reopening — or publishing a draft whose deadline already passed — goes to the form. */
+  function onTenderAction(kind: PublishAction, t: Tender) {
+    if (kind === 'publish' && readDeadline(t.expiresAt).closed) openEdit(t, true);
+    else setPending({ kind, tender: t });
+  }
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -337,6 +408,8 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
             const title   = t.titleI18n?.[listLang]   || t.titleI18n?.en   || t.title;
             const preview = t.contentI18n?.[listLang] || t.contentI18n?.en || t.content;
             const isRtl   = listLang === 'ar';
+            const fileCount = validAttachments(t.attachments).length;
+            const state = tenderState(t);
 
             return (
               <div
@@ -348,10 +421,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${t.isPublished ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {t.isPublished ? <CheckCircle2 className="w-2.5 h-2.5" /> : <AlertCircle className="w-2.5 h-2.5" />}
-                      {t.isPublished ? 'Published' : 'Draft'}
-                    </span>
+                    <PublishStateBadge state={state} className="!text-[10px] !px-2" />
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${PRIORITY_STYLES[t.priority]?.badge}`}>
                       {PRIORITY_STYLES[t.priority]?.label}
                     </span>
@@ -359,10 +429,10 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
                       <Clock className="w-2.5 h-2.5" />
                       {deadlineLabel(t.expiresAt)}
                     </span>
-                    {(t.attachments?.length ?? 0) > 0 && (
+                    {fileCount > 0 && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
                         <Paperclip className="w-2.5 h-2.5" />
-                        {t.attachments.length} file{t.attachments.length !== 1 ? 's' : ''}
+                        {fileCount} file{fileCount !== 1 ? 's' : ''}
                       </span>
                     )}
                     {/* i18n completeness indicators */}
@@ -388,27 +458,25 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-2 shrink-0">
-                  <div className="flex items-center gap-1">
-                    <Link
-                      href={`/${locale}/tenders/${t.id}`}
-                      target="_blank"
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Link>
-                    <button
-                      onClick={() => openEdit(t)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteId(t.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <PublishingActions
+                    state={state}
+                    busy={busyId === t.id}
+                    noun="tender"
+                    submissions="bids"
+                    onAction={(kind) => onTenderAction(kind, t)}
+                    onEdit={() => openEdit(t)}
+                  >
+                    <Tip label="View public page">
+                      <Link
+                        href={`/${locale}/tenders/${t.slug ?? t.id}`}
+                        target="_blank"
+                        aria-label="View public page"
+                        className={`${iconToolClass} hover:text-blue-600 hover:border-blue-300`}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
+                    </Tip>
+                  </PublishingActions>
                   <span className="text-[10px] text-gray-300">{toDateInput(t.publishAt)}</span>
                 </div>
               </div>
@@ -420,8 +488,12 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
       {/* ── Create / Edit modal ── */}
       <Modal isOpen={isModalOpen} onClose={() => !saving && setIsModalOpen(false)} size="xl">
         <ModalHeader>
-          <ModalTitle>{editingId ? 'Edit Tender' : 'New Tender'}</ModalTitle>
-          <ModalDescription>Fill in all three languages. Attach PDF documents or images.</ModalDescription>
+          <ModalTitle>{reopening ? 'Reopen Tender' : editingId ? 'Edit Tender' : 'New Tender'}</ModalTitle>
+          <ModalDescription>
+            {reopening
+              ? 'Set a new deadline, then save to start accepting bids again.'
+              : 'Fill in all three languages. Attach PDF documents or images.'}
+          </ModalDescription>
         </ModalHeader>
         <ModalBody className="space-y-5">
 
@@ -457,13 +529,19 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Deadline <span className="text-amber-500 font-normal">(optional)</span>
+                {reopening
+                  ? <>New deadline <span className="text-red-500">*</span></>
+                  : <>Deadline <span className="text-amber-500 font-normal">(optional)</span></>}
               </label>
               <input
                 type="date"
+                autoFocus={reopening}
+                min={reopening ? toDateInput(new Date(Date.now() + 86_400_000).toISOString()) : undefined}
                 value={form.expiresAt ? toDateInput(form.expiresAt) : ''}
                 onChange={(e) => set('expiresAt', e.target.value ? fromDateInput(e.target.value) : null)}
-                className="w-full rounded-lg border border-amber-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent"
+                className={`w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rmc-green focus:border-transparent ${
+                  reopening && !form.expiresAt ? 'border-red-300 ring-2 ring-red-100' : 'border-amber-200'
+                }`}
               />
             </div>
           </div>
@@ -562,7 +640,7 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
                   <AttachmentRow
                     key={att.key}
                     att={att}
-                    onPreview={() => setPreviewAttachment(att)}
+                    onPreview={() => previewSaved(att)}
                     onRemove={() => set('attachments', form.attachments.filter((a) => a.key !== att.key))}
                   />
                 ))}
@@ -573,7 +651,12 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
             {uploadQueue.length > 0 && (
               <div className="mb-3 space-y-2">
                 {uploadQueue.map((item) => (
-                  <UploadRow key={item.id} item={item} onRemove={() => removeQueued(item.id)} />
+                  <UploadRow
+                    key={item.id}
+                    item={item}
+                    onPreview={() => previewLocal(item.file)}
+                    onRemove={() => removeQueued(item.id)}
+                  />
                 ))}
               </div>
             )}
@@ -622,22 +705,26 @@ function TendersManager({ embedded = false }: { embedded?: boolean } = {}) {
       </Modal>
 
       {/* Attachment preview overlay */}
-      {previewAttachment && (
-        <AttachmentPreviewModal att={previewAttachment} onClose={() => setPreviewAttachment(null)} />
+      {preview && (
+        <AttachmentPreviewModal target={preview} onClose={closePreview} />
       )}
 
-      {/* Delete confirm */}
-      <ConfirmModal
-        isOpen={deleteId !== null}
-        onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
-        title="Delete tender?"
-        description="This will permanently remove the tender and its listing from the public page."
-        confirmLabel="Delete"
-        cancelLabel="Keep"
-        variant="danger"
-        isLoading={saving}
-      />
+      {pending && (
+        <ConfirmModal
+          open
+          onClose={() => { if (busyId === null) setPending(null); }}
+          onConfirm={runPending}
+          isLoading={busyId !== null}
+          {...publishingConfirmCopy({
+            action: pending.kind,
+            state: tenderState(pending.tender),
+            title: pending.tender.titleI18n?.en || pending.tender.title,
+            noun: 'tender',
+            submissions: 'bids',
+            deleteNote: 'Bids already received stay on record.',
+          })}
+        />
+      )}
     </div>
   );
 }
@@ -679,19 +766,26 @@ function AttachmentRow({
         <p className="text-xs font-semibold text-gray-700 truncate">{att.name}</p>
         <p className="text-[10px] text-gray-400">{formatSize(att.size)}</p>
       </div>
-      <button type="button" onClick={onPreview} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors shrink-0">
-        <Eye className="w-3.5 h-3.5" />
-      </button>
-      <button type="button" onClick={onRemove} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
-        <X className="w-3.5 h-3.5" />
-      </button>
+      <Tip label="Preview" side="start">
+        <button type="button" onClick={onPreview} aria-label="Preview attachment" className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors shrink-0">
+          <Eye className="w-3.5 h-3.5" />
+        </button>
+      </Tip>
+      <Tip label="Remove" side="start">
+        <button type="button" onClick={onRemove} aria-label="Remove attachment" className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </Tip>
     </div>
   );
 }
 
 // ── Upload row (in-progress) ──────────────────────────────────────────────────
 
-function UploadRow({ item, onRemove }: { item: UploadItem; onRemove: () => void }) {
+function UploadRow({
+  item, onPreview, onRemove,
+}: { item: UploadItem; onPreview: () => void; onRemove: () => void }) {
+  const canPreview = isPdf(item.file.type) || isImage(item.file.type);
   return (
     <div className="flex items-center gap-3 px-3 py-2 rounded-xl border border-gray-100 bg-gray-50">
       <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0">
@@ -711,10 +805,19 @@ function UploadRow({ item, onRemove }: { item: UploadItem; onRemove: () => void 
         {item.status === 'done'    && <p className="text-[10px] text-green-600">Uploaded</p>}
         {item.status === 'pending' && <p className="text-[10px] text-gray-400">{formatSize(item.file.size)} — will upload on save</p>}
       </div>
+      {canPreview && (
+        <Tip label="Preview" side="start">
+          <button type="button" onClick={onPreview} aria-label="Preview file" className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors shrink-0">
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+        </Tip>
+      )}
       {(item.status === 'pending' || item.status === 'error') && (
-        <button type="button" onClick={onRemove} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
-          <X className="w-3.5 h-3.5" />
-        </button>
+        <Tip label="Remove" side="start">
+          <button type="button" onClick={onRemove} aria-label="Remove file" className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </Tip>
       )}
     </div>
   );
@@ -722,8 +825,8 @@ function UploadRow({ item, onRemove }: { item: UploadItem; onRemove: () => void 
 
 // ── Attachment preview modal ───────────────────────────────────────────────────
 
-function AttachmentPreviewModal({ att, onClose }: { att: TenderAttachment; onClose: () => void }) {
-  const url = fileUrl(att.key);
+function AttachmentPreviewModal({ target: att, onClose }: { target: PreviewTarget; onClose: () => void }) {
+  const { url } = att;
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div className="fixed inset-0 z-[99990] flex items-center justify-center p-4">
@@ -739,9 +842,11 @@ function AttachmentPreviewModal({ att, onClose }: { att: TenderAttachment; onClo
             <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:border-amber-300 hover:text-amber-600 transition-colors">
               <ExternalLink className="w-3.5 h-3.5" /> Open
             </a>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-              <X className="w-4 h-4" />
-            </button>
+            <Tip label="Close" side="start">
+              <button type="button" onClick={onClose} aria-label="Close preview" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </Tip>
           </div>
         </div>
         <div className="flex-1 overflow-auto bg-gray-50 flex items-center justify-center p-4">

@@ -134,7 +134,7 @@ function AdminTendersContent() {
 
         {canPublish && (
           <Link
-            href={`/${locale}/admin/content/tenders`}
+            href={`/${locale}/admin/tenders/manage`}
             className="inline-flex items-center gap-1.5 rounded-lg border-2 border-gray-200 px-3.5 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
           >
             <Settings2 className="h-4 w-4" /> Manage tenders
@@ -207,7 +207,7 @@ function AdminTendersContent() {
           </p>
           {tenders.length === 0 && canPublish && (
             <Link
-              href={`/${locale}/admin/content/tenders`}
+              href={`/${locale}/admin/tenders/manage`}
               className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:underline"
             >
               Publish a tender →
@@ -222,7 +222,7 @@ function AdminTendersContent() {
               tender={tender}
               counts={counts[tender.id]}
               locale={locale}
-              href={`/${locale}/admin/tenders/board/${tender.id}`}
+              href={`/${locale}/admin/tenders/applications/board/${tender.id}`}
             />
           ))}
         </div>

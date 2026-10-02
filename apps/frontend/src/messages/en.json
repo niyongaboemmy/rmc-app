@@ -20,6 +20,13 @@
     "home": "Back to Home",
     "services": "Explore Services"
   },
+  "errorPage": {
+    "title": "Something Went Wrong",
+    "subtitle": "We hit an unexpected problem loading this page. Please try again — if it keeps happening, head back home.",
+    "retry": "Try Again",
+    "home": "Back to Home",
+    "reference": "Reference"
+  },
   "common": {
     "openInMaps": "Open in Maps",
     "findNearMe": "Find near me",
@@ -2366,6 +2373,9 @@
       "scholarshipManage": "Manage scholarships",
       "scholarshipApps": "Applications",
       "scholarshipReports": "Reports",
+      "tendersManage": "Manage tenders",
+      "tendersApps": "Applications",
+      "tendersReports": "Reports",
       "scholarship": "Scholarships",
       "funeral": "Funeral",
       "hajj": "Hajj",
@@ -2374,10 +2384,9 @@
       "discussionsAll": "All questions",
       "tenders": "Tenders",
       "jobs": "Jobs",
-      "jobPostings": "Job Postings",
-      "manageJob": "Manage Job",
-      "jobsApplication": "Application",
-      "jobsReport": "Report"
+      "jobsManage": "Manage jobs",
+      "jobsApps": "Applications",
+      "jobsReports": "Reports"
     },
     "topbar": {
       "viewSite": "View site",
@@ -3074,13 +3083,6 @@
         "missing": "Missing {langs}",
         "label": "Translations",
         "ok": "Complete"
-      }
-    },
-    "tenders": {
-      "tabs": {
-        "content": "Tenders Content",
-        "applications": "Manage Applications",
-        "dashboard": "Dashboard & Reports"
       }
     }
   },

@@ -20,6 +20,13 @@
     "home": "Subira Ahabanza",
     "services": "Reba Serivisi"
   },
+  "errorPage": {
+    "title": "Habayeho Ikibazo",
+    "subtitle": "Habayeho ikibazo kitunguranye mu gufungura uru rupapuro. Ongera ugerageze — nibikomeza, subira ahabanza.",
+    "retry": "Ongera Ugerageze",
+    "home": "Subira Ahabanza",
+    "reference": "Inomero y'ikibazo"
+  },
   "common": {
     "openInMaps": "Fungura muri Maps",
     "findNearMe": "Shakisha hafi yanjye",
@@ -2366,6 +2373,9 @@
       "scholarshipManage": "Gucunga buruse",
       "scholarshipApps": "Ubusabe",
       "scholarshipReports": "Raporo",
+      "tendersManage": "Gucunga amatumba",
+      "tendersApps": "Ubusabe",
+      "tendersReports": "Raporo",
       "scholarship": "Buruse",
       "funeral": "Ishyingura",
       "hajj": "Hija",
@@ -2374,10 +2384,9 @@
       "discussionsAll": "Ibibazo byose",
       "tenders": "Amatumba",
       "jobs": "Akazi",
-      "jobPostings": "Imyanya y'Akazi",
-      "manageJob": "Gucunga Akazi",
-      "jobsApplication": "Amasaba",
-      "jobsReport": "Raporo"
+      "jobsManage": "Gucunga akazi",
+      "jobsApps": "Ubusabe",
+      "jobsReports": "Raporo"
     },
     "topbar": {
       "viewSite": "Reba urubuga",
@@ -3074,13 +3083,6 @@
         "missing": "Missing {langs}",
         "label": "Translations",
         "ok": "Complete"
-      }
-    },
-    "tenders": {
-      "tabs": {
-        "content": "Tenders Content",
-        "applications": "Manage Applications",
-        "dashboard": "Dashboard & Reports"
       }
     }
   },

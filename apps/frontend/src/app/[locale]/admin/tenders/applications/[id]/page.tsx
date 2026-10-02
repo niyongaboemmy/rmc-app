@@ -164,7 +164,7 @@ function AdminTenderDetailContent() {
       <div className="text-center py-24">
         <p className="text-sm text-gray-400">Application not found.</p>
         <Link
-          href={`/${locale}/admin/tenders`}
+          href={`/${locale}/admin/tenders/applications`}
           className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:underline"
         >
           ← Back to tenders
@@ -182,7 +182,7 @@ function AdminTenderDetailContent() {
       {/* Back to the board this bid came from, not the tender picker — the
           reviewer opened it from one specific pipeline. */}
       <Link
-        href={`/${locale}/admin/tenders/board/${application.tenderId}`}
+        href={`/${locale}/admin/tenders/applications/board/${application.tenderId}`}
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
       >
         <ArrowLeft className="w-4 h-4" /> Back to board

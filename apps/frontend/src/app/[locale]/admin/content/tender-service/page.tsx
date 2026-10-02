@@ -43,7 +43,7 @@ export default function TenderServiceContentPage() {
           detailFields={DETAIL_FIELDS}
           publicPath="/services/tender"
           recordsLabel="Tenders"
-          recordsHref="/admin/content/tenders"
+          recordsHref="/admin/tenders/manage"
           recordsNote="The tenders listed on the board — deadlines, attachments and status"
         />
       </ToastProvider>

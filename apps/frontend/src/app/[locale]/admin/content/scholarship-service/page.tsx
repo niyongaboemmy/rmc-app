@@ -41,7 +41,7 @@ export default function ScholarshipServiceContentPage() {
           detailFields={DETAIL_FIELDS}
           publicPath="/services/scholarship"
           recordsLabel="Scholarship Programs"
-          recordsHref="/admin/scholarship/programs"
+          recordsHref="/admin/scholarships/manage"
           recordsNote="The programmes listed on the board — eligibility, deadlines and awards"
         />
       </ToastProvider>

@@ -20,6 +20,13 @@
     "home": "العودة إلى الرئيسية",
     "services": "استكشف الخدمات"
   },
+  "errorPage": {
+    "title": "حدث خطأ ما",
+    "subtitle": "واجهنا مشكلة غير متوقعة أثناء تحميل هذه الصفحة. يرجى المحاولة مرة أخرى، وإذا تكرر ذلك فعد إلى الصفحة الرئيسية.",
+    "retry": "حاول مرة أخرى",
+    "home": "العودة إلى الرئيسية",
+    "reference": "الرقم المرجعي"
+  },
   "common": {
     "openInMaps": "افتح في الخرائط",
     "findNearMe": "ابحث بالقرب مني",
@@ -2366,6 +2373,9 @@
       "scholarshipManage": "إدارة المنح",
       "scholarshipApps": "الطلبات",
       "scholarshipReports": "التقارير",
+      "tendersManage": "إدارة المناقصات",
+      "tendersApps": "الطلبات",
+      "tendersReports": "التقارير",
       "scholarship": "المنح الدراسية",
       "funeral": "الجنازة",
       "hajj": "الحج",
@@ -2374,10 +2384,9 @@
       "discussionsAll": "كل الأسئلة",
       "tenders": "المناقصات",
       "jobs": "الوظائف",
-      "jobPostings": "إعلانات الوظائف",
-      "manageJob": "إدارة الوظائف",
-      "jobsApplication": "الطلبات",
-      "jobsReport": "التقارير"
+      "jobsManage": "إدارة الوظائف",
+      "jobsApps": "الطلبات",
+      "jobsReports": "التقارير"
     },
     "topbar": {
       "viewSite": "عرض الموقع",
@@ -3074,13 +3083,6 @@
         "missing": "ناقص: {langs}",
         "label": "الترجمات",
         "ok": "مكتملة"
-      }
-    },
-    "tenders": {
-      "tabs": {
-        "content": "محتوى المناقصات",
-        "applications": "إدارة الطلبات",
-        "dashboard": "لوحة القيادة والتقارير"
       }
     }
   },

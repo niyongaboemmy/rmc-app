@@ -175,7 +175,7 @@ function AdminTenderBoardContent() {
       {/* Header — one compact block, so the board keeps the height. */}
       <div className="shrink-0 space-y-3">
         <Link
-          href={`/${locale}/admin/tenders`}
+          href={`/${locale}/admin/tenders/applications`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 transition-colors hover:text-teal-600"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> All tenders
@@ -295,7 +295,7 @@ function AdminTenderBoardContent() {
                       >
                         <td className="px-4 py-3">
                           <Link
-                            href={`/${locale}/admin/tenders/${app.id}`}
+                            href={`/${locale}/admin/tenders/applications/${app.id}`}
                             className="font-mono text-xs font-semibold text-teal-600 hover:underline"
                           >
                             {app.applicationNumber}
@@ -331,7 +331,7 @@ function AdminTenderBoardContent() {
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
                           <Link
-                            href={`/${locale}/admin/tenders/${app.id}`}
+                            href={`/${locale}/admin/tenders/applications/${app.id}`}
                             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
                           >
                             <Eye className="h-3.5 w-3.5" /> View

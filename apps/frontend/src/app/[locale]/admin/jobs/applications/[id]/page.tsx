@@ -510,7 +510,7 @@ function AdminJobDetailContent() {
 
   return (
     <div className="space-y-5">
-      <Link href={`/${locale}/admin/jobs`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+      <Link href={`/${locale}/admin/jobs/applications`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Back to applications
       </Link>
 

@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
 import { useInboxUnread } from '@/contexts/InboxUnreadContext';
 import {
-  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Briefcase, Award, ClipboardList, Building2,
+  LayoutDashboard, Users, Shield, UserCheck, Landmark, Clock, BarChart2, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, BookOpen, X, Heart, Wallet, Inbox, GraduationCap, Mail, HardDrive, Moon, Compass, ShieldCheck, Library, BookMarked, Tags, FileText, MessagesSquare, ClipboardCheck, Briefcase, Award, Building2,
 } from 'lucide-react';
 
 interface NavItem {
@@ -29,35 +29,32 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'members',   href: '/admin/members',      icon: UserCheck,       labelKey: 'sidebar.members',   group: 'main',   permission: Permission.MEMBERS_VIEW      },
   { key: 'marriage',  href: '/admin/marriage',     icon: Heart,           labelKey: 'sidebar.marriage',  group: 'main',   permission: Permission.MARRIAGE_VIEW     },
   { key: 'goodConduct', href: '/admin/good-conduct', icon: ShieldCheck,   labelKey: 'sidebar.goodConduct', group: 'main', permission: Permission.GOOD_CONDUCT_VIEW },
-  { key: 'tenders',   href: '/admin/tenders',      icon: Briefcase,       labelKey: 'sidebar.tenders',   group: 'main',   permission: Permission.TENDER_VIEW,
+  // Tenders, Scholarships and Jobs share one shape — the three things an
+  // administrator does with each: manage the listings, work the applications,
+  // report on them — at /admin/<section>/{manage,applications,reports}. Each
+  // child keeps its OWN permission, so a reviewer who may not publish and a
+  // finance reader who may not review each land only on pages they can open.
+  // The parent points at the applications, where most of the work is.
+  { key: 'tenders',   href: '/admin/tenders/applications', icon: Briefcase, labelKey: 'sidebar.tenders', group: 'main', permission: Permission.TENDER_VIEW,
     children: [
-      { key: 'tenders-content',      href: '/admin/content/tenders',  icon: FileText,   labelKey: 'tenders.tabs.content',      group: 'main', permission: Permission.CONTENT_VIEW },
-      { key: 'tenders-applications', href: '/admin/tenders',          icon: Users,      labelKey: 'tenders.tabs.applications',  group: 'main', permission: Permission.TENDER_VIEW  },
-      { key: 'tenders-dashboard',    href: '/admin/tenders/dashboard', icon: BarChart2, labelKey: 'tenders.tabs.dashboard',     group: 'main', permission: Permission.TENDER_REPORTS },
+      { key: 'tendersManage',  href: '/admin/tenders/manage',       icon: FileText,       labelKey: 'sidebar.tendersManage',  group: 'main', permission: Permission.CONTENT_VIEW   },
+      { key: 'tendersApps',    href: '/admin/tenders/applications', icon: ClipboardCheck, labelKey: 'sidebar.tendersApps',    group: 'main', permission: Permission.TENDER_VIEW    },
+      { key: 'tendersReports', href: '/admin/tenders/reports',      icon: BarChart2,      labelKey: 'sidebar.tendersReports', group: 'main', permission: Permission.TENDER_REPORTS },
     ],
   },
-  // Scholarships splits into the three jobs a scholarship administrator does:
-  // compose and publish the scholarships, work the applications, report on them.
-  // Each child keeps its OWN permission, so a reviewer who may not publish and a
-  // finance reader who may not review each land only on pages they can open.
-  // The parent points at the applications list, where most of the work is.
-  { key: 'scholarship', href: '/admin/scholarship',  icon: Award,           labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW,
+  { key: 'scholarship', href: '/admin/scholarships/applications', icon: Award, labelKey: 'sidebar.scholarship', group: 'main', permission: Permission.SCHOLARSHIP_VIEW,
     children: [
-      { key: 'scholarshipManage',  href: '/admin/scholarship/programs', icon: FileText,       labelKey: 'sidebar.scholarshipManage',  group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
-      { key: 'scholarshipApps',    href: '/admin/scholarship',          icon: ClipboardCheck, labelKey: 'sidebar.scholarshipApps',    group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
-      { key: 'scholarshipReports', href: '/admin/scholarship/reports',  icon: BarChart2,      labelKey: 'sidebar.scholarshipReports', group: 'main', permission: Permission.SCHOLARSHIP_REPORTS },
+      { key: 'scholarshipManage',  href: '/admin/scholarships/manage',       icon: FileText,       labelKey: 'sidebar.scholarshipManage',  group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
+      { key: 'scholarshipApps',    href: '/admin/scholarships/applications', icon: ClipboardCheck, labelKey: 'sidebar.scholarshipApps',    group: 'main', permission: Permission.SCHOLARSHIP_VIEW    },
+      { key: 'scholarshipReports', href: '/admin/scholarships/reports',      icon: BarChart2,      labelKey: 'sidebar.scholarshipReports', group: 'main', permission: Permission.SCHOLARSHIP_REPORTS },
     ],
   },
   { key: 'projects',  href: '/admin/projects',     icon: Building2,        labelKey: 'sidebar.projects',  group: 'main',   permission: Permission.CONTENT_VIEW      },
-  // Jobs — mirrors the Tenders/Scholarship group pattern: work the applications
-  // on the board, report on them, and manage the postings. The parent points at
-  // the applications board, where most of the work is; each child keeps its own
-  // permission.
-  { key: 'jobs', href: '/admin/jobs', icon: Briefcase, labelKey: 'sidebar.jobs', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW,
+  { key: 'jobs', href: '/admin/jobs/applications', icon: Briefcase, labelKey: 'sidebar.jobs', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW,
     children: [
-      { key: 'jobsApplication', href: '/admin/jobs',        icon: ClipboardCheck, labelKey: 'sidebar.jobsApplication', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
-      { key: 'jobsReport',      href: '/admin/jobs/reports', icon: BarChart2,      labelKey: 'sidebar.jobsReport',     group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
-      { key: 'jobPostings',     href: '/admin/job-postings', icon: ClipboardList,  labelKey: 'sidebar.jobPostings',    group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+      { key: 'jobsManage',  href: '/admin/jobs/manage',       icon: FileText,       labelKey: 'sidebar.jobsManage',  group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+      { key: 'jobsApps',    href: '/admin/jobs/applications', icon: ClipboardCheck, labelKey: 'sidebar.jobsApps',    group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
+      { key: 'jobsReports', href: '/admin/jobs/reports',      icon: BarChart2,      labelKey: 'sidebar.jobsReports', group: 'main', permission: Permission.JOB_APPLICATIONS_VIEW },
     ],
   },
   { key: 'mosques',   href: '/admin/mosques',      icon: Landmark,        labelKey: 'sidebar.mosques',   group: 'main',   permission: Permission.MOSQUES_VIEW      },
@@ -217,8 +214,8 @@ function SidebarNavGroup({
    *
    * `isActive` is a prefix test, so on `/admin/dawah/discussions/submissions`
    * BOTH "All questions" (`/admin/dawah/discussions`) and "Member questions"
-   * matched, and both lit up. The same holds for `/admin/tenders` against
-   * `/admin/tenders/dashboard`. Taking the LONGEST matching sibling picks the
+   * matched, and both lit up. The same holds for `/admin/tenders/applications` against
+   * `/admin/tenders/applications/board/…`. Taking the LONGEST matching sibling picks the
    * most specific route — the page you are actually on.
    *
    * Collapses to `null`, never `undefined`: `anyActive` below tests `!== null`,

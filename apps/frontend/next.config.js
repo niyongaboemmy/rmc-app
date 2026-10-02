@@ -16,9 +16,40 @@ function fileServerPattern() {
   }
 }
 
+/**
+ * Tenders, Scholarships and Jobs moved to one admin shape:
+ * /admin/<section>/{manage,applications,reports}. These keep bookmarks and open
+ * tabs from before the move working. Order matters — first match wins, so the
+ * specific paths sit above the `:id` catch-alls, and those exclude the new
+ * segment names so they never redirect a page that already moved.
+ */
+const L = '/:locale(rw|en|ar)';
+const NEW_SEGMENTS = 'applications|manage|reports';
+const legacyAdminRedirects = [
+  // Tenders
+  [`${L}/admin/content/tenders`, '/:locale/admin/tenders/manage'],
+  [`${L}/admin/tenders`, '/:locale/admin/tenders/applications'],
+  [`${L}/admin/tenders/board/:tenderId`, '/:locale/admin/tenders/applications/board/:tenderId'],
+  [`${L}/admin/tenders/:id((?!${NEW_SEGMENTS})[^/]+)`, '/:locale/admin/tenders/applications/:id'],
+  // Scholarships (the section was also renamed scholarship → scholarships)
+  [`${L}/admin/scholarship`, '/:locale/admin/scholarships/applications'],
+  [`${L}/admin/scholarship/programs`, '/:locale/admin/scholarships/manage'],
+  [`${L}/admin/scholarship/reports`, '/:locale/admin/scholarships/reports'],
+  [`${L}/admin/scholarship/board/:programId`, '/:locale/admin/scholarships/applications/board/:programId'],
+  [`${L}/admin/scholarship/:id`, '/:locale/admin/scholarships/applications/:id'],
+  [`${L}/admin/scholarships`, '/:locale/admin/scholarships/applications'],
+  // Jobs
+  [`${L}/admin/job-postings`, '/:locale/admin/jobs/manage'],
+  [`${L}/admin/jobs`, '/:locale/admin/jobs/applications'],
+  [`${L}/admin/jobs/:id((?!${NEW_SEGMENTS})[^/]+)`, '/:locale/admin/jobs/applications/:id'],
+].map(([source, destination]) => ({ source, destination, permanent: false }));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  async redirects() {
+    return legacyAdminRedirects;
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

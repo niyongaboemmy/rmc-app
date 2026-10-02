@@ -3,9 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import {
-  Plus, Pencil, Trash2, X, RefreshCw, GraduationCap, LayoutGrid, Globe, Lock, Loader2,
-} from 'lucide-react';
+import { Plus, X, RefreshCw, GraduationCap, LayoutGrid } from 'lucide-react';
 import {
   type ScholarshipProgram, type I18nText, type RequiredDocument,
 } from '@/lib/scholarshipApi';
@@ -17,6 +15,14 @@ import { ConfirmModal, ModalPortal } from '@/components/ui/Modal';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { ContentKeys, getSiteContent, SCHOLARSHIP_SERVICE_DEFAULT } from '@/lib/content-api';
 import { boardLevels, type BoardLevel } from '@/lib/content/service-boards';
+import {
+  PublishingActions, PublishStateBadge, Tip, iconToolClass, publishingConfirmCopy, serverMessage,
+  type PublishAction, type PublishState,
+} from '@/components/admin/shared/PublishingActions';
+
+/** "published" is the scholarship's word for what every listing here calls open. */
+const programState = (p: ScholarshipProgram): PublishState =>
+  p.status === 'published' ? 'open' : p.status;
 
 /**
  * Composing and publishing scholarships — extracted from the admin page when
@@ -486,12 +492,6 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
    */
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  /** Surfaces the server's own refusal — "cannot publish without: deadline" is
-   *  far more useful than a generic failure toast. */
-  const serverMessage = (err: unknown, fallback: string) =>
-    (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-      ?.message ?? fallback;
-
   /**
    * The action awaiting confirmation, or null.
    *
@@ -505,50 +505,20 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
    * scholarship, and "Delete this scholarship?" could not.
    */
   type PendingAction = {
-    kind: 'publish' | 'close' | 'delete';
+    kind: PublishAction;
     program: ScholarshipProgram;
   };
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [confirming, setConfirming] = useState(false);
 
-  /**
-   * Wording for each confirmation, derived from the row it was raised on.
-   *
-   * `reopen` is not a fourth action — it is `publish` on a closed scholarship,
-   * which is the same endpoint and a different thing to the person reading it.
-   */
-  const confirmCopy = (a: PendingAction) => {
-    const reopening = a.kind === 'publish' && a.program.status === 'closed';
-    if (a.kind === 'delete') {
-      return {
-        title: 'Delete this scholarship?',
-        message: `"${a.program.title}" will be removed. This cannot be undone, and a scholarship that already has applications cannot be deleted at all.`,
-        confirmLabel: 'Delete',
-        variant: 'danger' as const,
-      };
-    }
-    if (a.kind === 'close') {
-      return {
-        title: 'Close this scholarship?',
-        message: `"${a.program.title}" will stop accepting new applications. Applications already submitted continue through review, and you can reopen it later.`,
-        confirmLabel: 'Close it',
-        variant: 'default' as const,
-      };
-    }
-    return reopening
-      ? {
-          title: 'Reopen this scholarship?',
-          message: `"${a.program.title}" starts accepting applications again straight away.`,
-          confirmLabel: 'Reopen',
-          variant: 'default' as const,
-        }
-      : {
-          title: 'Publish this scholarship?',
-          message: `"${a.program.title}" becomes visible to applicants immediately.`,
-          confirmLabel: 'Publish',
-          variant: 'default' as const,
-        };
-  };
+  const confirmCopy = (a: PendingAction) =>
+    publishingConfirmCopy({
+      action: a.kind,
+      state: programState(a.program),
+      title: a.program.title,
+      noun: 'scholarship',
+      deleteNote: 'A scholarship that already has applications cannot be deleted at all.',
+    });
 
   /**
    * Runs whatever was confirmed.
@@ -640,107 +610,30 @@ export function ScholarshipProgramsTab({ canManage }: { canManage: boolean }) {
                       {p.deadline ? new Date(p.deadline).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-4 py-4">
-                      {/* Three states, not two: a draft is neither open nor
-                          closed, and showing it as "Closed" would hide the
-                          fact that it was never published. */}
-                      <span className={cn(
-                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                        p.status === 'published' && 'bg-green-100 text-green-700',
-                        p.status === 'draft' && 'bg-amber-100 text-amber-700',
-                        p.status === 'closed' && 'bg-gray-100 text-gray-500',
-                      )}>
-                        {p.status === 'published' ? 'Published' : p.status === 'draft' ? 'Draft' : 'Closed'}
-                      </span>
+                      <PublishStateBadge state={programState(p)} />
                     </td>
                     {canManage && (
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
+                      <td className="px-4 py-4 text-right">
+                        <PublishingActions
+                          state={programState(p)}
+                          busy={busyId === p.id}
+                          noun="scholarship"
+                          onAction={(kind) => setPending({ kind, program: p })}
+                          onEdit={() => setEditing(p)}
+                        >
                           {/* Straight to this scholarship's review pipeline —
                               the board is per-scholarship, so it needs an entry
                               point per row rather than one global link. */}
-                          <Link
-                            href={`/${locale}/admin/scholarship/board/${p.id}`}
-                            aria-label="Review board"
-                            title="Review board"
-                            className="text-gray-400 transition-colors hover:text-rmc-green"
-                          >
-                            <LayoutGrid className="h-4 w-4" />
-                          </Link>
-                          {/* The two state changes are the consequential actions in
-                              this row, and they used to be the least visible thing
-                              in it: bare text among four icon buttons, reading as
-                              labels rather than controls.
-
-                              Icon AND word, not icon alone. An icon by itself would
-                              be quicker to scan and worse to be sure about — these
-                              put a scholarship in front of the public or stop it
-                              taking applications, and neither is a guess worth
-                              inviting. The pill gives them the affordance the
-                              neutral row icons deliberately do not have.
-
-                              BOTH are always rendered, the inapplicable one
-                              disabled, rather than showing only the one that
-                              applies. Rendering conditionally meant a screen where
-                              every scholarship happened to be published showed no
-                              Publish button at all, so nothing on the page said the
-                              action existed — and the controls shifted position
-                              between rows, so the column could not be scanned. A
-                              disabled button with a reason says "not from here",
-                              which is what an admin needs to know.
-
-                              Disabled is expressed as a GREY PALETTE, never as
-                              opacity. Dimming the coloured pill to 40% put its
-                              label at 1.79:1 against the page — rendered, and
-                              unreadable, which is not a state a control should
-                              ever be in. Grey on grey is 4.6:1 and still reads
-                              instantly as inactive. */}
-                          <button
-                            onClick={() => setPending({ kind: 'publish', program: p })}
-                            disabled={busyId === p.id || p.status === 'published'}
-                            title={
-                              p.status === 'published'
-                                ? 'Already published'
-                                : p.status === 'closed'
-                                  ? 'Start accepting applications again'
-                                  : 'Make this scholarship visible to applicants'
-                            }
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-rmc-green/25 bg-rmc-green-light/60 px-2.5 py-1 text-xs font-semibold text-rmc-green transition-colors enabled:hover:bg-rmc-green enabled:hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
-                          >
-                            {busyId === p.id && p.status !== 'published' ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Globe className="h-3.5 w-3.5" />
-                            )}
-                            {/* Publishing a CLOSED scholarship reopens it — same
-                                endpoint, different thing to a reader. */}
-                            {p.status === 'closed' ? 'Reopen' : 'Publish'}
-                          </button>
-                          <button
-                            onClick={() => setPending({ kind: 'close', program: p })}
-                            disabled={busyId === p.id || p.status !== 'published'}
-                            title={
-                              p.status === 'closed'
-                                ? 'Already closed'
-                                : p.status === 'draft'
-                                  ? 'Publish it before you can close it'
-                                  : 'Stop accepting new applications; submitted ones continue through review'
-                            }
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors enabled:hover:bg-amber-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
-                          >
-                            {busyId === p.id && p.status === 'published' ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Lock className="h-3.5 w-3.5" />
-                            )}
-                            Close
-                          </button>
-                          <button onClick={() => setEditing(p)} aria-label="Edit" className="text-gray-400 hover:text-rmc-green transition-colors">
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => setPending({ kind: 'delete', program: p })} aria-label="Delete" className="text-gray-400 hover:text-red-600 transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                          <Tip label="Review board">
+                            <Link
+                              href={`/${locale}/admin/scholarships/applications/board/${p.id}`}
+                              aria-label="Review board"
+                              className={`${iconToolClass} hover:text-rmc-green hover:border-rmc-green`}
+                            >
+                              <LayoutGrid className="h-4 w-4" />
+                            </Link>
+                          </Tip>
+                        </PublishingActions>
                       </td>
                     )}
                   </tr>

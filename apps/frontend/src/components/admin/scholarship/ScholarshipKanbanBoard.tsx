@@ -213,7 +213,7 @@ export function ScholarshipKanbanBoard({ locale, programId, canApprove, onTotalC
                         )}
                         <div className="min-w-0 flex-1">
                           <Link
-                            href={`/${locale}/admin/scholarship/${app.id}`}
+                            href={`/${locale}/admin/scholarships/applications/${app.id}`}
                             className="block truncate text-[13px] font-semibold leading-tight text-gray-900 hover:text-rmc-green"
                           >
                             {app.fullNames}

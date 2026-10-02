@@ -3,9 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'next/navigation';
-import {
-  Briefcase, Plus, RefreshCw, Inbox, X, Pencil, Trash2, Eye, EyeOff, Users, AlertTriangle,
-} from 'lucide-react';
+import { Briefcase, Plus, RefreshCw, Inbox, X, Users } from 'lucide-react';
 import {
   jobPostingsAdminApi,
   EMPLOYMENT_TYPE_LABELS,
@@ -17,13 +15,11 @@ import { cn } from '@/lib/utils';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Permission } from '@/lib/permissions';
+import { ConfirmModal } from '@/components/ui/Modal';
+import {
+  PublishingActions, PublishStateBadge, publishingConfirmCopy, serverMessage, type PublishAction,
+} from '@/components/admin/shared/PublishingActions';
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-600',
-  open: 'bg-green-100 text-green-700',
-  closed: 'bg-red-100 text-red-700',
-};
-const STATUS_LABELS: Record<string, string> = { draft: 'Draft', open: 'Open', closed: 'Closed' };
 const EMPLOYMENT_TYPES: EmploymentType[] = ['full_time', 'part_time', 'contract', 'internship', 'volunteer'];
 
 type FormState = CreateJobPostingPayload;
@@ -42,7 +38,7 @@ function AdminPostingsContent() {
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<JobPosting | 'new' | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<JobPosting | null>(null);
+  const [pending, setPending] = useState<{ kind: PublishAction; posting: JobPosting } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,30 +55,21 @@ function AdminPostingsContent() {
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
-  const toggleStatus = async (p: JobPosting) => {
-    setBusyId(p.id);
+  /** Closes on success only, so a refusal is shown rather than hidden behind a dialog. */
+  const runPending = async () => {
+    if (!pending) return;
+    const { kind, posting } = pending;
+    setBusyId(posting.id);
     setError(null);
     try {
-      if (p.status === 'open') await jobPostingsAdminApi.close(p.id);
-      else await jobPostingsAdminApi.publish(p.id);
+      if (kind === 'publish') await jobPostingsAdminApi.publish(posting.id);
+      else if (kind === 'close') await jobPostingsAdminApi.close(posting.id);
+      else await jobPostingsAdminApi.remove(posting.id);
+      setPending(null);
       await fetchList();
     } catch (e: unknown) {
-      setError((e as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Action failed');
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    setBusyId(deleteTarget.id);
-    setError(null);
-    try {
-      await jobPostingsAdminApi.remove(deleteTarget.id);
-      setDeleteTarget(null);
-      await fetchList();
-    } catch (e: unknown) {
-      setError((e as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Could not delete this posting.');
+      setError(serverMessage(e, `Could not ${kind === 'publish' && posting.status === 'closed' ? 'reopen' : kind} this posting.`));
+      setPending(null);
     } finally {
       setBusyId(null);
     }
@@ -152,7 +139,7 @@ function AdminPostingsContent() {
                     </td>
                     <td className="px-5 py-3.5 text-gray-600">{EMPLOYMENT_TYPE_LABELS[p.employmentType]}</td>
                     <td className="px-5 py-3.5">
-                      <span className={cn('text-xs font-semibold px-2.5 py-0.5 rounded-full', STATUS_STYLES[p.status])}>{STATUS_LABELS[p.status]}</span>
+                      <PublishStateBadge state={p.status} />
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="inline-flex items-center gap-1 text-gray-600"><Users className="w-3.5 h-3.5 text-gray-400" /> {p.applicationsCount ?? 0}</span>
@@ -162,21 +149,13 @@ function AdminPostingsContent() {
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       {canManage && (
-                        <div className="inline-flex items-center gap-1.5 justify-end">
-                          <button onClick={() => setEditing(p)} title="Edit"
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors">
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => toggleStatus(p)} disabled={busyId === p.id}
-                            title={p.status === 'open' ? 'Close (stop accepting)' : 'Publish (open)'}
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rmc-green hover:border-rmc-green transition-colors disabled:opacity-50">
-                            {busyId === p.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : p.status === 'open' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                          <button onClick={() => { setDeleteTarget(p); setError(null); }} title="Delete"
-                            className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-600 hover:border-red-300 transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <PublishingActions
+                          state={p.status}
+                          busy={busyId === p.id}
+                          noun="job posting"
+                          onAction={(kind) => { setPending({ kind, posting: p }); setError(null); }}
+                          onEdit={() => setEditing(p)}
+                        />
                       )}
                     </td>
                   </tr>
@@ -195,27 +174,20 @@ function AdminPostingsContent() {
         />
       )}
 
-      {deleteTarget && createPortal(
-        <div role="dialog" aria-modal="true" onClick={() => busyId === null && setDeleteTarget(null)}
-          className="fixed inset-0 z-[99990] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <span className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0"><AlertTriangle className="w-5 h-5 text-red-600" /></span>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900">Delete posting?</h3>
-                <p className="text-sm text-gray-500 mt-1">This permanently deletes <strong>{deleteTarget.title}</strong>. Postings that already have applications can’t be deleted — close them instead.</p>
-              </div>
-            </div>
-            {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} disabled={busyId !== null} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-              <button onClick={confirmDelete} disabled={busyId !== null} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50">
-                {busyId ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Delete
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
+      {pending && (
+        <ConfirmModal
+          open
+          onClose={() => { if (busyId === null) setPending(null); }}
+          onConfirm={runPending}
+          isLoading={busyId !== null}
+          {...publishingConfirmCopy({
+            action: pending.kind,
+            state: pending.posting.status,
+            title: pending.posting.title,
+            noun: 'job posting',
+            deleteNote: 'A posting that already has applications cannot be deleted — close it instead.',
+          })}
+        />
       )}
     </div>
   );

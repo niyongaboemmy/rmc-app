@@ -28,7 +28,7 @@ import { STATUS_LABELS_SHORT, JOB_BOARD_COLUMNS } from '@/lib/jobWorkflow';
 
 /**
  * Job applications, as a board or a table. Mirrors the tender board page
- * (app/[locale]/admin/tenders/board/[tenderId]/page.tsx) — a compact toolbar over
+ * (app/[locale]/admin/tenders/applications/board/[tenderId]/page.tsx) — a compact toolbar over
  * a full-viewport board that scrolls inside itself — but is global across every
  * posting rather than scoped to one tender.
  */
@@ -194,7 +194,7 @@ function AdminJobsContent() {
                       >
                         <td className="px-4 py-3">
                           <Link
-                            href={`/${locale}/admin/jobs/${app.id}`}
+                            href={`/${locale}/admin/jobs/applications/${app.id}`}
                             className="font-mono text-xs font-semibold text-teal-600 hover:underline"
                           >
                             {app.trackingNumber}
@@ -220,7 +220,7 @@ function AdminJobsContent() {
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
                           <Link
-                            href={`/${locale}/admin/jobs/${app.id}`}
+                            href={`/${locale}/admin/jobs/applications/${app.id}`}
                             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
                           >
                             <Eye className="h-3.5 w-3.5" /> View

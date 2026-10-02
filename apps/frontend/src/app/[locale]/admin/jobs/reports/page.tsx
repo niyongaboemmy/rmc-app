@@ -59,7 +59,7 @@ function ReportsView() {
     <div className="space-y-5">
       <div>
         <Link
-          href={`/${locale}/admin/jobs`}
+          href={`/${locale}/admin/jobs/applications`}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 transition-colors hover:text-rmc-green"
         >
           <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" /> Applications

@@ -89,11 +89,11 @@ const DOMAINS: DomainConfig[] = [
     key: 'tenders',
     title: 'Tenders',
     description: 'Bids submitted and value awarded.',
-    href: '/admin/tenders',
+    href: '/admin/tenders/reports',
     icon: Briefcase,
     accent: 'text-teal-600',
     bg: 'bg-teal-50',
-    permission: Permission.TENDER_VIEW,
+    permission: Permission.TENDER_REPORTS,
     load: async () => {
       const s = await tenderApplicationAdminApi.getReports();
       return [

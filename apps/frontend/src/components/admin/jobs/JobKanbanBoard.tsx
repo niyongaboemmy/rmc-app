@@ -611,7 +611,7 @@ function ApplicationCard({
         )}
         <div className="min-w-0 flex-1">
           <Link
-            href={`/${locale}/admin/jobs/${app.id}`}
+            href={`/${locale}/admin/jobs/applications/${app.id}`}
             className="font-mono text-[11px] font-semibold text-teal-600 hover:underline"
           >
             {app.trackingNumber}
@@ -641,7 +641,7 @@ function ApplicationCard({
 
       <div className="mt-1.5 flex gap-1.5">
         <Link
-          href={`/${locale}/admin/jobs/${app.id}`}
+          href={`/${locale}/admin/jobs/applications/${app.id}`}
           className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-teal-400 hover:text-teal-600"
         >
           <Eye className="h-3 w-3" /> Open

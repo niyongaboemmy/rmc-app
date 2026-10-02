@@ -302,7 +302,7 @@ function ApplicationsTab() {
                       </td>
                       <td className="px-4 py-4">
                         <Link
-                          href={`/${locale}/admin/scholarship/${app.id}`}
+                          href={`/${locale}/admin/scholarships/applications/${app.id}`}
                           className="inline-flex items-center gap-1 text-xs font-medium text-rmc-green hover:text-rmc-green-dark transition-colors"
                         >
                           Review <ChevronRight className="w-3.5 h-3.5" />
