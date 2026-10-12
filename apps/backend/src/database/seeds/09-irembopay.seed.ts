@@ -10,18 +10,22 @@ import { DataSource } from 'typeorm';
  * private only narrows who can read it. Put it in the gitignored `.env`; the
  * seed tells you where to find it if it is missing.
  *
- * Which mode the row is in is decided by the KEYS, not by a flag someone has to
- * remember: IremboPay issues `pk_live_…`/`sk_live_…` for production and
- * `pk_test_…`/`sk_test_…` for the sandbox, and each pair only authenticates
- * against its own host. A live key left in test mode sends every call to
- * api.sandbox.irembopay.com, where it is rejected — and IremboPay's production
- * callbacks are signed with a key the sandbox never saw.
+ * The mode is never guessed. IremboPay's SANDBOX issues `pk_live_…` keys too,
+ * so the key prefix says nothing about which host the keys belong to — reading
+ * it as "production" once pointed sandbox keys at the live API. Instead:
+ *
+ *   IREMBOPAY_MODE=production   → test mode off, no sandbox defaults
+ *   IREMBOPAY_MODE=sandbox      → test mode on
+ *   (unset)                     → whatever the row already says (new rows: sandbox)
+ *
+ * so an admin's Test-mode toggle survives every re-run unless the environment
+ * explicitly says otherwise.
  *
  * Idempotent: credentials already on the row are never overwritten, so
  * re-running it can never replace production keys with sandbox ones. What it
- * does correct is configuration DERIVED from those keys — the test-mode flag,
- * sandbox URLs pinned on a live row, the callback URL, and sandbox product codes
- * left mapped on a live gateway.
+ * does correct is configuration derived from the mode — the test-mode flag,
+ * sandbox URLs pinned on a production row, the callback URL, and sandbox product
+ * codes left mapped on a production gateway.
  */
 const SANDBOX = {
   paymentAccountIdentifier: 'RMC-RWF',
@@ -41,17 +45,18 @@ const DEFAULTS = {
 /** Served behind `app.setGlobalPrefix('api/v1')` — see `WebhooksController`. */
 const WEBHOOK_PATH = '/api/v1/webhooks/irembopay';
 
-type KeyMode = 'live' | 'test' | null;
+type Mode = 'production' | 'sandbox' | null;
 
 /** Enough of a key to confirm which one loaded, never enough to use it. */
 function fingerprint(value: string): string {
   return value.length <= 8 ? '••••••••' : `${value.slice(0, 7)}…${value.slice(-2)}`;
 }
 
-/** `null` when neither key carries a recognisable prefix — the flag is then left alone. */
-function keyMode(...keys: (string | undefined)[]): KeyMode {
-  if (keys.some((k) => /^(pk|sk)_live_/.test(k ?? ''))) return 'live';
-  if (keys.some((k) => /^(pk|sk)_test_/.test(k ?? ''))) return 'test';
+/** `null` when IREMBOPAY_MODE is unset or unrecognised — the row's flag is then kept. */
+function requestedMode(value: string | undefined): Mode {
+  const v = (value ?? '').trim().toLowerCase();
+  if (v === 'production' || v === 'live') return 'production';
+  if (v === 'sandbox' || v === 'test') return 'sandbox';
   return null;
 }
 
@@ -103,8 +108,8 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
   // Credentials: whatever the row already holds wins over the environment.
   const secretKey = current.secretKey || envSecret;
   const publicKey = current.publicKey || envPublic;
-  const mode = keyMode(publicKey, secretKey);
-  const live = mode === 'live';
+  const mode = requestedMode(process.env.IREMBOPAY_MODE);
+  const live = mode === 'production' || (mode === null && existing?.is_test_mode === false);
 
   const settings: Record<string, string> = {
     ...DEFAULTS,
@@ -138,7 +143,7 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
   // request. Derived from APP_URL so the admin panel shows the URL to paste.
   if (appUrl) settings.callbackUrl = `${appUrl}${WEBHOOK_PATH}`;
 
-  const isTestMode: boolean = mode === null ? (existing?.is_test_mode ?? true) : !live;
+  const isTestMode = !live;
   const isConfigured = ['secretKey', 'publicKey', 'paymentAccountIdentifier'].every(
     (f) => !!settings[f]?.trim(),
   );
@@ -159,7 +164,7 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
   }
 
   if (existing && existing.is_test_mode !== isTestMode) {
-    log(`test mode ${existing.is_test_mode ? 'ON → OFF' : 'OFF → ON'} to match the ${mode} keys`);
+    log(`test mode ${existing.is_test_mode ? 'ON → OFF' : 'OFF → ON'} (IREMBOPAY_MODE=${mode})`);
   }
 
   // Every payment type needs a product or it fails the moment a payer tries to
@@ -222,7 +227,7 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
   }
 
   log(
-    `configured — ${live ? 'LIVE' : isTestMode ? 'sandbox' : 'production'} mode, ` +
+    `configured — ${live ? 'PRODUCTION' : 'sandbox'} mode, ` +
       `account=${settings.paymentAccountIdentifier ?? '(unset)'}, ` +
       `secret=${fingerprint(settings.secretKey ?? '')}, ` +
       `${mapped} payment type(s) mapped${replaced ? `, ${replaced} sandbox mapping(s) replaced` : ''}` +
