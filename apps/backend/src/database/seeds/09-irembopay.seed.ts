@@ -55,6 +55,16 @@ function keyMode(...keys: (string | undefined)[]): KeyMode {
   return null;
 }
 
+/**
+ * A `.env` copied from a template often still says `REPLACE_ME`. Mapped as a
+ * product code, that would break every payment type at once — so it is treated
+ * as unset rather than trusted.
+ */
+function notPlaceholder(value: string | undefined): string {
+  const v = (value ?? '').trim();
+  return /replace|change|your|todo|xxx|<|>/i.test(v) ? '' : v;
+}
+
 export async function seedIremboPay(dataSource: DataSource): Promise<void> {
   const log = (msg: string): void => {
     // eslint-disable-next-line no-console
@@ -63,8 +73,8 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
 
   const envSecret = (process.env.IREMBOPAY_SECRET_KEY ?? '').trim();
   const envPublic = (process.env.IREMBOPAY_PUBLIC_KEY ?? '').trim();
-  const envAccount = (process.env.IREMBOPAY_ACCOUNT ?? '').trim();
-  const envProduct = (process.env.IREMBOPAY_PRODUCT_CODE ?? '').trim();
+  const envAccount = notPlaceholder(process.env.IREMBOPAY_ACCOUNT);
+  const envProduct = notPlaceholder(process.env.IREMBOPAY_PRODUCT_CODE);
   const appUrl = (process.env.APP_URL ?? '').trim().replace(/\/+$/, '');
 
   const [method] = await dataSource.query(
