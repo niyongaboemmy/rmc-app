@@ -223,7 +223,7 @@ export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingFie
         { value: '1', label: 'v1' },
       ] },
     { key: 'callbackUrl', label: 'Callback URL', type: 'url',
-      placeholder: 'https://api.isengesho.com/api/v1/webhooks/irembopay',
+      placeholder: 'https://api.rwandamuslim.org/api/v1/webhooks/irembopay',
       hint: 'Copy this into the IremboPay portal — we do not send it per request' },
     { key: 'invoiceExpiryMinutes', label: 'Invoice Expiry (minutes)', placeholder: '1440' },
     { key: 'defaultLanguage', label: 'Invoice Language', type: 'select',

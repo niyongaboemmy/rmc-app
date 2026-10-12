@@ -15,7 +15,7 @@ jobs:
     if: github.event.inputs.confirm == 'SEED'
     environment:
       name: production
-      url: https://isengesho.com
+      url: https://rwandamuslim.org
     steps:
       - uses: actions/checkout@v4
 
