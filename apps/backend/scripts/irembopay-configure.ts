@@ -29,6 +29,7 @@ import { PaymentSettingsService } from '../src/payment-settings/payment-settings
 import { ProviderProductsService } from '../src/payment-settings/provider-products.service';
 import { PaymentMethodCode } from '../src/payment-settings/entities/payment-method.entity';
 import { IREMBOPAY_PROVIDER_KEY } from '../src/payments/providers/irembo-pay.provider';
+import { IREMBOPAY_FIELD_KEYS } from '../src/payment-settings/irembopay-fields';
 
 dotenv.config();
 
@@ -82,13 +83,16 @@ async function main(): Promise<void> {
   console.log(`accounts     RWF=${account} USD=${accountUsd || '-'} EUR=${accountEur || '-'}`);
   console.log(`mode         ${production ? 'PRODUCTION' : 'sandbox'}`);
 
+  // Into the fields of the merchant being configured; the other merchant's
+  // values on the row are left alone (see payment-settings/irembopay-fields.ts).
+  const f = IREMBOPAY_FIELD_KEYS[production ? 'production' : 'sandbox'];
   await settings.upsertMethodSettings(method.id, {
     settings: {
-      secretKey,
-      publicKey,
-      paymentAccountIdentifier: account,
-      ...(accountUsd ? { paymentAccountIdentifierUsd: accountUsd } : {}),
-      ...(accountEur ? { paymentAccountIdentifierEur: accountEur } : {}),
+      [f.secretKey]: secretKey,
+      [f.publicKey]: publicKey,
+      [f.accountRwf]: account,
+      ...(accountUsd ? { [f.accountUsd]: accountUsd } : {}),
+      ...(accountEur ? { [f.accountEur]: accountEur } : {}),
       ...(apiBaseUrl ? { apiBaseUrl } : {}),
     },
     isTestMode: !production,

@@ -11,9 +11,10 @@ import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
 import { UpsertPaymentMethodSettingsDto } from './dto/upsert-payment-method-settings.dto';
 import { UpsertPaymentTypeRateDto } from './dto/upsert-payment-type-rate.dto';
 import { SettingsCacheBus } from './settings-cache.bus';
+import { IREMBOPAY_SENSITIVE_FIELDS, iremboPayReady } from './irembopay-fields';
 
 const SENSITIVE_FIELDS: Partial<Record<PaymentMethodCode, string[]>> = {
-  [PaymentMethodCode.IREMBOPAY]: ['secretKey'],
+  [PaymentMethodCode.IREMBOPAY]: IREMBOPAY_SENSITIVE_FIELDS,
 };
 
 const MASK = '••••••••';
@@ -213,13 +214,13 @@ export class PaymentSettingsService {
       if (sensitive.includes(key) && value === MASK) continue;
       merged[key] = value;
     }
-    // Which merchant the keys belong to is recorded by the IremboPay seed, and
-    // it gates going live there. A key changed by hand makes that unknown.
-    if (merged.secretKey !== record.settings?.secretKey) delete merged.credentialsFor;
+    // Retired: key provenance was needed only while one set of fields held
+    // whichever merchant's keys; each merchant now has its own fields.
+    delete merged.credentialsFor;
 
     record.settings = merged;
     if (dto.isTestMode !== undefined) record.isTestMode = dto.isTestMode;
-    record.isConfigured = this.checkConfigured(merged, method.code);
+    record.isConfigured = this.checkConfigured(merged, method.code, record.isTestMode);
 
     const saved = await this.settingsRepo.save(record);
 
@@ -306,11 +307,15 @@ export class PaymentSettingsService {
     return masked;
   }
 
-  private checkConfigured(settings: Record<string, string>, code: string): boolean {
-    const required: Partial<Record<PaymentMethodCode, string[]>> = {
-      [PaymentMethodCode.IREMBOPAY]: ['secretKey', 'publicKey', 'paymentAccountIdentifier'],
-    };
-    const fields = required[code as PaymentMethodCode] ?? [];
-    return fields.every((f) => !!settings[f]?.trim());
+  /** Configured for the merchant the Test-mode flag selects. */
+  private checkConfigured(
+    settings: Record<string, string>,
+    code: string,
+    isTestMode: boolean,
+  ): boolean {
+    if (code === PaymentMethodCode.IREMBOPAY) {
+      return iremboPayReady(settings, isTestMode ? 'sandbox' : 'production');
+    }
+    return false;
   }
 }

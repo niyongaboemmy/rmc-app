@@ -149,7 +149,9 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
     const value = form[field.key] ?? '';
     const isRevealed = revealedFields.has(field.key);
     const isSensitive = !!field.sensitive;
-    const required = field.required && !simulating;
+    // A merchant's fields are required only while that merchant is live.
+    const live = !field.section || (field.section === 'sandbox') === isTestMode;
+    const required = field.required && !simulating && live;
 
     if (field.type === 'select') {
       return (
@@ -203,17 +205,17 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
   };
 
   // Split fields into grid pairs (2 per row)
-  const renderFieldsGrid = () => {
+  const renderGrid = (list: SettingField[]) => {
     const rows: SettingField[][] = [];
     let i = 0;
-    while (i < fields.length) {
+    while (i < list.length) {
       // Long-text / URL fields take full width
-      const f = fields[i];
+      const f = list[i];
       if (f.type === 'url' || f.type === 'text' || f.sensitive) {
         rows.push([f]);
         i += 1;
       } else {
-        rows.push(fields.slice(i, i + 2));
+        rows.push(list.slice(i, i + 2));
         i += 2;
       }
     }
@@ -225,6 +227,40 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
         {row.map(renderField)}
       </div>
     ));
+  };
+
+  /**
+   * Fields grouped by merchant. Both merchants' values are kept on one row and
+   * Test mode picks the live one, so the production configuration can be seen
+   * and completed while the site still takes sandbox payments.
+   */
+  const SECTIONS: { key: 'production' | 'sandbox' | undefined; title: string; note: string }[] = [
+    { key: 'production', title: 'Production merchant', note: 'Used when Test mode is off.' },
+    { key: 'sandbox', title: 'Sandbox merchant', note: 'Used when Test mode is on. Kept as the testing backup.' },
+    { key: undefined, title: 'Shared settings', note: 'Apply to whichever merchant is live.' },
+  ];
+
+  const renderFieldsGrid = () => {
+    if (!fields.some((f) => f.section)) return renderGrid(fields);
+    return SECTIONS.map(({ key, title, note }) => {
+      const list = fields.filter((f) => f.section === key);
+      if (list.length === 0) return null;
+      const live = key !== undefined && (key === 'sandbox') === isTestMode;
+      return (
+        <section key={title} className="space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+            {live && (
+              <span className="inline-flex items-center rounded-full bg-rmc-green-light px-2 py-0.5 text-[11px] font-medium text-rmc-green">
+                Live
+              </span>
+            )}
+            <span className="text-xs text-gray-400">{note}</span>
+          </div>
+          {renderGrid(list)}
+        </section>
+      );
+    });
   };
 
   return (
@@ -342,7 +378,7 @@ export function PaymentMethodSettingsTab({ initialMethod, methods }: Props) {
                 )}
               </div>
 
-              <div className="px-6 py-5 space-y-4">
+              <div className="px-6 py-5 space-y-6">
                 {loading ? (
                   <div className="flex items-center justify-center py-10">
                     <div className="w-5 h-5 border-2 border-rmc-green border-t-transparent rounded-full animate-spin" />

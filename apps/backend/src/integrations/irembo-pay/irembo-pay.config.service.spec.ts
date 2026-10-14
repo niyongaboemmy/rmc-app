@@ -120,6 +120,50 @@ describe('IremboPayConfigService', () => {
     });
   });
 
+  describe('per-merchant fields', () => {
+    const BOTH = {
+      secretKey: 'sk_PROD',
+      publicKey: 'pk_PROD',
+      paymentAccountIdentifier: 'RMC_RWF',
+      paymentAccountIdentifierUsd: 'RMC_USD',
+      paymentAccountIdentifierEur: 'RMC_EUR',
+      sandboxSecretKey: 'sk_SBX',
+      sandboxPublicKey: 'pk_SBX',
+      sandboxPaymentAccountIdentifier: 'RMC-RWF',
+    };
+
+    it('uses the sandbox merchant in test mode', async () => {
+      const { service } = build(BOTH, true);
+      await expect(service.get()).resolves.toMatchObject({
+        secretKey: 'sk_SBX',
+        publicKey: 'pk_SBX',
+        paymentAccountIdentifier: 'RMC-RWF',
+        paymentAccountIdentifierUsd: '',
+      });
+      await expect(service.isConfigured()).resolves.toBe(true);
+    });
+
+    it('uses the production merchant when test mode is off', async () => {
+      const { service } = build(BOTH, false);
+      await expect(service.get()).resolves.toMatchObject({
+        secretKey: 'sk_PROD',
+        paymentAccountIdentifier: 'RMC_RWF',
+        paymentAccountIdentifierEur: 'RMC_EUR',
+        apiBaseUrl: 'https://api.irembopay.com',
+      });
+    });
+
+    it('is not configured in production before the production keys are entered', async () => {
+      const { service } = build({ ...BOTH, secretKey: '', publicKey: '' }, false);
+      await expect(service.isConfigured()).resolves.toBe(false);
+    });
+
+    it('refuses a sandbox key pasted into the production field', async () => {
+      const { service } = build({ ...BOTH, secretKey: 'sk_SBX' }, false);
+      await expect(service.isConfigured()).resolves.toBe(false);
+    });
+  });
+
   describe('limits', () => {
     it("defaults to IremboPay's production limits", async () => {
       const cfg = await build(FULL).service.get();

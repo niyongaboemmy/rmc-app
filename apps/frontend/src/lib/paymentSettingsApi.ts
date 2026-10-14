@@ -210,7 +210,17 @@ export interface SettingField {
   label: string;
   placeholder?: string;
   sensitive?: boolean;
+  /**
+   * Required for the merchant its `section` names. A production field is only
+   * required while Test mode is off, a sandbox field only while it is on.
+   */
   required?: boolean;
+  /**
+   * Which merchant the value belongs to. Sandbox and production are separate
+   * IremboPay merchants stored side by side; Test mode picks the live one.
+   * Omitted = shared by both.
+   */
+  section?: 'production' | 'sandbox';
   type?: 'text' | 'url' | 'select';
   options?: { value: string; label: string }[];
   hint?: string;
@@ -222,29 +232,38 @@ export interface SettingField {
  */
 export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingField[]>> = {
   IREMBOPAY: [
-    { key: 'secretKey', label: 'Secret Key', required: true, sensitive: true,
-      placeholder: 'From Portal → Integration Details → View Token' },
-    { key: 'publicKey', label: 'Public Key', required: true,
+    // ── Production merchant (live when Test mode is off) ──
+    { key: 'secretKey', label: 'Secret Key', required: true, sensitive: true, section: 'production',
+      placeholder: 'Production portal → Integration Details → View Token' },
+    { key: 'publicKey', label: 'Public Key', required: true, section: 'production',
+      placeholder: 'Production portal → Integration Details → View Token',
       hint: 'Used by the inline payment widget in the browser' },
-    { key: 'paymentAccountIdentifier', label: 'Payment Account (RWF)', required: true,
-      placeholder: 'e.g. RMC_RWF', hint: 'Determines the invoice currency. Sandbox: RMC-RWF' },
-    { key: 'paymentAccountIdentifierUsd', label: 'Payment Account (USD)', placeholder: 'e.g. RMC_USD',
-      hint: 'Leave empty to refuse USD payments' },
-    { key: 'paymentAccountIdentifierEur', label: 'Payment Account (EUR)', placeholder: 'e.g. RMC_EUR',
-      hint: 'Leave empty to refuse EUR payments' },
+    { key: 'paymentAccountIdentifier', label: 'Payment Account (RWF)', required: true, section: 'production',
+      placeholder: 'RMC_RWF', hint: 'BK 100014931117 — fixes the invoice currency' },
+    { key: 'paymentAccountIdentifierUsd', label: 'Payment Account (USD)', section: 'production',
+      placeholder: 'RMC_USD', hint: 'BK 100014931273 — empty refuses USD payments' },
+    { key: 'paymentAccountIdentifierEur', label: 'Payment Account (EUR)', section: 'production',
+      placeholder: 'RMC_EUR', hint: 'BK 100014931389 — empty refuses EUR payments' },
+    // ── Sandbox merchant (live when Test mode is on) ──
+    { key: 'sandboxSecretKey', label: 'Secret Key', required: true, sensitive: true, section: 'sandbox',
+      placeholder: 'Sandbox portal → Integration Details → View Token' },
+    { key: 'sandboxPublicKey', label: 'Public Key', required: true, section: 'sandbox' },
+    { key: 'sandboxPaymentAccountIdentifier', label: 'Payment Account (RWF)', required: true, section: 'sandbox',
+      placeholder: 'RMC-RWF', hint: 'The sandbox has an RWF account only' },
+    // ── Shared ──
     // IremboPay's limits for the merchant. Empty = the production defaults.
     { key: 'maxTransactionRwf', label: 'Max per payment (RWF)', placeholder: '50000000',
-      hint: 'Leave empty for the IremboPay limit (50,000,000)' },
+      hint: 'IremboPay limit: 50,000,000' },
     { key: 'maxDailyRwf', label: 'Max per day (RWF)', placeholder: '100000000',
-      hint: 'Leave empty for the IremboPay limit (100,000,000)' },
+      hint: 'IremboPay limit: 100,000,000' },
     { key: 'maxTransactionUsd', label: 'Max per payment (USD)', placeholder: '100000',
-      hint: 'Leave empty for the IremboPay limit (100,000)' },
+      hint: 'IremboPay limit: 100,000' },
     { key: 'maxDailyUsd', label: 'Max per day (USD)', placeholder: '300000',
-      hint: 'Leave empty for the IremboPay limit (300,000)' },
+      hint: 'IremboPay limit: 300,000' },
     { key: 'maxTransactionEur', label: 'Max per payment (EUR)', placeholder: '100000',
-      hint: 'Leave empty for the IremboPay limit (100,000)' },
+      hint: 'IremboPay limit: 100,000' },
     { key: 'maxDailyEur', label: 'Max per day (EUR)', placeholder: '300000',
-      hint: 'Leave empty for the IremboPay limit (300,000)' },
+      hint: 'IremboPay limit: 300,000' },
     { key: 'apiBaseUrl', label: 'API Base URL', type: 'url',
       placeholder: 'https://api.sandbox.irembopay.com',
       hint: 'Leave empty to derive from the Test mode toggle' },

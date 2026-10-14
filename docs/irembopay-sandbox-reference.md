@@ -45,6 +45,12 @@ development, staging, or a rollback rehearsal.
 
 ## 3. Restoring a sandbox environment
 
+**On an environment past migration 082** (production included) the sandbox keys
+and account are stored in the *Sandbox merchant* fields of Admin → Settings →
+Payments → IremboPay. Restoring sandbox there is just **Test mode on → Save**.
+The steps below are for a fresh environment, or one whose sandbox fields were
+cleared.
+
 1. Pull the sandbox keys from the password manager into the gitignored
    `apps/backend/.env`:
 
@@ -55,13 +61,12 @@ development, staging, or a rollback rehearsal.
    IREMBOPAY_ACCOUNT_RWF=RMC-RWF
    ```
 
-   With an explicit `IREMBOPAY_MODE`, keys in `.env` replace the ones on the
-   settings row. That is what turns a production row back into a sandbox row.
+   With `IREMBOPAY_MODE=sandbox`, the keys go into the sandbox fields
+   (`sandboxSecretKey`, …) and the production fields are left alone.
 
 2. `npm run seed --workspace apps/backend` (or `node dist/database/seeds/run-seeds.js`).
-   Seed 09 writes the settings row in test mode, turns `RMC_RWF` back into
-   `RMC-RWF` and drops the USD/EUR accounts. Seed 10 gives any type without a
-   sandbox mapping the catch-all `PC-62d7108dd9`.
+   Seed 09 writes the settings row in test mode. Seed 10 gives any type without
+   a sandbox mapping the catch-all `PC-62d7108dd9`.
 3. Smoke test: `npx ts-node apps/backend/scripts/irembopay-sandbox-smoke.ts`.
 
 The sandbox product mappings stay in

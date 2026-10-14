@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PaymentMethodCode } from '../../payment-settings/entities/payment-method.entity';
 import { ProviderEnvironment } from '../../payment-settings/entities/payment-type-provider-product.entity';
 import { PaymentSettingsService } from '../../payment-settings/payment-settings.service';
+import { iremboPayFieldsFor, iremboPayReady } from '../../payment-settings/irembopay-fields';
 import { SettingsCacheBus } from '../../payment-settings/settings-cache.bus';
 import {
   DEFAULT_SIMULATOR_DELAY_MS,
@@ -92,6 +93,8 @@ const CACHE_TTL_MS = 60_000;
 export class IremboPayConfigService {
   private readonly logger = new Logger(IremboPayConfigService.name);
   private cache: { value: IremboPayConfig; expiresAt: number } | null = null;
+  /** Set alongside the cache by get(): the live merchant has usable credentials. */
+  private ready = false;
 
   constructor(
     private readonly paymentSettings: PaymentSettingsService,
@@ -127,13 +130,17 @@ export class IremboPayConfigService {
       false,
     );
     const isTestMode = record?.isTestMode ?? true;
+    const environment = isTestMode ? 'sandbox' : 'production';
+    // The row holds both merchants' keys and accounts; Test mode picks one.
+    const merchant = iremboPayFieldsFor(raw, environment);
+    this.ready = iremboPayReady(raw, environment);
 
     const value: IremboPayConfig = {
-      secretKey: (raw.secretKey ?? '').trim(),
-      publicKey: (raw.publicKey ?? '').trim(),
-      paymentAccountIdentifier: (raw.paymentAccountIdentifier ?? '').trim(),
-      paymentAccountIdentifierUsd: (raw.paymentAccountIdentifierUsd ?? '').trim(),
-      paymentAccountIdentifierEur: (raw.paymentAccountIdentifierEur ?? '').trim(),
+      secretKey: merchant.secretKey,
+      publicKey: merchant.publicKey,
+      paymentAccountIdentifier: merchant.accountRwf,
+      paymentAccountIdentifierUsd: merchant.accountUsd,
+      paymentAccountIdentifierEur: merchant.accountEur,
       apiBaseUrl: stripTrailingSlash(
         raw.apiBaseUrl?.trim() || (isTestMode ? SANDBOX_API : PRODUCTION_API),
       ),
@@ -147,7 +154,7 @@ export class IremboPayConfigService {
         DEFAULTS.signatureToleranceSeconds,
       ),
       isTestMode,
-      environment: isTestMode ? 'sandbox' : 'production',
+      environment,
       simulatorMode: asSimulatorMode(raw.simulatorMode),
       simulatorDelayMs: positiveInt(raw.simulatorDelayMs, DEFAULT_SIMULATOR_DELAY_MS),
       testMsisdn: raw.testMsisdn?.trim() || DEFAULTS.testMsisdn,
@@ -168,7 +175,13 @@ export class IremboPayConfigService {
     // Reporting "not configured" here would send every charge down the
     // no-gateway branch and defeat the simulation.
     if (this.simulationRequested(c)) return true;
-    return !!(c.secretKey && c.publicKey && c.paymentAccountIdentifier);
+    if (!this.ready && c.environment === 'production' && c.secretKey) {
+      this.logger.warn(
+        '[IremboPay] Production is selected but its secret key equals the sandbox one — ' +
+          'treated as not configured. Paste the production keys in Admin → Settings → Payments.',
+      );
+    }
+    return this.ready;
   }
 
   /** Whether payments are being answered locally rather than by IremboPay. */
