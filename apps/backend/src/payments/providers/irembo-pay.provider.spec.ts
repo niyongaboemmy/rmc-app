@@ -9,6 +9,8 @@ const CONFIG: IremboPayConfig = {
   publicKey: 'pk_test',
   paymentAccountIdentifier: 'TST-RWF',
   paymentAccountIdentifierUsd: '',
+  paymentAccountIdentifierEur: '',
+  environment: 'sandbox',
   apiBaseUrl: 'https://api.sandbox.irembopay.com',
   widgetScriptUrl: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
   apiVersion: '3',
@@ -48,6 +50,8 @@ function build(
     getInvoice?: jest.Mock;
     initiateMomoPush?: jest.Mock;
     resolveForCharge?: jest.Mock;
+    config?: Partial<IremboPayConfig>;
+    accountForCurrency?: jest.Mock;
     storedStatus?: 'NEW' | 'PAID' | 'PARTIALLY_PAID' | 'EXPIRED';
   } = {},
 ) {
@@ -61,9 +65,9 @@ function build(
   };
 
   const config = {
-    get: jest.fn().mockResolvedValue(CONFIG),
+    get: jest.fn().mockResolvedValue({ ...CONFIG, ...overrides.config }),
     isConfigured: jest.fn().mockResolvedValue(true),
-    accountForCurrency: jest.fn().mockResolvedValue('TST-RWF'),
+    accountForCurrency: overrides.accountForCurrency ?? jest.fn().mockResolvedValue('TST-RWF'),
   };
 
   const recordNewInvoice = jest.fn(async (remote: IremboInvoice) => ({
@@ -92,6 +96,7 @@ function build(
       products as never,
     ),
     irembo,
+    config,
     invoices,
     products,
     recordNewInvoice,
@@ -251,6 +256,103 @@ describe('IremboPayProvider', () => {
     expect(irembo.initiateMomoPush).not.toHaveBeenCalled();
     expect(result.status).toBe('PENDING');
     expect(result.message).toMatch(/Invoice 880519183280 created/);
+  });
+
+  describe('currency and environment', () => {
+    const PRODUCTION = { environment: 'production' as const, isTestMode: false };
+    const accounts = jest.fn(async (ccy: string) => `RMC_${ccy}`);
+    const catalog = jest.fn(
+      async (_provider: string, key: string, scope: { currency: string; environment: string }) => ({
+        productCode: `${key}-${scope.currency}-${scope.environment}`,
+        paymentAccountIdentifier: null,
+      }),
+    );
+
+    /** IremboPay answers BAD_DATA for a non-RWF push; we refuse before invoicing. */
+    it.each(['USD', 'EUR'])('refuses a %s MoMo push before any HTTP call', async (currency) => {
+      const { provider, irembo } = build({ config: PRODUCTION });
+
+      await expect(
+        provider.charge({ ...REQUEST, currency, pushProvider: 'MTN' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+      expect(irembo.initiateMomoPush).not.toHaveBeenCalled();
+    });
+
+    it('resolves products in the charge currency on the live merchant', async () => {
+      const { provider, products } = build({
+        config: PRODUCTION,
+        resolveForCharge: catalog,
+        accountForCurrency: accounts,
+      });
+
+      await provider.charge({ ...REQUEST, currency: 'usd', pushProvider: undefined });
+
+      expect(products.resolveForCharge).toHaveBeenCalledWith('irembopay', 'DONATION', {
+        rateId: undefined,
+        currency: 'USD',
+        environment: 'production',
+      });
+    });
+
+    it('bills a EUR basket of Sadaqat and Zakat as one RMC_EUR invoice', async () => {
+      const { provider, irembo, recordNewInvoice } = build({
+        config: PRODUCTION,
+        resolveForCharge: catalog,
+        accountForCurrency: accounts,
+      });
+
+      await provider.charge({
+        ...REQUEST,
+        amount: 75,
+        currency: 'EUR',
+        pushProvider: undefined,
+        items: [
+          { paymentTypeKey: 'DONATION', amount: 50, quantity: 1 },
+          { paymentTypeKey: 'ZAKAT', amount: 25, quantity: 1 },
+        ],
+      });
+
+      expect(irembo.createInvoice).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paymentAccountIdentifier: 'RMC_EUR',
+          paymentItems: [
+            { code: 'DONATION-EUR-production', quantity: 1, unitAmount: 50 },
+            { code: 'ZAKAT-EUR-production', quantity: 1, unitAmount: 25 },
+          ],
+        }),
+      );
+      expect(recordNewInvoice).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ environment: 'production', isTest: false }),
+      );
+    });
+
+    /** The €50-as-50-RWF regression, end to end through the provider. */
+    it('creates no invoice when the currency has no account', async () => {
+      const { provider, irembo } = build({
+        config: PRODUCTION,
+        accountForCurrency: jest
+          .fn()
+          .mockRejectedValue(new BadRequestException('IremboPay has no EUR payment account')),
+      });
+
+      await expect(
+        provider.charge({ ...REQUEST, currency: 'EUR', pushProvider: undefined }),
+      ).rejects.toThrow(/no EUR payment account/);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('records sandbox invoices as sandbox', async () => {
+      const { provider, recordNewInvoice } = build();
+
+      await provider.charge(REQUEST);
+
+      expect(recordNewInvoice).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ environment: 'sandbox' }),
+      );
+    });
   });
 
   describe('getStatus', () => {

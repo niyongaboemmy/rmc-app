@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpsertProviderProductDto {
@@ -27,4 +27,17 @@ export class UpsertProviderProductDto {
   @IsString()
   @MaxLength(50)
   paymentAccountIdentifier?: string;
+
+  @ApiPropertyOptional({ example: 'RWF', enum: ['RWF', 'USD', 'EUR'], default: 'RWF' })
+  @IsOptional()
+  @IsIn(['RWF', 'USD', 'EUR'])
+  currency?: 'RWF' | 'USD' | 'EUR';
+
+  @ApiPropertyOptional({
+    enum: ['sandbox', 'production'],
+    description: 'Merchant the code exists on. Defaults to the gateway’s current mode.',
+  })
+  @IsOptional()
+  @IsIn(['sandbox', 'production'])
+  environment?: 'sandbox' | 'production';
 }

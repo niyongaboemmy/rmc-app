@@ -2,7 +2,7 @@ import { IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TestIremboPayInvoiceDto {
-  @ApiPropertyOptional({ example: 100, description: 'Amount in RWF. Defaults to 100.' })
+  @ApiPropertyOptional({ example: 100, description: 'Amount in `currency`. Defaults to 100.' })
   @IsOptional()
   @IsNumber()
   @Min(1)
@@ -17,6 +17,11 @@ export class TestIremboPayInvoiceDto {
   @IsOptional()
   @IsString()
   mobilePhone?: string;
+
+  @ApiPropertyOptional({ example: 'RWF', enum: ['RWF', 'USD', 'EUR'], default: 'RWF' })
+  @IsOptional()
+  @IsIn(['RWF', 'USD', 'EUR'])
+  currency?: 'RWF' | 'USD' | 'EUR';
 
   @ApiPropertyOptional({ example: 'EN', enum: ['EN', 'FR', 'RW'] })
   @IsOptional()

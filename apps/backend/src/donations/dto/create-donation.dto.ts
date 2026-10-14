@@ -13,6 +13,7 @@ import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DonationFrequency } from '../entities/donation.entity';
 import { ACCEPTED_DONATION_METHODS } from '../donation-payment-method';
+import { DONATION_CURRENCIES } from '../donation-payment-type';
 
 /** Payload sent by the public donate page when a visitor makes a donation. */
 export class CreateDonationDto {
@@ -29,10 +30,14 @@ export class CreateDonationDto {
   @Min(1)
   amount: number;
 
-  @ApiPropertyOptional({ default: 'RWF' })
+  @ApiPropertyOptional({
+    enum: DONATION_CURRENCIES,
+    default: 'RWF',
+    description: 'A currency RMC holds an IremboPay account in. Case-insensitive.',
+  })
   @IsOptional()
-  @IsString()
-  @MaxLength(3)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
+  @IsIn(DONATION_CURRENCIES as readonly string[])
   currency?: string;
 
   @ApiPropertyOptional({ enum: DonationFrequency, default: DonationFrequency.ONCE })

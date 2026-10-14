@@ -12,8 +12,11 @@
  *
  *   IREMBOPAY_SECRET_KEY=...      # Portal → Integration Details → View Token
  *   IREMBOPAY_PUBLIC_KEY=...
- *   IREMBOPAY_ACCOUNT=TST-RWF     # Portal → Payment Accounts
- *   IREMBOPAY_PRODUCT_CODE=PI-... # Portal → Products
+ *   IREMBOPAY_ACCOUNT_RWF=RMC_RWF # Portal → Payment Accounts (sandbox: RMC-RWF)
+ *   IREMBOPAY_ACCOUNT_USD=RMC_USD # optional
+ *   IREMBOPAY_ACCOUNT_EUR=RMC_EUR # optional
+ *   IREMBOPAY_PRODUCT_CODE=PC-... # sandbox catch-all only; production products
+ *                                 # come from the 10-irembopay-catalog seed
  *   IREMBOPAY_API_BASE=           # optional; empty derives from test mode
  *
  * Run:  npx ts-node scripts/irembopay-configure.ts [--activate] [--production]
@@ -38,14 +41,16 @@ function fingerprint(value: string): string {
 async function main(): Promise<void> {
   const secretKey = (process.env.IREMBOPAY_SECRET_KEY ?? '').trim();
   const publicKey = (process.env.IREMBOPAY_PUBLIC_KEY ?? '').trim();
-  const account = (process.env.IREMBOPAY_ACCOUNT ?? '').trim();
+  const account = (process.env.IREMBOPAY_ACCOUNT_RWF || process.env.IREMBOPAY_ACCOUNT || '').trim();
+  const accountUsd = (process.env.IREMBOPAY_ACCOUNT_USD ?? '').trim();
+  const accountEur = (process.env.IREMBOPAY_ACCOUNT_EUR ?? '').trim();
   const productCode = (process.env.IREMBOPAY_PRODUCT_CODE ?? '').trim();
   const apiBaseUrl = (process.env.IREMBOPAY_API_BASE ?? '').trim();
 
   const missing = Object.entries({
     IREMBOPAY_SECRET_KEY: secretKey,
     IREMBOPAY_PUBLIC_KEY: publicKey,
-    IREMBOPAY_ACCOUNT: account,
+    IREMBOPAY_ACCOUNT_RWF: account,
   })
     .filter(([, v]) => !v)
     .map(([k]) => k);
@@ -74,7 +79,7 @@ async function main(): Promise<void> {
 
   console.log(`\nsecret key   ${fingerprint(secretKey)}`);
   console.log(`public key   ${fingerprint(publicKey)}`);
-  console.log(`account      ${account}`);
+  console.log(`accounts     RWF=${account} USD=${accountUsd || '-'} EUR=${accountEur || '-'}`);
   console.log(`mode         ${production ? 'PRODUCTION' : 'sandbox'}`);
 
   await settings.upsertMethodSettings(method.id, {
@@ -82,19 +87,30 @@ async function main(): Promise<void> {
       secretKey,
       publicKey,
       paymentAccountIdentifier: account,
+      ...(accountUsd ? { paymentAccountIdentifierUsd: accountUsd } : {}),
+      ...(accountEur ? { paymentAccountIdentifierEur: accountEur } : {}),
       ...(apiBaseUrl ? { apiBaseUrl } : {}),
     },
     isTestMode: !production,
   });
   console.log('\n✓ credentials saved to payment_method_settings');
 
-  if (productCode) {
-    const rows = await products.listRows(IREMBOPAY_PROVIDER_KEY);
-    const unmapped = rows.filter((r) => r.paymentTypeRateId === null && !r.productCode);
+  if (productCode && production) {
+    console.log(
+      '· IREMBOPAY_PRODUCT_CODE ignored in production — run the seeds, whose\n' +
+        '  10-irembopay-catalog maps every production product per currency',
+    );
+  } else if (productCode) {
+    const rows = await products.listRows(IREMBOPAY_PROVIDER_KEY, 'sandbox');
+    const unmapped = rows.filter(
+      (r) => r.paymentTypeRateId === null && r.currency === 'RWF' && !r.productCode,
+    );
     for (const row of unmapped) {
       await products.upsert(IREMBOPAY_PROVIDER_KEY, {
         paymentTypeId: row.paymentTypeId,
         productCode,
+        currency: 'RWF',
+        environment: 'sandbox',
       });
     }
     console.log(

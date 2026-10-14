@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { CartItem } from '@/components/donate/donateData';
+import { niyyahFor } from '@/components/donate/donateData';
 
 /* ──────────────────────────────────────────────────────────────
    Donation cart — the donor's in-progress pledges BEFORE checkout.
@@ -143,6 +144,9 @@ export function DonationCartProvider({ children }: { children: React.ReactNode }
         if (next !== cur) setCart([]);
         return next;
       });
+      // An intention not payable in the new currency (Zakat al-Fitr is RWF-only)
+      // falls back to the default rather than failing at checkout.
+      setNiyyah((n) => (niyyahFor(next).some((o) => o.key === n) ? n : DEFAULT_NIYYAH));
     },
     [],
   );

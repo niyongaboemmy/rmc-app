@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PaymentMethodCode } from '../../payment-settings/entities/payment-method.entity';
 import { ProviderProductsService } from '../../payment-settings/provider-products.service';
 import { IremboPayConfigService } from '../../integrations/irembo-pay/irembo-pay.config.service';
@@ -51,7 +51,16 @@ export class IremboPayProvider implements PaymentGatewayProvider {
 
   async charge(req: PaymentChargeRequest): Promise<PaymentChargeResult> {
     const cfg = await this.config.get();
-    const currency = req.currency ?? 'RWF';
+    const currency = (req.currency ?? 'RWF').trim().toUpperCase();
+
+    // IremboPay pushes MoMo prompts for RWF invoices only (BAD_DATA otherwise).
+    // Refused before an invoice exists, rather than leaving the payer with a
+    // USD invoice and a prompt that will never arrive.
+    if (req.pushProvider && currency !== 'RWF') {
+      throw new BadRequestException(
+        `Mobile money is available for RWF payments only. Pay ${currency} by card.`,
+      );
+    }
 
     // One invoice can carry several payment items, which is how a whole cart is
     // settled by a single payment rather than one invoice per line.
@@ -72,17 +81,17 @@ export class IremboPayProvider implements PaymentGatewayProvider {
     const resolved = await Promise.all(
       lines.map(async (line) => ({
         line,
-        product: await this.products.resolveForCharge(
-          IREMBOPAY_PROVIDER_KEY,
-          line.paymentTypeKey,
-          line.paymentTypeRateId,
-        ),
+        product: await this.products.resolveForCharge(IREMBOPAY_PROVIDER_KEY, line.paymentTypeKey, {
+          rateId: line.paymentTypeRateId,
+          currency,
+          environment: cfg.environment,
+        }),
       })),
     );
 
-    // A mixed-account invoice is not a thing IremboPay supports — the account
-    // fixes the currency — so the first line's override wins and the rest fall
-    // back to the method-level account.
+    // One invoice, one account — the account fixes the currency. Every line was
+    // resolved in this currency, so a per-mapping override (rare: a dedicated
+    // account for one service) is in it too; the first one found wins.
     const paymentAccount =
       resolved.find((r) => r.product.paymentAccountIdentifier)?.product.paymentAccountIdentifier ||
       (await this.config.accountForCurrency(currency));
@@ -127,6 +136,7 @@ export class IremboPayProvider implements PaymentGatewayProvider {
       paymentTypeKey: req.paymentTypeKey,
       referenceId: req.referenceId,
       isTest: req.isTest ?? cfg.isTestMode,
+      environment: cfg.environment,
       payerPhone: req.payer.phone,
       initiatedBy: req.initiatedBy,
     });

@@ -110,14 +110,61 @@ describe('IremboPayConfigService', () => {
       });
     });
 
-    it('uses the USD account for USD and falls back to RWF otherwise', async () => {
-      const { service } = build({ ...FULL, paymentAccountIdentifierUsd: 'TST-USD' });
+    it('reports the merchant as an environment', async () => {
+      await expect(build(FULL, true).service.get()).resolves.toMatchObject({
+        environment: 'sandbox',
+      });
+      await expect(build(FULL, false).service.get()).resolves.toMatchObject({
+        environment: 'production',
+      });
+    });
+  });
 
-      await expect(service.accountForCurrency('USD')).resolves.toBe('TST-USD');
-      await expect(service.accountForCurrency('RWF')).resolves.toBe('TST-RWF');
-      // No USD account configured is not an error — bill it to the RWF account.
-      const { service: rwfOnly } = build(FULL);
-      await expect(rwfOnly.accountForCurrency('USD')).resolves.toBe('TST-RWF');
+  describe('accountForCurrency', () => {
+    const PROD = {
+      ...FULL,
+      paymentAccountIdentifier: 'RMC_RWF',
+      paymentAccountIdentifierUsd: 'RMC_USD',
+      paymentAccountIdentifierEur: 'RMC_EUR',
+    };
+
+    it.each([
+      ['RWF', 'RMC_RWF'],
+      ['USD', 'RMC_USD'],
+      ['EUR', 'RMC_EUR'],
+      ['eur', 'RMC_EUR'],
+      [' usd ', 'RMC_USD'],
+    ])('maps %s to its own account', async (currency, account) => {
+      await expect(build(PROD, false).service.accountForCurrency(currency)).resolves.toBe(account);
+    });
+
+    it('defaults to the RWF account when no currency is named', async () => {
+      await expect(build(PROD, false).service.accountForCurrency()).resolves.toBe('RMC_RWF');
+    });
+
+    /**
+     * Regression: the account fixes the invoice currency, so falling back to
+     * the RWF account turned a €50 donation into a 50 RWF invoice — silently.
+     */
+    it.each(['USD', 'EUR'])(
+      'refuses %s when that account is not configured, never billing it in RWF',
+      async (currency) => {
+        const { service } = build(FULL);
+
+        await expect(service.accountForCurrency(currency)).rejects.toThrow(
+          new RegExp(`no ${currency} payment account`),
+        );
+      },
+    );
+
+    it('refuses a currency RMC has no account type for', async () => {
+      await expect(build(PROD).service.accountForCurrency('GBP')).rejects.toThrow(
+        /no GBP payment account/,
+      );
+    });
+
+    it('still reports configured with only the RWF account', async () => {
+      await expect(build(FULL).service.isConfigured()).resolves.toBe(true);
     });
   });
 

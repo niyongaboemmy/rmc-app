@@ -11,6 +11,8 @@ const CONFIG: IremboPayConfig = {
   publicKey: 'pk_test_public',
   paymentAccountIdentifier: 'TST-RWF',
   paymentAccountIdentifierUsd: '',
+  paymentAccountIdentifierEur: '',
+  environment: 'sandbox',
   apiBaseUrl: 'https://api.sandbox.irembopay.com',
   widgetScriptUrl: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
   apiVersion: '3',
@@ -114,10 +116,12 @@ describe('IremboPayAdminController', () => {
     /** An unmapped type fails at charge time; the admin should see it first. */
     it('counts payment types with no product mapping', async () => {
       const { controller } = build([
-        { paymentTypeRateId: null, unmapped: true },
-        { paymentTypeRateId: null, unmapped: false },
+        { paymentTypeRateId: null, unmapped: true, paymentTypeActive: true },
+        { paymentTypeRateId: null, unmapped: false, paymentTypeActive: true },
         // Rate-level rows are excluded — a rate inherits its type's mapping.
-        { paymentTypeRateId: 'rate-1', unmapped: true },
+        { paymentTypeRateId: 'rate-1', unmapped: true, paymentTypeActive: true },
+        // An inactive type cannot be charged, so its gap fails no payer.
+        { paymentTypeRateId: null, unmapped: true, paymentTypeActive: false },
       ]);
 
       await expect(controller.status()).resolves.toMatchObject({ unmappedPaymentTypes: 1 });
@@ -130,7 +134,18 @@ describe('IremboPayAdminController', () => {
 
       await controller.listProducts('irembopay');
 
-      expect(products.listRows).toHaveBeenCalledWith('irembopay');
+      // No environment named: the merchant the gateway is on now.
+      expect(products.listRows).toHaveBeenCalledWith('irembopay', 'sandbox');
+    });
+
+    it('lists the other merchant when asked, and ignores a nonsense value', async () => {
+      const { controller, products } = build();
+
+      await controller.listProducts('irembopay', 'production');
+      expect(products.listRows).toHaveBeenLastCalledWith('irembopay', 'production');
+
+      await controller.listProducts('irembopay', 'staging');
+      expect(products.listRows).toHaveBeenLastCalledWith('irembopay', 'sandbox');
     });
 
     it('upserts a type-level mapping when no rate is given', async () => {
@@ -146,7 +161,25 @@ describe('IremboPayAdminController', () => {
         paymentTypeRateId: null,
         productCode: 'PI-3e5fe23f2d',
         paymentAccountIdentifier: null,
+        currency: 'RWF',
+        environment: 'sandbox',
       });
+    });
+
+    it('maps a production EUR product while the gateway is still on sandbox', async () => {
+      const { controller, products } = build();
+
+      await controller.upsertProduct('irembopay', {
+        paymentTypeId: 'type-1',
+        productCode: 'PC-b38b93d13f',
+        currency: 'EUR',
+        environment: 'production',
+      });
+
+      expect(products.upsert).toHaveBeenCalledWith(
+        'irembopay',
+        expect.objectContaining({ currency: 'EUR', environment: 'production' }),
+      );
     });
 
     it('passes a rate id and account override through', async () => {

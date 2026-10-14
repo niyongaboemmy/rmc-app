@@ -218,4 +218,111 @@ describe('Donation gateway routing', () => {
       expect(donations.save).not.toHaveBeenCalled();
     });
   });
+
+  describe('currency and product routing', () => {
+    const line = (over: Record<string, unknown>) =>
+      ({ amount: 50, donorPhone: '0781234567', paymentMethod: 'card', ...over }) as never;
+
+    it('refuses a basket that mixes currencies, before writing anything', async () => {
+      await expect(
+        service.createCart([line({ currency: 'USD' }), line({ currency: 'EUR' })], null, 'card'),
+      ).rejects.toThrow(/one currency/);
+      expect(donations.save).not.toHaveBeenCalled();
+      expect(paymentGateway.charge).not.toHaveBeenCalled();
+    });
+
+    it('treats a missing currency as RWF when checking the basket', async () => {
+      await expect(
+        service.createCart([line({}), line({ currency: 'USD' })], null, 'card'),
+      ).rejects.toThrow(/RWF, USD/);
+    });
+
+    /** IremboPay pushes MoMo for RWF only; a USD prompt would never arrive. */
+    it('refuses a USD MoMo basket, before writing anything', async () => {
+      await expect(
+        service.createCart([line({ currency: 'USD', paymentMethod: 'momo' })], null, 'momo'),
+      ).rejects.toThrow(/RWF donations only/);
+      expect(donations.save).not.toHaveBeenCalled();
+    });
+
+    it('refuses a single EUR MoMo donation', async () => {
+      await expect(
+        service.create({ ...base, currency: 'EUR', paymentMethod: 'momo' } as never, null),
+      ).rejects.toThrow(/RWF donations only/);
+      expect(donations.save).not.toHaveBeenCalled();
+    });
+
+    it('charges a EUR card basket in EUR', async () => {
+      await service.createCart([line({ currency: 'EUR' })], null, 'card');
+
+      expect(paymentGateway.charge.mock.calls[0][0]).toMatchObject({
+        currency: 'EUR',
+        pushProvider: undefined,
+      });
+    });
+
+    it('charges each basket line under the product its intention names', async () => {
+      await service.createCart(
+        [
+          line({ message: 'niyyah:sadaqah|category:charity' }),
+          line({ message: 'niyyah:sadaqah|category:charity|fund:zakat' }),
+          line({ message: 'niyyah:lillah|category:quran' }),
+          line({ message: 'niyyah:zakat-al-fitr|category:charity' }),
+          line({}),
+        ],
+        null,
+        'card',
+      );
+
+      const items = paymentGateway.charge.mock.calls[0][0].items as { paymentTypeKey: string }[];
+      expect(items.map((i) => i.paymentTypeKey)).toEqual([
+        'DONATION',
+        'ZAKAT',
+        'QURAN_SUPPORT',
+        'ZAKAT_FITR',
+        'DONATION',
+      ]);
+    });
+
+    /** A missing product is a configuration refusal, not an outage: no "try again". */
+    it('reports a gateway refusal as 400 and marks the gifts REFUSED', async () => {
+      paymentGateway.charge.mockRejectedValue(
+        new BadRequestException('No irembopay product is mapped to "Zakat al-Fitr" in USD'),
+      );
+
+      await expect(
+        service.createCart(
+          [line({ currency: 'USD', message: 'niyyah:zakat-al-fitr' })],
+          null,
+          'card',
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      const failed = donations.save.mock.calls.at(-1)[0] as {
+        status: string;
+        gatewayResponseCode: string;
+      }[];
+      expect(failed[0]).toMatchObject({
+        status: DonationStatus.FAILED,
+        gatewayResponseCode: 'REFUSED',
+      });
+    });
+
+    it('still reports a provider outage as 503', async () => {
+      paymentGateway.charge.mockRejectedValue(new Error('ECONNRESET'));
+
+      await expect(
+        service.createCart([line({ currency: 'RWF' })], null, 'card'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    });
+
+    it('charges a single donation under its intention', async () => {
+      await service.create(
+        { ...base, paymentMethod: 'card', message: 'niyyah:zakat|category:school' } as never,
+        null,
+      );
+
+      expect(paymentGateway.charge.mock.calls[0][0].paymentTypeKey).toBe('ZAKAT');
+    });
+  });
 });

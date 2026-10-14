@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -62,19 +63,24 @@ export class IremboPayAdminController {
   @ApiOperation({
     summary: 'Payment types and rates with their provider product mapping, unmapped ones flagged',
   })
-  listProducts(@Param('provider') provider: string) {
-    return this.products.listRows(provider);
+  async listProducts(
+    @Param('provider') provider: string,
+    @Query('environment') environment?: string,
+  ) {
+    return this.products.listRows(provider, await this.environmentOrCurrent(environment));
   }
 
   @Put('providers/:provider/products')
   @Permissions(Permission.PAYMENT_SETTINGS_MANAGE)
   @ApiOperation({ summary: 'Create or update a payment type → provider product mapping' })
-  upsertProduct(@Param('provider') provider: string, @Body() dto: UpsertProviderProductDto) {
+  async upsertProduct(@Param('provider') provider: string, @Body() dto: UpsertProviderProductDto) {
     return this.products.upsert(provider, {
       paymentTypeId: dto.paymentTypeId,
       paymentTypeRateId: dto.paymentTypeRateId ?? null,
       productCode: dto.productCode,
       paymentAccountIdentifier: dto.paymentAccountIdentifier ?? null,
+      currency: dto.currency ?? 'RWF',
+      environment: await this.environmentOrCurrent(dto.environment),
     });
   }
 
@@ -93,7 +99,7 @@ export class IremboPayAdminController {
   @ApiOperation({ summary: 'Resolved IremboPay configuration — never includes the secret key' })
   async status() {
     const cfg = await this.config.get();
-    const rows = await this.products.listRows(IREMBOPAY_PROVIDER_KEY);
+    const rows = await this.products.listRows(IREMBOPAY_PROVIDER_KEY, cfg.environment);
 
     return {
       configured: await this.config.isConfigured(),
@@ -104,15 +110,22 @@ export class IremboPayAdminController {
       simulatorDelayMs: cfg.simulatorDelayMs,
       testMsisdn: cfg.testMsisdn,
       isTestMode: cfg.isTestMode,
+      environment: cfg.environment,
       apiBaseUrl: cfg.apiBaseUrl,
       widgetScriptUrl: cfg.widgetScriptUrl,
       apiVersion: cfg.apiVersion,
       publicKey: cfg.publicKey,
       paymentAccountIdentifier: cfg.paymentAccountIdentifier,
+      paymentAccountIdentifierUsd: cfg.paymentAccountIdentifierUsd,
+      paymentAccountIdentifierEur: cfg.paymentAccountIdentifierEur,
       invoiceExpiryMinutes: cfg.invoiceExpiryMinutes,
       defaultLanguage: cfg.defaultLanguage,
       signatureToleranceSeconds: cfg.signatureToleranceSeconds,
-      unmappedPaymentTypes: rows.filter((r) => r.unmapped && !r.paymentTypeRateId).length,
+      // Only active types count: an inactive one cannot be charged, so its
+      // missing product cannot fail a payer.
+      unmappedPaymentTypes: rows.filter(
+        (r) => r.unmapped && !r.paymentTypeRateId && r.paymentTypeActive,
+      ).length,
     };
   }
 
@@ -189,6 +202,12 @@ export class IremboPayAdminController {
     );
   }
 
+  /** An explicit `sandbox`/`production`, or the merchant the gateway is on now. */
+  private async environmentOrCurrent(value?: string): Promise<'sandbox' | 'production'> {
+    if (value === 'sandbox' || value === 'production') return value;
+    return (await this.config.get()).environment;
+  }
+
   private async charge(user: User, dto: TestIremboPayInvoiceDto, pushProvider?: 'MTN' | 'AIRTEL') {
     const transactionId = `TEST-${crypto.randomUUID().replace(/-/g, '').slice(0, 20).toUpperCase()}`;
 
@@ -200,7 +219,7 @@ export class IremboPayAdminController {
       {
         transactionId,
         amount: dto.amount ?? 100,
-        currency: 'RWF',
+        currency: dto.currency ?? 'RWF',
         paymentTypeKey: dto.paymentTypeKey ?? 'DONATION',
         payer: {
           name: `${user.firstName ?? 'RMC'} ${user.lastName ?? 'Admin'}`.trim(),

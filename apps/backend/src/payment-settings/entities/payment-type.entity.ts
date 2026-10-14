@@ -21,6 +21,8 @@ export enum PaymentTypeKey {
   HAJJ_FEE = 'HAJJ_FEE',
   TENDER_FEE = 'TENDER_FEE',
   SCHOLARSHIP_FEE = 'SCHOLARSHIP_FEE',
+  QURAN_SUPPORT = 'QURAN_SUPPORT',
+  ZAKAT_FITR = 'ZAKAT_FITR',
 }
 
 @Entity('payment_types')

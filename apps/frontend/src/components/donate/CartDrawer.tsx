@@ -13,7 +13,7 @@ import { MIN_GIFT } from '@/contexts/DonationCartContext';
 import { cn } from '@/lib/utils';
 import { paymentSettingsApi } from '@/lib/paymentSettingsApi';
 import { IremboPayWidget } from '@/components/payments/IremboPayWidget';
-import { ACCEPTED_METHODS } from '@/components/payments/acceptedMethods';
+import { acceptedMethodsFor } from '@/components/payments/acceptedMethods';
 import { IremboInvoiceHandle } from '@/hooks/useIremboPayment';
 import { money, type CartItem } from './donateData';
 import { donationsApi } from '@/lib/donationsApi';
@@ -516,6 +516,8 @@ export function CartDrawer({
 
   const initiatePayment = useCallback(async () => {
     if (total <= 0 || submitting) return;
+    // A direct MoMo push exists for RWF only; USD/EUR go through the card sheet.
+    if (currency !== 'RWF') { setError(t('cart.momoRwfOnly')); return; }
     if (!phone.trim()) { setError(t('cart.phoneRequired')); return; }
 
     setSubmitting(true);
@@ -552,7 +554,7 @@ export function CartDrawer({
     } finally {
       setSubmitting(false);
     }
-  }, [total, submitting, phone, t, startPolling, buildCartItems]);
+  }, [total, submitting, currency, phone, t, startPolling, buildCartItems]);
 
   /**
    * Checks out the basket for card/bank.
@@ -892,7 +894,7 @@ export function CartDrawer({
                             {/* Labels, not controls — the gateway owns the choice, so
                                 these deliberately have no hover or pressed state. */}
                             <ul className="flex flex-wrap gap-1.5">
-                              {ACCEPTED_METHODS.map(({ label, dot }) => (
+                              {acceptedMethodsFor(currency).map(({ label, dot }) => (
                                 <li
                                   key={label}
                                   className="inline-flex items-center gap-1.5 rounded-md bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200"
@@ -994,7 +996,7 @@ export function CartDrawer({
                   <>
                     {/* No channel in the label: the payer picks it in the sheet. */}
                     Pay {money(currency, total)}
-                    {!widgetSupported && ' with MoMo'}
+                    {!widgetSupported && currency === 'RWF' && ' with MoMo'}
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180" />
                   </>
                 )}

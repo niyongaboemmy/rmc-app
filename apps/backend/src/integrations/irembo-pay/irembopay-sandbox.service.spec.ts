@@ -8,6 +8,8 @@ const baseConfig: IremboPayConfig = {
   publicKey: '',
   paymentAccountIdentifier: '',
   paymentAccountIdentifierUsd: '',
+  paymentAccountIdentifierEur: '',
+  environment: 'sandbox',
   apiBaseUrl: 'https://api.sandbox.irembopay.com',
   widgetScriptUrl: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
   apiVersion: '3',

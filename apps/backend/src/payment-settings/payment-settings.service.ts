@@ -213,6 +213,9 @@ export class PaymentSettingsService {
       if (sensitive.includes(key) && value === MASK) continue;
       merged[key] = value;
     }
+    // Which merchant the keys belong to is recorded by the IremboPay seed, and
+    // it gates going live there. A key changed by hand makes that unknown.
+    if (merged.secretKey !== record.settings?.secretKey) delete merged.credentialsFor;
 
     record.settings = merged;
     if (dto.isTestMode !== undefined) record.isTestMode = dto.isTestMode;

@@ -57,15 +57,21 @@ export class IremboPayInvoiceService {
     minAge: Date,
     maxAge: Date,
     limit: number,
+    environment: 'sandbox' | 'production',
   ): Promise<IremboPayInvoice[]> {
-    return this.invoiceRepo
-      .createQueryBuilder('inv')
-      .where('inv.payment_status IN (:...statuses)', { statuses: ['NEW', 'PARTIALLY_PAID'] })
-      .andWhere('inv.created_at < :minAge', { minAge })
-      .andWhere('inv.created_at > :maxAge', { maxAge })
-      .orderBy('inv.created_at', 'ASC')
-      .take(limit)
-      .getMany();
+    return (
+      this.invoiceRepo
+        .createQueryBuilder('inv')
+        .where('inv.payment_status IN (:...statuses)', { statuses: ['NEW', 'PARTIALLY_PAID'] })
+        // A sandbox invoice does not exist on the production host (and vice
+        // versa): polling it there only produces a 404 every run.
+        .andWhere('inv.environment = :environment', { environment })
+        .andWhere('inv.created_at < :minAge', { minAge })
+        .andWhere('inv.created_at > :maxAge', { maxAge })
+        .orderBy('inv.created_at', 'ASC')
+        .take(limit)
+        .getMany()
+    );
   }
 
   /** Records a freshly created provider invoice, plus its ledger row. */
@@ -75,6 +81,8 @@ export class IremboPayInvoiceService {
       paymentTypeKey?: string;
       referenceId?: string;
       isTest: boolean;
+      /** The merchant it was created on. Absent only in legacy callers: sandbox. */
+      environment?: 'sandbox' | 'production';
       payerPhone?: string;
       paymentLinkUrl?: string;
       initiatedBy?: string;
@@ -87,6 +95,7 @@ export class IremboPayInvoiceService {
     invoice.paymentTypeKey = context.paymentTypeKey ?? invoice.paymentTypeKey ?? null;
     invoice.referenceId = context.referenceId ?? invoice.referenceId ?? null;
     invoice.isTest = context.isTest;
+    invoice.environment = context.environment ?? invoice.environment ?? 'sandbox';
     invoice.rawPayload = remote as unknown as Record<string, unknown>;
 
     const saved = await this.invoiceRepo.save(invoice);
@@ -154,6 +163,7 @@ export class IremboPayInvoiceService {
         } satisfies InvoiceStateChange;
       }
 
+      this.warnOnDrift(invoice, remote, source);
       this.assignFromRemote(invoice, remote);
       invoice.paymentStatus = incoming;
       invoice.rawPayload = (rawPayload ?? (remote as unknown as Record<string, unknown>)) || null;
@@ -183,6 +193,36 @@ export class IremboPayInvoiceService {
     if (change?.changed) await this.settlements.emit(change);
 
     return change;
+  }
+
+  /**
+   * Flags a notification whose currency or payment account differs from the
+   * invoice we created. It still settles: the money has moved, and refusing it
+   * would only lose the record of it. But it means an account is configured
+   * wrong, which finance has to hear about, so it is logged at error level.
+   */
+  private warnOnDrift(
+    local: IremboPayInvoice,
+    remote: IremboInvoice,
+    source: 'webhook' | 'reconciliation',
+  ): void {
+    const drift: string[] = [];
+    if (remote.currency && local.currency && remote.currency !== local.currency) {
+      drift.push(`currency ${local.currency} → ${remote.currency}`);
+    }
+    if (
+      remote.paymentAccountIdentifier &&
+      local.paymentAccountIdentifier &&
+      remote.paymentAccountIdentifier !== local.paymentAccountIdentifier
+    ) {
+      drift.push(`account ${local.paymentAccountIdentifier} → ${remote.paymentAccountIdentifier}`);
+    }
+    if (drift.length > 0) {
+      this.logger.error(
+        `[IremboPay] ${source}: invoice ${local.invoiceNumber ?? local.transactionId} ` +
+          `settled with ${drift.join(', ')} — check the payment accounts in settings`,
+      );
+    }
   }
 
   /**

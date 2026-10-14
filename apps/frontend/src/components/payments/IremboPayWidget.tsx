@@ -11,7 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ACCEPTED_METHOD_LABELS } from './acceptedMethods';
+import { acceptedMethodsFor } from './acceptedMethods';
 import {
   useIremboPayment,
   IremboInvoiceHandle,
@@ -133,7 +133,7 @@ export function IremboPayWidget({
         <div className="px-4 pb-4">
           {!done && (
             <div className="mb-3 flex flex-wrap gap-1">
-              {ACCEPTED_METHOD_LABELS.map((label) => (
+              {acceptedMethodsFor(currency).map(({ label }) => (
                 <span
                   key={label}
                   className="rounded-md bg-gray-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 ring-1 ring-gray-200/80"

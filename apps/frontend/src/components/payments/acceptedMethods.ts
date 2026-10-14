@@ -25,16 +25,30 @@ export interface AcceptedMethod {
   label: string;
   /** Brand dot, for the surfaces that show one. */
   dot: string;
+  /** Offered for RWF invoices only. IremboPay pushes mobile money in RWF alone. */
+  rwfOnly?: boolean;
 }
 
 export const ACCEPTED_METHODS: readonly AcceptedMethod[] = [
-  { label: 'MTN MoMo', dot: 'bg-[#FFCC00]' },
-  { label: 'Airtel Money', dot: 'bg-[#E4002B]' },
+  { label: 'MTN MoMo', dot: 'bg-[#FFCC00]', rwfOnly: true },
+  { label: 'Airtel Money', dot: 'bg-[#E4002B]', rwfOnly: true },
   { label: 'Visa', dot: 'bg-[#1A1F71]' },
   { label: 'Mastercard', dot: 'bg-[#EB001B]' },
-  { label: 'Bank transfer', dot: 'bg-gray-400' },
-  { label: 'USSD', dot: 'bg-gray-400' },
+  { label: 'Bank transfer', dot: 'bg-gray-400', rwfOnly: true },
+  { label: 'USSD', dot: 'bg-gray-400', rwfOnly: true },
 ];
+
+/**
+ * The methods a payer can actually use for an invoice in `currency`. A USD or
+ * EUR invoice is paid by card: listing MoMo there promises a channel the sheet
+ * will not offer. Bank and USSD are listed as RWF-only too, until IremboPay
+ * confirms they settle foreign-currency invoices.
+ */
+export function acceptedMethodsFor(currency = 'RWF'): readonly AcceptedMethod[] {
+  return currency.toUpperCase() === 'RWF'
+    ? ACCEPTED_METHODS
+    : ACCEPTED_METHODS.filter((m) => !m.rwfOnly);
+}
 
 /** Just the names, for surfaces that render plain chips. */
 export const ACCEPTED_METHOD_LABELS: readonly string[] = ACCEPTED_METHODS.map((m) => m.label);

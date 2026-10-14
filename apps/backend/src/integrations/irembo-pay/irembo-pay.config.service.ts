@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PaymentMethodCode } from '../../payment-settings/entities/payment-method.entity';
+import { ProviderEnvironment } from '../../payment-settings/entities/payment-type-provider-product.entity';
 import { PaymentSettingsService } from '../../payment-settings/payment-settings.service';
 import { SettingsCacheBus } from '../../payment-settings/settings-cache.bus';
 import {
@@ -12,9 +13,12 @@ import {
 export interface IremboPayConfig {
   secretKey: string;
   publicKey: string;
+  /** The RWF account (production `RMC_RWF`, sandbox `RMC-RWF`). Required. */
   paymentAccountIdentifier: string;
-  /** Optional second account for USD-denominated invoices. */
+  /** USD account (`RMC_USD`). Optional — without it, USD charges are refused. */
   paymentAccountIdentifierUsd: string;
+  /** EUR account (`RMC_EUR`). Optional — without it, EUR charges are refused. */
+  paymentAccountIdentifierEur: string;
   /** Host only — the client appends `/payments/...`. */
   apiBaseUrl: string;
   widgetScriptUrl: string;
@@ -23,6 +27,8 @@ export interface IremboPayConfig {
   defaultLanguage: IremboLanguage;
   signatureToleranceSeconds: number;
   isTestMode: boolean;
+  /** `isTestMode` as a merchant name — selects product mappings and invoices. */
+  environment: ProviderEnvironment;
   /**
    * Answer payments locally instead of calling IremboPay. Honoured only in test
    * mode and never in production — see `IremboPaySandboxService.isActive()`.
@@ -111,6 +117,7 @@ export class IremboPayConfigService {
       publicKey: (raw.publicKey ?? '').trim(),
       paymentAccountIdentifier: (raw.paymentAccountIdentifier ?? '').trim(),
       paymentAccountIdentifierUsd: (raw.paymentAccountIdentifierUsd ?? '').trim(),
+      paymentAccountIdentifierEur: (raw.paymentAccountIdentifierEur ?? '').trim(),
       apiBaseUrl: stripTrailingSlash(
         raw.apiBaseUrl?.trim() || (isTestMode ? SANDBOX_API : PRODUCTION_API),
       ),
@@ -124,6 +131,7 @@ export class IremboPayConfigService {
         DEFAULTS.signatureToleranceSeconds,
       ),
       isTestMode,
+      environment: isTestMode ? 'sandbox' : 'production',
       simulatorMode: asSimulatorMode(raw.simulatorMode),
       simulatorDelayMs: positiveInt(raw.simulatorDelayMs, DEFAULT_SIMULATOR_DELAY_MS),
       testMsisdn: raw.testMsisdn?.trim() || DEFAULTS.testMsisdn,
@@ -151,13 +159,32 @@ export class IremboPayConfigService {
     return process.env.NODE_ENV !== 'production' && c.isTestMode && c.simulatorMode !== 'off';
   }
 
-  /** The payment account for a currency, falling back to the RWF one. */
+  /**
+   * The payment account for a currency.
+   *
+   * Never falls back to another currency's account. On IremboPay the account
+   * *is* the currency, so the old "fall back to RWF" made a €50 donation a
+   * 50 RWF invoice — silently, since IremboPay has no way to know we meant
+   * euros. A currency with no account is refused instead, naming the setting.
+   */
   async accountForCurrency(currency = 'RWF'): Promise<string> {
     const c = await this.get();
-    if (currency.toUpperCase() === 'USD' && c.paymentAccountIdentifierUsd) {
-      return c.paymentAccountIdentifierUsd;
+    const ccy = currency.trim().toUpperCase();
+    const account =
+      ccy === 'RWF'
+        ? c.paymentAccountIdentifier
+        : ccy === 'USD'
+          ? c.paymentAccountIdentifierUsd
+          : ccy === 'EUR'
+            ? c.paymentAccountIdentifierEur
+            : '';
+    if (!account) {
+      throw new BadRequestException(
+        `IremboPay has no ${ccy} payment account configured, so ${ccy} payments cannot be taken. ` +
+          `Set it in Admin → Settings → Payments → IremboPay.`,
+      );
     }
-    return c.paymentAccountIdentifier;
+    return account;
   }
 }
 

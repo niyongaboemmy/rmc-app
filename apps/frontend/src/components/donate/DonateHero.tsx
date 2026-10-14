@@ -10,16 +10,19 @@
 import Image from 'next/image';
 import { HeartHandshake, ArrowDown, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { NIYYAH, HERO_IMG } from './donateData';
+import { niyyahFor, HERO_IMG } from './donateData';
 
 export function DonateHero({
   niyyah,
   onNiyyah,
+  currency = 'RWF',
 }: {
   niyyah: string;
   onNiyyah: (key: string) => void;
+  currency?: string;
 }) {
   const t = useTranslations('donate');
+  const options = niyyahFor(currency);
 
   return (
     <section className="relative overflow-hidden bg-rmc-green-deep">
@@ -59,8 +62,10 @@ export function DonateHero({
           <p className="mb-3 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-rmc-gold-light/90">
             <Sparkles className="h-3.5 w-3.5" /> {t('header.setIntention')}
           </p>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-            {NIYYAH.map((n) => {
+          <div
+            className={`grid grid-cols-1 gap-2.5 ${options.length > 3 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-3'}`}
+          >
+            {options.map((n) => {
               const active = niyyah === n.key;
               return (
                 <button

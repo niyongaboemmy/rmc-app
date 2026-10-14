@@ -1,8 +1,10 @@
 import { DataSource } from 'typeorm';
+import { PRODUCTION_ACCOUNTS, SANDBOX_CATALOG } from './10-irembopay-catalog.seed';
 
 /**
  * Brings an environment's IremboPay settings row into a consistent state —
- * sandbox on a fresh environment, live on production.
+ * sandbox on a fresh environment, live on production. Product mappings are
+ * `10-irembopay-catalog.seed.ts`'s job, not this one's.
  *
  * The secret and public keys are read from the environment (or kept from the
  * row an admin already filled in) and never defaulted. A live key committed to
@@ -14,24 +16,34 @@ import { DataSource } from 'typeorm';
  * so the key prefix says nothing about which host the keys belong to — reading
  * it as "production" once pointed sandbox keys at the live API. Instead:
  *
- *   IREMBOPAY_MODE=production   → test mode off, no sandbox defaults
+ *   IREMBOPAY_MODE=production   → test mode off, production accounts
  *   IREMBOPAY_MODE=sandbox      → test mode on
  *   (unset)                     → whatever the row already says (new rows: sandbox)
  *
  * so an admin's Test-mode toggle survives every re-run unless the environment
  * explicitly says otherwise.
  *
- * Idempotent: credentials already on the row are never overwritten, so
- * re-running it can never replace production keys with sandbox ones. What it
- * does correct is configuration derived from the mode — the test-mode flag,
- * sandbox URLs pinned on a production row, the callback URL, and sandbox product
- * codes left mapped on a production gateway.
+ * Idempotent. Credentials on the row win over the environment — so a re-run
+ * with a stale .env can never put sandbox keys over production ones — with one
+ * exception: under an explicit IREMBOPAY_MODE, keys in the environment that
+ * differ from the row replace it, and are recorded as belonging to that mode.
+ * That is the cutover itself (sandbox keys on the row, production keys just put
+ * in .env) and its rollback, and it needs the explicit mode, never a default.
+ * What it also corrects is configuration derived from the mode — the test-mode
+ * flag, sandbox URLs or the other merchant's accounts left on the row, and the
+ * callback URL.
  */
 const SANDBOX = {
-  paymentAccountIdentifier: 'RMC-RWF',
-  productCode: 'PC-62d7108dd9',
+  paymentAccountIdentifier: SANDBOX_CATALOG.account,
   testMsisdn: '0781234567',
 };
+
+/** Settings field holding each currency's payment account. */
+const ACCOUNT_FIELDS = {
+  RWF: 'paymentAccountIdentifier',
+  USD: 'paymentAccountIdentifierUsd',
+  EUR: 'paymentAccountIdentifierEur',
+} as const;
 
 /** Non-secret defaults that hold in either mode. */
 const DEFAULTS = {
@@ -78,8 +90,13 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
 
   const envSecret = (process.env.IREMBOPAY_SECRET_KEY ?? '').trim();
   const envPublic = (process.env.IREMBOPAY_PUBLIC_KEY ?? '').trim();
-  const envAccount = notPlaceholder(process.env.IREMBOPAY_ACCOUNT);
-  const envProduct = notPlaceholder(process.env.IREMBOPAY_PRODUCT_CODE);
+  const envAccounts = {
+    RWF:
+      notPlaceholder(process.env.IREMBOPAY_ACCOUNT_RWF) ||
+      notPlaceholder(process.env.IREMBOPAY_ACCOUNT),
+    USD: notPlaceholder(process.env.IREMBOPAY_ACCOUNT_USD),
+    EUR: notPlaceholder(process.env.IREMBOPAY_ACCOUNT_EUR),
+  };
   const appUrl = (process.env.APP_URL ?? '').trim().replace(/\/+$/, '');
 
   const [method] = await dataSource.query(
@@ -105,28 +122,80 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
     return;
   }
 
-  // Credentials: whatever the row already holds wins over the environment.
-  const secretKey = current.secretKey || envSecret;
-  const publicKey = current.publicKey || envPublic;
   const mode = requestedMode(process.env.IREMBOPAY_MODE);
   const live = mode === 'production' || (mode === null && existing?.is_test_mode === false);
+
+  // Credentials: whatever the row already holds wins over the environment,
+  // except when a mode is named explicitly (see the header).
+  const replaceKeys =
+    mode !== null &&
+    !!envSecret &&
+    !!envPublic &&
+    (envSecret !== current.secretKey || envPublic !== current.publicKey);
+
+  // Going live is refused unless the keys are known to be production keys:
+  // supplied now, or written by an earlier production run. Otherwise the row
+  // still holds sandbox keys, and live mode would send them to the production
+  // host — every charge a 401. The prefix cannot tell us (the sandbox issues
+  // `_live_` keys), so provenance is recorded instead.
+  if (mode === 'production' && !replaceKeys && current.credentialsFor !== 'production') {
+    log(
+      'REFUSED: IREMBOPAY_MODE=production, but no production keys. Put both ' +
+        'IREMBOPAY_SECRET_KEY and IREMBOPAY_PUBLIC_KEY (production portal → Integration ' +
+        'Details → View Token) in .env and re-run. Nothing was changed.',
+    );
+    return;
+  }
+  const secretKey = replaceKeys ? envSecret : current.secretKey || envSecret;
+  const publicKey = replaceKeys ? envPublic : current.publicKey || envPublic;
+  if (replaceKeys && current.secretKey) {
+    log(
+      `keys replaced for ${mode}: secret ${fingerprint(current.secretKey)} → ${fingerprint(envSecret)}, ` +
+        `public ${fingerprint(current.publicKey ?? '')} → ${fingerprint(envPublic)}`,
+    );
+  }
 
   const settings: Record<string, string> = {
     ...DEFAULTS,
     // A sandbox account name is meaningless on a live merchant, so it is only
-    // defaulted when the keys are not live.
+    // defaulted when not live.
     ...(live
       ? {}
       : {
           paymentAccountIdentifier: SANDBOX.paymentAccountIdentifier,
           testMsisdn: SANDBOX.testMsisdn,
         }),
-    ...(envAccount ? { paymentAccountIdentifier: envAccount } : {}),
     ...current,
     ...(secretKey ? { secretKey } : {}),
     ...(publicKey ? { publicKey } : {}),
   };
-  delete settings.productCode; // mapped per payment type below, not a method setting
+  delete settings.productCode; // a mapping, not a method setting — see the catalog seed
+  if (replaceKeys) settings.credentialsFor = mode as string;
+  else if (!current.secretKey && envSecret)
+    settings.credentialsFor = live ? 'production' : 'sandbox';
+
+  // Accounts: the environment wins (it is how a value is corrected), then the
+  // row, then the merchant's known accounts. The other merchant's account left
+  // on the row (RMC-RWF on production, RMC_* on sandbox) is never "the row's
+  // value" — IremboPay would answer PAYMENT_ACCOUNT_NOT_FOUND.
+  const productionValues = Object.values(PRODUCTION_ACCOUNTS) as string[];
+  for (const [currency, field] of Object.entries(ACCOUNT_FIELDS) as [
+    keyof typeof ACCOUNT_FIELDS,
+    string,
+  ][]) {
+    const fromEnv = envAccounts[currency];
+    if (fromEnv) {
+      settings[field] = fromEnv;
+    } else if (live) {
+      if (!settings[field] || settings[field] === SANDBOX.paymentAccountIdentifier) {
+        settings[field] = PRODUCTION_ACCOUNTS[currency];
+      }
+    } else if (productionValues.includes(settings[field] ?? '')) {
+      // The sandbox has an RWF account only.
+      if (currency === 'RWF') settings[field] = SANDBOX.paymentAccountIdentifier;
+      else delete settings[field];
+    }
+  }
 
   if (live) {
     // Pinned sandbox hosts override the mode-derived ones in
@@ -167,71 +236,12 @@ export async function seedIremboPay(dataSource: DataSource): Promise<void> {
     log(`test mode ${existing.is_test_mode ? 'ON → OFF' : 'OFF → ON'} (IREMBOPAY_MODE=${mode})`);
   }
 
-  // Every payment type needs a product or it fails the moment a payer tries to
-  // pay it. Sandbox product codes do not exist on the live merchant, so a live
-  // gateway is never defaulted to one.
-  const productCode = envProduct || (live ? '' : SANDBOX.productCode);
-  let mapped = 0;
-  let replaced = 0;
-
-  if (productCode) {
-    const inserted: unknown[] = await dataSource.query(
-      `INSERT INTO payment_type_provider_products (provider, payment_type_id, product_code)
-       SELECT 'irembopay', pt.id, $1
-         FROM payment_types pt
-        WHERE NOT EXISTS (
-          SELECT 1 FROM payment_type_provider_products p
-           WHERE p.provider = 'irembopay'
-             AND p.payment_type_id = pt.id
-             AND p.payment_type_rate_id IS NULL
-        )
-       RETURNING id`,
-      [productCode],
-    );
-    mapped = inserted.length;
-
-    if (live) {
-      // Mappings an earlier sandbox seed left behind point at a product the live
-      // merchant does not have. Only that exact code is replaced — a product an
-      // admin chose in the Products tab is left alone.
-      const updated: unknown[] = await dataSource.query(
-        `UPDATE payment_type_provider_products
-            SET product_code = $1, updated_at = now()
-          WHERE provider = 'irembopay' AND product_code = $2
-         RETURNING id`,
-        [productCode, SANDBOX.productCode],
-      );
-      replaced = updated.length;
-    }
-  }
-
-  if (live) {
-    const [{ stale, unmapped }] = await dataSource.query(
-      `SELECT
-         (SELECT count(*) FROM payment_type_provider_products
-           WHERE provider = 'irembopay' AND product_code = $1)::int AS stale,
-         (SELECT count(*) FROM payment_types pt
-           WHERE NOT EXISTS (
-             SELECT 1 FROM payment_type_provider_products p
-              WHERE p.provider = 'irembopay' AND p.payment_type_id = pt.id
-                AND p.payment_type_rate_id IS NULL))::int AS unmapped`,
-      [SANDBOX.productCode],
-    );
-    if (stale > 0 || unmapped > 0) {
-      log(
-        `WARNING: ${stale} mapping(s) still use sandbox product ${SANDBOX.productCode} and ` +
-          `${unmapped} payment type(s) have none. Set IREMBOPAY_PRODUCT_CODE to the live ` +
-          'product (portal → Products) and re-run, or fix them in the Products tab.',
-      );
-    }
-  }
-
   log(
     `configured — ${live ? 'PRODUCTION' : 'sandbox'} mode, ` +
-      `account=${settings.paymentAccountIdentifier ?? '(unset)'}, ` +
-      `secret=${fingerprint(settings.secretKey ?? '')}, ` +
-      `${mapped} payment type(s) mapped${replaced ? `, ${replaced} sandbox mapping(s) replaced` : ''}` +
-      (productCode ? ` to ${productCode}` : ''),
+      `accounts RWF=${settings.paymentAccountIdentifier ?? '(unset)'} ` +
+      `USD=${settings.paymentAccountIdentifierUsd || '(unset)'} ` +
+      `EUR=${settings.paymentAccountIdentifierEur || '(unset)'}, ` +
+      `secret=${fingerprint(settings.secretKey ?? '')}, public=${fingerprint(settings.publicKey ?? '')}`,
   );
   log(
     `callback URL for the IremboPay portal: ${settings.callbackUrl ?? `<APP_URL>${WEBHOOK_PATH}`}`,

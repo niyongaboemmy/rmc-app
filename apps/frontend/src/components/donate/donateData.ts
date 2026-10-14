@@ -19,12 +19,23 @@ export const uimg = (id: string, w = 600) =>
 export interface Niyyah {
   key: string;
   ar: string;
+  /**
+   * Currencies the intention can be paid in, when not all. Zakat al-Fitr has an
+   * RWF product only on IremboPay, so offering it in USD would fail at checkout.
+   */
+  currencies?: readonly string[];
 }
 export const NIYYAH: Niyyah[] = [
   { key: 'lillah', ar: 'لله' },
   { key: 'sadaqah', ar: 'صدقة جارية' },
   { key: 'zakat', ar: 'زكاة' },
+  { key: 'zakat-al-fitr', ar: 'زكاة الفطر', currencies: ['RWF'] },
 ];
+
+/** The intentions payable in `currency`. */
+export function niyyahFor(currency: string): Niyyah[] {
+  return NIYYAH.filter((n) => !n.currencies || n.currencies.includes(currency));
+}
 
 /* ── Currencies, presets & approximate Nisab thresholds ── */
 export interface CurrencyMeta {

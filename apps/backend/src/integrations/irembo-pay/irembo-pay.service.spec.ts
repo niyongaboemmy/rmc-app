@@ -10,6 +10,8 @@ const CONFIG: IremboPayConfig = {
   publicKey: 'pk_test_public',
   paymentAccountIdentifier: 'TST-RWF',
   paymentAccountIdentifierUsd: '',
+  paymentAccountIdentifierEur: '',
+  environment: 'sandbox',
   apiBaseUrl: 'https://api.sandbox.irembopay.com',
   widgetScriptUrl: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
   apiVersion: '3',
