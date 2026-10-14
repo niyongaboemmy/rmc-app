@@ -11,6 +11,11 @@ const CONFIG: IremboPayConfig = {
   paymentAccountIdentifierUsd: '',
   paymentAccountIdentifierEur: '',
   environment: 'sandbox',
+  limits: {
+    RWF: { perTransaction: 50_000_000, daily: 100_000_000 },
+    USD: { perTransaction: 100_000, daily: 300_000 },
+    EUR: { perTransaction: 100_000, daily: 300_000 },
+  },
   apiBaseUrl: 'https://api.sandbox.irembopay.com',
   widgetScriptUrl: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
   apiVersion: '3',
@@ -52,6 +57,7 @@ function build(
     resolveForCharge?: jest.Mock;
     config?: Partial<IremboPayConfig>;
     accountForCurrency?: jest.Mock;
+    paidToday?: number;
     storedStatus?: 'NEW' | 'PAID' | 'PARTIALLY_PAID' | 'EXPIRED';
   } = {},
 ) {
@@ -80,6 +86,7 @@ function build(
   const invoices = {
     recordNewInvoice,
     applyInvoiceState: jest.fn().mockResolvedValue(null),
+    paidTotalToday: jest.fn().mockResolvedValue(overrides.paidToday ?? 0),
   };
 
   const products = {
@@ -352,6 +359,77 @@ describe('IremboPayProvider', () => {
         expect.anything(),
         expect.objectContaining({ environment: 'sandbox' }),
       );
+    });
+  });
+
+  describe('IremboPay merchant limits', () => {
+    it('accepts exactly the per-transaction limit', async () => {
+      const { provider, irembo } = build();
+
+      await provider.charge({ ...REQUEST, amount: 50_000_000, pushProvider: undefined });
+
+      expect(irembo.createInvoice).toHaveBeenCalled();
+    });
+
+    it('refuses one franc over the per-transaction limit, before invoicing', async () => {
+      const { provider, irembo } = build();
+
+      await expect(
+        provider.charge({ ...REQUEST, amount: 50_000_001, pushProvider: undefined }),
+      ).rejects.toThrow(/cannot exceed 50,000,000 RWF/);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('measures a basket by its line total', async () => {
+      const { provider, irembo } = build();
+
+      await expect(
+        provider.charge({
+          ...REQUEST,
+          currency: 'USD',
+          amount: 100_001,
+          pushProvider: undefined,
+          items: [
+            { paymentTypeKey: 'DONATION', amount: 60_000, quantity: 1 },
+            { paymentTypeKey: 'ZAKAT', amount: 40_001, quantity: 1 },
+          ],
+        }),
+      ).rejects.toThrow(/cannot exceed 100,000 USD/);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('refuses a payment that would pass the daily limit', async () => {
+      const { provider, invoices, irembo } = build({ paidToday: 99_999_000 });
+
+      await expect(
+        provider.charge({ ...REQUEST, amount: 1_001, pushProvider: undefined }),
+      ).rejects.toThrow(/today's limit/);
+      expect(invoices.paidTotalToday).toHaveBeenCalledWith('RWF', 'sandbox');
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('allows a payment that lands exactly on the daily limit', async () => {
+      const { provider, irembo } = build({ paidToday: 99_999_000 });
+
+      await provider.charge({ ...REQUEST, amount: 1_000, pushProvider: undefined });
+
+      expect(irembo.createInvoice).toHaveBeenCalled();
+    });
+
+    it('uses admin-edited limits from the settings', async () => {
+      const { provider } = build({
+        config: {
+          limits: {
+            RWF: { perTransaction: 1_000, daily: 10_000 },
+            USD: { perTransaction: 100_000, daily: 300_000 },
+            EUR: { perTransaction: 100_000, daily: 300_000 },
+          },
+        },
+      });
+
+      await expect(
+        provider.charge({ ...REQUEST, amount: 1_001, pushProvider: undefined }),
+      ).rejects.toThrow(/cannot exceed 1,000 RWF/);
     });
   });
 

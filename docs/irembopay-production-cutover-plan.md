@@ -120,7 +120,27 @@ amount 0 (variable).
 | Zakatul maal_USD | `PC-5ab548a68d` | USD | `ZAKAT` | inactive → **activate** |
 | Zakatul maal_RWF | `PC-5d0f480b7e` | RWF | `ZAKAT` | inactive → **activate** |
 
-Payment accounts: `RMC_RWF`, `RMC_USD`, `RMC_EUR`.
+Payment accounts (identifier → settlement account, *RMC CENTRAL ACCOUNT* at Bank of Kigali Plc):
+
+| Identifier (API) | Currency | BK account number | Max per transaction | Max per day |
+|---|---|---|---|---|
+| `RMC_RWF` | RWF | 100014931117 | 50,000,000 | 100,000,000 |
+| `RMC_USD` | USD | 100014931273 | 100,000 | 300,000 |
+| `RMC_EUR` | EUR | 100014931389 | 100,000 | 300,000 |
+
+The bank numbers are for finance reconciliation only; the API uses the
+identifiers. The catalog seed stores each production product **with its
+account**, so a production charge never reads the method-level account. The
+limits are enforced before invoicing (`IremboPayProvider.assertWithinLimits`):
+over the per-transaction limit, or over the day's settled total in Kigali time,
+the payer gets a 400 with a plain message. The defaults above are editable in
+Admin → Settings → Payments → IremboPay (`maxTransaction*` / `maxDaily*`).
+
+Merchant portal users (`dashboard.irembopay.com`) are invited by IremboPay
+directly and have portal roles only — Merchant admin (Mufti of Rwanda),
+Merchant Operations admin (IT & Communication), Merchant Operations, and
+Merchant Finance Operations. Nothing in RMC's app corresponds to them. Only
+the **Merchant admin** can open *Integration Details → View Token* for the keys.
 
 **Payment types with no production product:** `MEMBERSHIP_FEE`, `SCHOOL_FEE`,
 `EVENT_FEE`, `FUNERAL_FEE`, `TENDER_FEE`, `SCHOLARSHIP_FEE`. All are inactive
@@ -526,7 +546,8 @@ Recommended window: a weekday morning, outside Ramadan and Hajj registration.
 | 1 | Snapshot sandbox state | On EC2: `npx ts-node scripts/irembopay-snapshot.ts` (from `apps/backend`) | JSON written. Fingerprints match the password manager. File moved to the password manager and deleted from the server. |
 | 2 | Deploy code | `cd-production.yml` | `GET /api/v1/health` returns 200. |
 | 3 | Migrate | `migrate-production.yml` (migration 081) | `\d payment_type_provider_products` shows `currency` and `environment`. Old rows are `sandbox`. `QURAN_SUPPORT` and `ZAKAT_FITR` exist. `ZAKAT` is active. |
-| 4 | Put keys in server `.env` | `IREMBOPAY_MODE=production`, `IREMBOPAY_SECRET_KEY`, `IREMBOPAY_PUBLIC_KEY` (both are required, otherwise the seed refuses). `IREMBOPAY_ACCOUNT_*` is optional; it defaults to `RMC_*`. | `chmod 600 .env`. Nothing in git. |
+| 4a | **Either** keys in the admin UI | Admin → Settings → Payments → IremboPay: paste secret + public key, turn **Test mode off**, save. Nothing else to set: production products carry their accounts. | Products tab (merchant = Production) shows the 14 codes each with `RMC_*`. |
+| 4 | **Or** keys in server `.env` | `IREMBOPAY_MODE=production`, `IREMBOPAY_SECRET_KEY`, `IREMBOPAY_PUBLIC_KEY` (both are required, otherwise the seed refuses). `IREMBOPAY_ACCOUNT_*` is optional; it defaults to `RMC_*`. | `chmod 600 .env`. Nothing in git. |
 | 5 | Seed | `seed-production.yml` (type `SEED`; use `--ref` on the branch until PR #19 merges) | Log: `keys replaced for production: …`, `test mode ON → OFF`, `PRODUCTION mode, accounts RWF=RMC_RWF USD=RMC_USD EUR=RMC_EUR`. The coverage matrix shows the 14 codes and **no** `WARNING` line. A `REFUSED` line means the keys were missing from `.env`. |
 | 6 | Cross-check catalog | Open the production portal → Products, and compare all 14 codes with the coverage matrix character by character. | 14/14 match. |
 | 7 | Portal callback | Production portal → callback URL = `https://api.rwandamuslim.org/api/v1/webhooks/irembopay` | Saved. |

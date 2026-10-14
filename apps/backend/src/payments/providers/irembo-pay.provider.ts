@@ -96,6 +96,12 @@ export class IremboPayProvider implements PaymentGatewayProvider {
       resolved.find((r) => r.product.paymentAccountIdentifier)?.product.paymentAccountIdentifier ||
       (await this.config.accountForCurrency(currency));
 
+    await this.assertWithinLimits(
+      currency,
+      lines.reduce((sum, l) => sum + l.amount * (l.quantity ?? 1), 0),
+      cfg,
+    );
+
     const expiryAt = req.expiresAt
       ? this.irembo.formatExpiry(req.expiresAt)
       : await this.irembo.defaultExpiry();
@@ -170,6 +176,41 @@ export class IremboPayProvider implements PaymentGatewayProvider {
       message,
       raw: invoice as unknown as Record<string, unknown>,
     };
+  }
+
+  /**
+   * IremboPay's per-transaction and daily processing limits for the merchant.
+   * Checked before invoicing, so a donor over the limit is told so plainly
+   * rather than handed an invoice the gateway will not settle. The daily check
+   * counts what has already been paid today; pending invoices are not counted,
+   * since most of them are never paid.
+   */
+  private async assertWithinLimits(
+    currency: string,
+    amount: number,
+    cfg: {
+      limits: Record<string, { perTransaction: number; daily: number }>;
+      environment: 'sandbox' | 'production';
+    },
+  ): Promise<void> {
+    const limit = cfg.limits[currency];
+    if (!limit) return; // an unknown currency is refused by accountForCurrency()
+
+    const fmt = (n: number) => `${n.toLocaleString('en-US')} ${currency}`;
+    if (amount > limit.perTransaction) {
+      throw new BadRequestException(
+        `A single payment cannot exceed ${fmt(limit.perTransaction)}. Split it into smaller payments.`,
+      );
+    }
+    const paidToday = await this.invoices.paidTotalToday(currency, cfg.environment);
+    if (paidToday + amount > limit.daily) {
+      this.logger.warn(
+        `[IremboPay] daily ${currency} limit reached: ${fmt(paidToday)} paid today, ${fmt(amount)} requested, limit ${fmt(limit.daily)}`,
+      );
+      throw new BadRequestException(
+        `Online payments in ${currency} have reached today's limit. Please try again tomorrow.`,
+      );
+    }
   }
 
   /** `reference` is an invoiceNumber or our own transactionId — both resolve. */

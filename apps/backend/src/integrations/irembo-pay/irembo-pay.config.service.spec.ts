@@ -120,6 +120,31 @@ describe('IremboPayConfigService', () => {
     });
   });
 
+  describe('limits', () => {
+    it("defaults to IremboPay's production limits", async () => {
+      const cfg = await build(FULL).service.get();
+
+      expect(cfg.limits).toEqual({
+        RWF: { perTransaction: 50_000_000, daily: 100_000_000 },
+        USD: { perTransaction: 100_000, daily: 300_000 },
+        EUR: { perTransaction: 100_000, daily: 300_000 },
+      });
+    });
+
+    it('reads admin-edited limits and ignores nonsense', async () => {
+      const cfg = await build({
+        ...FULL,
+        maxTransactionUsd: '5000',
+        maxDailyEur: '20000',
+        maxTransactionRwf: 'lots',
+      }).service.get();
+
+      expect(cfg.limits.USD.perTransaction).toBe(5000);
+      expect(cfg.limits.EUR.daily).toBe(20000);
+      expect(cfg.limits.RWF.perTransaction).toBe(50_000_000);
+    });
+  });
+
   describe('accountForCurrency', () => {
     const PROD = {
       ...FULL,

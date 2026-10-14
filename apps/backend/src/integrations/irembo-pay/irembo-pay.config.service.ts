@@ -37,6 +37,12 @@ export interface IremboPayConfig {
   /** How long the simulated payer takes to approve. */
   simulatorDelayMs: number;
   /**
+   * IremboPay's limits for the RMC merchant, per currency: the largest single
+   * invoice, and the most it will process in a day. Admin-editable; the
+   * defaults are the values IremboPay gave for the production merchant.
+   */
+  limits: Record<'RWF' | 'USD' | 'EUR', { perTransaction: number; daily: number }>;
+  /**
    * The number the admin test panel pushes to by default. In the sandbox only
    * IremboPay's own test MSISDN is accepted, and which one that is belongs with
    * the rest of the gateway's settings rather than in an env file nobody can
@@ -59,6 +65,16 @@ const DEFAULTS = {
   // accepts a push for.
   testMsisdn: '0781234567',
 };
+
+/**
+ * IremboPay production limits for merchant RWANDA MUSLIM COMMUNITY (Oct 2026):
+ * maximum per transaction, and maximum processed per day.
+ */
+export const DEFAULT_LIMITS = {
+  RWF: { perTransaction: 50_000_000, daily: 100_000_000 },
+  USD: { perTransaction: 100_000, daily: 300_000 },
+  EUR: { perTransaction: 100_000, daily: 300_000 },
+} as const;
 
 /** How long a resolved config is trusted before re-reading the settings row. */
 const CACHE_TTL_MS = 60_000;
@@ -135,6 +151,11 @@ export class IremboPayConfigService {
       simulatorMode: asSimulatorMode(raw.simulatorMode),
       simulatorDelayMs: positiveInt(raw.simulatorDelayMs, DEFAULT_SIMULATOR_DELAY_MS),
       testMsisdn: raw.testMsisdn?.trim() || DEFAULTS.testMsisdn,
+      limits: {
+        RWF: limitsFor(raw, 'Rwf', DEFAULT_LIMITS.RWF),
+        USD: limitsFor(raw, 'Usd', DEFAULT_LIMITS.USD),
+        EUR: limitsFor(raw, 'Eur', DEFAULT_LIMITS.EUR),
+      },
     };
 
     this.cache = { value, expiresAt: Date.now() + CACHE_TTL_MS };
@@ -186,6 +207,18 @@ export class IremboPayConfigService {
     }
     return account;
   }
+}
+
+/** `maxTransactionRwf` / `maxDailyRwf` from the settings row, or the default. */
+function limitsFor(
+  raw: Record<string, string>,
+  suffix: 'Rwf' | 'Usd' | 'Eur',
+  fallback: { perTransaction: number; daily: number },
+): { perTransaction: number; daily: number } {
+  return {
+    perTransaction: positiveInt(raw[`maxTransaction${suffix}`], fallback.perTransaction),
+    daily: positiveInt(raw[`maxDaily${suffix}`], fallback.daily),
+  };
 }
 
 function stripTrailingSlash(url: string): string {

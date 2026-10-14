@@ -74,6 +74,29 @@ export class IremboPayInvoiceService {
     );
   }
 
+  /**
+   * What IremboPay has settled for us today in one currency on one merchant —
+   * the figure its daily processing limit is measured against. "Today" is the
+   * Kigali calendar day, the merchant's own. A partly paid invoice counts what
+   * has been paid, not its face value.
+   */
+  async paidTotalToday(currency: string, environment: 'sandbox' | 'production'): Promise<number> {
+    const row = await this.invoiceRepo
+      .createQueryBuilder('inv')
+      .select(
+        `COALESCE(SUM(CASE WHEN inv.payment_status = 'PAID' THEN inv.amount ELSE COALESCE(inv.paid_amount, 0) END), 0)`,
+        'total',
+      )
+      .where('inv.environment = :environment', { environment })
+      .andWhere('inv.currency = :currency', { currency })
+      .andWhere(`inv.payment_status IN ('PAID', 'PARTIALLY_PAID')`)
+      .andWhere(
+        `inv.paid_at >= (date_trunc('day', now() AT TIME ZONE 'Africa/Kigali') AT TIME ZONE 'Africa/Kigali')`,
+      )
+      .getRawOne<{ total: string }>();
+    return Number(row?.total ?? 0);
+  }
+
   /** Records a freshly created provider invoice, plus its ledger row. */
   async recordNewInvoice(
     remote: IremboInvoice,

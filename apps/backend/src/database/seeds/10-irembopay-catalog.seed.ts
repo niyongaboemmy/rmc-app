@@ -145,17 +145,30 @@ export function validateCatalog(catalog: readonly CatalogEntry[]): void {
   }
 }
 
+/**
+ * Each production mapping also names its payment account (RMC_RWF/USD/EUR).
+ * The provider prefers a mapping's account over the method-level one, so the
+ * production accounts travel with the production products: going live is then
+ * just the production keys plus the Test-mode toggle, with no account fields
+ * to remember to change by hand — the sandbox account `RMC-RWF` on the
+ * settings row is never used for a production charge.
+ */
 const UPSERT_PRODUCTION = `
   INSERT INTO payment_type_provider_products
-    (provider, environment, payment_type_id, payment_type_rate_id, currency, product_code)
-  SELECT 'irembopay', 'production', pt.id, NULL, $2, $3
+    (provider, environment, payment_type_id, payment_type_rate_id, currency, product_code,
+     payment_account_identifier)
+  SELECT 'irembopay', 'production', pt.id, NULL, $2, $3, $4
     FROM payment_types pt
    WHERE pt.key = $1
   ON CONFLICT (provider, environment, payment_type_id,
                COALESCE(payment_type_rate_id, '00000000-0000-0000-0000-000000000000'::uuid),
                currency)
-  DO UPDATE SET product_code = EXCLUDED.product_code, updated_at = now()
+  DO UPDATE SET product_code = EXCLUDED.product_code,
+                payment_account_identifier = EXCLUDED.payment_account_identifier,
+                updated_at = now()
    WHERE payment_type_provider_products.product_code IS DISTINCT FROM EXCLUDED.product_code
+      OR payment_type_provider_products.payment_account_identifier
+           IS DISTINCT FROM EXCLUDED.payment_account_identifier
   RETURNING (xmax = 0) AS inserted`;
 
 /**
@@ -209,7 +222,7 @@ export async function seedIremboPayCatalog(dataSource: DataSource): Promise<void
   await dataSource.transaction(async (manager) => {
     for (const entry of PRODUCTION_CATALOG) {
       const [previous] = await manager.query(
-        `SELECT p.product_code FROM payment_type_provider_products p
+        `SELECT p.product_code, p.payment_account_identifier FROM payment_type_provider_products p
            JOIN payment_types pt ON pt.id = p.payment_type_id
           WHERE p.provider = 'irembopay' AND p.environment = 'production'
             AND pt.key = $1 AND p.currency = $2 AND p.payment_type_rate_id IS NULL`,
@@ -219,6 +232,7 @@ export async function seedIremboPayCatalog(dataSource: DataSource): Promise<void
         entry.paymentTypeKey,
         entry.currency,
         entry.productCode,
+        PRODUCTION_ACCOUNTS[entry.currency],
       ]);
       if (rows.length === 0) continue;
       if (rows[0].inserted) {
@@ -226,7 +240,9 @@ export async function seedIremboPayCatalog(dataSource: DataSource): Promise<void
       } else {
         updated++;
         log(
-          `${entry.paymentTypeKey}/${entry.currency}: ${previous?.product_code} → ${entry.productCode}`,
+          `${entry.paymentTypeKey}/${entry.currency}: ` +
+            `${previous?.product_code}@${previous?.payment_account_identifier ?? '-'} → ` +
+            `${entry.productCode}@${PRODUCTION_ACCOUNTS[entry.currency]}`,
         );
       }
     }
