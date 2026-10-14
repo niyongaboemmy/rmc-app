@@ -74,3 +74,29 @@ describe('DonationCartContext.updateAmount', () => {
     expect(result.current.cart[0].amount).toBe(5000);
   });
 });
+
+/**
+ * Zakat al-Fitr has an RWF product only. An intention that cannot be paid in
+ * the chosen currency would fail at checkout, so switching away drops it.
+ */
+describe('DonationCartContext.setCurrency — intention', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('drops an RWF-only intention when switching to USD', () => {
+    const { result } = renderHook(() => useDonationCart(), { wrapper });
+
+    act(() => result.current.setNiyyah('zakat-al-fitr'));
+    act(() => result.current.setCurrency('USD'));
+
+    expect(result.current.niyyah).toBe('sadaqah');
+  });
+
+  it('keeps an intention payable in every currency', () => {
+    const { result } = renderHook(() => useDonationCart(), { wrapper });
+
+    act(() => result.current.setNiyyah('zakat'));
+    act(() => result.current.setCurrency('EUR'));
+
+    expect(result.current.niyyah).toBe('zakat');
+  });
+});

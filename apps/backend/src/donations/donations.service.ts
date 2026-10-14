@@ -19,6 +19,7 @@ import { PaymentStatusResult } from '../payments/payment-gateway.port';
 import { SmsService } from '../integrations/sms/sms.service';
 import { DonationSmsTemplates } from './donation-sms-templates';
 import { parseDonationMeta } from './donation-meta';
+import { donationPaymentTypeKey } from './donation-payment-type';
 import { isOnlineDonationMethod, normalizeDonationMethod } from './donation-payment-method';
 import { toXlsxBuffer, formatDateTime } from '../common/utils/xlsx';
 
@@ -149,11 +150,29 @@ export class DonationsService {
    * therefore the honest record, and it is re-triable — the donor simply
    * donates again, with a new transaction id.
    */
+  /**
+   * IremboPay pushes MoMo prompts for RWF invoices only. Refused before any
+   * donation is written, so a USD "momo" gift is not left pending forever on a
+   * prompt that will never arrive.
+   */
+  private assertMomoCurrency(currency: string | undefined, isMomo: boolean): void {
+    const ccy = (currency ?? 'RWF').toUpperCase();
+    if (isMomo && ccy !== 'RWF') {
+      throw new BadRequestException(
+        `Mobile Money is available for RWF donations only. Pay ${ccy} by card.`,
+      );
+    }
+  }
+
   private async failUnreachable(donations: Donation[], error: unknown): Promise<never> {
     const reason = error instanceof Error ? error.message : String(error);
     const ids = donations.map((d) => d.id).join(', ');
+    // A 400 from the gateway is our configuration refusing the charge — no
+    // product or account for this currency — not an outage. Retrying would
+    // not help, so the donor must not be told to.
+    const refused = error instanceof BadRequestException;
     this.logger.error(
-      `[Donations] Payment provider unreachable for donation(s) ${ids}: ${reason}`,
+      `[Donations] Payment ${refused ? 'refused' : 'provider unreachable'} for donation(s) ${ids}: ${reason}`,
     );
 
     for (const donation of donations) {
@@ -161,7 +180,7 @@ export class DonationsService {
       // No `paymentReference` — there is no provider-side record to point at.
       // Both columns are narrow (varchar 20 / 255) and an over-long value throws
       // on save, which would put us right back to a stuck pending row.
-      donation.gatewayResponseCode = 'UNREACHABLE';
+      donation.gatewayResponseCode = refused ? 'REFUSED' : 'UNREACHABLE';
       donation.gatewayMessage = reason.slice(0, 255);
     }
     // Best-effort: if the database write also fails we still want the donor to
@@ -174,6 +193,14 @@ export class DonationsService {
           saveError instanceof Error ? saveError.message : String(saveError)
         }`,
       );
+    }
+
+    if (refused) {
+      throw new BadRequestException({
+        code: 'PAYMENT_NOT_AVAILABLE',
+        message:
+          'This gift cannot be paid online in the chosen currency. No payment was taken — please choose another currency or contact RMC.',
+      });
     }
 
     // 503, not the 500 this used to surface: the site is fine, the payment
@@ -269,6 +296,8 @@ export class DonationsService {
    * an admin can correct from the donations report if needed.
    */
   async create(dto: CreateDonationDto, donorId: string | null): Promise<Donation> {
+    this.assertMomoCurrency(dto.currency, normalizeDonationMethod(dto.paymentMethod) === 'momo');
+
     let campaignId: string | null = null;
     if (dto.campaignSlug) {
       const campaign = await this.campaigns.findOne({ where: { slug: dto.campaignSlug } });
@@ -331,7 +360,7 @@ export class DonationsService {
           transactionId: requestTxnId,
           amount: Number(saved.amount),
           currency: saved.currency,
-          paymentTypeKey: 'DONATION',
+          paymentTypeKey: donationPaymentTypeKey(parseDonationMeta(saved.message)),
           referenceId: saved.id,
           payer: {
             name: saved.donorName ?? undefined,
@@ -393,6 +422,17 @@ export class DonationsService {
     message: string;
   }> {
     if (dtos.length === 0) throw new BadRequestException('The cart is empty');
+
+    // One payment, one IremboPay account, and the account fixes the currency —
+    // so a basket is in one currency. The donate page clears the cart on a
+    // currency switch; this covers a client that does not.
+    const currencies = new Set(dtos.map((d) => (d.currency ?? 'RWF').toUpperCase()));
+    if (currencies.size > 1) {
+      throw new BadRequestException(
+        `A basket is paid in one currency, but this one mixes ${[...currencies].join(', ')}.`,
+      );
+    }
+    this.assertMomoCurrency([...currencies][0], channel === 'momo');
 
     const phone = dtos.find((d) => d.donorPhone)?.donorPhone;
 
@@ -469,7 +509,8 @@ export class DonationsService {
         transactionId: requestTxnId,
         amount: total,
         currency: saved[0].currency,
-        paymentTypeKey: 'DONATION',
+        // Logging only: the invoice's products come from `items` below.
+        paymentTypeKey: donationPaymentTypeKey(parseDonationMeta(saved[0].message)),
         referenceId: saved[0].id,
         payer: {
           name: saved[0].donorName ?? undefined,
@@ -477,8 +518,10 @@ export class DonationsService {
           email: saved[0].donorEmail ?? undefined,
         },
         description: 'RMC Donation – Rwanda Muslim Council',
+        // Each line under its own product (Sadaqat, Zakatul maal, …) — one
+        // invoice can carry several, since they share the account and currency.
         items: saved.map((d) => ({
-          paymentTypeKey: 'DONATION',
+          paymentTypeKey: donationPaymentTypeKey(parseDonationMeta(d.message)),
           amount: Number(d.amount),
           quantity: 1,
           description: d.message ?? undefined,

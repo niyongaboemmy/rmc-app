@@ -75,7 +75,13 @@ export class IremboPayReconciliationService implements OnModuleInit, OnModuleDes
 
       // Already-terminal invoices are excluded by the query, so a paid invoice
       // costs no API call at all.
-      const open = await this.invoices.findOpenForReconciliation(minAge, maxAge, this.BATCH_LIMIT);
+      const { environment } = await this.config.get();
+      const open = await this.invoices.findOpenForReconciliation(
+        minAge,
+        maxAge,
+        this.BATCH_LIMIT,
+        environment,
+      );
       if (open.length === 0) return summary;
 
       for (const invoice of open) {

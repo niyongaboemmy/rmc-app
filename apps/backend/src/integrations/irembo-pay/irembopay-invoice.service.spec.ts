@@ -362,4 +362,64 @@ describe('IremboPayInvoiceService', () => {
       expect(toGatewayStatus(status)).toBe(expected);
     });
   });
+
+  describe('currency and account drift', () => {
+    /**
+     * A notification in another currency or account than the invoice we made
+     * means a misconfigured account. The money has moved, so it still settles;
+     * the error log is how finance hears about it.
+     */
+    it('settles a drifted notification and logs it at error level', async () => {
+      const { service, emitted } = build(
+        localInvoice({ currency: 'EUR', paymentAccountIdentifier: 'RMC_EUR' }),
+      );
+      const logError = jest
+        .spyOn((service as unknown as { logger: { error: () => void } }).logger, 'error')
+        .mockImplementation(() => undefined);
+
+      const change = await service.applyInvoiceState(
+        remote({ currency: 'RWF', paymentAccountIdentifier: 'RMC_RWF' }),
+        'webhook',
+      );
+
+      expect(change?.resolvedStatus).toBe('SUCCESSFUL');
+      expect(emitted).toHaveLength(1);
+      expect(logError).toHaveBeenCalledWith(
+        expect.stringMatching(/currency EUR → RWF, account RMC_EUR → RMC_RWF/),
+      );
+    });
+
+    it('logs nothing when the notification matches the invoice', async () => {
+      const { service } = build();
+      const logError = jest
+        .spyOn((service as unknown as { logger: { error: () => void } }).logger, 'error')
+        .mockImplementation(() => undefined);
+
+      await service.applyInvoiceState(remote(), 'webhook');
+
+      expect(logError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('recordNewInvoice — environment', () => {
+    it('stores the merchant the invoice was created on', async () => {
+      const { service, savedInvoices } = build(null);
+
+      await service.recordNewInvoice(remote({ paymentStatus: 'NEW' }), {
+        isTest: true,
+        environment: 'production',
+      });
+
+      // An admin test-panel invoice on production: test, yet production.
+      expect(savedInvoices[0]).toMatchObject({ isTest: true, environment: 'production' });
+    });
+
+    it('defaults a legacy caller to sandbox', async () => {
+      const { service, savedInvoices } = build(null);
+
+      await service.recordNewInvoice(remote({ paymentStatus: 'NEW' }), { isTest: true });
+
+      expect(savedInvoices[0].environment).toBe('sandbox');
+    });
+  });
 });

@@ -107,17 +107,30 @@ export interface PaymentTransaction {
 
 // ── IremboPay ─────────────────────────────────────────────────────────────────
 
+/** Which IremboPay merchant: products, accounts and keys differ between them. */
+export type ProviderEnvironment = 'sandbox' | 'production';
+export type ProviderCurrency = 'RWF' | 'USD' | 'EUR';
+export const PROVIDER_CURRENCIES: readonly ProviderCurrency[] = ['RWF', 'USD', 'EUR'];
+
 export interface ProviderProductRow {
   paymentTypeId: string;
   paymentTypeKey: string;
   paymentTypeName: string;
+  paymentTypeActive: boolean;
   paymentTypeRateId: string | null;
+  /** The mapping row's id, when mapped. */
+  mappingId: string | null;
+  currency: ProviderCurrency;
+  environment: ProviderEnvironment;
   rateCode: string | null;
   rateName: string | null;
   amount: number | null;
   productCode: string | null;
   paymentAccountIdentifier: string | null;
-  /** True when a charge for this row would fail for want of a product code. */
+  /**
+   * True when an RWF charge for this row would fail for want of a product code.
+   * Never set on USD/EUR rows: most services are simply not sold in those.
+   */
   unmapped: boolean;
 }
 
@@ -126,6 +139,8 @@ export interface UpsertProviderProductPayload {
   paymentTypeRateId?: string | null;
   productCode: string;
   paymentAccountIdentifier?: string | null;
+  currency?: ProviderCurrency;
+  environment?: ProviderEnvironment;
 }
 
 export interface IremboPayStatus {
@@ -137,11 +152,14 @@ export interface IremboPayStatus {
   /** Default number the admin test panel pushes to. */
   testMsisdn: string;
   isTestMode: boolean;
+  environment: ProviderEnvironment;
   apiBaseUrl: string;
   widgetScriptUrl: string;
   apiVersion: string;
   publicKey: string;
   paymentAccountIdentifier: string;
+  paymentAccountIdentifierUsd: string;
+  paymentAccountIdentifierEur: string;
   invoiceExpiryMinutes: number;
   defaultLanguage: 'EN' | 'FR' | 'RW';
   signatureToleranceSeconds: number;
@@ -150,6 +168,7 @@ export interface IremboPayStatus {
 
 export interface IremboPayTestPayload {
   amount?: number;
+  currency?: ProviderCurrency;
   paymentTypeKey?: string;
   mobilePhone?: string;
   locale?: 'EN' | 'FR' | 'RW';
@@ -191,7 +210,17 @@ export interface SettingField {
   label: string;
   placeholder?: string;
   sensitive?: boolean;
+  /**
+   * Required for the merchant its `section` names. A production field is only
+   * required while Test mode is off, a sandbox field only while it is on.
+   */
   required?: boolean;
+  /**
+   * Which merchant the value belongs to. Sandbox and production are separate
+   * IremboPay merchants stored side by side; Test mode picks the live one.
+   * Omitted = shared by both.
+   */
+  section?: 'production' | 'sandbox';
   type?: 'text' | 'url' | 'select';
   options?: { value: string; label: string }[];
   hint?: string;
@@ -203,13 +232,38 @@ export interface SettingField {
  */
 export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingField[]>> = {
   IREMBOPAY: [
-    { key: 'secretKey', label: 'Secret Key', required: true, sensitive: true,
-      placeholder: 'From Portal → Integration Details → View Token' },
-    { key: 'publicKey', label: 'Public Key', required: true,
+    // ── Production merchant (live when Test mode is off) ──
+    { key: 'secretKey', label: 'Secret Key', required: true, sensitive: true, section: 'production',
+      placeholder: 'Production portal → Integration Details → View Token' },
+    { key: 'publicKey', label: 'Public Key', required: true, section: 'production',
+      placeholder: 'Production portal → Integration Details → View Token',
       hint: 'Used by the inline payment widget in the browser' },
-    { key: 'paymentAccountIdentifier', label: 'Payment Account (RWF)', required: true,
-      placeholder: 'e.g. TST-RWF', hint: 'Determines the invoice currency' },
-    { key: 'paymentAccountIdentifierUsd', label: 'Payment Account (USD)', placeholder: 'optional' },
+    { key: 'paymentAccountIdentifier', label: 'Payment Account (RWF)', required: true, section: 'production',
+      placeholder: 'RMC_RWF', hint: 'BK 100014931117 — fixes the invoice currency' },
+    { key: 'paymentAccountIdentifierUsd', label: 'Payment Account (USD)', section: 'production',
+      placeholder: 'RMC_USD', hint: 'BK 100014931273 — empty refuses USD payments' },
+    { key: 'paymentAccountIdentifierEur', label: 'Payment Account (EUR)', section: 'production',
+      placeholder: 'RMC_EUR', hint: 'BK 100014931389 — empty refuses EUR payments' },
+    // ── Sandbox merchant (live when Test mode is on) ──
+    { key: 'sandboxSecretKey', label: 'Secret Key', required: true, sensitive: true, section: 'sandbox',
+      placeholder: 'Sandbox portal → Integration Details → View Token' },
+    { key: 'sandboxPublicKey', label: 'Public Key', required: true, section: 'sandbox' },
+    { key: 'sandboxPaymentAccountIdentifier', label: 'Payment Account (RWF)', required: true, section: 'sandbox',
+      placeholder: 'RMC-RWF', hint: 'The sandbox has an RWF account only' },
+    // ── Shared ──
+    // IremboPay's limits for the merchant. Empty = the production defaults.
+    { key: 'maxTransactionRwf', label: 'Max per payment (RWF)', placeholder: '50000000',
+      hint: 'IremboPay limit: 50,000,000' },
+    { key: 'maxDailyRwf', label: 'Max per day (RWF)', placeholder: '100000000',
+      hint: 'IremboPay limit: 100,000,000' },
+    { key: 'maxTransactionUsd', label: 'Max per payment (USD)', placeholder: '100000',
+      hint: 'IremboPay limit: 100,000' },
+    { key: 'maxDailyUsd', label: 'Max per day (USD)', placeholder: '300000',
+      hint: 'IremboPay limit: 300,000' },
+    { key: 'maxTransactionEur', label: 'Max per payment (EUR)', placeholder: '100000',
+      hint: 'IremboPay limit: 100,000' },
+    { key: 'maxDailyEur', label: 'Max per day (EUR)', placeholder: '300000',
+      hint: 'IremboPay limit: 300,000' },
     { key: 'apiBaseUrl', label: 'API Base URL', type: 'url',
       placeholder: 'https://api.sandbox.irembopay.com',
       hint: 'Leave empty to derive from the Test mode toggle' },
@@ -223,7 +277,7 @@ export const PAYMENT_METHOD_FIELDS: Partial<Record<PaymentMethodCode, SettingFie
         { value: '1', label: 'v1' },
       ] },
     { key: 'callbackUrl', label: 'Callback URL', type: 'url',
-      placeholder: 'https://api.isengesho.com/api/v1/webhooks/irembopay',
+      placeholder: 'https://api.rwandamuslim.org/api/v1/webhooks/irembopay',
       hint: 'Copy this into the IremboPay portal — we do not send it per request' },
     { key: 'invoiceExpiryMinutes', label: 'Invoice Expiry (minutes)', placeholder: '1440' },
     { key: 'defaultLanguage', label: 'Invoice Language', type: 'select',
@@ -383,8 +437,14 @@ export const paymentSettingsApi = {
     return data.data ?? data;
   },
 
-  listProviderProducts: async (provider = 'irembopay'): Promise<ProviderProductRow[]> => {
-    const { data } = await apiClient.get(`/admin/payment-settings/providers/${provider}/products`);
+  /** Omit `environment` for the merchant the gateway is on now. */
+  listProviderProducts: async (
+    provider = 'irembopay',
+    environment?: ProviderEnvironment,
+  ): Promise<ProviderProductRow[]> => {
+    const { data } = await apiClient.get(`/admin/payment-settings/providers/${provider}/products`, {
+      params: environment ? { environment } : undefined,
+    });
     return data.data ?? data;
   },
 

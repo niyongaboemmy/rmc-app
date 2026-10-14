@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PaymentMethodCode } from '../../payment-settings/entities/payment-method.entity';
+import { ProviderEnvironment } from '../../payment-settings/entities/payment-type-provider-product.entity';
 import { PaymentSettingsService } from '../../payment-settings/payment-settings.service';
+import { iremboPayFieldsFor, iremboPayReady } from '../../payment-settings/irembopay-fields';
 import { SettingsCacheBus } from '../../payment-settings/settings-cache.bus';
 import {
   DEFAULT_SIMULATOR_DELAY_MS,
@@ -12,9 +14,12 @@ import {
 export interface IremboPayConfig {
   secretKey: string;
   publicKey: string;
+  /** The RWF account (production `RMC_RWF`, sandbox `RMC-RWF`). Required. */
   paymentAccountIdentifier: string;
-  /** Optional second account for USD-denominated invoices. */
+  /** USD account (`RMC_USD`). Optional — without it, USD charges are refused. */
   paymentAccountIdentifierUsd: string;
+  /** EUR account (`RMC_EUR`). Optional — without it, EUR charges are refused. */
+  paymentAccountIdentifierEur: string;
   /** Host only — the client appends `/payments/...`. */
   apiBaseUrl: string;
   widgetScriptUrl: string;
@@ -23,6 +28,8 @@ export interface IremboPayConfig {
   defaultLanguage: IremboLanguage;
   signatureToleranceSeconds: number;
   isTestMode: boolean;
+  /** `isTestMode` as a merchant name — selects product mappings and invoices. */
+  environment: ProviderEnvironment;
   /**
    * Answer payments locally instead of calling IremboPay. Honoured only in test
    * mode and never in production — see `IremboPaySandboxService.isActive()`.
@@ -30,6 +37,12 @@ export interface IremboPayConfig {
   simulatorMode: IremboSimulatorMode;
   /** How long the simulated payer takes to approve. */
   simulatorDelayMs: number;
+  /**
+   * IremboPay's limits for the RMC merchant, per currency: the largest single
+   * invoice, and the most it will process in a day. Admin-editable; the
+   * defaults are the values IremboPay gave for the production merchant.
+   */
+  limits: Record<'RWF' | 'USD' | 'EUR', { perTransaction: number; daily: number }>;
   /**
    * The number the admin test panel pushes to by default. In the sandbox only
    * IremboPay's own test MSISDN is accepted, and which one that is belongs with
@@ -54,6 +67,16 @@ const DEFAULTS = {
   testMsisdn: '0781234567',
 };
 
+/**
+ * IremboPay production limits for merchant RWANDA MUSLIM COMMUNITY (Oct 2026):
+ * maximum per transaction, and maximum processed per day.
+ */
+export const DEFAULT_LIMITS = {
+  RWF: { perTransaction: 50_000_000, daily: 100_000_000 },
+  USD: { perTransaction: 100_000, daily: 300_000 },
+  EUR: { perTransaction: 100_000, daily: 300_000 },
+} as const;
+
 /** How long a resolved config is trusted before re-reading the settings row. */
 const CACHE_TTL_MS = 60_000;
 
@@ -70,6 +93,8 @@ const CACHE_TTL_MS = 60_000;
 export class IremboPayConfigService {
   private readonly logger = new Logger(IremboPayConfigService.name);
   private cache: { value: IremboPayConfig; expiresAt: number } | null = null;
+  /** Set alongside the cache by get(): the live merchant has usable credentials. */
+  private ready = false;
 
   constructor(
     private readonly paymentSettings: PaymentSettingsService,
@@ -105,12 +130,17 @@ export class IremboPayConfigService {
       false,
     );
     const isTestMode = record?.isTestMode ?? true;
+    const environment = isTestMode ? 'sandbox' : 'production';
+    // The row holds both merchants' keys and accounts; Test mode picks one.
+    const merchant = iremboPayFieldsFor(raw, environment);
+    this.ready = iremboPayReady(raw, environment);
 
     const value: IremboPayConfig = {
-      secretKey: (raw.secretKey ?? '').trim(),
-      publicKey: (raw.publicKey ?? '').trim(),
-      paymentAccountIdentifier: (raw.paymentAccountIdentifier ?? '').trim(),
-      paymentAccountIdentifierUsd: (raw.paymentAccountIdentifierUsd ?? '').trim(),
+      secretKey: merchant.secretKey,
+      publicKey: merchant.publicKey,
+      paymentAccountIdentifier: merchant.accountRwf,
+      paymentAccountIdentifierUsd: merchant.accountUsd,
+      paymentAccountIdentifierEur: merchant.accountEur,
       apiBaseUrl: stripTrailingSlash(
         raw.apiBaseUrl?.trim() || (isTestMode ? SANDBOX_API : PRODUCTION_API),
       ),
@@ -124,9 +154,15 @@ export class IremboPayConfigService {
         DEFAULTS.signatureToleranceSeconds,
       ),
       isTestMode,
+      environment,
       simulatorMode: asSimulatorMode(raw.simulatorMode),
       simulatorDelayMs: positiveInt(raw.simulatorDelayMs, DEFAULT_SIMULATOR_DELAY_MS),
       testMsisdn: raw.testMsisdn?.trim() || DEFAULTS.testMsisdn,
+      limits: {
+        RWF: limitsFor(raw, 'Rwf', DEFAULT_LIMITS.RWF),
+        USD: limitsFor(raw, 'Usd', DEFAULT_LIMITS.USD),
+        EUR: limitsFor(raw, 'Eur', DEFAULT_LIMITS.EUR),
+      },
     };
 
     this.cache = { value, expiresAt: Date.now() + CACHE_TTL_MS };
@@ -139,7 +175,13 @@ export class IremboPayConfigService {
     // Reporting "not configured" here would send every charge down the
     // no-gateway branch and defeat the simulation.
     if (this.simulationRequested(c)) return true;
-    return !!(c.secretKey && c.publicKey && c.paymentAccountIdentifier);
+    if (!this.ready && c.environment === 'production' && c.secretKey) {
+      this.logger.warn(
+        '[IremboPay] Production is selected but its secret key equals the sandbox one — ' +
+          'treated as not configured. Paste the production keys in Admin → Settings → Payments.',
+      );
+    }
+    return this.ready;
   }
 
   /** Whether payments are being answered locally rather than by IremboPay. */
@@ -151,14 +193,45 @@ export class IremboPayConfigService {
     return process.env.NODE_ENV !== 'production' && c.isTestMode && c.simulatorMode !== 'off';
   }
 
-  /** The payment account for a currency, falling back to the RWF one. */
+  /**
+   * The payment account for a currency.
+   *
+   * Never falls back to another currency's account. On IremboPay the account
+   * *is* the currency, so the old "fall back to RWF" made a €50 donation a
+   * 50 RWF invoice — silently, since IremboPay has no way to know we meant
+   * euros. A currency with no account is refused instead, naming the setting.
+   */
   async accountForCurrency(currency = 'RWF'): Promise<string> {
     const c = await this.get();
-    if (currency.toUpperCase() === 'USD' && c.paymentAccountIdentifierUsd) {
-      return c.paymentAccountIdentifierUsd;
+    const ccy = currency.trim().toUpperCase();
+    const account =
+      ccy === 'RWF'
+        ? c.paymentAccountIdentifier
+        : ccy === 'USD'
+          ? c.paymentAccountIdentifierUsd
+          : ccy === 'EUR'
+            ? c.paymentAccountIdentifierEur
+            : '';
+    if (!account) {
+      throw new BadRequestException(
+        `IremboPay has no ${ccy} payment account configured, so ${ccy} payments cannot be taken. ` +
+          `Set it in Admin → Settings → Payments → IremboPay.`,
+      );
     }
-    return c.paymentAccountIdentifier;
+    return account;
   }
+}
+
+/** `maxTransactionRwf` / `maxDailyRwf` from the settings row, or the default. */
+function limitsFor(
+  raw: Record<string, string>,
+  suffix: 'Rwf' | 'Usd' | 'Eur',
+  fallback: { perTransaction: number; daily: number },
+): { perTransaction: number; daily: number } {
+  return {
+    perTransaction: positiveInt(raw[`maxTransaction${suffix}`], fallback.perTransaction),
+    daily: positiveInt(raw[`maxDaily${suffix}`], fallback.daily),
+  };
 }
 
 function stripTrailingSlash(url: string): string {

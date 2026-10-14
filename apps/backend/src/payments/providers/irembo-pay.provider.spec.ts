@@ -9,6 +9,13 @@ const CONFIG: IremboPayConfig = {
   publicKey: 'pk_test',
   paymentAccountIdentifier: 'TST-RWF',
   paymentAccountIdentifierUsd: '',
+  paymentAccountIdentifierEur: '',
+  environment: 'sandbox',
+  limits: {
+    RWF: { perTransaction: 50_000_000, daily: 100_000_000 },
+    USD: { perTransaction: 100_000, daily: 300_000 },
+    EUR: { perTransaction: 100_000, daily: 300_000 },
+  },
   apiBaseUrl: 'https://api.sandbox.irembopay.com',
   widgetScriptUrl: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
   apiVersion: '3',
@@ -48,6 +55,9 @@ function build(
     getInvoice?: jest.Mock;
     initiateMomoPush?: jest.Mock;
     resolveForCharge?: jest.Mock;
+    config?: Partial<IremboPayConfig>;
+    accountForCurrency?: jest.Mock;
+    paidToday?: number;
     storedStatus?: 'NEW' | 'PAID' | 'PARTIALLY_PAID' | 'EXPIRED';
   } = {},
 ) {
@@ -61,9 +71,9 @@ function build(
   };
 
   const config = {
-    get: jest.fn().mockResolvedValue(CONFIG),
+    get: jest.fn().mockResolvedValue({ ...CONFIG, ...overrides.config }),
     isConfigured: jest.fn().mockResolvedValue(true),
-    accountForCurrency: jest.fn().mockResolvedValue('TST-RWF'),
+    accountForCurrency: overrides.accountForCurrency ?? jest.fn().mockResolvedValue('TST-RWF'),
   };
 
   const recordNewInvoice = jest.fn(async (remote: IremboInvoice) => ({
@@ -76,6 +86,7 @@ function build(
   const invoices = {
     recordNewInvoice,
     applyInvoiceState: jest.fn().mockResolvedValue(null),
+    paidTotalToday: jest.fn().mockResolvedValue(overrides.paidToday ?? 0),
   };
 
   const products = {
@@ -92,6 +103,7 @@ function build(
       products as never,
     ),
     irembo,
+    config,
     invoices,
     products,
     recordNewInvoice,
@@ -251,6 +263,174 @@ describe('IremboPayProvider', () => {
     expect(irembo.initiateMomoPush).not.toHaveBeenCalled();
     expect(result.status).toBe('PENDING');
     expect(result.message).toMatch(/Invoice 880519183280 created/);
+  });
+
+  describe('currency and environment', () => {
+    const PRODUCTION = { environment: 'production' as const, isTestMode: false };
+    const accounts = jest.fn(async (ccy: string) => `RMC_${ccy}`);
+    const catalog = jest.fn(
+      async (_provider: string, key: string, scope: { currency: string; environment: string }) => ({
+        productCode: `${key}-${scope.currency}-${scope.environment}`,
+        paymentAccountIdentifier: null,
+      }),
+    );
+
+    /** IremboPay answers BAD_DATA for a non-RWF push; we refuse before invoicing. */
+    it.each(['USD', 'EUR'])('refuses a %s MoMo push before any HTTP call', async (currency) => {
+      const { provider, irembo } = build({ config: PRODUCTION });
+
+      await expect(
+        provider.charge({ ...REQUEST, currency, pushProvider: 'MTN' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+      expect(irembo.initiateMomoPush).not.toHaveBeenCalled();
+    });
+
+    it('resolves products in the charge currency on the live merchant', async () => {
+      const { provider, products } = build({
+        config: PRODUCTION,
+        resolveForCharge: catalog,
+        accountForCurrency: accounts,
+      });
+
+      await provider.charge({ ...REQUEST, currency: 'usd', pushProvider: undefined });
+
+      expect(products.resolveForCharge).toHaveBeenCalledWith('irembopay', 'DONATION', {
+        rateId: undefined,
+        currency: 'USD',
+        environment: 'production',
+      });
+    });
+
+    it('bills a EUR basket of Sadaqat and Zakat as one RMC_EUR invoice', async () => {
+      const { provider, irembo, recordNewInvoice } = build({
+        config: PRODUCTION,
+        resolveForCharge: catalog,
+        accountForCurrency: accounts,
+      });
+
+      await provider.charge({
+        ...REQUEST,
+        amount: 75,
+        currency: 'EUR',
+        pushProvider: undefined,
+        items: [
+          { paymentTypeKey: 'DONATION', amount: 50, quantity: 1 },
+          { paymentTypeKey: 'ZAKAT', amount: 25, quantity: 1 },
+        ],
+      });
+
+      expect(irembo.createInvoice).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paymentAccountIdentifier: 'RMC_EUR',
+          paymentItems: [
+            { code: 'DONATION-EUR-production', quantity: 1, unitAmount: 50 },
+            { code: 'ZAKAT-EUR-production', quantity: 1, unitAmount: 25 },
+          ],
+        }),
+      );
+      expect(recordNewInvoice).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ environment: 'production', isTest: false }),
+      );
+    });
+
+    /** The €50-as-50-RWF regression, end to end through the provider. */
+    it('creates no invoice when the currency has no account', async () => {
+      const { provider, irembo } = build({
+        config: PRODUCTION,
+        accountForCurrency: jest
+          .fn()
+          .mockRejectedValue(new BadRequestException('IremboPay has no EUR payment account')),
+      });
+
+      await expect(
+        provider.charge({ ...REQUEST, currency: 'EUR', pushProvider: undefined }),
+      ).rejects.toThrow(/no EUR payment account/);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('records sandbox invoices as sandbox', async () => {
+      const { provider, recordNewInvoice } = build();
+
+      await provider.charge(REQUEST);
+
+      expect(recordNewInvoice).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ environment: 'sandbox' }),
+      );
+    });
+  });
+
+  describe('IremboPay merchant limits', () => {
+    it('accepts exactly the per-transaction limit', async () => {
+      const { provider, irembo } = build();
+
+      await provider.charge({ ...REQUEST, amount: 50_000_000, pushProvider: undefined });
+
+      expect(irembo.createInvoice).toHaveBeenCalled();
+    });
+
+    it('refuses one franc over the per-transaction limit, before invoicing', async () => {
+      const { provider, irembo } = build();
+
+      await expect(
+        provider.charge({ ...REQUEST, amount: 50_000_001, pushProvider: undefined }),
+      ).rejects.toThrow(/cannot exceed 50,000,000 RWF/);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('measures a basket by its line total', async () => {
+      const { provider, irembo } = build();
+
+      await expect(
+        provider.charge({
+          ...REQUEST,
+          currency: 'USD',
+          amount: 100_001,
+          pushProvider: undefined,
+          items: [
+            { paymentTypeKey: 'DONATION', amount: 60_000, quantity: 1 },
+            { paymentTypeKey: 'ZAKAT', amount: 40_001, quantity: 1 },
+          ],
+        }),
+      ).rejects.toThrow(/cannot exceed 100,000 USD/);
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('refuses a payment that would pass the daily limit', async () => {
+      const { provider, invoices, irembo } = build({ paidToday: 99_999_000 });
+
+      await expect(
+        provider.charge({ ...REQUEST, amount: 1_001, pushProvider: undefined }),
+      ).rejects.toThrow(/today's limit/);
+      expect(invoices.paidTotalToday).toHaveBeenCalledWith('RWF', 'sandbox');
+      expect(irembo.createInvoice).not.toHaveBeenCalled();
+    });
+
+    it('allows a payment that lands exactly on the daily limit', async () => {
+      const { provider, irembo } = build({ paidToday: 99_999_000 });
+
+      await provider.charge({ ...REQUEST, amount: 1_000, pushProvider: undefined });
+
+      expect(irembo.createInvoice).toHaveBeenCalled();
+    });
+
+    it('uses admin-edited limits from the settings', async () => {
+      const { provider } = build({
+        config: {
+          limits: {
+            RWF: { perTransaction: 1_000, daily: 10_000 },
+            USD: { perTransaction: 100_000, daily: 300_000 },
+            EUR: { perTransaction: 100_000, daily: 300_000 },
+          },
+        },
+      });
+
+      await expect(
+        provider.charge({ ...REQUEST, amount: 1_001, pushProvider: undefined }),
+      ).rejects.toThrow(/cannot exceed 1,000 RWF/);
+    });
   });
 
   describe('getStatus', () => {

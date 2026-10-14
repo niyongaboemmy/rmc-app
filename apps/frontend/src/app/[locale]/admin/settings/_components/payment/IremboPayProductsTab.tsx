@@ -10,20 +10,25 @@ import {
   paymentSettingsApi,
   ProviderProductRow,
   IremboPayStatus,
+  ProviderEnvironment,
+  ProviderCurrency,
+  PROVIDER_CURRENCIES,
 } from '@/lib/paymentSettingsApi';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 
 const PROVIDER = 'irembopay';
 
-function fmtAmount(n: number | null | undefined) {
+function fmtAmount(n: number | null | undefined, currency = 'RWF') {
   if (n == null) return '—';
-  return new Intl.NumberFormat('rw-RW').format(Number(n)) + ' RWF';
+  return new Intl.NumberFormat('rw-RW').format(Number(n)) + ` ${currency}`;
 }
 
 function rowKey(row: ProviderProductRow) {
-  return `${row.paymentTypeId}:${row.paymentTypeRateId ?? 'default'}`;
+  return `${row.environment}:${row.currency}:${row.paymentTypeId}:${row.paymentTypeRateId ?? 'default'}`;
 }
+
+type CurrencyFilter = ProviderCurrency | 'ALL';
 
 /**
  * Admin → Settings → Payments → IremboPay.
@@ -42,26 +47,39 @@ export function IremboPayProductsTab() {
   const [status, setStatus] = useState<IremboPayStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
+  // Null until the status says which merchant is live; the list then follows it.
+  const [environment, setEnvironment] = useState<ProviderEnvironment | null>(null);
+  const [currencyFilter, setCurrencyFilter] = useState<CurrencyFilter>('ALL');
+  const initialised = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [productRows, iremboStatus] = await Promise.all([
-        paymentSettingsApi.listProviderProducts(PROVIDER),
-        paymentSettingsApi.getIremboPayStatus().catch(() => null),
-      ]);
-      setRows(productRows);
+      const iremboStatus = await paymentSettingsApi.getIremboPayStatus().catch(() => null);
+      const env =
+        environment ?? iremboStatus?.environment ?? (iremboStatus?.isTestMode === false ? 'production' : 'sandbox');
+      if (!initialised.current) {
+        initialised.current = true;
+        setEnvironment(env);
+      }
+      setRows(await paymentSettingsApi.listProviderProducts(PROVIDER, env));
       setStatus(iremboStatus);
     } catch {
       showToast('Could not load the IremboPay product mapping', 'error');
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, environment]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const liveEnvironment: ProviderEnvironment | null = status
+    ? status.environment ?? (status.isTestMode ? 'sandbox' : 'production')
+    : null;
+  const viewingLive = environment !== null && environment === liveEnvironment;
+  const visibleRows = rows.filter((r) => currencyFilter === 'ALL' || r.currency === currencyFilter);
 
   const save = async (row: ProviderProductRow, productCode: string, account: string) => {
     await paymentSettingsApi.upsertProviderProduct(
@@ -70,6 +88,8 @@ export function IremboPayProductsTab() {
         paymentTypeRateId: row.paymentTypeRateId,
         productCode: productCode.trim(),
         paymentAccountIdentifier: account.trim() || null,
+        currency: row.currency,
+        environment: row.environment,
       },
       PROVIDER,
     );
@@ -78,7 +98,10 @@ export function IremboPayProductsTab() {
     await load();
   };
 
-  const unmappedCount = rows.filter((r) => r.unmapped).length;
+  // Only what the live merchant would refuse: inactive types cannot be charged.
+  const unmappedCount = viewingLive
+    ? rows.filter((r) => r.unmapped && r.paymentTypeActive).length
+    : 0;
 
   if (loading) {
     return (
@@ -128,11 +151,47 @@ export function IremboPayProductsTab() {
           </button>
         </div>
 
+        {/*
+          Sandbox and production are separate merchants with separate product
+          codes. Both sets are kept; the Test-mode toggle picks the live one.
+        */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 border-b border-gray-200 text-xs">
+          <Segmented
+            label="Merchant"
+            value={environment ?? 'sandbox'}
+            options={[
+              { value: 'sandbox', label: 'Sandbox' },
+              { value: 'production', label: 'Production' },
+            ]}
+            onChange={(v) => {
+              setEditing(null);
+              setEnvironment(v as ProviderEnvironment);
+            }}
+          />
+          <Segmented
+            label="Currency"
+            value={currencyFilter}
+            options={[
+              { value: 'ALL', label: 'All' },
+              ...PROVIDER_CURRENCIES.map((c) => ({ value: c, label: c })),
+            ]}
+            onChange={(v) => setCurrencyFilter(v as CurrencyFilter)}
+          />
+          {environment && liveEnvironment && (
+            <span className={cn('ml-auto', viewingLive ? 'text-rmc-green' : 'text-gray-500')}>
+              {viewingLive
+                ? 'These mappings are live.'
+                : `Not live — the gateway is on ${liveEnvironment}. Edits here take effect when it switches.`}
+            </span>
+          )}
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
                 <th className="px-4 py-2.5 font-medium">Payment type</th>
+                <th className="px-4 py-2.5 font-medium">Currency</th>
                 <th className="px-4 py-2.5 font-medium">Amount</th>
                 <th className="px-4 py-2.5 font-medium">Product code</th>
                 <th className="px-4 py-2.5 font-medium">Payment account</th>
@@ -140,7 +199,7 @@ export function IremboPayProductsTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {rows.map((row) => (
+              {visibleRows.map((row) => (
                 <ProductRow
                   key={rowKey(row)}
                   row={row}
@@ -151,9 +210,9 @@ export function IremboPayProductsTab() {
                   onSave={(code, account) => save(row, code, account)}
                 />
               ))}
-              {rows.length === 0 && (
+              {visibleRows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
                     No payment types exist yet — add them under Service Areas first.
                   </td>
                 </tr>
@@ -226,7 +285,9 @@ function ConfigurationBanner({
 
         <Field label="API" value={status.apiBaseUrl} />
         <Field label="Version" value={`v${status.apiVersion}`} />
-        <Field label="Account" value={status.paymentAccountIdentifier} />
+        <Field label="RWF" value={status.paymentAccountIdentifier || '—'} />
+        <Field label="USD" value={status.paymentAccountIdentifierUsd || '—'} />
+        <Field label="EUR" value={status.paymentAccountIdentifierEur || '—'} />
         <Field label="Invoice expiry" value={`${status.invoiceExpiryMinutes} min`} />
         <Field label="Language" value={status.defaultLanguage} />
       </div>
@@ -263,6 +324,40 @@ function ConfigurationBanner({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+function Segmented({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-gray-400 uppercase tracking-wide">{label}</span>
+      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5" role="group" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={value === o.value}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              'px-2.5 py-1 rounded-md font-medium transition-colors',
+              value === o.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -310,7 +405,13 @@ function ProductRow({ row, editing, canManage, onEdit, onCancel, onSave }: Produ
   const isRate = row.paymentTypeRateId !== null;
 
   return (
-    <tr className={cn('hover:bg-gray-50/50', row.unmapped && 'bg-amber-50/40')}>
+    <tr
+      className={cn(
+        'hover:bg-gray-50/50',
+        row.unmapped && row.paymentTypeActive && 'bg-amber-50/40',
+        !row.paymentTypeActive && 'opacity-60',
+      )}
+    >
       <td className="px-4 py-2.5">
         <div className={cn('flex items-center gap-2', isRate && 'pl-5')}>
           {isRate && <span className="text-gray-300">└</span>}
@@ -322,16 +423,25 @@ function ProductRow({ row, editing, canManage, onEdit, onCancel, onSave }: Produ
               {isRate ? (row.rateCode ?? 'rate') : row.paymentTypeKey}
             </span>
           </div>
-          {row.unmapped && (
+          {row.unmapped && row.paymentTypeActive && (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
               <AlertTriangle className="w-3 h-3" />
               unmapped
             </span>
           )}
+          {!row.paymentTypeActive && !isRate && (
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+              inactive
+            </span>
+          )}
         </div>
       </td>
 
-      <td className="px-4 py-2.5 text-gray-600">{fmtAmount(row.amount)}</td>
+      <td className="px-4 py-2.5">
+        <span className="text-xs font-semibold text-gray-600">{row.currency}</span>
+      </td>
+
+      <td className="px-4 py-2.5 text-gray-600">{fmtAmount(row.amount, row.currency)}</td>
 
       <td className="px-4 py-2.5">
         {editing ? (
@@ -343,7 +453,7 @@ function ProductRow({ row, editing, canManage, onEdit, onCancel, onSave }: Produ
               if (e.key === 'Enter') void commit();
               if (e.key === 'Escape') onCancel();
             }}
-            placeholder="PI-3e5fe23f2d"
+            placeholder="PC-47fbbd81b8"
             className="w-44 px-2 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-rmc-green/20 focus:border-rmc-green outline-none"
           />
         ) : row.productCode ? (

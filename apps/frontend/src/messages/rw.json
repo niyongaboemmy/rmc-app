@@ -3141,6 +3141,10 @@
       "zakat": {
         "label": "Zakat",
         "desc": "Itegeko rya 2.5%"
+      },
+      "zakat-al-fitr": {
+        "label": "Zakat al-Fitr",
+        "desc": "Itangwa mbere y'isengesho rya Eid — RWF"
       }
     },
     "quickGive": {
@@ -3380,7 +3384,8 @@
       "error": "Ntitwashoboye kwandika impano yawe. Nyamuneka ongera ugerageze.",
       "phonePlaceholder": "Nimero ya Mobile Money",
       "phoneHint": "Tuzakohereza ubusabe bwo kwishyura kuri iyi nimero kugira ngo wemeze.",
-      "phoneRequired": "Andika nimero yawe ya Mobile Money kugira ngo ukomeze."
+      "phoneRequired": "Andika nimero yawe ya Mobile Money kugira ngo ukomeze.",
+      "momoRwfOnly": "Mobile Money ikoreshwa mu kwishyura mu mafaranga y'u Rwanda (RWF) gusa. Hindura ifaranga ujye kuri RWF, cyangwa wishyure ukoresheje ikarita."
     },
     "methods": {
       "momo": {

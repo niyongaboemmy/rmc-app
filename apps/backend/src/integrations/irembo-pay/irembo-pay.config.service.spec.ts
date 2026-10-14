@@ -110,14 +110,130 @@ describe('IremboPayConfigService', () => {
       });
     });
 
-    it('uses the USD account for USD and falls back to RWF otherwise', async () => {
-      const { service } = build({ ...FULL, paymentAccountIdentifierUsd: 'TST-USD' });
+    it('reports the merchant as an environment', async () => {
+      await expect(build(FULL, true).service.get()).resolves.toMatchObject({
+        environment: 'sandbox',
+      });
+      await expect(build(FULL, false).service.get()).resolves.toMatchObject({
+        environment: 'production',
+      });
+    });
+  });
 
-      await expect(service.accountForCurrency('USD')).resolves.toBe('TST-USD');
-      await expect(service.accountForCurrency('RWF')).resolves.toBe('TST-RWF');
-      // No USD account configured is not an error — bill it to the RWF account.
-      const { service: rwfOnly } = build(FULL);
-      await expect(rwfOnly.accountForCurrency('USD')).resolves.toBe('TST-RWF');
+  describe('per-merchant fields', () => {
+    const BOTH = {
+      secretKey: 'sk_PROD',
+      publicKey: 'pk_PROD',
+      paymentAccountIdentifier: 'RMC_RWF',
+      paymentAccountIdentifierUsd: 'RMC_USD',
+      paymentAccountIdentifierEur: 'RMC_EUR',
+      sandboxSecretKey: 'sk_SBX',
+      sandboxPublicKey: 'pk_SBX',
+      sandboxPaymentAccountIdentifier: 'RMC-RWF',
+    };
+
+    it('uses the sandbox merchant in test mode', async () => {
+      const { service } = build(BOTH, true);
+      await expect(service.get()).resolves.toMatchObject({
+        secretKey: 'sk_SBX',
+        publicKey: 'pk_SBX',
+        paymentAccountIdentifier: 'RMC-RWF',
+        paymentAccountIdentifierUsd: '',
+      });
+      await expect(service.isConfigured()).resolves.toBe(true);
+    });
+
+    it('uses the production merchant when test mode is off', async () => {
+      const { service } = build(BOTH, false);
+      await expect(service.get()).resolves.toMatchObject({
+        secretKey: 'sk_PROD',
+        paymentAccountIdentifier: 'RMC_RWF',
+        paymentAccountIdentifierEur: 'RMC_EUR',
+        apiBaseUrl: 'https://api.irembopay.com',
+      });
+    });
+
+    it('is not configured in production before the production keys are entered', async () => {
+      const { service } = build({ ...BOTH, secretKey: '', publicKey: '' }, false);
+      await expect(service.isConfigured()).resolves.toBe(false);
+    });
+
+    it('refuses a sandbox key pasted into the production field', async () => {
+      const { service } = build({ ...BOTH, secretKey: 'sk_SBX' }, false);
+      await expect(service.isConfigured()).resolves.toBe(false);
+    });
+  });
+
+  describe('limits', () => {
+    it("defaults to IremboPay's production limits", async () => {
+      const cfg = await build(FULL).service.get();
+
+      expect(cfg.limits).toEqual({
+        RWF: { perTransaction: 50_000_000, daily: 100_000_000 },
+        USD: { perTransaction: 100_000, daily: 300_000 },
+        EUR: { perTransaction: 100_000, daily: 300_000 },
+      });
+    });
+
+    it('reads admin-edited limits and ignores nonsense', async () => {
+      const cfg = await build({
+        ...FULL,
+        maxTransactionUsd: '5000',
+        maxDailyEur: '20000',
+        maxTransactionRwf: 'lots',
+      }).service.get();
+
+      expect(cfg.limits.USD.perTransaction).toBe(5000);
+      expect(cfg.limits.EUR.daily).toBe(20000);
+      expect(cfg.limits.RWF.perTransaction).toBe(50_000_000);
+    });
+  });
+
+  describe('accountForCurrency', () => {
+    const PROD = {
+      ...FULL,
+      paymentAccountIdentifier: 'RMC_RWF',
+      paymentAccountIdentifierUsd: 'RMC_USD',
+      paymentAccountIdentifierEur: 'RMC_EUR',
+    };
+
+    it.each([
+      ['RWF', 'RMC_RWF'],
+      ['USD', 'RMC_USD'],
+      ['EUR', 'RMC_EUR'],
+      ['eur', 'RMC_EUR'],
+      [' usd ', 'RMC_USD'],
+    ])('maps %s to its own account', async (currency, account) => {
+      await expect(build(PROD, false).service.accountForCurrency(currency)).resolves.toBe(account);
+    });
+
+    it('defaults to the RWF account when no currency is named', async () => {
+      await expect(build(PROD, false).service.accountForCurrency()).resolves.toBe('RMC_RWF');
+    });
+
+    /**
+     * Regression: the account fixes the invoice currency, so falling back to
+     * the RWF account turned a €50 donation into a 50 RWF invoice — silently.
+     */
+    it.each(['USD', 'EUR'])(
+      'refuses %s when that account is not configured, never billing it in RWF',
+      async (currency) => {
+        const { service } = build(FULL);
+
+        await expect(service.accountForCurrency(currency)).rejects.toThrow(
+          new RegExp(`no ${currency} payment account`),
+        );
+      },
+    );
+
+    it('refuses a currency RMC has no account type for', async () => {
+      await expect(build(PROD).service.accountForCurrency('GBP')).rejects.toThrow(
+        /no GBP payment account/,
+      );
+    });
+
+    it('still reports configured with only the RWF account', async () => {
+      await expect(build(FULL).service.isConfigured()).resolves.toBe(true);
     });
   });
 

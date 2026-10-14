@@ -12,6 +12,7 @@ import { seedSmsConfig } from './06-sms-config.seed';
 import { seedSectors } from './07-sectors.seed';
 import { seedDawahCategories } from './08-dawah-categories.seed';
 import { seedIremboPay } from './09-irembopay.seed';
+import { seedIremboPayCatalog } from './10-irembopay-catalog.seed';
 // No tenders here. They were `09-tenders.seed.ts` until it became clear the rows
 // are demo content published to the live board — see dev-fixtures-tenders.ts.
 
@@ -29,6 +30,7 @@ async function runSeeds(): Promise<void> {
   await seedSectors(AppDataSource);
   await seedDawahCategories(AppDataSource);
   await seedIremboPay(AppDataSource);
+  await seedIremboPayCatalog(AppDataSource);
 
   await AppDataSource.destroy();
   // eslint-disable-next-line no-console

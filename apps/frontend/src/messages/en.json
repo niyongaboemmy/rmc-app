@@ -3141,6 +3141,10 @@
       "zakat": {
         "label": "Zakat",
         "desc": "Obligatory alms — 2.5%"
+      },
+      "zakat-al-fitr": {
+        "label": "Zakat al-Fitr",
+        "desc": "Due before the Eid prayer — RWF"
       }
     },
     "quickGive": {
@@ -3380,7 +3384,8 @@
       "error": "We could not record your donation. Please try again.",
       "phonePlaceholder": "Mobile Money number",
       "phoneHint": "We'll send a payment request to this number to confirm.",
-      "phoneRequired": "Enter your Mobile Money number to continue."
+      "phoneRequired": "Enter your Mobile Money number to continue.",
+      "momoRwfOnly": "Mobile Money is available for RWF payments only. Switch the currency to RWF, or pay by card."
     },
     "methods": {
       "momo": {

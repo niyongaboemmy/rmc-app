@@ -8,6 +8,13 @@ const baseConfig: IremboPayConfig = {
   publicKey: '',
   paymentAccountIdentifier: '',
   paymentAccountIdentifierUsd: '',
+  paymentAccountIdentifierEur: '',
+  environment: 'sandbox',
+  limits: {
+    RWF: { perTransaction: 50_000_000, daily: 100_000_000 },
+    USD: { perTransaction: 100_000, daily: 300_000 },
+    EUR: { perTransaction: 100_000, daily: 300_000 },
+  },
   apiBaseUrl: 'https://api.sandbox.irembopay.com',
   widgetScriptUrl: 'https://dashboard.sandbox.irembopay.com/assets/payment/inline.js',
   apiVersion: '3',

@@ -81,6 +81,15 @@ export class IremboPayInvoice {
   @Column({ name: 'is_test', type: 'boolean', default: true })
   isTest: boolean;
 
+  /**
+   * The merchant the invoice was created on. Not the same as `isTest`, which is
+   * also true for admin test-panel invoices on production. Reconciliation only
+   * polls invoices of the environment it is configured for — a sandbox invoice
+   * does not exist on the production host.
+   */
+  @Column({ type: 'varchar', length: 10, default: 'sandbox' })
+  environment: 'sandbox' | 'production';
+
   /** Last full payload seen (create response, webhook, or reconciliation fetch). */
   @Column({ name: 'raw_payload', type: 'jsonb', nullable: true })
   rawPayload: Record<string, unknown> | null;

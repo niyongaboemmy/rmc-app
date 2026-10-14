@@ -183,3 +183,7 @@ HANDOFF.md
 
 # Ad-hoc reports dropped at the repo root — real docs belong in documentation/
 /*.pdf
+*.pem
+
+# IremboPay settings snapshots hold the secret key — scripts/irembopay-snapshot.ts
+apps/backend/backups/

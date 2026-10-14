@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PaymentMethodCode } from '../../payment-settings/entities/payment-method.entity';
 import { ProviderProductsService } from '../../payment-settings/provider-products.service';
 import { IremboPayConfigService } from '../../integrations/irembo-pay/irembo-pay.config.service';
@@ -51,7 +51,16 @@ export class IremboPayProvider implements PaymentGatewayProvider {
 
   async charge(req: PaymentChargeRequest): Promise<PaymentChargeResult> {
     const cfg = await this.config.get();
-    const currency = req.currency ?? 'RWF';
+    const currency = (req.currency ?? 'RWF').trim().toUpperCase();
+
+    // IremboPay pushes MoMo prompts for RWF invoices only (BAD_DATA otherwise).
+    // Refused before an invoice exists, rather than leaving the payer with a
+    // USD invoice and a prompt that will never arrive.
+    if (req.pushProvider && currency !== 'RWF') {
+      throw new BadRequestException(
+        `Mobile money is available for RWF payments only. Pay ${currency} by card.`,
+      );
+    }
 
     // One invoice can carry several payment items, which is how a whole cart is
     // settled by a single payment rather than one invoice per line.
@@ -72,20 +81,26 @@ export class IremboPayProvider implements PaymentGatewayProvider {
     const resolved = await Promise.all(
       lines.map(async (line) => ({
         line,
-        product: await this.products.resolveForCharge(
-          IREMBOPAY_PROVIDER_KEY,
-          line.paymentTypeKey,
-          line.paymentTypeRateId,
-        ),
+        product: await this.products.resolveForCharge(IREMBOPAY_PROVIDER_KEY, line.paymentTypeKey, {
+          rateId: line.paymentTypeRateId,
+          currency,
+          environment: cfg.environment,
+        }),
       })),
     );
 
-    // A mixed-account invoice is not a thing IremboPay supports — the account
-    // fixes the currency — so the first line's override wins and the rest fall
-    // back to the method-level account.
+    // One invoice, one account — the account fixes the currency. Every line was
+    // resolved in this currency, so a per-mapping override (rare: a dedicated
+    // account for one service) is in it too; the first one found wins.
     const paymentAccount =
       resolved.find((r) => r.product.paymentAccountIdentifier)?.product.paymentAccountIdentifier ||
       (await this.config.accountForCurrency(currency));
+
+    await this.assertWithinLimits(
+      currency,
+      lines.reduce((sum, l) => sum + l.amount * (l.quantity ?? 1), 0),
+      cfg,
+    );
 
     const expiryAt = req.expiresAt
       ? this.irembo.formatExpiry(req.expiresAt)
@@ -127,6 +142,7 @@ export class IremboPayProvider implements PaymentGatewayProvider {
       paymentTypeKey: req.paymentTypeKey,
       referenceId: req.referenceId,
       isTest: req.isTest ?? cfg.isTestMode,
+      environment: cfg.environment,
       payerPhone: req.payer.phone,
       initiatedBy: req.initiatedBy,
     });
@@ -160,6 +176,41 @@ export class IremboPayProvider implements PaymentGatewayProvider {
       message,
       raw: invoice as unknown as Record<string, unknown>,
     };
+  }
+
+  /**
+   * IremboPay's per-transaction and daily processing limits for the merchant.
+   * Checked before invoicing, so a donor over the limit is told so plainly
+   * rather than handed an invoice the gateway will not settle. The daily check
+   * counts what has already been paid today; pending invoices are not counted,
+   * since most of them are never paid.
+   */
+  private async assertWithinLimits(
+    currency: string,
+    amount: number,
+    cfg: {
+      limits: Record<string, { perTransaction: number; daily: number }>;
+      environment: 'sandbox' | 'production';
+    },
+  ): Promise<void> {
+    const limit = cfg.limits[currency];
+    if (!limit) return; // an unknown currency is refused by accountForCurrency()
+
+    const fmt = (n: number) => `${n.toLocaleString('en-US')} ${currency}`;
+    if (amount > limit.perTransaction) {
+      throw new BadRequestException(
+        `A single payment cannot exceed ${fmt(limit.perTransaction)}. Split it into smaller payments.`,
+      );
+    }
+    const paidToday = await this.invoices.paidTotalToday(currency, cfg.environment);
+    if (paidToday + amount > limit.daily) {
+      this.logger.warn(
+        `[IremboPay] daily ${currency} limit reached: ${fmt(paidToday)} paid today, ${fmt(amount)} requested, limit ${fmt(limit.daily)}`,
+      );
+      throw new BadRequestException(
+        `Online payments in ${currency} have reached today's limit. Please try again tomorrow.`,
+      );
+    }
   }
 
   /** `reference` is an invoiceNumber or our own transactionId — both resolve. */

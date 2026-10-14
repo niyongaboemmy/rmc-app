@@ -7,6 +7,7 @@ import {
 } from '@/lib/paymentSettingsApi';
 
 jest.mock('@/lib/paymentSettingsApi', () => ({
+  PROVIDER_CURRENCIES: ['RWF', 'USD', 'EUR'],
   paymentSettingsApi: {
     listTransactions: jest.fn(),
     getIremboPayStatus: jest.fn(),
@@ -170,6 +171,32 @@ describe('PaymentTestingTab', () => {
       const payload = api.testIremboPayInvoice.mock.calls[0][0];
       expect(payload).not.toHaveProperty('mobilePhone');
       expect(payload).not.toHaveProperty('paymentProvider');
+      expect(api.testIremboPayPush).not.toHaveBeenCalled();
+    });
+
+    it('sends RWF by default', async () => {
+      setup();
+      await waitFor(() => expect(api.getIremboPayStatus).toHaveBeenCalled());
+
+      fireEvent.click(screen.getByText('Invoice only'));
+      fireEvent.click(screen.getByText('Create Invoice'));
+
+      await waitFor(() => expect(api.testIremboPayInvoice).toHaveBeenCalled());
+      expect(api.testIremboPayInvoice.mock.calls[0][0]).toMatchObject({ currency: 'RWF' });
+    });
+
+    /** USD/EUR invoices are paid by card; IremboPay pushes MoMo in RWF only. */
+    it('switches a USD test to invoice-only and disables the push', async () => {
+      setup();
+      await waitFor(() => expect(api.getIremboPayStatus).toHaveBeenCalled());
+
+      fireEvent.click(screen.getByRole('button', { name: 'USD' }));
+
+      expect(screen.getByText('Invoice + MoMo push').closest('button')).toBeDisabled();
+      fireEvent.click(screen.getByText('Create Invoice'));
+
+      await waitFor(() => expect(api.testIremboPayInvoice).toHaveBeenCalled());
+      expect(api.testIremboPayInvoice.mock.calls[0][0]).toMatchObject({ currency: 'USD' });
       expect(api.testIremboPayPush).not.toHaveBeenCalled();
     });
 

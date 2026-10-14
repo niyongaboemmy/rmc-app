@@ -16,6 +16,8 @@ import {
   PaymentTransaction,
   IremboPayStatus,
   IremboPayTestPayload,
+  ProviderCurrency,
+  PROVIDER_CURRENCIES,
   IremboPayTestResult,
 } from '@/lib/paymentSettingsApi';
 import { IremboPayWidget } from '@/components/payments/IremboPayWidget';
@@ -51,8 +53,8 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function fmt(n: number) {
-  return new Intl.NumberFormat('rw-RW').format(n) + ' RWF';
+function fmt(n: number, currency = 'RWF') {
+  return new Intl.NumberFormat('rw-RW').format(n) + ` ${currency}`;
 }
 
 // ── Success Popup ─────────────────────────────────────────────────────────────
@@ -399,6 +401,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
   const [selectedTypeKey,  setSelectedTypeKey]  = useState<string>(activeTypes[0]?.key ?? '');
   const [mobilePhone,      setMobilePhone]      = useState('');
   const [amount,           setAmount]           = useState('100');
+  const [currency,         setCurrency]         = useState<ProviderCurrency>('RWF');
   const [testMode,         setTestMode]         = useState<TestMode>('push');
   const [pushProvider,     setPushProvider]     = useState<'MTN' | 'AIRTEL'>('MTN');
 
@@ -515,7 +518,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
   const handleSend = async () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount < 1) {
-      toast.error('Amount must be at least 1 RWF.');
+      toast.error(`Amount must be at least 1 ${currency}.`);
       return;
     }
     // An invoice is payable by card, bank or link, so it needs no phone number.
@@ -533,6 +536,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
     try {
       const payload: IremboPayTestPayload = {
         amount: numAmount,
+        currency,
         ...(mobilePhone.trim() ? { mobilePhone: mobilePhone.replace(/\s/g, '') } : {}),
         ...(selectedTypeKey ? { paymentTypeKey: selectedTypeKey } : {}),
         ...(testMode === 'push' ? { paymentProvider: pushProvider } : {}),
@@ -698,7 +702,11 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                   <button
                     type="button"
                     onClick={() => setTestMode('push')}
+                    // IremboPay pushes MoMo for RWF invoices only.
+                    disabled={currency !== 'RWF'}
+                    title={currency !== 'RWF' ? 'MoMo push is available for RWF only' : undefined}
                     className={cn(
+                      'disabled:cursor-not-allowed disabled:opacity-40',
                       'flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold transition-colors',
                       testMode === 'push'
                         ? 'bg-rmc-green border-rmc-green text-white'
@@ -807,11 +815,41 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                 <p className="text-xs text-slate-400 mt-1">Accepts: 0780313448 or 250780313448 — auto-converted to international format</p>
               </div>
 
+              {/* Currency — picks the payment account (RMC_RWF/USD/EUR) and the product */}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Currency</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {PROVIDER_CURRENCIES.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        setCurrency(c);
+                        if (c !== 'RWF') setTestMode('invoice');
+                      }}
+                      className={cn(
+                        'py-2 rounded-lg border text-xs font-semibold transition-colors',
+                        currency === c
+                          ? 'bg-rmc-green border-rmc-green text-white'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                {currency !== 'RWF' && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    {currency} invoices are paid by card in the IremboPay sheet — no MoMo push.
+                  </p>
+                )}
+              </div>
+
               {/* Amount */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">Amount</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none select-none">RWF</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none select-none">{currency}</span>
                   <input
                     type="number"
                     min={1}
@@ -917,6 +955,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                         paymentLinkUrl: lastResult.paymentLinkUrl,
                       }}
                       amount={parseFloat(amount) || 0}
+                      currency={currency}
                       checkStatus={(txn: string) =>
                         paymentSettingsApi.getPaymentStatus(txn).then((r) => r.status)
                       }
@@ -938,7 +977,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     {[
                       { label: 'Transaction ID', value: lastResult.transactionId },
                       { label: 'Invoice Number', value: lastResult.invoiceNumber || '—' },
-                      { label: 'Amount',         value: lastTx ? fmt(lastTx.amount) : `${amount} RWF` },
+                      { label: 'Amount',         value: lastTx ? fmt(lastTx.amount, lastTx.currency) : `${amount} ${currency}` },
                       { label: 'Phone',          value: lastTx?.mobilePhone || mobilePhone || '—' },
                       { label: 'Response Code',  value: lastResult.responseCode ?? lastTx?.responseCode ?? '—' },
                       { label: 'Message',        value: lastResult.message ?? lastTx?.message ?? '—' },
@@ -995,7 +1034,7 @@ export default function PaymentTestingTab({ methods, types }: Props) {
                     <tr key={tx.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-4 py-3 font-mono text-slate-600 max-w-[160px] truncate">{tx.requestTransactionId}</td>
                       <td className="px-4 py-3 text-slate-700">{tx.mobilePhone || '—'}</td>
-                      <td className="px-4 py-3 text-slate-700 font-medium">{fmt(tx.amount)}</td>
+                      <td className="px-4 py-3 text-slate-700 font-medium">{fmt(tx.amount, tx.currency)}</td>
                       <td className="px-4 py-3 text-slate-500">{tx.paymentTypeKey ?? '—'}</td>
                       <td className="px-4 py-3"><StatusBadge status={tx.status} /></td>
                       <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{new Date(tx.createdAt).toLocaleString()}</td>

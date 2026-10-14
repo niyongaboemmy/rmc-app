@@ -30,7 +30,10 @@ function build(options: { open?: IremboPayInvoice[]; getInvoice?: jest.Mock } = 
       })),
   };
 
-  const config = { isConfigured: jest.fn().mockResolvedValue(true) };
+  const config = {
+    isConfigured: jest.fn().mockResolvedValue(true),
+    get: jest.fn().mockResolvedValue({ environment: 'production' }),
+  };
 
   const settlements = new InvoiceSettlementBus();
   const applied: InvoiceStateChange[] = [];
@@ -184,5 +187,30 @@ describe('IremboPayReconciliationService', () => {
     expect(second).toEqual({ checked: 0, updated: 0, failed: 0 });
     await settle(first);
     expect(invoices.findOpenForReconciliation).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * A sandbox invoice does not exist on the production host. Polling it after
+   * the cutover would 404 on every run until it aged out.
+   */
+  it('only polls invoices of the merchant it is configured for', async () => {
+    const { service, config, invoices } = build();
+
+    await settle(service.reconcile());
+    expect(invoices.findOpenForReconciliation).toHaveBeenLastCalledWith(
+      expect.any(Date),
+      expect.any(Date),
+      expect.any(Number),
+      'production',
+    );
+
+    config.get.mockResolvedValue({ environment: 'sandbox' });
+    await settle(service.reconcile());
+    expect(invoices.findOpenForReconciliation).toHaveBeenLastCalledWith(
+      expect.any(Date),
+      expect.any(Date),
+      expect.any(Number),
+      'sandbox',
+    );
   });
 });

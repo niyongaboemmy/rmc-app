@@ -135,7 +135,7 @@ export function DonatePageClient() {
           <SuccessState locale={locale} summary={summary} onReset={reset} />
         ) : (
           <>
-            <DonateHero niyyah={niyyah} onNiyyah={setNiyyah} />
+            <DonateHero niyyah={niyyah} onNiyyah={setNiyyah} currency={currency} />
 
             {/* ── Causes — the heart of the page ── */}
             <section id="causes" className="scroll-mt-20 py-12 md:py-16">
